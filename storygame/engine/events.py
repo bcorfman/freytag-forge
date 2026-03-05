@@ -109,9 +109,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
 
 
 def select_event(beat: Beat, state: GameState, rng) -> EventTemplate:
-    templates = tuple(
-        template for template in list_event_templates() if set(template.tags) & set(beat.tags)
-    )
+    templates = tuple(template for template in list_event_templates() if set(template.tags) & set(beat.tags))
     if not templates:
         templates = list_event_templates()
     index = rng.randrange(len(templates))

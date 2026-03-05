@@ -82,6 +82,8 @@ class Npc:
     name: str
     description: str
     dialogue: str
+    identity: str = ""
+    pronouns: str = "they/them"
     tags: tuple[str, ...] = ()
     delta_progress: float = 0.0
     delta_tension: float = 0.0
@@ -147,9 +149,7 @@ class GameState:
             "event_log": [event.to_summary() for event in self.event_log],
             "beat_history": self.beat_history,
             "flags": self.player.flags,
-            "room_items": {
-                room_id: room.item_ids for room_id, room in sorted(self.world.rooms.items())
-            },
+            "room_items": {room_id: room.item_ids for room_id, room in sorted(self.world.rooms.items())},
         }
         payload = json.dumps(data, sort_keys=True).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()

@@ -13,6 +13,8 @@ class ActionKind(StrEnum):
     HELP = "help"
     INVENTORY = "inventory"
     QUIT = "quit"
+    SAVE = "save"
+    LOAD = "load"
     UNKNOWN = "unknown"
 
 
@@ -25,6 +27,19 @@ class Action:
 
 def _normalize_token(value: str) -> str:
     return value.strip().lower().replace(" ", "_")
+
+
+def _normalize_direction(value: str) -> str:
+    normalized = _normalize_token(value)
+    direction_aliases = {
+        "n": "north",
+        "s": "south",
+        "e": "east",
+        "w": "west",
+        "u": "up",
+        "d": "down",
+    }
+    return direction_aliases.get(normalized, normalized)
 
 
 def parse_command(raw: str) -> Action:
@@ -47,11 +62,20 @@ def parse_command(raw: str) -> Action:
     if words[0] in {"quit", "exit", "leave"}:
         return Action(ActionKind.QUIT, raw=raw)
 
-    if words[0] in {"north", "south", "east", "west", "up", "down", "go", "move", "travel", "walk"}:
-        if words[0] in {"go", "move", "travel", "walk"}:
-            target = _normalize_token(" ".join(words[1:]))
-            return Action(ActionKind.MOVE, target=target, raw=raw)
-        return Action(ActionKind.MOVE, target=_normalize_token(words[0]), raw=raw)
+    if words[0] in {"go", "move", "travel", "walk"}:
+        if len(words) < 2:
+            return Action(ActionKind.UNKNOWN, target="", raw=raw)
+        target = _normalize_direction(" ".join(words[1:]))
+        return Action(ActionKind.MOVE, target=target, raw=raw)
+
+    if words[0] == "save":
+        return Action(ActionKind.SAVE, target=_normalize_token(" ".join(words[1:])), raw=raw)
+
+    if words[0] == "load":
+        return Action(ActionKind.LOAD, target=_normalize_token(" ".join(words[1:])), raw=raw)
+
+    if words[0] in {"north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"}:
+        return Action(ActionKind.MOVE, target=_normalize_direction(words[0]), raw=raw)
 
     if words[0] in {"take", "get", "grab", "pick", "acquire"}:
         if words[0] == "pick" and len(words) > 1 and words[1] == "up":

@@ -3,13 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from storygame.engine.parser import Action
-from storygame.engine.state import EventLog, GameState
+from storygame.engine.state import EventLog, GameState, Npc
 from storygame.plot.freytag import get_phase
 
 MAX_RECENT_EVENTS = 5
 MAX_VISIBLE_ITEMS = 6
 MAX_INVENTORY_ITEMS = 8
-MAX_EVENT_MESSAGE_LEN = 80
+MAX_EVENT_MESSAGE_LEN = 120
+MAX_NPC_FACTS = 12
+MAX_NPC_DESCRIPTION_LEN = 100
 
 HARD_CONSTRAINTS = (
     "no_state_mutation",
@@ -24,6 +26,7 @@ class NarrationContext:
     room_description: str
     visible_items: tuple[str, ...]
     visible_npcs: tuple[str, ...]
+    npc_facts: tuple[dict, ...]
     exits: tuple[str, ...]
     inventory: tuple[str, ...]
     recent_events: tuple[dict, ...]
@@ -39,6 +42,7 @@ class NarrationContext:
             "room_description": self.room_description,
             "visible_items": list(self.visible_items),
             "visible_npcs": list(self.visible_npcs),
+            "npc_facts": list(self.npc_facts),
             "exits": list(self.exits),
             "inventory": list(self.inventory),
             "recent_events": list(self.recent_events),
@@ -57,6 +61,22 @@ def _short_message(value: str) -> str:
     return value[: MAX_EVENT_MESSAGE_LEN - 3] + "..."
 
 
+def _short_text(value: str, max_len: int) -> str:
+    if len(value) <= max_len:
+        return value
+    return value[: max_len - 3] + "..."
+
+
+def _npc_fact(npc: Npc) -> dict[str, str]:
+    return {
+        "id": npc.id,
+        "name": npc.name,
+        "pronouns": npc.pronouns,
+        "identity": _short_text(npc.identity, MAX_NPC_DESCRIPTION_LEN),
+        "description": _short_text(npc.description, MAX_NPC_DESCRIPTION_LEN),
+    }
+
+
 def _summarize_recent_events(events: EventLog) -> tuple[dict, ...]:
     trimmed = events.tail(MAX_RECENT_EVENTS)
     return tuple(
@@ -69,6 +89,11 @@ def _summarize_recent_events(events: EventLog) -> tuple[dict, ...]:
         }
         for event in trimmed
     )
+
+
+def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
+    npc_ids = sorted(state.world.npcs.keys())
+    return tuple(_npc_fact(state.world.npcs[npc_id]) for npc_id in npc_ids[:MAX_NPC_FACTS])
 
 
 def build_narration_context(
@@ -84,6 +109,7 @@ def build_narration_context(
         room_description=room.description,
         visible_items=visible_items[:MAX_VISIBLE_ITEMS],
         visible_npcs=room.npc_ids,
+        npc_facts=_summarize_npc_facts(state),
         exits=tuple(sorted(room.exits.keys())),
         inventory=state.player.inventory[:MAX_INVENTORY_ITEMS],
         recent_events=_summarize_recent_events(state.event_log),
