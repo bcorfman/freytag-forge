@@ -1,0 +1,53 @@
+[project]
+name = "FreytagForge"
+version = "0.1.0"
+description = "A text adventure engine with a Freytag plot manager and LLM narrator."
+authors = [{name = "Brandon Corfman", email = "h9tbgnbbk@privaterelay.appleid.com"}]
+license = {file="LICENSE"}
+readme = "README.md"
+requires-python = ">= 3.12"
+dependencies = [
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov-branch --cov-report term --cov=core"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+markers=["unit: Unit tests.",
+         "system: System (browser-based) tests."]
+         
+[tool.coverage.run]
+source = ["core"]
+
+[tool.ruff]
+line-length = 120
+fix = true
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+extend-fixable = ["E", "F", "UP", "B", "SIM", "I"]
