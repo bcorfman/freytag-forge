@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from random import Random
-import json
 
 from storygame.cli import main, run_turn
 from storygame.engine.events import list_event_templates
@@ -10,7 +10,7 @@ from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event, EventLog
 from storygame.engine.world import build_default_state, build_tiny_state
-from storygame.llm.adapters import MockNarrator, OpenAIAdapter, OllamaAdapter
+from storygame.llm.adapters import MockNarrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.context import MAX_EVENT_MESSAGE_LEN, build_narration_context
 from storygame.plot.freytag import get_phase
 
@@ -136,7 +136,7 @@ def test_openai_adapter_calls_openai_api_for_narration(monkeypatch):
         def read(self) -> bytes:
             return self._body
 
-        def __enter__(self) -> "_FakeResponse":
+        def __enter__(self) -> _FakeResponse:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:
@@ -191,7 +191,7 @@ def test_ollama_adapter_calls_local_api_for_narration(monkeypatch):
         def read(self) -> bytes:
             return self._body
 
-        def __enter__(self) -> "_FakeResponse":
+        def __enter__(self) -> _FakeResponse:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:

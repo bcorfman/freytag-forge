@@ -13,8 +13,7 @@ from storygame.llm.prompts import build_prompt, build_prompt_text
 
 
 class Narrator(Protocol):
-    def generate(self, context: NarrationContext) -> str:
-        ...
+    def generate(self, context: NarrationContext) -> str: ...
 
 
 class MockNarrator:
@@ -144,36 +143,26 @@ class OllamaAdapter:
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace")
                 if exc.code in {404, 405, 500} and endpoint != endpoints[-1]:
-                    attempt_errors.append(
-                        f"{endpoint} -> HTTP {exc.code}: {detail}"
-                    )
+                    attempt_errors.append(f"{endpoint} -> HTTP {exc.code}: {detail}")
                     continue
                 raise RuntimeError(f"Ollama API request failed: {exc.code} {detail}") from exc
             except urllib.error.URLError as exc:
-                attempt_errors.append(
-                    f"{endpoint} -> URL error: {exc}"
-                )
+                attempt_errors.append(f"{endpoint} -> URL error: {exc}")
                 if endpoint == endpoints[-1]:
                     break
                 continue
             except TimeoutError as exc:
-                attempt_errors.append(
-                    f"{endpoint} -> timeout after {self.timeout}s: {exc}"
-                )
-                if endpoint == endpoints[-1]:
-                    break
-                continue
-            except socket.timeout as exc:
-                attempt_errors.append(
-                    f"{endpoint} -> socket timeout after {self.timeout}s: {exc}"
-                )
+                attempt_errors.append(f"{endpoint} -> timeout after {self.timeout}s: {exc}")
                 if endpoint == endpoints[-1]:
                     break
                 continue
             except Exception as exc:  # noqa: BLE001
-                raise RuntimeError(
-                    f"Ollama API request failed with {type(exc).__name__}: {exc}"
-                ) from exc
+                if isinstance(exc, socket.timeout):
+                    attempt_errors.append(f"{endpoint} -> socket timeout after {self.timeout}s: {exc}")
+                    if endpoint == endpoints[-1]:
+                        break
+                    continue
+                raise RuntimeError(f"Ollama API request failed with {type(exc).__name__}: {exc}") from exc
 
             parsed = json.loads(response_bytes.decode("utf-8"))
             try:

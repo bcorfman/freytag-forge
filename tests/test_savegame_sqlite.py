@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import pytest
 from random import Random
+
+import pytest
 
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
@@ -49,9 +50,8 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
 
 def test_load_nonexistent_slot_raises_value_error(tmp_path):
     db_path = tmp_path / "saves.sqlite"
-    with SqliteSaveStore(db_path) as store:
-        with (pytest.raises(ValueError, match="No save exists")):
-            store.load_run("missing")
+    with SqliteSaveStore(db_path) as store, pytest.raises(ValueError, match="No save exists"):
+        store.load_run("missing")
 
 
 def test_list_slots_returns_sorted_slots(tmp_path):

@@ -2,7 +2,6 @@ from random import Random
 
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
-from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 
 

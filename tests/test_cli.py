@@ -3,14 +3,13 @@ from __future__ import annotations
 import builtins
 from random import Random
 
-from storygame.cli import main, run_replay, run_turn, _build_narrator, _event_lines, _write_transcript_line
-from storygame.cli import _room_lines
-from storygame.persistence.savegame_sqlite import SqliteSaveStore
+from storygame.cli import _build_narrator, _event_lines, _room_lines, _write_transcript_line, main, run_replay, run_turn
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
-from storygame.llm.context import build_narration_context
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import MockNarrator, SilentNarrator
+from storygame.llm.context import build_narration_context
+from storygame.persistence.savegame_sqlite import SqliteSaveStore
 
 
 def test_cli_helpers_handle_empty_event_list_and_no_transcript():
@@ -94,15 +93,17 @@ def test_main_debug_replay_prints_debug_lines(tmp_path):
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\n")
 
-    main([
-        "--seed",
-        "1",
-        "--replay",
-        str(replay),
-        "--debug",
-        "--transcript",
-        str(transcript),
-    ])
+    main(
+        [
+            "--seed",
+            "1",
+            "--replay",
+            str(replay),
+            "--debug",
+            "--transcript",
+            str(transcript),
+        ]
+    )
 
     assert "[debug] turn=" in transcript.read_text()
 

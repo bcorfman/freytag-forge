@@ -13,8 +13,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
     system = "\n".join(SYSTEM_CONSTRAINTS)
     payload = context.as_dict()
     npc_facts_line = ", ".join(
-        f"{fact['name']} [{fact['pronouns']}] ({fact['identity']})"
-        for fact in payload["npc_facts"]
+        f"{fact['name']} [{fact['pronouns']}] ({fact['identity']})" for fact in payload["npc_facts"]
     )
     user = (
         f"Action: {payload['action']}\n"

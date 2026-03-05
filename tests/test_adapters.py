@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import socket
 import urllib.error
 
 import pytest
@@ -24,7 +23,7 @@ class _FakeResponse:
     def read(self) -> bytes:
         return self._body
 
-    def __enter__(self) -> "_FakeResponse":
+    def __enter__(self) -> _FakeResponse:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -142,9 +141,7 @@ def test_openai_adapter_url_error_is_wrapped(monkeypatch):
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
 
     adapter = OpenAIAdapter()
-    with pytest.raises(
-        RuntimeError, match="Cannot reach OpenAI endpoint. Check OPENAI_BASE_URL and network."
-    ):
+    with pytest.raises(RuntimeError, match="Cannot reach OpenAI endpoint. Check OPENAI_BASE_URL and network."):
         adapter.generate(context)
 
 

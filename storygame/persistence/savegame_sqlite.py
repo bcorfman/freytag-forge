@@ -69,9 +69,7 @@ def serialize_state(state: GameState) -> dict[str, Any]:
             "inventory": list(state.player.inventory),
             "flags": dict(state.player.flags),
         },
-        "room_items": {
-            room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()
-        },
+        "room_items": {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()},
         "event_log": [serialize_event(event) for event in state.event_log.events],
     }
 
@@ -106,7 +104,7 @@ class SqliteSaveStore:
     def close(self) -> None:
         self.conn.close()
 
-    def __enter__(self) -> "SqliteSaveStore":
+    def __enter__(self) -> SqliteSaveStore:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ARG001
