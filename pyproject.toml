@@ -29,6 +29,13 @@ addopts = [
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
 
+[tool.coverage.run]
+source = ["storygame"]
+omit = [
+    "storygame/__init__.py",
+    "storygame/__main__.py",
+]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

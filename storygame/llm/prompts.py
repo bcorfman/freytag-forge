@@ -12,6 +12,10 @@ SYSTEM_CONSTRAINTS = (
 def build_prompt(context: NarrationContext) -> dict[str, str]:
     system = "\n".join(SYSTEM_CONSTRAINTS)
     payload = context.as_dict()
+    npc_facts_line = ", ".join(
+        f"{fact['name']} [{fact['pronouns']}] ({fact['identity']})"
+        for fact in payload["npc_facts"]
+    )
     user = (
         f"Action: {payload['action']}\n"
         f"Beat: {payload['beat']}\n"
@@ -20,6 +24,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Location: {payload['room_name']}\n"
         f"Visible items: {', '.join(payload['visible_items'])}\n"
         f"Visible NPCs: {', '.join(payload['visible_npcs'])}\n"
+        f"Canonical NPC facts: {npc_facts_line}\n"
         f"Inventory: {', '.join(payload['inventory'])}\n"
         f"Recent events: {[e['message_key'] for e in payload['recent_events']]}\n"
         f"Active goal: {payload['goal']}\n"

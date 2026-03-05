@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from random import Random
+import json
 
 from storygame.cli import main, run_turn
 from storygame.engine.events import list_event_templates
@@ -9,8 +10,8 @@ from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event, EventLog
 from storygame.engine.world import build_default_state, build_tiny_state
-from storygame.llm.adapters import MockNarrator, OpenAIAdapter
-from storygame.llm.context import build_narration_context
+from storygame.llm.adapters import MockNarrator, OpenAIAdapter, OllamaAdapter
+from storygame.llm.context import MAX_EVENT_MESSAGE_LEN, build_narration_context
 from storygame.plot.freytag import get_phase
 
 
@@ -58,7 +59,7 @@ def test_context_contains_hard_constraints_and_short_recent_messages():
 
     assert "do_not_invent_facts" in payload["constraints"]
     assert "no_state_mutation" in payload["constraints"]
-    assert len(payload["recent_events"][0]["message_key"]) <= 80
+    assert len(payload["recent_events"][0]["message_key"]) <= MAX_EVENT_MESSAGE_LEN
 
 
 def test_narration_output_does_not_mutate_state():
@@ -125,6 +126,115 @@ def test_openai_adapter_uses_env_for_non_secret_config(monkeypatch):
     adapter = OpenAIAdapter()
     assert adapter.model == "gpt-4.1-mini"
     assert adapter.timeout == 12.5
+
+
+def test_openai_adapter_calls_openai_api_for_narration(monkeypatch):
+    class _FakeResponse:
+        def __init__(self, body: str) -> None:
+            self._body = body.encode("utf-8")
+
+        def read(self) -> bytes:
+            return self._body
+
+        def __enter__(self) -> "_FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+    captured: dict[str, object] = {}
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        captured["url"] = getattr(request, "full_url", "")
+        captured["method"] = request.get_method()
+        captured["payload"] = json.loads(request.data.decode("utf-8"))
+        return _FakeResponse('{"choices":[{"message":{"content":"An ominous whisper drifted through the hall."}}]}')
+
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-token")
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+
+    state = build_default_state(seed=11)
+    context = build_narration_context(state, parse_command("look"), "hook")
+
+    adapter = OpenAIAdapter()
+    narration = adapter.generate(context)
+
+    assert narration == "An ominous whisper drifted through the hall."
+    assert captured["url"] == "https://api.openai.com/v1/chat/completions"
+    payload = captured["payload"]
+    assert isinstance(payload, dict)
+    assert payload["model"] == "gpt-4o-mini"
+    assert len(payload["messages"]) == 2
+
+
+def test_cli_runs_with_openai_narrator_argument(tmp_path, monkeypatch):
+    class _OpenAIFakeNarrator:
+        def generate(self, _context) -> str:
+            return "The oracle nods and the room grows quiet."
+
+    monkeypatch.setattr("storygame.cli.OpenAIAdapter", lambda: _OpenAIFakeNarrator())
+    replay = tmp_path / "commands.txt"
+    transcript = tmp_path / "transcript.txt"
+    replay.write_text("look\n")
+
+    main(["--seed", "5", "--replay", str(replay), "--narrator", "openai", "--transcript", str(transcript)])
+
+    text = transcript.read_text()
+    assert "The oracle nods and the room grows quiet." in text
+
+
+def test_ollama_adapter_calls_local_api_for_narration(monkeypatch):
+    class _FakeResponse:
+        def __init__(self, body: str) -> None:
+            self._body = body.encode("utf-8")
+
+        def read(self) -> bytes:
+            return self._body
+
+        def __enter__(self) -> "_FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+    captured: dict[str, object] = {}
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        captured["url"] = getattr(request, "full_url", "")
+        captured["payload"] = json.loads(request.data.decode("utf-8"))
+        return _FakeResponse('{"message":{"role":"assistant","content":"The forge bell begins to hum."}}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2")
+
+    state = build_default_state(seed=9)
+    context = build_narration_context(state, parse_command("look"), "hook")
+    adapter = OllamaAdapter(base_url="http://localhost:11434/api/chat")
+
+    narration = adapter.generate(context)
+
+    assert narration == "The forge bell begins to hum."
+    assert captured["url"] == "http://localhost:11434/api/chat"
+    payload = captured["payload"]
+    assert isinstance(payload, dict)
+    assert payload["model"] == "llama3.2"
+    assert len(payload["messages"]) == 2
+
+
+def test_cli_runs_with_ollama_narrator_argument(tmp_path, monkeypatch):
+    class _OllamaFakeNarrator:
+        def generate(self, _context) -> str:
+            return "A spectral smith nods from the forge."
+
+    monkeypatch.setattr("storygame.cli.OllamaAdapter", lambda: _OllamaFakeNarrator())
+    replay = tmp_path / "commands.txt"
+    transcript = tmp_path / "transcript.txt"
+    replay.write_text("look\n")
+
+    main(["--seed", "7", "--replay", str(replay), "--narrator", "ollama", "--transcript", str(transcript)])
+
+    text = transcript.read_text()
+    assert "A spectral smith nods from the forge." in text
 
 
 def test_world_targets_and_tiny_world_builder():

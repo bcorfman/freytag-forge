@@ -162,12 +162,14 @@ Later stages add:
 - [x] `generate(context: NarrationContext) -> str`
 - [x] Implement at least one adapter:
 - [x] `MockNarrator` (for tests)
-- [x] `OpenAIAdapter` OR `OllamaAdapter` (choose one; keep interface stable)
+- [x] `OpenAIAdapter`
+- [x] `OllamaAdapter` (local endpoint support)
 - [x] Add config via env vars (do not hardcode secrets)
 
 #### 3.2 Context builder (llm/context.py)
 - [x] Build a **state slice**:
 - [x] current room facts (name, visible items, exits, NPCs)
+- [x] canonical NPC identity facts (name + pronouns + identity summary) to reduce narrative drift
 - [x] inventory summary
 - [x] active goal/objective
 - [x] last N events (N=5) summarized structurally
@@ -183,6 +185,7 @@ Later stages add:
 - [x] do not change state
 - [x] narration must be consistent with provided facts
 - [x] User message includes context slice + player action + chosen beat
+- [x] User prompt includes canonical NPC identity/pronoun facts for continuity across turns
 
 #### 3.4 Engine integration (cli.py / engine loop)
 - [x] After action + plot selection:
@@ -191,6 +194,8 @@ Later stages add:
 - [x] Debug mode prints:
 - [x] phase, tension, beat, selected event types
 - [x] context slice keys (not full prompt)
+- [x] Add narrator mode switch in CLI (`--narrator mock|none|openai`) and require `OPENAI_API_KEY` for OpenAI mode.
+- [x] Add CLI support for local narration via `--narrator ollama` and `OLLAMA_*` env config.
 
 #### Tests
 - [x] `test_llm_context.py` (context includes required keys, respects size limit)
@@ -228,10 +233,10 @@ Later stages add:
 ### Stage 5 — Save/Resume with SQLite
 **Key rule:** persist structured state + event log + seed, not just transcript text.
 
-- [ ] `persistence/savegame_sqlite.py`
-- tables: runs, turns, state_snapshots, events, transcript_lines
-- [ ] CLI: `save <slot>`, `load <slot>`
-- [ ] Auto-save per turn optional
+- [x] `persistence/savegame_sqlite.py`
+- [x] tables: runs, turns, state_snapshots, events, transcript_lines
+- [x] CLI: `save <slot>`, `load <slot>`
+- [x] Auto-save per turn optional
 
 **Acceptance criteria**
 - [ ] Can stop and resume exactly from same state and seed
@@ -277,31 +282,3 @@ Later stages add:
 - how to set seed
 - how to replay
 - how to plug in LLM adapter
-
----
-
-## Codex implementation prompt (paste into Codex)
-
-You are implementing a Python project in this repo that follows the plan in README/PLAN.md.
-
-Hard constraints:
-- LLM MUST NOT mutate game state. The engine is sole authority for state changes.
-- LLM only narrates based on a context slice produced by context_builder.
-- Plot manager must deterministically select beats/events using a seeded RNG.
-- Provide replay capability using seed + command list.
-- Write tests first (pytest). Keep modules small and typed where reasonable.
-
-Implementation order:
-1) Milestone 0 scaffolding + CI
-2) Milestone 1 deterministic world engine with event log and parser
-3) Milestone 2 Freytag plot manager + beat manager + event selection/apply
-4) Milestone 3 LLM narrator interface + mock narrator + context builder + prompts
-5) Milestone 4 regression corpus + replay mode + content expansion
-
-Deliverables:
-- Working CLI: `python -m storygame --seed 123`
-- Replay: `python -m storygame --seed 123 --replay runs/demo_commands.txt`
-- Tests: parser, rules, plot, event selection, context builder, reproducibility
-- LLM integration uses a clean adapter interface and includes a MockNarrator for tests
-
-Do not add extra frameworks unless required. Keep architecture aligned with the plan.

@@ -8,8 +8,9 @@ from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import MockNarrator, Narrator, SilentNarrator
+from storygame.llm.adapters import MockNarrator, Narrator, OllamaAdapter, OpenAIAdapter, SilentNarrator
 from storygame.llm.context import build_narration_context
+from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
 
 
@@ -37,14 +38,65 @@ def _write_transcript_line(handle: TextIO | None, line: str) -> None:
     handle.write(line + "\n")
 
 
-def run_turn(state: GameState, raw: str, rng: Random, narrator: Narrator, debug: bool = False):
+def _build_narrator(mode: str) -> Narrator:
+    if mode == "mock":
+        return MockNarrator()
+    if mode == "openai":
+        return OpenAIAdapter()
+    if mode == "ollama":
+        return OllamaAdapter()
+    return SilentNarrator()
+
+
+def run_turn(
+    state: GameState,
+    raw: str,
+    rng: Random,
+    narrator: Narrator,
+    debug: bool = False,
+    save_store: SqliteSaveStore | None = None,
+):
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
 
+    if action.kind == ActionKind.SAVE:
+        if not action.target:
+            return state, ["Usage: save <slot>."], action.raw, "save", True
+        if save_store is None:
+            return state, ["Save requires --save-db <path>."], action.raw, "save", True
+        try:
+            save_store.save_run(action.target, state, rng, raw_command=action.raw, action_kind="save")
+            return state, [f"Saved to slot '{action.target}'."], action.raw, "save", True
+        except Exception as exc:
+            return state, [f"Failed to save: {exc}"], action.raw, "save", True
+
+    if action.kind == ActionKind.LOAD:
+        if not action.target:
+            return state, ["Usage: load <slot>."], action.raw, "load", True
+        if save_store is None:
+            return state, ["Load requires --save-db <path>."], action.raw, "load", True
+        try:
+            state, loaded_rng = save_store.load_run(action.target)
+            rng.setstate(loaded_rng.getstate())
+            return (
+                state,
+                [_room_lines(state), f"Loaded from slot '{action.target}'."],
+                action.raw,
+                "load",
+                True,
+            )
+        except ValueError as exc:
+            return state, [f"Could not load slot '{action.target}': {exc}"], action.raw, "load", True
+        except Exception as exc:
+            return state, [f"Failed to load: {exc}"], action.raw, "load", True
+
     next_state, events, beat_type, template_key = advance_turn(state, action, rng)
     context = build_narration_context(next_state, action, beat_type)
-    narration = narrator.generate(context)
+    try:
+        narration = narrator.generate(context)
+    except RuntimeError as exc:
+        narration = f"[Narrator failed: {exc}]"
 
     lines = [_room_lines(next_state), _event_lines(events)]
     if narration:
@@ -65,18 +117,31 @@ def run_turn(state: GameState, raw: str, rng: Random, narrator: Narrator, debug:
     return next_state, [line for line in lines if line], action.raw, beat_type, True
 
 
-def run_replay(seed: int, commands: list[str], debug: bool = False) -> GameState:
+def run_replay(
+    seed: int,
+    commands: list[str],
+    debug: bool = False,
+    save_db: Path | None = None,
+) -> GameState:
     rng = Random(seed)
     state = build_default_state(seed)
     narrator: Narrator = MockNarrator()
-    for command in commands:
-        state, _output, _action, _beat, _continued = run_turn(
-            state,
-            command,
-            rng,
-            narrator,
-            debug=debug,
-        )
+    save_store: SqliteSaveStore | None = SqliteSaveStore(save_db) if save_db is not None else None
+    try:
+        for command in commands:
+            state, _output, _action, _beat, _continued = run_turn(
+                state,
+                command,
+                rng,
+                narrator,
+                debug=debug,
+                save_store=save_store,
+            )
+            if not _continued:
+                break
+    finally:
+        if save_store is not None:
+            save_store.close()
     return state
 
 
@@ -86,11 +151,17 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Freytag text adventure")
     parser.add_argument("--seed", type=int, default=123, help="Random seed for deterministic play")
     parser.add_argument("--replay", type=Path, default=None, help="Replay commands from a file")
+    parser.add_argument("--save-db", type=Path, default=None, help="SQLite save file path")
     parser.add_argument("--debug", action="store_true", help="Print phase and beat diagnostics")
+    parser.add_argument(
+        "--autosave-slot",
+        default=None,
+        help="Auto-save state each turn to this slot (optional).",
+    )
     parser.add_argument("--transcript", type=Path, default=None, help="Write transcript to a file")
     parser.add_argument(
         "--narrator",
-        choices=("mock", "none"),
+        choices=("mock", "none", "openai", "ollama"),
         default="mock",
         help="Narration mode. 'none' keeps engine-only output.",
     )
@@ -99,7 +170,9 @@ def main(argv: list[str] | None = None) -> None:
 
     state = build_default_state(args.seed)
     rng = Random(args.seed)
-    narrator: Narrator = MockNarrator() if args.narrator == "mock" else SilentNarrator()
+    narrator: Narrator = _build_narrator(args.narrator)
+    save_store: SqliteSaveStore | None = SqliteSaveStore(args.save_db) if args.save_db is not None else None
+    autosave_slot = args.autosave_slot
 
     transcript_path = args.transcript
     if transcript_path is None and args.replay is not None:
@@ -125,7 +198,16 @@ def main(argv: list[str] | None = None) -> None:
                     rng,
                     narrator,
                     debug=args.debug,
+                    save_store=save_store,
                 )
+                if autosave_slot is not None and save_store is not None:
+                    save_store.save_run(
+                        autosave_slot,
+                        state,
+                        rng,
+                        raw_command=command,
+                        action_kind="autosave",
+                    )
                 for line in lines:
                     print(line)
                     _write_transcript_line(transcript_handle, line)
@@ -140,6 +222,7 @@ def main(argv: list[str] | None = None) -> None:
                 rng,
                 narrator,
                 debug=args.debug,
+                save_store=save_store,
             )
             for line in lines:
                 print(line)
@@ -148,9 +231,20 @@ def main(argv: list[str] | None = None) -> None:
                 break
             if not continued:
                 break
+
+            if autosave_slot is not None and save_store is not None:
+                save_store.save_run(
+                    autosave_slot,
+                    state,
+                    rng,
+                    raw_command=raw,
+                    action_kind="autosave",
+                )
     finally:
         if transcript_handle is not None:
             transcript_handle.close()
+        if save_store is not None:
+            save_store.close()
 
 
 if __name__ == "__main__":
