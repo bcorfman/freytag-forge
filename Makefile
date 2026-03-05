@@ -1,35 +1,19 @@
-PACKAGE := freytag-forge
-PACKAGE_DIR := src/${PACKAGE}
-SHELL := env PYTHON_VERSION=3.12 /bin/bash
-.SILENT: install devinstall tools test run lint format
-PYTHON_VERSION ?= 3.12
+PACKAGE := storygame
 
-setup:
-	curl -LsSf https://astral.sh/uv/install.sh | sh
+.PHONY: install test lint run package
 
 install:
-	uv python pin $(PYTHON_VERSION)
-	uv sync --frozen --no-dev
-
-devinstall:
-	uv python pin $(PYTHON_VERSION)
-	uv add pytest pytest-cov --dev
-	uv sync --all-extras --dev
-
-tools:
-	uv tool install ruff --force
-	uv tool install ipython --force
+	uv sync
 
 test:
-	uv run pytest
-
-run: 
-	uv run python main.py
+	uv run pytest -q
 
 lint:
-	uv tool run ruff check -q
+	uv run ruff check .
 
-format:
-	uv tool run ruff format
+run:
+	uv run python -m storygame
 
-all: devinstall tools lint format test
+package:
+	uv run python -m pip install --upgrade build
+	uv run python -m build
