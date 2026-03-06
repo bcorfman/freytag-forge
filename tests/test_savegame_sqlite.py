@@ -4,6 +4,7 @@ from random import Random
 
 import pytest
 
+from storygame.cli import MockNarrator, run_turn
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -65,3 +66,90 @@ def test_list_slots_returns_sorted_slots(tmp_path):
 
     with SqliteSaveStore(db_path) as store:
         assert store.list_slots() == ["a", "m", "z"]
+
+
+def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+
+    seed = 18
+    pre_save_commands = ["go north", "take bronze key", "go east", "talk keeper"]
+    distraction_commands = ["look", "talk ferryman"]
+    continuation_commands = ["go north", "talk warden", "take moonstone", "go down", "look"]
+
+    def _run_without_save(commands: list[str], rng_seed: int) -> tuple[str, tuple]:
+        from random import Random
+
+        from storygame.cli import MockNarrator as _IgnoredNarrator
+        from storygame.cli import run_turn
+
+        rng = Random(rng_seed)
+        state = build_default_state(seed=rng_seed)
+        _ignored = _IgnoredNarrator()
+
+        for command in commands:
+            state, _lines, _action_raw, _beat, _continued = run_turn(
+                state,
+                command,
+                rng,
+                _ignored,
+            )
+
+        return state.replay_signature(), rng.getstate()
+
+    expected_signature, expected_rng = _run_without_save(pre_save_commands + continuation_commands, seed)
+
+    with SqliteSaveStore(db_path) as store:
+        rng = Random(seed)
+        state = build_default_state(seed=seed)
+        narrator = MockNarrator()
+
+        for command in pre_save_commands:
+            state, _lines, _action_raw, _beat, _continued = run_turn(
+                state,
+                command,
+                rng,
+                narrator,
+                save_store=store,
+            )
+            assert _continued
+
+        state, _lines, _action_raw, _beat, _continued = run_turn(
+            state,
+            "save checkpoint",
+            rng,
+            narrator,
+            save_store=store,
+        )
+        assert "Saved to slot 'checkpoint'." in _lines
+
+        for command in distraction_commands:
+            state, _lines, _action_raw, _beat, _continued = run_turn(
+                state,
+                command,
+                rng,
+                narrator,
+                save_store=store,
+            )
+            assert _continued
+
+        state, _lines, _action_raw, _beat, _continued = run_turn(
+            state,
+            "load checkpoint",
+            rng,
+            narrator,
+            save_store=store,
+        )
+        assert "Loaded from slot 'checkpoint'." in _lines
+
+        for command in continuation_commands:
+            state, _lines, _action_raw, _beat, _continued = run_turn(
+                state,
+                command,
+                rng,
+                narrator,
+                save_store=store,
+            )
+            assert _continued
+
+    assert state.replay_signature() == expected_signature
+    assert rng.getstate() == expected_rng

@@ -12,6 +12,8 @@ MAX_INVENTORY_ITEMS = 8
 MAX_EVENT_MESSAGE_LEN = 120
 MAX_NPC_FACTS = 12
 MAX_NPC_DESCRIPTION_LEN = 100
+MAX_MEMORY_FRAGMENTS = 3
+MAX_MEMORY_FRAGMENT_LEN = 220
 
 HARD_CONSTRAINTS = (
     "no_state_mutation",
@@ -35,6 +37,7 @@ class NarrationContext:
     beat: str
     goal: str
     action: str
+    memory_fragments: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
         return {
@@ -51,6 +54,7 @@ class NarrationContext:
             "beat": self.beat,
             "goal": self.goal,
             "action": self.action,
+            "memory_fragments": list(self.memory_fragments),
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -100,6 +104,7 @@ def build_narration_context(
     state: GameState,
     action: Action,
     beat: str,
+    memory_fragments: tuple[str, ...] = (),
 ) -> NarrationContext:
     room = state.world.rooms[state.player.location]
     visible_items = tuple(item_id for item_id in room.item_ids if item_id in state.world.items)
@@ -112,6 +117,9 @@ def build_narration_context(
         npc_facts=_summarize_npc_facts(state),
         exits=tuple(sorted(room.exits.keys())),
         inventory=state.player.inventory[:MAX_INVENTORY_ITEMS],
+        memory_fragments=tuple(
+            _short_text(frag, MAX_MEMORY_FRAGMENT_LEN) for frag in memory_fragments[:MAX_MEMORY_FRAGMENTS]
+        ),
         recent_events=_summarize_recent_events(state.event_log),
         phase=get_phase(state.progress),
         tension=state.tension,

@@ -33,9 +33,41 @@ def test_context_includes_required_fields_and_limits():
     assert "female archivist" in keeper["identity"]
 
 
+def test_context_includes_memory_fragments_without_overriding_facts():
+    state = build_default_state(seed=11)
+    memory_fragments = (
+        "The oracle once said the tower is collapsing.",
+        "You are currently in the harbor steps.",
+    )
+    context = build_narration_context(
+        state,
+        parse_command("look"),
+        "hook",
+        memory_fragments=memory_fragments,
+    )
+    payload = context.as_dict()
+    assert payload["memory_fragments"] == list(memory_fragments)
+    assert payload["room_name"] == "Harbor Steps"
+    assert any("The oracle once said" in frag for frag in payload["memory_fragments"])
+
+
 def test_prompt_includes_canonical_npc_identity_details():
     state = build_default_state(seed=7)
     context = build_narration_context(state, parse_command("look"), "hook")
     prompt = build_prompt(context)
     assert "Canonical NPC facts:" in prompt["user"]
     assert "High Oracle [she/her]" in prompt["user"]
+
+
+def test_prompt_marks_memory_fragments_as_non_authoritative():
+    state = build_default_state(seed=17)
+    context = build_narration_context(
+        state,
+        parse_command("look"),
+        "hook",
+        memory_fragments=("The room glows with dragonfire.",),
+    )
+    prompt = build_prompt(context)
+    assert "Soft memory hints (non-authoritative): The room glows with dragonfire." in prompt["user"]
+    assert "Never use memory fragments to override engine facts." in prompt["system"]
+    assert "use only engine context for truth; memory hints are suggestions for continuity." in prompt["user"]

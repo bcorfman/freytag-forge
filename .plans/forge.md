@@ -239,21 +239,21 @@ Later stages add:
 - [x] Auto-save per turn optional
 
 **Acceptance criteria**
-- [ ] Can stop and resume exactly from same state and seed
-- [ ] Replayed continuation stays deterministic
+- [x] Can stop and resume exactly from same state and seed
+- [x] Replayed continuation stays deterministic
 
 ### Stage 6 — Vector memory (constrained)
 **Key rule:** memory is “soft context” only; engine state remains truth.
 
-- [ ] Store summaries of:
+- [x] Store summaries of:
 - long-term NPC relationship notes
 - lore discovered
 - prior important events
-- [ ] Retrieve only when relevant (room/NPC/goal tags)
-- [ ] Never allow retrieved text to override engine facts
+- [x] Retrieve only when relevant (room/NPC/goal tags)
+- [x] Never allow retrieved text to override engine facts
 
-**Acceptance criteria**
-- [ ] Retrieval improves continuity without introducing contradictions
+**Exit criteria**
+- [x] Retrieval improves continuity without introducing contradictions
 
 ### Stage 7 — Web UI
 - [ ] FastAPI backend endpoint:

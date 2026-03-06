@@ -17,3 +17,18 @@ def test_mock_narrator_snapshot_output():
     result = narrator.generate(context)
     assert result.startswith("DBG:")
     assert "beat at" in result
+
+
+def test_mock_narrator_supports_memory_fragments():
+    state = build_default_state(seed=1)
+    rng = Random(1)
+    state, _events, beat, _template = advance_turn(state, parse_command("talk keeper"), rng)
+    context = build_narration_context(
+        state,
+        parse_command("look"),
+        beat,
+        memory_fragments=("Prior note: keeper trusts your request.",),
+    )
+    result = MockNarrator().generate(context)
+    assert isinstance(result, str)
+    assert "beat at" in result
