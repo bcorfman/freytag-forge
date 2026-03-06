@@ -10,6 +10,7 @@ from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import MockNarrator, Narrator, OllamaAdapter, OpenAIAdapter, SilentNarrator
 from storygame.llm.context import build_narration_context
+from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
 
@@ -48,6 +49,19 @@ def _build_narrator(mode: str) -> Narrator:
     return SilentNarrator()
 
 
+def _build_memory_tag_set(state: GameState, action) -> tuple[str, ...]:
+    room = state.world.rooms[state.player.location]
+    action_target = normalize_tag(action.target) if action.target else ""
+    goal_words = tuple(normalize_tag(word) for word in state.active_goal.split() if word)[:2]
+    base_tags = (
+        f"room_{state.player.location}",
+        f"beat_{state.beat_history[-1]}" if state.beat_history else "beat_unknown",
+        f"goal_{goal_words[0]}" if goal_words else "goal",
+    )
+    npc_tags = tuple(f"npc_{npc}" for npc in room.npc_ids)
+    return tuple(sorted(set(base_tags + (action_target,) + npc_tags)))[:MAX_MEMORY_NOTES]
+
+
 def run_turn(
     state: GameState,
     raw: str,
@@ -55,6 +69,8 @@ def run_turn(
     narrator: Narrator,
     debug: bool = False,
     save_store: SqliteSaveStore | None = None,
+    memory_store: MemoryStore | None = None,
+    memory_slot: str = "default",
 ):
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
@@ -92,7 +108,11 @@ def run_turn(
             return state, [f"Failed to load: {exc}"], action.raw, "load", True
 
     next_state, events, beat_type, template_key = advance_turn(state, action, rng)
-    context = build_narration_context(next_state, action, beat_type)
+    memory_fragments: tuple[str, ...] = ()
+    if memory_store is not None:
+        memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
+
+    context = build_narration_context(next_state, action, beat_type, memory_fragments)
     try:
         narration = narrator.generate(context)
     except RuntimeError as exc:
@@ -114,6 +134,9 @@ def run_turn(
     if next_state.progress >= 0.95:
         lines.append("Objective complete.")
 
+    if memory_store is not None:
+        memory_store.ingest_events(memory_slot, next_state, events)
+
     return next_state, [line for line in lines if line], action.raw, beat_type, True
 
 
@@ -122,11 +145,14 @@ def run_replay(
     commands: list[str],
     debug: bool = False,
     save_db: Path | None = None,
+    memory_db: Path | None = None,
+    memory_slot: str = "default",
 ) -> GameState:
     rng = Random(seed)
     state = build_default_state(seed)
     narrator: Narrator = MockNarrator()
     save_store: SqliteSaveStore | None = SqliteSaveStore(save_db) if save_db is not None else None
+    memory_store: SqliteVectorMemory | None = SqliteVectorMemory(memory_db) if memory_db is not None else None
     try:
         for command in commands:
             state, _output, _action, _beat, _continued = run_turn(
@@ -136,12 +162,16 @@ def run_replay(
                 narrator,
                 debug=debug,
                 save_store=save_store,
+                memory_store=memory_store,
+                memory_slot=memory_slot,
             )
             if not _continued:
                 break
     finally:
         if save_store is not None:
             save_store.close()
+        if memory_store is not None:
+            memory_store.close()
     return state
 
 
@@ -152,6 +182,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=123, help="Random seed for deterministic play")
     parser.add_argument("--replay", type=Path, default=None, help="Replay commands from a file")
     parser.add_argument("--save-db", type=Path, default=None, help="SQLite save file path")
+    parser.add_argument("--memory-db", type=Path, default=None, help="SQLite vector memory file path")
+    parser.add_argument("--memory-slot", default="default", help="Memory slot key for retrieval and storage")
     parser.add_argument("--debug", action="store_true", help="Print phase and beat diagnostics")
     parser.add_argument(
         "--autosave-slot",
@@ -172,7 +204,9 @@ def main(argv: list[str] | None = None) -> None:
     rng = Random(args.seed)
     narrator: Narrator = _build_narrator(args.narrator)
     save_store: SqliteSaveStore | None = SqliteSaveStore(args.save_db) if args.save_db is not None else None
+    memory_store: SqliteVectorMemory | None = SqliteVectorMemory(args.memory_db) if args.memory_db is not None else None
     autosave_slot = args.autosave_slot
+    memory_slot = args.memory_slot
 
     transcript_path = args.transcript
     if transcript_path is None and args.replay is not None:
@@ -199,6 +233,8 @@ def main(argv: list[str] | None = None) -> None:
                     narrator,
                     debug=args.debug,
                     save_store=save_store,
+                    memory_store=memory_store,
+                    memory_slot=memory_slot,
                 )
                 if autosave_slot is not None and save_store is not None:
                     save_store.save_run(
@@ -223,6 +259,8 @@ def main(argv: list[str] | None = None) -> None:
                 narrator,
                 debug=args.debug,
                 save_store=save_store,
+                memory_store=memory_store,
+                memory_slot=memory_slot,
             )
             for line in lines:
                 print(line)
@@ -245,6 +283,8 @@ def main(argv: list[str] | None = None) -> None:
             transcript_handle.close()
         if save_store is not None:
             save_store.close()
+        if memory_store is not None:
+            memory_store.close()
 
 
 if __name__ == "__main__":
