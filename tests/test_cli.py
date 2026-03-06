@@ -4,13 +4,13 @@ import builtins
 from random import Random
 
 from storygame.cli import (
-    _build_narrator,
     _build_memory_tag_set,
+    _build_narrator,
     _event_lines,
-    _room_distance,
     _opening_briefing_lines,
-    _signal_hint,
+    _room_distance,
     _room_lines,
+    _signal_hint,
     _write_transcript_line,
     main,
     run_replay,

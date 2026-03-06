@@ -54,8 +54,7 @@ def npc_talk_message(state: GameState, npc: Npc, first_talk: bool) -> str:
     if npc.id == "ferryman":
         if has_map and has_lens:
             return (
-                "Rumor from dock crews: forged tones are loudest near the sanctuary stair. "
-                "Use your map marks there."
+                "Rumor from dock crews: forged tones are loudest near the sanctuary stair. " "Use your map marks there."
             )
         return (
             "Rumor from dock crews: the emergency pattern sounded wrong before dawn. "
@@ -91,9 +90,7 @@ def npc_talk_message(state: GameState, npc: Npc, first_talk: bool) -> str:
 
     if npc.id == "oracle":
         if not talked_keeper:
-            return (
-                "Witness account: names without records are only rumors. Verify the ledgers first in the archives."
-            )
+            return "Witness account: names without records are only rumors. Verify the ledgers first in the archives."
         if not has_moonstone:
             return (
                 "Witness account: the hidden relay answers only to moonstone resonance. "

@@ -7,12 +7,12 @@ from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.llm.context import NarrationContext
 from storygame.memory import (
+    SqliteVectorMemory,
     _cosine,
     _extract_event_notes,
     _short_text,
     _tokenize_text,
     _vector,
-    SqliteVectorMemory,
 )
 
 

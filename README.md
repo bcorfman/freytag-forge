@@ -110,6 +110,14 @@ uv run pytest -q
 uv run ruff check .
 ```
 
+To keep style checks automatic, install and run pre-commit:
+
+```bash
+uv sync --group dev
+uv run pre-commit install
+uv run pre-commit run --all-files
+```
+
 ## CLI Options
 
 - `--seed`: deterministic world, beat, and event selection.

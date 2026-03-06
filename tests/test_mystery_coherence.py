@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from random import Random
 
+import storygame.engine.mystery as mystery
 from storygame.cli import _room_lines, run_turn
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.world import build_default_state
-import storygame.engine.mystery as mystery
 from storygame.llm.adapters import SilentNarrator
 from storygame.llm.context import build_narration_context
 
@@ -103,9 +103,7 @@ def test_mystery_item_messages_reflect_item_role():
 def test_npc_talks_change_with_player_progress():
     state = build_default_state(seed=42)
     state.player.inventory = tuple(
-        item
-        for item in ("bronze_key", "sea_map", "glass_lens", "moonstone")
-        if item in state.world.items
+        item for item in ("bronze_key", "sea_map", "glass_lens", "moonstone") if item in state.world.items
     )
     state.player.flags["talked_keeper"] = True
 
@@ -115,9 +113,7 @@ def test_npc_talks_change_with_player_progress():
     assert "loudest near" in mystery.npc_talk_message(state, ferryman, True).lower()
     assert "names without records are only rumors" not in mystery.npc_talk_message(state, oracle, True).lower()
 
-    assert mystery.npc_talk_message(state, oracle, False).startswith(
-        "Witness account: once the relay is exposed"
-    )
+    assert mystery.npc_talk_message(state, oracle, False).startswith("Witness account: once the relay is exposed")
     state.player.flags["transmitter_exposed"] = True
     assert "publish the codebook" in mystery.npc_talk_message(state, oracle, False).lower()
 
