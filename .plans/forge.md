@@ -256,9 +256,9 @@ Later stages add:
 - [x] Retrieval improves continuity without introducing contradictions
 
 ### Stage 7 — Web UI
-- [ ] FastAPI backend endpoint:
+- [x] FastAPI backend endpoint:
 - POST `/turn` {command, run_id}
-- [ ] Minimal frontend:
+- [x] Minimal frontend:
 - transcript panel
 - input box
 - inventory/objective panel
@@ -266,8 +266,8 @@ Later stages add:
 - debug toggle
 
 **Acceptance criteria**
-- [ ] Same engine used by CLI and web
-- [ ] Save/load works through web UI
+- [x] Same engine used by CLI and web
+- [x] Save/load works through web UI
 
 ---
 

@@ -52,7 +52,7 @@ def _tokenize_text(value: str) -> tuple[str, ...]:
 
 def _vector(value: str) -> dict[str, float]:
     tokens = _tokenize_text(value)
-    return Counter(tokens)
+    return {word: float(count) for word, count in Counter(tokens).items()}
 
 
 def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
