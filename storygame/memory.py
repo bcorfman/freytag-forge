@@ -23,19 +23,16 @@ class MemoryStore(Protocol):
         summary: str,
         category: str,
         tags: Iterable[str],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def retrieve(
         self,
         slot: str,
         query_tags: Iterable[str],
         limit: int = MAX_MEMORY_NOTES,
-    ) -> tuple[str, ...]:
-        ...
+    ) -> tuple[str, ...]: ...
 
-    def ingest_events(self, slot: str, state: GameState, events: list[Event]) -> None:
-        ...
+    def ingest_events(self, slot: str, state: GameState, events: list[Event]) -> None: ...
 
 
 def normalize_tag(value: str) -> str:
@@ -63,10 +60,7 @@ def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
     denom_b = math.sqrt(sum(weight * weight for weight in b.values()))
     if denom_a == 0 or denom_b == 0:
         return 0.0
-    numerator = sum(
-        weight_a * b.get(token, 0.0)
-        for token, weight_a in a.items()
-    )
+    numerator = sum(weight_a * b.get(token, 0.0) for token, weight_a in a.items())
     return numerator / (denom_a * denom_b)
 
 
@@ -166,7 +160,7 @@ class SqliteVectorMemory:
     def close(self) -> None:
         self.conn.close()
 
-    def __enter__(self) -> "SqliteVectorMemory":
+    def __enter__(self) -> SqliteVectorMemory:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ARG001
@@ -196,9 +190,7 @@ class SqliteVectorMemory:
         category: str,
         tags: Iterable[str],
     ) -> None:
-        normalized_tags = tuple(
-            tag for tag in (normalize_tag(str(tag)) for tag in tags) if tag
-        ) or ("general",)
+        normalized_tags = tuple(tag for tag in (normalize_tag(str(tag)) for tag in tags) if tag) or ("general",)
         vector_payload = dict(_vector(f"{category} {' '.join(normalized_tags)} {summary}"))
         self.conn.execute(
             """

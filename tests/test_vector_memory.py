@@ -3,7 +3,6 @@ from __future__ import annotations
 from random import Random
 
 from storygame.cli import run_turn
-from storygame.engine.parser import parse_command
 from storygame.engine.world import build_default_state
 from storygame.llm.context import NarrationContext
 from storygame.memory import SqliteVectorMemory
@@ -86,9 +85,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
         )
 
     assert captured
-    assert any(
-        "keeper trusts your judgment" in "\n".join(context.memory_fragments) for context in captured
-    )
+    assert any("keeper trusts your judgment" in "\n".join(context.memory_fragments) for context in captured)
     with SqliteVectorMemory(db_path) as reopened_store:
         retrieved_notes = reopened_store.retrieve("run", ("npc_keeper", "relationship"))
         assert any("spoke with keeper" in note.lower() for note in retrieved_notes)
