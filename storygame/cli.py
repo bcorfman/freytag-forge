@@ -93,10 +93,23 @@ def _room_lines(state: GameState) -> str:
     return "\n".join(pieces)
 
 
-def _event_lines(events) -> str:
+def _public_event_message(message_key: str) -> str:
+    message = message_key.strip()
+    if not message:
+        return ""
+    # Hide engine-like keys in normal mode (for example: move_success, take_failed).
+    if "_" in message and " " not in message:
+        return ""
+    return message
+
+
+def _event_lines(events, debug: bool = False) -> str:
     if not events:
         return ""
-    return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
+    if debug:
+        return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
+    public_lines = [_public_event_message(event.message_key) for event in events]
+    return "\n".join(f"- {message}" for message in public_lines if message)
 
 
 def _write_transcript_line(handle: TextIO | None, line: str) -> None:
@@ -204,8 +217,9 @@ def run_turn(
     lines: list[str] = []
     if show_opening_briefing:
         lines.extend(_opening_briefing_lines(next_state))
-    lines.extend([_room_lines(next_state), _event_lines(events)])
-    lines.extend(caseboard_lines(next_state))
+    lines.extend([_room_lines(next_state), _event_lines(events, debug=debug)])
+    if debug:
+        lines.extend(caseboard_lines(next_state))
     if narration:
         lines.append(narration)
 

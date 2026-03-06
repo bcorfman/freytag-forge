@@ -33,6 +33,27 @@ def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     _write_transcript_line(None, "ignored")
 
 
+def test_event_lines_hide_engine_keys_unless_debug():
+    class _Event:
+        def __init__(self, event_type: str, message_key: str) -> None:
+            self.type = event_type
+            self.message_key = message_key
+
+    events = [
+        _Event("move", "move_success"),
+        _Event("talk", "Witness account: follow the ledger trail."),
+    ]
+
+    text = _event_lines(events)
+    assert "move_success" not in text
+    assert "Witness account:" in text
+    assert "talk:" not in text
+
+    debug_text = _event_lines(events, debug=True)
+    assert "move_success" in debug_text
+    assert "talk:" in debug_text
+
+
 def test_opening_briefing_explains_stakes_and_conspiracy():
     state = build_default_state(seed=1)
     lines = _opening_briefing_lines(state)
