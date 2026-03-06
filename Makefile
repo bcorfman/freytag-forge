@@ -1,6 +1,6 @@
 PACKAGE := storygame
 
-.PHONY: install test lint format run package
+.PHONY: install test lint format precommit run package
 
 install:
 	uv sync
@@ -13,6 +13,10 @@ lint:
 
 format:
 	uv run ruff format
+
+precommit:
+	uv sync --group dev
+	uv run pre-commit install
 
 run:
 	uv run uvicorn storygame.web:app --reload

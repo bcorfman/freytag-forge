@@ -110,6 +110,14 @@ uv run pytest -q
 uv run ruff check .
 ```
 
+To keep style checks automatic, install and run pre-commit:
+
+```bash
+uv sync --group dev
+uv run pre-commit install
+uv run pre-commit run --all-files
+```
+
 ## CLI Options
 
 - `--seed`: deterministic world, beat, and event selection.
@@ -175,6 +183,15 @@ If Ollama is not available, gameplay continues with a fallback narrator error li
 
 ## Recent Changes
 
+- Story coherence overhaul for the forge scenario:
+  - The first playable turn now includes an explicit briefing with backstory and stakes (who framed your mentor, what was stolen, and why exposing the conspiracy matters).
+  - Plot events now describe a forged resonance transmitter, not a magically ringing broken bell.
+  - Removed nonsensical "memory trap" language in favor of concrete physical complications.
+  - Room output now includes a directional `Signal:` hint so navigation follows audible logic.
+  - NPC `talk` output is now knowledge-bounded by role/source (`rumor`, `archive record`, `maintenance record`, `witness account`) and gives actionable next leads.
+  - Added meaningful item interactions (for example: `use glass lens on sea map`) that set flags and advance progress.
+  - Added item role typing (`junk`, `tool`, `clue`, `evidence`) to reduce inventory/room clutter and keep prompts focused on actionable objects.
+  - Added a turn-level `Caseboard` with known facts, open questions, and active leads to keep the mystery legible.
 - Added canonical NPC continuity facts in narrator context and prompts:
   - NPC identity and pronouns are now always present in the LLM context slice.
   - This reduces drift like "oracle changed gender between turns."

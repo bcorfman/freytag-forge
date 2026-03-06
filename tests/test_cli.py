@@ -3,7 +3,19 @@ from __future__ import annotations
 import builtins
 from random import Random
 
-from storygame.cli import _build_narrator, _event_lines, _room_lines, _write_transcript_line, main, run_replay, run_turn
+from storygame.cli import (
+    _build_memory_tag_set,
+    _build_narrator,
+    _event_lines,
+    _opening_briefing_lines,
+    _room_distance,
+    _room_lines,
+    _signal_hint,
+    _write_transcript_line,
+    main,
+    run_replay,
+    run_turn,
+)
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
 from storygame.engine.world import build_default_state
@@ -19,6 +31,15 @@ def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     assert line.startswith("[Harbor Steps]")
 
     _write_transcript_line(None, "ignored")
+
+
+def test_opening_briefing_explains_stakes_and_conspiracy():
+    state = build_default_state(seed=1)
+    lines = _opening_briefing_lines(state)
+
+    assert any("conspiracy" in line.lower() for line in lines)
+    assert any("forged" in line.lower() for line in lines)
+    assert any("mentor" in line.lower() for line in lines)
 
 
 def test_room_lines_when_empty_room_has_no_optional_sections():
@@ -73,6 +94,99 @@ def test_run_turn_handles_quit_and_narration_failures():
     assert lines == ["Goodbye."]
 
 
+def test_signal_hint_and_room_distance_cover_missing_graph_cases():
+    state = build_default_state(seed=16)
+    assert _room_distance(state, "harbor", "harbor") == 0
+    assert _room_distance(state, "harbor", "nonexistent") is None
+
+    harbor_state = build_default_state(seed=16)
+    harbor = harbor_state.world.rooms["harbor"]
+    original_exits = harbor.exits
+    try:
+        harbor.exits = {}
+        assert _signal_hint(harbor_state) == ""
+    finally:
+        harbor.exits = original_exits
+
+    missing_source = build_default_state(seed=16)
+    del missing_source.world.rooms["sanctuary"]
+    assert _signal_hint(missing_source) == ""
+
+    missing_source.player.location = "harbor"
+    assert _signal_hint(missing_source) == ""
+
+    near_sanctuary = build_default_state(seed=16)
+    near_sanctuary.player.location = "harbor"
+    assert "stronger toward" in _signal_hint(near_sanctuary)
+
+
+def test_run_turn_save_load_error_paths():
+    state = build_default_state(seed=17)
+    _, no_store_save_lines, *_ = run_turn(
+        state,
+        "save quicksave",
+        Random(17),
+        SilentNarrator(),
+        save_store=None,
+    )
+    assert any("Save requires --save-db" in line for line in no_store_save_lines)
+
+    _, no_store_load_lines, *_ = run_turn(
+        state,
+        "load missing",
+        Random(17),
+        SilentNarrator(),
+        save_store=None,
+    )
+    assert any("Load requires --save-db" in line for line in no_store_load_lines)
+
+
+def test_run_turn_load_missing_slot_with_store_is_handled(tmp_path):
+    with SqliteSaveStore(tmp_path / "game.sqlite") as store:
+        _, load_lines, *_ = run_turn(
+            build_default_state(seed=18),
+            "load missing",
+            Random(18),
+            SilentNarrator(),
+            save_store=store,
+        )
+        assert any("Could not load slot 'missing'" in line for line in load_lines)
+
+
+def test_build_memory_tag_set_includes_expected_fields():
+    state = build_default_state(seed=20)
+    tags = _build_memory_tag_set(state, parse_command("talk ferryman"))
+    assert "beat_unknown" in tags
+    assert "goal_map" in tags
+    assert "ferryman" in tags
+    assert "npc_ferryman" in tags
+
+
+def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
+    final_state = run_replay(
+        seed=21,
+        commands=["look", "save quicksave", "north", "load quicksave"],
+        save_db=tmp_path / "saves.sqlite",
+        memory_db=tmp_path / "memory.sqlite",
+    )
+    assert final_state.player.location == "harbor"
+
+
+def test_first_turn_includes_opening_briefing_lines():
+    state = build_default_state(seed=15)
+    next_state, lines, _action_raw, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(15),
+        SilentNarrator(),
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    assert any("Before dawn" in line for line in lines)
+    assert any("mentor" in line.lower() for line in lines)
+
+
 def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     replay = ["look", "quit"]
     inputs = iter(replay)
@@ -83,6 +197,7 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     main(["--seed", "1", "--transcript", str(transcript)])
 
     text = transcript.read_text()
+    assert "Before dawn" in text
     assert "CMD look" in text
     assert "CMD quit" in text
     assert "Goodbye." in text

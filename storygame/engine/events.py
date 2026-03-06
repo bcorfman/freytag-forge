@@ -33,7 +33,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="objective_call",
-            message_key="The old bell call can be traced to the tower.",
+            message_key="A forged resonance tone threads through the district toward the tower.",
             tags=("goal_reveal",),
             delta_progress=0.05,
             delta_tension=0.02,
@@ -41,10 +41,10 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="blocked_memories",
-            message_key="A memory trap causes a pause in your resolve.",
+            message_key="A saboteur jams the stair gears, forcing a slower climb.",
             tags=("complication",),
-            delta_tension=-0.02,
-            set_flags=("memories_shaken",),
+            delta_tension=0.03,
+            set_flags=("stair_jammed",),
         ),
         EventTemplate(
             key="cryptic_revelation",
@@ -68,7 +68,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="storm_warning",
-            message_key="A warning bell clangs from somewhere in the sanctuary.",
+            message_key="The broken frame howls as the hidden resonator spikes toward overload.",
             tags=("climax", "confrontation"),
             delta_progress=0.04,
             delta_tension=0.15,
@@ -76,7 +76,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="irreversible_choice",
-            message_key="A choice appears: advance the bell or retreat from the tower.",
+            message_key="You must expose the transmitter now or lose the conspiracy trail for good.",
             tags=("climax", "irreversible_choice"),
             delta_progress=0.04,
             delta_tension=0.12,
@@ -99,7 +99,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="final_coda",
-            message_key="The bell speaks softly, and the story reaches still water.",
+            message_key="The forged tone collapses, and the harbor settles into clear silence.",
             tags=("epilogue",),
             delta_progress=0.08,
             delta_tension=-0.06,

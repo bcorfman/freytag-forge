@@ -5,13 +5,23 @@ from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, Worl
 
 def _expanded_items() -> dict[str, Item]:
     return {
-        "sea_map": Item(id="sea_map", name="Sea Map", description="A worn map of old roads.", tags=("map",)),
+        "sea_map": Item(
+            id="sea_map",
+            name="Sea Map",
+            description="A worn map of old roads.",
+            tags=("map",),
+            kind="clue",
+            clue_text="Shipping lanes and watch routes intersect near the sanctuary stair.",
+            points_to=("sanctuary", "archives"),
+        ),
         "bronze_key": Item(
             id="bronze_key",
             name="Bronze Gate Key",
             description="A cold bronze key for the archive gate.",
             tags=("key", "quest"),
             delta_progress=0.12,
+            kind="tool",
+            points_to=("inner_archive",),
         ),
         "moonstone": Item(
             id="moonstone",
@@ -19,21 +29,52 @@ def _expanded_items() -> dict[str, Item]:
             description="A pale stone etched with faint runes.",
             tags=("artifact", "quest"),
             delta_progress=0.16,
+            kind="evidence",
+            clue_text="Resonance from this shard matches residue at the sanctuary relay.",
+            proves="the alarm signal came from a hidden relay, not the bell",
+            points_to=("sanctuary",),
         ),
-        "torch": Item(id="torch", name="Torch", description="Burns with steady fire."),
-        "iron_ring": Item(id="iron_ring", name="Iron Ring", description="A small ring with two hooks."),
+        "torch": Item(id="torch", name="Torch", description="Burns with steady fire.", kind="tool"),
+        "iron_ring": Item(id="iron_ring", name="Iron Ring", description="A small ring with two hooks.", kind="junk"),
         "old_coin": Item(id="old_coin", name="Old Coin", description="A rusted copper coin."),
-        "chalk": Item(id="chalk", name="Chalk", description="Used for route markings."),
-        "ropes": Item(id="ropes", name="Ropes", description="A coil of thick rope."),
-        "altar_thread": Item(id="altar_thread", name="Altar Thread", description="A red thread used for seals."),
+        "chalk": Item(id="chalk", name="Chalk", description="Used for route markings.", kind="tool"),
+        "ropes": Item(id="ropes", name="Ropes", description="A coil of thick rope.", kind="tool"),
+        "altar_thread": Item(
+            id="altar_thread",
+            name="Altar Thread",
+            description="A red thread used for seals.",
+            kind="junk",
+        ),
         "herb_bundle": Item(id="herb_bundle", name="Herb Bundle", description="A scent of earth and lemon."),
-        "glass_lens": Item(id="glass_lens", name="Glass Lens", description="A lens from a survey scope."),
-        "salt_badge": Item(id="salt_badge", name="Salt Guild Badge", description="A weathered brass token."),
+        "glass_lens": Item(
+            id="glass_lens",
+            name="Glass Lens",
+            description="A lens from a survey scope.",
+            kind="tool",
+            points_to=("sanctuary", "tower_top"),
+        ),
+        "salt_badge": Item(
+            id="salt_badge",
+            name="Salt Guild Badge",
+            description="A weathered brass token.",
+            kind="evidence",
+            clue_text="This badge was logged at the archive during the false alarm hour.",
+            proves="salt guild staff had access during the false alarm window",
+            points_to=("archives",),
+        ),
         "ink_vial": Item(id="ink_vial", name="Ink Vial", description="Half full of black ink."),
-        "wax_stamp": Item(id="wax_stamp", name="Wax Stamp", description="A crest used by archivists."),
+        "wax_stamp": Item(
+            id="wax_stamp",
+            name="Wax Stamp",
+            description="A crest used by archivists.",
+            kind="evidence",
+            clue_text="Residue pattern matches edits in harbor levy and conviction ledgers.",
+            proves="the same office sealed both altered records",
+            points_to=("archives", "sanctuary"),
+        ),
         "harbor_pass": Item(id="harbor_pass", name="Harbor Pass", description="Stamped with yesterday's date."),
         "river_reed": Item(id="river_reed", name="River Reed", description="A hollow reed cut for whistles."),
-        "bell_pin": Item(id="bell_pin", name="Bell Pin", description="A steel pin from the bell rigging."),
+        "bell_pin": Item(id="bell_pin", name="Bell Pin", description="A steel pin from the bell rigging.", kind="tool"),
         "charcoal": Item(id="charcoal", name="Charcoal", description="Smudges hands and maps alike."),
         "linen_wrap": Item(id="linen_wrap", name="Linen Wrap", description="Bandage cloth from the sanctuary."),
         "amber_shard": Item(
@@ -50,39 +91,45 @@ def _expanded_npcs() -> dict[str, Npc]:
             id="ferryman",
             name="Harbor Ferryman",
             description="An old ferryman that knows the tide.",
-            dialogue="The city breathes at dawn and midnight.",
+            dialogue="The forged resonance drifts in from the tower quarter. Follow where it grows stronger.",
             identity="male dockworker and river guide",
             pronouns="he/him",
+            knowledge_source="rumor",
         ),
         "keeper": Npc(
             id="keeper",
             name="Archive Keeper",
             description="An archivist with ink-blackened fingers.",
-            dialogue="The signal is stronger when the moonstone is found.",
+            dialogue="Take the bronze key from the market and unlock the north gate. The tower records are inside.",
             identity="female archivist and keeper of sealed records",
             pronouns="she/her",
             tags=("quest",),
             delta_progress=0.12,
+            knowledge_source="archive record",
         ),
         "warden": Npc(
             id="warden",
             name="Tower Warden",
             description="A hard-eyed guardian in a soot-lined coat.",
-            dialogue="No key can open that gate while the bell remains silent.",
+            dialogue=(
+                "The bell is shattered; the signal comes from a hidden resonator. " "Brace the frame with rope and pin."
+            ),
             identity="male tower guardian of the inner vault",
             pronouns="he/him",
             tags=("quest",),
             delta_progress=0.12,
+            knowledge_source="maintenance record",
         ),
         "oracle": Npc(
             id="oracle",
             name="High Oracle",
             description="A robed figure with a quiet, distant gaze.",
-            dialogue="At the hour the city sleeps, the answer arrives.",
+            dialogue="Carry the moonstone into the sanctuary and match its glow to the resonator tone.",
             identity="female mystic and bell interpreter",
             pronouns="she/her",
             tags=("quest",),
             delta_progress=0.14,
+            knowledge_source="witness account",
         ),
     }
 
@@ -163,7 +210,12 @@ def _expanded_rooms() -> dict[str, Room]:
 def build_default_state(seed: int) -> GameState:
     world = WorldState(rooms=_expanded_rooms(), items=_expanded_items(), npcs=_expanded_npcs())
     player = PlayerState(location="harbor", inventory=("torch",), flags={"started": True})
-    return GameState(seed=seed, player=player, world=world)
+    return GameState(
+        seed=seed,
+        player=player,
+        world=world,
+        active_goal="Map the relay route and expose the harbor conspiracy.",
+    )
 
 
 def build_tiny_state(seed: int) -> GameState:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from storygame.engine.mystery import npc_talk_message, take_item_message
 from storygame.engine.parser import Action, ActionKind
 from storygame.engine.state import Event, GameState, Room
 
@@ -11,6 +12,113 @@ def _find_exit(room: Room, target: str) -> str | None:
         if destination == target:
             return destination
     return None
+
+
+def _use_event(turn_index: int, entities: tuple[str, ...], message: str, delta_progress: float = 0.0) -> Event:
+    return Event(
+        type="use",
+        message_key=message,
+        entities=entities,
+        delta_progress=delta_progress,
+        delta_tension=0.01,
+        tags=("world",),
+        turn_index=turn_index,
+    )
+
+
+def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
+    turn_index = state.turn_index
+    inventory = state.player.inventory
+    location = state.player.location
+    target_label = (item_id, target) if target else (item_id,)
+
+    map_and_lens = {item_id, target} == {"sea_map", "glass_lens"}
+    if map_and_lens:
+        if "sea_map" not in inventory:
+            return Event(
+                type="use_failed",
+                message_key="use_failed_missing_item",
+                entities=("sea_map",),
+                tags=("validation",),
+                turn_index=turn_index,
+            )
+        if "glass_lens" not in inventory:
+            return Event(
+                type="use_failed",
+                message_key="use_failed_missing_item",
+                entities=("glass_lens",),
+                tags=("validation",),
+                turn_index=turn_index,
+            )
+        if state.player.flags.get("relay_route_confirmed", False):
+            return _use_event(
+                turn_index,
+                target_label,
+                "The lens confirms your marked routes still converge on the sanctuary.",
+            )
+        state.player.flags["relay_route_confirmed"] = True
+        return _use_event(
+            turn_index,
+            target_label,
+            "You map the relay route: archive vault, tower stair, then sanctuary.",
+            delta_progress=0.08,
+        )
+
+    if item_id == "ropes" and target in {"bell", "bell_frame", "frame"}:
+        if location != "tower_top":
+            return Event(
+                type="use_failed",
+                message_key="You need to brace the frame from the tower top.",
+                entities=target_label,
+                tags=("validation",),
+                turn_index=turn_index,
+            )
+        if "bell_pin" not in inventory:
+            return Event(
+                type="use_failed",
+                message_key="The rope slips free without the bell pin.",
+                entities=("bell_pin",),
+                tags=("validation",),
+                turn_index=turn_index,
+            )
+        if state.player.flags.get("frame_braced", False):
+            return _use_event(
+                turn_index,
+                target_label,
+                "The frame is already braced and steady in the wind.",
+            )
+        state.player.flags["frame_braced"] = True
+        return _use_event(
+            turn_index,
+            target_label,
+            "You brace the shattered bell frame. The resonance stabilizes toward the sanctuary.",
+            delta_progress=0.1,
+        )
+
+    if item_id == "moonstone" and location == "sanctuary":
+        if not state.player.flags.get("frame_braced", False):
+            return Event(
+                type="use_failed",
+                message_key="The tone scatters until the tower frame is braced.",
+                entities=target_label,
+                tags=("validation",),
+                turn_index=turn_index,
+            )
+        if state.player.flags.get("transmitter_exposed", False):
+            return _use_event(
+                turn_index,
+                target_label,
+                "The moonstone keeps the hidden resonator exposed.",
+            )
+        state.player.flags["transmitter_exposed"] = True
+        return _use_event(
+            turn_index,
+            target_label,
+            "The moonstone reveals a hidden resonator beneath the altar.",
+            delta_progress=0.16,
+        )
+
+    return _use_event(turn_index, target_label, "use_success")
 
 
 def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list[Event]]:
@@ -129,12 +237,13 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
         events.append(
             Event(
                 type="take",
-                message_key="take_success",
+                message_key=take_item_message(item),
                 entities=(action.target,),
                 delta_progress=item.delta_progress,
                 delta_tension=0.02,
                 tags=("world", "quest_item" if "quest" in item.tags else "world_item"),
                 turn_index=next_state.turn_index,
+                metadata={"item_kind": item.kind, "item_name": item.name},
             )
         )
         return next_state, events
@@ -159,16 +268,22 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
         if not previous_talk:
             next_state.player.flags[flag_key] = True
 
+        talk_line = npc_talk_message(next_state, npc, not previous_talk)
         events.append(
             Event(
                 type="talk",
-                message_key="talk_success",
+                message_key=talk_line,
                 entities=(npc_id,),
                 delta_progress=0.0 if previous_talk else npc.delta_progress,
                 delta_tension=0.03,
                 tags=("world", "dialog"),
                 turn_index=next_state.turn_index,
-                metadata={"dialog": npc.dialogue},
+                metadata={
+                    "dialogue": talk_line,
+                    "npc_id": npc_id,
+                    "first_talk": not previous_talk,
+                    "knowledge_source": npc.knowledge_source,
+                },
             )
         )
         return next_state, events
@@ -192,16 +307,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
             )
             return next_state, events
 
-        events.append(
-            Event(
-                type="use",
-                message_key="use_success",
-                entities=(item_id, target) if target else (item_id,),
-                delta_tension=0.01,
-                tags=("world",),
-                turn_index=next_state.turn_index,
-            )
-        )
+        events.append(_resolve_use(next_state, item_id, target))
         return next_state, events
 
     events.append(
