@@ -54,13 +54,32 @@ def test_npc_knowledge_is_bounded_by_role_and_sources():
     assert "harbor levy ledgers" in keeper_text
 
 
-def test_first_turn_shows_caseboard_with_facts_questions_and_leads():
+def test_first_turn_hides_caseboard_outside_debug_mode():
     state = build_default_state(seed=34)
     next_state, lines, _action, _beat, continued = run_turn(
         state,
         "look",
         Random(34),
         SilentNarrator(),
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    text = "\n".join(lines)
+    assert "Caseboard:" not in text
+    assert "Known facts:" not in text
+    assert "Open questions:" not in text
+    assert "Active leads:" not in text
+
+
+def test_first_turn_shows_caseboard_in_debug_mode():
+    state = build_default_state(seed=35)
+    next_state, lines, _action, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(35),
+        SilentNarrator(),
+        debug=True,
     )
 
     assert continued is True
