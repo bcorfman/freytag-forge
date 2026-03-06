@@ -105,11 +105,14 @@ def _extract_event_notes(state: GameState, events: list[Event]) -> list[tuple[st
 
         if event.type == "take":
             item_id = event.entities[0] if event.entities else "an item"
+            item_kind = normalize_tag(str(event.metadata.get("item_kind", "junk")))
+            if item_kind == "junk":
+                continue
             notes.append(
                 (
                     f"Collected {item_id} and added it to inventory.",
                     "lore",
-                    base_tags + (f"item_{normalize_tag(item_id)}", "item", "inventory"),
+                    base_tags + (f"item_{normalize_tag(item_id)}", f"item_kind_{item_kind}", "item", "inventory"),
                 )
             )
             continue
@@ -135,6 +138,9 @@ def _extract_event_notes(state: GameState, events: list[Event]) -> list[tuple[st
                     base_tags + tuple(f"tag_{normalize_tag(tag)}" for tag in event.tags),
                 )
             )
+            continue
+
+        if event.type == "use" and event.message_key == "use_success":
             continue
 
         if event.message_key:

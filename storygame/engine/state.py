@@ -74,6 +74,10 @@ class Item:
     tags: tuple[str, ...] = ()
     delta_progress: float = 0.0
     delta_tension: float = 0.0
+    kind: str = "junk"
+    clue_text: str = ""
+    proves: str = ""
+    points_to: tuple[str, ...] = ()
 
 
 @dataclass
@@ -87,6 +91,7 @@ class Npc:
     tags: tuple[str, ...] = ()
     delta_progress: float = 0.0
     delta_tension: float = 0.0
+    knowledge_source: str = "rumor"
 
 
 @dataclass

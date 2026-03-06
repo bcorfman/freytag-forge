@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections import deque
 from pathlib import Path
 from random import Random
 from typing import Protocol, TextIO
 
+from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import GameState
@@ -15,11 +17,78 @@ from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
 
 
+def _room_distance(state: GameState, start_room_id: str, target_room_id: str) -> int | None:
+    if start_room_id == target_room_id:
+        return 0
+    visited = {start_room_id}
+    frontier = deque([(start_room_id, 0)])
+    while frontier:
+        room_id, distance = frontier.popleft()
+        room = state.world.rooms[room_id]
+        for _direction, next_room_id in room.exits.items():
+            if next_room_id in visited:
+                continue
+            if next_room_id == target_room_id:
+                return distance + 1
+            visited.add(next_room_id)
+            frontier.append((next_room_id, distance + 1))
+    return None
+
+
+def _signal_hint(state: GameState) -> str:
+    source_room = "sanctuary"
+    if source_room not in state.world.rooms:
+        return ""
+
+    room = state.world.rooms[state.player.location]
+    if not room.exits:
+        return ""
+    if room.id == source_room:
+        return "Signal: The resonance source is directly beneath this sanctuary floor."
+
+    best_distance: int | None = None
+    best_directions: list[str] = []
+    for direction, destination in room.exits.items():
+        distance = _room_distance(state, destination, source_room)
+        if distance is None:
+            continue
+        if best_distance is None or distance < best_distance:
+            best_distance = distance
+            best_directions = [direction]
+            continue
+        if distance == best_distance:
+            best_directions.append(direction)
+
+    if not best_directions:
+        return "Signal: The tone is muffled here; no clear path stands out."
+
+    direction_text = "/".join(sorted(best_directions))
+    return (
+        "Signal: Echoes refract through stone, but the resonance is stronger toward "
+        f"{direction_text}."
+    )
+
+
+def _opening_briefing_lines(state: GameState) -> tuple[str, ...]:
+    return (
+        "Before dawn, forged emergency tones emptied the harbor while conspirators raided sealed archive ledgers.",
+        "Your mentor was framed for those false alarms; proving the conspiracy is the only way to clear their name.",
+        f"Objective: {state.active_goal}",
+    )
+
+
 def _room_lines(state: GameState) -> str:
     room = state.world.rooms[state.player.location]
     pieces = [f"[{room.name}]", room.description]
-    if room.item_ids:
-        pieces.append("Items: " + ", ".join(room.item_ids))
+    signal_hint = _signal_hint(state)
+    if signal_hint:
+        pieces.append(signal_hint)
+    actionable_items, junk_count = room_item_groups(state, room)
+    if actionable_items:
+        pieces.append("Items: " + ", ".join(actionable_items))
+    if junk_count > 0:
+        suffix = "item" if junk_count == 1 else "items"
+        pieces.append(f"Junk nearby: {junk_count} {suffix}.")
     if room.npc_ids:
         pieces.append("NPCs: " + ", ".join(room.npc_ids))
     if room.exits:
@@ -88,6 +157,7 @@ def run_turn(
     memory_store: MemoryStore | None = None,
     memory_slot: str = "default",
 ):
+    show_opening_briefing = state.turn_index == 0
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
@@ -134,7 +204,11 @@ def run_turn(
     except RuntimeError as exc:
         narration = f"[Narrator failed: {exc}]"
 
-    lines = [_room_lines(next_state), _event_lines(events)]
+    lines: list[str] = []
+    if show_opening_briefing:
+        lines.extend(_opening_briefing_lines(next_state))
+    lines.extend([_room_lines(next_state), _event_lines(events)])
+    lines.extend(caseboard_lines(next_state))
     if narration:
         lines.append(narration)
 

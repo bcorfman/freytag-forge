@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
 from storygame.engine.state import EventLog, GameState, Npc
 from storygame.plot.freytag import get_phase
@@ -107,7 +108,7 @@ def build_narration_context(
     memory_fragments: tuple[str, ...] = (),
 ) -> NarrationContext:
     room = state.world.rooms[state.player.location]
-    visible_items = tuple(item_id for item_id in room.item_ids if item_id in state.world.items)
+    visible_items, _junk_count = room_item_groups(state, room)
 
     return NarrationContext(
         room_name=room.name,
@@ -116,7 +117,7 @@ def build_narration_context(
         visible_npcs=room.npc_ids,
         npc_facts=_summarize_npc_facts(state),
         exits=tuple(sorted(room.exits.keys())),
-        inventory=state.player.inventory[:MAX_INVENTORY_ITEMS],
+        inventory=filtered_inventory(state)[:MAX_INVENTORY_ITEMS],
         memory_fragments=tuple(
             _short_text(frag, MAX_MEMORY_FRAGMENT_LEN) for frag in memory_fragments[:MAX_MEMORY_FRAGMENTS]
         ),
