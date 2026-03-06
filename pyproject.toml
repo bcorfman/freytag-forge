@@ -8,6 +8,8 @@ authors = [{ name = "Brandon Corfman", email = "h9tbgnbbk@privaterelay.appleid.c
 license = { file = "LICENSE" }
 
 dependencies = [
+    "fastapi>=0.116.1",
+    "uvicorn>=0.35.0",
 ]
 
 [project.scripts]
@@ -15,6 +17,7 @@ storygame = "storygame.cli:main"
 
 [tool.uv]
 dev-dependencies = [
+    "httpx>=0.28.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.8.4",

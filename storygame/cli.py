@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from random import Random
-from typing import TextIO
+from typing import Protocol, TextIO
 
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
@@ -62,13 +62,29 @@ def _build_memory_tag_set(state: GameState, action) -> tuple[str, ...]:
     return tuple(sorted(set(base_tags + (action_target,) + npc_tags)))[:MAX_MEMORY_NOTES]
 
 
+class SaveStore(Protocol):
+    def save_run(
+        self,
+        slot: str,
+        state: GameState,
+        rng: Random,
+        raw_command: str = "save",
+        action_kind: str = "save",
+        beat_type: str | None = None,
+        template_key: str | None = None,
+        transcript: list[str] | None = None,
+    ) -> None: ...
+
+    def load_run(self, slot: str) -> tuple[GameState, Random]: ...
+
+
 def run_turn(
     state: GameState,
     raw: str,
     rng: Random,
     narrator: Narrator,
     debug: bool = False,
-    save_store: SqliteSaveStore | None = None,
+    save_store: SaveStore | None = None,
     memory_store: MemoryStore | None = None,
     memory_slot: str = "default",
 ):

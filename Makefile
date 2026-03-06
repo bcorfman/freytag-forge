@@ -15,6 +15,12 @@ format:
 	uv run ruff format
 
 run:
+	uv run uvicorn storygame.web:app --reload
+
+run-web:
+	uv run uvicorn storygame.web:app --reload
+
+run-cli:
 	uv run python -m storygame
 
 package:

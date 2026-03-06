@@ -36,6 +36,39 @@ Write replay transcript:
 python -m storygame --seed 123 --replay runs/demo_commands.txt --transcript runs/demo_transcript.txt
 ```
 
+## Web UI
+
+Serve the FastAPI app:
+
+```bash
+uv run uvicorn storygame.web:app --reload
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) and interact with the same engine used by the CLI.
+
+The web client uses:
+- `POST /turn` with `{ "command": "...", "run_id": "...", "seed": 123, "debug": false }`.
+- `run_id` can be omitted to create a fresh run.
+- `save <slot>` and `load <slot>` are handled by the same backend and persist through a shared SQLite save store.
+
+### Web narrator selection
+
+Web narrator is selected automatically:
+
+- `FREYTAG_NARRATOR=openai` explicitly enables OpenAI.
+- `FREYTAG_NARRATOR=ollama` explicitly enables Ollama.
+- `FREYTAG_NARRATOR=mock` / `FREYTAG_NARRATOR=none` for deterministic/non-LM mode.
+- Otherwise, the presence of `OPENAI_API_KEY` enables OpenAI.
+- Otherwise, `OLLAMA_BASE_URL` or `OLLAMA_MODEL` enables Ollama.
+- Otherwise it falls back to `mock`.
+
+To force a mode, set `FREYTAG_NARRATOR` before starting:
+
+```bash
+FREYTAG_NARRATOR=openai uv run uvicorn storygame.web:app --reload
+```
+
+
 ## Save and Resume
 
 Save and resume are now available with a local SQLite save file.

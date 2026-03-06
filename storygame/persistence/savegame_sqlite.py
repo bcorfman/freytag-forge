@@ -94,10 +94,14 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
 
 
 class SqliteSaveStore:
-    def __init__(self, path: str | Path = "runs/storygame_saves.sqlite") -> None:
+    def __init__(
+        self,
+        path: str | Path = "runs/storygame_saves.sqlite",
+        check_same_thread: bool = True,
+    ) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(self.path)
+        self.conn = sqlite3.connect(self.path, check_same_thread=check_same_thread)
         self.conn.row_factory = sqlite3.Row
         self._create_schema()
 
