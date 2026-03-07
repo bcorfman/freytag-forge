@@ -12,6 +12,12 @@ DEFAULT_WEIGHTS = {"continuity": 0.4, "causality": 0.4, "dialogue_fit": 0.2}
 DEFAULT_CRITICAL_FLOORS = {"continuity": 70, "causality": 70}
 DEFAULT_THRESHOLD = 80
 DEFAULT_MAX_ROUNDS = 10
+DEFAULT_MAX_VALIDATION_REVISIONS = 10
+
+MOTION_MARKER_PATTERN = re.compile(r"\b(go|head|move|walk|run|sprint|toward|towards|through)\b", re.IGNORECASE)
+ROOM_LOCATION_PATTERN = re.compile(r"\bin ([a-z][a-z0-9_ ]+)\b", re.IGNORECASE)
+WITH_ITEM_PATTERN = re.compile(r"\bwith the ([a-z][a-z0-9_ -]+)\b", re.IGNORECASE)
+CARDINAL_PATTERN = re.compile(r"\b(north|south|east|west|up|down)\b", re.IGNORECASE)
 
 
 class CritiqueReport(TypedDict):
@@ -36,12 +42,31 @@ class CoherenceResult(TypedDict):
     narration: str
     judge_decision: JudgeDecision
     critique_reports: tuple[CritiqueReport, ...]
+    validator_reports: tuple[ValidationReport, ...]
+    validation_revisions: int
+
+
+class ValidationReport(TypedDict):
+    validator_id: str
+    passed: bool
+    reason_codes: tuple[str, ...]
+    details: str
 
 
 class CritiqueAgent(Protocol):
     critic_id: str
 
     def critique(self, context: NarrationContext, narration: str) -> CritiqueReport: ...
+
+
+class CandidateValidator(Protocol):
+    validator_id: str
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport: ...
+
+
+def _normalize(value: str) -> str:
+    return "_".join(re.findall(r"[a-z0-9]+", value.lower()))
 
 
 def _token_set(text: str) -> set[str]:
@@ -114,6 +139,121 @@ class _DefaultCritic:
             "critic_id": self.critic_id,
             "scores": scores,
             "feedback": feedback,
+        }
+
+
+class _EntityReachabilityValidator:
+    validator_id = "entity_reachability"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        exits = {exit_name.lower() for exit_name in context.exits}
+        if MOTION_MARKER_PATTERN.search(lower_narration):
+            directions = {match.group(1).lower() for match in CARDINAL_PATTERN.finditer(lower_narration)}
+            unreachable = sorted(direction for direction in directions if direction not in exits)
+            if unreachable:
+                reasons.append("VLD_EXIT_UNREACHABLE")
+                details.append(f"unreachable_directions={','.join(unreachable)}")
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _InventoryLocationConsistencyValidator:
+    validator_id = "inventory_location_consistency"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        known_items = {_normalize(item) for item in context.visible_items + context.inventory}
+
+        for match in ROOM_LOCATION_PATTERN.finditer(lower_narration):
+            candidate_room = _normalize(match.group(1))
+            expected_room = _normalize(context.room_name)
+            if candidate_room and candidate_room != expected_room:
+                reasons.append("VLD_LOCATION_MISMATCH")
+                details.append(f"expected_room={expected_room},found_room={candidate_room}")
+                break
+
+        for match in WITH_ITEM_PATTERN.finditer(lower_narration):
+            item_name = _normalize(match.group(1))
+            if item_name and item_name not in known_items:
+                reasons.append("VLD_INVENTORY_ITEM_UNKNOWN")
+                details.append(f"unknown_item={item_name}")
+                break
+
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _CommittedStateContradictionValidator:
+    validator_id = "committed_state_contradiction"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        event_messages = [str(event.get("message_key", "")).lower() for event in context.recent_events]
+
+        if event_messages and "nothing happened" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_RECENT_EVENTS")
+            details.append("narration_claims_nothing_happened")
+
+        event_has_east = any(" east" in message or message.endswith("east") for message in event_messages)
+        event_has_west = any(" west" in message or message.endswith("west") for message in event_messages)
+        if event_has_east and " west" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_DIRECTIONAL")
+            details.append("recent_events_point_east_but_narration_points_west")
+        if event_has_west and " east" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_DIRECTIONAL")
+            details.append("recent_events_point_west_but_narration_points_east")
+
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _BeatTransitionLegalityValidator:
+    validator_id = "beat_transition_legality"
+    _allowed_by_phase = {
+        "exposition": {"hook", "inciting_incident"},
+        "rising_action": {
+            "progressive_complication",
+            "pinch",
+            "midpoint_reversal",
+            "setback",
+        },
+        "climax": {"climax"},
+        "falling_action": {"resolution", "denouement"},
+    }
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:  # noqa: ARG002
+        allowed = self._allowed_by_phase.get(context.phase, set())
+        if context.beat in allowed:
+            return {
+                "validator_id": self.validator_id,
+                "passed": True,
+                "reason_codes": (),
+                "details": "",
+            }
+        return {
+            "validator_id": self.validator_id,
+            "passed": False,
+            "reason_codes": ("VLD_BEAT_ILLEGAL_FOR_PHASE",),
+            "details": f"phase={context.phase},beat={context.beat}",
         }
 
 
@@ -191,6 +331,15 @@ def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDeci
     return f"Revision directive: {focus}. Notes: {' | '.join(feedbacks[:2])}"
 
 
+def _validation_revision_directive(reports: tuple[ValidationReport, ...]) -> str:
+    failed = [report for report in reports if not report["passed"]]
+    reason_codes: list[str] = []
+    for report in failed:
+        reason_codes.extend(report["reason_codes"])
+    unique_codes = sorted(set(reason_codes))
+    return f"Revision directive: fix validation errors. reason_codes={','.join(unique_codes)}"
+
+
 def _context_with_revision(context: NarrationContext, directive: str) -> NarrationContext:
     existing = list(context.memory_fragments)
     existing.append(directive)
@@ -217,34 +366,93 @@ class CoherenceGate:
     def __init__(
         self,
         critics: tuple[CritiqueAgent, ...],
+        validators: tuple[CandidateValidator, ...],
         threshold: int = DEFAULT_THRESHOLD,
         critical_floors: dict[str, int] | None = None,
         max_rounds: int = DEFAULT_MAX_ROUNDS,
+        max_validation_revisions: int = DEFAULT_MAX_VALIDATION_REVISIONS,
     ) -> None:
         if max_rounds < 1:
             raise ValueError("max_rounds must be >= 1.")
+        if max_validation_revisions < 1:
+            raise ValueError("max_validation_revisions must be >= 1.")
         self._critics = critics
+        self._validators = validators
         self._threshold = threshold
         self._critical_floors = DEFAULT_CRITICAL_FLOORS if critical_floors is None else dict(critical_floors)
         self._max_rounds = max_rounds
+        self._max_validation_revisions = max_validation_revisions
 
     def critique_round(self, context: NarrationContext, narration: str) -> tuple[CritiqueReport, ...]:
         return tuple(critic.critique(context, narration) for critic in self._critics)
 
+    def validate_candidate(self, context: NarrationContext, narration: str) -> tuple[ValidationReport, ...]:
+        return tuple(validator.validate(context, narration) for validator in self._validators)
+
+    def _validation_failed(self, reports: tuple[ValidationReport, ...]) -> bool:
+        return any(not report["passed"] for report in reports)
+
+    def _validation_failure_decision(
+        self,
+        validation_revisions: int,
+        reports: tuple[ValidationReport, ...],
+    ) -> JudgeDecision:
+        reason_codes: list[str] = []
+        for report in reports:
+            if report["passed"]:
+                continue
+            reason_codes.extend(report["reason_codes"])
+        ordered_codes = tuple(sorted(set(reason_codes)))
+        payload = {
+            "validation_revisions": validation_revisions,
+            "reason_codes": ordered_codes,
+            "threshold": self._threshold,
+        }
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
+        return {
+            "decision_id": f"judge-vld-{validation_revisions}-{digest}",
+            "status": "failed",
+            "round_index": 0,
+            "threshold": self._threshold,
+            "total_score": 0,
+            "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
+            "critical_floors": dict(self._critical_floors),
+            "critic_ids": (),
+            "critic_reports": (),
+        }
+
     def generate_with_gate(self, narrator, context: NarrationContext) -> CoherenceResult:
         current_context = context
         final_reports: tuple[CritiqueReport, ...] = ()
+        final_validator_reports: tuple[ValidationReport, ...] = ()
         final_decision: JudgeDecision | None = None
         final_narration = ""
+        validation_revisions = 0
+        critique_round_index = 0
 
-        for round_index in range(1, self._max_rounds + 1):
+        while critique_round_index < self._max_rounds:
             narration = narrator.generate(current_context)
+            validator_reports = self.validate_candidate(current_context, narration)
+            final_validator_reports = validator_reports
+            if self._validation_failed(validator_reports):
+                validation_revisions += 1
+                final_narration = narration
+                if validation_revisions >= self._max_validation_revisions:
+                    final_decision = self._validation_failure_decision(validation_revisions, validator_reports)
+                    break
+                current_context = _context_with_revision(
+                    current_context,
+                    _validation_revision_directive(validator_reports),
+                )
+                continue
+
             reports = self.critique_round(current_context, narration)
+            critique_round_index += 1
             decision = judge_critique_round(
                 reports,
                 threshold=self._threshold,
                 critical_floors=self._critical_floors,
-                round_index=round_index,
+                round_index=critique_round_index,
             )
             final_narration = narration
             final_reports = reports
@@ -260,18 +468,31 @@ class CoherenceGate:
             "narration": final_narration,
             "judge_decision": final_decision,
             "critique_reports": final_reports,
+            "validator_reports": final_validator_reports,
+            "validation_revisions": validation_revisions,
         }
 
 
-def build_default_coherence_gate(max_rounds: int = DEFAULT_MAX_ROUNDS) -> CoherenceGate:
+def build_default_coherence_gate(
+    max_rounds: int = DEFAULT_MAX_ROUNDS,
+    max_validation_revisions: int = DEFAULT_MAX_VALIDATION_REVISIONS,
+) -> CoherenceGate:
     critics: tuple[CritiqueAgent, ...] = (
         _DefaultCritic("continuity", "continuity"),
         _DefaultCritic("causality", "causality"),
         _DefaultCritic("dialogue_fit", "dialogue_fit"),
     )
+    validators: tuple[CandidateValidator, ...] = (
+        _EntityReachabilityValidator(),
+        _InventoryLocationConsistencyValidator(),
+        _CommittedStateContradictionValidator(),
+        _BeatTransitionLegalityValidator(),
+    )
     return CoherenceGate(
         critics=critics,
+        validators=validators,
         threshold=DEFAULT_THRESHOLD,
         critical_floors=DEFAULT_CRITICAL_FLOORS,
         max_rounds=max_rounds,
+        max_validation_revisions=max_validation_revisions,
     )

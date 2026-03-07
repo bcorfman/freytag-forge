@@ -5,6 +5,7 @@ from storygame.llm.coherence import (
     DEFAULT_CRITICAL_FLOORS,
     DEFAULT_THRESHOLD,
     CritiqueReport,
+    ValidationReport,
     build_default_coherence_gate,
     judge_critique_round,
 )
@@ -114,3 +115,54 @@ def test_coherence_gate_fails_deterministically_after_max_rounds():
     assert first["judge_decision"]["status"] == "failed"
     assert first["judge_decision"]["round_index"] == 3
     assert first["judge_decision"] == second["judge_decision"]
+
+
+def test_prejudge_validator_rejects_invalid_candidate_without_consuming_critique_budget():
+    class _FixingNarrator:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def generate(self, context: NarrationContext) -> str:
+            self.calls += 1
+            if any("VLD_EXIT_UNREACHABLE" in fragment for fragment in context.memory_fragments):
+                return (
+                    "Archive Hall echoes as the keeper says the forged ledger moved east because of the bell "
+                    "diversion, and after that you talk to the keeper to follow the trail to the next witness."
+                )
+            return "You sprint south through a hidden exit with the moonstone."
+
+    narrator = _FixingNarrator()
+    gate = build_default_coherence_gate(max_rounds=3, max_validation_revisions=5)
+    result = gate.generate_with_gate(narrator, _context())
+
+    assert result["judge_decision"]["status"] == "accepted"
+    assert result["judge_decision"]["round_index"] == 1
+    assert result["validation_revisions"] == 1
+    assert narrator.calls == 2
+
+
+def test_validator_reason_codes_are_machine_readable():
+    gate = build_default_coherence_gate()
+    reports = gate.validate_candidate(_context(), "You sprint south through a hidden exit with the moonstone.")
+
+    failing_reports: list[ValidationReport] = [report for report in reports if not report["passed"]]
+    assert failing_reports
+    for report in failing_reports:
+        assert report["validator_id"]
+        assert report["reason_codes"]
+        for reason in report["reason_codes"]:
+            assert reason.startswith("VLD_")
+
+
+def test_invalid_candidates_never_reach_judge_scoring():
+    class _AlwaysInvalidNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            return "You sprint south through a hidden exit with the moonstone."
+
+    gate = build_default_coherence_gate(max_rounds=2, max_validation_revisions=2)
+    result = gate.generate_with_gate(_AlwaysInvalidNarrator(), _context())
+
+    assert result["judge_decision"]["status"] == "failed"
+    assert result["judge_decision"]["round_index"] == 0
+    assert result["judge_decision"]["total_score"] == 0
+    assert result["validation_revisions"] == 2
