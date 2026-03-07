@@ -180,6 +180,16 @@ Turn narration now runs through a deterministic multi-critic coherence gate (`st
 - Acceptance rule is fixed:
 - total score `>= 80`, plus critical floors `continuity >= 70` and `causality >= 70`.
 - Critique loop is bounded to `max_rounds=10` and emits a deterministic `JudgeDecision` including critic IDs and rubric component scores.
+- Hard turn budgets are enforced:
+- max critique rounds, token spend per role (`narrator`, `critics`), and wall-clock timeout.
+- If a budget is exhausted before acceptance, the gate hard-fails with a deterministic reason code:
+- `BUDGET_MAX_CRITIQUE_ROUNDS`, `BUDGET_NARRATOR_TOKENS`, `BUDGET_CRITIC_TOKENS`, or `BUDGET_WALL_CLOCK_TIMEOUT`.
+- Coherence telemetry is emitted per turn with:
+- critique rounds used, per-role token spend, elapsed milliseconds, and hard-fail reason.
+- Hard-fail recovery uses a constrained reversal branch for retryable failures:
+- deterministic reversal seed and machine-readable delta with `preserved`, `modified`, and `discarded`.
+- preserved fields include committed room/action/goal and visible state anchors.
+- replan retry runs through the same critique/judge pipeline with bounded reversal rounds.
 - Debug mode prints a judge summary line with status, score, threshold, round, critic IDs, components, and decision ID.
 
 ## Running Ollama locally

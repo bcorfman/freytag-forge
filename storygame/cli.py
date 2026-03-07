@@ -221,10 +221,17 @@ def run_turn(
         "rubric_components": {},
         "decision_id": "judge-error",
     }
+    coherence_telemetry = {
+        "critique_rounds": 0,
+        "token_spend": {"narrator": 0, "critics": 0},
+        "elapsed_ms": 0,
+        "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
+    }
     try:
         coherence_result = gate.generate_with_gate(narrator, context)
         narration = coherence_result["narration"]
         judge_decision = coherence_result["judge_decision"]
+        coherence_telemetry = coherence_result["telemetry"]
     except RuntimeError as exc:
         narration = f"[Narrator failed: {exc}]"
 
@@ -250,6 +257,11 @@ def run_turn(
             f"threshold={judge_decision['threshold']} round={judge_decision['round_index']} "
             f"critics={judge_decision['critic_ids']} components={judge_decision['rubric_components']} "
             f"decision_id={judge_decision['decision_id']}"
+        )
+        lines.append(
+            f"[debug] coherence_budget rounds={coherence_telemetry['critique_rounds']} "
+            f"tokens={coherence_telemetry['token_spend']} elapsed_ms={coherence_telemetry['elapsed_ms']} "
+            f"hard_fail_reason={coherence_telemetry['hard_fail_reason']}"
         )
 
     if next_state.progress >= 0.95:

@@ -42,6 +42,7 @@ class _ScopedSaveStore:
         beat_type: str | None = None,
         template_key: str | None = None,
         transcript: list[str] | None = None,
+        judge_decision: dict[str, str] | None = None,
     ) -> None:
         self._store.save_run(
             self._slot(slot),
@@ -52,6 +53,7 @@ class _ScopedSaveStore:
             beat_type=beat_type,
             template_key=template_key,
             transcript=transcript,
+            judge_decision=judge_decision,
         )
 
     def load_run(self, slot: str) -> tuple[GameState, Random]:
