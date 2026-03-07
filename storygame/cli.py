@@ -63,7 +63,7 @@ def _signal_hint(state: GameState) -> str:
         return "Signal: The tone is muffled here; no clear path stands out."
 
     direction_text = "/".join(sorted(best_directions))
-    return "Signal: Echoes refract through stone, but the resonance is stronger toward " f"{direction_text}."
+    return f"Signal: Echoes refract through stone, but the resonance is stronger toward {direction_text}."
 
 
 def _opening_briefing_lines(state: GameState) -> tuple[str, ...]:
@@ -152,6 +152,7 @@ class SaveStore(Protocol):
         beat_type: str | None = None,
         template_key: str | None = None,
         transcript: list[str] | None = None,
+        judge_decision: dict[str, str] | None = None,
     ) -> None: ...
 
     def load_run(self, slot: str) -> tuple[GameState, Random]: ...

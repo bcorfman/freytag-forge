@@ -103,6 +103,22 @@ Optional auto-save on each turn:
 python -m storygame --seed 123 --save-db runs/storygame_saves.sqlite --autosave-slot autosave
 ```
 
+### Canonical Story Artifacts
+
+Each save slot writes a canonical artifact pair in `story_artifacts/<slot>/`:
+
+- `StoryState.json`: authoritative structured state (`schema_version=2`).
+- `STORY.md`: narrative workspace rendered from `StoryState.json`.
+
+Artifact guarantees:
+
+- `StoryState.json` includes deterministic trace metadata:
+- `raw_command`, `action_kind`, `beat_type`, `template_key`, and an accepted `judge_decision`.
+- `StoryState.json` includes `story_markdown_sha256` for the exact `STORY.md` snapshot.
+- Writes are orchestrator-only through the save-store persistence path.
+- Before each write, existing artifacts are integrity-checked. If `STORY.md` was externally edited, persistence fails with an integrity error.
+- Canonical JSON rendering is deterministic (`sort_keys` + stable formatting), and round-trips reproduce byte-stable output.
+
 ## Test and Lint
 
 ```bash
