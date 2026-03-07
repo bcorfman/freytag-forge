@@ -19,16 +19,16 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] Canonical state round-trip is deterministic within a single process and across processes.
 - [x] Each `StoryState.json` turn diff maps to one prior command and one accepted `JudgeDecision`.
 
-- [ ] **Coherence gate: multi-agent critique, single final judge**
-- [ ] Add multiple critique agents that return rubric-scored feedback.
-- [ ] Keep one `Director/Judge` as final arbiter for aggregate pass/fail decisions.
-- [ ] Keep weighted rubric + threshold `>=80/100` with critical-dimension floors and max `10` rounds.
-- [ ] All critique agents return all required rubric dimensions each round.
-- [ ] Judge aggregation is deterministic and documented.
-- [ ] A turn is accepted only if total score `>=80` and every critical floor is met.
-- [ ] Judge outputs include referenced critic IDs and rubric component scores.
-- [ ] **Quality exit criteria for Coherence gate met**
-- [ ] Rubric pass/fail thresholds are enforced and reproducible under fixed seeds.
+- [x] **Coherence gate: multi-agent critique, single final judge**
+- [x] Add multiple critique agents that return rubric-scored feedback.
+- [x] Keep one `Director/Judge` as final arbiter for aggregate pass/fail decisions.
+- [x] Keep weighted rubric + threshold `>=80/100` with critical-dimension floors and max `10` rounds.
+- [x] All critique agents return all required rubric dimensions each round.
+- [x] Judge aggregation is deterministic and documented.
+- [x] A turn is accepted only if total score `>=80` and every critical floor is met.
+- [x] Judge outputs include referenced critic IDs and rubric component scores.
+- [x] **Quality exit criteria for Coherence gate met**
+- [x] Rubric pass/fail thresholds are enforced and reproducible under fixed seeds.
 
 - [ ] **Deterministic validators before judge loop**
 - [ ] Add pre-judge validators for:

@@ -306,3 +306,16 @@ def test_main_save_and_load_via_cli(tmp_path):
     log = transcript.read_text()
     assert "Saved to slot 'demo'." in log
     assert "Loaded from slot 'demo'." in log
+
+
+def test_run_turn_debug_includes_judge_decision_summary():
+    state = build_default_state(seed=23)
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(23),
+        MockNarrator(),
+        debug=True,
+    )
+
+    assert any("[debug] judge_status=" in line for line in lines)

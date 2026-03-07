@@ -169,6 +169,19 @@ uv run pre-commit run --all-files
 Engine state never depends on LLM output. Narrators receive a constrained context slice built by `storygame.llm.context.build_narration_context`.
 That context now includes canonical NPC identity/pronoun facts so narration can keep details stable across turns.
 
+## Coherence Gate
+
+Turn narration now runs through a deterministic multi-critic coherence gate (`storygame.llm.coherence`) before output:
+
+- Three critique agents run every round: `continuity`, `causality`, and `dialogue_fit`.
+- Each critique report returns all rubric dimensions (`continuity`, `causality`, `dialogue_fit`) and feedback text.
+- A single deterministic judge aggregates critic outputs with fixed weights:
+- `continuity=0.4`, `causality=0.4`, `dialogue_fit=0.2`.
+- Acceptance rule is fixed:
+- total score `>= 80`, plus critical floors `continuity >= 70` and `causality >= 70`.
+- Critique loop is bounded to `max_rounds=10` and emits a deterministic `JudgeDecision` including critic IDs and rubric component scores.
+- Debug mode prints a judge summary line with status, score, threshold, round, critic IDs, components, and decision ID.
+
 ## Running Ollama locally
 
 Start Ollama and keep it alive in one terminal:

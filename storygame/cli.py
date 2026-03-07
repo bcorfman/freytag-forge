@@ -11,6 +11,7 @@ from storygame.engine.simulation import advance_turn
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import MockNarrator, Narrator, OllamaAdapter, OpenAIAdapter, SilentNarrator
+from storygame.llm.coherence import build_default_coherence_gate
 from storygame.llm.context import build_narration_context
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -210,8 +211,20 @@ def run_turn(
         memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
 
     context = build_narration_context(next_state, action, beat_type, memory_fragments)
+    gate = build_default_coherence_gate()
+    judge_decision = {
+        "status": "failed",
+        "total_score": 0,
+        "threshold": 80,
+        "round_index": 1,
+        "critic_ids": (),
+        "rubric_components": {},
+        "decision_id": "judge-error",
+    }
     try:
-        narration = narrator.generate(context)
+        coherence_result = gate.generate_with_gate(narrator, context)
+        narration = coherence_result["narration"]
+        judge_decision = coherence_result["judge_decision"]
     except RuntimeError as exc:
         narration = f"[Narrator failed: {exc}]"
 
@@ -232,6 +245,12 @@ def run_turn(
         )
         lines.append(f"[debug] event_types={tuple(event.type for event in events)}")
         lines.append(f"[debug] context_keys={tuple(context.as_dict().keys())}")
+        lines.append(
+            f"[debug] judge_status={judge_decision['status']} total={judge_decision['total_score']} "
+            f"threshold={judge_decision['threshold']} round={judge_decision['round_index']} "
+            f"critics={judge_decision['critic_ids']} components={judge_decision['rubric_components']} "
+            f"decision_id={judge_decision['decision_id']}"
+        )
 
     if next_state.progress >= 0.95:
         lines.append("Objective complete.")
