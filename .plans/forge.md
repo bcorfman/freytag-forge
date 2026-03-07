@@ -31,17 +31,17 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] Rubric pass/fail thresholds are enforced and reproducible under fixed seeds.
 
 - [ ] **Deterministic validators before judge loop**
-- [ ] Add pre-judge validators for:
-- [ ] entity existence/reachability
-- [ ] inventory/location consistency
-- [ ] contradiction checks against prior committed state
-- [ ] beat-transition legality from Story Supervisor
-- [ ] Reject invalid candidate before critique rounds and force revision.
-- [ ] Each validator returns explicit pass/fail and machine-readable reason codes.
-- [ ] Invalid candidates never reach judge scoring.
-- [ ] Deterministic invalid-turn fixtures have 100% recall.
-- [ ] **Quality exit criteria for deterministic validators met**
-- [ ] Golden corpus yields zero false positives for valid turns and deterministic reject path coverage.
+- [x] Add pre-judge validators for:
+- [x] entity existence/reachability
+- [x] inventory/location consistency
+- [x] contradiction checks against prior committed state
+- [x] beat-transition legality from Story Supervisor
+- [x] Reject invalid candidate before critique rounds and force revision.
+- [x] Each validator returns explicit pass/fail and machine-readable reason codes.
+- [x] Invalid candidates never reach judge scoring.
+- [x] Deterministic invalid-turn fixtures have 100% recall.
+- [x] **Quality exit criteria for deterministic validators met**
+- [x] Golden corpus yields zero false positives for valid turns and deterministic reject path coverage.
 
 - [ ] **Turn budgets and fail-fast controls**
 - [ ] Define hard limits per turn: max critique rounds (10), per-role token budget, wall-clock timeout.
