@@ -112,7 +112,7 @@ def _expanded_npcs() -> dict[str, Npc]:
             name="Tower Warden",
             description="A hard-eyed guardian in a soot-lined coat.",
             dialogue=(
-                "The bell is shattered; the signal comes from a hidden resonator. " "Brace the frame with rope and pin."
+                "The bell is shattered; the signal comes from a hidden resonator. Brace the frame with rope and pin."
             ),
             identity="male tower guardian of the inner vault",
             pronouns="he/him",

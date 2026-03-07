@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import pickle
+import re
 import sqlite3
 from pathlib import Path
 from random import Random
@@ -10,6 +11,7 @@ from typing import Any
 
 from storygame.engine.state import Event, EventLog, GameState
 from storygame.engine.world import build_default_state
+from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
 
 
 def _encode_rng(rng: Random) -> str:
@@ -103,6 +105,8 @@ class SqliteSaveStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.path, check_same_thread=check_same_thread)
         self.conn.row_factory = sqlite3.Row
+        self.artifacts_root = self.path.parent / "story_artifacts"
+        self.artifacts_root.mkdir(parents=True, exist_ok=True)
         self._create_schema()
 
     def close(self) -> None:
@@ -158,6 +162,13 @@ class SqliteSaveStore:
         )
         self.conn.commit()
 
+    def _safe_slot(self, slot: str) -> str:
+        safe_slot = re.sub(r"[^a-zA-Z0-9._-]", "_", slot).strip("._")
+        return safe_slot or "default"
+
+    def _slot_directory(self, slot: str) -> Path:
+        return self.artifacts_root / self._safe_slot(slot)
+
     def save_run(
         self,
         slot: str,
@@ -168,9 +179,18 @@ class SqliteSaveStore:
         beat_type: str | None = None,
         template_key: str | None = None,
         transcript: list[str] | None = None,
+        judge_decision: dict[str, str] | None = None,
     ) -> None:
         payload = serialize_state(state)
         event_payloads = [serialize_event(event) for event in state.event_log.events]
+        accepted_judge_decision = self._accepted_judge_decision(judge_decision)
+        trace = {
+            "raw_command": raw_command,
+            "action_kind": action_kind,
+            "beat_type": beat_type or "",
+            "template_key": template_key or "",
+            "judge_decision": accepted_judge_decision,
+        }
         with self.conn:
             self.conn.execute("DELETE FROM turns WHERE slot = ?", (slot,))
             self.conn.execute("DELETE FROM state_snapshots WHERE slot = ?", (slot,))
@@ -214,6 +234,13 @@ class SqliteSaveStore:
                         (slot, state.turn_index, line_index, line),
                     )
 
+            write_turn_artifacts(
+                state,
+                self._slot_directory(slot),
+                trace=trace,
+                writer=ORCHESTRATOR_WRITER,
+            )
+
     def load_run(self, slot: str) -> tuple[GameState, Random]:
         run_row = self.conn.execute("SELECT seed, rng_state FROM runs WHERE slot = ?", (slot,)).fetchone()
         if run_row is None:
@@ -234,3 +261,28 @@ class SqliteSaveStore:
     def list_slots(self) -> list[str]:
         rows = self.conn.execute("SELECT slot FROM runs ORDER BY slot ASC").fetchall()
         return [row["slot"] for row in rows]
+
+    def _accepted_judge_decision(self, judge_decision: dict[str, str] | None) -> dict[str, str]:
+        if judge_decision is None:
+            return {
+                "decision_id": "legacy-accepted",
+                "status": "accepted",
+                "judge": "director",
+                "rationale": "single-agent deterministic mode auto-accept",
+            }
+
+        decision_id = judge_decision.get("decision_id", "").strip()
+        status = judge_decision.get("status", "").strip()
+        judge = judge_decision.get("judge", "").strip()
+        rationale = judge_decision.get("rationale", "").strip()
+        if not decision_id or not status or not judge:
+            raise ValueError("JudgeDecision must include decision_id, status, and judge.")
+        if status != "accepted":
+            raise ValueError("StoryState persistence requires an accepted JudgeDecision.")
+
+        return {
+            "decision_id": decision_id,
+            "status": status,
+            "judge": judge,
+            "rationale": rationale,
+        }

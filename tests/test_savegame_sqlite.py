@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from random import Random
 
 import pytest
@@ -153,3 +154,32 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
 
     assert state.replay_signature() == expected_signature
     assert rng.getstate() == expected_rng
+
+
+def test_save_run_writes_story_state_artifacts(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=55)
+    state.progress = 0.72
+    state.player.flags["talked_ferryman"] = True
+    state.append_event(_event_for_test())
+
+    with SqliteSaveStore(db_path) as store:
+        store.save_run("artifact slot", state, Random(99))
+
+    artifact_dir = db_path.parent / "story_artifacts" / "artifact_slot"
+    story_state_path = artifact_dir / "StoryState.json"
+    story_path = artifact_dir / "STORY.md"
+
+    assert story_state_path.exists()
+    assert story_path.exists()
+
+    payload = json.loads(story_state_path.read_text(encoding="utf-8"))
+    assert payload["schema_version"] >= 2
+    assert payload["seed"] == 55
+    assert payload["player"]["flags"]["talked_ferryman"] is True
+    assert payload["trace"]["judge_decision"]["status"] == "accepted"
+    assert payload["story_markdown_sha256"]
+
+    markdown = story_path.read_text(encoding="utf-8")
+    assert "# StoryState Workspace" in markdown
+    assert "Talked" in markdown or "talked_ferryman" in markdown
