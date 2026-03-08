@@ -81,6 +81,79 @@ Engine state never depends on LLM output.
 ```bash
 uv sync --group dev
 uv run pre-commit install
+uv run pre-commit run --all-files
+```
+
+## CLI Options
+
+- `--seed`: deterministic world, beat, and event selection.
+- `--replay <path>`: run command list from file.
+- `--debug`: print turn/phase/tension/beat diagnostics and context keys.
+- `--transcript <path>`: write transcript lines.
+- `--narrator mock|none|openai|ollama`: narrator mode.
+  - `openai`: calls `api.openai.com` with API key.
+  - `ollama`: calls local Ollama server (`OLLAMA_BASE_URL`).
+- `--save-db <path>`: path to SQLite save/resume database.
+- `--autosave-slot <slot>`: write snapshot to slot after each turn.
+
+## LLM Adapter
+
+`storygame.llm.adapters.Narrator` is the integration boundary:
+
+- `MockNarrator`: deterministic test narrator.
+- `SilentNarrator`: disables narration.
+- `OpenAIAdapter`: reads from environment:
+  - `OPENAI_API_KEY` (required for `--narrator openai`)
+  - `OPENAI_MODEL` (default `gpt-4o-mini`)
+  - `OPENAI_TIMEOUT` (default `10.0`)
+  - `OPENAI_BASE_URL` (optional override for API endpoint)
+  - `OPENAI_TEMPERATURE` (default `0.2`, lower drift)
+  - `OPENAI_MAX_TOKENS` (default `512`)
+- `OllamaAdapter`: reads from environment:
+  - `OLLAMA_MODEL` (default `llama3.2`)
+  - `OLLAMA_TIMEOUT` (default `180.0`)
+  - `OLLAMA_BASE_URL` (default `http://localhost:11434/api/chat`)
+  - `OLLAMA_TEMPERATURE` (default `0.2`, lower drift)
+  - `OLLAMA_MAX_TOKENS` (default `512`)
+
+Engine state never depends on LLM output. Narrators receive a constrained context slice built by `storygame.llm.context.build_narration_context`.
+That context now includes canonical NPC identity/pronoun facts so narration can keep details stable across turns.
+
+## Coherence Gate
+
+Turn narration now runs through a deterministic multi-critic coherence gate (`storygame.llm.coherence`) before output:
+
+- Three critique agents run every round: `continuity`, `causality`, and `dialogue_fit`.
+- Each critique report returns all rubric dimensions (`continuity`, `causality`, `dialogue_fit`) and feedback text.
+- A single deterministic judge aggregates critic outputs with fixed weights:
+- `continuity=0.4`, `causality=0.4`, `dialogue_fit=0.2`.
+- Acceptance rule is fixed:
+- total score `>= 80`, plus critical floors `continuity >= 70` and `causality >= 70`.
+- Critique loop is bounded to `max_rounds=10` and emits a deterministic `JudgeDecision` including critic IDs and rubric component scores.
+- Hard turn budgets are enforced:
+- max critique rounds, token spend per role (`narrator`, `critics`), and wall-clock timeout.
+- If a budget is exhausted before acceptance, the gate hard-fails with a deterministic reason code:
+- `BUDGET_MAX_CRITIQUE_ROUNDS`, `BUDGET_NARRATOR_TOKENS`, `BUDGET_CRITIC_TOKENS`, or `BUDGET_WALL_CLOCK_TIMEOUT`.
+- Coherence telemetry is emitted per turn with:
+- critique rounds used, per-role token spend, elapsed milliseconds, and hard-fail reason.
+- Hard-fail recovery uses a constrained reversal branch for retryable failures:
+- deterministic reversal seed and machine-readable delta with `preserved`, `modified`, and `discarded`.
+- preserved fields include committed room/action/goal and visible state anchors.
+- replan retry runs through the same critique/judge pipeline with bounded reversal rounds.
+- Debug mode prints a judge summary line with status, score, threshold, round, critic IDs, components, and decision ID.
+
+## Running Ollama locally
+
+Start Ollama and keep it alive in one terminal:
+
+```bash
+ollama serve
+```
+
+In another terminal, ensure a model is pulled first:
+
+```bash
+ollama pull llama3.2
 ```
 2. Run checks before opening a PR:
 ```bash

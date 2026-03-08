@@ -117,6 +117,91 @@ def test_coherence_gate_fails_deterministically_after_max_rounds():
     assert first["judge_decision"] == second["judge_decision"]
 
 
+def test_hard_fail_triggers_when_narrator_token_budget_is_exhausted():
+    class _LongNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            return "word " * 200
+
+    gate = build_default_coherence_gate(max_rounds=10, max_tokens_per_role={"narrator": 30, "critics": 3000})
+    result = gate.generate_with_gate(_LongNarrator(), _context())
+
+    assert result["judge_decision"]["status"] == "failed"
+    assert result["telemetry"]["hard_fail_reason"] == "BUDGET_NARRATOR_TOKENS"
+    assert result["telemetry"]["token_spend"]["narrator"] > 30
+
+
+def test_hard_fail_triggers_when_wall_clock_budget_is_exhausted():
+    class _SteadyNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            return "In Archive Hall, the keeper says the ledger moved east because of the diversion."
+
+    ticks = iter((0.0, 0.2, 0.4, 0.6, 0.8))
+    gate = build_default_coherence_gate(
+        max_rounds=10,
+        wall_clock_timeout_ms=150,
+        time_source=lambda: next(ticks),
+    )
+    result = gate.generate_with_gate(_SteadyNarrator(), _context())
+
+    assert result["judge_decision"]["status"] == "failed"
+    assert result["telemetry"]["hard_fail_reason"] == "BUDGET_WALL_CLOCK_TIMEOUT"
+    assert result["telemetry"]["elapsed_ms"] >= 150
+
+
+def test_telemetry_includes_rounds_tokens_elapsed_and_fail_reason():
+    class _PassingNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            return (
+                "In Archive Hall, the keeper says the forged ledger moved east because of the bell diversion, "
+                "and after that you talk to the keeper to follow the trail to the next witness."
+            )
+
+    gate = build_default_coherence_gate()
+    result = gate.generate_with_gate(_PassingNarrator(), _context())
+    telemetry = result["telemetry"]
+
+    assert telemetry["critique_rounds"] >= 1
+    assert "narrator" in telemetry["token_spend"]
+    assert "critics" in telemetry["token_spend"]
+    assert telemetry["elapsed_ms"] >= 0
+    assert telemetry["hard_fail_reason"] == ""
+
+
+def test_hard_fail_recovery_replans_with_constrained_reversal():
+    class _ReversalNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            if any("reversal_seed=" in fragment for fragment in context.memory_fragments):
+                return (
+                    "In Archive Hall, the keeper says the forged ledger moved east because of the bell diversion, "
+                    "and after that you talk to the keeper to follow the trail to the next witness."
+                )
+            return "Nonsense unrelated to state."
+
+    gate = build_default_coherence_gate(max_rounds=1, max_reversal_rounds=2)
+    result = gate.generate_with_gate(_ReversalNarrator(), _context())
+    reversal = result["reversal"]
+
+    assert reversal["trigger_reason"] == "BUDGET_MAX_CRITIQUE_ROUNDS"
+    assert reversal["replan_attempted"] is True
+    assert reversal["replan_passed"] is True
+    assert set(reversal["delta"].keys()) == {"preserved", "modified", "discarded"}
+    assert any(item == "action=talk keeper" for item in reversal["delta"]["preserved"])
+    assert any(item.startswith("reversal_seed=") for item in reversal["seed"])
+    assert result["judge_decision"]["status"] == "accepted"
+
+
+def test_reversal_branch_is_deterministic_for_identical_inputs():
+    class _AlwaysBadNarrator:
+        def generate(self, context: NarrationContext) -> str:
+            return "Nonsense unrelated to state."
+
+    gate = build_default_coherence_gate(max_rounds=1, max_reversal_rounds=1)
+    first = gate.generate_with_gate(_AlwaysBadNarrator(), _context())
+    second = gate.generate_with_gate(_AlwaysBadNarrator(), _context())
+
+    assert first["reversal"] == second["reversal"]
+
+
 def test_prejudge_validator_rejects_invalid_candidate_without_consuming_critique_budget():
     class _FixingNarrator:
         def __init__(self) -> None:

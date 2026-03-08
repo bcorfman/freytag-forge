@@ -319,3 +319,16 @@ def test_run_turn_debug_includes_judge_decision_summary():
     )
 
     assert any("[debug] judge_status=" in line for line in lines)
+
+
+def test_run_turn_debug_includes_coherence_budget_telemetry():
+    state = build_default_state(seed=24)
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(24),
+        MockNarrator(),
+        debug=True,
+    )
+
+    assert any("[debug] coherence_budget" in line for line in lines)

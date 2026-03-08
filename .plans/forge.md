@@ -30,7 +30,7 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] **Quality exit criteria for Coherence gate met**
 - [x] Rubric pass/fail thresholds are enforced and reproducible under fixed seeds.
 
-- [ ] **Deterministic validators before judge loop**
+- [x] **Deterministic validators before judge loop**
 - [x] Add pre-judge validators for:
 - [x] entity existence/reachability
 - [x] inventory/location consistency
@@ -43,23 +43,23 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] **Quality exit criteria for deterministic validators met**
 - [x] Golden corpus yields zero false positives for valid turns and deterministic reject path coverage.
 
-- [ ] **Turn budgets and fail-fast controls**
-- [ ] Define hard limits per turn: max critique rounds (10), per-role token budget, wall-clock timeout.
-- [ ] Invoke hard-fail when any hard limit is exhausted with no earlier acceptance.
-- [ ] Enforce no budget overruns.
-- [ ] Emit per-turn telemetry for rounds, token spend, elapsed time, and hard-fail reason.
-- [ ] **Quality exit criteria for turn budgets met**
-- [ ] Failure/retry behavior under identical seeds is reproducible and bounded.
+- [x] **Turn budgets and fail-fast controls**
+- [x] Define hard limits per turn: max critique rounds (10), per-role token budget, wall-clock timeout.
+- [x] Invoke hard-fail when any hard limit is exhausted with no earlier acceptance.
+- [x] Enforce no budget overruns.
+- [x] Emit per-turn telemetry for rounds, token spend, elapsed time, and hard-fail reason.
+- [x] **Quality exit criteria for turn budgets met**
+- [x] Failure/retry behavior under identical seeds is reproducible and bounded.
 
-- [ ] **Hard-fail recovery with constrained reversal**
-- [ ] Implement reversal seeding by Story Supervisor.
-- [ ] Preserve committed facts/player agency and emit changed-vs-preserved delta.
-- [ ] Replan from reversal state through normal critique pipeline.
-- [ ] Include `preserved`, `modified`, and `discarded` categories in reversal output.
-- [ ] Reversed candidates are revalidated end-to-end.
-- [ ] Successful deterministic retry path exists under max-round failure.
-- [ ] **Quality exit criteria for hard-fail recovery met**
-- [ ] Reversal branch satisfies revalidation and traceability requirements.
+- [x] **Hard-fail recovery with constrained reversal**
+- [x] Implement reversal seeding by Story Supervisor.
+- [x] Preserve committed facts/player agency and emit changed-vs-preserved delta.
+- [x] Replan from reversal state through normal critique pipeline.
+- [x] Include `preserved`, `modified`, and `discarded` categories in reversal output.
+- [x] Reversed candidates are revalidated end-to-end.
+- [x] Successful deterministic retry path exists under max-round failure.
+- [x] **Quality exit criteria for hard-fail recovery met**
+- [x] Reversal branch satisfies revalidation and traceability requirements.
 
 - [ ] **Strict typed contracts for agent I/O**
 - [ ] Define schemas for:
