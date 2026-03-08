@@ -33,12 +33,12 @@ For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).
 
 ## Run the Application
 
-### 0) Install tooling and Python dependencies:
+### 1) Install Python tooling:
 
 - Install [Python](https://www.python.org) 3.10+
 - Install [uv](https://docs.astral.sh/uv/)
 
-### 5) Configure narrator backends
+### 2) Configure narrator backends
 Default narrator mode is `mock`, which requires no external setup.
 
 OpenAI setup:
@@ -61,7 +61,7 @@ Notes:
 - Ollama local usage does not require an API key.
 - If you omit `--narrator`, CLI uses `mock`.
 
-### 1) Install dependencies
+### 3) Install dependencies
 ```bash
 make install
 ```
@@ -71,4 +71,3 @@ make install
 make run
 ```
 Open `http://127.0.0.1:8000`.
-
