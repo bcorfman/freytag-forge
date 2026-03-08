@@ -7,8 +7,18 @@ import time
 from typing import Protocol, TypedDict
 
 from storygame.llm.context import NarrationContext
+from storygame.llm.contracts import (
+    CRITIQUE_DIMENSIONS,
+    ContractValidationError,
+    CritiqueReport,
+    JudgeDecision,
+    RevisionDirective,
+    narration_to_agent_proposal,
+    parse_critique_report,
+    parse_judge_decision,
+    parse_revision_directive,
+)
 
-CRITIQUE_DIMENSIONS = ("continuity", "causality", "dialogue_fit")
 DEFAULT_WEIGHTS = {"continuity": 0.4, "causality": 0.4, "dialogue_fit": 0.2}
 DEFAULT_CRITICAL_FLOORS = {"continuity": 70, "causality": 70}
 DEFAULT_THRESHOLD = 80
@@ -22,24 +32,6 @@ MOTION_MARKER_PATTERN = re.compile(r"\b(go|head|move|walk|run|sprint|toward|towa
 ROOM_LOCATION_PATTERN = re.compile(r"\bin ([a-z][a-z0-9_ ]+)\b", re.IGNORECASE)
 WITH_ITEM_PATTERN = re.compile(r"\bwith the ([a-z][a-z0-9_ -]+)\b", re.IGNORECASE)
 CARDINAL_PATTERN = re.compile(r"\b(north|south|east|west|up|down)\b", re.IGNORECASE)
-
-
-class CritiqueReport(TypedDict):
-    critic_id: str
-    scores: dict[str, int]
-    feedback: str
-
-
-class JudgeDecision(TypedDict):
-    decision_id: str
-    status: str
-    round_index: int
-    threshold: int
-    total_score: int
-    rubric_components: dict[str, int]
-    critical_floors: dict[str, int]
-    critic_ids: tuple[str, ...]
-    critic_reports: tuple[CritiqueReport, ...]
 
 
 class CoherenceResult(TypedDict):
@@ -328,9 +320,10 @@ def judge_critique_round(
 ) -> JudgeDecision:
     if not reports:
         raise ValueError("judge_critique_round requires at least one critique report.")
+    validated_reports = tuple(parse_critique_report(dict(report)) for report in reports)
     chosen_floors = DEFAULT_CRITICAL_FLOORS if critical_floors is None else critical_floors
     chosen_weights = DEFAULT_WEIGHTS if weights is None else weights
-    ordered_reports = tuple(reports)
+    ordered_reports = tuple(validated_reports)
     component_scores = _average_dimension_scores(ordered_reports)
     weighted_total = sum(component_scores[dim] * chosen_weights[dim] for dim in CRITIQUE_DIMENSIONS)
     total_score = int(round(weighted_total))
@@ -338,20 +331,29 @@ def judge_critique_round(
     # Tie-break rule is deterministic: score exactly at threshold still fails on any critical-floor violation.
     status = "accepted" if total_score >= threshold and not floor_violations else "failed"
     critic_ids = tuple(report["critic_id"] for report in ordered_reports)
-    return {
-        "decision_id": _decision_id(round_index, component_scores, total_score, status, critic_ids),
-        "status": status,
-        "round_index": round_index,
-        "threshold": threshold,
-        "total_score": total_score,
-        "rubric_components": component_scores,
-        "critical_floors": dict(chosen_floors),
-        "critic_ids": critic_ids,
-        "critic_reports": ordered_reports,
-    }
+    rationale = (
+        "All thresholds and critical floors are satisfied."
+        if status == "accepted"
+        else "Threshold and floor requirements are not satisfied."
+    )
+    return parse_judge_decision(
+        {
+            "decision_id": _decision_id(round_index, component_scores, total_score, status, critic_ids),
+            "status": status,
+            "round_index": round_index,
+            "threshold": threshold,
+            "total_score": total_score,
+            "rubric_components": component_scores,
+            "critical_floors": dict(chosen_floors),
+            "critic_ids": critic_ids,
+            "critic_reports": ordered_reports,
+            "judge": "director",
+            "rationale": rationale,
+        }
+    )
 
 
-def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDecision) -> str:
+def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDecision) -> RevisionDirective:
     weakest = sorted(
         decision["rubric_components"].items(),
         key=lambda item: (item[1], item[0]),
@@ -364,21 +366,36 @@ def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDeci
         focus = "mention continuity anchors from room facts and recent events"
     else:
         focus = "mention causality and dialogue while staying tied to the current goal"
-    return f"Revision directive: {focus}. Notes: {' | '.join(feedbacks[:2])}"
+    notes = " | ".join(feedbacks[:2])[:140]
+    payload = {
+        "directive_id": f"rev-round-{decision['round_index']}",
+        "target_agent_id": "narrator",
+        "focus_dimensions": (lowest,),
+        "instruction": f"{focus}. Notes: {notes}",
+        "rationale": "Judge-selected weakest rubric dimension requires revision.",
+    }
+    return parse_revision_directive(payload)
 
 
-def _validation_revision_directive(reports: tuple[ValidationReport, ...]) -> str:
+def _validation_revision_directive(reports: tuple[ValidationReport, ...]) -> RevisionDirective:
     failed = [report for report in reports if not report["passed"]]
     reason_codes: list[str] = []
     for report in failed:
         reason_codes.extend(report["reason_codes"])
     unique_codes = sorted(set(reason_codes))
-    return f"Revision directive: fix validation errors. reason_codes={','.join(unique_codes)}"
+    payload = {
+        "directive_id": f"rev-validation-{'-'.join(unique_codes) or 'none'}",
+        "target_agent_id": "narrator",
+        "focus_dimensions": ("continuity",),
+        "instruction": f"Fix deterministic validation errors. reason_codes={','.join(unique_codes)}",
+        "rationale": "Validator failures must be resolved before critique scoring.",
+    }
+    return parse_revision_directive(payload)
 
 
-def _context_with_revision(context: NarrationContext, directive: str) -> NarrationContext:
+def _context_with_memory_fragment(context: NarrationContext, fragment: str) -> NarrationContext:
     existing = list(context.memory_fragments)
-    existing.append(directive)
+    existing.append(fragment)
     revised_fragments = tuple(existing[-3:])
     return NarrationContext(
         room_name=context.room_name,
@@ -396,6 +413,10 @@ def _context_with_revision(context: NarrationContext, directive: str) -> Narrati
         action=context.action,
         memory_fragments=revised_fragments,
     )
+
+
+def _context_with_revision(context: NarrationContext, directive: RevisionDirective) -> NarrationContext:
+    return _context_with_memory_fragment(context, directive["instruction"])
 
 
 def _reversal_seed(context: NarrationContext, hard_fail_reason: str, decision_id: str) -> tuple[str, ...]:
@@ -476,7 +497,11 @@ class CoherenceGate:
         self._max_validation_revisions = max_validation_revisions
 
     def critique_round(self, context: NarrationContext, narration: str) -> tuple[CritiqueReport, ...]:
-        return tuple(critic.critique(context, narration) for critic in self._critics)
+        reports: list[CritiqueReport] = []
+        for critic in self._critics:
+            raw_report = critic.critique(context, narration)
+            reports.append(parse_critique_report(dict(raw_report)))
+        return tuple(reports)
 
     def validate_candidate(self, context: NarrationContext, narration: str) -> tuple[ValidationReport, ...]:
         return tuple(validator.validate(context, narration) for validator in self._validators)
@@ -501,17 +526,21 @@ class CoherenceGate:
             "threshold": self._threshold,
         }
         digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
-        return {
-            "decision_id": f"judge-vld-{validation_revisions}-{digest}",
-            "status": "failed",
-            "round_index": 0,
-            "threshold": self._threshold,
-            "total_score": 0,
-            "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
-            "critical_floors": dict(self._critical_floors),
-            "critic_ids": (),
-            "critic_reports": (),
-        }
+        return parse_judge_decision(
+            {
+                "decision_id": f"judge-vld-{validation_revisions}-{digest}",
+                "status": "failed",
+                "round_index": 0,
+                "threshold": self._threshold,
+                "total_score": 0,
+                "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
+                "critical_floors": dict(self._critical_floors),
+                "critic_ids": (),
+                "critic_reports": (),
+                "judge": "director",
+                "rationale": "Candidate failed deterministic validators before critique scoring.",
+            }
+        )
 
     def _run_scoring_pipeline(
         self,
@@ -547,7 +576,8 @@ class CoherenceGate:
                 hard_fail_reason = "BUDGET_WALL_CLOCK_TIMEOUT"
                 break
 
-            narration = narrator.generate(current_context)
+            proposal = narration_to_agent_proposal("narrator", narrator.generate(current_context))
+            narration = proposal["narration"]
             token_spend["narrator"] += _token_count(narration)
             if token_spend["narrator"] > self._max_tokens_per_role["narrator"]:
                 final_narration = narration
@@ -595,17 +625,21 @@ class CoherenceGate:
         if final_decision is None:
             if hard_fail_reason == "":
                 hard_fail_reason = "BUDGET_MAX_CRITIQUE_ROUNDS"
-            final_decision = {
-                "decision_id": f"judge-hard-fail-{hard_fail_reason.lower()}",
-                "status": "failed",
-                "round_index": max_rounds if hard_fail_reason == "BUDGET_MAX_CRITIQUE_ROUNDS" else 0,
-                "threshold": self._threshold,
-                "total_score": 0,
-                "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
-                "critical_floors": dict(self._critical_floors),
-                "critic_ids": tuple(report["critic_id"] for report in final_reports),
-                "critic_reports": final_reports,
-            }
+            final_decision = parse_judge_decision(
+                {
+                    "decision_id": f"judge-hard-fail-{hard_fail_reason.lower()}",
+                    "status": "failed",
+                    "round_index": max_rounds if hard_fail_reason == "BUDGET_MAX_CRITIQUE_ROUNDS" else 0,
+                    "threshold": self._threshold,
+                    "total_score": 0,
+                    "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
+                    "critical_floors": dict(self._critical_floors),
+                    "critic_ids": tuple(report["critic_id"] for report in final_reports),
+                    "critic_reports": final_reports,
+                    "judge": "director",
+                    "rationale": f"Hard fail triggered by {hard_fail_reason}.",
+                }
+            )
 
         now = self._time_source()
         elapsed_ms = int(round((now - start_time) * 1000))
@@ -633,18 +667,21 @@ class CoherenceGate:
         )
 
     def generate_with_gate(self, narrator, context: NarrationContext) -> CoherenceResult:
-        (
-            final_narration,
-            final_reports,
-            final_validator_reports,
-            validation_revisions,
-            final_decision,
-            telemetry,
-        ) = self._run_scoring_pipeline(
-            narrator,
-            context,
-            max_rounds=self._max_rounds,
-        )
+        try:
+            (
+                final_narration,
+                final_reports,
+                final_validator_reports,
+                validation_revisions,
+                final_decision,
+                telemetry,
+            ) = self._run_scoring_pipeline(
+                narrator,
+                context,
+                max_rounds=self._max_rounds,
+            )
+        except ContractValidationError as exc:
+            raise RuntimeError(exc.code) from exc
 
         reversal: ReversalReport = {
             "trigger_reason": "",
@@ -674,20 +711,23 @@ class CoherenceGate:
 
             reversal_context = context
             for seed_line in seed:
-                reversal_context = _context_with_revision(reversal_context, seed_line)
+                reversal_context = _context_with_memory_fragment(reversal_context, seed_line)
 
-            (
-                replan_narration,
-                replan_reports,
-                replan_validator_reports,
-                replan_validation_revisions,
-                replan_decision,
-                replan_telemetry,
-            ) = self._run_scoring_pipeline(
-                narrator,
-                reversal_context,
-                max_rounds=self._max_reversal_rounds,
-            )
+            try:
+                (
+                    replan_narration,
+                    replan_reports,
+                    replan_validator_reports,
+                    replan_validation_revisions,
+                    replan_decision,
+                    replan_telemetry,
+                ) = self._run_scoring_pipeline(
+                    narrator,
+                    reversal_context,
+                    max_rounds=self._max_reversal_rounds,
+                )
+            except ContractValidationError as exc:
+                raise RuntimeError(exc.code) from exc
 
             if replan_decision["status"] == "accepted":
                 final_narration = replan_narration

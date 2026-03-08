@@ -61,18 +61,18 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] **Quality exit criteria for hard-fail recovery met**
 - [x] Reversal branch satisfies revalidation and traceability requirements.
 
-- [ ] **Strict typed contracts for agent I/O**
-- [ ] Define schemas for:
-- [ ] `AgentProposal`
-- [ ] `StoryPatch`
-- [ ] `CritiqueReport`
-- [ ] `JudgeDecision`
-- [ ] `RevisionDirective`
-- [ ] Enforce structured outputs with bounded natural-language rationale.
-- [ ] Missing/invalid fields are rejected with deterministic error typing and no state mutation.
-- [ ] Boundary validation is explicit in parser/adapter layer.
-- [ ] **Quality exit criteria for typed contracts met**
-- [ ] Parser/adapters reject malformed contracts and prevent silent fallthrough.
+- [x] **Strict typed contracts for agent I/O**
+- [x] Define schemas for:
+- [x] `AgentProposal`
+- [x] `StoryPatch`
+- [x] `CritiqueReport`
+- [x] `JudgeDecision`
+- [x] `RevisionDirective`
+- [x] Enforce structured outputs with bounded natural-language rationale.
+- [x] Missing/invalid fields are rejected with deterministic error typing and no state mutation.
+- [x] Boundary validation is explicit in parser/adapter layer.
+- [x] **Quality exit criteria for typed contracts met**
+- [x] Parser/adapters reject malformed contracts and prevent silent fallthrough.
 
 - [ ] **Evaluation harness aligned to classic IF output contract**
 - [ ] Add golden-turn checks for diegetic output, debug internals, room-first structure, clarity prompts, and transcript-only echo.
