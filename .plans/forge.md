@@ -74,15 +74,15 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [x] **Quality exit criteria for typed contracts met**
 - [x] Parser/adapters reject malformed contracts and prevent silent fallthrough.
 
-- [ ] **Evaluation harness aligned to classic IF output contract**
-- [ ] Add golden-turn checks for diegetic output, debug internals, room-first structure, clarity prompts, and transcript-only echo.
-- [ ] Add coherence regression tests on fixed seeds/commands.
-- [ ] Golden tests are deterministic and byte-stable in non-debug sections.
-- [ ] Debug mode can emit parseable internal trace.
-- [ ] Non-debug mode never exposes engine labels or rubric internals.
-- [ ] Coherence regression reports no narrative/state deltas on replay.
-- [ ] **Quality exit criteria for evaluation harness met**
-- [ ] Full output-contract matrix is green with fixed fixtures.
+- [x] **Evaluation harness aligned to classic IF output contract**
+- [x] Add golden-turn checks for diegetic output, debug internals, room-first structure, clarity prompts, and transcript-only echo.
+- [x] Add coherence regression tests on fixed seeds/commands.
+- [x] Golden tests are deterministic and byte-stable in non-debug sections.
+- [x] Debug mode can emit parseable internal trace.
+- [x] Non-debug mode never exposes engine labels or rubric internals.
+- [x] Coherence regression reports no narrative/state deltas on replay.
+- [x] **Quality exit criteria for evaluation harness met**
+- [x] Full output-contract matrix is green with fixed fixtures.
 
 ## Test Plan
 - [ ] Determinism: same seed + command stream => identical `StoryState.json` history and accepted turn outputs.
@@ -90,7 +90,7 @@ This revision applies recommendations **1-7**, with recommendation 2 changed to:
 - [ ] Critique loop: pass path and budget-exhaustion path both deterministic.
 - [ ] Single judge integration: judge decision must reference critic reports and rubric components.
 - [ ] Reversal path: triggered only on threshold failure after max rounds; produces valid replan candidate.
-- [ ] Output contract: non-debug contains no engine labels/scores; debug exposes internals.
+- [x] Output contract: non-debug contains no engine labels/scores; debug exposes internals.
 
 ## Assumptions and Defaults
 - [ ] Big-bang rewrite remains the migration strategy.

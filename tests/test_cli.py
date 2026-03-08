@@ -219,8 +219,8 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
 
     text = transcript.read_text()
     assert "Before dawn" in text
-    assert "CMD look" in text
-    assert "CMD quit" in text
+    assert ">LOOK" in text
+    assert ">QUIT" in text
     assert "Goodbye." in text
 
 

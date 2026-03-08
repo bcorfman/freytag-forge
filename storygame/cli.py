@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import deque
 from pathlib import Path
 from random import Random
@@ -98,6 +99,19 @@ def _public_event_message(message_key: str) -> str:
     message = message_key.strip()
     if not message:
         return ""
+    clarification_messages = {
+        "unknown_command": (
+            "I didn't understand that command. Try LOOK, GO <direction>, TALK <name>, TAKE <item>, or INVENTORY."
+        ),
+        "move_failed_unknown_destination": "You can't go that way.",
+        "move_failed_locked_exit": "That way is locked.",
+        "take_failed_missing": "You don't see that here.",
+        "take_failed_not_portable": "You can't carry that.",
+        "talk_failed_missing": "No one by that name is here.",
+        "use_failed_missing_item": "You aren't carrying that item.",
+    }
+    if message in clarification_messages:
+        return clarification_messages[message]
     # Hide engine-like keys in normal mode (for example: move_success, take_failed).
     if "_" in message and " " not in message:
         return ""
@@ -117,6 +131,10 @@ def _write_transcript_line(handle: TextIO | None, line: str) -> None:
     if handle is None:
         return
     handle.write(line + "\n")
+
+
+def _transcript_command_echo(raw_command: str) -> str:
+    return f">{raw_command.strip().upper()}"
 
 
 def _build_narrator(mode: str) -> Narrator:
@@ -236,9 +254,12 @@ def run_turn(
         narration = f"[Narrator failed: {exc}]"
 
     lines: list[str] = []
+    lines.append(_room_lines(next_state))
+    event_line = _event_lines(events, debug=debug)
+    if event_line:
+        lines.append(event_line)
     if show_opening_briefing:
         lines.extend(_opening_briefing_lines(next_state))
-    lines.extend([_room_lines(next_state), _event_lines(events, debug=debug)])
     if debug:
         lines.extend(caseboard_lines(next_state))
     if narration:
@@ -263,6 +284,26 @@ def run_turn(
             f"tokens={coherence_telemetry['token_spend']} elapsed_ms={coherence_telemetry['elapsed_ms']} "
             f"hard_fail_reason={coherence_telemetry['hard_fail_reason']}"
         )
+        debug_trace = {
+            "turn": next_state.turn_index,
+            "phase": str(get_phase(next_state.progress)),
+            "tension": round(next_state.tension, 4),
+            "progress": round(next_state.progress, 4),
+            "beat": beat_type,
+            "plot_event": template_key,
+            "events": [event.type for event in events],
+            "judge": {
+                "status": judge_decision["status"],
+                "total_score": judge_decision["total_score"],
+                "threshold": judge_decision["threshold"],
+                "round_index": judge_decision["round_index"],
+                "critic_ids": list(judge_decision["critic_ids"]),
+                "rubric_components": judge_decision["rubric_components"],
+                "decision_id": judge_decision["decision_id"],
+            },
+            "coherence": coherence_telemetry,
+        }
+        lines.append("[debug-json] " + json.dumps(debug_trace, sort_keys=True))
 
     if next_state.progress >= 0.95:
         lines.append("Objective complete.")
@@ -358,7 +399,7 @@ def main(argv: list[str] | None = None) -> None:
         if args.replay is not None:
             commands = [line.strip() for line in args.replay.read_text().splitlines() if line.strip()]
             for command in commands:
-                _write_transcript_line(transcript_handle, f"CMD {command}")
+                _write_transcript_line(transcript_handle, _transcript_command_echo(command))
                 state, lines, _action, _beat, _ = run_turn(
                     state,
                     command,
@@ -384,7 +425,7 @@ def main(argv: list[str] | None = None) -> None:
 
         while True:
             raw = input("> ")
-            _write_transcript_line(transcript_handle, f"CMD {raw}")
+            _write_transcript_line(transcript_handle, _transcript_command_echo(raw))
             state, lines, action_raw, _, continued = run_turn(
                 state,
                 raw,
