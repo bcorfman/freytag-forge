@@ -33,26 +33,10 @@ For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).
 
 ## Run the Application
 
-### 1) Install dependencies
-```bash
-uv sync
-```
+### 0) Install tooling and Python dependencies:
 
-### 2) Run CLI mode
-```bash
-uv run python -m storygame --seed 123
-```
-
-### 3) Run replay + transcript
-```bash
-uv run python -m storygame --seed 123 --replay runs/demo_commands.txt --transcript runs/demo_transcript.txt
-```
-
-### 4) Run web mode
-```bash
-uv run uvicorn storygame.web:app --reload
-```
-Open `http://127.0.0.1:8000`.
+- Install [Python](https://www.python.org) 3.10+
+- Install [uv](https://docs.astral.sh/uv/)
 
 ### 5) Configure narrator backends
 Default narrator mode is `mock`, which requires no external setup.
@@ -76,3 +60,15 @@ uv run python -m storygame --seed 123 --narrator ollama
 Notes:
 - Ollama local usage does not require an API key.
 - If you omit `--narrator`, CLI uses `mock`.
+
+### 1) Install dependencies
+```bash
+make install
+```
+
+### 4) Run 
+```bash
+make run
+```
+Open `http://127.0.0.1:8000`.
+
