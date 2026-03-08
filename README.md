@@ -2,7 +2,7 @@
 
 ## Executive Summary
 Freytag Forge is a deterministic interactive-fiction engine built around a multi-agent narrative pipeline.
-Instead of trusting a single narrator pass, it routes each candidate turn through specialist critics and a deterministic judge, improving continuity, causality, and dialogue fit before output is shown to the player.
+Instead of trusting a single narrator pass, it routes each candidate turn through specialist critics and a deterministic judge, improving continuity, causality, and dialog fit before output is shown to the player.
 The result is stronger story coherence turn-to-turn, with reproducible behavior and auditable decision traces.
 
 ```mermaid
