@@ -53,6 +53,20 @@ Freytag Forge is a deterministic narrative-engine platform for interactive ficti
   - `JudgeDecision`
   - `RevisionDirective`
 
+```mermaid
+flowchart LR
+    C[Player Command] --> N[Narrator Candidate]
+    N --> V[Deterministic Validators]
+    V -->|pass| R[Critics: continuity/causality/dialogue]
+    V -->|fail| D[Revision Directive]
+    R --> J[Deterministic Judge]
+    J -->|accepted| O[Player-Facing Output]
+    J -->|failed| D
+    D --> N
+    J -->|hard-fail budgets| X[Constrained Reversal Replan]
+    X --> N
+```
+
 ### Persistence + Canonical Artifacts
 - `storygame.persistence.savegame_sqlite` stores run snapshots/events/transcripts.
 - `storygame.persistence.story_state` emits canonical turn artifacts:
