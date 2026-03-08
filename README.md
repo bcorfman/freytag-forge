@@ -141,6 +141,10 @@ Turn narration now runs through a deterministic multi-critic coherence gate (`st
 - preserved fields include committed room/action/goal and visible state anchors.
 - replan retry runs through the same critique/judge pipeline with bounded reversal rounds.
 - Debug mode prints a judge summary line with status, score, threshold, round, critic IDs, components, and decision ID.
+- Agent I/O contracts are enforced in `storygame.llm.contracts`:
+- `AgentProposal`, `StoryPatch`, `CritiqueReport`, `JudgeDecision`, and `RevisionDirective` have explicit parsers/adapters with `extra=forbid`.
+- natural-language fields (`rationale`, `feedback`, revision instruction) are length-bounded.
+- malformed payloads are rejected with deterministic contract error codes (for example: `CONTRACT_INVALID_CRITIQUE_REPORT`) rather than silently falling through.
 
 ## Running Ollama locally
 
