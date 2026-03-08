@@ -116,8 +116,8 @@ def test_cli_replay_writes_transcript(tmp_path: Path):
 
     assert transcript.exists()
     text = transcript.read_text()
-    assert "CMD look" in text
-    assert "CMD inventory" in text
+    assert ">LOOK" in text
+    assert ">INVENTORY" in text
 
 
 def test_openai_adapter_uses_env_for_non_secret_config(monkeypatch):

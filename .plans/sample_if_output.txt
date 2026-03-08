@@ -1,0 +1,160 @@
+Here is an entire transcript for a sample game in triple quotes.. Note that the game starts by showing the name of the room (map position) the player is in, then a room description, a list of items (flowing naturally with the text), then a description of the exits, followed by NPC interactions or background events. The transcript shows a few simple puzzles and their solutions, and it will give you a good idea of how interactive fiction works. The player's commands appear in capital letters after each prompt (>).
+"""Cheese Corner 
+You are in the cheese section of Donna's Delicious Delicacies. Hundreds of different kinds of cheese are displayed in open refrigerated cases or are aging on the shelves. The finest Bries, Camemberts, Port du Saluts, Tilsits, and many other varieties exude a heady, cozy aroma. Saltless crackers of varying degrees of tastelessness fill a shelf on one side of the room. The only exit is to the north. You hear people arguing to the north.
+
+>WALK NORTH
+Check-out Area
+You are in the check-out area of Donna's Delicious Delicacies. The store exit is to the east. Doors lead north to the dessert department, south to the cheese corner, and west to the salad bar. A cashier, looking bored, is sitting behind a cash register, chewing gum and reading a trashy novel.
+
+Lou, the store's overweight stockboy, leaves the room heading west. Donna, the surprisingly slim proprietor of this establishment, is here. Her face is flushed with anger. Donna turns to you and says, "That boy had better watch his step. A lot of expensive food has been disappearing lately, and I've a good idea that he's been eating my inventory without my permission."
+
+>DONNA, TELL ME ABOUT THE ARGUMENT
+"I accused him of stealing, and he called me an ungrateful and suspicious beanpole. We exchanged some harsh words; too bad, really, because he's really been a fine stockboy. But with this food disappearing...." She shakes her head in thought.
+
+>WEST
+Salad Bar
+This is the salad bar of Donna's Delicious Delicacies. Behind refrigerated glass cases are dozens of appetizing and colorful cold salads. Donna's Antipasto Deluxe, lobster/seafood salad, marinated mushrooms, Artichoke Delight: all are attractively garnished, and the extravagant prices are tastefully posted in tiny black letters on the wall. The exit is to the east. A door marked "Private" is to the west.
+
+>GO WEST
+The door is locked.
+
+>INVENTORY
+You are carrying:
+a badge
+a pad of violation forms
+a wallet containing $10
+
+>KNOCK ON THE DOOR
+After a moment, the door opens and Lou, the stockboy, comes out, wiping his hands on a towel. "Yes?" he inquires politely.
+
+>ACCUSE LOU OF STEALING
+"Oh, I suppose Donna thinks everyone who works for her is stealing. Well, I'm not. I'm an honest, underpaid, unappreciated hard worker." Donna comes into the room. She looks very angry. Lois, the store's assistant manager, follows Donna into the room. Lois is a short but seemingly strong young woman. Lois is saying something to Donna.
+
+>LISTEN TO LOIS
+"When I came back from my coffee break, several cream puffs were missing, and a tin of the Danish butter cookies was open and half empty." Lois throws a look at Lou. "He's certainly large enough to eat more than that just for a snack!"
+
+>LOIS, WHERE IS THE TIN OF COOKIES?
+Lois looks at you coldly. "Where do you think?"
+Donna, barely restraining her anger, says to Lou, "You're fired!"
+
+>EAST
+As you leave the salad bar, you somehow bump into Lois. "Hey, watch it!" she snaps.
+
+Check-out Area
+A cashier, looking bored, is sitting behind a cash register, chewing gum and reading a trashy novel.
+You hear people arguing to the west.
+
+>NORTH
+Dessert Department
+You are in the dessert department of Donna's Delicious Delicacies. A refrigerated glass case holds a sinful assortment of cakes, pies, and pastries: Boston cream pie, seven-layer cake, raspberry-apple tarts, frosted cup-cakes, and many other freshly-made baked goods. The cream puffs are not symmetrically positioned on their tray, indicating that some are missing.
+
+There is also an open case containg candies and chocolate truffles.
+
+A shelf is stacked with tins of Danish butter cookies. On a table next to the shelf is an opened tin of cookies.
+
+>EXAMINE THE TIN
+(Which tin do you mean, a closed tin on the shelf or the opened tin on the table?)
+
+>OPENED
+The opened tin of Danish butter cookies is half empty. The shiny cover lies next to the opened tin.
+
+>ANALYZE THE COVER
+Your ever-helpful assistant, Sergeant Duffy, arrives suddenly and takes the shiny cover from you. "I'll have this analyzed in no time flat, Detective." He leaves as quickly as he came.
+
+>SOUTH
+Check-out Area
+A cashier, looking bored, is sitting behind a cash register, chewing gum and reading a trashy novel.
+You hear people arguing to the west.
+
+>CASHIER, WHERE IS DONNA?
+"I think she's in salad." She returns to her book.
+
+>TELL ME ABOUT LOU
+(said to the cashier)
+"Aw, he's nice. Very polite, you know?" She returns to her book.
+
+>TELL ME ABOUT LOIS
+(said to the cashier)
+The cashier looks around to make sure no one is listening, then whispers, "Donna likes her, but Lois gives me the creeps! She's not very friendly, either. Whenever I ask her if she wants some lunch or somethin', she says, very haughty-like, 'I'm not hungry.'" She returns to her book.
+
+Duffy comes in from the east. He hands you the shiny cover to the tin of Danish butter cookies. "Well, Detective," he says, "we found some fingerprints, but it'll take a little while to determine whose they are. I'll be back as soon as we know." He disappears as quickly as he arrived.
+
+>GO NORTH
+Dessert Department
+
+There is an opened tin of Danish butter cookies on the table.
+
+>LOOK
+Dessert Department
+You are in the dessert department of Donna's Delicious Delicacies. A refrigerated glass case holds a sinful assortment of cakes, pies, and pastries: Boston cream pie, seven-layer cake, raspberry-apple tarts, frosted cup-cakes, and many other freshly-made baked goods. The cream puffs are not symmetrically positioned on their tray, indicating that some are missing.
+
+There is also an open case containg candies and chocolate truffles. A shelf is stacked with tins of Danish butter cookies. On a table next to the shelf is an opened tin of cookies.
+
+>HIDE BEHIND THE CASE
+(Which case do you mean, the refrigerated case or the open case?)
+
+>REFRIGERATED
+You are now crouching behind the refrigerated case.
+
+>WAIT
+Time passes...
+
+Lois comes to the room and looks around stealthily.
+
+Do you wish to keep waiting? >YES
+
+Not seeing anyone in the room, Lois reaches into the open case containing candy and chocolate truffles. She eats one, two, three truffles. While she's chewing, she reaches for a fourth.
+
+Do you wish to keep waiting? >NO
+
+>STAND UP
+You stand up and come out of hiding.
+
+Lois, seeing you, freezes immediately.
+
+>ACCUSE LOIS OF STEALING
+"Mnffmmpfrrm," she says. Her mouth is full of truffles.
+
+>INVENTORY
+You are carrying:
+a badge
+a pad of violation forms
+a shiny cover to a tin of Danish butter cookies
+
+>LOIS, WHERE IS THE WALEET?
+The word "waleet" isn't in your vocabulary.
+
+>LOIS, WHERE IS THE WALLET?
+"Mnffmmpfrrm," she says. Her mouth is full of truffles.
+
+>SWALLOW THE TRUFFLES
+You don't have the truffles!
+
+LOIS, SWALLOW THE TRUFFLES
+Lois swallows the truffles and looks at you guiltily.
+
+>WHERE IS THE WALLET?
+(said to Lois)
+
+"What wallet? I've never seen your brown leather wa...." She trails off.
+
+>SEARCH LOIS
+Lois is carrying your wallet, which you reclaim.
+
+>SHOW THE BADGE TO LOIS
+"Oh, dear, this isn't my day," says Lois.
+
+>ACCUSE LOIS OF PICKPOCKETING
+"Um, well, I won't do it again?" She looks at you hopefully.
+
+>ACCUSE LOIS OF STEALING
+"Oh yes, well, um...." She trails off.
+
+Sergeant Duffy suddenly arrives. "Detective, the fingerprints belong to someone by the name of 'Lois O'Shea.'" Donna enters the room.
+
+>ARREST LOIS
+"Good work, Detective." Duffy gently leads Lois away.
+
+Donna says, "It looks as if I owe Lou an apology. Thank you, Detective."
+
+She hurries off."""
