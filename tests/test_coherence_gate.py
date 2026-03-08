@@ -200,6 +200,8 @@ def test_reversal_branch_is_deterministic_for_identical_inputs():
     second = gate.generate_with_gate(_AlwaysBadNarrator(), _context())
 
     assert first["reversal"] == second["reversal"]
+
+
 def test_prejudge_validator_rejects_invalid_candidate_without_consuming_critique_budget():
     class _FixingNarrator:
         def __init__(self) -> None:

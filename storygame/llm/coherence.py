@@ -46,8 +46,8 @@ class CoherenceResult(TypedDict):
     narration: str
     judge_decision: JudgeDecision
     critique_reports: tuple[CritiqueReport, ...]
-    telemetry: dict[str, object]
-    reversal: dict[str, object]
+    telemetry: CoherenceTelemetry
+    reversal: ReversalReport
     validator_reports: tuple[ValidationReport, ...]
     validation_revisions: int
 
@@ -57,6 +57,32 @@ class ValidationReport(TypedDict):
     passed: bool
     reason_codes: tuple[str, ...]
     details: str
+
+
+class TokenSpend(TypedDict):
+    narrator: int
+    critics: int
+
+
+class CoherenceTelemetry(TypedDict):
+    critique_rounds: int
+    token_spend: TokenSpend
+    elapsed_ms: int
+    hard_fail_reason: str
+
+
+class ReversalDelta(TypedDict):
+    preserved: tuple[str, ...]
+    modified: tuple[str, ...]
+    discarded: tuple[str, ...]
+
+
+class ReversalReport(TypedDict):
+    trigger_reason: str
+    seed: tuple[str, ...]
+    delta: ReversalDelta
+    replan_attempted: bool
+    replan_passed: bool
 
 
 class CritiqueAgent(Protocol):
@@ -388,7 +414,7 @@ def _reversal_seed(context: NarrationContext, hard_fail_reason: str, decision_id
     )
 
 
-def _reversal_delta(context: NarrationContext, hard_fail_reason: str) -> dict[str, tuple[str, ...]]:
+def _reversal_delta(context: NarrationContext, hard_fail_reason: str) -> ReversalDelta:
     preserved = (
         f"room={context.room_name}",
         f"action={context.action}",
@@ -412,12 +438,6 @@ def _reversal_delta(context: NarrationContext, hard_fail_reason: str) -> dict[st
         "discarded": discarded,
     }
 
-    def _run_scoring_pipeline(
-        self,
-        narrator,
-        context: NarrationContext,
-        max_rounds: int,
-    ) -> tuple[str, tuple[CritiqueReport, ...], JudgeDecision, dict[str, object]]:
 
 class CoherenceGate:
     def __init__(
@@ -504,7 +524,7 @@ class CoherenceGate:
         tuple[ValidationReport, ...],
         int,
         JudgeDecision,
-        dict[str, object],
+        CoherenceTelemetry,
     ]:
         current_context = context
         final_reports: tuple[CritiqueReport, ...] = ()
@@ -512,7 +532,7 @@ class CoherenceGate:
         final_decision: JudgeDecision | None = None
         final_narration = ""
 
-        token_spend = {"narrator": 0, "critics": 0}
+        token_spend: TokenSpend = {"narrator": 0, "critics": 0}
         hard_fail_reason = ""
         start_time = self._time_source()
         elapsed_ms = 0
@@ -589,10 +609,14 @@ class CoherenceGate:
 
         now = self._time_source()
         elapsed_ms = int(round((now - start_time) * 1000))
-        if hard_fail_reason == "" and final_decision["status"] == "failed" and final_decision["round_index"] >= max_rounds:
+        if (
+            hard_fail_reason == ""
+            and final_decision["status"] == "failed"
+            and final_decision["round_index"] >= max_rounds
+        ):
             hard_fail_reason = "BUDGET_MAX_CRITIQUE_ROUNDS"
 
-        telemetry = {
+        telemetry: CoherenceTelemetry = {
             "critique_rounds": final_decision["round_index"],
             "token_spend": token_spend,
             "elapsed_ms": elapsed_ms,
@@ -622,7 +646,7 @@ class CoherenceGate:
             max_rounds=self._max_rounds,
         )
 
-        reversal = {
+        reversal: ReversalReport = {
             "trigger_reason": "",
             "seed": (),
             "delta": {"preserved": (), "modified": (), "discarded": ()},
@@ -683,7 +707,6 @@ class CoherenceGate:
             "validator_reports": final_validator_reports,
             "validation_revisions": validation_revisions,
         }
-
 
 
 def build_default_coherence_gate(
