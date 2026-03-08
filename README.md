@@ -53,3 +53,26 @@ uv run python -m storygame --seed 123 --replay runs/demo_commands.txt --transcri
 uv run uvicorn storygame.web:app --reload
 ```
 Open `http://127.0.0.1:8000`.
+
+### 5) Configure narrator backends
+Default narrator mode is `mock`, which requires no external setup.
+
+OpenAI setup:
+```bash
+export OPENAI_API_KEY="your_api_key"
+export OPENAI_MODEL="gpt-4o-mini"  # optional
+uv run python -m storygame --seed 123 --narrator openai
+```
+
+Ollama setup:
+```bash
+ollama serve
+ollama pull llama3.2
+export OLLAMA_MODEL="llama3.2"  # optional
+export OLLAMA_BASE_URL="http://localhost:11434/api/chat"  # optional
+uv run python -m storygame --seed 123 --narrator ollama
+```
+
+Notes:
+- Ollama local usage does not require an API key.
+- If you omit `--narrator`, CLI uses `mock`.
