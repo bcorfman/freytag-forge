@@ -16,6 +16,12 @@ DEFAULT_MAX_ROUNDS = 10
 DEFAULT_MAX_TOKENS_PER_ROLE = {"narrator": 2000, "critics": 2000}
 DEFAULT_WALL_CLOCK_TIMEOUT_MS = 1500
 DEFAULT_MAX_REVERSAL_ROUNDS = 3
+DEFAULT_MAX_VALIDATION_REVISIONS = 10
+
+MOTION_MARKER_PATTERN = re.compile(r"\b(go|head|move|walk|run|sprint|toward|towards|through)\b", re.IGNORECASE)
+ROOM_LOCATION_PATTERN = re.compile(r"\bin ([a-z][a-z0-9_ ]+)\b", re.IGNORECASE)
+WITH_ITEM_PATTERN = re.compile(r"\bwith the ([a-z][a-z0-9_ -]+)\b", re.IGNORECASE)
+CARDINAL_PATTERN = re.compile(r"\b(north|south|east|west|up|down)\b", re.IGNORECASE)
 
 
 class CritiqueReport(TypedDict):
@@ -42,12 +48,31 @@ class CoherenceResult(TypedDict):
     critique_reports: tuple[CritiqueReport, ...]
     telemetry: dict[str, object]
     reversal: dict[str, object]
+    validator_reports: tuple[ValidationReport, ...]
+    validation_revisions: int
+
+
+class ValidationReport(TypedDict):
+    validator_id: str
+    passed: bool
+    reason_codes: tuple[str, ...]
+    details: str
 
 
 class CritiqueAgent(Protocol):
     critic_id: str
 
     def critique(self, context: NarrationContext, narration: str) -> CritiqueReport: ...
+
+
+class CandidateValidator(Protocol):
+    validator_id: str
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport: ...
+
+
+def _normalize(value: str) -> str:
+    return "_".join(re.findall(r"[a-z0-9]+", value.lower()))
 
 
 def _token_set(text: str) -> set[str]:
@@ -127,6 +152,121 @@ class _DefaultCritic:
         }
 
 
+class _EntityReachabilityValidator:
+    validator_id = "entity_reachability"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        exits = {exit_name.lower() for exit_name in context.exits}
+        if MOTION_MARKER_PATTERN.search(lower_narration):
+            directions = {match.group(1).lower() for match in CARDINAL_PATTERN.finditer(lower_narration)}
+            unreachable = sorted(direction for direction in directions if direction not in exits)
+            if unreachable:
+                reasons.append("VLD_EXIT_UNREACHABLE")
+                details.append(f"unreachable_directions={','.join(unreachable)}")
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _InventoryLocationConsistencyValidator:
+    validator_id = "inventory_location_consistency"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        known_items = {_normalize(item) for item in context.visible_items + context.inventory}
+
+        for match in ROOM_LOCATION_PATTERN.finditer(lower_narration):
+            candidate_room = _normalize(match.group(1))
+            expected_room = _normalize(context.room_name)
+            if candidate_room and candidate_room != expected_room:
+                reasons.append("VLD_LOCATION_MISMATCH")
+                details.append(f"expected_room={expected_room},found_room={candidate_room}")
+                break
+
+        for match in WITH_ITEM_PATTERN.finditer(lower_narration):
+            item_name = _normalize(match.group(1))
+            if item_name and item_name not in known_items:
+                reasons.append("VLD_INVENTORY_ITEM_UNKNOWN")
+                details.append(f"unknown_item={item_name}")
+                break
+
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _CommittedStateContradictionValidator:
+    validator_id = "committed_state_contradiction"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        reasons: list[str] = []
+        details: list[str] = []
+        lower_narration = narration.lower()
+        event_messages = [str(event.get("message_key", "")).lower() for event in context.recent_events]
+
+        if event_messages and "nothing happened" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_RECENT_EVENTS")
+            details.append("narration_claims_nothing_happened")
+
+        event_has_east = any(" east" in message or message.endswith("east") for message in event_messages)
+        event_has_west = any(" west" in message or message.endswith("west") for message in event_messages)
+        if event_has_east and " west" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_DIRECTIONAL")
+            details.append("recent_events_point_east_but_narration_points_west")
+        if event_has_west and " east" in lower_narration:
+            reasons.append("VLD_CONTRADICTION_DIRECTIONAL")
+            details.append("recent_events_point_west_but_narration_points_east")
+
+        return {
+            "validator_id": self.validator_id,
+            "passed": not reasons,
+            "reason_codes": tuple(reasons),
+            "details": "; ".join(details),
+        }
+
+
+class _BeatTransitionLegalityValidator:
+    validator_id = "beat_transition_legality"
+    _allowed_by_phase = {
+        "exposition": {"hook", "inciting_incident"},
+        "rising_action": {
+            "progressive_complication",
+            "pinch",
+            "midpoint_reversal",
+            "setback",
+        },
+        "climax": {"climax"},
+        "falling_action": {"resolution", "denouement"},
+    }
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:  # noqa: ARG002
+        allowed = self._allowed_by_phase.get(context.phase, set())
+        if context.beat in allowed:
+            return {
+                "validator_id": self.validator_id,
+                "passed": True,
+                "reason_codes": (),
+                "details": "",
+            }
+        return {
+            "validator_id": self.validator_id,
+            "passed": False,
+            "reason_codes": ("VLD_BEAT_ILLEGAL_FOR_PHASE",),
+            "details": f"phase={context.phase},beat={context.beat}",
+        }
+
+
 def _average_dimension_scores(reports: tuple[CritiqueReport, ...]) -> dict[str, int]:
     averages: dict[str, int] = {}
     for dimension in CRITIQUE_DIMENSIONS:
@@ -201,6 +341,15 @@ def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDeci
     return f"Revision directive: {focus}. Notes: {' | '.join(feedbacks[:2])}"
 
 
+def _validation_revision_directive(reports: tuple[ValidationReport, ...]) -> str:
+    failed = [report for report in reports if not report["passed"]]
+    reason_codes: list[str] = []
+    for report in failed:
+        reason_codes.extend(report["reason_codes"])
+    unique_codes = sorted(set(reason_codes))
+    return f"Revision directive: fix validation errors. reason_codes={','.join(unique_codes)}"
+
+
 def _context_with_revision(context: NarrationContext, directive: str) -> NarrationContext:
     existing = list(context.memory_fragments)
     existing.append(directive)
@@ -263,11 +412,18 @@ def _reversal_delta(context: NarrationContext, hard_fail_reason: str) -> dict[st
         "discarded": discarded,
     }
 
+    def _run_scoring_pipeline(
+        self,
+        narrator,
+        context: NarrationContext,
+        max_rounds: int,
+    ) -> tuple[str, tuple[CritiqueReport, ...], JudgeDecision, dict[str, object]]:
 
 class CoherenceGate:
     def __init__(
         self,
         critics: tuple[CritiqueAgent, ...],
+        validators: tuple[CandidateValidator, ...],
         threshold: int = DEFAULT_THRESHOLD,
         critical_floors: dict[str, int] | None = None,
         max_rounds: int = DEFAULT_MAX_ROUNDS,
@@ -275,6 +431,7 @@ class CoherenceGate:
         wall_clock_timeout_ms: int = DEFAULT_WALL_CLOCK_TIMEOUT_MS,
         max_reversal_rounds: int = DEFAULT_MAX_REVERSAL_ROUNDS,
         time_source=None,
+        max_validation_revisions: int = DEFAULT_MAX_VALIDATION_REVISIONS,
     ) -> None:
         if max_rounds < 1:
             raise ValueError("max_rounds must be >= 1.")
@@ -282,7 +439,11 @@ class CoherenceGate:
             raise ValueError("wall_clock_timeout_ms must be >= 1.")
         if max_reversal_rounds < 1:
             raise ValueError("max_reversal_rounds must be >= 1.")
+        if max_validation_revisions < 1:
+            raise ValueError("max_validation_revisions must be >= 1.")
+
         self._critics = critics
+        self._validators = validators
         self._threshold = threshold
         self._critical_floors = DEFAULT_CRITICAL_FLOORS if critical_floors is None else dict(critical_floors)
         self._max_rounds = max_rounds
@@ -292,26 +453,74 @@ class CoherenceGate:
         self._wall_clock_timeout_ms = wall_clock_timeout_ms
         self._max_reversal_rounds = max_reversal_rounds
         self._time_source = time.perf_counter if time_source is None else time_source
+        self._max_validation_revisions = max_validation_revisions
 
     def critique_round(self, context: NarrationContext, narration: str) -> tuple[CritiqueReport, ...]:
         return tuple(critic.critique(context, narration) for critic in self._critics)
+
+    def validate_candidate(self, context: NarrationContext, narration: str) -> tuple[ValidationReport, ...]:
+        return tuple(validator.validate(context, narration) for validator in self._validators)
+
+    def _validation_failed(self, reports: tuple[ValidationReport, ...]) -> bool:
+        return any(not report["passed"] for report in reports)
+
+    def _validation_failure_decision(
+        self,
+        validation_revisions: int,
+        reports: tuple[ValidationReport, ...],
+    ) -> JudgeDecision:
+        reason_codes: list[str] = []
+        for report in reports:
+            if report["passed"]:
+                continue
+            reason_codes.extend(report["reason_codes"])
+        ordered_codes = tuple(sorted(set(reason_codes)))
+        payload = {
+            "validation_revisions": validation_revisions,
+            "reason_codes": ordered_codes,
+            "threshold": self._threshold,
+        }
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
+        return {
+            "decision_id": f"judge-vld-{validation_revisions}-{digest}",
+            "status": "failed",
+            "round_index": 0,
+            "threshold": self._threshold,
+            "total_score": 0,
+            "rubric_components": {dimension: 0 for dimension in CRITIQUE_DIMENSIONS},
+            "critical_floors": dict(self._critical_floors),
+            "critic_ids": (),
+            "critic_reports": (),
+        }
 
     def _run_scoring_pipeline(
         self,
         narrator,
         context: NarrationContext,
         max_rounds: int,
-    ) -> tuple[str, tuple[CritiqueReport, ...], JudgeDecision, dict[str, object]]:
+    ) -> tuple[
+        str,
+        tuple[CritiqueReport, ...],
+        tuple[ValidationReport, ...],
+        int,
+        JudgeDecision,
+        dict[str, object],
+    ]:
         current_context = context
         final_reports: tuple[CritiqueReport, ...] = ()
+        final_validator_reports: tuple[ValidationReport, ...] = ()
         final_decision: JudgeDecision | None = None
         final_narration = ""
+
         token_spend = {"narrator": 0, "critics": 0}
         hard_fail_reason = ""
         start_time = self._time_source()
         elapsed_ms = 0
 
-        for round_index in range(1, max_rounds + 1):
+        validation_revisions = 0
+        critique_round_index = 0
+
+        while critique_round_index < max_rounds:
             now = self._time_source()
             elapsed_ms = int(round((now - start_time) * 1000))
             if elapsed_ms > self._wall_clock_timeout_ms:
@@ -325,6 +534,20 @@ class CoherenceGate:
                 hard_fail_reason = "BUDGET_NARRATOR_TOKENS"
                 break
 
+            validator_reports = self.validate_candidate(current_context, narration)
+            final_validator_reports = validator_reports
+            if self._validation_failed(validator_reports):
+                validation_revisions += 1
+                final_narration = narration
+                if validation_revisions >= self._max_validation_revisions:
+                    final_decision = self._validation_failure_decision(validation_revisions, validator_reports)
+                    break
+                current_context = _context_with_revision(
+                    current_context,
+                    _validation_revision_directive(validator_reports),
+                )
+                continue
+
             reports = self.critique_round(current_context, narration)
             critic_token_spend = sum(_token_count(report["feedback"]) for report in reports)
             token_spend["critics"] += critic_token_spend
@@ -334,17 +557,19 @@ class CoherenceGate:
                 hard_fail_reason = "BUDGET_CRITIC_TOKENS"
                 break
 
+            critique_round_index += 1
             decision = judge_critique_round(
                 reports,
                 threshold=self._threshold,
                 critical_floors=self._critical_floors,
-                round_index=round_index,
+                round_index=critique_round_index,
             )
             final_narration = narration
             final_reports = reports
             final_decision = decision
             if decision["status"] == "accepted":
                 break
+
             current_context = _context_with_revision(current_context, _revision_directive(reports, decision))
 
         if final_decision is None:
@@ -361,24 +586,37 @@ class CoherenceGate:
                 "critic_ids": tuple(report["critic_id"] for report in final_reports),
                 "critic_reports": final_reports,
             }
+
         now = self._time_source()
         elapsed_ms = int(round((now - start_time) * 1000))
-        if (
-            hard_fail_reason == ""
-            and final_decision["status"] == "failed"
-            and final_decision["round_index"] >= max_rounds
-        ):
+        if hard_fail_reason == "" and final_decision["status"] == "failed" and final_decision["round_index"] >= max_rounds:
             hard_fail_reason = "BUDGET_MAX_CRITIQUE_ROUNDS"
+
         telemetry = {
             "critique_rounds": final_decision["round_index"],
             "token_spend": token_spend,
             "elapsed_ms": elapsed_ms,
             "hard_fail_reason": hard_fail_reason,
         }
-        return final_narration, final_reports, final_decision, telemetry
+
+        return (
+            final_narration,
+            final_reports,
+            final_validator_reports,
+            validation_revisions,
+            final_decision,
+            telemetry,
+        )
 
     def generate_with_gate(self, narrator, context: NarrationContext) -> CoherenceResult:
-        final_narration, final_reports, final_decision, telemetry = self._run_scoring_pipeline(
+        (
+            final_narration,
+            final_reports,
+            final_validator_reports,
+            validation_revisions,
+            final_decision,
+            telemetry,
+        ) = self._run_scoring_pipeline(
             narrator,
             context,
             max_rounds=self._max_rounds,
@@ -391,12 +629,14 @@ class CoherenceGate:
             "replan_attempted": False,
             "replan_passed": False,
         }
+
         hard_fail_reason = str(telemetry["hard_fail_reason"])
         can_replan = hard_fail_reason in {
             "BUDGET_MAX_CRITIQUE_ROUNDS",
             "BUDGET_NARRATOR_TOKENS",
             "BUDGET_CRITIC_TOKENS",
         }
+
         if final_decision["status"] == "failed" and can_replan:
             seed = _reversal_seed(context, hard_fail_reason, final_decision["decision_id"])
             delta = _reversal_delta(context, hard_fail_reason)
@@ -407,17 +647,29 @@ class CoherenceGate:
                 "replan_attempted": True,
                 "replan_passed": False,
             }
+
             reversal_context = context
             for seed_line in seed:
                 reversal_context = _context_with_revision(reversal_context, seed_line)
-            replan_narration, replan_reports, replan_decision, replan_telemetry = self._run_scoring_pipeline(
+
+            (
+                replan_narration,
+                replan_reports,
+                replan_validator_reports,
+                replan_validation_revisions,
+                replan_decision,
+                replan_telemetry,
+            ) = self._run_scoring_pipeline(
                 narrator,
                 reversal_context,
                 max_rounds=self._max_reversal_rounds,
             )
+
             if replan_decision["status"] == "accepted":
                 final_narration = replan_narration
                 final_reports = replan_reports
+                final_validator_reports = replan_validator_reports
+                validation_revisions += replan_validation_revisions
                 final_decision = replan_decision
                 telemetry = replan_telemetry
                 reversal["replan_passed"] = True
@@ -428,7 +680,10 @@ class CoherenceGate:
             "critique_reports": final_reports,
             "telemetry": telemetry,
             "reversal": reversal,
+            "validator_reports": final_validator_reports,
+            "validation_revisions": validation_revisions,
         }
+
 
 
 def build_default_coherence_gate(
@@ -437,14 +692,22 @@ def build_default_coherence_gate(
     wall_clock_timeout_ms: int = DEFAULT_WALL_CLOCK_TIMEOUT_MS,
     max_reversal_rounds: int = DEFAULT_MAX_REVERSAL_ROUNDS,
     time_source=None,
+    max_validation_revisions: int = DEFAULT_MAX_VALIDATION_REVISIONS,
 ) -> CoherenceGate:
     critics: tuple[CritiqueAgent, ...] = (
         _DefaultCritic("continuity", "continuity"),
         _DefaultCritic("causality", "causality"),
         _DefaultCritic("dialogue_fit", "dialogue_fit"),
     )
+    validators: tuple[CandidateValidator, ...] = (
+        _EntityReachabilityValidator(),
+        _InventoryLocationConsistencyValidator(),
+        _CommittedStateContradictionValidator(),
+        _BeatTransitionLegalityValidator(),
+    )
     return CoherenceGate(
         critics=critics,
+        validators=validators,
         threshold=DEFAULT_THRESHOLD,
         critical_floors=DEFAULT_CRITICAL_FLOORS,
         max_rounds=max_rounds,
@@ -452,4 +715,5 @@ def build_default_coherence_gate(
         wall_clock_timeout_ms=wall_clock_timeout_ms,
         max_reversal_rounds=max_reversal_rounds,
         time_source=time_source,
+        max_validation_revisions=max_validation_revisions,
     )
