@@ -21,12 +21,6 @@ precommit:
 run:
 	uv run uvicorn storygame.web:app --reload
 
-run-web:
-	uv run uvicorn storygame.web:app --reload
-
-run-cli:
-	uv run python -m storygame
-
 package:
 	uv run python -m pip install --upgrade build
 	uv run python -m build
