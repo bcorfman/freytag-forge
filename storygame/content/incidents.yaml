@@ -1,0 +1,65 @@
+version: 1
+incidents:
+  - id: market_pickpocket
+    once_flag: incident_market_pickpocket
+    beat_tags: [inciting_incident, complication, setback]
+    message: "A runner bursts through the crowd: the harbor levy ledger has been stolen from the market lockbox."
+    entities: [ledger, market]
+    effects:
+      delta_progress: 0.03
+      delta_tension: 0.09
+      set_flags: [ledger_stolen]
+    triggers:
+      min_turn: 3
+
+  - id: keeper_detained
+    once_flag: incident_keeper_detained
+    beat_tags: [revelation, escalation, setback]
+    message: "City watch officers arrest the Archive Keeper before she can finish her warning."
+    entities: [keeper, watch]
+    effects:
+      delta_progress: 0.02
+      delta_tension: 0.10
+      set_flags: [keeper_detained]
+    triggers:
+      all:
+        - location_is: archives
+        - action_type: talk
+          entity: keeper
+
+  - id: moonstone_theft_attempt
+    once_flag: incident_moonstone_theft_attempt
+    beat_tags: [confrontation, irreversible_choice, climax]
+    message: "A masked saboteur lunges for the moonstone and vanishes up the stair, forcing an immediate pursuit."
+    entities: [moonstone, saboteur]
+    effects:
+      delta_progress: 0.04
+      delta_tension: 0.12
+    triggers:
+      all:
+        - item_in_inventory: moonstone
+      any:
+        - location_is: sanctuary
+        - progress_at_least: 0.6
+      not:
+        - flag_is_true: finished
+
+  - id: forged_warrant
+    once_flag: incident_forged_warrant
+    beat_tags: [revelation, escalation]
+    message: "A forged warrant appears, naming your ally as the saboteur."
+    entities: [warrant, keeper]
+    effects:
+      delta_progress: 0.01
+      delta_tension: 0.08
+    triggers:
+      sequence:
+        within_turns: 6
+        steps:
+          - action_type: talk
+            entity: keeper
+          - action_type: take
+            entity: wax_stamp
+          - event: player_entered_room
+            room: sanctuary
+      cooldown_turns: 4
