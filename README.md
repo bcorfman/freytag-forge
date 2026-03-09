@@ -18,10 +18,27 @@ flowchart TD
     J -->|hard-fail budgets| X[Constrained Reversal Replan]
     X --> N
 ```
+## Agent Definitions
+Agent behavior is centered in [storygame/llm/coherence.py](storygame/llm/coherence.py), with contract shapes in [storygame/llm/contracts.py](storygame/llm/contracts.py) and narrator backends in [storygame/llm/adapters.py](storygame/llm/adapters.py).
+
+There are **5 narrative agents** in the default pipeline:
+- **1 narrator** (`agent_id="narrator"`): proposes candidate narration each round.
+- **3 critics** (`continuity`, `causality`, `dialogue_fit`): score and provide focused feedback.
+- **1 judge** (`judge="director"`): deterministically accepts/fails rounds using thresholds/floors.
+
+There are also **4 deterministic validators** run before critics:
+- `entity_reachability`
+- `inventory_location_consistency`
+- `committed_state_contradiction`
+- `beat_transition_legality`
+
+So the default coherence pipeline has **9 total decision participants** (5 narrative agents + 4 validators).
 ## Main Features
 - Deterministic world simulation with seed-stable replay.
 - Multi-agent coherence architecture:
   narrator proposal -> validator gates -> multi-critic review -> single deterministic judge -> revision/replan when needed.
+- Beat realization layer for concrete story incidents:
+  timed and trigger-based incidents (location/item/NPC interactions) can materialize beat themes into in-world events.
 - IF-style output contract with room-first narration and transcript command echo (`>COMMAND`).
 - Multi-critic coherence gate with deterministic judge decisions.
 - Deterministic validation gates before critique scoring.
@@ -30,6 +47,15 @@ flowchart TD
 - Strict typed contracts for agent I/O and deterministic contract error typing.
 
 For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).
+
+## Incident Authoring
+- Incident content is now defined in [storygame/content/incidents.yaml](storygame/content/incidents.yaml).
+- Supported trigger primitives include:
+  - `min_turn`, `cooldown_turns`
+  - boolean groups: `all`, `any`, `not`
+  - condition keys: `location_is`, `item_in_inventory`, `flag_is_true`, `progress_at_least`
+  - action/event keys: `action_type`, `entity`, `event` (including `player_entered_room`)
+  - ordered history matching via `sequence.steps` with `within_turns`
 
 ## Run the Application
 

@@ -41,6 +41,7 @@ Freytag Forge is a deterministic narrative-engine platform for interactive ficti
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
+- `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
 
 ### Narration + Coherence
 - `storygame.llm.adapters` defines narrator integrations (`mock`, `none`, `openai`, `ollama`).
@@ -75,6 +76,18 @@ flowchart LR
 - Artifact integrity is enforced by hash checks and orchestrator-only write constraints.
 
 ## Feature Details
+### Beat Realization
+- Abstract Freytag beats are realized as concrete incidents (for example: thefts, arrests, urgent clue deliveries).
+- Incident triggers are deterministic and may depend on:
+  - turn timing (`min_turn`),
+  - player location,
+  - inventory requirements,
+  - recent action-event patterns (for example specific `talk`/`take` activity).
+- Incidents are one-shot via explicit per-incident flags and can adjust progress/tension.
+- Incident definitions are authored in `storygame/content/incidents.yaml`.
+- Trigger schema supports boolean groups (`all`/`any`/`not`), `cooldown_turns`, and ordered event `sequence` matching.
+- If no incident matches the current beat context, the engine falls back to generic beat-tagged plot templates.
+
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.

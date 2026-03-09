@@ -3,6 +3,7 @@ from __future__ import annotations
 from random import Random
 
 from storygame.engine.events import apply_event_template, select_event
+from storygame.engine.incidents import realize_beat_incident
 from storygame.engine.parser import Action
 from storygame.engine.rules import apply_action
 from storygame.engine.state import Event, GameState
@@ -33,12 +34,18 @@ def advance_turn(
     beat = select_beat(next_state, rng)
     next_state.append_beat(beat.type)
 
-    template = select_event(beat, next_state, rng)
-    next_state, narrative_events = apply_event_template(next_state, template, rng)
+    next_state, incident_events = realize_beat_incident(next_state, beat, action_events, rng)
+    if incident_events:
+        narrative_events = incident_events
+        template_key = f"incident:{incident_events[0].metadata['incident_id']}"
+    else:
+        template = select_event(beat, next_state, rng)
+        template_key = template.key
+        next_state, narrative_events = apply_event_template(next_state, template, rng)
     next_state = apply_events_to_state(next_state, narrative_events)
 
     all_events = action_events + narrative_events
-    return next_state, all_events, beat.type, template.key
+    return next_state, all_events, beat.type, template_key
 
 
 def run_command_sequence(
