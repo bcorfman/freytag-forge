@@ -6,6 +6,8 @@ from pathlib import Path
 from random import Random
 from typing import Protocol, TextIO
 
+from rich.console import Console
+
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
@@ -131,6 +133,11 @@ def _write_transcript_line(handle: TextIO | None, line: str) -> None:
     if handle is None:
         return
     handle.write(line + "\n")
+
+
+def _emit_cli_line(console: Console, line: str) -> None:
+    for paragraph in line.split("\n"):
+        console.print(paragraph, highlight=False, markup=False, overflow="fold")
 
 
 def _transcript_command_echo(raw_command: str) -> str:
@@ -373,6 +380,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     args = parser.parse_args(argv)
+    console = Console()
 
     state = build_default_state(args.seed)
     rng = Random(args.seed)
@@ -393,7 +401,7 @@ def main(argv: list[str] | None = None) -> None:
 
     try:
         header = _room_lines(state)
-        print(header)
+        _emit_cli_line(console, header)
         _write_transcript_line(transcript_handle, header)
 
         if args.replay is not None:
@@ -419,7 +427,7 @@ def main(argv: list[str] | None = None) -> None:
                         action_kind="autosave",
                     )
                 for line in lines:
-                    print(line)
+                    _emit_cli_line(console, line)
                     _write_transcript_line(transcript_handle, line)
             return
 
@@ -437,7 +445,7 @@ def main(argv: list[str] | None = None) -> None:
                 memory_slot=memory_slot,
             )
             for line in lines:
-                print(line)
+                _emit_cli_line(console, line)
                 _write_transcript_line(transcript_handle, line)
             if action_raw.lower() in {"quit", "exit", "leave"}:
                 break
