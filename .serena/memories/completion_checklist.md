@@ -1,0 +1,1 @@
+When a coding task is complete, run relevant tests first, then lint/format as needed. In this repo prefer `uv run python -m pytest -q` for tests and `uv run python -m ruff check .`, `uv run python -m ruff format` for code quality. Update docs after behavior changes per AGENTS.md.

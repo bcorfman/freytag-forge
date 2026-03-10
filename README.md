@@ -97,3 +97,5 @@ make install
 make run
 ```
 Open `http://127.0.0.1:8000`.
+
+CLI output uses terminal-aware wrapping (`rich`) so long narration lines remain readable at your current shell width.

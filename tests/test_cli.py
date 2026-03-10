@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import builtins
+from io import StringIO
 from random import Random
+
+from rich.console import Console
 
 from storygame.cli import (
     _build_memory_tag_set,
     _build_narrator,
+    _emit_cli_line,
     _event_lines,
     _opening_briefing_lines,
     _room_distance,
@@ -31,6 +35,17 @@ def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     assert line.startswith("[Harbor Steps]")
 
     _write_transcript_line(None, "ignored")
+
+
+def test_emit_cli_line_wraps_long_lines_to_console_width():
+    output = StringIO()
+    console = Console(file=output, width=24, force_terminal=False, color_system=None)
+
+    _emit_cli_line(console, "Freytag Forge should wrap this line cleanly.")
+
+    wrapped_lines = [line for line in output.getvalue().splitlines() if line]
+    assert len(wrapped_lines) >= 2
+    assert all(len(line) <= 24 for line in wrapped_lines)
 
 
 def test_event_lines_hide_engine_keys_unless_debug():
