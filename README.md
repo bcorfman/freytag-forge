@@ -40,10 +40,13 @@ So the default coherence pipeline has **9 total decision participants** (5 narra
 - Beat realization layer for concrete story incidents:
   timed and trigger-based incidents (location/item/NPC interactions) can materialize beat themes into in-world events.
 - IF-style output contract with room-first narration and transcript command echo (`>COMMAND`).
+- Non-debug output stays diegetic: plain room title/prose, no engine bullets, and no rubric internals.
 - Multi-critic coherence gate with deterministic judge decisions.
 - Deterministic validation gates before critique scoring.
 - Hard budget limits and constrained reversal recovery path.
 - Canonical `StoryState.json` + `STORY.md` artifacts with integrity checks.
+- Canonical artifact trace chaining via `trace.parent_story_state_sha256`.
+- Per-turn artifact history snapshots under `story_artifacts/<slot>/turns/<turn_index>/`.
 - Strict typed contracts for agent I/O and deterministic contract error typing.
 
 For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).

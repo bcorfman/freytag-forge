@@ -74,6 +74,8 @@ flowchart LR
   - `StoryState.json`
   - `STORY.md`
 - Artifact integrity is enforced by hash checks and orchestrator-only write constraints.
+- Each artifact trace includes `parent_story_state_sha256` to link canonical snapshots across persisted turns.
+- Per-turn artifact history is retained under `story_artifacts/<slot>/turns/<turn_index>/`.
 
 ## Feature Details
 ### Beat Realization
@@ -91,6 +93,7 @@ flowchart LR
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
+- Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
 - Non-debug path surfaces clarity prompts for invalid/unknown actions.
 - Transcript command echo uses `>COMMAND` format.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
@@ -105,6 +108,7 @@ flowchart LR
 ### Deterministic Validators
 - Entity reachability
 - Inventory/location consistency
+- NPC presence consistency (off-screen NPCs cannot be narrated as present in-room)
 - Committed-state contradiction checks
 - Beat-transition legality
 

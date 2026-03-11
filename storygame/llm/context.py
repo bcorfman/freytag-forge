@@ -72,13 +72,14 @@ def _short_text(value: str, max_len: int) -> str:
     return value[: max_len - 3] + "..."
 
 
-def _npc_fact(npc: Npc) -> dict[str, str]:
+def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
     return {
         "id": npc.id,
         "name": npc.name,
         "pronouns": npc.pronouns,
         "identity": _short_text(npc.identity, MAX_NPC_DESCRIPTION_LEN),
         "description": _short_text(npc.description, MAX_NPC_DESCRIPTION_LEN),
+        "location": location,
     }
 
 
@@ -96,9 +97,18 @@ def _summarize_recent_events(events: EventLog) -> tuple[dict, ...]:
     )
 
 
+def _npc_locations(state: GameState) -> dict[str, str]:
+    locations: dict[str, str] = {}
+    for room_id, room in state.world.rooms.items():
+        for npc_id in room.npc_ids:
+            locations[npc_id] = room_id
+    return locations
+
+
 def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
+    locations = _npc_locations(state)
     npc_ids = sorted(state.world.npcs.keys())
-    return tuple(_npc_fact(state.world.npcs[npc_id]) for npc_id in npc_ids[:MAX_NPC_FACTS])
+    return tuple(_npc_fact(state.world.npcs[npc_id], locations.get(npc_id, "")) for npc_id in npc_ids[:MAX_NPC_FACTS])
 
 
 def build_narration_context(

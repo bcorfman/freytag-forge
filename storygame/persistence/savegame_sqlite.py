@@ -73,6 +73,7 @@ def serialize_state(state: GameState) -> dict[str, Any]:
         },
         "room_items": {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()},
         "event_log": [serialize_event(event) for event in state.event_log.events],
+        "last_judge_decision": dict(state.last_judge_decision) if state.last_judge_decision is not None else None,
     }
 
 
@@ -92,6 +93,16 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
             state.world.rooms[room_id].item_ids = tuple(item_ids)
 
     state.event_log = EventLog(tuple(deserialize_event(raw) for raw in payload.get("event_log", [])))
+    raw_judge_decision = payload.get("last_judge_decision")
+    if raw_judge_decision is None:
+        state.last_judge_decision = None
+    else:
+        state.last_judge_decision = {
+            "decision_id": str(raw_judge_decision.get("decision_id", "")),
+            "status": str(raw_judge_decision.get("status", "")),
+            "judge": str(raw_judge_decision.get("judge", "")),
+            "rationale": str(raw_judge_decision.get("rationale", "")),
+        }
     return state
 
 

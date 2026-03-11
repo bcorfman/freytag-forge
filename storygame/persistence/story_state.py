@@ -12,6 +12,7 @@ STORY_STATE_FILE = "StoryState.json"
 STORY_MARKDOWN_FILE = "STORY.md"
 ARTIFACT_SCHEMA_VERSION = 2
 ORCHESTRATOR_WRITER = "sqlite_save_store_orchestrator"
+TURN_HISTORY_DIR = "turns"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -100,6 +101,10 @@ def _story_markdown_sha256(story_markdown: str) -> str:
     return hashlib.sha256(story_markdown.encode("utf-8")).hexdigest()
 
 
+def _text_sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 def _validate_story_from_payload(payload: dict[str, object], story_markdown: str) -> None:
     expected_hash = payload["story_markdown_sha256"]
     actual_hash = _story_markdown_sha256(story_markdown)
@@ -107,21 +112,24 @@ def _validate_story_from_payload(payload: dict[str, object], story_markdown: str
         raise ValueError("Story markdown hash mismatch for canonical payload.")
 
 
-def _validate_existing_artifacts(directory: Path) -> None:
+def _validate_existing_artifacts(directory: Path) -> str:
     state_path = directory / STORY_STATE_FILE
     story_path = directory / STORY_MARKDOWN_FILE
     if not state_path.exists() and not story_path.exists():
-        return
+        return ""
     if not state_path.exists() or not story_path.exists():
         LOGGER.error("Artifact integrity check failed: missing paired artifact in %s", directory)
         raise ValueError("Artifact integrity check failed: artifact pair is incomplete.")
-    payload = load_story_state_payload(state_path)
+    state_text = state_path.read_text(encoding="utf-8")
+    payload = json.loads(state_text)
+    validate_story_state_payload(payload)
     story_markdown = story_path.read_text(encoding="utf-8")
     try:
         _validate_story_from_payload(payload, story_markdown)
     except ValueError as exc:
         LOGGER.error("Artifact integrity check failed: %s", exc)
         raise ValueError("Artifact integrity check failed: STORY.md was externally mutated.") from exc
+    return _text_sha256(state_text)
 
 
 def _assert_orchestrator_writer(writer: str) -> None:
@@ -164,9 +172,11 @@ def write_turn_artifacts(
 ) -> tuple[Path, Path]:
     _assert_orchestrator_writer(writer)
     directory.mkdir(parents=True, exist_ok=True)
-    _validate_existing_artifacts(directory)
+    parent_state_hash = _validate_existing_artifacts(directory)
 
-    payload = build_story_state_payload(state, trace=trace)
+    trace_payload = dict(trace)
+    trace_payload["parent_story_state_sha256"] = parent_state_hash
+    payload = build_story_state_payload(state, trace=trace_payload)
     story_markdown = _markdown_from_payload(payload)
     payload["story_markdown_sha256"] = _story_markdown_sha256(story_markdown)
     validate_story_state_payload(payload)
@@ -175,4 +185,9 @@ def write_turn_artifacts(
     state_path.write_text(canonical_story_state_text(payload), encoding="utf-8")
     story_path = directory / STORY_MARKDOWN_FILE
     story_path.write_text(story_markdown, encoding="utf-8")
+
+    history_dir = directory / TURN_HISTORY_DIR / f"{state.turn_index:06d}"
+    history_dir.mkdir(parents=True, exist_ok=True)
+    (history_dir / STORY_STATE_FILE).write_text(canonical_story_state_text(payload), encoding="utf-8")
+    (history_dir / STORY_MARKDOWN_FILE).write_text(story_markdown, encoding="utf-8")
     return state_path, story_path

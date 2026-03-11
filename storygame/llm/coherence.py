@@ -184,6 +184,38 @@ class _EntityReachabilityValidator:
             if unreachable:
                 reasons.append("VLD_EXIT_UNREACHABLE")
                 details.append(f"unreachable_directions={','.join(unreachable)}")
+
+        visible_npcs = {npc_id.lower() for npc_id in context.visible_npcs}
+        npc_labels: dict[str, tuple[str, ...]] = {}
+        for fact in context.npc_facts:
+            npc_id = str(fact.get("id", "")).strip().lower()
+            if npc_id:
+                labels: list[str] = [npc_id.replace("_", " ")]
+                npc_name = str(fact.get("name", "")).strip().lower()
+                if npc_name:
+                    labels.append(npc_name)
+                npc_labels[npc_id] = tuple(dict.fromkeys(label for label in labels if label))
+        for npc_id, labels in npc_labels.items():
+            if npc_id in visible_npcs:
+                continue
+            if not labels:
+                continue
+            presence_claims: list[str] = []
+            for label in labels:
+                presence_claims.extend(
+                    (
+                        f"{label} is here",
+                        f"{label} are here",
+                        f"{label} stands here",
+                        f"{label} waits here",
+                        f"{label} beside you",
+                        f"{label} in front of you",
+                    )
+                )
+            if any(claim in lower_narration for claim in presence_claims):
+                reasons.append("VLD_NPC_NOT_VISIBLE")
+                details.append(f"npc_not_visible={npc_id}")
+                break
         return {
             "validator_id": self.validator_id,
             "passed": not reasons,
@@ -578,11 +610,12 @@ class CoherenceGate:
 
             proposal = narration_to_agent_proposal("narrator", narrator.generate(current_context))
             narration = proposal["narration"]
-            token_spend["narrator"] += _token_count(narration)
-            if token_spend["narrator"] > self._max_tokens_per_role["narrator"]:
+            narration_tokens = _token_count(narration)
+            if token_spend["narrator"] + narration_tokens > self._max_tokens_per_role["narrator"]:
                 final_narration = narration
                 hard_fail_reason = "BUDGET_NARRATOR_TOKENS"
                 break
+            token_spend["narrator"] += narration_tokens
 
             validator_reports = self.validate_candidate(current_context, narration)
             final_validator_reports = validator_reports
@@ -600,12 +633,12 @@ class CoherenceGate:
 
             reports = self.critique_round(current_context, narration)
             critic_token_spend = sum(_token_count(report["feedback"]) for report in reports)
-            token_spend["critics"] += critic_token_spend
-            if token_spend["critics"] > self._max_tokens_per_role["critics"]:
+            if token_spend["critics"] + critic_token_spend > self._max_tokens_per_role["critics"]:
                 final_narration = narration
                 final_reports = reports
                 hard_fail_reason = "BUDGET_CRITIC_TOKENS"
                 break
+            token_spend["critics"] += critic_token_spend
 
             critique_round_index += 1
             decision = judge_critique_round(

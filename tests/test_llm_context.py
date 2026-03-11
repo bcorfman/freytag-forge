@@ -31,6 +31,11 @@ def test_context_includes_required_fields_and_limits():
     assert keeper is not None
     assert keeper["pronouns"] == "she/her"
     assert "female archivist" in keeper["identity"]
+    assert keeper["location"] == "archives"
+
+    ferryman = next((fact for fact in payload["npc_facts"] if fact["id"] == "ferryman"), None)
+    assert ferryman is not None
+    assert ferryman["location"] == "harbor"
 
 
 def test_context_includes_memory_fragments_without_overriding_facts():

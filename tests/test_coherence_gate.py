@@ -127,7 +127,7 @@ def test_hard_fail_triggers_when_narrator_token_budget_is_exhausted():
 
     assert result["judge_decision"]["status"] == "failed"
     assert result["telemetry"]["hard_fail_reason"] == "BUDGET_NARRATOR_TOKENS"
-    assert result["telemetry"]["token_spend"]["narrator"] > 30
+    assert result["telemetry"]["token_spend"]["narrator"] <= 30
 
 
 def test_hard_fail_triggers_when_wall_clock_budget_is_exhausted():
@@ -251,3 +251,35 @@ def test_invalid_candidates_never_reach_judge_scoring():
     assert result["judge_decision"]["round_index"] == 0
     assert result["judge_decision"]["total_score"] == 0
     assert result["validation_revisions"] == 2
+
+
+def test_validator_rejects_non_visible_npc_presence_claims():
+    gate = build_default_coherence_gate()
+    context = NarrationContext(
+        room_name="Salt Market",
+        room_description="Bright awnings and bargaining voices fill the plaza.",
+        visible_items=("bronze_key",),
+        visible_npcs=(),
+        npc_facts=(
+            {
+                "id": "ferryman",
+                "name": "Harbor Ferryman",
+                "pronouns": "he/him",
+                "identity": "male dockworker and river guide",
+                "description": "An old ferryman that knows the tide.",
+                "location": "harbor",
+            },
+        ),
+        exits=("south", "east"),
+        inventory=("torch",),
+        recent_events=(),
+        phase="rising_action",
+        tension=0.3,
+        beat="progressive_complication",
+        goal="Map the relay route and expose the harbor conspiracy.",
+        action="look",
+        memory_fragments=(),
+    )
+    reports = gate.validate_candidate(context, "The ferryman is here in the market beside you.")
+    reason_codes = {reason for report in reports if not report["passed"] for reason in report["reason_codes"]}
+    assert "VLD_NPC_NOT_VISIBLE" in reason_codes

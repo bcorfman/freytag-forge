@@ -13,6 +13,7 @@ from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.persistence.story_state import (
     STORY_MARKDOWN_FILE,
     STORY_STATE_FILE,
+    TURN_HISTORY_DIR,
     canonical_story_state_text,
     load_story_state_payload,
 )
@@ -117,3 +118,41 @@ def test_story_state_canonical_text_is_stable_across_processes(tmp_path):
     )
 
     assert local_text == cross_process_text
+
+
+def test_story_state_trace_links_parent_hash_on_subsequent_persist(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=902)
+    state.turn_index = 1
+
+    with SqliteSaveStore(db_path) as store:
+        store.save_run("trace_chain", state, Random(3), raw_command="look", action_kind="look")
+
+        artifact_dir = db_path.parent / "story_artifacts" / "trace_chain"
+        first_text = (artifact_dir / STORY_STATE_FILE).read_text(encoding="utf-8")
+        first_hash = hashlib.sha256(first_text.encode("utf-8")).hexdigest()
+
+        state.turn_index = 2
+        store.save_run("trace_chain", state, Random(3), raw_command="north", action_kind="move")
+
+    second_payload = load_story_state_payload(artifact_dir / STORY_STATE_FILE)
+    assert second_payload["trace"]["parent_story_state_sha256"] == first_hash
+
+
+def test_story_state_writes_per_turn_history_snapshots(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=711)
+
+    with SqliteSaveStore(db_path) as store:
+        state.turn_index = 1
+        store.save_run("history_slot", state, Random(5), raw_command="look", action_kind="look")
+        state.turn_index = 2
+        store.save_run("history_slot", state, Random(5), raw_command="north", action_kind="move")
+
+    artifact_dir = db_path.parent / "story_artifacts" / "history_slot"
+    turn_1_dir = artifact_dir / TURN_HISTORY_DIR / "000001"
+    turn_2_dir = artifact_dir / TURN_HISTORY_DIR / "000002"
+    assert (turn_1_dir / STORY_STATE_FILE).exists()
+    assert (turn_1_dir / STORY_MARKDOWN_FILE).exists()
+    assert (turn_2_dir / STORY_STATE_FILE).exists()
+    assert (turn_2_dir / STORY_MARKDOWN_FILE).exists()
