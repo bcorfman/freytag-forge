@@ -23,7 +23,7 @@ def _event_for_test() -> Event:
 
 def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
     db_path = tmp_path / "saves.sqlite"
-    state = build_default_state(seed=12)
+    state = build_default_state(seed=12, genre="thriller", session_length="long")
     state.progress = 0.41
     state.tension = 0.55
     state.turn_index = 4
@@ -47,6 +47,9 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
         loaded_state, loaded_rng = store.load_run("demo")
 
     assert loaded_state.replay_signature() == state.replay_signature()
+    assert loaded_state.story_genre == "thriller"
+    assert loaded_state.session_length == "long"
+    assert loaded_state.plot_curve_id == state.plot_curve_id
     assert loaded_rng.getstate() == rng.getstate()
 
 

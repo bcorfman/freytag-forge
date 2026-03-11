@@ -32,3 +32,14 @@ def test_game_state_tail_uses_sorted_room_items_in_signature():
     state = build_default_state(seed=9)
     state2 = state.clone()
     assert state2.replay_signature() == state.replay_signature()
+
+
+def test_build_default_state_sets_story_curve_metadata():
+    state = build_default_state(seed=13, genre="fantasy", session_length="long", tone="epic")
+
+    assert state.story_genre == "fantasy"
+    assert state.session_length == "long"
+    assert state.story_tone == "epic"
+    assert state.plot_curve_id in {"fantasy_prophecy_quest", "fantasy_dark_realm"}
+    assert state.story_outline_id
+    assert state.world_package["map"]["rooms"]

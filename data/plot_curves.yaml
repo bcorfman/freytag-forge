@@ -1,0 +1,560 @@
+version: 1
+sources:
+- name: Reagan et al. (2016) six emotional arcs
+  url: https://arxiv.org/abs/1606.07772
+  use: Base macro arc families for reusable curve shapes.
+- name: Save the Cat - 15 beats
+  url: https://savethecat.com/wp-content/uploads/2019/07/STC_Crash_Course_Essential_Vocabulary.pdf
+  use: Beat timing windows (Catalyst, Midpoint, All Is Lost, Finale) and act rhythm.
+- name: Save the Cat - beat list
+  url: https://savethecat.com/wp-content/uploads/2013/12/STC_BeatSheetRev3.pdf
+  use: Canonical beat sequence names for curve constraints.
+- name: Story Grid - thriller obligatory moments
+  url: https://storygrid.com/724/
+  use: Thriller/suspense convention anchors (clock, red herrings, false ending, mercy scene).
+- name: Story Grid - thriller cheat sheet
+  url: https://storygrid.com/wp-content/uploads/2023/02/Thriller-Guide.pdf
+  use: Life/Death global value and climactic stress profile.
+- name: Story Grid - love story cheat sheet
+  url: https://storygrid.com/wp-content/uploads/2017/04/Love-Story-Cheat-Sheet.pdf
+  use: Romance obligatory moments and reunion-oriented resolution profile.
+- name: Romance Genre 101 - HEA/HFN expectation
+  url: https://romancegenre101.com/faqs/
+  use: Ending constraint for romance templates (HEA/HFN style resolution).
+notes:
+  interpretation: Tension values are normalized to [0.0, 1.0]. Curves are soft scaffolding for dynamic overlay, not rigid scripts.
+  sampling: Each template uses 12 points corresponding to normalized story progress buckets (~8.3% each).
+  genre_set:
+  - sci-fi
+  - mystery
+  - romance
+  - adventure
+  - action
+  - suspense
+  - drama
+  - fantasy
+  - horror
+  - thriller
+global_overlay_contract:
+  required_beat_windows:
+    inciting_incident:
+    - 0.1
+    - 0.22
+    midpoint_shift:
+    - 0.45
+    - 0.6
+    all_is_lost:
+    - 0.68
+    - 0.84
+    climax:
+    - 0.78
+    - 0.94
+    resolution:
+    - 0.9
+    - 1.0
+  overlay_policy:
+    respect_curve_shape: true
+    allow_local_replanning: true
+    max_per_turn_tension_delta: 0.15
+    minimum_climax_delta_above_setup: 0.35
+    preserve_genre_obligatory_moments: true
+curve_library:
+  sci-fi:
+  - curve_id: sci_fi_discovery_escalation
+    arc_family: rags_to_riches_with_mid_reversal
+    points:
+    - 0.16
+    - 0.22
+    - 0.3
+    - 0.36
+    - 0.48
+    - 0.58
+    - 0.52
+    - 0.66
+    - 0.76
+    - 0.9
+    - 0.62
+    - 0.4
+    obligatory_moments:
+    - novum_reveal
+    - capability_cost
+    - systemic_consequence
+    - ethical_decision_climax
+    tags:
+    - tech_discovery
+    - escalation
+    - ethical_stakes
+  - curve_id: sci_fi_dystopian_pressure
+    arc_family: fall_then_rebound
+    points:
+    - 0.22
+    - 0.28
+    - 0.36
+    - 0.46
+    - 0.58
+    - 0.68
+    - 0.62
+    - 0.74
+    - 0.86
+    - 0.96
+    - 0.7
+    - 0.44
+    obligatory_moments:
+    - oppressive_system_pressure
+    - point_of_no_return
+    - truth_reveal
+    - liberation_or_submission
+    tags:
+    - dystopia
+    - resistance
+    - high_stakes
+  mystery:
+  - curve_id: mystery_fair_play_whodunit
+    arc_family: man_in_hole
+    points:
+    - 0.18
+    - 0.24
+    - 0.3
+    - 0.38
+    - 0.5
+    - 0.6
+    - 0.56
+    - 0.68
+    - 0.8
+    - 0.9
+    - 0.58
+    - 0.36
+    obligatory_moments:
+    - body_or_core_crime
+    - clue_ladder
+    - red_herring_pivot
+    - jaccuse_reveal
+    tags:
+    - investigation
+    - reveal
+    - deduction
+  - curve_id: mystery_conspiracy_spiral
+    arc_family: fall_then_fall_harder_then_reveal
+    points:
+    - 0.24
+    - 0.3
+    - 0.38
+    - 0.48
+    - 0.58
+    - 0.7
+    - 0.66
+    - 0.78
+    - 0.88
+    - 0.95
+    - 0.72
+    - 0.46
+    obligatory_moments:
+    - crime_macguffin
+    - witness_compromise
+    - investigator_in_peril
+    - double_reveal_endgame
+    tags:
+    - conspiracy
+    - pressure
+    - high_reversal
+  romance:
+  - curve_id: romance_courtship_classic
+    arc_family: cinderella
+    points:
+    - 0.14
+    - 0.2
+    - 0.28
+    - 0.36
+    - 0.46
+    - 0.58
+    - 0.54
+    - 0.64
+    - 0.76
+    - 0.86
+    - 0.48
+    - 0.26
+    obligatory_moments:
+    - lovers_meet
+    - intimate_connection
+    - breakup
+    - proof_of_love
+    - reunion
+    tags:
+    - courtship
+    - emotional_growth
+    - reunion
+  - curve_id: romance_second_chance
+    arc_family: man_in_hole_with_soft_landing
+    points:
+    - 0.2
+    - 0.26
+    - 0.34
+    - 0.42
+    - 0.54
+    - 0.62
+    - 0.5
+    - 0.6
+    - 0.74
+    - 0.84
+    - 0.44
+    - 0.24
+    obligatory_moments:
+    - past_wound_trigger
+    - renewed_closeness
+    - betrayal_or_setback
+    - sacrificial_proof
+    - earned_reunion
+    tags:
+    - second_chance
+    - healing
+    - commitment
+  adventure:
+  - curve_id: adventure_quest_rise
+    arc_family: rags_to_riches
+    points:
+    - 0.16
+    - 0.22
+    - 0.3
+    - 0.4
+    - 0.52
+    - 0.62
+    - 0.58
+    - 0.68
+    - 0.8
+    - 0.92
+    - 0.6
+    - 0.36
+    obligatory_moments:
+    - call_to_adventure
+    - threshold_crossing
+    - artifact_or_map_reveal
+    - ordeal
+    - return_with_change
+    tags:
+    - quest
+    - exploration
+    - set_piece
+  - curve_id: adventure_survival_odyssey
+    arc_family: icarus_then_recovery
+    points:
+    - 0.24
+    - 0.3
+    - 0.38
+    - 0.5
+    - 0.6
+    - 0.7
+    - 0.64
+    - 0.76
+    - 0.86
+    - 0.94
+    - 0.68
+    - 0.42
+    obligatory_moments:
+    - expedition_complication
+    - resource_crisis
+    - route_reversal
+    - last_push_escape
+    tags:
+    - survival
+    - hazards
+    - forward_momentum
+  action:
+  - curve_id: action_revenge_clock
+    arc_family: steady_rise_high_peak
+    points:
+    - 0.22
+    - 0.3
+    - 0.4
+    - 0.52
+    - 0.62
+    - 0.72
+    - 0.66
+    - 0.78
+    - 0.88
+    - 0.97
+    - 0.72
+    - 0.46
+    obligatory_moments:
+    - inciting_attack
+    - training_or_regroup
+    - midpoint_counterstrike
+    - all_is_lost_setback
+    - final_showdown
+    tags:
+    - kinetic
+    - combat
+    - clock
+  - curve_id: action_heist_escalation
+    arc_family: rise_false_win_crash_win
+    points:
+    - 0.2
+    - 0.28
+    - 0.36
+    - 0.48
+    - 0.58
+    - 0.68
+    - 0.72
+    - 0.8
+    - 0.9
+    - 0.96
+    - 0.7
+    - 0.44
+    obligatory_moments:
+    - target_setup
+    - crew_or_tool_assembly
+    - false_success
+    - betrayal_or_alarm
+    - extraction_climax
+    tags:
+    - heist
+    - twists
+    - set_piece
+  suspense:
+  - curve_id: suspense_cat_mouse
+    arc_family: fall_then_rise_under_clock
+    points:
+    - 0.24
+    - 0.3
+    - 0.38
+    - 0.48
+    - 0.58
+    - 0.68
+    - 0.64
+    - 0.76
+    - 0.88
+    - 0.95
+    - 0.74
+    - 0.5
+    obligatory_moments:
+    - threat_materializes
+    - clock_announced
+    - safe_place_breached
+    - false_ending
+    - narrow_escape_or_capture
+    tags:
+    - paranoia
+    - clock
+    - chase
+  - curve_id: suspense_psychological_spike
+    arc_family: oscillating_spiral_up
+    points:
+    - 0.2
+    - 0.28
+    - 0.34
+    - 0.46
+    - 0.52
+    - 0.66
+    - 0.54
+    - 0.72
+    - 0.82
+    - 0.92
+    - 0.68
+    - 0.48
+    obligatory_moments:
+    - uncertainty_seed
+    - reliability_doubt
+    - personalization_of_threat
+    - identity_reveal_or_choice
+    tags:
+    - psychological
+    - reversals
+    - instability
+  drama:
+  - curve_id: drama_character_pressure
+    arc_family: man_in_hole_soft_recovery
+    points:
+    - 0.14
+    - 0.2
+    - 0.28
+    - 0.36
+    - 0.48
+    - 0.58
+    - 0.5
+    - 0.62
+    - 0.74
+    - 0.84
+    - 0.46
+    - 0.3
+    obligatory_moments:
+    - core_wound_exposed
+    - relationship_fracture
+    - moral_choice
+    - costly_repair_attempt
+    tags:
+    - character
+    - relationships
+    - moral_conflict
+  - curve_id: drama_family_reckoning
+    arc_family: fall_then_partial_heal
+    points:
+    - 0.18
+    - 0.24
+    - 0.32
+    - 0.4
+    - 0.52
+    - 0.62
+    - 0.56
+    - 0.68
+    - 0.78
+    - 0.86
+    - 0.52
+    - 0.34
+    obligatory_moments:
+    - old_secret_surface
+    - interpersonal_break
+    - accountability_scene
+    - imperfect_reconciliation
+    tags:
+    - family
+    - secrets
+    - reconciliation
+  fantasy:
+  - curve_id: fantasy_prophecy_quest
+    arc_family: heroic_rise
+    points:
+    - 0.16
+    - 0.24
+    - 0.32
+    - 0.42
+    - 0.52
+    - 0.62
+    - 0.58
+    - 0.7
+    - 0.82
+    - 0.92
+    - 0.6
+    - 0.36
+    obligatory_moments:
+    - world_magic_reveal
+    - prophecy_or_call
+    - mentor_or_artifact_turn
+    - ordeal_with_cost
+    - realm_balance_shift
+    tags:
+    - quest
+    - magic_system
+    - chosen_or_reluctant_hero
+  - curve_id: fantasy_dark_realm
+    arc_family: fall_and_redemptive_counter
+    points:
+    - 0.24
+    - 0.3
+    - 0.38
+    - 0.5
+    - 0.6
+    - 0.7
+    - 0.64
+    - 0.78
+    - 0.88
+    - 0.96
+    - 0.7
+    - 0.42
+    obligatory_moments:
+    - corruption_sign
+    - faction_split
+    - sacrifice_gate
+    - final_binding_or_breaking
+    tags:
+    - dark_fantasy
+    - faction_conflict
+    - sacrifice
+  horror:
+  - curve_id: horror_monster_house
+    arc_family: steady_rise_to_dread_peak
+    points:
+    - 0.26
+    - 0.34
+    - 0.42
+    - 0.52
+    - 0.62
+    - 0.74
+    - 0.7
+    - 0.82
+    - 0.92
+    - 0.98
+    - 0.82
+    - 0.58
+    obligatory_moments:
+    - monster_hint
+    - no_escape_condition
+    - body_count_or_direct_cost
+    - hero_at_mercy
+    - final_confrontation
+    tags:
+    - dread
+    - containment
+    - survival
+  - curve_id: horror_psychological_haunting
+    arc_family: oscillating_descent
+    points:
+    - 0.2
+    - 0.28
+    - 0.36
+    - 0.46
+    - 0.54
+    - 0.66
+    - 0.6
+    - 0.74
+    - 0.84
+    - 0.94
+    - 0.78
+    - 0.56
+    obligatory_moments:
+    - anomaly_pattern
+    - belief_split
+    - reality_break_scene
+    - costly_truth_reveal
+    tags:
+    - psychological_horror
+    - haunting
+    - unreliable_perception
+  thriller:
+  - curve_id: thriller_macguffin_clock
+    arc_family: high_pressure_escalation
+    points:
+    - 0.24
+    - 0.32
+    - 0.4
+    - 0.5
+    - 0.62
+    - 0.74
+    - 0.68
+    - 0.8
+    - 0.9
+    - 0.98
+    - 0.76
+    - 0.52
+    obligatory_moments:
+    - inciting_crime
+    - macguffin_definition
+    - red_herring_chain
+    - hero_at_mercy
+    - false_ending_then_true_end
+    tags:
+    - clock
+    - red_herring
+    - false_ending
+  - curve_id: thriller_political_conspiracy
+    arc_family: double_reversal_climb
+    points:
+    - 0.22
+    - 0.3
+    - 0.38
+    - 0.5
+    - 0.6
+    - 0.72
+    - 0.64
+    - 0.78
+    - 0.88
+    - 0.96
+    - 0.72
+    - 0.5
+    obligatory_moments:
+    - public_incident
+    - institutional_obstruction
+    - personalization_of_risk
+    - public_unmasking_or_silencing_attempt
+    tags:
+    - conspiracy
+    - institutions
+    - high_stakes_reveal

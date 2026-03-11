@@ -380,13 +380,16 @@ def run_turn(
 def run_replay(
     seed: int,
     commands: list[str],
+    genre: str = "mystery",
+    session_length: int | str = "medium",
+    tone: str = "neutral",
     debug: bool = False,
     save_db: Path | None = None,
     memory_db: Path | None = None,
     memory_slot: str = "default",
 ) -> GameState:
     rng = Random(seed)
-    state = build_default_state(seed)
+    state = build_default_state(seed, genre=genre, session_length=session_length, tone=tone)
     narrator: Narrator = MockNarrator()
     save_store: SqliteSaveStore | None = SqliteSaveStore(save_db) if save_db is not None else None
     memory_store: SqliteVectorMemory | None = SqliteVectorMemory(memory_db) if memory_db is not None else None
@@ -417,6 +420,35 @@ def main(argv: list[str] | None = None) -> None:
 
     parser = argparse.ArgumentParser(description="Freytag text adventure")
     parser.add_argument("--seed", type=int, default=123, help="Random seed for deterministic play")
+    parser.add_argument(
+        "--genre",
+        choices=(
+            "sci-fi",
+            "mystery",
+            "romance",
+            "adventure",
+            "action",
+            "suspense",
+            "drama",
+            "fantasy",
+            "horror",
+            "thriller",
+        ),
+        default="mystery",
+        help="Story genre used for startup curve selection.",
+    )
+    parser.add_argument(
+        "--session-length",
+        choices=("short", "medium", "long"),
+        default="medium",
+        help="Session-length bucket used for startup curve selection.",
+    )
+    parser.add_argument(
+        "--tone",
+        choices=("neutral", "dark", "light", "romantic", "tense", "mysterious", "epic"),
+        default="neutral",
+        help="Optional tone preference used for outline selection.",
+    )
     parser.add_argument("--replay", type=Path, default=None, help="Replay commands from a file")
     parser.add_argument("--save-db", type=Path, default=None, help="SQLite save file path")
     parser.add_argument("--memory-db", type=Path, default=None, help="SQLite vector memory file path")
@@ -438,7 +470,12 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     console = Console()
 
-    state = build_default_state(args.seed)
+    state = build_default_state(
+        args.seed,
+        genre=args.genre,
+        session_length=args.session_length,
+        tone=args.tone,
+    )
     rng = Random(args.seed)
     narrator: Narrator = _build_narrator(args.narrator)
     save_store: SqliteSaveStore | None = SqliteSaveStore(args.save_db) if args.save_db is not None else None

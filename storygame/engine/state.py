@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from storygame.engine.facts import FactStore
+
 
 def _clamp_unit(value: float) -> float:
     if value < 0.0:
@@ -117,6 +119,14 @@ class GameState:
     seed: int
     player: PlayerState
     world: WorldState
+    story_genre: str = "mystery"
+    story_tone: str = "neutral"
+    session_length: str = "medium"
+    plot_curve_id: str = "mystery_fair_play_whodunit"
+    story_outline_id: str = ""
+    world_package: dict[str, Any] = field(default_factory=dict)
+    world_facts: FactStore = field(default_factory=FactStore)
+    fact_metrics: dict[str, float] = field(default_factory=dict)
     progress: float = 0.0
     tension: float = 0.35
     turn_index: int = 0

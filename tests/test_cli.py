@@ -86,6 +86,22 @@ def test_run_replay_executes_sequence_with_mock_narrator():
     assert final_state.turn_index == 2
 
 
+def test_run_replay_selects_curve_from_genre_and_length():
+    final_state = run_replay(
+        seed=13,
+        commands=["look"],
+        genre="horror",
+        session_length="short",
+        tone="dark",
+        debug=False,
+    )
+    assert final_state.story_genre == "horror"
+    assert final_state.session_length == "short"
+    assert final_state.story_tone == "dark"
+    assert final_state.plot_curve_id in {"horror_monster_house", "horror_psychological_haunting"}
+    assert final_state.story_outline_id
+
+
 def test_build_narrator_modes():
     narrator = _build_narrator("none")
     assert isinstance(narrator, SilentNarrator)
@@ -185,7 +201,7 @@ def test_build_memory_tag_set_includes_expected_fields():
     state = build_default_state(seed=20)
     tags = _build_memory_tag_set(state, parse_command("talk ferryman"))
     assert "beat_unknown" in tags
-    assert "goal_map" in tags
+    assert any(tag.startswith("goal_") for tag in tags)
     assert "ferryman" in tags
     assert "npc_ferryman" in tags
 

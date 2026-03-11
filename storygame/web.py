@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from os import getenv
 from pathlib import Path
 from random import Random
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -64,6 +65,20 @@ class TurnRequest(BaseModel):
     command: str
     run_id: str | None = None
     seed: int = 123
+    genre: Literal[
+        "sci-fi",
+        "mystery",
+        "romance",
+        "adventure",
+        "action",
+        "suspense",
+        "drama",
+        "fantasy",
+        "horror",
+        "thriller",
+    ] = "mystery"
+    session_length: Literal["short", "medium", "long"] = "medium"
+    tone: Literal["neutral", "dark", "light", "romantic", "tense", "mysterious", "epic"] = "neutral"
     debug: bool = False
 
 
@@ -72,6 +87,11 @@ class StateSnapshot(BaseModel):
     location: str
     room_name: str
     inventory: list[str]
+    genre: str
+    tone: str
+    session_length: str
+    plot_curve_id: str
+    story_outline_id: str
     objective: str
     phase: str
     progress: float
@@ -113,7 +133,15 @@ def create_app(
             session = sessions[run_id]
         elif run_id is None:
             run_id = uuid4().hex
-            session = _SessionState(build_default_state(seed=payload.seed), Random(payload.seed))
+            session = _SessionState(
+                build_default_state(
+                    seed=payload.seed,
+                    genre=payload.genre,
+                    session_length=payload.session_length,
+                    tone=payload.tone,
+                ),
+                Random(payload.seed),
+            )
             sessions[run_id] = session
         else:
             raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'.")
@@ -136,6 +164,11 @@ def create_app(
             location=next_state.player.location,
             room_name=room.name,
             inventory=list(next_state.player.inventory),
+            genre=next_state.story_genre,
+            tone=next_state.story_tone,
+            session_length=next_state.session_length,
+            plot_curve_id=next_state.plot_curve_id,
+            story_outline_id=next_state.story_outline_id,
             objective=next_state.active_goal,
             phase=str(get_phase(next_state.progress)),
             progress=next_state.progress,

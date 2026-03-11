@@ -1,0 +1,22 @@
+schema_version: 1
+cards:
+  - npc_id: oracle
+    core_identity:
+      role: high_oracle
+      worldview: ["truth_over_comfort", "omens_have_costs"]
+      speech_style: ["measured", "symbolic", "short_sentences"]
+      taboos: ["no_modern_slang"]
+      hard_goals: ["protect_sanctuary_rites"]
+    adaptive_state:
+      trust_player: 0.45
+      fear_level: 0.30
+      stance_on_player: cautious
+      current_goal: verify_resonator_source
+      secondary_goals: ["test_player_intent"]
+      mood_tags: ["wary", "curious"]
+    dialogue_policy:
+      max_utterance_sentences: 3
+      ask_question_bias: 0.6
+      reveal_thresholds:
+        hidden_resonator:
+          trust_min: 0.55

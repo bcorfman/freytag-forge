@@ -1,20 +1,37 @@
 from __future__ import annotations
 
+from storygame.engine.facts import (
+    apply_fact_ops,
+    event_fact_ops,
+    player_inventory,
+    player_location,
+    rebuild_facts_from_legacy_views,
+    room_items,
+    room_npcs,
+    room_paths,
+)
 from storygame.engine.mystery import npc_talk_message, take_item_message
 from storygame.engine.parser import Action, ActionKind
-from storygame.engine.state import Event, GameState, Room
+from storygame.engine.state import Event, GameState
 
 
-def _find_exit(room: Room, target: str) -> str | None:
-    if target in room.exits:
-        return room.exits[target]
-    for _direction, destination in room.exits.items():
+def _find_exit(state: GameState, room_id: str, target: str) -> tuple[str, str] | None:
+    exits = room_paths(state, room_id)
+    if target in exits:
+        return target, exits[target]
+    for direction, destination in exits.items():
         if destination == target:
-            return destination
+            return direction, destination
     return None
 
 
-def _use_event(turn_index: int, entities: tuple[str, ...], message: str, delta_progress: float = 0.0) -> Event:
+def _use_event(
+    turn_index: int,
+    entities: tuple[str, ...],
+    message: str,
+    delta_progress: float = 0.0,
+    fact_ops: list[dict[str, object]] | None = None,
+) -> Event:
     return Event(
         type="use",
         message_key=message,
@@ -23,13 +40,14 @@ def _use_event(turn_index: int, entities: tuple[str, ...], message: str, delta_p
         delta_tension=0.01,
         tags=("world",),
         turn_index=turn_index,
+        metadata={"fact_ops": fact_ops or []},
     )
 
 
 def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
     turn_index = state.turn_index
-    inventory = state.player.inventory
-    location = state.player.location
+    inventory = player_inventory(state)
+    location = player_location(state)
     target_label = (item_id, target) if target else (item_id,)
 
     map_and_lens = {item_id, target} == {"sea_map", "glass_lens"}
@@ -50,18 +68,18 @@ def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
                 tags=("validation",),
                 turn_index=turn_index,
             )
-        if state.player.flags.get("relay_route_confirmed", False):
+        if state.world_facts.holds("flag", "player", "relay_route_confirmed"):
             return _use_event(
                 turn_index,
                 target_label,
                 "The lens confirms your marked routes still converge on the sanctuary.",
             )
-        state.player.flags["relay_route_confirmed"] = True
         return _use_event(
             turn_index,
             target_label,
             "You map the relay route: archive vault, tower stair, then sanctuary.",
             delta_progress=0.08,
+            fact_ops=[{"op": "assert", "fact": ("flag", "player", "relay_route_confirmed")}],
         )
 
     if item_id == "ropes" and target in {"bell", "bell_frame", "frame"}:
@@ -81,22 +99,22 @@ def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
                 tags=("validation",),
                 turn_index=turn_index,
             )
-        if state.player.flags.get("frame_braced", False):
+        if state.world_facts.holds("flag", "player", "frame_braced"):
             return _use_event(
                 turn_index,
                 target_label,
                 "The frame is already braced and steady in the wind.",
             )
-        state.player.flags["frame_braced"] = True
         return _use_event(
             turn_index,
             target_label,
             "You brace the shattered bell frame. The resonance stabilizes toward the sanctuary.",
             delta_progress=0.1,
+            fact_ops=[{"op": "assert", "fact": ("flag", "player", "frame_braced")}],
         )
 
     if item_id == "moonstone" and location == "sanctuary":
-        if not state.player.flags.get("frame_braced", False):
+        if not state.world_facts.holds("flag", "player", "frame_braced"):
             return Event(
                 type="use_failed",
                 message_key="The tone scatters until the tower frame is braced.",
@@ -104,18 +122,18 @@ def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
                 tags=("validation",),
                 turn_index=turn_index,
             )
-        if state.player.flags.get("transmitter_exposed", False):
+        if state.world_facts.holds("flag", "player", "transmitter_exposed"):
             return _use_event(
                 turn_index,
                 target_label,
                 "The moonstone keeps the hidden resonator exposed.",
             )
-        state.player.flags["transmitter_exposed"] = True
         return _use_event(
             turn_index,
             target_label,
             "The moonstone reveals a hidden resonator beneath the altar.",
             delta_progress=0.16,
+            fact_ops=[{"op": "assert", "fact": ("flag", "player", "transmitter_exposed")}],
         )
 
     return _use_event(turn_index, target_label, "use_success")
@@ -123,10 +141,19 @@ def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
 
 def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list[Event]]:
     next_state = state.clone()
+    rebuild_facts_from_legacy_views(next_state)
     next_state.turn_index += 1
     events: list[Event] = []
 
-    room = next_state.world.rooms[next_state.player.location]
+    room_id = player_location(next_state)
+    _room = next_state.world.rooms[room_id]
+
+    def _commit() -> tuple[GameState, list[Event]]:
+        for event in events:
+            ops = event_fact_ops(event)
+            if ops:
+                apply_fact_ops(next_state, ops)
+        return next_state, events
 
     if action.kind == ActionKind.LOOK:
         events.append(
@@ -138,7 +165,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                 turn_index=next_state.turn_index,
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.HELP:
         events.append(
@@ -149,22 +176,22 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                 turn_index=next_state.turn_index,
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.INVENTORY:
         events.append(
             Event(
                 type="inventory",
                 message_key="inventory",
-                entities=next_state.player.inventory,
+                entities=player_inventory(next_state),
                 turn_index=next_state.turn_index,
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.MOVE:
-        destination = _find_exit(room, action.target)
-        if destination is None:
+        exit_result = _find_exit(next_state, room_id, action.target)
+        if exit_result is None:
             events.append(
                 Event(
                     type="move_failed",
@@ -174,15 +201,13 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
+            return _commit()
 
-        direction = next(
-            (key for key, value in room.exits.items() if value == destination),
-            action.target,
-        )
-        lock_key = room.locked_exits.get(action.target) or room.locked_exits.get(direction)
+        direction, destination = exit_result
+        locked_facts = next_state.world_facts.query("locked", direction, room_id, None)
+        lock_key = locked_facts[0][3] if locked_facts else None
 
-        if lock_key is not None and lock_key not in next_state.player.inventory:
+        if lock_key is not None and lock_key not in player_inventory(next_state):
             events.append(
                 Event(
                     type="move_failed",
@@ -192,9 +217,8 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
+            return _commit()
 
-        next_state.player.location = destination
         events.append(
             Event(
                 type="move",
@@ -202,12 +226,18 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                 entities=(action.target, destination),
                 tags=("world",),
                 turn_index=next_state.turn_index,
+                metadata={
+                    "fact_ops": [
+                        {"op": "retract", "fact": ("at", "player", room_id)},
+                        {"op": "assert", "fact": ("at", "player", destination)},
+                    ]
+                },
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.TAKE:
-        if action.target not in room.item_ids:
+        if action.target not in room_items(next_state, room_id):
             events.append(
                 Event(
                     type="take_failed",
@@ -217,7 +247,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
+            return _commit()
 
         item = next_state.world.items[action.target]
         if not item.portable:
@@ -229,10 +259,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
-
-        room.item_ids = tuple(item_id for item_id in room.item_ids if item_id != action.target)
-        next_state.player.inventory = tuple(list(next_state.player.inventory) + [action.target])
+            return _commit()
 
         events.append(
             Event(
@@ -243,14 +270,21 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                 delta_tension=0.02,
                 tags=("world", "quest_item" if "quest" in item.tags else "world_item"),
                 turn_index=next_state.turn_index,
-                metadata={"item_kind": item.kind, "item_name": item.name},
+                metadata={
+                    "item_kind": item.kind,
+                    "item_name": item.name,
+                    "fact_ops": [
+                        {"op": "retract", "fact": ("room_item", room_id, action.target)},
+                        {"op": "assert", "fact": ("holding", "player", action.target)},
+                    ],
+                },
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.TALK:
         npc_id = action.target
-        if npc_id not in room.npc_ids:
+        if npc_id not in room_npcs(next_state, room_id):
             events.append(
                 Event(
                     type="talk_failed",
@@ -260,13 +294,11 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
+            return _commit()
 
         npc = next_state.world.npcs[npc_id]
         flag_key = f"talked_{npc_id}"
-        previous_talk = next_state.player.flags.get(flag_key, False)
-        if not previous_talk:
-            next_state.player.flags[flag_key] = True
+        previous_talk = next_state.world_facts.holds("flag", "player", flag_key)
 
         talk_line = npc_talk_message(next_state, npc, not previous_talk)
         events.append(
@@ -283,10 +315,11 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     "npc_id": npc_id,
                     "first_talk": not previous_talk,
                     "knowledge_source": npc.knowledge_source,
+                    "fact_ops": ([] if previous_talk else [{"op": "assert", "fact": ("flag", "player", flag_key)}]),
                 },
             )
         )
-        return next_state, events
+        return _commit()
 
     if action.kind == ActionKind.USE:
         payload = action.target
@@ -295,7 +328,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
         else:
             item_id, target = payload, ""
 
-        if item_id not in next_state.player.inventory:
+        if item_id not in player_inventory(next_state):
             events.append(
                 Event(
                     type="use_failed",
@@ -305,10 +338,10 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     turn_index=next_state.turn_index,
                 )
             )
-            return next_state, events
+            return _commit()
 
         events.append(_resolve_use(next_state, item_id, target))
-        return next_state, events
+        return _commit()
 
     events.append(
         Event(
@@ -319,4 +352,4 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
             turn_index=next_state.turn_index,
         )
     )
-    return next_state, events
+    return _commit()
