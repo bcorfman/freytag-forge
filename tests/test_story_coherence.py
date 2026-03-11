@@ -7,7 +7,7 @@ from storygame.engine.events import list_event_templates
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import SilentNarrator
+from storygame.llm.adapters import MockNarrator, SilentNarrator
 
 
 def _event_texts() -> tuple[str, ...]:
@@ -28,7 +28,7 @@ def test_room_output_includes_signal_direction_hint():
     next_state, lines, *_ = run_turn(state, "look", rng, SilentNarrator())
 
     assert next_state.player.location == "harbor"
-    assert any("Signal:" in line for line in lines)
+    assert any("resonance is stronger toward" in line for line in lines)
 
 
 def test_npc_dialogue_is_actionable_and_exposed_in_talk_event_text():
@@ -70,3 +70,14 @@ def test_story_goal_is_specific_and_not_just_follow_bell_signal():
     assert "bell signal" not in goal
     assert "conspiracy" in goal
     assert "relay" in goal
+
+
+def test_npcs_do_not_follow_player_between_rooms_without_trigger():
+    state = build_default_state(seed=19)
+    rng = Random(19)
+
+    moved_state, lines, *_ = run_turn(state, "north", rng, MockNarrator(), debug=False)
+
+    assert moved_state.player.location == "market"
+    combined = "\n".join(lines).lower()
+    assert "ferryman is here" not in combined

@@ -16,9 +16,9 @@ def test_room_lines_prioritize_clues_and_summarize_junk():
 
     lines = _room_lines(state)
 
-    assert "sea_map" in lines
+    assert "sea map" in lines
     assert "old_coin" not in lines
-    assert "Junk nearby:" in lines
+    assert "unremarkable item" in lines
 
 
 def test_narration_context_filters_junk_inventory_items():

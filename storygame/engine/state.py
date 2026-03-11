@@ -123,6 +123,7 @@ class GameState:
     event_log: EventLog = field(default_factory=EventLog)
     beat_history: tuple[str, ...] = ()
     active_goal: str = "Follow the bell signal and uncover the old conspiracy."
+    last_judge_decision: dict[str, str] | None = None
 
     def clone(self) -> GameState:
         return copy.deepcopy(self)

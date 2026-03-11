@@ -11,7 +11,6 @@ from storygame.cli import (
     _build_narrator,
     _emit_cli_line,
     _event_lines,
-    _opening_briefing_lines,
     _room_distance,
     _room_lines,
     _signal_hint,
@@ -26,13 +25,14 @@ from storygame.engine.world import build_default_state
 from storygame.llm.adapters import MockNarrator, SilentNarrator
 from storygame.llm.context import build_narration_context
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
+from storygame.persistence.story_state import STORY_STATE_FILE, load_story_state_payload
 
 
 def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     assert _event_lines([]) == ""
 
     line = _room_lines(build_default_state(seed=1))
-    assert line.startswith("[Harbor Steps]")
+    assert line.startswith("Harbor Steps\n")
 
     _write_transcript_line(None, "ignored")
 
@@ -63,19 +63,11 @@ def test_event_lines_hide_engine_keys_unless_debug():
     assert "move_success" not in text
     assert "Witness account:" in text
     assert "talk:" not in text
+    assert "- Witness account:" not in text
 
     debug_text = _event_lines(events, debug=True)
     assert "move_success" in debug_text
     assert "talk:" in debug_text
-
-
-def test_opening_briefing_explains_stakes_and_conspiracy():
-    state = build_default_state(seed=1)
-    lines = _opening_briefing_lines(state)
-
-    assert any("conspiracy" in line.lower() for line in lines)
-    assert any("forged" in line.lower() for line in lines)
-    assert any("mentor" in line.lower() for line in lines)
 
 
 def test_room_lines_when_empty_room_has_no_optional_sections():
@@ -86,7 +78,7 @@ def test_room_lines_when_empty_room_has_no_optional_sections():
         description="Closed.",
     )
     lines = _room_lines(state)
-    assert lines == "[Harbor]\nClosed."
+    assert lines == "Harbor\nClosed."
 
 
 def test_run_replay_executes_sequence_with_mock_narrator():
@@ -208,7 +200,7 @@ def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
     assert final_state.player.location == "harbor"
 
 
-def test_first_turn_includes_opening_briefing_lines():
+def test_first_turn_uses_diegetic_room_first_output():
     state = build_default_state(seed=15)
     next_state, lines, _action_raw, _beat, continued = run_turn(
         state,
@@ -219,8 +211,9 @@ def test_first_turn_includes_opening_briefing_lines():
 
     assert continued is True
     assert next_state.turn_index == 1
-    assert any("Before dawn" in line for line in lines)
-    assert any("mentor" in line.lower() for line in lines)
+    assert lines[0].startswith("Harbor Steps\n")
+    assert all("Before dawn" not in line for line in lines)
+    assert all(not line.startswith("- ") for line in lines)
 
 
 def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
@@ -233,7 +226,7 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     main(["--seed", "1", "--transcript", str(transcript)])
 
     text = transcript.read_text()
-    assert "Before dawn" in text
+    assert "Before dawn" not in text
     assert ">LOOK" in text
     assert ">QUIT" in text
     assert "Goodbye." in text
@@ -347,3 +340,30 @@ def test_run_turn_debug_includes_coherence_budget_telemetry():
     )
 
     assert any("[debug] coherence_budget" in line for line in lines)
+
+
+def test_save_persists_last_accepted_judge_decision(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=77)
+    rng = Random(77)
+    state.last_judge_decision = {
+        "decision_id": "judge-test-accepted",
+        "status": "accepted",
+        "judge": "director",
+        "rationale": "deterministic test fixture",
+    }
+
+    with SqliteSaveStore(db_path) as store:
+        _state, save_lines, _action_raw, _beat, _continued = run_turn(
+            state,
+            "save checkpoint",
+            rng,
+            MockNarrator(),
+            save_store=store,
+        )
+        assert "Saved to slot 'checkpoint'." in save_lines
+
+    artifact_dir = db_path.parent / "story_artifacts" / "checkpoint"
+    payload = load_story_state_payload(artifact_dir / STORY_STATE_FILE)
+    assert payload["trace"]["judge_decision"]["decision_id"] == "judge-test-accepted"
+    assert payload["trace"]["judge_decision"]["status"] == "accepted"

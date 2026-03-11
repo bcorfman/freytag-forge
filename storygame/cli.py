@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import deque
 from pathlib import Path
 from random import Random
@@ -70,30 +71,44 @@ def _signal_hint(state: GameState) -> str:
     return f"Signal: Echoes refract through stone, but the resonance is stronger toward {direction_text}."
 
 
-def _opening_briefing_lines(state: GameState) -> tuple[str, ...]:
-    return (
-        "Before dawn, forged emergency tones emptied the harbor while conspirators raided sealed archive ledgers.",
-        "Your mentor was framed for those false alarms; proving the conspiracy is the only way to clear their name.",
-        f"Objective: {state.active_goal}",
-    )
+def _humanize_token(token: str) -> str:
+    return token.replace("_", " ")
+
+
+def _joined_with_and(values: tuple[str, ...] | list[str]) -> str:
+    if not values:
+        return ""
+    if len(values) == 1:
+        return values[0]
+    if len(values) == 2:
+        return f"{values[0]} and {values[1]}"
+    return f"{', '.join(values[:-1])}, and {values[-1]}"
 
 
 def _room_lines(state: GameState) -> str:
     room = state.world.rooms[state.player.location]
-    pieces = [f"[{room.name}]", room.description]
+    pieces = [room.name, room.description]
     signal_hint = _signal_hint(state)
-    if signal_hint:
-        pieces.append(signal_hint)
     actionable_items, junk_count = room_item_groups(state, room)
     if actionable_items:
-        pieces.append("Items: " + ", ".join(actionable_items))
+        visible_items = tuple(_humanize_token(item) for item in actionable_items)
+        pieces.append(f"You can see {_joined_with_and(visible_items)}.")
     if junk_count > 0:
         suffix = "item" if junk_count == 1 else "items"
-        pieces.append(f"Junk nearby: {junk_count} {suffix}.")
+        verb = "is" if junk_count == 1 else "are"
+        pieces.append(f"There {verb} {junk_count} other unremarkable {suffix} nearby.")
     if room.npc_ids:
-        pieces.append("NPCs: " + ", ".join(room.npc_ids))
+        visible_npcs = tuple(_humanize_token(npc) for npc in room.npc_ids)
+        verb = "is" if len(visible_npcs) == 1 else "are"
+        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} here.")
     if room.exits:
-        pieces.append("Exits: " + ", ".join(sorted(room.exits.keys())))
+        exits = tuple(sorted(room.exits.keys()))
+        if len(exits) == 1:
+            pieces.append(f"The only exit is to the {exits[0]}.")
+        else:
+            pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
+    if signal_hint:
+        pieces.append(signal_hint.replace("Signal: ", ""))
     return "\n".join(pieces)
 
 
@@ -102,6 +117,9 @@ def _public_event_message(message_key: str) -> str:
     if not message:
         return ""
     clarification_messages = {
+        "look": "",
+        "inventory": "",
+        "help": "",
         "unknown_command": (
             "I didn't understand that command. Try LOOK, GO <direction>, TALK <name>, TAKE <item>, or INVENTORY."
         ),
@@ -126,7 +144,7 @@ def _event_lines(events, debug: bool = False) -> str:
     if debug:
         return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
     public_lines = [_public_event_message(event.message_key) for event in events]
-    return "\n".join(f"- {message}" for message in public_lines if message)
+    return "\n".join(message for message in public_lines if message)
 
 
 def _write_transcript_line(handle: TextIO | None, line: str) -> None:
@@ -138,6 +156,23 @@ def _write_transcript_line(handle: TextIO | None, line: str) -> None:
 def _emit_cli_line(console: Console, line: str) -> None:
     for paragraph in line.split("\n"):
         console.print(paragraph, highlight=False, markup=False, overflow="fold")
+
+
+def _inventory_lines(state: GameState) -> list[str]:
+    items = tuple(_humanize_token(item) for item in state.player.inventory)
+    if not items:
+        return ["You are carrying nothing."]
+    lines = ["You are carrying:"]
+    lines.extend(items)
+    return lines
+
+
+def _sanitize_narration_for_player(narration: str, debug: bool) -> str:
+    if debug:
+        return narration
+    if re.search(r"\bbeat at\b", narration.lower()):
+        return ""
+    return narration
 
 
 def _transcript_command_echo(raw_command: str) -> str:
@@ -184,6 +219,14 @@ class SaveStore(Protocol):
     def load_run(self, slot: str) -> tuple[GameState, Random]: ...
 
 
+def _judge_decision_for_persistence(state: GameState) -> dict[str, str] | None:
+    if state.last_judge_decision is None:
+        return None
+    if state.last_judge_decision.get("status") != "accepted":
+        return None
+    return state.last_judge_decision
+
+
 def run_turn(
     state: GameState,
     raw: str,
@@ -194,7 +237,6 @@ def run_turn(
     memory_store: MemoryStore | None = None,
     memory_slot: str = "default",
 ):
-    show_opening_briefing = state.turn_index == 0
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
@@ -205,7 +247,14 @@ def run_turn(
         if save_store is None:
             return state, ["Save requires --save-db <path>."], action.raw, "save", True
         try:
-            save_store.save_run(action.target, state, rng, raw_command=action.raw, action_kind="save")
+            save_store.save_run(
+                action.target,
+                state,
+                rng,
+                raw_command=action.raw,
+                action_kind="save",
+                judge_decision=_judge_decision_for_persistence(state),
+            )
             return state, [f"Saved to slot '{action.target}'."], action.raw, "save", True
         except Exception as exc:
             return state, [f"Failed to save: {exc}"], action.raw, "save", True
@@ -260,15 +309,15 @@ def run_turn(
     except RuntimeError as exc:
         narration = f"[Narrator failed: {exc}]"
 
-    lines: list[str] = []
-    lines.append(_room_lines(next_state))
+    lines: list[str] = [_room_lines(next_state)]
+    if action.kind == ActionKind.INVENTORY:
+        lines.extend(_inventory_lines(next_state))
     event_line = _event_lines(events, debug=debug)
     if event_line:
         lines.append(event_line)
-    if show_opening_briefing:
-        lines.extend(_opening_briefing_lines(next_state))
     if debug:
         lines.extend(caseboard_lines(next_state))
+    narration = _sanitize_narration_for_player(narration, debug=debug)
     if narration:
         lines.append(narration)
 
@@ -317,6 +366,13 @@ def run_turn(
 
     if memory_store is not None:
         memory_store.ingest_events(memory_slot, next_state, events)
+
+    next_state.last_judge_decision = {
+        "decision_id": str(judge_decision["decision_id"]),
+        "status": str(judge_decision["status"]),
+        "judge": "director",
+        "rationale": str(judge_decision.get("rationale", "")),
+    }
 
     return next_state, [line for line in lines if line], action.raw, beat_type, True
 
@@ -425,6 +481,7 @@ def main(argv: list[str] | None = None) -> None:
                         rng,
                         raw_command=command,
                         action_kind="autosave",
+                        judge_decision=_judge_decision_for_persistence(state),
                     )
                 for line in lines:
                     _emit_cli_line(console, line)
@@ -459,6 +516,7 @@ def main(argv: list[str] | None = None) -> None:
                     rng,
                     raw_command=raw,
                     action_kind="autosave",
+                    judge_decision=_judge_decision_for_persistence(state),
                 )
     finally:
         if transcript_handle is not None:

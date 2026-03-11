@@ -33,10 +33,13 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
     )
 
     assert lines
-    assert lines[0].startswith("[")
+    assert lines[0].startswith("Harbor Steps\n")
+    assert "Wind whistles" in lines[0]
     assert all("[debug]" not in line for line in lines)
     assert all("judge_status=" not in line for line in lines)
     assert all("coherence_budget" not in line for line in lines)
+    assert all(not line.startswith("- ") for line in lines)
+    assert all(" beat at " not in line.lower() for line in lines)
 
 
 def test_unknown_command_emits_clarity_prompt_in_non_debug_mode():
@@ -80,6 +83,7 @@ def test_transcript_uses_prompt_echo_format(tmp_path):
     assert ">LOOK" in text
     assert ">INVENTORY" in text
     assert "CMD " not in text
+    assert "Before dawn" not in text
 
 
 def test_fixed_seed_replay_is_byte_stable_for_output_and_state():

@@ -19,9 +19,6 @@ precommit:
 	uv run pre-commit install
 
 run:
-	uv run uvicorn storygame.web:app --reload
-
-run-cli:
 	uv run uvicorn storygame.web:app --reload --host 127.0.0.1 --port 8000
 
 package:
