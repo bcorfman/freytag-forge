@@ -60,6 +60,41 @@ _ITEM_TEMPLATES: dict[str, tuple[str, ...]] = {
 }
 
 
+def _clean_outline_sentence(outline_text: str) -> str:
+    text = outline_text.strip()
+    if text.lower().startswith("premise:"):
+        text = text[len("premise:") :].strip()
+    sentence = text.split(".")[0].strip()
+    return sentence
+
+
+def _primary_goal_for_genre(genre: str, outline_text: str) -> str:
+    seed_sentence = _clean_outline_sentence(outline_text)
+    if genre == "mystery":
+        return "Map the relay route and expose the conspiracy behind the case."
+    if genre == "thriller":
+        return "Identify the central threat and stop the final operation before the deadline."
+    if genre == "horror":
+        return "Survive the escalating threat and break the source of the haunting."
+    if genre == "romance":
+        return "Navigate the relationship conflict and secure an earned reunion."
+    if genre == "fantasy":
+        return "Resolve the prophecy conflict and prevent the realm from falling into chaos."
+    if genre == "action":
+        return "Disrupt the hostile plan and win the final confrontation."
+    if genre == "adventure":
+        return "Complete the expedition and return with decisive proof."
+    if genre == "sci-fi":
+        return "Resolve the technology crisis and choose a future the world can live with."
+    if genre == "suspense":
+        return "Stay ahead of the threat and survive long enough to expose the truth."
+    if genre == "drama":
+        return "Resolve the central personal conflict and face its consequences honestly."
+    if seed_sentence:
+        return seed_sentence
+    return f"Resolve the central conflict in this {genre} scenario."
+
+
 def _story_outlines_path() -> Path:
     data_dir = Path(__file__).resolve().parents[2] / "data"
     preferred = data_dir / "story_outlines.yaml"
@@ -91,7 +126,8 @@ def _normalize_tone(tone: str | None) -> str:
 
 @lru_cache(maxsize=2)
 def _load_story_outlines(path_key: str) -> dict[str, Any]:
-    payload = yaml.safe_load(Path(path_key).read_text(encoding="utf-8"))
+    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+    payload = yaml.load(Path(path_key).read_text(encoding="utf-8"), Loader=loader)
     stories = payload["stories"]
     if not stories:
         raise ValueError("story_outlines.yaml contains no stories.")
@@ -191,9 +227,7 @@ def build_world_package(
     character_names = _extract_character_names(outline["outline"])
     map_section = _build_map_for_genre(normalized_genre)
     item_ids = list(_ITEM_TEMPLATES[normalized_genre])
-    primary_goal = str(outline["outline"]).split(".")[0].strip()
-    if not primary_goal:
-        primary_goal = f"Resolve the central conflict in this {normalized_genre} scenario."
+    primary_goal = _primary_goal_for_genre(normalized_genre, str(outline["outline"]))
 
     beat_candidates = list(curve["obligatory_moments"])
     trigger_seeds = [

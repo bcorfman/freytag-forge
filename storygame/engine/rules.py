@@ -146,7 +146,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
     events: list[Event] = []
 
     room_id = player_location(next_state)
-    room = next_state.world.rooms[room_id]
+    _room = next_state.world.rooms[room_id]
 
     def _commit() -> tuple[GameState, list[Event]]:
         for event in events:

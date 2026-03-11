@@ -55,7 +55,7 @@ def load_plot_curves(path: Path | None = None) -> dict[str, Any]:
 
 
 def _stable_index(genre: str, length_bucket: LengthBucket, seed: int, count: int) -> int:
-    digest = hashlib.sha256(f"{genre}|{length_bucket}|{seed}".encode("utf-8")).digest()
+    digest = hashlib.sha256(f"{genre}|{length_bucket}|{seed}".encode()).digest()
     value = int.from_bytes(digest[:8], byteorder="big", signed=False)
     return value % count
 
@@ -104,4 +104,3 @@ def select_curve_id(
     if not isinstance(curve_id, str) or not curve_id:
         raise ValueError(f"Selected curve for genre '{genre}' is missing a valid curve_id.")
     return curve_id
-
