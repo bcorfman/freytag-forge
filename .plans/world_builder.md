@@ -5,16 +5,16 @@
 - [ ] Target artifact path: `.plans/world_builder.md`.
 
 ## Key Changes
-- [ ] Introduce a pregame generation pipeline:
-- [ ] Ask player for `genre` plus optional `tone` and `session_length`.
-- [ ] Select matching outlines from `story_outlines.yaml`.
-- [ ] Select a compatible plot-curve template from `plot_curves.yaml`.
-- [ ] Generate a world package in one pass from outline+curve: entities, map, goals, beat candidates, item graph, and trigger seeds.
+- [x] Introduce a pregame generation pipeline:
+- [x] Ask player for `genre` plus optional `tone` and `session_length`.
+- [x] Select matching outlines from `story_outlines.yaml`.
+- [x] Select a compatible plot-curve template from `plot_curves.yaml`.
+- [x] Generate a world package in one pass from outline+curve: entities, map, goals, beat candidates, item graph, and trigger seeds.
 
-- [ ] Replace object-centric runtime world state with KB facts:
-- [ ] Store dynamic simulation truth as predicates only.
-- [ ] Keep events/triggers, but convert effects to fact operations: `assert`, `retract`, `numeric_delta`.
-- [ ] Make command handlers query facts (`inventory`, movement, social state, goal status) instead of mutating nested objects directly.
+- [x] Replace object-centric runtime world state with KB facts:
+- [x] Store dynamic simulation truth as predicates only.
+- [x] Keep events/triggers, but convert effects to fact operations: `assert`, `retract`, `numeric_delta`.
+- [x] Make command handlers query facts (`inventory`, movement, social state, goal status) instead of mutating nested objects directly.
 
 - [ ] Keep roleplay flexibility for non-command input:
 - [ ] Parse known commands first.
@@ -38,17 +38,17 @@
 - [ ] Keep story solvable by opening alternate evidence/progression routes.
 
 ## Public Interfaces and Types
-- [ ] `story_outlines.yaml`: genre-indexed story seeds and framing metadata.
-- [ ] `plot_curves.yaml`: reusable pacing/beat-shape templates by genre and length.
-- [ ] `predicates/core.yaml`: global predicate definitions, arity, arg types, invariants.
-- [ ] `predicates/genres/<genre>.yaml`: genre-specific predicate extensions.
-- [ ] `rules/core_rules.yaml`: cross-genre condition->effect rules.
-- [ ] `rules/genres/<genre>_rules.yaml`: genre behavior mappings and consequences.
-- [ ] `npc_voice_cards.yaml`: core identity traits, adaptive state defaults, dialog policy limits.
-- [ ] LLM output contracts:
-- [ ] `ActionProposal` for interpreted player intent.
-- [ ] `DialogProposal` for in-character response.
-- [ ] `StateUpdateEnvelope` for approved fact deltas before commit.
+- [x] `story_outlines.yaml`: genre-indexed story seeds and framing metadata.
+- [x] `plot_curves.yaml`: reusable pacing/beat-shape templates by genre and length.
+- [x] `predicates/core.yaml`: global predicate definitions, arity, arg types, invariants.
+- [x] `predicates/genres/<genre>.yaml`: genre-specific predicate extensions.
+- [x] `rules/core_rules.yaml`: cross-genre condition->effect rules.
+- [x] `rules/genres/<genre>_rules.yaml`: genre behavior mappings and consequences.
+- [x] `npc_voice_cards.yaml`: core identity traits, adaptive state defaults, dialog policy limits.
+- [x] LLM output contracts:
+- [x] `ActionProposal` for interpreted player intent.
+- [x] `DialogProposal` for in-character response.
+- [x] `StateUpdateEnvelope` for approved fact deltas before commit.
 
 ## Test Plan
 - [ ] Generation validity:

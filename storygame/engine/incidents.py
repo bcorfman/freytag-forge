@@ -8,6 +8,7 @@ from typing import TypedDict
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from storygame.engine.facts import apply_fact_ops, player_inventory, player_location, rebuild_facts_from_legacy_views
 from storygame.engine.state import Event, GameState
 from storygame.plot.beat_manager import Beat
 
@@ -188,13 +189,16 @@ def _condition_matches_turn(
     state: GameState,
     action_events: tuple[Event, ...],
 ) -> bool:
-    if condition["location_is"] and state.player.location != condition["location_is"]:
+    location = player_location(state)
+    inventory = player_inventory(state)
+
+    if condition["location_is"] and location != condition["location_is"]:
         return False
 
-    if condition["item_in_inventory"] and condition["item_in_inventory"] not in state.player.inventory:
+    if condition["item_in_inventory"] and condition["item_in_inventory"] not in inventory:
         return False
 
-    if condition["flag_is_true"] and not state.player.flags.get(condition["flag_is_true"], False):
+    if condition["flag_is_true"] and not state.world_facts.holds("flag", "player", condition["flag_is_true"]):
         return False
 
     threshold = condition["progress_at_least"]
@@ -269,7 +273,7 @@ def _eligible(spec: IncidentSpec, state: GameState, beat: Beat, action_events: t
         return False
 
     once_flag = spec["once_flag"]
-    if once_flag and state.player.flags.get(once_flag, False):
+    if once_flag and state.world_facts.holds("flag", "player", once_flag):
         return False
 
     triggers = spec["triggers"]
@@ -307,6 +311,7 @@ def realize_beat_incident(
     rng: Random,
     incident_specs: tuple[IncidentSpec, ...] | None = None,
 ) -> tuple[GameState, list[Event]]:
+    rebuild_facts_from_legacy_views(state)
     specs = load_incident_specs() if incident_specs is None else incident_specs
     action_tuple = tuple(action_events)
     candidates = [spec for spec in specs if _eligible(spec, state, beat, action_tuple)]
@@ -317,13 +322,13 @@ def realize_beat_incident(
     next_state = state.clone()
 
     once_flag = chosen["once_flag"]
+    fact_ops: list[dict[str, object]] = []
     if once_flag:
-        next_state.player.flags[once_flag] = True
-
+        fact_ops.append({"op": "assert", "fact": ("flag", "player", once_flag)})
     for flag in chosen["effects"]["set_flags"]:
-        next_state.player.flags[flag] = True
+        fact_ops.append({"op": "assert", "fact": ("flag", "player", flag)})
     for flag in chosen["effects"]["clear_flags"]:
-        next_state.player.flags[flag] = False
+        fact_ops.append({"op": "retract", "fact": ("flag", "player", flag)})
 
     event = Event(
         type="incident",
@@ -333,7 +338,9 @@ def realize_beat_incident(
         delta_progress=chosen["effects"]["delta_progress"],
         delta_tension=chosen["effects"]["delta_tension"],
         turn_index=next_state.turn_index,
-        metadata={"incident_id": chosen["incident_id"]},
+        metadata={"incident_id": chosen["incident_id"], "fact_ops": fact_ops},
     )
+    if fact_ops:
+        apply_fact_ops(next_state, fact_ops)
     next_state.append_event(event)
     return next_state, [event]

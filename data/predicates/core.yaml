@@ -1,0 +1,31 @@
+schema_version: 1
+scope: core
+predicates:
+  - name: at
+    arity: 2
+    arg_types: [actor, room]
+    invariants: ["single_location_per_actor"]
+  - name: holding
+    arity: 2
+    arg_types: [actor, item]
+    invariants: ["item_not_in_room_when_held"]
+  - name: path
+    arity: 3
+    arg_types: [direction, room, room]
+    invariants: ["room_ids_must_exist"]
+  - name: locked
+    arity: 3
+    arg_types: [direction, room, item]
+    invariants: ["direction_must_exist_on_path"]
+  - name: room_item
+    arity: 2
+    arg_types: [room, item]
+    invariants: ["item_not_duplicated_in_multiple_rooms"]
+  - name: npc_at
+    arity: 2
+    arg_types: [npc, room]
+    invariants: ["single_room_per_npc"]
+  - name: flag
+    arity: 2
+    arg_types: [actor, flag]
+    invariants: ["boolean_presence_semantics"]

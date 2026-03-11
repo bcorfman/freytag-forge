@@ -40,6 +40,7 @@ Freytag Forge is a deterministic narrative-engine platform for interactive ficti
 ## Architecture Overview
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
+- Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, etc.) with legacy object views synchronized for compatibility.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
 
@@ -90,6 +91,18 @@ flowchart LR
 - Trigger schema supports boolean groups (`all`/`any`/`not`), `cooldown_turns`, and ordered event `sequence` matching.
 - If no incident matches the current beat context, the engine falls back to generic beat-tagged plot templates.
 
+### World Builder Interfaces
+- Predicate and rule packs are YAML-defined:
+  - `data/predicates/core.yaml`
+  - `data/predicates/genres/<genre>.yaml`
+  - `data/rules/core_rules.yaml`
+  - `data/rules/genres/<genre>_rules.yaml`
+- NPC voice cards are defined in `data/npc_voice_cards.yaml`.
+- Runtime contract validators cover:
+  - `ActionProposal`
+  - `DialogProposal`
+  - `StateUpdateEnvelope`
+
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
@@ -119,6 +132,7 @@ flowchart LR
 
 ## CLI and Runtime Modes
 - CLI: `uv run python -m storygame --seed 123`
+- CLI with story profile: `uv run python -m storygame --seed 123 --genre mystery --session-length medium --tone neutral`
 - Replay: `--replay <file> --transcript <file>`
 - Web: `uv run uvicorn storygame.web:app --reload`
 - Narrator mode: `--narrator mock|none|openai|ollama`

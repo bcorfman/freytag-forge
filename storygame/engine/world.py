@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from storygame.engine.facts import initialize_world_facts, sync_legacy_views
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
+from storygame.engine.world_builder import build_world_package
 
 
 def _expanded_items() -> dict[str, Item]:
@@ -207,15 +209,35 @@ def _expanded_rooms() -> dict[str, Room]:
     }
 
 
-def build_default_state(seed: int) -> GameState:
+def build_default_state(
+    seed: int,
+    genre: str = "mystery",
+    session_length: int | str = "medium",
+    tone: str = "neutral",
+) -> GameState:
+    world_package = build_world_package(
+        genre=genre,
+        session_length=session_length,
+        seed=seed,
+        tone=tone,
+    )
     world = WorldState(rooms=_expanded_rooms(), items=_expanded_items(), npcs=_expanded_npcs())
     player = PlayerState(location="harbor", inventory=("torch",), flags={"started": True})
-    return GameState(
+    state = GameState(
         seed=seed,
         player=player,
         world=world,
-        active_goal="Map the relay route and expose the harbor conspiracy.",
+        story_genre=world_package["genre"],
+        story_tone=world_package["tone"],
+        session_length=world_package["session_length"],
+        plot_curve_id=world_package["curve_id"],
+        story_outline_id=world_package["outline"]["id"],
+        world_package=world_package,
+        active_goal=world_package["goals"]["primary"],
     )
+    initialize_world_facts(state)
+    sync_legacy_views(state)
+    return state
 
 
 def build_tiny_state(seed: int) -> GameState:
@@ -283,4 +305,7 @@ def build_tiny_state(seed: int) -> GameState:
 
     world = WorldState(rooms=rooms, items=items, npcs=npcs)
     player = PlayerState(location="harbor", inventory=(), flags={"started": True})
-    return GameState(seed=seed, player=player, world=world, active_goal="Recover the moonstone.")
+    state = GameState(seed=seed, player=player, world=world, active_goal="Recover the moonstone.")
+    initialize_world_facts(state)
+    sync_legacy_views(state)
+    return state

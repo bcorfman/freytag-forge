@@ -61,6 +61,14 @@ def deserialize_event(payload: dict[str, Any]) -> Event:
 def serialize_state(state: GameState) -> dict[str, Any]:
     return {
         "seed": state.seed,
+        "story_genre": state.story_genre,
+        "story_tone": state.story_tone,
+        "session_length": state.session_length,
+        "plot_curve_id": state.plot_curve_id,
+        "story_outline_id": state.story_outline_id,
+        "world_package": dict(state.world_package),
+        "world_facts": [list(fact) for fact in state.world_facts.all()],
+        "fact_metrics": dict(state.fact_metrics),
         "progress": state.progress,
         "tension": state.tension,
         "turn_index": state.turn_index,
@@ -78,7 +86,22 @@ def serialize_state(state: GameState) -> dict[str, Any]:
 
 
 def deserialize_state(payload: dict[str, Any]) -> GameState:
-    state = build_default_state(seed=int(payload["seed"]))
+    state = build_default_state(
+        seed=int(payload["seed"]),
+        genre=str(payload.get("story_genre", "mystery")),
+        session_length=str(payload.get("session_length", "medium")),
+        tone=str(payload.get("story_tone", "neutral")),
+    )
+    state.story_tone = str(payload.get("story_tone", state.story_tone))
+    state.plot_curve_id = str(payload.get("plot_curve_id", state.plot_curve_id))
+    state.story_outline_id = str(payload.get("story_outline_id", state.story_outline_id))
+    state.world_package = dict(payload.get("world_package", state.world_package))
+    raw_facts = payload.get("world_facts", [])
+    state.world_facts.replace_all(tuple(tuple(fact) for fact in raw_facts))
+    state.fact_metrics = {str(key): float(value) for key, value in dict(payload.get("fact_metrics", {})).items()}
+    from storygame.engine.facts import sync_legacy_views
+
+    sync_legacy_views(state)
     state.progress = float(payload["progress"])
     state.tension = float(payload["tension"])
     state.turn_index = int(payload["turn_index"])

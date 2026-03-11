@@ -28,6 +28,12 @@ def build_story_state_payload(
     return {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "seed": state.seed,
+        "story_genre": state.story_genre,
+        "story_tone": state.story_tone,
+        "session_length": state.session_length,
+        "plot_curve_id": state.plot_curve_id,
+        "story_outline_id": state.story_outline_id,
+        "world_package": state.world_package,
         "turn_index": state.turn_index,
         "active_goal": state.active_goal,
         "progress": state.progress,
@@ -42,6 +48,8 @@ def build_story_state_payload(
             "flags": dict(state.player.flags),
         },
         "room_items": _sorted_room_inventory(state.world),
+        "world_facts": [list(fact) for fact in state.world_facts.all()],
+        "fact_metrics": dict(state.fact_metrics),
         "event_log": [event.to_summary() for event in state.event_log],
         "trace": trace,
         "story_markdown_sha256": story_markdown_sha256,
@@ -73,6 +81,11 @@ def _markdown_from_payload(payload: dict[str, object]) -> str:
         "",
         f"## Turn {payload['turn_index']}",
         f"- Seed: {payload['seed']}",
+        f"- Story genre: {payload.get('story_genre', 'mystery')}",
+        f"- Story tone: {payload.get('story_tone', 'neutral')}",
+        f"- Session length: {payload.get('session_length', 'medium')}",
+        f"- Plot curve: {payload.get('plot_curve_id', '') or 'unknown'}",
+        f"- Story outline: {payload.get('story_outline_id', '') or 'unknown'}",
         f"- Phase: {payload['phase']}",
         f"- Progress: {float(payload['progress']):.2f}",
         f"- Tension: {float(payload['tension']):.2f}",
@@ -143,6 +156,11 @@ def validate_story_state_payload(payload: dict[str, object]) -> None:
         int(payload["schema_version"])
         int(payload["seed"])
         int(payload["turn_index"])
+        payload["story_genre"].strip()
+        payload["story_tone"].strip()
+        payload["session_length"].strip()
+        payload["plot_curve_id"].strip()
+        payload["story_outline_id"].strip()
         float(payload["progress"])
         float(payload["tension"])
         payload["active_goal"].strip()

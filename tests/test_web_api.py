@@ -12,12 +12,23 @@ def _client(tmp_path):
 
 def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     client = _client(tmp_path)
-    response = client.post("/turn", json={"command": "look", "seed": 19})
+    response = client.post(
+        "/turn",
+        json={"command": "look", "seed": 19, "genre": "thriller", "session_length": "long", "tone": "dark"},
+    )
     assert response.status_code == 200
 
     payload = response.json()
     assert "run_id" in payload
     assert payload["state"]["location"] == "harbor"
+    assert payload["state"]["genre"] == "thriller"
+    assert payload["state"]["session_length"] == "long"
+    assert payload["state"]["tone"] == "dark"
+    assert payload["state"]["plot_curve_id"] in {
+        "thriller_macguffin_clock",
+        "thriller_political_conspiracy",
+    }
+    assert payload["state"]["story_outline_id"]
     run_id = payload["run_id"]
     assert payload["continued"] is True
     assert payload["state"]["inventory"]

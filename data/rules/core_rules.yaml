@@ -1,0 +1,30 @@
+schema_version: 1
+scope: core
+rules:
+  - rule_id: move_actor
+    when:
+      all:
+        - predicate: path
+          args: ["$direction", "$from", "$to"]
+        - predicate: at
+          args: ["$actor", "$from"]
+      not:
+        - predicate: locked
+          args: ["$direction", "$from", "$key"]
+    then:
+      retract:
+        - [at, "$actor", "$from"]
+      assert:
+        - [at, "$actor", "$to"]
+  - rule_id: take_item
+    when:
+      all:
+        - predicate: at
+          args: ["$actor", "$room"]
+        - predicate: room_item
+          args: ["$room", "$item"]
+    then:
+      retract:
+        - [room_item, "$room", "$item"]
+      assert:
+        - [holding, "$actor", "$item"]
