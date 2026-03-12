@@ -9,6 +9,7 @@ from typing import Protocol, TextIO
 
 from rich.console import Console
 
+from storygame.engine.freeform import DEFAULT_FREEFORM_ADAPTER, FreeformProposalAdapter, resolve_freeform_roleplay
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
@@ -236,6 +237,7 @@ def run_turn(
     save_store: SaveStore | None = None,
     memory_store: MemoryStore | None = None,
     memory_slot: str = "default",
+    freeform_adapter: FreeformProposalAdapter = DEFAULT_FREEFORM_ADAPTER,
 ):
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
@@ -279,35 +281,59 @@ def run_turn(
         except Exception as exc:
             return state, [f"Failed to load: {exc}"], action.raw, "load", True
 
-    next_state, events, beat_type, template_key = advance_turn(state, action, rng)
-    memory_fragments: tuple[str, ...] = ()
-    if memory_store is not None:
-        memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
+    if action.kind == ActionKind.UNKNOWN:
+        freeform = resolve_freeform_roleplay(state, action.raw, freeform_adapter)
+        next_state = freeform["state"]
+        events = [freeform["event"]]
+        beat_type = "freeform_roleplay"
+        template_key = "freeform_roleplay"
+        context = None
+        judge_decision = {
+            "status": "accepted",
+            "total_score": 100,
+            "threshold": 80,
+            "round_index": 0,
+            "critic_ids": (),
+            "rubric_components": {},
+            "decision_id": "freeform-policy-approved",
+        }
+        coherence_telemetry = {
+            "critique_rounds": 0,
+            "token_spend": {"narrator": 0, "critics": 0},
+            "elapsed_ms": 0,
+            "hard_fail_reason": "FREEFORM_PATH",
+        }
+        narration = ""
+    else:
+        next_state, events, beat_type, template_key = advance_turn(state, action, rng)
+        memory_fragments: tuple[str, ...] = ()
+        if memory_store is not None:
+            memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
 
-    context = build_narration_context(next_state, action, beat_type, memory_fragments)
-    gate = build_default_coherence_gate()
-    judge_decision = {
-        "status": "failed",
-        "total_score": 0,
-        "threshold": 80,
-        "round_index": 1,
-        "critic_ids": (),
-        "rubric_components": {},
-        "decision_id": "judge-error",
-    }
-    coherence_telemetry = {
-        "critique_rounds": 0,
-        "token_spend": {"narrator": 0, "critics": 0},
-        "elapsed_ms": 0,
-        "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
-    }
-    try:
-        coherence_result = gate.generate_with_gate(narrator, context)
-        narration = coherence_result["narration"]
-        judge_decision = coherence_result["judge_decision"]
-        coherence_telemetry = coherence_result["telemetry"]
-    except RuntimeError as exc:
-        narration = f"[Narrator failed: {exc}]"
+        context = build_narration_context(next_state, action, beat_type, memory_fragments)
+        gate = build_default_coherence_gate()
+        judge_decision = {
+            "status": "failed",
+            "total_score": 0,
+            "threshold": 80,
+            "round_index": 1,
+            "critic_ids": (),
+            "rubric_components": {},
+            "decision_id": "judge-error",
+        }
+        coherence_telemetry = {
+            "critique_rounds": 0,
+            "token_spend": {"narrator": 0, "critics": 0},
+            "elapsed_ms": 0,
+            "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
+        }
+        try:
+            coherence_result = gate.generate_with_gate(narrator, context)
+            narration = coherence_result["narration"]
+            judge_decision = coherence_result["judge_decision"]
+            coherence_telemetry = coherence_result["telemetry"]
+        except RuntimeError as exc:
+            narration = f"[Narrator failed: {exc}]"
 
     lines: list[str] = [_room_lines(next_state)]
     if action.kind == ActionKind.INVENTORY:
@@ -328,7 +354,8 @@ def run_turn(
             f"beat={beat_type} plot_event={template_key}"
         )
         lines.append(f"[debug] event_types={tuple(event.type for event in events)}")
-        lines.append(f"[debug] context_keys={tuple(context.as_dict().keys())}")
+        context_keys = tuple(context.as_dict().keys()) if context is not None else ("freeform_roleplay",)
+        lines.append(f"[debug] context_keys={context_keys}")
         lines.append(
             f"[debug] judge_status={judge_decision['status']} total={judge_decision['total_score']} "
             f"threshold={judge_decision['threshold']} round={judge_decision['round_index']} "

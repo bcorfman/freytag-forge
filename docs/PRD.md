@@ -102,12 +102,18 @@ flowchart LR
   - `ActionProposal`
   - `DialogProposal`
   - `StateUpdateEnvelope`
+- Non-command input now uses a freeform roleplay path:
+  - Known commands are parsed first.
+  - Parse failures route to `freeform_roleplay`.
+  - Freeform adapters produce `DialogProposal` + `ActionProposal`.
+  - Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
 
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
-- Non-debug path surfaces clarity prompts for invalid/unknown actions.
+- Parse failures on non-command input return in-world dialog through freeform roleplay.
+- Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - Transcript command echo uses `>COMMAND` format.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
 
