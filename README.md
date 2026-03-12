@@ -40,6 +40,7 @@ So the default coherence pipeline has **9 total decision participants** (5 narra
 - Beat realization layer for concrete story incidents:
   timed and trigger-based incidents (location/item/NPC interactions) can materialize beat themes into in-world events.
 - IF-style output contract with room-first narration and transcript command echo (`>COMMAND`).
+- Freeform roleplay fallback for non-command text with policy-bounded fact updates.
 - Non-debug output stays diegetic: plain room title/prose, no engine bullets, and no rubric internals.
 - Multi-critic coherence gate with deterministic judge decisions.
 - Deterministic validation gates before critique scoring.

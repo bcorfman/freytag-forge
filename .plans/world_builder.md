@@ -16,11 +16,11 @@
 - [x] Keep events/triggers, but convert effects to fact operations: `assert`, `retract`, `numeric_delta`.
 - [x] Make command handlers query facts (`inventory`, movement, social state, goal status) instead of mutating nested objects directly.
 
-- [ ] Keep roleplay flexibility for non-command input:
-- [ ] Parse known commands first.
-- [ ] Route parse failures to `freeform_roleplay`.
-- [ ] LLM returns in-character response plus constrained action proposal.
-- [ ] Engine maps proposal through policy/rules into approved fact updates.
+- [x] Keep roleplay flexibility for non-command input:
+- [x] Parse known commands first.
+- [x] Route parse failures to `freeform_roleplay`.
+- [x] LLM returns in-character response plus constrained action proposal.
+- [x] Engine maps proposal through policy/rules into approved fact updates.
 
 - [ ] Add predicate schema and rule packs:
 - [ ] Use a layered ontology: core predicates + genre predicate packs + story extensions.

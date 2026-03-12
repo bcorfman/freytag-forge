@@ -42,17 +42,18 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
     assert all(" beat at " not in line.lower() for line in lines)
 
 
-def test_unknown_command_emits_clarity_prompt_in_non_debug_mode():
+def test_unknown_non_command_input_uses_in_world_roleplay_response():
     state = build_default_state(seed=32)
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
-        "xyzzy",
+        "ask ferryman about rumors",
         Random(32),
         SilentNarrator(),
         debug=False,
     )
 
-    assert any("didn't understand" in line.lower() for line in lines)
+    assert any("ferryman" in line.lower() for line in lines)
+    assert not any("didn't understand" in line.lower() for line in lines)
 
 
 def test_debug_mode_emits_parseable_internal_trace():

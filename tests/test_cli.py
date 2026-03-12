@@ -358,6 +358,41 @@ def test_run_turn_debug_includes_coherence_budget_telemetry():
     assert any("[debug] coherence_budget" in line for line in lines)
 
 
+def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
+    state = build_default_state(seed=88)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "ask ferryman about the signal",
+        Random(88),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("ferryman" in line.lower() for line in lines)
+    assert not any("didn't understand" in line.lower() for line in lines)
+    assert next_state.player.flags.get("asked_signal_ferryman") is True
+
+
+def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
+    state = build_default_state(seed=89)
+    initial_flags = dict(state.player.flags)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "ask dragon about the signal",
+        Random(89),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert any("no one here" in line.lower() for line in lines)
+    assert next_state.player.flags == initial_flags
+
+
 def test_save_persists_last_accepted_judge_decision(tmp_path):
     db_path = tmp_path / "saves.sqlite"
     state = build_default_state(seed=77)
