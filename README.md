@@ -89,7 +89,25 @@ uv run python -m storygame --seed 123 --narrator ollama
 
 Notes:
 - Ollama local usage does not require an API key.
-- If you omit `--narrator`, CLI uses `mock`.
+- Web mode (`make run`) resolves narrator automatically in this order:
+  1. `FREYTAG_NARRATOR` (if set to `mock|none|openai|ollama`)
+  2. `OPENAI_API_KEY` -> `openai`
+  3. `OLLAMA_BASE_URL` or `OLLAMA_MODEL` -> `ollama`
+  4. fallback `mock`
+
+Examples:
+```bash
+# Force web mode to use mock even if OPENAI_API_KEY is set
+export FREYTAG_NARRATOR=mock
+make run
+```
+
+```bash
+# Force web mode to use OpenAI
+export FREYTAG_NARRATOR=openai
+export OPENAI_API_KEY="your_api_key"
+make run
+```
 
 ### 3) Install dependencies
 ```bash
