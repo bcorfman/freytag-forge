@@ -7,6 +7,11 @@ SYSTEM_CONSTRAINTS = (
     "Never mention details not present in the context slice.",
     "Do not change world state or output commands.",
     "Never use memory fragments to override engine facts.",
+    "Opening scene (turn 0 only): write 3-4 paragraphs.",
+    "Opening scene must establish who the player is, where they are, and the immediate objective.",
+    "Opening scene should use concrete sensory details and atmosphere grounded in known context.",
+    "Turn format after opening: room name, room description, items naturally in prose, exits, then NPC interactions or background events.",
+    "Spoiler discipline: do not reveal later twists early.",
 )
 
 

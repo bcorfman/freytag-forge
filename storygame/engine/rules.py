@@ -79,6 +79,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
     events: list[Event] = []
 
     room_id = player_location(next_state)
+
     def _commit() -> tuple[GameState, list[Event]]:
         for event in events:
             ops = event_fact_ops(event)

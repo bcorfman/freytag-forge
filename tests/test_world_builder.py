@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from storygame.engine.world_builder import build_world_package, select_story_outline
+import textwrap
+from random import Random
+
+from storygame.engine.parser import parse_command
+from storygame.engine.simulation import advance_turn
+from storygame.engine.world import build_default_state
+from storygame.engine.world_builder import _extract_character_names, build_world_package, select_story_outline
 
 
 def test_select_story_outline_filters_by_genre() -> None:
@@ -36,6 +42,102 @@ def test_build_world_package_has_required_sections() -> None:
     assert package["entities"]["npcs"]
     assert package["map"]["rooms"]
     assert package["goals"]["primary"]
+    assert package["goals"]["setup"]
     assert package["beat_candidates"]
     assert package["item_graph"]["items"]
     assert package["trigger_seeds"]
+
+
+def test_build_world_package_derives_goals_from_outline_text(tmp_path) -> None:
+    outlines = tmp_path / "story_outlines.yaml"
+    outlines.write_text(
+        textwrap.dedent(
+            """
+            stories:
+              - id: mystery_custom_001
+                genre: mystery
+                outline: |
+                  Premise: The mayor vanished after the lantern festival and the town square was sealed.
+                  Scene: Old town square.
+                  Characters: Inspector Vale, Archivist Rowan.
+            """
+        ).strip()
+    )
+
+    package = build_world_package(
+        genre="mystery",
+        session_length="medium",
+        seed=7,
+        tone="neutral",
+        outlines_path=outlines,
+    )
+
+    primary = package["goals"]["primary"].lower()
+    setup = package["goals"]["setup"].lower()
+    assert "mayor vanished" in primary
+    assert "lantern festival" in setup
+    assert "relay route" not in primary
+
+
+def test_active_goal_starts_with_setup_then_refines_to_primary() -> None:
+    state = build_default_state(seed=91, genre="drama", tone="dark")
+    setup_goal = state.world_package["goals"]["setup"]
+    primary_goal = state.world_package["goals"]["primary"]
+    assert state.active_goal == setup_goal
+
+    rng = Random(91)
+    for _ in range(6):
+        state, _events, _beat, _template = advance_turn(state, parse_command("look"), rng)
+
+    assert state.active_goal == primary_goal
+
+
+def test_story_agent_plan_expands_setup_and_hides_future_spoilers(tmp_path) -> None:
+    outlines = tmp_path / "story_outlines.yaml"
+    outlines.write_text(
+        textwrap.dedent(
+            """
+            stories:
+              - id: mystery_detective_001
+                genre: mystery
+                outline: |
+                  Situation: A detective, embittered by a past failure and now living the life of a recluse in a secluded mansion, is tasked with solving one last case that leads him to a confrontation with the ghosts of his past and a choice between justice and mercy.
+            """
+        ).strip()
+    )
+
+    package = build_world_package(
+        genre="mystery",
+        session_length="medium",
+        seed=12,
+        outlines_path=outlines,
+    )
+
+    plan = package["story_plan"]
+    assert plan["protagonist_name"]
+    assert len(plan["setup_paragraphs"]) in {3, 4}
+    opening_text = "\n".join(plan["setup_paragraphs"]).lower()
+    assert "choice between justice and mercy" not in opening_text
+    assert "confrontation with the ghosts of his past" not in opening_text
+
+    hidden_text = "\n".join(plan["hidden_threads"]).lower()
+    assert "choice between justice and mercy" in hidden_text
+    assert "ghosts of his past" in hidden_text
+    setup_goal = package["goals"]["setup"].lower()
+    assert "tasked with." not in setup_goal
+    assert "is tasked with" not in setup_goal
+    assert "case file" in setup_goal
+
+
+def test_extract_character_names_reads_outline_character_lines() -> None:
+    outline = "Characters:\nAri Vale: Investigator.\nMina Cole: Archivist.\n"
+    names = _extract_character_names(outline)
+    assert names[:2] == ["Ari Vale", "Mina Cole"]
+
+
+def test_extract_character_names_ignores_outline_section_labels() -> None:
+    outline = "Premise: A detective returns.\nScene: Manor gate.\nCharacters:\nAri Vale: Investigator.\n"
+    names = _extract_character_names(outline)
+    assert "Premise" not in names
+    assert "Scene" not in names
+    assert names[0] == "Ari Vale"

@@ -51,6 +51,9 @@ Current runtime generation is package-driven.
 - `storygame.llm.adapters` defines narrator integrations (`mock`, `none`, `openai`, `ollama`).
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
+- `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).
+- `storygame.llm.story_agents.prompts` defines per-agent prompt templates.
+- `storygame.llm.story_agents.contracts` defines per-agent JSON contracts and parsers.
 - `storygame.llm.contracts` defines and validates strict typed contracts:
   - `AgentProposal`
   - `StoryPatch`
@@ -116,6 +119,11 @@ flowchart LR
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
+- Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
+- Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
+- Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
+- A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
+- Output editor gate runs on every user-facing response; OpenAI/Ollama modes use an LLM critic rewrite pass with deterministic fallback.
 - Signal hints are objective-driven from generated map topology (targeting package terminal room), not hardcoded world landmarks.
 - Parse failures on non-command input return in-world dialog through freeform roleplay.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
@@ -124,6 +132,7 @@ flowchart LR
 
 ### Coherence Gate
 - Critics: `continuity`, `causality`, `dialogue_fit`.
+- Critic score payloads use explicit `ScoreVector` contract keys (`continuity`, `causality`, `dialogue_fit`) for static and runtime validation alignment.
 - Judge: deterministic single arbiter with fixed weighted rubric.
 - Threshold and critical floors are enforced deterministically.
 - Hard limits: rounds, per-role tokens, wall-clock timeout.

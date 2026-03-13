@@ -13,6 +13,7 @@ from storygame.llm.contracts import (
     CritiqueReport,
     JudgeDecision,
     RevisionDirective,
+    ScoreVector,
     narration_to_agent_proposal,
     parse_critique_report,
     parse_judge_decision,
@@ -101,7 +102,7 @@ def _token_count(text: str) -> int:
     return len(re.findall(r"\S+", text))
 
 
-def _base_dimension_scores(context: NarrationContext, narration: str) -> dict[str, int]:
+def _base_dimension_scores(context: NarrationContext, narration: str) -> ScoreVector:
     narration_tokens = _token_set(narration)
     goal_tokens = {token for token in _token_set(context.goal) if len(token) >= 5}
     event_tokens: set[str] = set()
@@ -135,10 +136,13 @@ def _base_dimension_scores(context: NarrationContext, narration: str) -> dict[st
     if in_length_band:
         dialogue_fit += 20
 
+    continuity_score = max(0, min(100, continuity))
+    causality_score = max(0, min(100, causality))
+    dialogue_fit_score = max(0, min(100, dialogue_fit))
     return {
-        "continuity": max(0, min(100, continuity)),
-        "causality": max(0, min(100, causality)),
-        "dialogue_fit": max(0, min(100, dialogue_fit)),
+        "continuity": continuity_score,
+        "causality": causality_score,
+        "dialogue_fit": dialogue_fit_score,
     }
 
 
@@ -148,10 +152,16 @@ def _feedback_for_dimension(dimension: str, score: int) -> str:
     if score >= 70:
         return f"{dimension} is acceptable but can tighten references."
     if dimension == "continuity":
-        return "Reference room facts, recent events, and active goal more explicitly."
+        return (
+            "Reference room facts, recent events, and active goal explicitly; keep who/where/objective clear and "
+            "avoid revealing unrevealed twists."
+        )
     if dimension == "causality":
-        return "Use explicit causal links (for example: because/after) tied to the prior event."
-    return "Make dialogue more direct and grounded in the player's action."
+        return "Use explicit causal links (for example: because/after) tied to the prior event and action."
+    return (
+        "Make dialogue more direct and grounded in the player's action, then place NPC/background interaction after "
+        "room/exits context."
+    )
 
 
 class _DefaultCritic:
@@ -195,13 +205,13 @@ class _EntityReachabilityValidator:
                 if npc_name:
                     labels.append(npc_name)
                 npc_labels[npc_id] = tuple(dict.fromkeys(label for label in labels if label))
-        for npc_id, labels in npc_labels.items():
+        for npc_id, known_labels in npc_labels.items():
             if npc_id in visible_npcs:
                 continue
-            if not labels:
+            if not known_labels:
                 continue
             presence_claims: list[str] = []
-            for label in labels:
+            for label in known_labels:
                 presence_claims.extend(
                     (
                         f"{label} is here",
@@ -395,9 +405,15 @@ def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDeci
     if lowest == "causality":
         focus = "mention causality and dialogue with explicit links to prior events"
     elif lowest == "continuity":
-        focus = "mention continuity anchors from room facts and recent events"
+        focus = (
+            "mention continuity anchors from room facts and recent events; keep who/where/objective explicit; "
+            "do not reveal later twists early"
+        )
     else:
-        focus = "mention causality and dialogue while staying tied to the current goal"
+        focus = (
+            "mention causality and dialogue while staying tied to the current goal, and preserve room->items->exits->"
+            "npc/background ordering"
+        )
     notes = " | ".join(feedbacks[:2])[:140]
     payload = {
         "directive_id": f"rev-round-{decision['round_index']}",
