@@ -26,6 +26,22 @@ def _item_kind_for_index(index: int) -> str:
     return "evidence"
 
 
+def _room_name_for_display(room_id: str, genre: str) -> str:
+    if genre == "mystery" and room_id == "front_steps":
+        return "Outside The Mansion"
+    return _humanize_identifier(room_id)
+
+
+def _room_description(room_id: str, genre: str, tone: str) -> str:
+    location = room_id.replace("_", " ")
+    if genre == "mystery" and room_id == "front_steps":
+        return (
+            "Stone steps lead toward the mansion entrance while the street behind you stays active with distant "
+            "voices and restless weather."
+        )
+    return f"A {tone} {genre} location around {location}, detailed enough to investigate without revealing its secrets at once."
+
+
 def _build_items(package: dict) -> dict[str, Item]:
     item_ids = tuple(package["item_graph"]["items"])
     primary_goal = str(package["goals"]["primary"])
@@ -81,7 +97,7 @@ def _build_room_exits(paths: tuple[dict, ...] | list[dict]) -> dict[str, dict[st
 def _build_rooms(package: dict, items: dict[str, Item], npcs: dict[str, Npc]) -> dict[str, Room]:
     room_ids = tuple(package["map"]["rooms"])
     exits = _build_room_exits(tuple(package["map"]["paths"]))
-    item_ids = tuple(item_id for item_id in items.keys() if item_id != "field_kit")
+    item_ids = tuple(item_id for item_id in items if item_id != "field_kit")
     npc_ids = tuple(npcs.keys())
 
     rooms: dict[str, Room] = {}
@@ -96,11 +112,8 @@ def _build_rooms(package: dict, items: dict[str, Item], npcs: dict[str, Npc]) ->
 
         rooms[room_id] = Room(
             id=room_id,
-            name=_humanize_identifier(room_id),
-            description=(
-                f"A {package['tone']} {package['genre']} scene. "
-                f"The objective is to move the story toward resolution."
-            ),
+            name=_room_name_for_display(room_id, package["genre"]),
+            description=_room_description(room_id, package["genre"], package["tone"]),
             exits=dict(exits.get(room_id, {})),
             item_ids=tuple(assigned_items),
             npc_ids=tuple(assigned_npcs),
@@ -144,7 +157,34 @@ def build_default_state(
     rooms = _build_rooms(package, items, npcs)
 
     start_room = package["map"]["rooms"][0]
-    player = PlayerState(location=start_room, inventory=(), flags={"started": True})
+    opening_inventory: list[str] = ["field_kit"]
+    if package["genre"] == "mystery" and "case_file" in items:
+        opening_inventory.append("case_file")
+
+    start_room_state = rooms[start_room]
+    start_room_state.item_ids = tuple(
+        item_id for item_id in start_room_state.item_ids if item_id not in opening_inventory
+    )
+    if not start_room_state.item_ids:
+        replacement_item = ""
+        replacement_room = ""
+        for room_id, room_state in rooms.items():
+            for item_id in room_state.item_ids:
+                if item_id not in opening_inventory:
+                    replacement_item = item_id
+                    replacement_room = room_id
+                    break
+            if replacement_item:
+                break
+        if replacement_item:
+            start_room_state.item_ids = (replacement_item,)
+            if replacement_room and replacement_room != start_room:
+                source_room = rooms[replacement_room]
+                source_room.item_ids = tuple(item_id for item_id in source_room.item_ids if item_id != replacement_item)
+
+    player = PlayerState(
+        location=start_room, inventory=tuple(dict.fromkeys(opening_inventory)), flags={"started": True}
+    )
     world = WorldState(rooms=rooms, items=items, npcs=npcs)
 
     state = GameState(
@@ -157,7 +197,7 @@ def build_default_state(
         plot_curve_id=package["curve_id"],
         story_outline_id=package["outline"]["id"],
         world_package=package,
-        active_goal=package["goals"]["primary"],
+        active_goal=str(package["goals"].get("setup", package["goals"]["primary"])),
     )
     initialize_world_facts(state)
     sync_legacy_views(state)

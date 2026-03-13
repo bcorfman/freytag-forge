@@ -11,10 +11,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator, run_turn
+from storygame.cli import _build_narrator, _setup_phase_lines, run_turn
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator
+from storygame.llm.output_editor import build_output_editor
+from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
 
@@ -121,6 +123,8 @@ def create_app(
     sessions: dict[str, _SessionState] = {}
     resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
     narrator: Narrator = _build_narrator(resolved_narrator_mode)
+    output_editor = build_output_editor(resolved_narrator_mode)
+    story_director = StoryDirector(resolved_narrator_mode, output_editor)
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
@@ -129,6 +133,7 @@ def create_app(
     @app.post("/turn", response_model=TurnResponse)
     def submit_turn(payload: TurnRequest) -> TurnResponse:
         run_id = payload.run_id
+        session_started = False
         if run_id is not None and run_id in sessions:
             session = sessions[run_id]
         elif run_id is None:
@@ -143,22 +148,56 @@ def create_app(
                 Random(payload.seed),
             )
             sessions[run_id] = session
+            session_started = True
         else:
             raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'.")
 
+        start_state = session.state
+        bootstrap_only = session_started and payload.command.strip().lower() in {"", "look", "start"}
+        if bootstrap_only:
+            room = start_state.world.rooms[start_state.player.location]
+            response_state = StateSnapshot(
+                run_id=run_id,
+                location=start_state.player.location,
+                room_name=room.name,
+                inventory=list(start_state.player.inventory),
+                genre=start_state.story_genre,
+                tone=start_state.story_tone,
+                session_length=start_state.session_length,
+                plot_curve_id=start_state.plot_curve_id,
+                story_outline_id=start_state.story_outline_id,
+                objective=start_state.active_goal,
+                phase=str(get_phase(start_state.progress)),
+                progress=start_state.progress,
+                tension=start_state.tension,
+                turn_index=start_state.turn_index,
+            )
+            return TurnResponse(
+                run_id=run_id,
+                command=payload.command,
+                action_raw=payload.command,
+                beat="setup_scene",
+                continued=True,
+                lines=story_director.compose_opening(start_state),
+                state=response_state,
+            )
+
         scoped_store = _ScopedSaveStore(store, run_id)
         next_state, lines, action_raw, beat_type, continued = run_turn(
-            session.state,
+            start_state,
             payload.command,
             session.rng,
             narrator,
             debug=payload.debug,
             save_store=scoped_store,
             memory_slot=run_id,
+            output_editor=output_editor,
+            story_director=story_director,
         )
 
         room = next_state.world.rooms[next_state.player.location]
         sessions[run_id].state = next_state
+        response_lines = list(lines)
         response_state = StateSnapshot(
             run_id=run_id,
             location=next_state.player.location,
@@ -181,7 +220,7 @@ def create_app(
             action_raw=action_raw,
             beat=beat_type,
             continued=continued,
-            lines=list(lines),
+            lines=response_lines,
             state=response_state,
         )
 
@@ -404,17 +443,33 @@ _WEB_UI_HTML = """<!doctype html>
       });
 
       newGame.addEventListener("click", () => {
+        startNewGame();
+      });
+
+      async function startNewGame() {
         localStorage.removeItem("freytag-run-id");
         runId = null;
         runIdLabel.textContent = "none";
         transcript.textContent = "";
-      });
-
-      if (runId) {
-        runIdLabel.textContent = runId;
+        inventory.textContent = "(empty)";
+        objective.textContent = "-";
+        phase.textContent = "-";
+        tension.textContent = "-";
+        progress.textContent = "-";
+        await turn("look");
       }
 
-      appendLine("Ready. Save/load are available via commands, e.g. save checkpoint / load checkpoint.");
+      async function bootstrap() {
+        if (runId) {
+          runIdLabel.textContent = runId;
+        } else {
+          await startNewGame();
+        }
+
+        appendLine("Ready. Save/load are available via commands, e.g. save checkpoint / load checkpoint.");
+      }
+
+      bootstrap();
     </script>
   </body>
 </html>

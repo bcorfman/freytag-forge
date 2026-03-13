@@ -18,6 +18,8 @@ from storygame.engine.world import build_default_state
 from storygame.llm.adapters import MockNarrator, Narrator, OllamaAdapter, OpenAIAdapter, SilentNarrator
 from storygame.llm.coherence import build_default_coherence_gate
 from storygame.llm.context import build_narration_context
+from storygame.llm.output_editor import OutputEditor, build_output_editor
+from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
@@ -81,6 +83,43 @@ def _humanize_token(token: str) -> str:
     return token.replace("_", " ")
 
 
+def _lowercase_location_phrase(location: str) -> str:
+    words = location.split()
+    if not words:
+        return "the area"
+    return f"the {' '.join(word.lower() for word in words)}"
+
+
+def _with_indefinite_article(phrase: str) -> str:
+    cleaned = phrase.strip()
+    if not cleaned:
+        return cleaned
+    first = cleaned[0].lower()
+    article = "an" if first in {"a", "e", "i", "o", "u"} else "a"
+    return f"{article} {cleaned}"
+
+
+def _opening_story_editor(paragraphs: list[str]) -> list[str]:
+    forbidden = (
+        "neutral mystery scene",
+        "move the story toward resolution",
+        "where you are:",
+        "cast:",
+    )
+    cleaned: list[str] = []
+    for paragraph in paragraphs:
+        normalized = " ".join(paragraph.split())
+        for fragment in forbidden:
+            normalized = normalized.replace(fragment, "")
+            normalized = normalized.replace(fragment.title(), "")
+        normalized = normalized.strip(" ,")
+        if normalized.lower().endswith("tasked with."):
+            normalized = normalized[: -len("tasked with.")].rstrip(" ,.;")
+            normalized = f"{normalized} and forced to take one final case."
+        cleaned.append(normalized)
+    return [paragraph for paragraph in cleaned if paragraph]
+
+
 def _joined_with_and(values: tuple[str, ...] | list[str]) -> str:
     if not values:
         return ""
@@ -103,19 +142,24 @@ def _room_lines(state: GameState) -> str:
         suffix = "item" if junk_count == 1 else "items"
         verb = "is" if junk_count == 1 else "are"
         pieces.append(f"There {verb} {junk_count} other unremarkable {suffix} nearby.")
-    if room.npc_ids:
-        visible_npcs = tuple(_humanize_token(npc) for npc in room.npc_ids)
-        verb = "is" if len(visible_npcs) == 1 else "are"
-        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} here.")
     if room.exits:
         exits = tuple(sorted(room.exits.keys()))
         if len(exits) == 1:
             pieces.append(f"The only exit is to the {exits[0]}.")
         else:
             pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
+    if room.npc_ids:
+        visible_npcs = tuple(_humanize_token(npc) for npc in room.npc_ids)
+        verb = "is" if len(visible_npcs) == 1 else "are"
+        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} here.")
     if signal_hint:
         pieces.append(signal_hint.replace("Signal: ", ""))
     return "\n".join(pieces)
+
+
+def _setup_phase_lines(state: GameState) -> list[str]:
+    director = StoryDirector("mock")
+    return director.compose_opening(state)
 
 
 def _public_event_message(message_key: str) -> str:
@@ -199,13 +243,23 @@ def _build_memory_tag_set(state: GameState, action) -> tuple[str, ...]:
     room = state.world.rooms[state.player.location]
     action_target = normalize_tag(action.target) if action.target else ""
     goal_words = tuple(normalize_tag(word) for word in state.active_goal.split() if word)[:2]
-    base_tags = (
-        f"room_{state.player.location}",
+    ordered_tags: list[str] = [
         f"beat_{state.beat_history[-1]}" if state.beat_history else "beat_unknown",
         f"goal_{goal_words[0]}" if goal_words else "goal",
-    )
-    npc_tags = tuple(f"npc_{npc}" for npc in room.npc_ids)
-    return tuple(sorted(set(base_tags + (action_target,) + npc_tags)))[:MAX_MEMORY_NOTES]
+    ]
+    if action_target:
+        ordered_tags.append(action_target)
+        ordered_tags.append(f"npc_{action_target}")
+    for npc in room.npc_ids:
+        ordered_tags.append(npc)
+        ordered_tags.append(f"npc_{npc}")
+    ordered_tags.append(f"room_{state.player.location}")
+
+    deduped: list[str] = []
+    for tag in ordered_tags:
+        if tag and tag not in deduped:
+            deduped.append(tag)
+    return tuple(deduped[:MAX_MEMORY_NOTES])
 
 
 class SaveStore(Protocol):
@@ -243,6 +297,8 @@ def run_turn(
     memory_store: MemoryStore | None = None,
     memory_slot: str = "default",
     freeform_adapter: FreeformProposalAdapter = DEFAULT_FREEFORM_ADAPTER,
+    output_editor: OutputEditor | None = None,
+    story_director: StoryDirector | None = None,
 ):
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
@@ -406,7 +462,10 @@ def run_turn(
         "rationale": str(judge_decision.get("rationale", "")),
     }
 
-    return next_state, [line for line in lines if line], action.raw, beat_type, True
+    editor = build_output_editor("mock") if output_editor is None else output_editor
+    director = StoryDirector("mock", editor) if story_director is None else story_director
+    reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
+    return next_state, reviewed_lines, action.raw, beat_type, True
 
 
 def run_replay(
@@ -510,6 +569,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     rng = Random(args.seed)
     narrator: Narrator = _build_narrator(args.narrator)
+    output_editor = build_output_editor(args.narrator)
+    story_director = StoryDirector(args.narrator, output_editor)
     save_store: SqliteSaveStore | None = SqliteSaveStore(args.save_db) if args.save_db is not None else None
     memory_store: SqliteVectorMemory | None = SqliteVectorMemory(args.memory_db) if args.memory_db is not None else None
     autosave_slot = args.autosave_slot
@@ -525,9 +586,10 @@ def main(argv: list[str] | None = None) -> None:
         transcript_handle = transcript_path.open("w", encoding="utf-8")
 
     try:
-        header = _room_lines(state)
-        _emit_cli_line(console, header)
-        _write_transcript_line(transcript_handle, header)
+        setup_lines = story_director.compose_opening(state)
+        for line in setup_lines:
+            _emit_cli_line(console, line)
+            _write_transcript_line(transcript_handle, line)
 
         if args.replay is not None:
             commands = [line.strip() for line in args.replay.read_text().splitlines() if line.strip()]
@@ -542,6 +604,8 @@ def main(argv: list[str] | None = None) -> None:
                     save_store=save_store,
                     memory_store=memory_store,
                     memory_slot=memory_slot,
+                    output_editor=output_editor,
+                    story_director=story_director,
                 )
                 if autosave_slot is not None and save_store is not None:
                     save_store.save_run(
@@ -569,6 +633,8 @@ def main(argv: list[str] | None = None) -> None:
                 save_store=save_store,
                 memory_store=memory_store,
                 memory_slot=memory_slot,
+                output_editor=output_editor,
+                story_director=story_director,
             )
             for line in lines:
                 _emit_cli_line(console, line)

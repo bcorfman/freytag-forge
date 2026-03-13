@@ -64,7 +64,8 @@ def test_story_goal_is_specific_and_not_just_follow_bell_signal():
 
     goal = state.active_goal.lower()
     assert "bell signal" not in goal
-    assert "threat" in goal
+    assert "get oriented" in goal
+    assert len(goal) > 40
 
 
 def test_npcs_do_not_follow_player_between_rooms_without_trigger():

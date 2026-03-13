@@ -20,6 +20,10 @@ def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
 
     payload = response.json()
     assert "run_id" in payload
+    assert payload["state"]["turn_index"] == 0
+    assert all(not line.startswith("Where you are: ") for line in payload["lines"])
+    assert all("Immediate objective:" not in line for line in payload["lines"])
+    assert all("The only exit is to" not in line for line in payload["lines"])
     start_location = payload["state"]["location"]
     assert payload["state"]["genre"] == "thriller"
     assert payload["state"]["session_length"] == "long"
@@ -37,6 +41,7 @@ def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     payload = response.json()
     assert payload["run_id"] == run_id
     assert payload["state"]["location"] != start_location
+    assert payload["state"]["turn_index"] == 1
     assert response.status_code == 200
 
 
@@ -96,3 +101,12 @@ def test_resolve_narrator_mode_prefers_explicit_and_env(monkeypatch):
 
     monkeypatch.setenv("FREYTAG_NARRATOR", "none")
     assert _resolve_narrator_mode("  ") == "none"
+
+
+def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):
+    client = _client(tmp_path)
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+    assert "async function startNewGame()" in html
+    assert "await startNewGame();" in html

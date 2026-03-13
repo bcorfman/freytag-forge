@@ -21,11 +21,19 @@ flowchart TD
 ```
 ## Agent Definitions
 Agent behavior is centered in [storygame/llm/coherence.py](storygame/llm/coherence.py), with contract shapes in [storygame/llm/contracts.py](storygame/llm/contracts.py) and narrator backends in [storygame/llm/adapters.py](storygame/llm/adapters.py).
+Story-design agent orchestration is implemented in [storygame/llm/story_director.py](storygame/llm/story_director.py), with explicit per-agent prompt builders in [storygame/llm/story_agents/prompts.py](storygame/llm/story_agents/prompts.py) and JSON contracts in [storygame/llm/story_agents/contracts.py](storygame/llm/story_agents/contracts.py).
 
 There are **5 narrative agents** in the default pipeline:
 - **1 narrator** (`agent_id="narrator"`): proposes candidate narration each round.
 - **3 critics** (`continuity`, `causality`, `dialogue_fit`): score and provide focused feedback.
 - **1 judge** (`judge="director"`): deterministically accepts/fails rounds using thresholds/floors.
+
+Story-quality checks now enforced in prompts/revision directives:
+- Opening setup guidance: 3-4 paragraphs, establish who/where/immediate objective, keep future twists hidden.
+- Turn-order guidance: room name -> room description -> items in prose -> exits -> NPC/background activity.
+- Continuity revisions explicitly call out setup anchors and spoiler discipline when continuity is weakest.
+- Opening scene now passes through a deterministic story-editor pass before display to strip legacy/meta phrasing and repair obvious coherence issues.
+- Every player-facing output now passes through an output-editor gate; when narrator mode is `openai` or `ollama`, this gate uses an LLM critic pass and falls back to deterministic editing if unavailable.
 
 There are also **4 deterministic validators** run before critics:
 - `entity_reachability`

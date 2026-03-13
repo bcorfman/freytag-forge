@@ -13,6 +13,7 @@ from storygame.cli import (
     _event_lines,
     _room_distance,
     _room_lines,
+    _setup_phase_lines,
     _signal_hint,
     _write_transcript_line,
     main,
@@ -392,6 +393,94 @@ def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
     assert beat_type == "freeform_roleplay"
     assert any("no one here" in line.lower() for line in lines)
     assert next_state.player.flags == initial_flags
+
+
+def test_run_turn_applies_output_editor_before_returning_lines():
+    class _PassThroughEditor:
+        def review_opening(self, lines, active_goal):  # noqa: ANN001
+            return lines
+
+        def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
+            return [line.replace("Echoes", "Edited echoes") for line in lines]
+
+    state = build_default_state(seed=93)
+    next_state, lines, _action_raw, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(93),
+        SilentNarrator(),
+        output_editor=_PassThroughEditor(),
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    assert any("edited echoes" in line.lower() for line in lines)
+
+
+def test_setup_phase_lines_include_who_where_and_objective():
+    state = build_default_state(seed=90, genre="fantasy", tone="epic")
+    lines = _setup_phase_lines(state)
+    room = state.world.rooms[state.player.location]
+
+    assert 3 <= len(lines) <= 4
+    assert any(room.name.lower() in paragraph.lower() for paragraph in lines)
+    assert any("objective" in paragraph.lower() for paragraph in lines)
+    assert all(not paragraph.lower().startswith("where you are:") for paragraph in lines)
+    assert all(not paragraph.lower().startswith("cast:") for paragraph in lines)
+    assert all("immediate objective:" not in paragraph.lower() for paragraph in lines)
+    assert all("the only exit is to" not in paragraph.lower() for paragraph in lines)
+    assert any("case file" in paragraph.lower() or state.active_goal in paragraph for paragraph in lines)
+
+
+def test_setup_phase_lines_story_editor_removes_legacy_meta_fragments():
+    state = build_default_state(seed=91, genre="mystery", tone="neutral")
+    lines = _setup_phase_lines(state)
+    joined = "\n".join(lines).lower()
+
+    assert "neutral mystery scene" not in joined
+    assert "move the story toward resolution" not in joined
+    assert "where you are:" not in joined
+    assert "cast:" not in joined
+    assert "tasked with." not in joined
+
+
+def test_setup_phase_lines_place_identity_after_environment_and_use_named_contact():
+    state = build_default_state(seed=123, genre="mystery", tone="dark")
+    lines = _setup_phase_lines(state)
+    assert len(lines) >= 3
+
+    first = lines[0].lower()
+    second = lines[1].lower() if len(lines) > 1 else ""
+    joined = "\n".join(lines).lower()
+
+    assert "you are " not in first
+    assert "you are " in second
+    assert "premise waits nearby" not in joined
+    assert "premise:" not in joined
+
+
+def test_setup_phase_lines_weave_background_and_actionable_objective():
+    state = build_default_state(seed=124, genre="mystery", tone="dark")
+    lines = _setup_phase_lines(state)
+    joined = "\n".join(lines).lower()
+
+    assert "the case in front of you starts simply" not in joined
+    assert "your history" in joined
+    assert "case file" in joined
+    assert "field kit" in joined
+    assert "get oriented and secure your first reliable lead" not in joined
+
+
+def test_main_replay_emits_setup_phase_before_commands(tmp_path):
+    replay = tmp_path / "commands.txt"
+    transcript = tmp_path / "transcript.txt"
+    replay.write_text("look\n", encoding="utf-8")
+
+    main(["--seed", "4", "--replay", str(replay), "--transcript", str(transcript)])
+
+    lines = transcript.read_text(encoding="utf-8").splitlines()
+    command_index = next(i for i, line in enumerate(lines) if line == ">LOOK")
+    assert command_index >= 3
 
 
 def test_save_persists_last_accepted_judge_decision(tmp_path):

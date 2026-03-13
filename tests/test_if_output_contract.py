@@ -43,6 +43,35 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
     assert all(" beat at " not in line.lower() for line in lines)
 
 
+def test_per_turn_room_block_follows_expected_section_order():
+    state = build_default_state(seed=133)
+    room = state.world.rooms[state.player.location]
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(133),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    room_block = lines[0].splitlines()
+    assert room_block[0] == room.name
+    assert room.description in room_block[1]
+
+    item_index = next(i for i, line in enumerate(room_block) if "you can see" in line.lower())
+    exit_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower())
+    assert item_index < exit_index
+
+    npc_line_indices = [
+        i for i, line in enumerate(room_block) if " is here." in line.lower() or " are here." in line.lower()
+    ]
+    if npc_line_indices:
+        assert npc_line_indices[0] > exit_index
+
+    assert len(lines) >= 2
+    assert lines[1].strip()
+
+
 def test_unknown_non_command_input_uses_in_world_roleplay_response():
     state = build_default_state(seed=32)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]

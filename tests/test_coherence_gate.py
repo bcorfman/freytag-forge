@@ -6,10 +6,12 @@ from storygame.llm.coherence import (
     DEFAULT_THRESHOLD,
     CritiqueReport,
     ValidationReport,
+    _revision_directive,
     build_default_coherence_gate,
     judge_critique_round,
 )
 from storygame.llm.context import NarrationContext
+from storygame.llm.contracts import parse_critique_report
 
 
 def _context(memory_fragments: tuple[str, ...] = ()) -> NarrationContext:
@@ -46,6 +48,15 @@ def test_default_critics_return_all_rubric_dimensions():
     assert len(reports) >= 3
     for report in reports:
         assert set(report["scores"].keys()) == set(CRITIQUE_DIMENSIONS)
+
+
+def test_default_critics_emit_contract_valid_payloads():
+    gate = build_default_coherence_gate()
+    reports = gate.critique_round(_context(), "You ask the guide about the forged directive.")
+
+    for report in reports:
+        parsed = parse_critique_report(dict(report))
+        assert parsed["critic_id"] == report["critic_id"]
 
 
 def test_judge_uses_weighted_rubric_threshold_and_floors():
@@ -283,3 +294,56 @@ def test_validator_rejects_non_visible_npc_presence_claims():
     reports = gate.validate_candidate(context, "The witness is here in the market beside you.")
     reason_codes = {reason for report in reports if not report["passed"] for reason in report["reason_codes"]}
     assert "VLD_NPC_NOT_VISIBLE" in reason_codes
+
+
+def test_validator_rejects_non_visible_npc_name_presence_claims():
+    gate = build_default_coherence_gate()
+    context = NarrationContext(
+        room_name="Salt Market",
+        room_description="Bright awnings and bargaining voices fill the plaza.",
+        visible_items=("route_key",),
+        visible_npcs=(),
+        npc_facts=(
+            {
+                "id": "witness",
+                "name": "Harbor Ferryman",
+                "pronouns": "he/him",
+                "identity": "male dockworker and river guide",
+                "description": "An old witness that knows the tide.",
+                "location": "district",
+            },
+        ),
+        exits=("south", "east"),
+        inventory=("torch",),
+        recent_events=(),
+        phase="rising_action",
+        tension=0.3,
+        beat="progressive_complication",
+        goal="Map the relay route and expose the district conspiracy.",
+        action="look",
+        memory_fragments=(),
+    )
+    reports = gate.validate_candidate(context, "The harbor ferryman stands here in the market beside you.")
+    reason_codes = {reason for report in reports if not report["passed"] for reason in report["reason_codes"]}
+    assert "VLD_NPC_NOT_VISIBLE" in reason_codes
+
+
+def test_revision_directive_for_continuity_includes_setup_and_spoiler_checks():
+    reports: tuple[CritiqueReport, ...] = (
+        {
+            "critic_id": "continuity",
+            "scores": {"continuity": 55, "causality": 82, "dialogue_fit": 80},
+            "feedback": "Continuity needs clearer anchors.",
+        },
+        {
+            "critic_id": "causality",
+            "scores": {"continuity": 60, "causality": 83, "dialogue_fit": 79},
+            "feedback": "Causality is adequate.",
+        },
+    )
+    decision = judge_critique_round(reports, threshold=80, critical_floors=DEFAULT_CRITICAL_FLOORS, round_index=2)
+
+    directive = _revision_directive(reports, decision)
+    instruction = directive["instruction"].lower()
+    assert "who/where/objective" in instruction
+    assert "do not reveal later twists early" in instruction

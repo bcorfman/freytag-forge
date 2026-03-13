@@ -20,16 +20,22 @@ def test_room_lines_include_room_identity_and_navigation():
     assert "exit" in lines.lower()
 
 
+def test_starting_state_avoids_meta_room_text_and_starts_with_kit():
+    state = build_default_state(seed=35, genre="mystery")
+    room = state.world.rooms[state.player.location]
+
+    assert "move the story toward resolution" not in room.description.lower()
+    assert "neutral mystery scene" not in room.description.lower()
+    assert "field_kit" in state.player.inventory
+    assert "field_kit" not in room.item_ids
+
+
 def test_context_filters_inventory_to_actionable_items():
     state = build_default_state(seed=32, genre="thriller")
-    room = state.world.rooms[state.player.location]
-    item_id = room.item_ids[0]
-
-    state = apply_action(state, parse_command(f"take {item_id}"), Random(32))[0]
     context = build_narration_context(state, parse_command("look"), "hook")
     payload = context.as_dict()
 
-    assert item_id in payload["inventory"]
+    assert "field_kit" in payload["inventory"]
     assert payload["npc_facts"]
 
 
