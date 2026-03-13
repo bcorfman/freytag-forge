@@ -29,6 +29,14 @@ class _StubNarrator:
         ]
 
 
+class _StubReplan:
+    def run(self, state, disruption):  # noqa: ANN001
+        return {
+            "new_active_goal": "Contain the fallout and evade immediate arrest.",
+            "note": "The story shifts: your previous move forces a new objective.",
+        }
+
+
 class _StubEditor:
     def review_opening(self, lines, active_goal):  # noqa: ANN001
         return [f"edited:{line}" for line in lines]
@@ -57,3 +65,25 @@ def test_story_director_supports_swappable_agent_components():
         [Event(type="story_event", message_key="Reminder")],
     )
     assert reviewed_turn[0].startswith("turn:")
+
+
+def test_story_director_uses_swappable_replan_component():
+    state = build_default_state(seed=8)
+    state.player.flags["story_replan_required"] = True
+    state.world_package["story_replan_context"] = {"impact_class": "critical"}
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_StubNarrator(),
+        story_replan=_StubReplan(),
+    )
+
+    event = director.replan_if_needed(state)
+    assert event is not None
+    assert event.type == "story_replan"
+    assert "story shifts" in event.message_key.lower()
+    assert state.active_goal == "Contain the fallout and evade immediate arrest."
+    assert state.player.flags["story_replan_required"] is False

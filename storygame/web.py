@@ -11,11 +11,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator, _setup_phase_lines, run_turn
+from storygame.cli import _build_narrator, run_turn
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator
-from storygame.llm.output_editor import build_output_editor
+from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
@@ -115,6 +115,9 @@ def create_app(
     save_db_path: str | Path | None = None,
     default_seed: int = 123,
     narrator_mode: str | None = None,
+    narrator: Narrator | None = None,
+    output_editor: OutputEditor | None = None,
+    story_director: StoryDirector | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge", version="0.1.0")
 
@@ -122,9 +125,11 @@ def create_app(
     store = SqliteSaveStore(save_db, check_same_thread=False)
     sessions: dict[str, _SessionState] = {}
     resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
-    narrator: Narrator = _build_narrator(resolved_narrator_mode)
-    output_editor = build_output_editor(resolved_narrator_mode)
-    story_director = StoryDirector(resolved_narrator_mode, output_editor)
+    active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
+    active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
+    active_story_director = (
+        StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
+    )
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
@@ -178,7 +183,7 @@ def create_app(
                 action_raw=payload.command,
                 beat="setup_scene",
                 continued=True,
-                lines=story_director.compose_opening(start_state),
+                lines=active_story_director.compose_opening(start_state),
                 state=response_state,
             )
 
@@ -187,12 +192,13 @@ def create_app(
             start_state,
             payload.command,
             session.rng,
-            narrator,
+            active_narrator,
+            narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
             memory_slot=run_id,
-            output_editor=output_editor,
-            story_director=story_director,
+            output_editor=active_output_editor,
+            story_director=active_story_director,
         )
 
         room = next_state.world.rooms[next_state.player.location]
@@ -234,13 +240,15 @@ def create_app(
 def _resolve_narrator_mode(requested_mode: str | None = None) -> str:
     if requested_mode is not None:
         requested_mode = requested_mode.strip().lower()
-        if requested_mode:
+        if requested_mode in {"openai", "ollama"}:
             return requested_mode
+        if requested_mode:
+            raise ValueError("Narrator mode must be 'openai' or 'ollama'.")
 
     explicit = getenv("FREYTAG_NARRATOR")
     if explicit:
         explicit = explicit.strip().lower()
-        if explicit in {"mock", "none", "openai", "ollama"}:
+        if explicit in {"openai", "ollama"}:
             return explicit
 
     if getenv("OPENAI_API_KEY"):
@@ -249,7 +257,7 @@ def _resolve_narrator_mode(requested_mode: str | None = None) -> str:
     if getenv("OLLAMA_BASE_URL") or getenv("OLLAMA_MODEL"):
         return "ollama"
 
-    return "mock"
+    return "openai"
 
 
 app = create_app()

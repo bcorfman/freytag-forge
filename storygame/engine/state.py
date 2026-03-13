@@ -134,6 +134,8 @@ class GameState:
     beat_history: tuple[str, ...] = ()
     active_goal: str = "Follow the bell signal and uncover the old conspiracy."
     last_judge_decision: dict[str, str] | None = None
+    pending_high_impact_command: str = ""
+    pending_high_impact_assessment: dict[str, Any] = field(default_factory=dict)
 
     def clone(self) -> GameState:
         return copy.deepcopy(self)
@@ -165,6 +167,8 @@ class GameState:
             "event_log": [event.to_summary() for event in self.event_log],
             "beat_history": self.beat_history,
             "flags": self.player.flags,
+            "pending_high_impact_command": self.pending_high_impact_command,
+            "pending_high_impact_assessment": self.pending_high_impact_assessment,
             "room_items": {room_id: room.item_ids for room_id, room in sorted(self.world.rooms.items())},
         }
         payload = json.dumps(data, sort_keys=True).encode("utf-8")

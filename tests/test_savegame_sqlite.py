@@ -5,10 +5,11 @@ from random import Random
 
 import pytest
 
-from storygame.cli import MockNarrator, run_turn
+from storygame.cli import run_turn
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
+from tests.narrator_stubs import StubNarrator
 
 
 def _event_for_test() -> Event:
@@ -30,6 +31,8 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
     inventory_seed = tuple(state.world.items.keys())[:2]
     state.player.inventory = inventory_seed
     state.append_event(_event_for_test())
+    state.pending_high_impact_command = "punch police officer"
+    state.pending_high_impact_assessment = {"impact_class": "critical", "score": 1.8}
 
     rng = Random(1234)
     rng.random()
@@ -51,6 +54,8 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
     assert loaded_state.story_genre == "thriller"
     assert loaded_state.session_length == "long"
     assert loaded_state.plot_curve_id == state.plot_curve_id
+    assert loaded_state.pending_high_impact_command == "punch police officer"
+    assert loaded_state.pending_high_impact_assessment["impact_class"] == "critical"
     assert loaded_rng.getstate() == rng.getstate()
 
 
@@ -84,12 +89,11 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
     def _run_without_save(commands: list[str], rng_seed: int) -> tuple[str, tuple]:
         from random import Random
 
-        from storygame.cli import MockNarrator as _IgnoredNarrator
         from storygame.cli import run_turn
 
         rng = Random(rng_seed)
         state = build_default_state(seed=rng_seed)
-        _ignored = _IgnoredNarrator()
+        _ignored = StubNarrator()
 
         for command in commands:
             state, _lines, _action_raw, _beat, _continued = run_turn(
@@ -106,7 +110,7 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
     with SqliteSaveStore(db_path) as store:
         rng = Random(seed)
         state = build_default_state(seed=seed)
-        narrator = MockNarrator()
+        narrator = StubNarrator()
 
         for command in pre_save_commands:
             state, _lines, _action_raw, _beat, _continued = run_turn(

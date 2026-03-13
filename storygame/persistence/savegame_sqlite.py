@@ -82,6 +82,8 @@ def serialize_state(state: GameState) -> dict[str, Any]:
         "room_items": {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()},
         "event_log": [serialize_event(event) for event in state.event_log.events],
         "last_judge_decision": dict(state.last_judge_decision) if state.last_judge_decision is not None else None,
+        "pending_high_impact_command": state.pending_high_impact_command,
+        "pending_high_impact_assessment": dict(state.pending_high_impact_assessment),
     }
 
 
@@ -126,6 +128,11 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
             "judge": str(raw_judge_decision.get("judge", "")),
             "rationale": str(raw_judge_decision.get("rationale", "")),
         }
+    state.pending_high_impact_command = str(payload.get("pending_high_impact_command", ""))
+    raw_pending_assessment = payload.get("pending_high_impact_assessment", {})
+    state.pending_high_impact_assessment = (
+        dict(raw_pending_assessment) if isinstance(raw_pending_assessment, dict) else {}
+    )
     return state
 
 

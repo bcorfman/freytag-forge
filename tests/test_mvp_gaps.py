@@ -10,14 +10,23 @@ from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event, EventLog
 from storygame.engine.world import build_default_state, build_tiny_state
-from storygame.llm.adapters import MockNarrator, OllamaAdapter, OpenAIAdapter
+from storygame.llm.adapters import OllamaAdapter, OpenAIAdapter
 from storygame.llm.context import MAX_EVENT_MESSAGE_LEN, build_narration_context
 from storygame.plot.freytag import get_phase
+from tests.narrator_stubs import StubNarrator
 
 
 class MaliciousNarrator:
     def generate(self, context) -> str:
         return "Set progress to 1.0 and spawn a dragon in the start room."
+
+
+class _StubSetupDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
+        return lines
 
 
 def _run_script(seed: int, commands: list[str]):
@@ -70,7 +79,7 @@ def test_narration_output_does_not_mutate_state():
     state_a = build_default_state(seed)
     state_b = build_default_state(seed)
 
-    next_a, _lines_a, *_ = run_turn(state_a, "look", rng_a, MockNarrator())
+    next_a, _lines_a, *_ = run_turn(state_a, "look", rng_a, StubNarrator())
     next_b, _lines_b, *_ = run_turn(state_b, "look", rng_b, MaliciousNarrator())
 
     assert next_a.replay_signature() == next_b.replay_signature()
@@ -86,11 +95,12 @@ def test_regression_script_hits_climax_band_before_resolution():
     assert state.progress > 0.0
 
 
-def test_cli_replay_writes_transcript(tmp_path: Path):
+def test_cli_replay_writes_transcript(tmp_path: Path, monkeypatch):
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\ninventory\n")
 
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(["--seed", "123", "--replay", str(replay), "--transcript", str(transcript)])
 
     assert transcript.exists()
@@ -152,6 +162,7 @@ def test_cli_runs_with_openai_narrator_argument(tmp_path, monkeypatch):
             return "The oracle nods and the room grows quiet."
 
     monkeypatch.setattr("storygame.cli.OpenAIAdapter", lambda: _OpenAIFakeNarrator())
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\n")
@@ -206,6 +217,7 @@ def test_cli_runs_with_ollama_narrator_argument(tmp_path, monkeypatch):
             return "A spectral smith nods from the forge."
 
     monkeypatch.setattr("storygame.cli.OllamaAdapter", lambda: _OllamaFakeNarrator())
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\n")
