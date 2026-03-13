@@ -16,19 +16,19 @@ from storygame.llm.contracts import (
 
 def _context() -> NarrationContext:
     return NarrationContext(
-        room_name="Archive Hall",
-        room_description="Cold stone and ledger stacks.",
-        visible_items=("ledger", "inkpot"),
-        visible_npcs=("keeper",),
+        room_name="Operations Hall",
+        room_description="Cold stone and mission boards.",
+        visible_items=("dossier", "inkpot"),
+        visible_npcs=("guide",),
         npc_facts=(),
         exits=("east", "west"),
-        inventory=("bronze_key",),
+        inventory=("route_key",),
         recent_events=(),
         phase="rising_action",
         tension=0.5,
         beat="progressive_complication",
-        goal="Follow the forged ledger trail.",
-        action="talk keeper",
+        goal="Follow the forged directive trail.",
+        action="talk guide",
         memory_fragments=(),
     )
 
@@ -39,7 +39,7 @@ def test_contract_parsers_accept_valid_payloads():
             "patch_id": "patch-1",
             "operations": (
                 {"op": "set", "path": "goal", "value": "Follow ledger east"},
-                {"op": "add", "path": "memory", "value": "keeper testimony"},
+                {"op": "add", "path": "memory", "value": "guide testimony"},
             ),
             "rationale": "Apply deterministic updates from accepted narration.",
         }
@@ -47,7 +47,7 @@ def test_contract_parsers_accept_valid_payloads():
     proposal = parse_agent_proposal(
         {
             "agent_id": "narrator",
-            "narration": "You question the keeper and follow the trail east.",
+            "narration": "You question the guide and follow the trail east.",
             "story_patch": patch,
             "rationale": "Grounded in visible facts and current objective.",
         }
@@ -128,7 +128,7 @@ def test_coherence_gate_rejects_malformed_critic_contracts():
 
     class _Narrator:
         def generate(self, context: NarrationContext) -> str:  # noqa: ARG002
-            return "The keeper points east because the forged ledger was moved after the alarm."
+            return "The guide points east because the forged directive moved after the alarm."
 
     gate = CoherenceGate(
         critics=(_InvalidCritic(),),

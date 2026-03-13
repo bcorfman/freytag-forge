@@ -1,22 +1,22 @@
 schema_version: 1
 cards:
-  - npc_id: oracle
+  - npc_id: guide
     core_identity:
-      role: high_oracle
-      worldview: ["truth_over_comfort", "omens_have_costs"]
-      speech_style: ["measured", "symbolic", "short_sentences"]
+      role: field_guide
+      worldview: ["truth_over_comfort", "plans_need_flexibility"]
+      speech_style: ["measured", "direct", "short_sentences"]
       taboos: ["no_modern_slang"]
-      hard_goals: ["protect_sanctuary_rites"]
+      hard_goals: ["protect_team"]
     adaptive_state:
       trust_player: 0.45
       fear_level: 0.30
       stance_on_player: cautious
-      current_goal: verify_resonator_source
+      current_goal: verify_lead
       secondary_goals: ["test_player_intent"]
       mood_tags: ["wary", "curious"]
     dialogue_policy:
       max_utterance_sentences: 3
       ask_question_bias: 0.6
       reveal_thresholds:
-        hidden_resonator:
+        key_clue:
           trust_min: 0.55

@@ -24,6 +24,8 @@ from storygame.plot.freytag import get_phase
 
 
 def _room_distance(state: GameState, start_room_id: str, target_room_id: str) -> int | None:
+    if start_room_id not in state.world.rooms or target_room_id not in state.world.rooms:
+        return None
     if start_room_id == target_room_id:
         return 0
     visited = {start_room_id}
@@ -42,7 +44,10 @@ def _room_distance(state: GameState, start_room_id: str, target_room_id: str) ->
 
 
 def _signal_hint(state: GameState) -> str:
-    source_room = "sanctuary"
+    map_rooms = tuple(state.world_package.get("map", {}).get("rooms", ()))
+    if not map_rooms:
+        return ""
+    source_room = map_rooms[-1]
     if source_room not in state.world.rooms:
         return ""
 
@@ -50,7 +55,7 @@ def _signal_hint(state: GameState) -> str:
     if not room.exits:
         return ""
     if room.id == source_room:
-        return "Signal: The resonance source is directly beneath this sanctuary floor."
+        return "Signal: The objective signal source is directly beneath this location."
 
     best_distance: int | None = None
     best_directions: list[str] = []

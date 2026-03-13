@@ -27,7 +27,8 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
     state.progress = 0.41
     state.tension = 0.55
     state.turn_index = 4
-    state.player.inventory = ("torch", "bronze_key")
+    inventory_seed = tuple(state.world.items.keys())[:2]
+    state.player.inventory = inventory_seed
     state.append_event(_event_for_test())
 
     rng = Random(1234)
@@ -76,9 +77,9 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
     db_path = tmp_path / "saves.sqlite"
 
     seed = 18
-    pre_save_commands = ["go north", "take bronze key", "go east", "talk keeper"]
-    distraction_commands = ["look", "talk ferryman"]
-    continuation_commands = ["go north", "talk warden", "take moonstone", "go down", "look"]
+    pre_save_commands = ["go north", "look", "inventory", "look"]
+    distraction_commands = ["look", "inventory"]
+    continuation_commands = ["look", "north", "look", "inventory", "look"]
 
     def _run_without_save(commands: list[str], rng_seed: int) -> tuple[str, tuple]:
         from random import Random
@@ -163,7 +164,7 @@ def test_save_run_writes_story_state_artifacts(tmp_path):
     db_path = tmp_path / "saves.sqlite"
     state = build_default_state(seed=55)
     state.progress = 0.72
-    state.player.flags["talked_ferryman"] = True
+    state.player.flags["talked_guide"] = True
     state.append_event(_event_for_test())
 
     with SqliteSaveStore(db_path) as store:
@@ -179,10 +180,10 @@ def test_save_run_writes_story_state_artifacts(tmp_path):
     payload = json.loads(story_state_path.read_text(encoding="utf-8"))
     assert payload["schema_version"] >= 2
     assert payload["seed"] == 55
-    assert payload["player"]["flags"]["talked_ferryman"] is True
+    assert payload["player"]["flags"]["talked_guide"] is True
     assert payload["trace"]["judge_decision"]["status"] == "accepted"
     assert payload["story_markdown_sha256"]
 
     markdown = story_path.read_text(encoding="utf-8")
     assert "# StoryState Workspace" in markdown
-    assert "Talked" in markdown or "talked_ferryman" in markdown
+    assert "Talked" in markdown or "talked_guide" in markdown

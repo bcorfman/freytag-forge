@@ -46,97 +46,30 @@ def _use_event(
 
 def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
     turn_index = state.turn_index
-    inventory = player_inventory(state)
-    location = player_location(state)
     target_label = (item_id, target) if target else (item_id,)
+    target_fragment = target if target else "self"
+    flag = f"used_{item_id}_{target_fragment}".replace(" ", "_")
 
-    map_and_lens = {item_id, target} == {"sea_map", "glass_lens"}
-    if map_and_lens:
-        if "sea_map" not in inventory:
-            return Event(
-                type="use_failed",
-                message_key="use_failed_missing_item",
-                entities=("sea_map",),
-                tags=("validation",),
-                turn_index=turn_index,
-            )
-        if "glass_lens" not in inventory:
-            return Event(
-                type="use_failed",
-                message_key="use_failed_missing_item",
-                entities=("glass_lens",),
-                tags=("validation",),
-                turn_index=turn_index,
-            )
-        if state.world_facts.holds("flag", "player", "relay_route_confirmed"):
-            return _use_event(
-                turn_index,
-                target_label,
-                "The lens confirms your marked routes still converge on the sanctuary.",
-            )
-        return _use_event(
-            turn_index,
-            target_label,
-            "You map the relay route: archive vault, tower stair, then sanctuary.",
-            delta_progress=0.08,
-            fact_ops=[{"op": "assert", "fact": ("flag", "player", "relay_route_confirmed")}],
-        )
+    if state.world_facts.holds("flag", "player", flag):
+        return _use_event(turn_index, target_label, "use_success")
 
-    if item_id == "ropes" and target in {"bell", "bell_frame", "frame"}:
-        if location != "tower_top":
-            return Event(
-                type="use_failed",
-                message_key="You need to brace the frame from the tower top.",
-                entities=target_label,
-                tags=("validation",),
-                turn_index=turn_index,
-            )
-        if "bell_pin" not in inventory:
-            return Event(
-                type="use_failed",
-                message_key="The rope slips free without the bell pin.",
-                entities=("bell_pin",),
-                tags=("validation",),
-                turn_index=turn_index,
-            )
-        if state.world_facts.holds("flag", "player", "frame_braced"):
-            return _use_event(
-                turn_index,
-                target_label,
-                "The frame is already braced and steady in the wind.",
-            )
-        return _use_event(
-            turn_index,
-            target_label,
-            "You brace the shattered bell frame. The resonance stabilizes toward the sanctuary.",
-            delta_progress=0.1,
-            fact_ops=[{"op": "assert", "fact": ("flag", "player", "frame_braced")}],
-        )
+    item = state.world.items.get(item_id)
+    delta_progress = 0.0
+    if item is not None:
+        if item.kind == "tool":
+            delta_progress = 0.02
+        elif item.kind == "clue":
+            delta_progress = 0.04
+        elif item.kind == "evidence":
+            delta_progress = 0.06
 
-    if item_id == "moonstone" and location == "sanctuary":
-        if not state.world_facts.holds("flag", "player", "frame_braced"):
-            return Event(
-                type="use_failed",
-                message_key="The tone scatters until the tower frame is braced.",
-                entities=target_label,
-                tags=("validation",),
-                turn_index=turn_index,
-            )
-        if state.world_facts.holds("flag", "player", "transmitter_exposed"):
-            return _use_event(
-                turn_index,
-                target_label,
-                "The moonstone keeps the hidden resonator exposed.",
-            )
-        return _use_event(
-            turn_index,
-            target_label,
-            "The moonstone reveals a hidden resonator beneath the altar.",
-            delta_progress=0.16,
-            fact_ops=[{"op": "assert", "fact": ("flag", "player", "transmitter_exposed")}],
-        )
-
-    return _use_event(turn_index, target_label, "use_success")
+    return _use_event(
+        turn_index,
+        target_label,
+        "use_success",
+        delta_progress=delta_progress,
+        fact_ops=[{"op": "assert", "fact": ("flag", "player", flag)}],
+    )
 
 
 def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list[Event]]:
@@ -146,8 +79,6 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
     events: list[Event] = []
 
     room_id = player_location(next_state)
-    _room = next_state.world.rooms[room_id]
-
     def _commit() -> tuple[GameState, list[Event]]:
         for event in events:
             ops = event_fact_ops(event)

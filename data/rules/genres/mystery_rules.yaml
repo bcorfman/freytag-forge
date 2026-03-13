@@ -15,7 +15,7 @@ rules:
     when:
       all:
         - predicate: holding
-          args: [player, bronze_key]
+          args: [player, "$key_item"]
     then:
       retract:
-        - [locked, north, archives, bronze_key]
+        - [locked, "$direction", "$room", "$key_item"]

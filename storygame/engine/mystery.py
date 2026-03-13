@@ -35,8 +35,8 @@ def filtered_inventory(state: GameState) -> tuple[str, ...]:
 
 
 def take_item_message(item: Item) -> str:
-    if item.kind == "evidence" and item.proves:
-        return f"Evidence secured: {item.name}. It proves {item.proves}."
+    if item.kind == "evidence" and item.clue_text:
+        return f"Evidence secured: {item.clue_text}"
     if item.kind == "clue" and item.clue_text:
         return f"Clue noted: {item.clue_text}"
     if item.kind == "tool":
@@ -45,101 +45,32 @@ def take_item_message(item: Item) -> str:
 
 
 def npc_talk_message(state: GameState, npc: Npc, first_talk: bool) -> str:
-    has_key = "bronze_key" in state.player.inventory
-    has_map = "sea_map" in state.player.inventory
-    has_lens = "glass_lens" in state.player.inventory
-    has_moonstone = "moonstone" in state.player.inventory
-    talked_keeper = state.player.flags.get("talked_keeper", False)
-
-    if npc.id == "ferryman":
-        if has_map and has_lens:
-            return "Rumor from dock crews: forged tones are loudest near the sanctuary stair. Use your map marks there."
-        return (
-            "Rumor from dock crews: the emergency pattern sounded wrong before dawn. Someone wanted the streets empty."
-        )
-
-    if npc.id == "keeper":
-        if not has_key:
-            return (
-                "Archive record: the north gate key was signed out to the salt market lockbox. "
-                "Take the bronze key and open the north gate."
-            )
-        if not has_moonstone:
-            return (
-                "Archive record: harbor levy ledgers, emergency signal codebook, and conviction docket were edited "
-                "during the false alarm window. Recover the moonstone from the inner vault and compare seal residue."
-            )
-        return (
-            "Archive record cross-check: the altered harbor levy ledgers and conviction docket share wax from the "
-            "Port Chancellor's seal. Bring that evidence to the sanctuary relay."
-        )
-
-    if npc.id == "warden":
-        if not has_map or not has_lens:
-            return (
-                "Maintenance record: the bell frame is shattered; no one could ring it. "
-                "Track the relay path before confronting the relay chamber."
-            )
-        return (
-            "Maintenance record: brace the frame with rope and bell pin at the tower top, "
-            "then align the moonstone in the sanctuary."
-        )
-
-    if npc.id == "oracle":
-        if not talked_keeper:
-            return "Witness account: names without records are only rumors. Verify the ledgers first in the archives."
-        if not has_moonstone:
-            return (
-                "Witness account: the hidden relay answers only to moonstone resonance. "
-                "Retrieve it from the inner vault."
-            )
-        return (
-            "Witness account: once the relay is exposed, publish the codebook and conviction docket together "
-            "or the cover-up survives."
-        )
-
     if first_talk:
         return npc.dialogue
-    return f"{npc.knowledge_source.title()} source offers nothing new."
+    return f"{npc.name} has nothing new to add right now."
 
 
 def caseboard_lines(state: GameState) -> tuple[str, ...]:
     known_facts = [
-        "False emergency tones cleared the harbor before dawn.",
-        "The physical bell is broken; a hidden relay produced the signal.",
+        f"Current objective: {state.active_goal}",
+        f"Progress is {state.progress:.2f} with tension {state.tension:.2f}.",
     ]
-    if "talked_keeper" in state.player.flags:
-        known_facts.append("Archive records were altered during the alarm window.")
-    if "moonstone" in state.player.inventory:
-        known_facts.append("Moonstone resonance can expose the sanctuary relay.")
-    if state.player.flags.get("transmitter_exposed", False):
-        known_facts.append("The hidden transmitter is exposed and tied to seal tampering.")
+    if state.beat_history:
+        known_facts.append(f"Latest beat: {state.beat_history[-1]}.")
 
     open_questions = [
-        "Who authorized the false alarm pattern?",
-        "Who altered the harbor levy and conviction records?",
+        "Which scene should be explored next?",
+        "Which NPC or item can unlock the next progression step?",
     ]
-    if "talked_keeper" in state.player.flags:
-        open_questions[1] = "Which official chain links altered ledgers to the Port Chancellor?"
 
     leads: list[str] = []
-    location = state.player.location
-    if "bronze_key" not in state.player.inventory:
-        leads.append("Retrieve bronze key from the market lockbox.")
-    elif location == "archives" and "moonstone" not in state.player.inventory:
-        leads.append("Unlock the north gate and search the inner archive vault.")
-
-    if "sea_map" not in state.player.inventory:
-        leads.append("Collect the sea map at the harbor.")
-    if "glass_lens" not in state.player.inventory:
-        leads.append("Collect the glass lens in the market.")
-    if state.player.flags.get("relay_route_confirmed", False) and not state.player.flags.get("frame_braced", False):
-        leads.append("Brace the tower frame with rope and bell pin.")
-    if "moonstone" in state.player.inventory and not state.player.flags.get("transmitter_exposed", False):
-        leads.append("Use moonstone in the sanctuary to expose the relay.")
-
+    room = state.world.rooms[state.player.location]
+    if room.item_ids:
+        leads.append(f"Inspect available items in {room.name}.")
+    if room.npc_ids:
+        leads.append(f"Question {room.npc_ids[0].replace('_', ' ')} for new context.")
     if not leads:
-        leads.append("Correlate ledger evidence with signal codebook and publish the chain.")
+        leads.append("Explore adjacent rooms to gather more context.")
 
     return (
         "Caseboard:",

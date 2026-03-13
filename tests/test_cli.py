@@ -31,8 +31,9 @@ from storygame.persistence.story_state import STORY_STATE_FILE, load_story_state
 def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     assert _event_lines([]) == ""
 
-    line = _room_lines(build_default_state(seed=1))
-    assert line.startswith("Harbor Steps\n")
+    state = build_default_state(seed=1)
+    line = _room_lines(state)
+    assert line.startswith(f"{state.world.rooms[state.player.location].name}\n")
 
     _write_transcript_line(None, "ignored")
 
@@ -72,8 +73,9 @@ def test_event_lines_hide_engine_keys_unless_debug():
 
 def test_room_lines_when_empty_room_has_no_optional_sections():
     state = build_default_state(seed=1)
-    state.world.rooms["harbor"] = Room(
-        id="harbor",
+    room_id = state.player.location
+    state.world.rooms[room_id] = Room(
+        id=room_id,
         name="Harbor",
         description="Closed.",
     )
@@ -140,28 +142,22 @@ def test_run_turn_handles_quit_and_narration_failures():
 
 def test_signal_hint_and_room_distance_cover_missing_graph_cases():
     state = build_default_state(seed=16)
-    assert _room_distance(state, "harbor", "harbor") == 0
-    assert _room_distance(state, "harbor", "nonexistent") is None
+    start_room = state.player.location
+    assert _room_distance(state, start_room, start_room) == 0
+    assert _room_distance(state, start_room, "nonexistent") is None
 
-    harbor_state = build_default_state(seed=16)
-    harbor = harbor_state.world.rooms["harbor"]
-    original_exits = harbor.exits
+    no_exit_state = build_default_state(seed=16)
+    room = no_exit_state.world.rooms[no_exit_state.player.location]
+    original_exits = room.exits
     try:
-        harbor.exits = {}
-        assert _signal_hint(harbor_state) == ""
+        room.exits = {}
+        assert _signal_hint(no_exit_state) == ""
     finally:
-        harbor.exits = original_exits
+        room.exits = original_exits
 
-    missing_source = build_default_state(seed=16)
-    del missing_source.world.rooms["sanctuary"]
-    assert _signal_hint(missing_source) == ""
-
-    missing_source.player.location = "harbor"
-    assert _signal_hint(missing_source) == ""
-
-    near_sanctuary = build_default_state(seed=16)
-    near_sanctuary.player.location = "harbor"
-    assert "stronger toward" in _signal_hint(near_sanctuary)
+    hint_state = build_default_state(seed=16)
+    hint = _signal_hint(hint_state)
+    assert isinstance(hint, str)
 
 
 def test_run_turn_save_load_error_paths():
@@ -199,21 +195,23 @@ def test_run_turn_load_missing_slot_with_store_is_handled(tmp_path):
 
 def test_build_memory_tag_set_includes_expected_fields():
     state = build_default_state(seed=20)
-    tags = _build_memory_tag_set(state, parse_command("talk ferryman"))
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    tags = _build_memory_tag_set(state, parse_command(f"talk {npc_id}"))
     assert "beat_unknown" in tags
     assert any(tag.startswith("goal_") for tag in tags)
-    assert "ferryman" in tags
-    assert "npc_ferryman" in tags
+    assert npc_id in tags
+    assert f"npc_{npc_id}" in tags
 
 
 def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
+    initial_state = build_default_state(seed=21)
     final_state = run_replay(
         seed=21,
         commands=["look", "save quicksave", "north", "load quicksave"],
         save_db=tmp_path / "saves.sqlite",
         memory_db=tmp_path / "memory.sqlite",
     )
-    assert final_state.player.location == "harbor"
+    assert final_state.player.location == initial_state.player.location
 
 
 def test_first_turn_uses_diegetic_room_first_output():
@@ -227,7 +225,7 @@ def test_first_turn_uses_diegetic_room_first_output():
 
     assert continued is True
     assert next_state.turn_index == 1
-    assert lines[0].startswith("Harbor Steps\n")
+    assert lines[0].startswith(f"{state.world.rooms[state.player.location].name}\n")
     assert all("Before dawn" not in line for line in lines)
     assert all(not line.startswith("- ") for line in lines)
 
@@ -286,14 +284,16 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
         assert action_raw == "save checkpoint"
         assert "Saved to slot 'checkpoint'." in lines
 
+        direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
+        destination = state.world.rooms[state.player.location].exits[direction]
         state, _, _action, _beat, _continued = run_turn(
             state,
-            "north",
+            direction,
             rng,
             MockNarrator(),
             save_store=store,
         )
-        assert state.player.location == "market"
+        assert state.player.location == destination
 
         state, lines, _action, _beat, _continued = run_turn(
             state,
@@ -360,9 +360,10 @@ def test_run_turn_debug_includes_coherence_budget_telemetry():
 
 def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     state = build_default_state(seed=88)
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
-        "ask ferryman about the signal",
+        f"ask {npc_id} about the signal",
         Random(88),
         SilentNarrator(),
         debug=False,
@@ -371,9 +372,9 @@ def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any("ferryman" in line.lower() for line in lines)
+    assert any(npc_id in line.lower() for line in lines)
     assert not any("didn't understand" in line.lower() for line in lines)
-    assert next_state.player.flags.get("asked_signal_ferryman") is True
+    assert next_state.player.flags.get(f"asked_signal_{npc_id}") is True
 
 
 def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():

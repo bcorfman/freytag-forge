@@ -34,10 +34,10 @@ _TONE_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 _ROOM_TEMPLATES: dict[str, tuple[str, ...]] = {
-    "sci-fi": ("dock_hub", "market_arcade", "archive_node", "lab_ring", "tower_array", "sanctuary_core"),
+    "sci-fi": ("dock_hub", "market_arcade", "archive_node", "lab_ring", "tower_array", "command_core"),
     "mystery": ("front_steps", "market_lane", "records_office", "safehouse", "watch_tower", "old_chapel"),
     "romance": ("courtyard", "cafe_row", "garden_path", "gallery_hall", "river_walk", "lantern_square"),
-    "adventure": ("camp", "trailhead", "cliff_pass", "ruin_gate", "inner_chamber", "return_harbor"),
+    "adventure": ("camp", "trailhead", "cliff_pass", "ruin_gate", "inner_chamber", "return_camp"),
     "action": ("safe_flat", "alley_junction", "control_room", "warehouse", "checkpoint", "extraction_point"),
     "suspense": ("apartment", "backstreet", "records_room", "subway_platform", "abandoned_site", "panic_room"),
     "drama": ("family_home", "main_street", "clinic", "school_hall", "community_center", "lake_house"),
@@ -48,7 +48,7 @@ _ROOM_TEMPLATES: dict[str, tuple[str, ...]] = {
 
 _ITEM_TEMPLATES: dict[str, tuple[str, ...]] = {
     "sci-fi": ("data_key", "signal_lens", "power_cell"),
-    "mystery": ("case_file", "ledger_page", "bronze_key"),
+    "mystery": ("case_file", "ledger_page", "route_key"),
     "romance": ("letter", "locket", "keepsake"),
     "adventure": ("map_fragment", "rope_kit", "artifact_shard"),
     "action": ("badge", "breach_charge", "comm_scrambler"),

@@ -2,6 +2,7 @@
 
 ## Product Intent
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
+Current runtime generation is package-driven.
 
 ## Goals
 - Deliver a playable CLI and web IF experience.
@@ -41,6 +42,8 @@ Freytag Forge is a deterministic narrative-engine platform for interactive ficti
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, etc.) with legacy object views synchronized for compatibility.
+- `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
+- `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
 
@@ -80,7 +83,7 @@ flowchart LR
 
 ## Feature Details
 ### Beat Realization
-- Abstract Freytag beats are realized as concrete incidents (for example: thefts, arrests, urgent clue deliveries).
+- Abstract Freytag beats are realized as concrete incidents (for example: panic spikes, interrupted briefings, forged directives).
 - Incident triggers are deterministic and may depend on:
   - turn timing (`min_turn`),
   - player location,
@@ -92,6 +95,7 @@ flowchart LR
 - If no incident matches the current beat context, the engine falls back to generic beat-tagged plot templates.
 
 ### World Builder Interfaces
+- Runtime map/entity/item realization is derived from `world_package` (selected from outline + curve templates) rather than static scene constants.
 - Predicate and rule packs are YAML-defined:
   - `data/predicates/core.yaml`
   - `data/predicates/genres/<genre>.yaml`
@@ -112,6 +116,7 @@ flowchart LR
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
+- Signal hints are objective-driven from generated map topology (targeting package terminal room), not hardcoded world landmarks.
 - Parse failures on non-command input return in-world dialog through freeform roleplay.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - Transcript command echo uses `>COMMAND` format.
@@ -142,8 +147,16 @@ flowchart LR
 - Replay: `--replay <file> --transcript <file>`
 - Web: `uv run uvicorn storygame.web:app --reload`
 - Narrator mode: `--narrator mock|none|openai|ollama`
+- Web narrator resolution precedence (when not explicitly passed in `create_app(...)`):
+  1. `FREYTAG_NARRATOR` (`mock|none|openai|ollama`)
+  2. `OPENAI_API_KEY` => `openai`
+  3. `OLLAMA_BASE_URL` or `OLLAMA_MODEL` => `ollama`
+  4. fallback `mock`
 
 ## Environment Variables
+### Runtime selection
+- `FREYTAG_NARRATOR`
+
 ### OpenAI adapter
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (default `gpt-4o-mini`)

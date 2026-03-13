@@ -99,7 +99,7 @@ def list_event_templates() -> tuple[EventTemplate, ...]:
         ),
         EventTemplate(
             key="final_coda",
-            message_key="The forged tone collapses, and the harbor settles into clear silence.",
+            message_key="The conflict resolves, and the district settles into clear silence.",
             tags=("epilogue",),
             delta_progress=0.08,
             delta_tension=-0.06,

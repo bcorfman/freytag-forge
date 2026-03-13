@@ -34,9 +34,9 @@ def test_parse_shortcuts():
 
 
 def test_parse_take_with_spaces():
-    action = parse_command("take bronze key")
+    action = parse_command("take route key")
     assert action.kind == ActionKind.TAKE
-    assert action.target == "bronze_key"
+    assert action.target == "route_key"
 
 
 def test_parse_take_pick_up_aliases():

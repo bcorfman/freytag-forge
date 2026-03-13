@@ -36,7 +36,7 @@ def test_npc_voice_cards_load() -> None:
     payload = load_npc_voice_cards()
 
     assert payload["schema_version"] >= 1
-    assert any(card["npc_id"] == "oracle" for card in payload["cards"])
+    assert any(card["npc_id"] == "guide" for card in payload["cards"])
 
 
 def test_action_dialog_and_state_update_contracts_validate() -> None:
@@ -50,8 +50,8 @@ def test_action_dialog_and_state_update_contracts_validate() -> None:
     )
     dialog = parse_dialog_proposal(
         {
-            "speaker": "oracle",
-            "text": "The sanctuary does not answer to mockery.",
+            "speaker": "guide",
+            "text": "That approach won't help. Focus on verifiable facts.",
             "tone": "stern",
         }
     )
@@ -65,7 +65,7 @@ def test_action_dialog_and_state_update_contracts_validate() -> None:
     )
 
     assert action["intent"] == "mock"
-    assert dialog["speaker"] == "oracle"
+    assert dialog["speaker"] == "guide"
     assert envelope["numeric_delta"][0]["delta"] == -0.1
 
 

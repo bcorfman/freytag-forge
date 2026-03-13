@@ -14,7 +14,7 @@ _ALLOWED_TOPIC_FLAGS = {
     "rumor",
     "rumors",
     "ledger",
-    "sanctuary",
+    "objective",
     "bell",
 }
 _ALLOWED_INTENTS = {"ask_about", "greet", "apologize", "threaten"}

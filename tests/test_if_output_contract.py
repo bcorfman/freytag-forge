@@ -24,6 +24,7 @@ def _run_script(seed: int, commands: list[str]) -> tuple[list[list[str]], list[s
 
 def test_non_debug_output_is_room_first_and_hides_internal_labels():
     state = build_default_state(seed=31)
+    room = state.world.rooms[state.player.location]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
         "look",
@@ -33,8 +34,8 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
     )
 
     assert lines
-    assert lines[0].startswith("Harbor Steps\n")
-    assert "Wind whistles" in lines[0]
+    assert lines[0].startswith(f"{room.name}\n")
+    assert room.description in lines[0]
     assert all("[debug]" not in line for line in lines)
     assert all("judge_status=" not in line for line in lines)
     assert all("coherence_budget" not in line for line in lines)
@@ -44,15 +45,16 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
 
 def test_unknown_non_command_input_uses_in_world_roleplay_response():
     state = build_default_state(seed=32)
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
-        "ask ferryman about rumors",
+        f"ask {npc_id} about rumors",
         Random(32),
         SilentNarrator(),
         debug=False,
     )
 
-    assert any("ferryman" in line.lower() for line in lines)
+    assert any(npc_id in line.lower() for line in lines)
     assert not any("didn't understand" in line.lower() for line in lines)
 
 
@@ -88,7 +90,7 @@ def test_transcript_uses_prompt_echo_format(tmp_path):
 
 
 def test_fixed_seed_replay_is_byte_stable_for_output_and_state():
-    commands = ["look", "north", "talk keeper", "inventory", "look"]
+    commands = ["look", "north", "look", "inventory", "look"]
     first_output, first_state = _run_script(77, commands)
     second_output, second_state = _run_script(77, commands)
 

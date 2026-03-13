@@ -4,6 +4,7 @@
 Freytag Forge is a deterministic interactive-fiction engine built around a multi-agent narrative pipeline.
 Instead of trusting a single narrator pass, it routes each candidate turn through specialist critics and a deterministic judge, improving continuity, causality, and dialog fit before output is shown to the player.
 The result is stronger story coherence turn-to-turn, with reproducible behavior and auditable decision traces.
+Worlds are now generated from genre/tone/session inputs at startup.
 
 ```mermaid
 flowchart TD
@@ -35,10 +36,12 @@ There are also **4 deterministic validators** run before critics:
 So the default coherence pipeline has **9 total decision participants** (5 narrative agents + 4 validators).
 ## Main Features
 - Deterministic world simulation with seed-stable replay.
+- Package-driven world realization:
+  generated `world_package` metadata (map/entities/items/goals) is realized into playable runtime rooms, NPCs, and items at startup.
 - Multi-agent coherence architecture:
   narrator proposal -> validator gates -> multi-critic review -> single deterministic judge -> revision/replan when needed.
 - Beat realization layer for concrete story incidents:
-  timed and trigger-based incidents (location/item/NPC interactions) can materialize beat themes into in-world events.
+  timed and trigger-based incidents can materialize beat themes into in-world events without relying on fixed room/item IDs.
 - IF-style output contract with room-first narration and transcript command echo (`>COMMAND`).
 - Freeform roleplay fallback for non-command text with policy-bounded fact updates.
 - Non-debug output stays diegetic: plain room title/prose, no engine bullets, and no rubric internals.
@@ -54,6 +57,7 @@ For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).
 
 ## Incident Authoring
 - Incident content is now defined in [storygame/content/incidents.yaml](storygame/content/incidents.yaml).
+- Incident defaults are now world-agnostic (no hard dependency on specific legacy room or NPC IDs).
 - Supported trigger primitives include:
   - `min_turn`, `cooldown_turns`
   - boolean groups: `all`, `any`, `not`
@@ -119,3 +123,8 @@ make install
 make run
 ```
 Open `http://127.0.0.1:8000`.
+
+Optional CLI run (same runtime engine):
+```bash
+uv run python -m storygame --seed 123 --genre fantasy --session-length long --tone epic
+```

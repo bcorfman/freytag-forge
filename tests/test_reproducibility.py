@@ -13,15 +13,13 @@ def run_script(seed: int, commands: list[str]):
 
 def test_same_seed_replays_same_state_and_log():
     commands = [
-        "go north",
-        "take bronze key",
-        "go east",
-        "go north",
-        "talk warden",
-        "take moonstone",
-        "go east",
-        "go up",
-        "talk oracle",
+        "look",
+        "north",
+        "look",
+        "inventory",
+        "look",
+        "north",
+        "look",
     ]
 
     sig_one, state_one = run_script(123, commands)

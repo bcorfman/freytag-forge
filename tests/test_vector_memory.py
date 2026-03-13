@@ -23,34 +23,36 @@ def test_vector_memory_store_retrieves_relevant_notes(tmp_path):
             "demo",
             "Keeper opened the archive corridors after the bell phrase.",
             "lore",
-            ("npc_keeper", "room_archives", "lore"),
+            ("npc_guide", "room_records", "lore"),
         )
         store.add_memory(
             "demo",
-            "A crate of fish is waiting at the harbor.",
+            "A crate of supplies is waiting at the district gate.",
             "lore",
-            ("room_harbor", "market"),
+            ("room_gate", "market"),
         )
         store.add_memory(
             "demo",
-            "Moonstone glows brighter when the bell rings.",
+            "Artifact shards glow brighter when the alarm rings.",
             "plot",
-            ("plot", "lore", "moonstone", "goal"),
+            ("plot", "lore", "artifact", "goal"),
         )
 
-        hits_for_keeper = store.retrieve("demo", ("npc_keeper", "keeper", "lore"))
+        hits_for_keeper = store.retrieve("demo", ("npc_guide", "guide", "lore"))
         assert hits_for_keeper
         assert "Keeper opened the archive corridors after the bell phrase." in hits_for_keeper[0]
 
-        hits_for_market = store.retrieve("demo", ("room_harbor",))
+        hits_for_market = store.retrieve("demo", ("room_gate",))
         assert hits_for_market
-        assert hits_for_market[0].startswith("A crate of fish")
+        assert hits_for_market[0].startswith("A crate of supplies")
 
 
 def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
     db_path = tmp_path / "memory.sqlite"
     state = build_default_state(seed=77)
     rng = Random(77)
+    room_id = state.player.location
+    npc_id = state.world.rooms[room_id].npc_ids[0]
 
     captured: list[NarrationContext] = []
 
@@ -62,14 +64,14 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
     with SqliteVectorMemory(db_path) as memory_store:
         memory_store.add_memory(
             "run",
-            "The keeper trusts your judgment after repeated visits.",
+            "A key ally trusts your judgment after repeated visits.",
             "relationship",
-            ("npc_keeper", "room_archives", "goal"),
+            (f"npc_{npc_id}", f"room_{room_id}", "goal"),
         )
 
         state, _lines, _action, _beat, _continued = run_turn(
             state,
-            "go north",
+            "look",
             rng,
             _CaptureNarrator(),
             memory_store=memory_store,
@@ -77,15 +79,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
         )
         state, _lines, _action, _beat, _continued = run_turn(
             state,
-            "go east",
-            rng,
-            _CaptureNarrator(),
-            memory_store=memory_store,
-            memory_slot="run",
-        )
-        state, _lines, _action, _beat, _continued = run_turn(
-            state,
-            "talk keeper",
+            f"talk {npc_id}",
             rng,
             _CaptureNarrator(),
             memory_store=memory_store,
@@ -93,10 +87,10 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
         )
 
     assert captured
-    assert any("keeper trusts your judgment" in "\n".join(context.memory_fragments) for context in captured)
+    assert any("trusts your judgment" in "\n".join(context.memory_fragments) for context in captured)
     with SqliteVectorMemory(db_path) as reopened_store:
-        retrieved_notes = reopened_store.retrieve("run", ("npc_keeper", "relationship"))
-        assert any("spoke with keeper" in note.lower() for note in retrieved_notes)
+        retrieved_notes = reopened_store.retrieve("run", (f"npc_{npc_id}", "relationship"))
+        assert any("spoke with" in note.lower() for note in retrieved_notes)
 
 
 def test_event_extraction_tracks_progressive_memory_event_types():
@@ -105,11 +99,11 @@ def test_event_extraction_tracks_progressive_memory_event_types():
     notes = _extract_event_notes(
         state,
         [
-            Event(type="look", message_key="you looked around", entities=("harbor",), turn_index=1),
+            Event(type="look", message_key="you looked around", entities=("district_gate",), turn_index=1),
             Event(
                 type="talk",
                 message_key="",
-                entities=("keeper",),
+                entities=("guide",),
                 tags=("world",),
                 turn_index=1,
                 metadata={"dialogue": "Archive doors closed."},
@@ -123,7 +117,7 @@ def test_event_extraction_tracks_progressive_memory_event_types():
             ),
             Event(
                 type="move",
-                entities=("harbor", "market"),
+                entities=("room_a", "room_b"),
                 tags=("world",),
                 turn_index=1,
             ),
@@ -137,9 +131,9 @@ def test_event_extraction_tracks_progressive_memory_event_types():
         ],
     )
     messages = [note[0] for note in notes]
-    assert any("Relationship note: spoke with keeper" in message for message in messages)
+    assert any("Relationship note: spoke with guide" in message for message in messages)
     assert any("Collected sea_map" in message for message in messages)
-    assert any("Moved from harbor to market" in message for message in messages)
+    assert any("Moved from room_a to room_b" in message for message in messages)
     assert any("Major story memory" in message for message in messages)
 
 
@@ -175,7 +169,7 @@ def test_memory_retrieval_with_empty_query_is_noop(tmp_path):
 def test_memory_helpers_cover_text_and_vector_paths():
     assert _short_text("abc", max_len=3) == "abc"
     assert _short_text("abcdef", max_len=4) == "a..."
-    assert _tokenize_text("Bell! Ringing at the harbor.") == ("bell", "ringing", "at", "the", "harbor")
+    assert _tokenize_text("Bell! Ringing at the district gate.") == ("bell", "ringing", "at", "the", "district", "gate")
     assert _vector("hello hello world") == {"hello": 2.0, "world": 1.0}
     assert _cosine({"a": 1.0}, {"b": 1.0}) == 0.0
 
@@ -187,21 +181,21 @@ def test_ingest_events_adds_take_talk_and_move_notes(tmp_path):
             Event(
                 type="talk",
                 message_key="",
-                entities=("keeper",),
+                entities=("guide",),
                 metadata={"dialogue": "You compared the ledgers."},
                 tags=("world",),
                 turn_index=1,
             ),
             Event(
                 type="take",
-                entities=("moonstone",),
+                entities=("artifact_core",),
                 metadata={"item_kind": "evidence"},
                 tags=("world",),
                 turn_index=1,
             ),
             Event(
                 type="move",
-                entities=("harbor", "market"),
+                entities=("district_gate", "market_lane"),
                 tags=("world",),
                 turn_index=1,
             ),
@@ -209,6 +203,6 @@ def test_ingest_events_adds_take_talk_and_move_notes(tmp_path):
         store.ingest_events("case", state, events)
 
         notes = store.retrieve("case", ("movement", "inventory", "relationship"))
-    assert any("spoke with keeper" in note.lower() for note in notes)
+    assert any("spoke with guide" in note.lower() for note in notes)
     assert any("added it to inventory" in note.lower() for note in notes)
     assert any("exploring" in note.lower() for note in notes)

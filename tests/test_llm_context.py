@@ -27,22 +27,20 @@ def test_context_includes_required_fields_and_limits():
     assert payload["goal"]
     assert len(payload["recent_events"]) <= MAX_RECENT_EVENTS
     assert payload["npc_facts"]
-    keeper = next((fact for fact in payload["npc_facts"] if fact["id"] == "keeper"), None)
-    assert keeper is not None
-    assert keeper["pronouns"] == "she/her"
-    assert "female archivist" in keeper["identity"]
-    assert keeper["location"] == "archives"
-
-    ferryman = next((fact for fact in payload["npc_facts"] if fact["id"] == "ferryman"), None)
-    assert ferryman is not None
-    assert ferryman["location"] == "harbor"
+    npc_fact = payload["npc_facts"][0]
+    assert npc_fact["id"]
+    assert npc_fact["name"]
+    assert npc_fact["pronouns"]
+    assert npc_fact["identity"]
+    assert npc_fact["location"] in state.world.rooms
 
 
 def test_context_includes_memory_fragments_without_overriding_facts():
     state = build_default_state(seed=11)
+    room_name = state.world.rooms[state.player.location].name
     memory_fragments = (
         "The oracle once said the tower is collapsing.",
-        "You are currently in the harbor steps.",
+        "You are currently in the active objective room.",
     )
     context = build_narration_context(
         state,
@@ -52,7 +50,7 @@ def test_context_includes_memory_fragments_without_overriding_facts():
     )
     payload = context.as_dict()
     assert payload["memory_fragments"] == list(memory_fragments)
-    assert payload["room_name"] == "Harbor Steps"
+    assert payload["room_name"] == room_name
     assert any("The oracle once said" in frag for frag in payload["memory_fragments"])
 
 
@@ -61,7 +59,8 @@ def test_prompt_includes_canonical_npc_identity_details():
     context = build_narration_context(state, parse_command("look"), "hook")
     prompt = build_prompt(context)
     assert "Canonical NPC facts:" in prompt["user"]
-    assert "High Oracle [she/her]" in prompt["user"]
+    first_npc = context.npc_facts[0]
+    assert f"{first_npc['name']} [{first_npc['pronouns']}]" in prompt["user"]
 
 
 def test_prompt_marks_memory_fragments_as_non_authoritative():
