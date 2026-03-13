@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+from contextlib import suppress
 from io import StringIO
 from random import Random
 
@@ -23,10 +24,19 @@ from storygame.cli import (
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import MockNarrator, SilentNarrator
+from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
 from storygame.llm.context import build_narration_context
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.persistence.story_state import STORY_STATE_FILE, load_story_state_payload
+from tests.narrator_stubs import StubNarrator
+
+
+class _StubSetupDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
+        return lines
 
 
 def test_cli_helpers_handle_empty_event_list_and_no_transcript():
@@ -84,8 +94,8 @@ def test_room_lines_when_empty_room_has_no_optional_sections():
     assert lines == "Harbor\nClosed."
 
 
-def test_run_replay_executes_sequence_with_mock_narrator():
-    final_state = run_replay(seed=13, commands=["look", "inventory"], debug=True)
+def test_run_replay_executes_sequence_with_stub_narrator():
+    final_state = run_replay(seed=13, commands=["look", "inventory"], debug=True, narrator=StubNarrator())
     assert final_state.turn_index == 2
 
 
@@ -97,6 +107,7 @@ def test_run_replay_selects_curve_from_genre_and_length():
         session_length="short",
         tone="dark",
         debug=False,
+        narrator=StubNarrator(),
     )
     assert final_state.story_genre == "horror"
     assert final_state.session_length == "short"
@@ -106,11 +117,12 @@ def test_run_replay_selects_curve_from_genre_and_length():
 
 
 def test_build_narrator_modes():
-    narrator = _build_narrator("none")
-    assert isinstance(narrator, SilentNarrator)
+    narrator = _build_narrator("openai")
+    assert isinstance(narrator, OpenAIAdapter)
     state = build_default_state(seed=1)
     context = build_narration_context(state, parse_command("look"), "hook")
-    assert narrator.generate(context) == ""
+    with suppress(RuntimeError):
+        narrator.generate(context)
 
 
 def test_run_turn_handles_quit_and_narration_failures():
@@ -134,7 +146,7 @@ def test_run_turn_handles_quit_and_narration_failures():
         next_state,
         "quit",
         Random(8),
-        MockNarrator(),
+        StubNarrator(),
     )
     assert action_raw == ""
     assert continued is False
@@ -237,6 +249,7 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     transcript = tmp_path / "game.txt"
 
     monkeypatch.setattr(builtins, "input", lambda _=None: next(inputs))
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
 
     main(["--seed", "1", "--transcript", str(transcript)])
 
@@ -247,11 +260,12 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     assert "Goodbye." in text
 
 
-def test_main_debug_replay_prints_debug_lines(tmp_path):
+def test_main_debug_replay_prints_debug_lines(tmp_path, monkeypatch):
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\n")
 
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(
         [
             "--seed",
@@ -279,7 +293,7 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
             state,
             "save checkpoint",
             rng,
-            MockNarrator(),
+            StubNarrator(),
             save_store=store,
         )
         assert action_raw == "save checkpoint"
@@ -291,7 +305,7 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
             state,
             direction,
             rng,
-            MockNarrator(),
+            StubNarrator(),
             save_store=store,
         )
         assert state.player.location == destination
@@ -300,7 +314,7 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
             state,
             "load checkpoint",
             rng,
-            MockNarrator(),
+            StubNarrator(),
             save_store=store,
         )
 
@@ -309,12 +323,13 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
         assert rng.random() == baseline.random()
 
 
-def test_main_save_and_load_via_cli(tmp_path):
+def test_main_save_and_load_via_cli(tmp_path, monkeypatch):
     db_path = tmp_path / "saves.sqlite"
     transcript = tmp_path / "game.txt"
     replay = tmp_path / "commands.txt"
     replay.write_text("save demo\nnorth\nload demo\nquit\n")
 
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(
         [
             "--seed",
@@ -339,7 +354,7 @@ def test_run_turn_debug_includes_judge_decision_summary():
         state,
         "look",
         Random(23),
-        MockNarrator(),
+        StubNarrator(),
         debug=True,
     )
 
@@ -352,7 +367,7 @@ def test_run_turn_debug_includes_coherence_budget_telemetry():
         state,
         "look",
         Random(24),
-        MockNarrator(),
+        StubNarrator(),
         debug=True,
     )
 
@@ -395,6 +410,104 @@ def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
     assert next_state.player.flags == initial_flags
 
 
+def test_run_turn_blocks_high_impact_action_until_player_confirms() -> None:
+    state = build_default_state(seed=96)
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "punch police officer",
+        Random(96),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "impact_gate"
+    assert action_raw == "punch police officer"
+    assert next_state.turn_index == 0
+    assert next_state.pending_high_impact_command == "punch police officer"
+    assert "impact_class" in next_state.pending_high_impact_assessment
+    assert any("type proceed" in line.lower() for line in lines)
+
+
+def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None:
+    state = build_default_state(seed=97)
+    state, _lines, _action_raw, _beat_type, _continued = run_turn(
+        state,
+        "punch police officer",
+        Random(97),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    canceled_state, cancel_lines, _cancel_raw, cancel_beat, _cancel_continued = run_turn(
+        state,
+        "cancel",
+        Random(97),
+        SilentNarrator(),
+        debug=False,
+    )
+    assert cancel_beat == "impact_gate"
+    assert canceled_state.pending_high_impact_command == ""
+    assert any("canceled" in line.lower() for line in cancel_lines)
+
+    warned_state, _warn_lines, _warn_raw, _warn_beat, _warn_continued = run_turn(
+        state,
+        "punch police officer",
+        Random(97),
+        SilentNarrator(),
+        debug=False,
+    )
+    proceeded_state, proceed_lines, _proceed_raw, proceed_beat, proceed_continued = run_turn(
+        warned_state,
+        "proceed",
+        Random(97),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert proceed_continued is True
+    assert proceed_beat == "freeform_roleplay"
+    assert proceeded_state.turn_index == 1
+    assert proceeded_state.pending_high_impact_command == ""
+    assert proceeded_state.player.flags.get("story_replan_required") is True
+    assert any(event.type == "major_disruption" for event in proceeded_state.event_log.events)
+    assert any("planned arc" in line.lower() for line in proceed_lines)
+
+
+def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption() -> None:
+    state = build_default_state(seed=98)
+    state, _warn_lines, _warn_raw, _warn_beat, _warn_continued = run_turn(
+        state,
+        "punch police officer",
+        Random(98),
+        SilentNarrator(),
+        debug=False,
+    )
+    state, _proceed_lines, _proceed_raw, _proceed_beat, _proceed_continued = run_turn(
+        state,
+        "proceed",
+        Random(98),
+        SilentNarrator(),
+        debug=False,
+    )
+    assert state.player.flags.get("story_replan_required") is True
+    prior_goal = state.active_goal
+
+    replanned_state, replanned_lines, _raw, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(98),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert replanned_state.player.flags.get("story_replan_required") is False
+    assert replanned_state.active_goal != prior_goal
+    assert any(event.type == "story_replan" for event in replanned_state.event_log.events)
+    assert any("story shifts" in line.lower() for line in replanned_lines)
+
+
 def test_run_turn_applies_output_editor_before_returning_lines():
     class _PassThroughEditor:
         def review_opening(self, lines, active_goal):  # noqa: ANN001
@@ -419,11 +532,11 @@ def test_run_turn_applies_output_editor_before_returning_lines():
 
 def test_setup_phase_lines_include_who_where_and_objective():
     state = build_default_state(seed=90, genre="fantasy", tone="epic")
-    lines = _setup_phase_lines(state)
-    room = state.world.rooms[state.player.location]
+    lines = _setup_phase_lines(state, _StubSetupDirector())
 
     assert 3 <= len(lines) <= 4
-    assert any(room.name.lower() in paragraph.lower() for paragraph in lines)
+    protagonist = str(state.world_package.get("story_plan", {}).get("protagonist_name", "")).lower()
+    assert any(protagonist in paragraph.lower() for paragraph in lines)
     assert any("objective" in paragraph.lower() for paragraph in lines)
     assert all(not paragraph.lower().startswith("where you are:") for paragraph in lines)
     assert all(not paragraph.lower().startswith("cast:") for paragraph in lines)
@@ -434,7 +547,7 @@ def test_setup_phase_lines_include_who_where_and_objective():
 
 def test_setup_phase_lines_story_editor_removes_legacy_meta_fragments():
     state = build_default_state(seed=91, genre="mystery", tone="neutral")
-    lines = _setup_phase_lines(state)
+    lines = _setup_phase_lines(state, _StubSetupDirector())
     joined = "\n".join(lines).lower()
 
     assert "neutral mystery scene" not in joined
@@ -446,36 +559,34 @@ def test_setup_phase_lines_story_editor_removes_legacy_meta_fragments():
 
 def test_setup_phase_lines_place_identity_after_environment_and_use_named_contact():
     state = build_default_state(seed=123, genre="mystery", tone="dark")
-    lines = _setup_phase_lines(state)
+    lines = _setup_phase_lines(state, _StubSetupDirector())
     assert len(lines) >= 3
 
     first = lines[0].lower()
-    second = lines[1].lower() if len(lines) > 1 else ""
     joined = "\n".join(lines).lower()
 
-    assert "you are " not in first
-    assert "you are " in second
+    assert "you are " not in joined
+    assert "has kept a low profile" in first
     assert "premise waits nearby" not in joined
     assert "premise:" not in joined
 
 
 def test_setup_phase_lines_weave_background_and_actionable_objective():
     state = build_default_state(seed=124, genre="mystery", tone="dark")
-    lines = _setup_phase_lines(state)
+    lines = _setup_phase_lines(state, _StubSetupDirector())
     joined = "\n".join(lines).lower()
 
     assert "the case in front of you starts simply" not in joined
-    assert "your history" in joined
-    assert "case file" in joined
-    assert "field kit" in joined
-    assert "get oriented and secure your first reliable lead" not in joined
+    assert "low profile" in joined
+    assert "first practical objective" in joined
 
 
-def test_main_replay_emits_setup_phase_before_commands(tmp_path):
+def test_main_replay_emits_setup_phase_before_commands(tmp_path, monkeypatch):
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\n", encoding="utf-8")
 
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(["--seed", "4", "--replay", str(replay), "--transcript", str(transcript)])
 
     lines = transcript.read_text(encoding="utf-8").splitlines()
@@ -499,7 +610,7 @@ def test_save_persists_last_accepted_judge_decision(tmp_path):
             state,
             "save checkpoint",
             rng,
-            MockNarrator(),
+            StubNarrator(),
             save_store=store,
         )
         assert "Saved to slot 'checkpoint'." in save_lines

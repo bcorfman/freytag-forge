@@ -5,17 +5,18 @@ import re
 from collections import deque
 from pathlib import Path
 from random import Random
-from typing import Protocol, TextIO
+from typing import Any, Protocol, TextIO
 
 from rich.console import Console
 
 from storygame.engine.freeform import DEFAULT_FREEFORM_ADAPTER, FreeformProposalAdapter, resolve_freeform_roleplay
+from storygame.engine.impact import assess_player_command, requires_high_impact_confirmation
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
-from storygame.engine.state import GameState
+from storygame.engine.state import Event, GameState
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import MockNarrator, Narrator, OllamaAdapter, OpenAIAdapter, SilentNarrator
+from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.coherence import build_default_coherence_gate
 from storygame.llm.context import build_narration_context
 from storygame.llm.output_editor import OutputEditor, build_output_editor
@@ -157,9 +158,57 @@ def _room_lines(state: GameState) -> str:
     return "\n".join(pieces)
 
 
-def _setup_phase_lines(state: GameState) -> list[str]:
-    director = StoryDirector("mock")
+def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
+    director = StoryDirector("openai") if story_director is None else story_director
     return director.compose_opening(state)
+
+
+_PROCEED_WORDS = {"proceed", "confirm", "yes", "y"}
+_CANCEL_WORDS = {"cancel", "abort", "no", "n"}
+
+
+def _clear_pending_high_impact(state: GameState) -> None:
+    state.pending_high_impact_command = ""
+    state.pending_high_impact_assessment = {}
+
+
+def _high_impact_warning_lines(assessment: dict[str, Any]) -> list[str]:
+    impact_class = str(assessment.get("impact_class", "high")).upper()
+    consequences = [str(item).strip() for item in assessment.get("consequences", []) if str(item).strip()]
+    lines = [
+        f"High-impact action detected ({impact_class}). This may alter goals, NPC behavior, and event timing.",
+    ]
+    lines.extend(consequences[:2])
+    lines.append("Type PROCEED to continue or CANCEL to abort.")
+    return lines
+
+
+def _record_major_disruption(
+    state: GameState,
+    events: list[Event],
+    raw_command: str,
+    assessment: dict[str, Any],
+) -> None:
+    state.player.flags["story_replan_required"] = True
+    state.player.flags["story_bounds_overridden"] = True
+    state.world_package["story_replan_context"] = {
+        "command": raw_command,
+        "impact_class": str(assessment.get("impact_class", "high")),
+        "reasons": list(assessment.get("reasons", [])),
+        "turn_index": state.turn_index,
+    }
+    disruption_event = Event(
+        type="major_disruption",
+        tags=("story", "major_disruption"),
+        message_key="Your choice disrupts the planned arc. The world is already reacting.",
+        turn_index=state.turn_index,
+        metadata={
+            "command": raw_command,
+            "assessment": dict(assessment),
+        },
+    )
+    events.append(disruption_event)
+    state.append_event(disruption_event)
 
 
 def _public_event_message(message_key: str) -> str:
@@ -230,13 +279,11 @@ def _transcript_command_echo(raw_command: str) -> str:
 
 
 def _build_narrator(mode: str) -> Narrator:
-    if mode == "mock":
-        return MockNarrator()
     if mode == "openai":
         return OpenAIAdapter()
     if mode == "ollama":
         return OllamaAdapter()
-    return SilentNarrator()
+    raise ValueError("Narrator mode must be 'openai' or 'ollama'.")
 
 
 def _build_memory_tag_set(state: GameState, action) -> tuple[str, ...]:
@@ -299,7 +346,46 @@ def run_turn(
     freeform_adapter: FreeformProposalAdapter = DEFAULT_FREEFORM_ADAPTER,
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
+    narrator_mode: str = "openai",
+    _confirmed_high_impact: bool = False,
+    _confirmed_assessment: dict[str, Any] | None = None,
 ):
+    raw_input = raw.strip()
+    lowered_input = raw_input.lower()
+    if state.pending_high_impact_command:
+        if lowered_input in _PROCEED_WORDS:
+            confirmed_command = state.pending_high_impact_command
+            confirmed_assessment = dict(state.pending_high_impact_assessment)
+            resumed_state = state.clone()
+            _clear_pending_high_impact(resumed_state)
+            return run_turn(
+                resumed_state,
+                confirmed_command,
+                rng,
+                narrator,
+                debug=debug,
+                save_store=save_store,
+                memory_store=memory_store,
+                memory_slot=memory_slot,
+                freeform_adapter=freeform_adapter,
+                output_editor=output_editor,
+                story_director=story_director,
+                narrator_mode=narrator_mode,
+                _confirmed_high_impact=True,
+                _confirmed_assessment=confirmed_assessment,
+            )
+        if lowered_input in _CANCEL_WORDS:
+            canceled_state = state.clone()
+            _clear_pending_high_impact(canceled_state)
+            return canceled_state, ["Action canceled. Story plan remains unchanged."], raw_input, "impact_gate", True
+        return (
+            state,
+            ["A high-impact action is pending confirmation. Type PROCEED to continue or CANCEL to abort."],
+            raw_input,
+            "impact_gate",
+            True,
+        )
+
     action = parse_command(raw)
     if action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
@@ -342,10 +428,33 @@ def run_turn(
         except Exception as exc:
             return state, [f"Failed to load: {exc}"], action.raw, "load", True
 
+    impact_assessment = (
+        _confirmed_assessment
+        if _confirmed_assessment is not None
+        else assess_player_command(state, action.raw, action)
+    )
+    if not _confirmed_high_impact and requires_high_impact_confirmation(impact_assessment):
+        blocked_state = state.clone()
+        blocked_state.pending_high_impact_command = action.raw
+        blocked_state.pending_high_impact_assessment = dict(impact_assessment)
+        return blocked_state, _high_impact_warning_lines(impact_assessment), action.raw, "impact_gate", True
+
+    editor = build_output_editor(narrator_mode) if output_editor is None else output_editor
+    director = StoryDirector(narrator_mode, editor) if story_director is None else story_director
+    preturn_state = state
+    replan_event = None
+    if state.player.flags.get("story_replan_required", False):
+        preturn_state = state.clone()
+        replan_event = director.replan_if_needed(preturn_state)
+    if replan_event is not None:
+        preturn_state.append_event(replan_event)
+
     if action.kind == ActionKind.UNKNOWN:
-        freeform = resolve_freeform_roleplay(state, action.raw, freeform_adapter)
+        freeform = resolve_freeform_roleplay(preturn_state, action.raw, freeform_adapter)
         next_state = freeform["state"]
         events = [freeform["event"]]
+        if replan_event is not None:
+            events.insert(0, replan_event)
         beat_type = "freeform_roleplay"
         template_key = "freeform_roleplay"
         context = None
@@ -366,7 +475,9 @@ def run_turn(
         }
         narration = ""
     else:
-        next_state, events, beat_type, template_key = advance_turn(state, action, rng)
+        next_state, events, beat_type, template_key = advance_turn(preturn_state, action, rng)
+        if replan_event is not None:
+            events.insert(0, replan_event)
         memory_fragments: tuple[str, ...] = ()
         if memory_store is not None:
             memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
@@ -395,6 +506,9 @@ def run_turn(
             coherence_telemetry = coherence_result["telemetry"]
         except RuntimeError as exc:
             narration = f"[Narrator failed: {exc}]"
+
+    if _confirmed_high_impact:
+        _record_major_disruption(next_state, events, action.raw, impact_assessment)
 
     lines: list[str] = [_room_lines(next_state)]
     if action.kind == ActionKind.INVENTORY:
@@ -462,8 +576,6 @@ def run_turn(
         "rationale": str(judge_decision.get("rationale", "")),
     }
 
-    editor = build_output_editor("mock") if output_editor is None else output_editor
-    director = StoryDirector("mock", editor) if story_director is None else story_director
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
     return next_state, reviewed_lines, action.raw, beat_type, True
 
@@ -478,10 +590,12 @@ def run_replay(
     save_db: Path | None = None,
     memory_db: Path | None = None,
     memory_slot: str = "default",
+    narrator: Narrator | None = None,
+    narrator_mode: str = "openai",
 ) -> GameState:
     rng = Random(seed)
     state = build_default_state(seed, genre=genre, session_length=session_length, tone=tone)
-    narrator: Narrator = MockNarrator()
+    active_narrator: Narrator = _build_narrator(narrator_mode) if narrator is None else narrator
     save_store: SqliteSaveStore | None = SqliteSaveStore(save_db) if save_db is not None else None
     memory_store: SqliteVectorMemory | None = SqliteVectorMemory(memory_db) if memory_db is not None else None
     try:
@@ -490,11 +604,12 @@ def run_replay(
                 state,
                 command,
                 rng,
-                narrator,
+                active_narrator,
                 debug=debug,
                 save_store=save_store,
                 memory_store=memory_store,
                 memory_slot=memory_slot,
+                narrator_mode=narrator_mode,
             )
             if not _continued:
                 break
@@ -553,9 +668,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--transcript", type=Path, default=None, help="Write transcript to a file")
     parser.add_argument(
         "--narrator",
-        choices=("mock", "none", "openai", "ollama"),
-        default="mock",
-        help="Narration mode. 'none' keeps engine-only output.",
+        choices=("openai", "ollama"),
+        default="openai",
+        help="Narration mode.",
     )
 
     args = parser.parse_args(argv)
@@ -606,6 +721,7 @@ def main(argv: list[str] | None = None) -> None:
                     memory_slot=memory_slot,
                     output_editor=output_editor,
                     story_director=story_director,
+                    narrator_mode=args.narrator,
                 )
                 if autosave_slot is not None and save_store is not None:
                     save_store.save_run(
@@ -635,6 +751,7 @@ def main(argv: list[str] | None = None) -> None:
                 memory_slot=memory_slot,
                 output_editor=output_editor,
                 story_director=story_director,
+                narrator_mode=args.narrator,
             )
             for line in lines:
                 _emit_cli_line(console, line)

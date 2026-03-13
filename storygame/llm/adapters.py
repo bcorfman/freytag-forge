@@ -16,15 +16,6 @@ class Narrator(Protocol):
     def generate(self, context: NarrationContext) -> str: ...
 
 
-class MockNarrator:
-    def __init__(self, prefix: str = "") -> None:
-        self.prefix = prefix
-
-    def generate(self, context: NarrationContext) -> str:
-        base = f"{self.prefix}{context.beat.title()} beat at {context.room_name}."
-        return base + " " + context.goal
-
-
 class SilentNarrator:
     def generate(self, context: NarrationContext) -> str:
         return ""

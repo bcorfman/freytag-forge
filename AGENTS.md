@@ -17,6 +17,7 @@ Hard rules:
 
 Dependency/testability:
 - Write tests first, then write the code to match the tests (TDD), then update the docs to reflect the new/updated code once it works.
+- Sustain project-wide test coverage at `>=90%` on every change; verify with `uv run pytest -q` and do not merge changes that drop coverage below this threshold.
 - Accept dependencies via constructors; avoid hidden instantiation inside methods.
 - Avoid circular dependencies.
 - Prefer composition over inheritance for dependencies.

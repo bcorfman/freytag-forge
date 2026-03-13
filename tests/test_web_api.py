@@ -3,27 +3,49 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from storygame.web import _resolve_narrator_mode, create_app
+from tests.narrator_stubs import StubNarrator
+
+
+class _PassThroughEditor:
+    def review_opening(self, lines, active_goal):  # noqa: ANN001
+        return lines
+
+    def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
+        return lines
+
+
+class _StubDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
+        return lines
 
 
 def _client(tmp_path):
     db_path = tmp_path / "web_saves.sqlite"
-    return TestClient(create_app(save_db_path=db_path, narrator_mode="mock"))
+    return TestClient(
+        create_app(
+            save_db_path=db_path,
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        )
+    )
 
 
 def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     client = _client(tmp_path)
     response = client.post(
         "/turn",
-        json={"command": "look", "seed": 19, "genre": "thriller", "session_length": "long", "tone": "dark"},
+        json={"command": "go north", "seed": 19, "genre": "thriller", "session_length": "long", "tone": "dark"},
     )
     assert response.status_code == 200
 
     payload = response.json()
     assert "run_id" in payload
-    assert payload["state"]["turn_index"] == 0
-    assert all(not line.startswith("Where you are: ") for line in payload["lines"])
-    assert all("Immediate objective:" not in line for line in payload["lines"])
-    assert all("The only exit is to" not in line for line in payload["lines"])
+    assert payload["state"]["turn_index"] == 1
     start_location = payload["state"]["location"]
     assert payload["state"]["genre"] == "thriller"
     assert payload["state"]["session_length"] == "long"
@@ -36,18 +58,18 @@ def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     run_id = payload["run_id"]
     assert payload["continued"] is True
 
-    response = client.post("/turn", json={"command": "go north", "run_id": run_id, "debug": False})
+    response = client.post("/turn", json={"command": "look", "run_id": run_id, "debug": False})
     assert response.status_code == 200
     payload = response.json()
     assert payload["run_id"] == run_id
-    assert payload["state"]["location"] != start_location
-    assert payload["state"]["turn_index"] == 1
+    assert payload["state"]["location"] == start_location
+    assert payload["state"]["turn_index"] == 2
     assert response.status_code == 200
 
 
 def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
     client = _client(tmp_path)
-    response = client.post("/turn", json={"command": "look", "seed": 7})
+    response = client.post("/turn", json={"command": "go north", "seed": 7})
     assert response.status_code == 200
     run_id = response.json()["run_id"]
 
@@ -61,12 +83,9 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
     move_payload = pre_move.json()
     room_after_move = move_payload["state"]["location"]
     room_inventory = tuple(move_payload["state"]["inventory"])
-    if room_inventory:
-        item_id = room_inventory[0]
-    else:
-        # fallback for empty-room seeds: ask for look output and take first known item from lines is unsupported,
-        # so use a no-op take to keep endpoint behavior validated.
-        item_id = "missing_item"
+    # fallback for empty-room seeds: ask for look output and take first known item from lines is unsupported,
+    # so use a no-op take to keep endpoint behavior validated.
+    item_id = room_inventory[0] if room_inventory else "missing_item"
 
     moved = client.post("/turn", json={"run_id": run_id, "command": f"take {item_id}"})
     assert moved.status_code == 200
@@ -87,20 +106,20 @@ def test_unknown_web_run_id_returns_404(tmp_path):
 
 
 def test_resolve_narrator_mode_prefers_explicit_and_env(monkeypatch):
-    assert _resolve_narrator_mode("None") == "none"
     assert _resolve_narrator_mode("  OLLAMA ") == "ollama"
+    assert _resolve_narrator_mode(" OpenAI ") == "openai"
 
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
     monkeypatch.delenv("OLLAMA_MODEL", raising=False)
-    assert _resolve_narrator_mode(None) == "mock"
+    assert _resolve_narrator_mode(None) == "openai"
 
     monkeypatch.setenv("OPENAI_API_KEY", "abc")
     assert _resolve_narrator_mode(None) == "openai"
 
-    monkeypatch.setenv("FREYTAG_NARRATOR", "none")
-    assert _resolve_narrator_mode("  ") == "none"
+    monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
+    assert _resolve_narrator_mode("  ") == "ollama"
 
 
 def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):

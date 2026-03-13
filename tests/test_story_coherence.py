@@ -7,7 +7,8 @@ from storygame.engine.events import list_event_templates
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import MockNarrator, SilentNarrator
+from storygame.llm.adapters import SilentNarrator
+from tests.narrator_stubs import StubNarrator
 
 
 def _event_texts() -> tuple[str, ...]:
@@ -75,7 +76,7 @@ def test_npcs_do_not_follow_player_between_rooms_without_trigger():
     direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
     destination = state.world.rooms[state.player.location].exits[direction]
 
-    moved_state, lines, *_ = run_turn(state, direction, rng, MockNarrator(), debug=False)
+    moved_state, lines, *_ = run_turn(state, direction, rng, StubNarrator(), debug=False)
 
     assert moved_state.player.location == destination
     combined = "\n".join(lines).lower()

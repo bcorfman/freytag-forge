@@ -81,7 +81,7 @@ For detailed product/design/architecture notes, see [docs/PRD.md](docs/PRD.md).
 - Install [uv](https://docs.astral.sh/uv/)
 
 ### 2) Configure narrator backends
-Default narrator mode is `mock`, which requires no external setup.
+Narration requires an LLM backend (`openai` or `ollama`).
 
 OpenAI setup:
 ```bash
@@ -102,18 +102,12 @@ uv run python -m storygame --seed 123 --narrator ollama
 Notes:
 - Ollama local usage does not require an API key.
 - Web mode (`make run`) resolves narrator automatically in this order:
-  1. `FREYTAG_NARRATOR` (if set to `mock|none|openai|ollama`)
+  1. `FREYTAG_NARRATOR` (if set to `openai|ollama`)
   2. `OPENAI_API_KEY` -> `openai`
   3. `OLLAMA_BASE_URL` or `OLLAMA_MODEL` -> `ollama`
-  4. fallback `mock`
+  4. default `openai`
 
 Examples:
-```bash
-# Force web mode to use mock even if OPENAI_API_KEY is set
-export FREYTAG_NARRATOR=mock
-make run
-```
-
 ```bash
 # Force web mode to use OpenAI
 export FREYTAG_NARRATOR=openai

@@ -48,12 +48,13 @@ Current runtime generation is package-driven.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
 
 ### Narration + Coherence
-- `storygame.llm.adapters` defines narrator integrations (`mock`, `none`, `openai`, `ollama`).
+- `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`).
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
 - `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).
 - `storygame.llm.story_agents.prompts` defines per-agent prompt templates.
 - `storygame.llm.story_agents.contracts` defines per-agent JSON contracts and parsers.
+- Story-agent parsers enforce required JSON keys but normalize lightweight label/punctuation variants and ignore non-contract extra fields to reduce brittle generation failures.
 - `storygame.llm.contracts` defines and validates strict typed contracts:
   - `AgentProposal`
   - `StoryPatch`
@@ -120,13 +121,16 @@ flowchart LR
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
 - Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
+- Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
-- Output editor gate runs on every user-facing response; OpenAI/Ollama modes use an LLM critic rewrite pass with deterministic fallback.
+- Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
 - Signal hints are objective-driven from generated map topology (targeting package terminal room), not hardcoded world landmarks.
 - Parse failures on non-command input return in-world dialog through freeform roleplay.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
+- High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation.
+- Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, event timing, and NPC behavior.
 - Transcript command echo uses `>COMMAND` format.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
 
@@ -155,12 +159,12 @@ flowchart LR
 - CLI with story profile: `uv run python -m storygame --seed 123 --genre mystery --session-length medium --tone neutral`
 - Replay: `--replay <file> --transcript <file>`
 - Web: `uv run uvicorn storygame.web:app --reload`
-- Narrator mode: `--narrator mock|none|openai|ollama`
+- Narrator mode: `--narrator openai|ollama`
 - Web narrator resolution precedence (when not explicitly passed in `create_app(...)`):
-  1. `FREYTAG_NARRATOR` (`mock|none|openai|ollama`)
+  1. `FREYTAG_NARRATOR` (`openai|ollama`)
   2. `OPENAI_API_KEY` => `openai`
   3. `OLLAMA_BASE_URL` or `OLLAMA_MODEL` => `ollama`
-  4. fallback `mock`
+  4. default `openai`
 
 ## Environment Variables
 ### Runtime selection

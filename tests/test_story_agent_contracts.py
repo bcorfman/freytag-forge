@@ -67,3 +67,41 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
 
     system, _user = build_narrator_opening_prompt("draft")
     assert "paragraphs" in system
+
+
+def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
+    architect = parse_story_architect_output(
+        {
+            "protagonist_name": "Name: Noah Kade",
+            "protagonist_background": "Background: A detective returning for one last case",
+            "secrets_to_hide": ["  late reveal 1  ", ""],
+            "tone": " Dark ",
+            "extra_key": "ignored",
+        }
+    )
+    cast = parse_character_designer_output(
+        {
+            "contacts": [
+                {"name": "Characters:", "role": "assistant", "trait": "observant"},
+                {"name": "Name: Daria Stone", "role": "Role: assistant", "trait": "Trait: observant"},
+            ]
+        }
+    )
+    plot = parse_plot_designer_output(
+        {
+            "assistant_name": "assistant_name: Daria Stone",
+            "actionable_objective": "Objective: Review the case file and pick your first lead",
+            "unused": {"ignored": True},
+        }
+    )
+    opening = parse_narrator_opening_output(
+        {"paragraphs": ["first paragraph", "second paragraph.", "third paragraph"], "other": "ignored"}
+    )
+
+    assert architect["protagonist_name"] == "Noah Kade"
+    assert architect["protagonist_background"].endswith(".")
+    assert architect["tone"] == "dark"
+    assert cast["contacts"][0]["name"] == "Daria Stone"
+    assert plot["assistant_name"] == "Daria Stone"
+    assert plot["actionable_objective"].endswith(".")
+    assert all(paragraph.endswith((".", "!", "?")) for paragraph in opening["paragraphs"])

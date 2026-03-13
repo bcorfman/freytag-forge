@@ -5,7 +5,8 @@ from random import Random
 
 from storygame.cli import main, run_turn
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import MockNarrator, SilentNarrator
+from storygame.llm.adapters import SilentNarrator
+from tests.narrator_stubs import StubNarrator
 
 
 def _run_script(seed: int, commands: list[str]) -> tuple[list[list[str]], list[str]]:
@@ -14,12 +15,20 @@ def _run_script(seed: int, commands: list[str]) -> tuple[list[list[str]], list[s
     per_turn_lines: list[list[str]] = []
     signatures: list[str] = []
     for command in commands:
-        state, lines, _action_raw, _beat, continued = run_turn(state, command, rng, MockNarrator(), debug=False)
+        state, lines, _action_raw, _beat, continued = run_turn(state, command, rng, StubNarrator(), debug=False)
         per_turn_lines.append(lines)
         signatures.append(state.replay_signature())
         if not continued:
             break
     return per_turn_lines, signatures
+
+
+class _StubSetupDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
+        return lines
 
 
 def test_non_debug_output_is_room_first_and_hides_internal_labels():
@@ -93,7 +102,7 @@ def test_debug_mode_emits_parseable_internal_trace():
         state,
         "look",
         Random(33),
-        MockNarrator(),
+        StubNarrator(),
         debug=True,
     )
 
@@ -104,11 +113,12 @@ def test_debug_mode_emits_parseable_internal_trace():
     assert payload["coherence"]["critique_rounds"] >= 0
 
 
-def test_transcript_uses_prompt_echo_format(tmp_path):
+def test_transcript_uses_prompt_echo_format(tmp_path, monkeypatch):
     replay = tmp_path / "commands.txt"
     transcript = tmp_path / "transcript.txt"
     replay.write_text("look\ninventory\n", encoding="utf-8")
 
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(["--seed", "123", "--replay", str(replay), "--transcript", str(transcript)])
 
     text = transcript.read_text(encoding="utf-8")
