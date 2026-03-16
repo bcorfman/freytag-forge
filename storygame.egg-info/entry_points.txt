@@ -1,0 +1,2 @@
+[console_scripts]
+storygame = storygame.cli:main

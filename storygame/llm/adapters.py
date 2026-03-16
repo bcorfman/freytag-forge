@@ -7,6 +7,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Protocol
+from uuid import uuid4
 
 from storygame.llm.context import NarrationContext
 from storygame.llm.prompts import build_prompt, build_prompt_text
@@ -218,6 +219,63 @@ class OllamaAdapter:
             if endpoint not in unique_endpoints:
                 unique_endpoints.append(endpoint)
         return tuple(unique_endpoints)
+
+
+class CloudflareWorkersAIAdapter:
+    def __init__(
+        self,
+        worker_url: str | None = None,
+        token: str | None = None,
+        timeout: float | None = None,
+    ) -> None:
+        self.worker_url = worker_url if worker_url is not None else os.getenv("CLOUDFLARE_WORKER_URL", "")
+        self.token = token if token is not None else os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
+        self.timeout = timeout if timeout is not None else float(os.getenv("CLOUDFLARE_TIMEOUT", "20.0"))
+
+    def generate(self, context: NarrationContext) -> str:
+        if not self.worker_url:
+            raise RuntimeError("Cloudflare adapter requires CLOUDFLARE_WORKER_URL environment variable.")
+
+        payload = build_prompt(context)
+        trace_id = uuid4().hex
+        request_payload = {
+            "system": payload["system"],
+            "user": payload["user"],
+            "trace_id": trace_id,
+            "session_id": "",
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        http_request = urllib.request.Request(
+            self.worker_url,
+            data=json.dumps(request_payload).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+        try:
+            with urllib.request.urlopen(http_request, timeout=self.timeout) as response:
+                response_bytes = response.read()
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            if exc.code == 429 and ("AI_QUOTA_EXCEEDED" in detail or "quota" in detail.lower()):
+                raise RuntimeError(f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED {detail}") from exc
+            raise RuntimeError(f"Cloudflare Workers AI request failed: {exc.code} {detail}") from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Cannot reach Cloudflare Worker endpoint. Error: {exc}.") from exc
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError("Cloudflare Workers AI request failed.") from exc
+
+        parsed = json.loads(response_bytes.decode("utf-8"))
+        narration = str(parsed.get("narration", "")).strip()
+        if narration:
+            return narration
+        if "choices" in parsed:
+            try:
+                return str(parsed["choices"][0]["message"]["content"]).strip()
+            except Exception as exc:  # noqa: BLE001
+                raise RuntimeError("Cloudflare Workers AI response had unexpected shape.") from exc
+        raise RuntimeError("Cloudflare Workers AI response missing expected narration content.")
 
 
 def describe_prompt(context: NarrationContext) -> str:
