@@ -17,6 +17,7 @@ Current runtime generation is package-driven.
 ├── storygame/
 │   ├── cli.py
 │   ├── web.py
+│   ├── web_demo.py
 │   ├── engine/
 │   ├── llm/
 │   ├── persistence/
@@ -50,7 +51,7 @@ Current runtime generation is package-driven.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
 
 ### Narration + Coherence
-- `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`).
+- `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`, `cloudflare_workers_ai`).
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
 - Multi-critic evaluation executes critic runs in parallel per round while preserving deterministic output ordering for judge inputs.
@@ -88,6 +89,24 @@ flowchart LR
 - Artifact integrity is enforced by hash checks and orchestrator-only write constraints.
 - Each artifact trace includes `parent_story_state_sha256` to link canonical snapshots across persisted turns.
 - Per-turn artifact history is retained under `story_artifacts/<slot>/turns/<turn_index>/`.
+
+### Web Surfaces
+- `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
+- `storygame.web_demo` is the hosted-demo API surface:
+  - `GET /api/v1/health`
+  - `POST /api/v1/session`
+  - `POST /api/v1/turn`
+- Hosted-demo sessions use explicit TTL expiry with server-side `session_id` continuity.
+- Demo app save/load slots are scoped by `session_id` for deterministic isolation.
+- Demo app enforces guardrails:
+  - per-IP short-window rate limit,
+  - per-IP daily turn cap,
+  - per-session turn cap.
+- Demo `/api/v1/turn` now returns typed fail-closed statuses for hosted clients:
+  - `rate_limited` (HTTP 429),
+  - `quota_exhausted` (HTTP 429),
+  - `service_unavailable` (HTTP 503),
+  - `ok` (HTTP 200).
 
 ## Feature Details
 ### Beat Realization
@@ -212,6 +231,17 @@ flowchart LR
   - Host-only values (for example `http://localhost:11434`) are normalized to `/api/chat` for story-agent requests.
 - `OLLAMA_TEMPERATURE` (default `0.2`)
 - `OLLAMA_MAX_TOKENS` (default `512`)
+
+### Cloudflare Workers adapter (demo mode)
+- `CLOUDFLARE_WORKER_URL`
+- `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
+- `CLOUDFLARE_TIMEOUT` (default `20.0`)
+
+### Demo API guardrails
+- `SESSION_TTL_SECONDS` (app default 1800)
+- `SESSION_TURN_CAP` (app default 30)
+- `IP_RATE_LIMIT_PER_MIN` (app default 20)
+- `IP_DAILY_TURN_CAP` (app default 300)
 
 ## Developer Workflow
 ```bash

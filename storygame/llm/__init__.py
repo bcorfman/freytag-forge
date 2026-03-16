@@ -1,3 +1,4 @@
+from .adapters import CloudflareWorkersAIAdapter as CloudflareWorkersAIAdapter
 from .adapters import Narrator as Narrator
 from .adapters import OllamaAdapter as OllamaAdapter
 from .adapters import OpenAIAdapter as OpenAIAdapter
@@ -8,6 +9,7 @@ from .prompts import build_prompt as build_prompt
 __all__ = [
     "OpenAIAdapter",
     "OllamaAdapter",
+    "CloudflareWorkersAIAdapter",
     "Narrator",
     "NarrationContext",
     "build_narration_context",

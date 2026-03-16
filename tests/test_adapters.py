@@ -7,7 +7,7 @@ import pytest
 
 from storygame.engine.parser import parse_command
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import OllamaAdapter, OpenAIAdapter, describe_prompt
+from storygame.llm.adapters import CloudflareWorkersAIAdapter, OllamaAdapter, OpenAIAdapter, describe_prompt
 from storygame.llm.context import build_narration_context
 
 
@@ -387,3 +387,45 @@ def test_describe_prompt_wraps_prompt_builder():
     text = describe_prompt(_build_context())
     assert isinstance(text, str)
     assert "Narrate only" in text
+
+
+def test_cloudflare_adapter_requires_worker_url(monkeypatch):
+    monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
+    adapter = CloudflareWorkersAIAdapter(worker_url=None)
+    with pytest.raises(RuntimeError, match="requires CLOUDFLARE_WORKER_URL"):
+        adapter.generate(_build_context())
+
+
+def test_cloudflare_adapter_success_parses_narration(monkeypatch):
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        return _FakeResponse('{"narration":"Cloudflare narration response.","model":"demo-model"}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate", token="t")
+    assert adapter.generate(_build_context()) == "Cloudflare narration response."
+
+
+def test_cloudflare_adapter_maps_quota_http_error(monkeypatch):
+    def _fake_urlopen(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://demo.example.workers.dev/api/narrate",
+            429,
+            "Too Many Requests",
+            None,
+            io.BytesIO(b'{"code":"AI_QUOTA_EXCEEDED","message":"quota"}'),
+        )
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+    with pytest.raises(RuntimeError, match="AI_QUOTA_EXCEEDED"):
+        adapter.generate(_build_context())
+
+
+def test_cloudflare_adapter_wraps_url_error(monkeypatch):
+    def _fake_urlopen(*_args, **_kwargs):
+        raise urllib.error.URLError("network down")
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+    with pytest.raises(RuntimeError, match="Cannot reach Cloudflare Worker endpoint"):
+        adapter.generate(_build_context())

@@ -1,100 +1,197 @@
-## Freytag Forge Demo Architecture: GitHub Pages + Railway Backend + Cloudflare Workers AI
+## Freytag Forge Web Demo Plan (Cloudflare + Railway) While Preserving Local Interface
 
-### Summary
-Deploy a production-shaped public demo with predictable spend by keeping Python server-side and the browser static:
-1. **GitHub Pages** serves a static HTML/CSS/JS frontend.
-2. **Railway (Hobby)** runs the existing FastAPI + Python game engine backend.
-3. **Cloudflare Workers AI** provides narration inference with fail-closed quota behavior.
+### Product Intent
+Ship a public, low-friction demo that anyone can try without supplying API keys, while preserving the current local developer/player experience.
 
-This keeps implementation close to current repo architecture while reducing browser/runtime complexity and preserving server-side controls.
+### Non-Negotiables
+1. Keep the existing local interfaces intact:
+   - `storygame.web` (`/` + `/turn`) remains the default local web UX.
+   - CLI and replay flows remain unchanged.
+2. Hosted demo users do not need their own OpenAI/Ollama tokens.
+3. Deterministic world/state boundaries remain server-authoritative.
+4. Hosted spend and abuse are bounded with explicit guardrails.
 
-### Implementation Changes
-- **Backend API surface (FastAPI on Railway)**
-  - Split web UI concerns from API concerns:
-    - Keep existing local `storygame.web` for dev convenience.
-    - Add dedicated API module for hosted demo endpoints:
-      - `POST /api/v1/session` creates session + seed.
-      - `POST /api/v1/turn` accepts `session_id`, `command`, `debug` and returns turn payload.
-      - `GET /api/v1/health` for deploy and uptime checks.
-  - Maintain in-memory active session cache plus bounded persistence (SQLite) for restart resilience.
-  - Add explicit dependency-injected narrator adapter that calls Cloudflare endpoint (no OpenAI key path in hosted demo).
+---
 
-- **Narrator integration (Railway -> Cloudflare)**
-  - Add `CloudflareWorkersAIAdapter` implementing existing `Narrator` protocol.
-  - Request shape to Worker:
-    - `system`, `user`, `trace_id`, `session_id`.
-  - Adapter enforces strict timeouts, request retries for transient 5xx only, and typed error mapping.
-  - Hard-fail on quota errors (`429 AI_QUOTA_EXCEEDED`) with user-visible status message.
+## Current State (As Implemented)
+- Web runtime is a single FastAPI app in `storygame/web.py`.
+- API shape today:
+  - `GET /` serves embedded HTML/JS web UI.
+  - `POST /turn` drives game turns using `run_id` session continuity.
+- Turn routing is planner-first for gameplay intents, with deterministic state/event tracking.
+- Narrator backends today are OpenAI/Ollama adapters.
 
-- **Abuse and spend guardrails (server-side)**
-  - Per-IP rate limit (short window) and per-IP daily turn cap.
-  - Per-session turn cap (default 30) and inactivity expiry (default 30 minutes).
-  - Narration request ceilings:
-    - max tokens, max timeout, max retries.
-  - Optional mode toggle after quota exhaustion:
-    - default `fail_closed` for hosted demo.
-    - configurable `mock_fallback` for private deployments.
+---
 
-- **Frontend (GitHub Pages static app)**
-  - Build simple JS client matching zorkdemo style:
-    - session bootstrap via `/api/v1/session`.
-    - turn submission via `/api/v1/turn`.
-    - transcript + inventory/objective/phase panels.
-  - Add clear non-technical error UX states:
-    - `rate_limited`, `quota_exhausted`, `service_unavailable`.
-  - On `quota_exhausted`, disable submit and display daily reset guidance.
+## Target Architecture
 
-- **Deployment and CI/CD**
-  - Add GitHub Pages workflow:
-    - build static frontend artifact and deploy on push to `main`.
-  - Add Railway deploy workflow (optional if using Railway auto-deploy).
-  - Add Worker deploy workflow using Wrangler.
-  - Wire environment variables:
-    - Railway: `CORS_ALLOW_ORIGINS`, `CLOUDFLARE_WORKER_URL`, `SESSION_TURN_CAP`, `IP_DAILY_TURN_CAP`, `TURN_TIMEOUT_MS`.
-    - Worker: AI binding/model config and allowed origin list.
+### A) Preserve Existing Local Interface (No Breaking Changes)
+- Keep `storygame.web:create_app()` behavior and payload contracts unchanged.
+- Keep current embedded web UI for local/dev use.
+- Keep current env resolution (`FREYTAG_NARRATOR`, OpenAI/Ollama vars) for local runs.
 
-### Public Interfaces
-- **Backend API (new hosted surface)**
-  - `POST /api/v1/session`
-    - Request: `{ "seed": int? }`
-    - Response: `{ "session_id": str, "seed": int, "expires_at": iso8601 }`
-  - `POST /api/v1/turn`
-    - Request: `{ "session_id": str, "command": str, "debug": bool? }`
-    - Response: `{ "session_id": str, "command": str, "action_raw": str, "beat": str, "continued": bool, "lines": [str], "state": {...}, "status": "ok"|"quota_exhausted"|"rate_limited"|"error" }`
-  - `GET /api/v1/health`
-    - Response: `{ "status": "ok" }`
+### B) Add Hosted Demo Surface (Railway + Cloudflare)
+Add a separate deploy-oriented app module (for example `storygame/web_demo.py`) that:
+- uses the same core game loop (`run_turn`) and deterministic state model,
+- exposes a stable hosted API for a static frontend,
+- injects a Cloudflare-backed narrator path so demo users do not bring keys.
 
-- **Cloudflare Worker API**
-  - `POST /api/narrate`
-    - Request: `{ "system": str, "user": str, "trace_id": str, "session_id": str }`
-    - Success `200`: `{ "narration": str, "model": str, "trace_id": str }`
-    - Quota `429`: `{ "code": "AI_QUOTA_EXCEEDED", "message": str, "trace_id": str }`
+Recommended hosted API (versioned):
+- `POST /api/v1/session`
+  - creates a server session and returns `session_id` + seed + expiry metadata.
+- `POST /api/v1/turn`
+  - accepts `session_id`, `command`, optional `debug` and returns turn payload.
+- `GET /api/v1/health`
+  - liveness/readiness endpoint for Railway and smoke tests.
 
-### Test Plan
-- **Backend behavior tests**
-  - Session lifecycle: create, valid turn, expired session handling.
-  - Turn API parity: `/api/v1/turn` returns same story-state semantics as existing `run_turn` flow.
-  - Error mapping:
-    - Cloudflare `429` -> API status `quota_exhausted`.
-    - backend rate-limit -> API status `rate_limited`.
+Rationale:
+- avoids changing existing local `/turn` contract,
+- supports static frontend hosting cleanly,
+- isolates demo-specific rate/quota behavior from local mode.
 
-- **Adapter tests**
-  - Cloudflare adapter success parsing.
-  - timeout/retry policy behavior.
-  - quota and upstream error normalization.
+---
 
-- **Frontend integration tests**
-  - Initial session bootstrap and first turn render.
-  - quota-exhausted UX disables input.
-  - rate-limit and transient-error banners are distinct.
+## Narration and Adapter Strategy
 
-- **Deployment checks**
-  - `GET /api/v1/health` used by Railway health checks.
-  - CORS allows Pages origin only.
+### Cloudflare-backed demo narrator
+- Add `CloudflareWorkersAIAdapter` implementing existing `Narrator` protocol.
+- Hosted demo uses this adapter by dependency injection in the demo app.
+- Keep OpenAI/Ollama adapters for local/dev and advanced usage.
 
-### Assumptions and Defaults
-- Railway plan is **Hobby ($5/mo credits)** and acceptable for backend hosting.
-- Hosted demo model provider is **Cloudflare Workers AI** only.
-- Default production policy is **fail-closed** on AI quota exhaustion.
-- Frontend remains static and does not store secrets.
-- Existing CLI and local web mode continue to work unchanged for development.
+### Output-editor behavior in demo
+- Do not couple demo correctness to OpenAI/Ollama-only editor modes.
+- Use either:
+  - a deterministic pass-through editor for demo mode, or
+  - a Cloudflare-capable output editor adapter if implemented.
+
+---
+
+## Session, Persistence, and Determinism
+
+### Session model
+- In-memory active session map with TTL expiration (demo app).
+- Optional SQLite-backed recovery for session continuity across process restarts.
+
+### Save/load in hosted demo
+- Keep command-level save/load semantics available unless product decides to hide them in demo UX.
+- If hidden in UI, backend should still support deterministic slot behavior per session scope.
+
+### Deterministic guarantees
+- Engine remains sole authority for state mutation.
+- LLM outputs stay proposal/narration scoped; deterministic policies validate and commit bounded state updates.
+
+---
+
+## Abuse and Spend Guardrails (Demo App)
+
+### Required controls
+- Per-IP short-window rate limiting.
+- Per-IP/day turn cap.
+- Per-session turn cap and inactivity expiry.
+- Request timeout/token ceilings for narrator calls.
+
+### Failure policy
+- Default hosted policy: fail-closed on hard quota/rate limits with user-readable status.
+- Distinguish:
+  - `rate_limited`
+  - `quota_exhausted`
+  - `service_unavailable`
+
+---
+
+## Frontend Strategy
+
+### Hosted demo frontend
+- Static frontend (GitHub Pages acceptable) calling Railway demo API.
+- Minimal UX:
+  - bootstrap session,
+  - submit turns,
+  - render transcript and state panel (inventory/objective/phase/tension/progress),
+  - clear handling for quota/rate-limit/service errors.
+
+### Local frontend
+- Keep existing embedded UI in `storygame.web` unchanged for dev and deeper exploration.
+
+---
+
+## Deployment Topology
+
+### Local/dev
+- `uv run uvicorn storygame.web:app --reload`
+
+### Hosted demo
+- Railway service running demo app entrypoint (for example `storygame.web_demo:app`).
+- Cloudflare Worker endpoint used by `CloudflareWorkersAIAdapter`.
+- Optional GitHub Pages for static demo frontend.
+
+---
+
+## Environment Variables (Proposed)
+
+### Shared/local (existing)
+- `FREYTAG_NARRATOR`
+- `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_TIMEOUT`, etc.
+- `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT`, etc.
+
+### Hosted demo (new)
+- `DEMO_MODE=true`
+- `CORS_ALLOW_ORIGINS`
+- `CLOUDFLARE_WORKER_URL`
+- `CLOUDFLARE_WORKER_TOKEN` (or equivalent auth)
+- `SESSION_TTL_SECONDS`
+- `SESSION_TURN_CAP`
+- `IP_RATE_LIMIT_PER_MIN`
+- `IP_DAILY_TURN_CAP`
+- `NARRATOR_TIMEOUT_MS`
+
+---
+
+## Rollout Plan
+
+### Phase 1: Demo backend skeleton
+- Create `web_demo.py` with `session`, `turn`, `health` endpoints.
+- Reuse current state/session/run-turn plumbing.
+- Add API tests for lifecycle and error envelopes.
+
+### Phase 2: Cloudflare adapter
+- Implement `CloudflareWorkersAIAdapter` + tests (success, timeout, 429, 5xx retry policy).
+- Wire into demo app via constructor injection.
+
+### Phase 3: Guardrails
+- Add rate limiting, session TTL/turn caps, and typed error mapping.
+- Add integration tests for cap/rate/quota behavior.
+
+### Phase 4: Static demo frontend
+- Build static client against `/api/v1/*`.
+- Add smoke tests against deployed Railway URL.
+
+### Phase 5: Launch checklist
+- CORS locked to demo origin(s).
+- Health checks configured.
+- Observability for request/turn/quota metrics.
+
+---
+
+## Test Plan
+
+### Backend
+- Session create/continue/expire flows.
+- Turn parity with current run loop semantics.
+- Error mapping for rate/quota/upstream failures.
+
+### Adapter
+- Cloudflare success path.
+- timeout and retry behavior.
+- 429 normalization (`quota_exhausted`).
+
+### Frontend
+- session bootstrap and first-turn rendering.
+- disabled input on quota exhaustion.
+- distinct banners for rate-limit vs service outage.
+
+---
+
+## Open Decisions
+1. Should hosted demo expose save/load in UI or keep it power-user only?
+2. Should demo output editor be pass-through or Cloudflare-backed critique rewrite?
+3. Should the hosted API return `run_id` to align with existing web contract, or keep `session_id` for explicit versioned API separation?
