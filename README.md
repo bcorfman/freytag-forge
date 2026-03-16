@@ -10,16 +10,10 @@ A torn ledger page lies half-caught in a crack between the stones near the botto
 Daria Stone is nearby, watching your next move.
 
 >PICK UP THE LEDGER PAGE
-Outside The Mansion
-The entrance features stone steps and a carved oak door.
-Daria Stone is nearby, watching your next move.
 Clue noted: Half-burned ledger page with initials that match the victim's diary.
 
 >DARIA, WHAT DO YOU MAKE OF THIS?
-Outside The Mansion
-The entrance features stone steps and a carved oak door.
-Daria Stone is nearby, watching your next move.
-Daria Stone says: "The initials aren't random. Start with whoever had access to the archives tonight."
+Daria says: "The initials aren't random. Start with whoever had access to the archives tonight."
 ```
 
 ## Quick Start
