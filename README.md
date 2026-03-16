@@ -23,7 +23,7 @@ Daria says: "The initials aren't random. Start with whoever had access to the ar
 
 ### 2) Install deps
 ```bash
-uv sync
+make install
 ```
 
 ### 3) Configure narrator backend
@@ -42,16 +42,10 @@ export OLLAMA_BASE_URL="http://localhost:11434/api/chat"  # optional
 ```
 
 ### 4) Run
-Web UI:
 ```bash
-uv run uvicorn storygame.web:app --reload --host 127.0.0.1 --port 8000
+make run
 ```
 Then open `http://127.0.0.1:8000`.
-
-CLI:
-```bash
-uv run python -m storygame --seed 123 --genre mystery --session-length medium --tone dark --narrator openai
-```
 
 ## Usage Commands
 Core gameplay commands:
@@ -67,7 +61,7 @@ uv run python -m storygame --seed 123 --replay runs/commands.txt --transcript ru
 
 Run tests:
 ```bash
-uv run pytest -q
+make test
 ```
 
 ## Architecture (Focused Summary)
@@ -78,12 +72,5 @@ uv run pytest -q
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history with trace linkage.
 
 For full architecture and design details, see [docs/PRD.md](docs/PRD.md).
-
-## Dev Shortcuts
-```bash
-make install   # uv sync
-make run       # web app
-make test      # pytest -q
-make lint      # ruff check --fix
 make format    # ruff format
 ```
