@@ -72,5 +72,3 @@ make test
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history with trace linkage.
 
 For full architecture and design details, see [docs/PRD.md](docs/PRD.md).
-make format    # ruff format
-```
