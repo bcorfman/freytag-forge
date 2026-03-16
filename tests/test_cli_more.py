@@ -40,6 +40,14 @@ class _StubSetupDirector:
         return lines
 
 
+class _DropNarrationDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+        return [line for line in lines if "llm narration" not in line.lower()]
+
+
 class _RaisingSaveStore:
     def save_run(self, *args, **kwargs):  # noqa: ANN002, ANN003
         raise RuntimeError("boom-save")
@@ -109,6 +117,19 @@ def test_run_turn_save_and_load_generic_exception_paths() -> None:
         story_director=_StubSetupDirector(),
     )
     assert any("Failed to load" in line for line in lines)
+
+
+def test_run_turn_preserves_llm_narration_when_director_drops_it() -> None:
+    state = build_default_state(seed=704)
+    _next, lines, _raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(704),
+        StubNarrator("LLM narration: you notice fresh boot prints by the archive door."),
+        output_editor=_PassThroughEditor(),
+        story_director=_DropNarrationDirector(),
+    )
+    assert any("llm narration:" in line.lower() for line in lines)
 
 
 def test_run_replay_breaks_on_quit_branch() -> None:

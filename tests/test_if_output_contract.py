@@ -52,6 +52,22 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
     assert all(" beat at " not in line.lower() for line in lines)
 
 
+def test_turn_output_prefers_llm_narration_block_over_deterministic_room_block():
+    state = build_default_state(seed=311)
+    room = state.world.rooms[state.player.location]
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(311),
+        StubNarrator("You scan the courtyard, cataloging items, exits, and every flicker of movement."),
+        debug=False,
+    )
+
+    assert len(lines) == 1
+    assert lines[0].startswith(f"{room.name}\n")
+    assert room.description not in lines[0]
+
+
 def test_per_turn_room_block_follows_expected_section_order():
     state = build_default_state(seed=133)
     room = state.world.rooms[state.player.location]
@@ -84,6 +100,7 @@ def test_per_turn_room_block_follows_expected_section_order():
 def test_unknown_non_command_input_uses_in_world_roleplay_response():
     state = build_default_state(seed=32)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    npc_name = state.world.npcs[npc_id].name.lower()
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
         f"ask {npc_id} about rumors",
@@ -92,7 +109,7 @@ def test_unknown_non_command_input_uses_in_world_roleplay_response():
         debug=False,
     )
 
-    assert any(npc_id in line.lower() for line in lines)
+    assert any(npc_name in line.lower() for line in lines)
     assert not any("didn't understand" in line.lower() for line in lines)
 
 

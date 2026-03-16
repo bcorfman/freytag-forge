@@ -5,7 +5,7 @@ from random import Random
 
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
-from storygame.engine.world import build_default_state
+from storygame.engine.world import _infer_binary_pronouns, build_default_state
 from storygame.engine.world_builder import _extract_character_names, build_world_package, select_story_outline
 
 
@@ -141,3 +141,14 @@ def test_extract_character_names_ignores_outline_section_labels() -> None:
     assert "Premise" not in names
     assert "Scene" not in names
     assert names[0] == "Ari Vale"
+
+
+def test_infer_binary_pronouns_uses_likely_name_gender() -> None:
+    assert _infer_binary_pronouns("Daria Stone") == "she/her"
+    assert _infer_binary_pronouns("Alexander Grey") == "he/him"
+
+
+def test_generated_npcs_use_binary_pronouns() -> None:
+    state = build_default_state(seed=101, genre="mystery")
+    assert state.world.npcs
+    assert all(npc.pronouns in {"he/him", "she/her"} for npc in state.world.npcs.values())

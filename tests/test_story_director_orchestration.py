@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.llm.story_director import StoryDirector
@@ -29,6 +31,57 @@ class _StubNarrator:
         ]
 
 
+class _StubRoomPresentation:
+    def run(self, state, architect, cast, plan):  # noqa: ANN001
+        return {
+            room_id: {
+                "long": f"Long {room.name}.",
+                "short": f"Short {room.name}.",
+            }
+            for room_id, room in state.world.rooms.items()
+        }
+
+
+class _ParallelAwareNarrator:
+    def __init__(self, own_started: threading.Event, other_started: threading.Event) -> None:
+        self._own_started = own_started
+        self._other_started = other_started
+        self.saw_other = False
+
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        self._own_started.set()
+        self.saw_other = self._other_started.wait(timeout=0.2)
+        return ["P1", "P2", "P3"]
+
+
+class _ParallelAwareRoomPresentation:
+    def __init__(self, own_started: threading.Event, other_started: threading.Event) -> None:
+        self._own_started = own_started
+        self._other_started = other_started
+        self.saw_other = False
+
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        self._own_started.set()
+        self.saw_other = self._other_started.wait(timeout=0.2)
+        return {
+            room_id: {
+                "long": f"Long {room.name}.",
+                "short": f"Short {room.name}.",
+            }
+            for room_id, room in state.world.rooms.items()
+        }
+
+
+class _RaisingRoomPresentation:
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        raise RuntimeError("boom")
+
+
+class _RaisingNarrator:
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        raise RuntimeError("NarratorOpening agent returned non-JSON content.")
+
+
 class _StubReplan:
     def run(self, state, disruption):  # noqa: ANN001
         return {
@@ -54,10 +107,14 @@ def test_story_director_supports_swappable_agent_components():
         character_designer=_StubCharacter(),
         plot_designer=_StubPlot(),
         narrator_opening=_StubNarrator(),
+        room_presentation=_StubRoomPresentation(),
     )
 
     opening = director.compose_opening(state)
     assert opening == ["edited:P1", "edited:P2", "edited:P3"]
+    room_cache = state.world_package.get("room_presentation_cache", {})
+    assert room_cache
+    assert all("long" in room_cache[room_id] and "short" in room_cache[room_id] for room_id in state.world.rooms)
 
     reviewed_turn = director.review_turn(
         state,
@@ -87,3 +144,62 @@ def test_story_director_uses_swappable_replan_component():
     assert "story shifts" in event.message_key.lower()
     assert state.active_goal == "Contain the fallout and evade immediate arrest."
     assert state.player.flags["story_replan_required"] is False
+
+
+def test_story_director_room_presentation_falls_back_when_agent_fails():
+    state = build_default_state(seed=9)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_StubNarrator(),
+        room_presentation=_RaisingRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+    assert opening == ["edited:P1", "edited:P2", "edited:P3"]
+    room_cache = state.world_package.get("room_presentation_cache", {})
+    assert set(room_cache.keys()) == set(state.world.rooms.keys())
+
+
+def test_story_director_parallelizes_narrator_and_room_presentation():
+    state = build_default_state(seed=10)
+    narrator_started = threading.Event()
+    room_started = threading.Event()
+    narrator = _ParallelAwareNarrator(narrator_started, room_started)
+    room_presentation = _ParallelAwareRoomPresentation(room_started, narrator_started)
+
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=narrator,
+        room_presentation=room_presentation,
+    )
+
+    opening = director.compose_opening(state)
+
+    assert opening == ["edited:P1", "edited:P2", "edited:P3"]
+    assert narrator.saw_other is True
+    assert room_presentation.saw_other is True
+
+
+def test_story_director_opening_falls_back_when_narrator_agent_fails():
+    state = build_default_state(seed=11)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_RaisingNarrator(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+    assert opening
+    assert all(line.startswith("edited:") for line in opening)

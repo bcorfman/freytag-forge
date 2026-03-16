@@ -47,6 +47,12 @@ def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     assert "run_id" in payload
     assert payload["state"]["turn_index"] == 1
     start_location = payload["state"]["location"]
+    assert payload["lines"]
+    assert payload["lines"][0]
+    assert payload["lines"][-1]
+    assert payload["lines"][0].startswith(">GO NORTH")
+    assert any(line.startswith(">GO NORTH") for line in payload["lines"])
+    assert any(line.startswith(payload["state"]["room_name"] + "\n") for line in payload["lines"])
     assert payload["state"]["genre"] == "thriller"
     assert payload["state"]["session_length"] == "long"
     assert payload["state"]["tone"] == "dark"
@@ -129,3 +135,24 @@ def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):
     html = response.text
     assert "async function startNewGame()" in html
     assert "await startNewGame();" in html
+    assert "Ready. Save/load are available via commands, e.g. save checkpoint / load checkpoint." not in html
+
+
+def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_path):
+    client = _client(tmp_path)
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["beat"] == "setup_scene"
+    assert payload["lines"]
+    assert any(payload["state"]["room_name"] in line for line in payload["lines"])
+
+
+def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):
+    client = _client(tmp_path)
+    response = client.post("/turn", json={"command": "Daria, knock on the door", "seed": 22})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["beat"] != "setup_scene"
+    assert payload["lines"]
+    assert payload["lines"][0].startswith(">DARIA, KNOCK ON THE DOOR")

@@ -18,6 +18,77 @@ def _slugify_name(value: str) -> str:
     return normalized or "npc"
 
 
+_LIKELY_FEMALE_FIRST_NAMES = {
+    "daria",
+    "maria",
+    "anna",
+    "elena",
+    "sophia",
+    "emily",
+    "ava",
+    "mia",
+    "grace",
+    "lily",
+    "alice",
+    "rachel",
+    "julia",
+    "sarah",
+    "olivia",
+    "isabella",
+    "amelia",
+    "victoria",
+    "natasha",
+    "anya",
+    "leah",
+    "nora",
+    "zoe",
+    "clara",
+    "eva",
+}
+
+_LIKELY_MALE_FIRST_NAMES = {
+    "alexander",
+    "noah",
+    "liam",
+    "ethan",
+    "jack",
+    "james",
+    "daniel",
+    "david",
+    "michael",
+    "john",
+    "thomas",
+    "henry",
+    "ryan",
+    "isaac",
+    "lucas",
+    "nathan",
+    "andrew",
+    "aaron",
+    "max",
+    "oliver",
+    "samuel",
+    "george",
+    "arthur",
+    "victor",
+    "joseph",
+}
+
+
+def _infer_binary_pronouns(name: str) -> str:
+    cleaned = " ".join(name.split()).strip().lower()
+    first = re.sub(r"[^a-z]", "", cleaned.split(" ")[0]) if cleaned else ""
+    if first in _LIKELY_FEMALE_FIRST_NAMES:
+        return "she/her"
+    if first in _LIKELY_MALE_FIRST_NAMES:
+        return "he/him"
+
+    likely_female_suffixes = ("a", "ia", "na", "la", "ra", "elle", "ette", "ina", "aya", "lynn")
+    if first.endswith(likely_female_suffixes):
+        return "she/her"
+    return "he/him"
+
+
 def _item_kind_for_index(index: int) -> str:
     if index == 0:
         return "tool"
@@ -36,10 +107,13 @@ def _room_description(room_id: str, genre: str, tone: str) -> str:
     location = room_id.replace("_", " ")
     if genre == "mystery" and room_id == "front_steps":
         return (
-            "Stone steps lead toward the mansion entrance while the street behind you stays active with distant "
-            "voices and restless weather."
+            "Broad stone steps rise to a carved oak door framed by weathered columns. "
+            "A brass lantern burns beside the entrance and fresh mud marks the path from the street."
         )
-    return f"A {tone} {genre} location around {location}, detailed enough to investigate without revealing its secrets at once."
+    return (
+        f"The {location} is laid out for close inspection, with worn surfaces and practical routes that can be "
+        f"searched room by room in this {tone} {genre} case."
+    )
 
 
 def _build_items(package: dict) -> dict[str, Item]:
@@ -79,7 +153,7 @@ def _build_npcs(package: dict) -> dict[str, Npc]:
             description=f"{npc_name} watches the situation carefully.",
             dialogue=f"Stay focused on the objective: {package['goals']['primary']}",
             identity=f"{package['genre']} world participant",
-            pronouns="they/them",
+            pronouns=_infer_binary_pronouns(npc_name),
             tags=(package["genre"],),
             delta_progress=0.05 if index < 3 else 0.0,
             knowledge_source="witness account",

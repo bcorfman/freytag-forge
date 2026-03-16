@@ -39,12 +39,31 @@ class NarratorOpeningOutput(TypedDict):
     paragraphs: list[str]
 
 
+class RoomPresentationEntry(TypedDict):
+    room_id: str
+    long: str
+    short: str
+
+
+class RoomPresentationOutput(TypedDict):
+    rooms: list[RoomPresentationEntry]
+
+
 class _StoryArchitectModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     protagonist_name: str = Field(min_length=1, max_length=80)
     protagonist_background: str = Field(min_length=1, max_length=500)
     secrets_to_hide: list[str] = Field(default_factory=list, max_length=8)
+    tone: str = Field(min_length=1, max_length=40)
+
+
+class _StoryArchitectSingleSecretModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    protagonist_name: str = Field(min_length=1, max_length=80)
+    protagonist_background: str = Field(min_length=1, max_length=500)
+    secrets_to_hide: str = Field(min_length=1, max_length=500)
     tone: str = Field(min_length=1, max_length=40)
 
 
@@ -73,6 +92,20 @@ class _NarratorOpeningModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     paragraphs: list[str] = Field(min_length=3, max_length=4)
+
+
+class _RoomPresentationEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    room_id: str = Field(min_length=1, max_length=80)
+    long: str = Field(min_length=1, max_length=900)
+    short: str = Field(min_length=1, max_length=260)
+
+
+class _RoomPresentationModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    rooms: list[_RoomPresentationEntryModel] = Field(min_length=1, max_length=64)
 
 
 def _raise_contract_error(code: str, exc: ValidationError) -> StoryAgentContractError:
@@ -110,11 +143,24 @@ def _is_placeholder_contact_name(name: str) -> bool:
     return re.fullmatch(r"(premise|scene|outline|characters)\s*:?", name.strip().lower()) is not None
 
 
-def parse_story_architect_output(payload: dict) -> StoryArchitectOutput:
+def _validate_story_architect_payload(payload: dict) -> _StoryArchitectModel:
     try:
-        model = _StoryArchitectModel.model_validate(payload)
-    except ValidationError as exc:
-        raise _raise_contract_error("STORY_ARCHITECT_CONTRACT_INVALID", exc) from exc
+        return _StoryArchitectModel.model_validate(payload)
+    except ValidationError:
+        try:
+            single_secret_model = _StoryArchitectSingleSecretModel.model_validate(payload)
+        except ValidationError as second_exc:
+            raise _raise_contract_error("STORY_ARCHITECT_CONTRACT_INVALID", second_exc) from second_exc
+        normalized_payload = single_secret_model.model_dump(mode="python")
+        normalized_payload["secrets_to_hide"] = [normalized_payload["secrets_to_hide"]]
+        try:
+            return _StoryArchitectModel.model_validate(normalized_payload)
+        except ValidationError as normalized_exc:
+            raise _raise_contract_error("STORY_ARCHITECT_CONTRACT_INVALID", normalized_exc) from normalized_exc
+
+
+def parse_story_architect_output(payload: dict) -> StoryArchitectOutput:
+    model = _validate_story_architect_payload(payload)
     parsed = model.model_dump(mode="python")
     normalized = {
         "protagonist_name": _strip_label(str(parsed["protagonist_name"]), ("name", "protagonist")),
@@ -180,3 +226,27 @@ def parse_narrator_opening_output(payload: dict) -> NarratorOpeningOutput:
     if len(paragraphs) < 3:
         raise StoryAgentContractError("NARRATOR_OPENING_CONTRACT_INVALID", "paragraphs:min_length")
     return cast(NarratorOpeningOutput, {"paragraphs": paragraphs[:4]})
+
+
+def parse_room_presentation_output(payload: dict, room_ids: tuple[str, ...]) -> RoomPresentationOutput:
+    try:
+        model = _RoomPresentationModel.model_validate(payload)
+    except ValidationError as exc:
+        raise _raise_contract_error("ROOM_PRESENTATION_CONTRACT_INVALID", exc) from exc
+    parsed = model.model_dump(mode="python")
+    allowed_ids = set(room_ids)
+    normalized_rooms: list[RoomPresentationEntry] = []
+    seen_ids: set[str] = set()
+    for room in parsed["rooms"]:
+        room_id = _trim_sentence(str(room["room_id"]))
+        if room_id not in allowed_ids or room_id in seen_ids:
+            continue
+        long_value = _ensure_terminal_punctuation(str(room["long"]))
+        short_value = _ensure_terminal_punctuation(str(room["short"]))
+        if not long_value or not short_value:
+            continue
+        seen_ids.add(room_id)
+        normalized_rooms.append({"room_id": room_id, "long": long_value, "short": short_value})
+    if len(normalized_rooms) < len(room_ids):
+        raise StoryAgentContractError("ROOM_PRESENTATION_CONTRACT_INVALID", "rooms:missing_required_room_ids")
+    return cast(RoomPresentationOutput, {"rooms": normalized_rooms})

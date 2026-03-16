@@ -11,10 +11,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator, run_turn
+from storygame.cli import _build_narrator, _room_lines, _transcript_command_echo, _with_paragraph_spacing, run_turn
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import Narrator
+from storygame.llm.adapters import Narrator, SilentNarrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -183,16 +183,21 @@ def create_app(
                 action_raw=payload.command,
                 beat="setup_scene",
                 continued=True,
-                lines=active_story_director.compose_opening(start_state),
+                lines=[
+                    *_with_paragraph_spacing(active_story_director.compose_opening(start_state)),
+                    "",
+                    _room_lines(start_state, long_form=True),
+                ],
                 state=response_state,
             )
 
         scoped_store = _ScopedSaveStore(store, run_id)
+        turn_narrator: Narrator = SilentNarrator() if session_started else active_narrator
         next_state, lines, action_raw, beat_type, continued = run_turn(
             start_state,
             payload.command,
             session.rng,
-            active_narrator,
+            turn_narrator,
             narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
@@ -203,7 +208,7 @@ def create_app(
 
         room = next_state.world.rooms[next_state.player.location]
         sessions[run_id].state = next_state
-        response_lines = list(lines)
+        response_lines = [_transcript_command_echo(payload.command), *list(lines)]
         response_state = StateSnapshot(
             run_id=run_id,
             location=next_state.player.location,
@@ -473,8 +478,6 @@ _WEB_UI_HTML = """<!doctype html>
         } else {
           await startNewGame();
         }
-
-        appendLine("Ready. Save/load are available via commands, e.g. save checkpoint / load checkpoint.");
       }
 
       bootstrap();

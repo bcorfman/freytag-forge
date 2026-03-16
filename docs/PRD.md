@@ -51,7 +51,9 @@ Current runtime generation is package-driven.
 - `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`).
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
+- Multi-critic evaluation executes critic runs in parallel per round while preserving deterministic output ordering for judge inputs.
 - `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).
+- Opening orchestration runs dependency-ordered stages first (architect -> character -> plot), then executes room-presentation caching and narrator opening generation in parallel to reduce latency.
 - `storygame.llm.story_agents.prompts` defines per-agent prompt templates.
 - `storygame.llm.story_agents.contracts` defines per-agent JSON contracts and parsers.
 - Story-agent parsers enforce required JSON keys but normalize lightweight label/punctuation variants and ignore non-contract extra fields to reduce brittle generation failures.
@@ -106,33 +108,56 @@ flowchart LR
   - `data/rules/core_rules.yaml`
   - `data/rules/genres/<genre>_rules.yaml`
 - NPC voice cards are defined in `data/npc_voice_cards.yaml`.
+- Generated runtime NPCs now receive deterministic binary pronouns (`she/her` or `he/him`) inferred from likely first-name gender, replacing the previous universal `they/them` default.
 - Runtime contract validators cover:
   - `ActionProposal`
   - `DialogProposal`
   - `StateUpdateEnvelope`
 - Non-command input now uses a freeform roleplay path:
-  - Known commands are parsed first.
   - Parse failures route to `freeform_roleplay`.
-  - Freeform adapters produce `DialogProposal` + `ActionProposal`.
-  - Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
+  - Default freeform adapter now attempts an LLM planner first (strict `DialogProposal`/`ActionProposal` JSON contracts), then falls back deterministically if planner output is invalid/unavailable.
+- Freeform adapters produce `DialogProposal` + `ActionProposal`.
+- Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
+- Unknown or out-of-policy freeform intents now use a generic policy fallback that still records deterministic world-state facts (intent/target flags) and applies bounded story deltas, rather than silently no-oping.
+- Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
 
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
+- Room presentation now uses cached long/short descriptions per location: `LOOK` renders long form; non-LOOK turns render short form.
 - Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
+- Opening/goal language is normalized to keep assistant-role continuity (for example, `first contact` instead of conflicting `first witness` phrasing when the assistant is the first NPC partner).
+- When plot/objective text frames the assistant as a suspect, objective language is rewritten to target a separate suspect contact (or a generic suspect fallback) so the assistant remains an ally role in the opening.
+- Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
+- Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
+- Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
+- First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
+- Opening generation now fails soft: if narrator-opening contract parsing fails, a deterministic fallback opening is used instead of surfacing a 500 error.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
 - Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
-- Signal hints are objective-driven from generated map topology (targeting package terminal room), not hardcoded world landmarks.
+- Turn output retains an explicit LLM narration line when generation succeeds; if downstream review strips it, the original narration is reattached.
+- Turn narration is action-grounded: if a generated narration omits meaningful tokens from the player’s command, a deterministic action-reference prefix is added.
+- Per-turn rendering is LLM-first: when narrator output is available, deterministic room/event blocks are not shown; deterministic room/event rendering remains fallback-only for empty/invalid narrator proposals.
+- Coherence contract failures are fail-soft for turn rendering: revision-directive contract errors trigger a direct narrator fallback for that turn rather than exposing internal contract error strings to the player.
+- Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
+- Legacy signal/resonance hint copy has been removed from normal room output.
 - Parse failures on non-command input return in-world dialog through freeform roleplay.
+- Turn intent routing is planner-first: gameplay inputs are interpreted through the LLM/freeform action proposal path, then mapped into deterministic engine actions or bounded freeform envelopes.
+- Deterministic parser paths are retained as control-plane/fallback guards (`save`, `load`, `quit`, and planner-failure fallback) so state mutation remains reproducible.
+- Freeform NPC replies are normalized to explicit dialogue format: `<Character> says: "<reply>"`.
+- Freeform turns also run through the same narrator/coherence pipeline as command turns, so player prompts receive an LLM narration response in addition to policy-bounded state updates.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation.
 - Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, event timing, and NPC behavior.
 - Transcript command echo uses `>COMMAND` format.
+- CLI/replay transcripts insert a blank line before each `>COMMAND` echo for readability between turns.
+- Web turn response lines now prepend `>COMMAND` each turn for transcript-style continuity in clients.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
+- Debug traces for freeform turns include planner/policy diagnostics (`action_proposal` including planner source/error, envelope reasons, applied fact ops, and story delta) to explain why and how state changed.
 
 ### Coherence Gate
 - Critics: `continuity`, `causality`, `dialogue_fit`.
@@ -182,6 +207,7 @@ flowchart LR
 - `OLLAMA_MODEL` (default `llama3.2`)
 - `OLLAMA_TIMEOUT` (default `180.0`)
 - `OLLAMA_BASE_URL` (default `http://localhost:11434/api/chat`)
+  - Host-only values (for example `http://localhost:11434`) are normalized to `/api/chat` for story-agent requests.
 - `OLLAMA_TEMPERATURE` (default `0.2`)
 - `OLLAMA_MAX_TOKENS` (default `512`)
 
