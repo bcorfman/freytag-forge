@@ -41,6 +41,8 @@ Current runtime generation is package-driven.
 ## Architecture Overview
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
+- Turn routing is planner-first for gameplay inputs: LLM/freeform action proposals are interpreted before dispatching to deterministic engine actions or bounded freeform policy envelopes.
+- Deterministic parser handling is retained for control-plane commands (`save`, `load`, `quit`) and planner-failure fallback.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, etc.) with legacy object views synchronized for compatibility.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
@@ -113,9 +115,10 @@ flowchart LR
   - `ActionProposal`
   - `DialogProposal`
   - `StateUpdateEnvelope`
-- Non-command input now uses a freeform roleplay path:
-  - Parse failures route to `freeform_roleplay`.
-  - Default freeform adapter now attempts an LLM planner first (strict `DialogProposal`/`ActionProposal` JSON contracts), then falls back deterministically if planner output is invalid/unavailable.
+- Gameplay intent resolution uses a planner-first path:
+  - Default freeform adapter attempts an LLM planner first (strict `DialogProposal`/`ActionProposal` JSON contracts).
+  - Planner outputs are either mapped to deterministic engine actions (for canonical IF intents) or handled as bounded `freeform_roleplay`.
+  - If planner output is invalid/unavailable, deterministic fallback proposal logic is used.
 - Freeform adapters produce `DialogProposal` + `ActionProposal`.
 - Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
 - Unknown or out-of-policy freeform intents now use a generic policy fallback that still records deterministic world-state facts (intent/target flags) and applies bounded story deltas, rather than silently no-oping.
@@ -145,7 +148,6 @@ flowchart LR
 - Coherence contract failures are fail-soft for turn rendering: revision-directive contract errors trigger a direct narrator fallback for that turn rather than exposing internal contract error strings to the player.
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
-- Parse failures on non-command input return in-world dialog through freeform roleplay.
 - Turn intent routing is planner-first: gameplay inputs are interpreted through the LLM/freeform action proposal path, then mapped into deterministic engine actions or bounded freeform envelopes.
 - Deterministic parser paths are retained as control-plane/fallback guards (`save`, `load`, `quit`, and planner-failure fallback) so state mutation remains reproducible.
 - Freeform NPC replies are normalized to explicit dialogue format: `<Character> says: "<reply>"`.
