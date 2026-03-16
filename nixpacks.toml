@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python312", "uv"]
+
+[phases.install]
+cmds = ["uv sync --no-dev"]
+
+[start]
+cmd = "uv run uvicorn storygame.web_demo:app --host 0.0.0.0 --port ${PORT:-8000}"
