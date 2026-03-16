@@ -67,3 +67,30 @@ def test_unknown_non_command_routes_to_freeform_roleplay():
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
     assert lines
+
+
+def test_room_presentation_uses_short_on_move_and_long_on_look():
+    state = build_default_state(seed=36, genre="mystery")
+    direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
+    destination = state.world.rooms[state.player.location].exits[direction]
+
+    moved_state, move_lines, _action_raw, _beat_type, _continued = run_turn(
+        state,
+        direction,
+        Random(36),
+        SilentNarrator(),
+        debug=False,
+    )
+    cache = moved_state.world_package["room_presentation_cache"][destination]
+    assert cache["short"] in move_lines[0]
+    assert cache["long"] not in move_lines[0]
+
+    looked_state, look_lines, _action_raw, _beat_type, _continued = run_turn(
+        moved_state,
+        "look around",
+        Random(37),
+        SilentNarrator(),
+        debug=False,
+    )
+    look_cache = looked_state.world_package["room_presentation_cache"][destination]
+    assert look_cache["long"] in look_lines[0]

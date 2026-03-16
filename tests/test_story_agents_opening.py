@@ -41,4 +41,6 @@ def test_narrator_opening_merges_protagonist_name_and_background_in_intro() -> N
     assert "detective" in intro
     assert "one last case." in intro
     assert "daria stone stays close as your assistant" in intro
-    assert "their tone observant while they wait for your first instruction." in intro
+    assert "daria stone's tone observant" in intro
+    assert "while daria stone waits for your first instruction." in intro
+    assert "their tone" not in intro

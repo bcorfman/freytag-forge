@@ -45,6 +45,12 @@ def test_parse_take_pick_up_aliases():
     assert action.target == "old_coin"
 
 
+def test_parse_take_strips_articles_and_trailing_compound_phrase():
+    action = parse_command("pick up the ledger page and read it")
+    assert action.kind == ActionKind.TAKE
+    assert action.target == "ledger_page"
+
+
 def test_parse_talk_and_use():
     talk = parse_command("talk to oracle")
     speak = parse_command("speak to oracle")

@@ -12,10 +12,12 @@ from storygame.llm.story_agents.agents import (
     DefaultCharacterDesignerAgent,
     DefaultNarratorOpeningAgent,
     DefaultPlotDesignerAgent,
+    DefaultRoomPresentationAgent,
     DefaultStoryArchitectAgent,
     DefaultStoryReplanAgent,
     _build_identity_intro_sentence,
     _json_from_text,
+    _normalize_actionable_objective_language,
     _normalize_background_clause,
     _summary_premise,
 )
@@ -55,6 +57,26 @@ def test_summary_and_background_normalizers_cover_variants() -> None:
     assert _build_identity_intro_sentence("Noah Kade", "A detective.") == "You are Noah Kade, a detective."
 
 
+def test_actionable_objective_normalizer_keeps_assistant_out_of_suspect_language() -> None:
+    normalized = _normalize_actionable_objective_language(
+        "Review the case file, then ask targeted questions about Daria Stone's involvement and question your witness.",
+        "Daria Stone",
+        "Victor Hale",
+    )
+    assert "first witness" not in normalized.lower()
+    assert "question your contact" in normalized.lower()
+    assert "daria stone's involvement" not in normalized.lower()
+    assert "victor hale's involvement" in normalized.lower()
+
+    fallback = _normalize_actionable_objective_language(
+        "Ask direct questions about Daria Stone's involvement.",
+        "Daria Stone",
+        "",
+    )
+    assert "daria stone's involvement" not in fallback.lower()
+    assert "the suspect's involvement" in fallback.lower()
+
+
 def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
 
@@ -69,6 +91,39 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
     assert agent_module._chat_complete("ollama", "s", "u") == "ok-ollama"
+
+
+def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+    def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        assert request.get_method() == "POST"
+        assert request.full_url == "http://localhost:11434/api/chat"
+        return _FakeResponse('{"message":{"content":"ok-ollama"}}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
+    assert agent_module._chat_complete("ollama", "s", "u") == "ok-ollama"
+
+
+def test_chat_complete_ollama_falls_back_to_generate_on_404(monkeypatch) -> None:
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434/api/chat")
+    called_urls: list[str] = []
+
+    def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        called_urls.append(request.full_url)
+        if request.full_url.endswith("/api/chat"):
+            raise urllib.error.HTTPError(
+                request.full_url,
+                404,
+                "Not Found",
+                None,
+                io.BytesIO(b'{"error":"not found"}'),
+            )
+        return _FakeResponse('{"response":"ok-generate"}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
+    assert agent_module._chat_complete("ollama", "s", "u") == "ok-generate"
+    assert called_urls[:2] == ["http://localhost:11434/api/chat", "http://localhost:11434/api/generate"]
 
 
 def test_chat_complete_error_paths(monkeypatch) -> None:
@@ -136,6 +191,7 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     char_agent = DefaultCharacterDesignerAgent("openai")
     plot_agent = DefaultPlotDesignerAgent("openai")
     narr_agent = DefaultNarratorOpeningAgent("openai")
+    room_agent = DefaultRoomPresentationAgent("openai")
 
     # Character success
     monkeypatch.setattr(
@@ -156,6 +212,7 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     )
     plot = plot_agent.run(state, architect, contacts)
     assert "case file" in plot["actionable_objective"].lower()
+    assert "first witness" not in plot["actionable_objective"].lower()
 
     # Narrator success
     monkeypatch.setattr(
@@ -165,10 +222,44 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     opening = narr_agent.run(state, architect, cast, plan)
     assert len(opening) == 3
 
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "paragraphs": [
+                    "Daria Stone stands close, their posture steady.",
+                    "You keep the file ready.",
+                    "The case begins.",
+                ]
+            }
+        ),
+    )
+    opening_with_named_contact = narr_agent.run(state, architect, cast, plan)
+    assert "their posture" not in opening_with_named_contact[0].lower()
+    assert "daria stone's posture" in opening_with_named_contact[0].lower()
+
+    # Room presentation success
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "rooms": [
+                    {"room_id": room_id, "long": "Detailed room copy.", "short": "Brief room copy."}
+                    for room_id in state.world.rooms
+                ]
+            }
+        ),
+    )
+    room_copy = room_agent.run(state, architect, cast, plan)
+    assert set(room_copy.keys()) == set(state.world.rooms.keys())
+    assert all("long" in entry and "short" in entry for entry in room_copy.values())
+
     # Narrator non-JSON failure
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "bad")
     with pytest.raises(RuntimeError, match="non-JSON"):
         narr_agent.run(state, architect, cast, plan)
+    with pytest.raises(RuntimeError, match="non-JSON"):
+        room_agent.run(state, architect, cast, plan)
 
     # Plot contract failure
     def _raise_plot_contract(payload):  # noqa: ANN001

@@ -4,11 +4,13 @@ import hashlib
 import json
 import re
 import time
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Protocol, TypedDict
 
 from storygame.llm.context import NarrationContext
 from storygame.llm.contracts import (
     CRITIQUE_DIMENSIONS,
+    MAX_INSTRUCTION_CHARS,
     ContractValidationError,
     CritiqueReport,
     JudgeDecision,
@@ -415,11 +417,14 @@ def _revision_directive(reports: tuple[CritiqueReport, ...], decision: JudgeDeci
             "npc/background ordering"
         )
     notes = " | ".join(feedbacks[:2])[:140]
+    instruction = f"{focus}. Notes: {notes}"
+    if len(instruction) > MAX_INSTRUCTION_CHARS:
+        instruction = instruction[:MAX_INSTRUCTION_CHARS].rstrip(" ,;:.")
     payload = {
         "directive_id": f"rev-round-{decision['round_index']}",
         "target_agent_id": "narrator",
         "focus_dimensions": (lowest,),
-        "instruction": f"{focus}. Notes: {notes}",
+        "instruction": instruction,
         "rationale": "Judge-selected weakest rubric dimension requires revision.",
     }
     return parse_revision_directive(payload)
@@ -431,11 +436,14 @@ def _validation_revision_directive(reports: tuple[ValidationReport, ...]) -> Rev
     for report in failed:
         reason_codes.extend(report["reason_codes"])
     unique_codes = sorted(set(reason_codes))
+    instruction = f"Fix deterministic validation errors. reason_codes={','.join(unique_codes)}"
+    if len(instruction) > MAX_INSTRUCTION_CHARS:
+        instruction = instruction[:MAX_INSTRUCTION_CHARS].rstrip(" ,;:.")
     payload = {
         "directive_id": f"rev-validation-{'-'.join(unique_codes) or 'none'}",
         "target_agent_id": "narrator",
         "focus_dimensions": ("continuity",),
-        "instruction": f"Fix deterministic validation errors. reason_codes={','.join(unique_codes)}",
+        "instruction": instruction,
         "rationale": "Validator failures must be resolved before critique scoring.",
     }
     return parse_revision_directive(payload)
@@ -545,10 +553,16 @@ class CoherenceGate:
         self._max_validation_revisions = max_validation_revisions
 
     def critique_round(self, context: NarrationContext, narration: str) -> tuple[CritiqueReport, ...]:
+        if not self._critics:
+            return ()
         reports: list[CritiqueReport] = []
-        for critic in self._critics:
-            raw_report = critic.critique(context, narration)
-            reports.append(parse_critique_report(dict(raw_report)))
+        with ThreadPoolExecutor(max_workers=len(self._critics)) as executor:
+            futures: list[Future[CritiqueReport]] = [
+                executor.submit(critic.critique, context, narration) for critic in self._critics
+            ]
+            for future in futures:
+                raw_report = future.result()
+                reports.append(parse_critique_report(dict(raw_report)))
         return tuple(reports)
 
     def validate_candidate(self, context: NarrationContext, narration: str) -> tuple[ValidationReport, ...]:

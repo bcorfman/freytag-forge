@@ -101,6 +101,7 @@ uv run python -m storygame --seed 123 --narrator ollama
 
 Notes:
 - Ollama local usage does not require an API key.
+- `OLLAMA_BASE_URL` may be either `http://localhost:11434` or `http://localhost:11434/api/chat`; host-only values are normalized to `/api/chat` for story-agent calls.
 - Web mode (`make run`) resolves narrator automatically in this order:
   1. `FREYTAG_NARRATOR` (if set to `openai|ollama`)
   2. `OPENAI_API_KEY` -> `openai`

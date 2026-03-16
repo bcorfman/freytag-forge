@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import json
 from contextlib import suppress
 from io import StringIO
 from random import Random
@@ -12,10 +13,8 @@ from storygame.cli import (
     _build_narrator,
     _emit_cli_line,
     _event_lines,
-    _room_distance,
     _room_lines,
     _setup_phase_lines,
-    _signal_hint,
     _write_transcript_line,
     main,
     run_replay,
@@ -153,24 +152,74 @@ def test_run_turn_handles_quit_and_narration_failures():
     assert lines == ["Goodbye."]
 
 
-def test_signal_hint_and_room_distance_cover_missing_graph_cases():
+def test_run_turn_falls_back_to_direct_narration_on_revision_directive_contract_error(monkeypatch):
+    class _Gate:
+        def generate_with_gate(self, narrator, context):  # noqa: ANN001, ARG002
+            raise RuntimeError("CONTRACT_INVALID_REVISION_DIRECTIVE")
+
+    monkeypatch.setattr("storygame.cli.build_default_coherence_gate", lambda: _Gate())
+    state = build_default_state(seed=801)
+    next_state, lines, _action_raw, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(801),
+        StubNarrator("You focus on the room, tracing exits and clues before deciding your next move."),
+        debug=False,
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    assert any("tracing exits and clues" in line.lower() for line in lines)
+    assert not any("contract_invalid_revision_directive" in line.lower() for line in lines)
+
+
+def test_run_turn_discards_failed_narration_when_coherence_wall_clock_times_out(monkeypatch):
+    class _Gate:
+        def generate_with_gate(self, narrator, context):  # noqa: ANN001, ARG002
+            return {
+                "narration": (
+                    "Noah Kade stepped out of the car, the crunch of gravel beneath his boots echoing in the stillness."
+                ),
+                "judge_decision": {
+                    "status": "failed",
+                    "total_score": 0,
+                    "threshold": 80,
+                    "round_index": 0,
+                    "critic_ids": (),
+                    "rubric_components": {},
+                    "decision_id": "judge-hard-fail-budget_wall_clock_timeout",
+                },
+                "telemetry": {
+                    "critique_rounds": 0,
+                    "token_spend": {"narrator": 345, "critics": 0},
+                    "elapsed_ms": 60000,
+                    "hard_fail_reason": "BUDGET_WALL_CLOCK_TIMEOUT",
+                },
+            }
+
+    monkeypatch.setattr("storygame.cli.build_default_coherence_gate", lambda: _Gate())
+    state = build_default_state(seed=802)
+    next_state, lines, _action_raw, _beat, continued = run_turn(
+        state,
+        "look",
+        Random(802),
+        StubNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    assert not any("noah kade" in line.lower() for line in lines)
+    assert any(state.world.rooms[state.player.location].name.lower() in line.lower() for line in lines)
+
+
+def test_room_lines_do_not_emit_legacy_signal_copy():
     state = build_default_state(seed=16)
-    start_room = state.player.location
-    assert _room_distance(state, start_room, start_room) == 0
-    assert _room_distance(state, start_room, "nonexistent") is None
-
-    no_exit_state = build_default_state(seed=16)
-    room = no_exit_state.world.rooms[no_exit_state.player.location]
-    original_exits = room.exits
-    try:
-        room.exits = {}
-        assert _signal_hint(no_exit_state) == ""
-    finally:
-        room.exits = original_exits
-
-    hint_state = build_default_state(seed=16)
-    hint = _signal_hint(hint_state)
-    assert isinstance(hint, str)
+    lines = _room_lines(state)
+    lower = lines.lower()
+    assert "echoes refract through stone" not in lower
+    assert "resonance is stronger" not in lower
+    assert "signal:" not in lower
 
 
 def test_run_turn_save_load_error_paths():
@@ -374,9 +423,27 @@ def test_run_turn_debug_includes_coherence_budget_telemetry():
     assert any("[debug] coherence_budget" in line for line in lines)
 
 
+def test_run_turn_debug_includes_freeform_policy_diagnostics():
+    state = build_default_state(seed=241)
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "Daria, knock on the door",
+        Random(241),
+        SilentNarrator(),
+        debug=True,
+    )
+
+    assert any("[debug] freeform_policy " in line for line in lines)
+    debug_json_lines = [line for line in lines if line.startswith("[debug-json] ")]
+    payload = json.loads(debug_json_lines[-1].replace("[debug-json] ", "", 1))
+    assert "freeform_policy" in payload
+    assert payload["freeform_policy"]["action_proposal"]["intent"]
+
+
 def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     state = build_default_state(seed=88)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    npc_name = state.world.npcs[npc_id].name.lower()
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
         f"ask {npc_id} about the signal",
@@ -388,9 +455,99 @@ def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(npc_id in line.lower() for line in lines)
+    assert any(npc_name in line.lower() for line in lines)
     assert not any("didn't understand" in line.lower() for line in lines)
     assert next_state.player.flags.get(f"asked_signal_{npc_id}") is True
+
+
+def test_run_turn_uses_planner_action_for_deterministic_take_path():
+    class _PlannerTakeAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "narrator", "text": "Planner parsed a TAKE intent.", "tone": "in_world"},
+                {"intent": "take", "targets": ["ledger_page"], "arguments": {}, "proposed_effects": ["take:ledger_page"]},
+            )
+
+    state = build_default_state(seed=220)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Pick up the ledger page and read it.",
+        Random(220),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_PlannerTakeAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type != "freeform_roleplay"
+    assert "ledger_page" in next_state.player.inventory
+    assert any("clue noted:" in line.lower() for line in lines)
+    assert not any("you don't see that here" in line.lower() for line in lines)
+
+
+def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
+    state = build_default_state(seed=883)
+    after_examine, _lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "examine the case file",
+        Random(883),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert after_examine.turn_index == 1
+    assert after_examine.progress > state.progress
+    assert after_examine.player.flags.get("freeform_intent_read_case_file") is True
+    assert after_examine.player.flags.get("reviewed_case_file") is True
+
+    after_knock, _lines, _action_raw, beat_type, continued = run_turn(
+        after_examine,
+        "Daria, knock on the door",
+        Random(883),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert after_knock.turn_index == 2
+    assert after_knock.progress > after_examine.progress
+    assert after_knock.player.flags.get("freeform_intent_knock") is True
+
+
+def test_run_turn_unknown_input_includes_narrator_output_when_available():
+    state = build_default_state(seed=881)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "ask about the signal",
+        Random(881),
+        StubNarrator("You press for specifics, and the rumor sharpens into a usable lead."),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("usable lead" in line.lower() for line in lines)
+
+
+def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
+    state = build_default_state(seed=882)
+    command = "ask daria about the signal"
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        command,
+        Random(882),
+        StubNarrator("The night is tense and everyone watches in silence."),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("ask daria about the signal" in line.lower() for line in lines)
 
 
 def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
@@ -514,7 +671,7 @@ def test_run_turn_applies_output_editor_before_returning_lines():
             return lines
 
         def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
-            return [line.replace("Echoes", "Edited echoes") for line in lines]
+            return [f"[edited] {line}" for line in lines]
 
     state = build_default_state(seed=93)
     next_state, lines, _action_raw, _beat, continued = run_turn(
@@ -527,7 +684,7 @@ def test_run_turn_applies_output_editor_before_returning_lines():
 
     assert continued is True
     assert next_state.turn_index == 1
-    assert any("edited echoes" in line.lower() for line in lines)
+    assert all(line.startswith("[edited] ") for line in lines)
 
 
 def test_setup_phase_lines_include_who_where_and_objective():
@@ -592,6 +749,31 @@ def test_main_replay_emits_setup_phase_before_commands(tmp_path, monkeypatch):
     lines = transcript.read_text(encoding="utf-8").splitlines()
     command_index = next(i for i, line in enumerate(lines) if line == ">LOOK")
     assert command_index >= 3
+
+
+def test_main_replay_inserts_blank_line_between_opening_paragraphs(tmp_path, monkeypatch):
+    replay = tmp_path / "commands.txt"
+    transcript = tmp_path / "transcript.txt"
+    replay.write_text("look\n", encoding="utf-8")
+
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
+    main(["--seed", "4", "--replay", str(replay), "--transcript", str(transcript)])
+
+    setup_section = transcript.read_text(encoding="utf-8").split(">LOOK", maxsplit=1)[0]
+    assert "\n\n" in setup_section
+
+
+def test_main_replay_inserts_blank_line_before_each_command_echo(tmp_path, monkeypatch):
+    replay = tmp_path / "commands.txt"
+    transcript = tmp_path / "transcript.txt"
+    replay.write_text("look\ninventory\n", encoding="utf-8")
+
+    monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
+    main(["--seed", "4", "--replay", str(replay), "--transcript", str(transcript)])
+
+    text = transcript.read_text(encoding="utf-8")
+    assert "\n\n>LOOK\n" in text
+    assert "\n\n>INVENTORY\n" in text
 
 
 def test_save_persists_last_accepted_judge_decision(tmp_path):

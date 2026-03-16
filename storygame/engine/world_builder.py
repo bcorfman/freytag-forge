@@ -60,7 +60,7 @@ _ITEM_TEMPLATES: dict[str, tuple[str, ...]] = {
 }
 
 _DEFAULT_SETUP_OBJECTIVES: dict[str, str] = {
-    "mystery": "Review the case file, question your first witness, and identify the strongest lead.",
+    "mystery": "Review the case file, question your first contact, and identify the strongest lead.",
     "thriller": "Stabilize the situation, verify your intel, and secure the first trustworthy contact.",
     "horror": "Survey the immediate threat, gather protective tools, and establish a safe next move.",
 }

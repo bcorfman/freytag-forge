@@ -2,17 +2,22 @@ from __future__ import annotations
 
 import json
 import re
-from collections import deque
 from pathlib import Path
 from random import Random
 from typing import Any, Protocol, TextIO
 
 from rich.console import Console
 
-from storygame.engine.freeform import DEFAULT_FREEFORM_ADAPTER, FreeformProposalAdapter, resolve_freeform_roleplay
+from storygame.engine.freeform import (
+    DEFAULT_FREEFORM_ADAPTER,
+    FreeformProposalAdapter,
+    resolve_freeform_roleplay,
+    resolve_freeform_roleplay_with_proposals,
+)
 from storygame.engine.impact import assess_player_command, requires_high_impact_confirmation
+from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
-from storygame.engine.parser import ActionKind, parse_command
+from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event, GameState
 from storygame.engine.world import build_default_state
@@ -24,60 +29,6 @@ from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
-
-
-def _room_distance(state: GameState, start_room_id: str, target_room_id: str) -> int | None:
-    if start_room_id not in state.world.rooms or target_room_id not in state.world.rooms:
-        return None
-    if start_room_id == target_room_id:
-        return 0
-    visited = {start_room_id}
-    frontier = deque([(start_room_id, 0)])
-    while frontier:
-        room_id, distance = frontier.popleft()
-        room = state.world.rooms[room_id]
-        for _direction, next_room_id in room.exits.items():
-            if next_room_id in visited:
-                continue
-            if next_room_id == target_room_id:
-                return distance + 1
-            visited.add(next_room_id)
-            frontier.append((next_room_id, distance + 1))
-    return None
-
-
-def _signal_hint(state: GameState) -> str:
-    map_rooms = tuple(state.world_package.get("map", {}).get("rooms", ()))
-    if not map_rooms:
-        return ""
-    source_room = map_rooms[-1]
-    if source_room not in state.world.rooms:
-        return ""
-
-    room = state.world.rooms[state.player.location]
-    if not room.exits:
-        return ""
-    if room.id == source_room:
-        return "Signal: The objective signal source is directly beneath this location."
-
-    best_distance: int | None = None
-    best_directions: list[str] = []
-    for direction, destination in room.exits.items():
-        distance = _room_distance(state, destination, source_room)
-        if distance is None:
-            continue
-        if best_distance is None or distance < best_distance:
-            best_distance = distance
-            best_directions = [direction]
-            continue
-        if distance == best_distance:
-            best_directions.append(direction)
-
-    if not best_directions:
-        return "Signal: The tone is muffled here; no clear path stands out."
-
-    direction_text = "/".join(sorted(best_directions))
-    return f"Signal: Echoes refract through stone, but the resonance is stronger toward {direction_text}."
 
 
 def _humanize_token(token: str) -> str:
@@ -131,14 +82,48 @@ def _joined_with_and(values: tuple[str, ...] | list[str]) -> str:
     return f"{', '.join(values[:-1])}, and {values[-1]}"
 
 
-def _room_lines(state: GameState) -> str:
+def _first_sentence(value: str) -> str:
+    fragments = re.split(r"(?<=[.!?])\s+", value.strip())
+    return fragments[0] if fragments and fragments[0] else value.strip()
+
+
+def _shorten_line(value: str, max_chars: int) -> str:
+    text = value.strip()
+    if len(text) <= max_chars:
+        return text
+    cut = text[:max_chars].rstrip(" ,;:")
+    return f"{cut}..."
+
+
+def _cached_room_presentation(state: GameState, room_id: str) -> dict[str, str]:
+    cache = state.world_package.setdefault("room_presentation_cache", {})
+    room_cache = cache.get(room_id)
+    if room_cache:
+        return room_cache
+
+    room = state.world.rooms[room_id]
+    long_description = room.description.strip()
+    first_sentence = _first_sentence(long_description)
+    short_description = _shorten_line(first_sentence, 110)
+
+    generated = {"long": long_description, "short": short_description}
+    cache[room_id] = generated
+    return generated
+
+
+def _room_lines(state: GameState, *, long_form: bool = True) -> str:
     room = state.world.rooms[state.player.location]
-    pieces = [room.name, room.description]
-    signal_hint = _signal_hint(state)
+    presentation = _cached_room_presentation(state, room.id)
+    pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
     actionable_items, junk_count = room_item_groups(state, room)
     if actionable_items:
         visible_items = tuple(_humanize_token(item) for item in actionable_items)
-        pieces.append(f"You can see {_joined_with_and(visible_items)}.")
+        if room.id == "front_steps" and "ledger_page" in actionable_items:
+            pieces.append(
+                "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
+            )
+        else:
+            pieces.append(f"You can see {_joined_with_and(visible_items)} within easy reach.")
     if junk_count > 0:
         suffix = "item" if junk_count == 1 else "items"
         verb = "is" if junk_count == 1 else "are"
@@ -146,21 +131,35 @@ def _room_lines(state: GameState) -> str:
     if room.exits:
         exits = tuple(sorted(room.exits.keys()))
         if len(exits) == 1:
-            pieces.append(f"The only exit is to the {exits[0]}.")
+            if room.id == "front_steps":
+                pieces.append(
+                    f"The main exit from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
+                )
+            else:
+                pieces.append(f"The single obvious exit leads {exits[0]}.")
         else:
             pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
     if room.npc_ids:
         visible_npcs = tuple(_humanize_token(npc) for npc in room.npc_ids)
         verb = "is" if len(visible_npcs) == 1 else "are"
-        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} here.")
-    if signal_hint:
-        pieces.append(signal_hint.replace("Signal: ", ""))
+        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} nearby, watching your next move.")
     return "\n".join(pieces)
 
 
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
     director = StoryDirector("openai") if story_director is None else story_director
     return director.compose_opening(state)
+
+
+def _with_paragraph_spacing(lines: list[str]) -> list[str]:
+    if len(lines) <= 1:
+        return list(lines)
+    spaced: list[str] = []
+    for index, line in enumerate(lines):
+        spaced.append(line)
+        if index < len(lines) - 1:
+            spaced.append("")
+    return spaced
 
 
 _PROCEED_WORDS = {"proceed", "confirm", "yes", "y"}
@@ -274,8 +273,97 @@ def _sanitize_narration_for_player(narration: str, debug: bool) -> str:
     return narration
 
 
+def _narration_references_action(narration: str, action_raw: str) -> bool:
+    narration_tokens = {token for token in re.findall(r"[a-z0-9]+", narration.lower()) if len(token) >= 4}
+    action_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]+", action_raw.lower())
+        if len(token) >= 4 and token not in {"look", "talk", "speak", "move", "north", "south", "east", "west"}
+    }
+    if not action_tokens:
+        return True
+    return bool(narration_tokens.intersection(action_tokens))
+
+
+def _ensure_action_grounded_narration(narration: str, action: Action) -> str:
+    if not narration:
+        return narration
+    if action.kind in {ActionKind.LOOK, ActionKind.HELP, ActionKind.INVENTORY, ActionKind.SAVE, ActionKind.LOAD}:
+        return narration
+    if _narration_references_action(narration, action.raw):
+        return narration
+    return f'You act on "{action.raw}". {narration}'
+
+
+def _should_discard_failed_narration(
+    judge_decision: dict[str, Any],
+    coherence_telemetry: dict[str, Any],
+) -> bool:
+    return (
+        str(judge_decision["status"]) == "failed"
+        and str(coherence_telemetry["hard_fail_reason"]) == "BUDGET_WALL_CLOCK_TIMEOUT"
+    )
+
+
+def _contains_normalized_line(lines: list[str], target: str) -> bool:
+    normalized_target = " ".join(target.split()).lower()
+    if not normalized_target:
+        return False
+    return any(normalized_target in " ".join(line.split()).lower() for line in lines)
+
+
+def _has_similar_narration(lines: list[str], target: str) -> bool:
+    target_tokens = {token for token in re.findall(r"[a-z0-9]+", target.lower()) if len(token) >= 4}
+    if len(target_tokens) < 6:
+        return _contains_normalized_line(lines, target)
+    for line in lines:
+        line_tokens = {token for token in re.findall(r"[a-z0-9]+", line.lower()) if len(token) >= 4}
+        if not line_tokens:
+            continue
+        overlap = len(target_tokens.intersection(line_tokens))
+        ratio = overlap / len(target_tokens)
+        if ratio >= 0.65:
+            return True
+    return False
+
+
 def _transcript_command_echo(raw_command: str) -> str:
     return f">{raw_command.strip().upper()}"
+
+
+def _write_transcript_command_echo(handle: TextIO | None, raw_command: str) -> None:
+    _write_transcript_line(handle, "")
+    _write_transcript_line(handle, _transcript_command_echo(raw_command))
+
+
+def _target_from_proposal(action_proposal: dict[str, Any]) -> str:
+    targets = tuple(str(target).strip().lower() for target in action_proposal.get("targets", ()) if str(target).strip())
+    if not targets:
+        return ""
+    return targets[0]
+
+
+def _action_from_proposal(raw: str, action_proposal: dict[str, Any]) -> Action:
+    intent = str(action_proposal.get("intent", "")).strip().lower()
+    target = _target_from_proposal(action_proposal)
+
+    if intent in {"look"}:
+        return Action(ActionKind.LOOK, raw=raw)
+    if intent in {"inventory", "inv"}:
+        return Action(ActionKind.INVENTORY, raw=raw)
+    if intent in {"help", "hint"}:
+        return Action(ActionKind.HELP, raw=raw)
+    if intent in {"go", "move", "travel", "walk"} and target:
+        return Action(ActionKind.MOVE, target=target, raw=raw)
+    if intent in {"take", "get", "grab", "pick_up", "pickup", "acquire"} and target:
+        return Action(ActionKind.TAKE, target=target, raw=raw)
+    if intent in {"talk", "speak"} and target:
+        return Action(ActionKind.TALK, target=target, raw=raw)
+    if intent in {"use"} and target:
+        secondary = str(action_proposal.get("arguments", {}).get("target", "")).strip().lower()
+        combined = f"{target}:{secondary}" if secondary else target
+        return Action(ActionKind.USE, target=combined, raw=raw)
+    return Action(ActionKind.UNKNOWN, raw=raw)
 
 
 def _build_narrator(mode: str) -> Narrator:
@@ -386,58 +474,47 @@ def run_turn(
             True,
         )
 
-    action = parse_command(raw)
-    if action.kind == ActionKind.QUIT:
+    control_action = parse_command(raw)
+    if control_action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
 
-    if action.kind == ActionKind.SAVE:
-        if not action.target:
-            return state, ["Usage: save <slot>."], action.raw, "save", True
+    if control_action.kind == ActionKind.SAVE:
+        if not control_action.target:
+            return state, ["Usage: save <slot>."], control_action.raw, "save", True
         if save_store is None:
-            return state, ["Save requires --save-db <path>."], action.raw, "save", True
+            return state, ["Save requires --save-db <path>."], control_action.raw, "save", True
         try:
             save_store.save_run(
-                action.target,
+                control_action.target,
                 state,
                 rng,
-                raw_command=action.raw,
+                raw_command=control_action.raw,
                 action_kind="save",
                 judge_decision=_judge_decision_for_persistence(state),
             )
-            return state, [f"Saved to slot '{action.target}'."], action.raw, "save", True
+            return state, [f"Saved to slot '{control_action.target}'."], control_action.raw, "save", True
         except Exception as exc:
-            return state, [f"Failed to save: {exc}"], action.raw, "save", True
+            return state, [f"Failed to save: {exc}"], control_action.raw, "save", True
 
-    if action.kind == ActionKind.LOAD:
-        if not action.target:
-            return state, ["Usage: load <slot>."], action.raw, "load", True
+    if control_action.kind == ActionKind.LOAD:
+        if not control_action.target:
+            return state, ["Usage: load <slot>."], control_action.raw, "load", True
         if save_store is None:
-            return state, ["Load requires --save-db <path>."], action.raw, "load", True
+            return state, ["Load requires --save-db <path>."], control_action.raw, "load", True
         try:
-            state, loaded_rng = save_store.load_run(action.target)
+            state, loaded_rng = save_store.load_run(control_action.target)
             rng.setstate(loaded_rng.getstate())
             return (
                 state,
-                [_room_lines(state), f"Loaded from slot '{action.target}'."],
-                action.raw,
+                [_room_lines(state, long_form=True), f"Loaded from slot '{control_action.target}'."],
+                control_action.raw,
                 "load",
                 True,
             )
         except ValueError as exc:
-            return state, [f"Could not load slot '{action.target}': {exc}"], action.raw, "load", True
+            return state, [f"Could not load slot '{control_action.target}': {exc}"], control_action.raw, "load", True
         except Exception as exc:
-            return state, [f"Failed to load: {exc}"], action.raw, "load", True
-
-    impact_assessment = (
-        _confirmed_assessment
-        if _confirmed_assessment is not None
-        else assess_player_command(state, action.raw, action)
-    )
-    if not _confirmed_high_impact and requires_high_impact_confirmation(impact_assessment):
-        blocked_state = state.clone()
-        blocked_state.pending_high_impact_command = action.raw
-        blocked_state.pending_high_impact_assessment = dict(impact_assessment)
-        return blocked_state, _high_impact_warning_lines(impact_assessment), action.raw, "impact_gate", True
+            return state, [f"Failed to load: {exc}"], control_action.raw, "load", True
 
     editor = build_output_editor(narrator_mode) if output_editor is None else output_editor
     director = StoryDirector(narrator_mode, editor) if story_director is None else story_director
@@ -449,78 +526,132 @@ def run_turn(
     if replan_event is not None:
         preturn_state.append_event(replan_event)
 
-    if action.kind == ActionKind.UNKNOWN:
-        freeform = resolve_freeform_roleplay(preturn_state, action.raw, freeform_adapter)
+    planner_dialog_payload: dict[str, Any] | None = None
+    planner_action_payload: dict[str, Any] | None = None
+    planner_parse_error = ""
+    fallback_action = parse_command(raw)
+    effective_action = fallback_action
+    freeform_policy_debug: dict[str, Any] | None = None
+    try:
+        planner_dialog_payload, planner_action_payload = freeform_adapter.propose(preturn_state, raw_input)
+        normalized_action_payload = parse_action_proposal(planner_action_payload)
+        planner_action_payload = normalized_action_payload
+        proposal_action = _action_from_proposal(raw_input, normalized_action_payload)
+        if proposal_action.kind != ActionKind.UNKNOWN:
+            effective_action = proposal_action
+    except Exception as exc:
+        planner_parse_error = str(exc)
+
+    impact_assessment = (
+        _confirmed_assessment
+        if _confirmed_assessment is not None
+        else assess_player_command(state, effective_action.raw, effective_action)
+    )
+    if not _confirmed_high_impact and requires_high_impact_confirmation(impact_assessment):
+        blocked_state = state.clone()
+        blocked_state.pending_high_impact_command = effective_action.raw
+        blocked_state.pending_high_impact_assessment = dict(impact_assessment)
+        return blocked_state, _high_impact_warning_lines(impact_assessment), effective_action.raw, "impact_gate", True
+
+    if effective_action.kind == ActionKind.UNKNOWN:
+        if planner_dialog_payload is not None and planner_action_payload is not None:
+            freeform = resolve_freeform_roleplay_with_proposals(
+                preturn_state,
+                effective_action.raw,
+                planner_dialog_payload,
+                planner_action_payload,
+            )
+        else:
+            freeform = resolve_freeform_roleplay(preturn_state, effective_action.raw, freeform_adapter)
         next_state = freeform["state"]
         events = [freeform["event"]]
+        freeform_policy_debug = {
+            "action_proposal": dict(freeform["action_proposal"]),
+            "state_update_envelope": dict(freeform["state_update_envelope"]),
+            "fact_ops": list(freeform["event"].metadata.get("fact_ops", [])),
+            "planner_error": planner_parse_error,
+            "story_delta": {
+                "progress": freeform["event"].delta_progress,
+                "tension": freeform["event"].delta_tension,
+            },
+        }
         if replan_event is not None:
             events.insert(0, replan_event)
         beat_type = "freeform_roleplay"
         template_key = "freeform_roleplay"
-        context = None
-        judge_decision = {
-            "status": "accepted",
-            "total_score": 100,
-            "threshold": 80,
-            "round_index": 0,
-            "critic_ids": (),
-            "rubric_components": {},
-            "decision_id": "freeform-policy-approved",
-        }
-        coherence_telemetry = {
-            "critique_rounds": 0,
-            "token_spend": {"narrator": 0, "critics": 0},
-            "elapsed_ms": 0,
-            "hard_fail_reason": "FREEFORM_PATH",
-        }
-        narration = ""
     else:
-        next_state, events, beat_type, template_key = advance_turn(preturn_state, action, rng)
+        next_state, events, beat_type, template_key = advance_turn(preturn_state, effective_action, rng)
         if replan_event is not None:
             events.insert(0, replan_event)
-        memory_fragments: tuple[str, ...] = ()
-        if memory_store is not None:
-            memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, action))
 
-        context = build_narration_context(next_state, action, beat_type, memory_fragments)
-        gate = build_default_coherence_gate()
-        judge_decision = {
-            "status": "failed",
-            "total_score": 0,
-            "threshold": 80,
-            "round_index": 1,
-            "critic_ids": (),
-            "rubric_components": {},
-            "decision_id": "judge-error",
-        }
-        coherence_telemetry = {
-            "critique_rounds": 0,
-            "token_spend": {"narrator": 0, "critics": 0},
-            "elapsed_ms": 0,
-            "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
-        }
-        try:
-            coherence_result = gate.generate_with_gate(narrator, context)
-            narration = coherence_result["narration"]
-            judge_decision = coherence_result["judge_decision"]
-            coherence_telemetry = coherence_result["telemetry"]
-        except RuntimeError as exc:
+    memory_fragments: tuple[str, ...] = ()
+    if memory_store is not None:
+        memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, effective_action))
+
+    context = build_narration_context(next_state, effective_action, beat_type, memory_fragments)
+    gate = build_default_coherence_gate()
+    judge_decision = {
+        "status": "failed",
+        "total_score": 0,
+        "threshold": 80,
+        "round_index": 1,
+        "critic_ids": (),
+        "rubric_components": {},
+        "decision_id": "judge-error",
+    }
+    coherence_telemetry = {
+        "critique_rounds": 0,
+        "token_spend": {"narrator": 0, "critics": 0},
+        "elapsed_ms": 0,
+        "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
+    }
+    try:
+        coherence_result = gate.generate_with_gate(narrator, context)
+        narration = coherence_result["narration"]
+        judge_decision = coherence_result["judge_decision"]
+        coherence_telemetry = coherence_result["telemetry"]
+    except RuntimeError as exc:
+        error_code = str(exc)
+        if error_code == "CONTRACT_INVALID_AGENT_PROPOSAL":
+            narration = ""
+        elif error_code == "CONTRACT_INVALID_REVISION_DIRECTIVE":
+            try:
+                narration = str(narrator.generate(context)).strip()
+            except Exception as fallback_exc:  # noqa: BLE001
+                narration = f"[Narrator failed: {fallback_exc}]"
+        else:
             narration = f"[Narrator failed: {exc}]"
 
-    if _confirmed_high_impact:
-        _record_major_disruption(next_state, events, action.raw, impact_assessment)
+    if _should_discard_failed_narration(judge_decision, coherence_telemetry):
+        narration = ""
 
-    lines: list[str] = [_room_lines(next_state)]
-    if action.kind == ActionKind.INVENTORY:
-        lines.extend(_inventory_lines(next_state))
-    event_line = _event_lines(events, debug=debug)
-    if event_line:
-        lines.append(event_line)
+    if _confirmed_high_impact:
+        _record_major_disruption(next_state, events, effective_action.raw, impact_assessment)
+
+    narration = _sanitize_narration_for_player(narration, debug=debug)
+    narration = _ensure_action_grounded_narration(narration, effective_action)
+    if narration:
+        room_name = next_state.world.rooms[next_state.player.location].name
+        turn_text = narration.strip()
+        if turn_text and not turn_text.lower().startswith(room_name.lower()):
+            turn_text = f"{room_name}\n{turn_text}"
+        lines: list[str] = [turn_text]
+    else:
+        lines = [
+            _room_lines(
+                next_state,
+                long_form=effective_action.kind == ActionKind.LOOK
+                or (state.turn_index == 0 and effective_action.kind == ActionKind.UNKNOWN),
+            )
+        ]
+        if effective_action.kind == ActionKind.INVENTORY:
+            lines.extend(_inventory_lines(next_state))
+        event_line = _event_lines(events, debug=debug)
+        if event_line:
+            lines.append(event_line)
+
     if debug:
         lines.extend(caseboard_lines(next_state))
-    narration = _sanitize_narration_for_player(narration, debug=debug)
-    if narration:
-        lines.append(narration)
 
     if debug:
         lines.append(
@@ -531,6 +662,17 @@ def run_turn(
         lines.append(f"[debug] event_types={tuple(event.type for event in events)}")
         context_keys = tuple(context.as_dict().keys()) if context is not None else ("freeform_roleplay",)
         lines.append(f"[debug] context_keys={context_keys}")
+        if freeform_policy_debug is not None:
+            proposal = freeform_policy_debug["action_proposal"]
+            envelope = freeform_policy_debug["state_update_envelope"]
+            lines.append(
+                "[debug] freeform_policy "
+                f"intent={proposal.get('intent', '')} "
+                f"targets={tuple(proposal.get('targets', ())) } "
+                f"reasons={tuple(envelope.get('reasons', ())) } "
+                f"fact_ops={tuple(freeform_policy_debug['fact_ops'])} "
+                f"story_delta={freeform_policy_debug['story_delta']}"
+            )
         lines.append(
             f"[debug] judge_status={judge_decision['status']} total={judge_decision['total_score']} "
             f"threshold={judge_decision['threshold']} round={judge_decision['round_index']} "
@@ -550,6 +692,7 @@ def run_turn(
             "beat": beat_type,
             "plot_event": template_key,
             "events": [event.type for event in events],
+            "freeform_policy": freeform_policy_debug,
             "judge": {
                 "status": judge_decision["status"],
                 "total_score": judge_decision["total_score"],
@@ -577,7 +720,9 @@ def run_turn(
     }
 
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
-    return next_state, reviewed_lines, action.raw, beat_type, True
+    if narration and not _has_similar_narration(reviewed_lines, narration):
+        reviewed_lines.append(narration)
+    return next_state, reviewed_lines, effective_action.raw, beat_type, True
 
 
 def run_replay(
@@ -702,14 +847,14 @@ def main(argv: list[str] | None = None) -> None:
 
     try:
         setup_lines = story_director.compose_opening(state)
-        for line in setup_lines:
+        for line in _with_paragraph_spacing(setup_lines):
             _emit_cli_line(console, line)
             _write_transcript_line(transcript_handle, line)
 
         if args.replay is not None:
             commands = [line.strip() for line in args.replay.read_text().splitlines() if line.strip()]
             for command in commands:
-                _write_transcript_line(transcript_handle, _transcript_command_echo(command))
+                _write_transcript_command_echo(transcript_handle, command)
                 state, lines, _action, _beat, _ = run_turn(
                     state,
                     command,
@@ -739,7 +884,7 @@ def main(argv: list[str] | None = None) -> None:
 
         while True:
             raw = input("> ")
-            _write_transcript_line(transcript_handle, _transcript_command_echo(raw))
+            _write_transcript_command_echo(transcript_handle, raw)
             state, lines, action_raw, _, continued = run_turn(
                 state,
                 raw,

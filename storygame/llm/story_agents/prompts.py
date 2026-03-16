@@ -54,7 +54,23 @@ def build_plot_designer_prompt(active_goal: str, assistant_name: str) -> tuple[s
 def build_narrator_opening_prompt(opening_draft: str) -> tuple[str, str]:
     system = (
         "You are Narrator Agent. Return JSON only with key paragraphs (3 to 4 paragraphs). "
-        "Second person voice, no spoilers, no meta-game phrasing."
+        "Second person voice, no spoilers, no meta-game phrasing. "
+        "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns."
     )
     user = json.dumps({"opening_draft": opening_draft}, ensure_ascii=True)
+    return system, user
+
+
+def build_room_presentation_prompt(
+    genre: str,
+    tone: str,
+    rooms: list[dict[str, object]],
+) -> tuple[str, str]:
+    system = (
+        "You are Room Presentation Agent. Return JSON only with key rooms, where rooms is a list of "
+        "objects with keys room_id, long, short. Use only provided world facts. "
+        "long must be a concrete 2-3 sentence location description. short must be a single concise sentence. "
+        "Avoid vague filler and avoid unexplained mystery wording."
+    )
+    user = json.dumps({"genre": genre, "tone": tone, "rooms": rooms}, ensure_ascii=True)
     return system, user

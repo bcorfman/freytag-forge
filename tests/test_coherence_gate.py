@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import threading
+
 from storygame.llm.coherence import (
     CRITIQUE_DIMENSIONS,
+    CoherenceGate,
     DEFAULT_CRITICAL_FLOORS,
     DEFAULT_THRESHOLD,
     CritiqueReport,
@@ -57,6 +60,36 @@ def test_default_critics_emit_contract_valid_payloads():
     for report in reports:
         parsed = parse_critique_report(dict(report))
         assert parsed["critic_id"] == report["critic_id"]
+
+
+def test_critique_round_parallelizes_critics_and_preserves_order():
+    class _ParallelAwareCritic:
+        def __init__(self, critic_id: str, own_started: threading.Event, other_started: threading.Event) -> None:
+            self.critic_id = critic_id
+            self._own_started = own_started
+            self._other_started = other_started
+            self.saw_other = False
+
+        def critique(self, context: NarrationContext, narration: str) -> CritiqueReport:  # noqa: ARG002
+            self._own_started.set()
+            self.saw_other = self._other_started.wait(timeout=0.2)
+            return {
+                "critic_id": self.critic_id,
+                "scores": {"continuity": 90, "causality": 90, "dialogue_fit": 90},
+                "feedback": "solid",
+            }
+
+    first_started = threading.Event()
+    second_started = threading.Event()
+    first = _ParallelAwareCritic("first", first_started, second_started)
+    second = _ParallelAwareCritic("second", second_started, first_started)
+    gate = CoherenceGate(critics=(first, second), validators=())
+
+    reports = gate.critique_round(_context(), "You ask the guide about the forged directive.")
+
+    assert [report["critic_id"] for report in reports] == ["first", "second"]
+    assert first.saw_other is True
+    assert second.saw_other is True
 
 
 def test_judge_uses_weighted_rubric_threshold_and_floors():
@@ -347,3 +380,23 @@ def test_revision_directive_for_continuity_includes_setup_and_spoiler_checks():
     instruction = directive["instruction"].lower()
     assert "who/where/objective" in instruction
     assert "do not reveal later twists early" in instruction
+
+
+def test_revision_directive_truncates_to_contract_limit_for_long_feedback():
+    long_feedback = "x" * 280
+    reports: tuple[CritiqueReport, ...] = (
+        {
+            "critic_id": "continuity",
+            "scores": {"continuity": 55, "causality": 82, "dialogue_fit": 80},
+            "feedback": long_feedback,
+        },
+        {
+            "critic_id": "causality",
+            "scores": {"continuity": 60, "causality": 83, "dialogue_fit": 79},
+            "feedback": long_feedback,
+        },
+    )
+    decision = judge_critique_round(reports, threshold=80, critical_floors=DEFAULT_CRITICAL_FLOORS, round_index=2)
+    directive = _revision_directive(reports, decision)
+
+    assert len(directive["instruction"]) <= 320
