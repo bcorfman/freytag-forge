@@ -55,17 +55,10 @@ uv run python -m storygame --seed 123 --genre mystery --session-length medium --
 
 ## Usage Commands
 Core gameplay commands:
-- `look`
-- `go <direction>`
-- `take <item>`
-- `talk <npc>`
-- `use <item> on <target>`
-- `inventory`
+- `look`, `go <direction>`, `take <item>`, `talk <npc>`, `use <item> on <target>`, `inventory`
 
 Meta commands:
-- `save <slot>`
-- `load <slot>`
-- `quit`
+- `save <slot>`, `load <slot>`, `quit`
 
 Replay + transcript:
 ```bash
