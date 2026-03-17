@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 import re
 from pathlib import Path
@@ -111,6 +112,64 @@ def _cached_room_presentation(state: GameState, room_id: str) -> dict[str, str]:
     return generated
 
 
+def _introduced_npc_ids(state: GameState) -> tuple[str, ...]:
+    introduced = state.world_package.setdefault("introduced_npcs", [])
+    return tuple(str(npc_id) for npc_id in introduced)
+
+
+def _remember_npc_introductions(state: GameState, npc_ids: tuple[str, ...]) -> None:
+    introduced = list(_introduced_npc_ids(state))
+    changed = False
+    for npc_id in npc_ids:
+        if npc_id not in introduced:
+            introduced.append(npc_id)
+            changed = True
+    if changed:
+        state.world_package["introduced_npcs"] = introduced
+
+
+def _first_name(value: str) -> str:
+    words = tuple(part for part in value.split() if part)
+    if not words:
+        return value
+    return words[0]
+
+
+def _display_name_for_npc(state: GameState, npc_id: str, room_npc_ids: tuple[str, ...]) -> str:
+    npc = state.world.npcs[npc_id]
+    full_name = npc.name.strip() or _humanize_token(npc_id).title()
+    name_words = tuple(part for part in full_name.split() if part)
+    if len(name_words) < 2:
+        return full_name
+
+    introduced = _introduced_npc_ids(state)
+    if npc_id not in introduced:
+        return full_name
+
+    first_name = name_words[0]
+    same_first_name_count = 0
+    for other_npc_id in room_npc_ids:
+        other_name = state.world.npcs[other_npc_id].name.strip()
+        if _first_name(other_name) == first_name:
+            same_first_name_count += 1
+    if same_first_name_count > 1:
+        return full_name
+    return first_name
+
+
+def _rewrite_known_npc_names(state: GameState, text: str) -> str:
+    room = state.world.rooms[state.player.location]
+    if "nearby, watching your next move." in text:
+        return text
+    rewritten = text
+    for npc_id in room.npc_ids:
+        full_name = state.world.npcs[npc_id].name.strip()
+        display_name = _display_name_for_npc(state, npc_id, room.npc_ids)
+        if display_name != full_name:
+            rewritten = rewritten.replace(full_name, display_name)
+    return rewritten
+
+
 def _room_lines(state: GameState, *, long_form: bool = True) -> str:
     room = state.world.rooms[state.player.location]
     presentation = _cached_room_presentation(state, room.id)
@@ -140,9 +199,10 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
         else:
             pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
     if room.npc_ids:
-        visible_npcs = tuple(_humanize_token(npc) for npc in room.npc_ids)
+        visible_npcs = tuple(_display_name_for_npc(state, npc_id, room.npc_ids) for npc_id in room.npc_ids)
         verb = "is" if len(visible_npcs) == 1 else "are"
-        pieces.append(f"{_joined_with_and(list(visible_npcs)).title()} {verb} nearby, watching your next move.")
+        pieces.append(f"{_joined_with_and(list(visible_npcs))} {verb} nearby, watching your next move.")
+        _remember_npc_introductions(state, room.npc_ids)
     return "\n".join(pieces)
 
 
@@ -243,6 +303,55 @@ def _event_lines(events, debug: bool = False) -> str:
         return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
     public_lines = [_public_event_message(event.message_key) for event in events]
     return "\n".join(message for message in public_lines if message)
+
+
+def _raw_input_requests_goal(raw_input: str) -> bool:
+    lowered = raw_input.lower()
+    return re.search(r"\b(goal|goals|objective|objectives)\b", lowered) is not None
+
+
+def _context_goal_for_turn(raw_input: str, goal: str, turn_index: int) -> str:
+    if turn_index <= 0:
+        return goal
+    if _raw_input_requests_goal(raw_input):
+        return goal
+    return ""
+
+
+def _has_bounded_dialogue_event(events: list[Event], debug: bool = False) -> bool:
+    if debug:
+        return False
+    for event in events:
+        message = _public_event_message(event.message_key)
+        if ' says: "' in message:
+            return True
+    return False
+
+
+def _suppress_repeated_goal_copy(lines: list[str], raw_input: str, active_goal: str) -> list[str]:
+    if _raw_input_requests_goal(raw_input):
+        return lines
+
+    lowered_goal = active_goal.lower().strip()
+    filtered: list[str] = []
+    for line in lines:
+        lowered = line.lower()
+        if "first practical objective" in lowered or "immediate objective" in lowered:
+            continue
+        if lowered_goal and lowered_goal in lowered and ("goal" in lowered or "objective" in lowered):
+            continue
+        filtered.append(line)
+    return filtered
+
+
+def _contains_repeated_goal_copy(text: str, raw_input: str, active_goal: str) -> bool:
+    if _raw_input_requests_goal(raw_input):
+        return False
+    lowered = text.lower()
+    if "first practical objective" in lowered or "immediate objective" in lowered:
+        return True
+    lowered_goal = active_goal.lower().strip()
+    return bool(lowered_goal and lowered_goal in lowered and ("goal" in lowered or "objective" in lowered))
 
 
 def _write_transcript_line(handle: TextIO | None, line: str) -> None:
@@ -589,6 +698,10 @@ def run_turn(
         memory_fragments = memory_store.retrieve(memory_slot, _build_memory_tag_set(next_state, effective_action))
 
     context = build_narration_context(next_state, effective_action, beat_type, memory_fragments)
+    context = replace(
+        context,
+        goal=_context_goal_for_turn(raw_input, context.goal, next_state.turn_index),
+    )
     gate = build_default_coherence_gate()
     judge_decision = {
         "status": "failed",
@@ -630,6 +743,11 @@ def run_turn(
 
     narration = _sanitize_narration_for_player(narration, debug=debug)
     narration = _ensure_action_grounded_narration(narration, effective_action)
+
+    preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)
+    if preserve_bounded_dialogue:
+        narration = ""
+
     if narration:
         room_name = next_state.world.rooms[next_state.player.location].name
         turn_text = narration.strip()
@@ -719,8 +837,17 @@ def run_turn(
         "rationale": str(judge_decision.get("rationale", "")),
     }
 
+    lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
+    lines = _suppress_repeated_goal_copy(lines, raw_input, next_state.active_goal)
+    if not lines:
+        lines = [_room_lines(next_state, long_form=effective_action.kind == ActionKind.LOOK)]
+
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
-    if narration and not _has_similar_narration(reviewed_lines, narration):
+    if (
+        narration
+        and not _contains_repeated_goal_copy(narration, raw_input, next_state.active_goal)
+        and not _has_similar_narration(reviewed_lines, narration)
+    ):
         reviewed_lines.append(narration)
     return next_state, reviewed_lines, effective_action.raw, beat_type, True
 

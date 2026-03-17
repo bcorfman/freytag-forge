@@ -168,6 +168,8 @@ class RuleBasedFreeformProposalAdapter:
         elif "threat" in text or "warn" in text:
             intent = "threaten"
             topic = ""
+        elif re.search(r"\b(goal|goals|objective|objectives)\b", text):
+            topic = "objective"
         elif "about" in text:
             topic = text.split("about", 1)[1].strip() or "rumors"
         elif _PLACE_QUESTION_PATTERN.search(raw_input):
@@ -340,6 +342,8 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
             if exits:
                 return f"{speaker} says, 'Nothing here feels settled. We clear this room, then push {exits[0]}.'"
             return f"{speaker} says, 'The room is thin on comfort and thick with loose ends. We should search it carefully.'"
+        if topic in {"objective", "goal", "goals"} and state is not None:
+            return f"{speaker} says, 'Our current objective is clear: {state.active_goal}'"
         if topic in {"rumor", "rumors"}:
             return (
                 f"{speaker} says, 'Rumors are noisy unless we anchor them. Ask about a person, item, "

@@ -21,7 +21,7 @@ from storygame.cli import (
     run_turn,
 )
 from storygame.engine.parser import parse_command
-from storygame.engine.state import Room
+from storygame.engine.state import Npc, Room
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
 from storygame.llm.context import build_narration_context
@@ -547,7 +547,133 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any("ask daria about the signal" in line.lower() for line in lines)
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert not any("the night is tense" in line.lower() for line in lines)
+
+
+def test_run_turn_prefers_bounded_dialogue_over_freeform_narrator_prose():
+    state = build_default_state(seed=8831)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what do you make of this place?",
+        Random(8831),
+        StubNarrator(
+            "Outside The Mansion\n"
+            "As I stand outside the mansion, the rain needles across my coat and I remind myself "
+            "that I need to get oriented before anything else."
+        ),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(line.startswith("Daria says:") for line in lines)
+    assert not any("as i stand outside the mansion" in line.lower() for line in lines)
+    assert not any("i need to get oriented" in line.lower() for line in lines)
+
+
+def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
+    state = build_default_state(seed=8832)
+    next_state, first_lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "look",
+        Random(8832),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert any("Daria Stone is nearby" in line for line in first_lines)
+
+    final_state, lines, _action_raw, beat_type, continued = run_turn(
+        next_state,
+        "Daria, what do you make of this place?",
+        Random(8832),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert final_state.turn_index == 2
+    assert any("Daria is nearby" in line for line in lines)
+    assert not any("Daria Stone is nearby" in line for line in lines)
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+
+
+def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
+    state = build_default_state(seed=8833)
+    room_id = state.player.location
+    room = state.world.rooms[room_id]
+    state.world.npcs["daria_quill"] = Npc(
+        id="daria_quill",
+        name="Daria Quill",
+        description="Another investigator with a wary stare.",
+        dialogue="Stay alert.",
+    )
+    room.npc_ids = room.npc_ids + ("daria_quill",)
+
+    next_state, first_lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "look",
+        Random(8833),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert any("Daria Stone and Daria Quill are nearby" in line for line in first_lines)
+
+    final_state, lines, _action_raw, beat_type, continued = run_turn(
+        next_state,
+        "Daria Stone, what do you make of this place?",
+        Random(8833),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert final_state.turn_index == 2
+    assert any("Daria Stone and Daria Quill are nearby" in line for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
+
+
+def test_run_turn_suppresses_repeated_goal_copy_after_opening():
+    state = build_default_state(seed=8834)
+    goal_line = f"Your immediate objective is clear: {state.active_goal}"
+    next_state, lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "look",
+        Random(8834),
+        StubNarrator(goal_line),
+        debug=False,
+    )
+
+    assert continued is True
+    assert next_state.turn_index == 1
+    assert not any("immediate objective" in line.lower() for line in lines)
+    assert not any(state.active_goal in line for line in lines)
+    assert any(state.world.rooms[state.player.location].name in line for line in lines)
+
+
+def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
+    state = build_default_state(seed=8835)
+    goal_line = f"Your immediate objective is clear: {state.active_goal}"
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what is our objective?",
+        Random(8835),
+        StubNarrator(goal_line),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(state.active_goal in line for line in lines)
 
 
 def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
