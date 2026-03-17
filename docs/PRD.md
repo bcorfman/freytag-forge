@@ -23,8 +23,10 @@ Current runtime generation is package-driven.
 │   ├── persistence/
 │   ├── plot/
 │   └── memory.py
+├── frontend/
 ├── tests/
 ├── .plans/
+├── .github/workflows/
 ├── runs/
 ├── Makefile
 ├── pyproject.toml
@@ -96,12 +98,14 @@ flowchart LR
   - `GET /api/v1/health`
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
+- `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
 - Hosted-demo sessions use explicit TTL expiry with server-side `session_id` continuity.
 - Demo app save/load slots are scoped by `session_id` for deterministic isolation.
 - Demo app enforces guardrails:
   - per-IP short-window rate limit,
   - per-IP daily turn cap,
   - per-session turn cap.
+- Demo app supports browser-based hosted clients through configurable CORS origin allowlisting.
 - Cloudflare demo narrator env inputs (`CLOUDFLARE_WORKER_URL`, `CLOUDFLARE_WORKER_TOKEN`, `CLOUDFLARE_TIMEOUT`) are normalized at adapter boundaries to avoid whitespace-driven deploy breakage.
 - Cloudflare demo narrator requests use bounded retries for transient upstream failures (network errors and HTTP 5xx), while still failing fast on hard errors like 403/429.
 - Demo `/api/v1/turn` now returns typed fail-closed statuses for hosted clients:
@@ -110,6 +114,7 @@ flowchart LR
   - `service_unavailable` (HTTP 503),
   - `ok` (HTTP 200).
 - Hosted demo fail-closed narrator responses are also logged server-side with the underlying upstream error string for operator diagnosis while preserving generic client-facing error payloads.
+- GitHub Pages deployment is handled by `.github/workflows/deploy-frontend-pages.yml`, using a Pages repo variable `VITE_API_BASE_URL` to point the static client at the Railway backend.
 
 ## Feature Details
 ### Beat Realization
@@ -244,6 +249,10 @@ flowchart LR
 - `CLOUDFLARE_TIMEOUT` (default `20.0`)
 - `CLOUDFLARE_RETRIES` (default `1`)
 - `CLOUDFLARE_RETRY_BACKOFF_MS` (default `250`)
+
+### Hosted demo frontend / CORS
+- `DEMO_CORS_ALLOW_ORIGINS` (comma-separated list, default `*`)
+- GitHub Pages variable: `VITE_API_BASE_URL`
 
 ### Demo API guardrails
 - `SESSION_TTL_SECONDS` (app default 1800)

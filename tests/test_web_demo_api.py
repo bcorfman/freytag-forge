@@ -64,6 +64,30 @@ def test_demo_health_endpoint_is_ok(tmp_path):
     assert response.json() == {"status": "ok"}
 
 
+def test_demo_app_allows_configured_cors_origin(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            cors_allow_origins=("https://example.github.io",),
+        )
+    )
+
+    response = client.options(
+        "/api/v1/session",
+        headers={
+            "Origin": "https://example.github.io",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "https://example.github.io"
+
+
 def test_demo_session_create_then_turn_flow(tmp_path):
     client = _client(tmp_path)
     created = client.post("/api/v1/session", json={"seed": 42, "genre": "mystery", "session_length": "short", "tone": "dark"})

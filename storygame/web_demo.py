@@ -9,6 +9,7 @@ from typing import Callable, Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -150,6 +151,7 @@ def create_demo_app(
     session_turn_cap: int = 30,
     ip_rate_limit_per_min: int = 20,
     ip_daily_turn_cap: int = 300,
+    cors_allow_origins: tuple[str, ...] | None = None,
     now_fn: Callable[[], datetime] | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge Demo API", version="0.1.0")
@@ -169,6 +171,13 @@ def create_demo_app(
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     active_story_director = (
         StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
+    )
+    resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(resolved_cors_allow_origins),
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     def _expiry(now_at: datetime) -> datetime:
@@ -352,6 +361,18 @@ def _resolve_narrator_mode(requested_mode: str | None = None) -> str:
         return "ollama"
 
     return "openai"
+
+
+def _resolve_demo_cors_allow_origins(configured_origins: tuple[str, ...] | None = None) -> tuple[str, ...]:
+    if configured_origins is not None:
+        cleaned = tuple(origin.strip() for origin in configured_origins if origin.strip())
+        return cleaned or ("*",)
+
+    raw = getenv("DEMO_CORS_ALLOW_ORIGINS", "").strip()
+    if not raw:
+        return ("*",)
+    cleaned = tuple(origin.strip() for origin in raw.split(",") if origin.strip())
+    return cleaned or ("*",)
 
 
 def _build_demo_narrator(resolved_narrator_mode: str) -> Narrator:
