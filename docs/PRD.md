@@ -102,6 +102,7 @@ flowchart LR
   - per-IP short-window rate limit,
   - per-IP daily turn cap,
   - per-session turn cap.
+- Cloudflare demo narrator env inputs (`CLOUDFLARE_WORKER_URL`, `CLOUDFLARE_WORKER_TOKEN`, `CLOUDFLARE_TIMEOUT`) are normalized at adapter boundaries to avoid whitespace-driven deploy breakage.
 - Demo `/api/v1/turn` now returns typed fail-closed statuses for hosted clients:
   - `rate_limited` (HTTP 429),
   - `quota_exhausted` (HTTP 429),

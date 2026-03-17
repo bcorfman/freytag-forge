@@ -228,9 +228,12 @@ class CloudflareWorkersAIAdapter:
         token: str | None = None,
         timeout: float | None = None,
     ) -> None:
-        self.worker_url = worker_url if worker_url is not None else os.getenv("CLOUDFLARE_WORKER_URL", "")
-        self.token = token if token is not None else os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
-        self.timeout = timeout if timeout is not None else float(os.getenv("CLOUDFLARE_TIMEOUT", "20.0"))
+        env_worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "")
+        env_token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
+        env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "20.0")
+        self.worker_url = worker_url.strip() if worker_url is not None else env_worker_url.strip()
+        self.token = token.strip() if token is not None else env_token.strip()
+        self.timeout = timeout if timeout is not None else float(env_timeout.strip())
 
     def generate(self, context: NarrationContext) -> str:
         if not self.worker_url:
