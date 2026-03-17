@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 from os import getenv
 from pathlib import Path
@@ -19,6 +20,8 @@ from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _utc_now() -> datetime:
@@ -210,12 +213,14 @@ def create_demo_app(
         for line in lines:
             lowered = line.lower()
             if "ai_quota_exceeded" in lowered:
+                _LOGGER.warning("Narrator quota exhausted: %s", line)
                 return _error_response(
                     429,
                     "quota_exhausted",
                     "Narration quota exhausted for the hosted demo. Please retry later.",
                 )
             if "[narrator failed:" in lowered:
+                _LOGGER.warning("Narrator failed: %s", line)
                 return _error_response(
                     503,
                     "service_unavailable",
