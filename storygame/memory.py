@@ -103,6 +103,17 @@ def _extract_event_notes(state: GameState, events: list[Event]) -> list[tuple[st
             notes.append((relation_phrase, "relationship", base_tags + tags))
             continue
 
+        if event.type == "freeform_roleplay":
+            npc_id = event.entities[0] if event.entities else ""
+            dialogue = event.message_key or event.metadata.get("dialog_proposal", {}).get("text", "")
+            if npc_id:
+                relation_phrase = f"Relationship note: spoke with {npc_id}."
+                if dialogue:
+                    relation_phrase = f"{relation_phrase} {dialogue}"
+                tags = (f"npc_{normalize_tag(npc_id)}", "relationship", "lore", "npc")
+                notes.append((relation_phrase, "relationship", base_tags + tags))
+                continue
+
         if event.type == "take":
             item_id = event.entities[0] if event.entities else "an item"
             item_kind = normalize_tag(str(event.metadata.get("item_kind", "junk")))

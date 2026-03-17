@@ -76,10 +76,6 @@ class RuleBasedFreeformProposalAdapter:
             "grab",
             "pick",
             "acquire",
-            "talk",
-            "speak",
-            "speak_to",
-            "speakto",
             "use",
             "l",
             "h",
@@ -129,6 +125,7 @@ class RuleBasedFreeformProposalAdapter:
 
         target = _visible_npc_match(state, direct_address_candidate) if direct_address_candidate else ""
         explicit_target_requested = bool(direct_address_candidate)
+        conversation_head = first in {"talk", "speak", "speak_to", "speakto"}
         ask_target_match = _ASK_TARGET_PATTERN.search(raw_input)
         if not target and ask_target_match is not None:
             explicit_target_requested = True
@@ -153,6 +150,12 @@ class RuleBasedFreeformProposalAdapter:
 
         intent = "ask_about"
         topic = "rumors"
+        if conversation_head:
+            intent = "greet"
+            topic = ""
+            if "about" in text:
+                intent = "ask_about"
+                topic = text.split("about", 1)[1].strip() or "rumors"
         if re.search(r"\b(examine|inspect|read|review)\b", text):
             intent = "inspect"
             topic = ""

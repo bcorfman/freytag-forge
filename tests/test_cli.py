@@ -485,6 +485,58 @@ def test_run_turn_uses_planner_action_for_deterministic_take_path():
     assert not any("you don't see that here" in line.lower() for line in lines)
 
 
+def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
+    class _PlannerConversationAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            npc_id = state.world.rooms[state.player.location].npc_ids[0]
+            return (
+                {
+                    "speaker": npc_id,
+                    "text": "The ledger matters because someone wanted it hidden before we arrived.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "ask_about",
+                    "targets": [npc_id],
+                    "arguments": {"topic": "ledger"},
+                    "proposed_effects": ["new_lead"],
+                },
+            )
+
+    state = build_default_state(seed=221)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "talk to daria stone",
+        Random(221),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_PlannerConversationAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.player.flags.get("asked_ledger_daria_stone") is True
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any("wanted it hidden" in line.lower() for line in lines)
+
+
+def test_run_turn_talk_command_uses_freeform_dialogue_by_default():
+    state = build_default_state(seed=222)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "talk to daria stone",
+        Random(222),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert next_state.player.flags.get("greeted_daria_stone") is True
+
+
 def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
     state = build_default_state(seed=883)
     after_examine, _lines, _action_raw, beat_type, continued = run_turn(

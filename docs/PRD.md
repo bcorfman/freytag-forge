@@ -7,6 +7,7 @@ Current runtime generation is package-driven.
 ## Goals
 - Deliver a playable CLI and web IF experience.
 - Keep world-state progression deterministic and replayable.
+- Let LLMs drive ordinary in-scope story progression, NPC dialogue, and turn framing inside deterministic safety rails.
 - Improve narration quality via bounded, reproducible coherence workflows.
 - Persist canonical artifacts with traceability and integrity enforcement.
 - Enforce explicit typed contracts at agent boundaries.
@@ -42,15 +43,46 @@ Current runtime generation is package-driven.
 - Persistence: SQLite (save snapshots + vector memory)
 
 ## Architecture Overview
+### Design Delta: LLM-Driven Runtime Within Deterministic Guardrails
+- Ordinary gameplay turns are story-first, not parser-first.
+- The LLM is the default author of:
+  - NPC dialogue,
+  - immediate turn framing,
+  - in-scope action interpretation,
+  - candidate story consequences,
+  - candidate beat/event suggestions.
+- Deterministic systems remain the sole authority for:
+  - world-state commits,
+  - fact validation,
+  - inventory/location legality,
+  - map reachability,
+  - persistence,
+  - replay signatures,
+  - bounded acceptance/rejection of LLM proposals.
+- The engine must not reduce ordinary turns to a small parser command set unless:
+  - the player used an explicit control-plane command,
+  - the LLM proposal is invalid,
+  - the proposal fails deterministic validators,
+  - or the requested action is intentionally out of story scope.
+- Out-of-scope or high-impact actions are handled by explicit confirmation:
+  - engine explains why the action exceeds current story bounds,
+  - player chooses `PROCEED` or `CANCEL`,
+  - confirmed `PROCEED` triggers deterministic state markers plus story replanning of goals, NPC behavior, likely consequences, and event timing.
+- Product intent for runtime feel:
+  - the game should feel like a responsive story simulation with deterministic enforcement,
+  - not a classic command parser with LLM text layered on top.
+
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
-- Turn routing is planner-first for gameplay inputs: LLM/freeform action proposals are interpreted before dispatching to deterministic engine actions or bounded freeform policy envelopes.
-- Deterministic parser handling is retained for control-plane commands (`save`, `load`, `quit`) and planner-failure fallback.
+- Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
+- Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`) and proposal-failure fallback.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, etc.) with legacy object views synchronized for compatibility.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
+- A dedicated turn-orchestration layer accepts structured candidate proposals from the LLM and commits only validated deltas to canonical world state.
+- Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 
 ### Narration + Coherence
 - `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`, `cloudflare_workers_ai`).
@@ -68,6 +100,21 @@ Current runtime generation is package-driven.
   - `CritiqueReport`
   - `JudgeDecision`
   - `RevisionDirective`
+- Runtime turn contracts must expand so the LLM can propose richer but bounded story behavior:
+  - `TurnProposal`
+  - `NpcReplyProposal`
+  - `EventProposal`
+  - `StateDeltaProposal`
+  - `ReplanProposal`
+- A valid runtime proposal may suggest:
+  - dialogue,
+  - room-facing narration,
+  - NPC reactions,
+  - event candidates,
+  - bounded fact mutations,
+  - bounded numeric deltas,
+  - and beat advancement hints.
+- Deterministic validation decides which parts are committed, revised, or rejected before the player-facing turn is finalized.
 
 ```mermaid
 flowchart LR
@@ -142,15 +189,20 @@ flowchart LR
   - `ActionProposal`
   - `DialogProposal`
   - `StateUpdateEnvelope`
-- Gameplay intent resolution uses a planner-first path:
-  - Default freeform adapter attempts an LLM planner first (strict `DialogProposal`/`ActionProposal` JSON contracts).
-  - Planner outputs are either mapped to deterministic engine actions (for canonical IF intents) or handled as bounded `freeform_roleplay`.
-  - If planner output is invalid/unavailable, deterministic fallback proposal logic is used.
+- Gameplay intent resolution uses an LLM-first simulation path:
+  - Default runtime adapter attempts an LLM proposal first for ordinary gameplay inputs.
+  - Proposal outputs are interpreted as candidate story actions and candidate story consequences, not just parser aliases.
+  - Deterministic fallback command parsing is a resilience path, not the dominant authored path.
 - Deterministic fallback dialogue routing resolves explicit NPC names against the visible cast before falling back, so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
-- Freeform adapters produce `DialogProposal` + `ActionProposal`.
-- Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
-- Unknown or out-of-policy freeform intents now use a generic policy fallback that still records deterministic world-state facts (intent/target flags) and applies bounded story deltas, rather than silently no-oping.
+- Runtime adapters produce dialogue, action, event, and state-delta proposals.
+- Engine policy maps proposals into bounded deterministic fact deltas before commit.
+- In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
+- Unknown or out-of-policy intents use a generic policy fallback only as a last resort and must still preserve narrative continuity.
 - Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
+- NPCs are stateful story actors:
+  - their replies should usually be LLM-authored from deterministic context,
+  - their knowledge, trust, availability, and goals remain deterministically tracked,
+  - and their output must remain consistent with visible facts and prior reveals.
 
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
@@ -178,20 +230,20 @@ flowchart LR
 - Coherence contract failures are fail-soft for turn rendering: revision-directive contract errors trigger a direct narrator fallback for that turn rather than exposing internal contract error strings to the player.
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
-- Turn intent routing is planner-first: gameplay inputs are interpreted through the LLM/freeform action proposal path, then mapped into deterministic engine actions or bounded freeform envelopes.
-- Deterministic parser paths are retained as control-plane/fallback guards (`save`, `load`, `quit`, and planner-failure fallback) so state mutation remains reproducible.
-- Freeform NPC replies are normalized to explicit dialogue format: `<Character> says: "<reply>"`.
+- Turn intent routing is LLM-first for ordinary play: gameplay inputs are interpreted through runtime proposal contracts, then validated and committed by deterministic engine policy.
+- Deterministic parser paths are retained only as control-plane/fallback guards (`save`, `load`, `quit`, `help`, and proposal-failure fallback) so state mutation remains reproducible.
+- NPC replies should ordinarily be LLM-authored and context-rich; normalization to explicit dialogue format remains allowed for clarity, but the runtime should not reduce most conversations to canned or single-sentence parser responses.
 - Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation.
-- Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, event timing, and NPC behavior.
+- Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, NPC behavior, object significance, event timing, likely consequences, and future room framing.
 - Transcript command echo uses `>COMMAND` format.
 - CLI/replay transcripts insert a blank line before each `>COMMAND` echo for readability between turns.
 - Web turn response lines now prepend `>COMMAND` each turn for transcript-style continuity in clients.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
-- Debug traces for freeform turns include planner/policy diagnostics (`action_proposal` including planner source/error, envelope reasons, applied fact ops, and story delta) to explain why and how state changed.
+- Debug traces for runtime turns include proposal/policy diagnostics (proposal source/error, accepted vs rejected deltas, applied fact ops, event decisions, and story delta) to explain why and how state changed.
 
 ### Coherence Gate
 - Critics: `continuity`, `causality`, `dialogue_fit`.
@@ -212,6 +264,22 @@ flowchart LR
 - Fixed-seed regression tests for replay stability.
 - Output contract tests for debug/non-debug boundaries.
 - Contract parser tests for malformed payload rejection.
+- Runtime-behavior tests for:
+  - LLM-driven in-scope dialogue actually affecting deterministic state,
+  - NPC consistency across turns,
+  - validator rejection of contradictory LLM proposals,
+  - high-impact confirmation + replan flow,
+  - and proposal-first routing staying dominant over parser fallback.
+
+## Implementation Guardrails
+- `AGENTS.md` should be treated as an implementation guardrail document for this PRD, not just a coding-style note.
+- Future implementation work should preserve these runtime invariants:
+  - ordinary turns must remain LLM-proposal-first,
+  - deterministic systems must remain commit authorities,
+  - parser fallback must stay secondary,
+  - high-impact/out-of-scope actions must require confirmation before mutation,
+  - and tests must lock these behaviors in before refactors land.
+- If implementation begins drifting back toward parser-dominant turn handling, update `AGENTS.md` with explicit architecture rules or a required checklist for proposal-first routing and validation boundaries.
 
 ## CLI and Runtime Modes
 - CLI: `uv run python -m storygame --seed 123`
