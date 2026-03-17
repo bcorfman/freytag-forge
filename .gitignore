@@ -10,6 +10,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+storygame.egg-info/
 .Python
 build/
 develop-eggs/
@@ -124,3 +125,6 @@ cython_debug/
 
 # Demo/replay artifacts
 runs/
+
+# MCP directories
+.serena/
