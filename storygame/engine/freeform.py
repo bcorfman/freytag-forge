@@ -30,6 +30,7 @@ _PROGRESSIVE_TOKENS = {"inspect", "examine", "investigate", "search", "review", 
 _ESCALATION_TOKENS = {"threaten", "attack", "assault", "harm", "violence"}
 _CASE_FILE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bcase\s+file\b")
 _QUOTED_DIALOGUE_PATTERN = re.compile(r"""["']([^"']+)["']""")
+_PLACE_QUESTION_PATTERN = re.compile(r"\b(this place|here|what do you make of|what do you think of)\b", re.IGNORECASE)
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -169,6 +170,8 @@ class RuleBasedFreeformProposalAdapter:
             topic = ""
         elif "about" in text:
             topic = text.split("about", 1)[1].strip() or "rumors"
+        elif _PLACE_QUESTION_PATTERN.search(raw_input):
+            topic = "place"
 
         targets: list[str] = [target] if target else []
         if intent in {"inspect", "knock"}:
@@ -188,7 +191,7 @@ class RuleBasedFreeformProposalAdapter:
             "proposed_effects": [f"{intent}:{targets[0] if targets else 'none'}"],
         }
         speaker = target or "narrator"
-        response = _dialog_line(intent=intent, target=target, topic=topic)
+        response = _dialog_line(intent=intent, target=target, topic=topic, state=state)
         if explicit_target_requested and not target:
             response = "No one here answers that. Try speaking to someone in the room."
         dialog_payload = {"speaker": speaker, "text": response, "tone": "in_world"}
@@ -308,7 +311,7 @@ class LlmFreeformProposalAdapter:
             return dialog_payload, action_payload
 
 
-def _dialog_line(intent: str, target: str, topic: str) -> str:
+def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:
     speaker = target.replace("_", " ").title()
     if not target:
         if intent == "inspect":
@@ -323,6 +326,20 @@ def _dialog_line(intent: str, target: str, topic: str) -> str:
     if intent == "threaten":
         return f"{speaker} narrows their eyes. 'Threats won't help us solve this.'"
     if topic:
+        if topic == "place" and state is not None:
+            room = state.world.rooms[state.player.location]
+            if room.id == "front_steps":
+                return (
+                    f"{speaker} says, 'The mud marks are fresh, and that ledger page did not land there by accident. "
+                    "This entryway is already telling us where to start.'"
+                )
+            if room.item_ids:
+                first_item = room.item_ids[0].replace("_", " ")
+                return f"{speaker} says, 'This room matters because of the {first_item}. I'd start there before we move on.'"
+            exits = sorted(room.exits.keys())
+            if exits:
+                return f"{speaker} says, 'Nothing here feels settled. We clear this room, then push {exits[0]}.'"
+            return f"{speaker} says, 'The room is thin on comfort and thick with loose ends. We should search it carefully.'"
         if topic in {"rumor", "rumors"}:
             return (
                 f"{speaker} says, 'Rumors are noisy unless we anchor them. Ask about a person, item, "
