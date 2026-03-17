@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Freytag Forge Demo</title>
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <p class="eyebrow">Hosted Demo</p>
+        <h1>Freytag Forge</h1>
+        <p class="lede">
+          A deterministic mystery engine with LLM narration, playable directly in the browser.
+        </p>
+      </section>
+
+      <section class="panel">
+        <header class="panel-header">
+          <div>
+            <h2>Case Feed</h2>
+            <p id="status-line" class="status-line">Connecting...</p>
+          </div>
+          <div class="panel-actions">
+            <button id="new-game-button" type="button">New Session</button>
+          </div>
+        </header>
+
+        <section id="transcript" class="transcript" aria-live="polite"></section>
+
+        <form id="command-form" class="command-form">
+          <label class="sr-only" for="command-input">Command</label>
+          <input
+            id="command-input"
+            name="command"
+            type="text"
+            autocomplete="off"
+            placeholder='Try "look" or "Daria, what do you make of this place?"'
+          />
+          <button id="send-button" type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
