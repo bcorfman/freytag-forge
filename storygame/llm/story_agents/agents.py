@@ -215,6 +215,42 @@ def _pick_suspect_name(contacts: list[dict[str, str]], assistant_name: str) -> s
     return ""
 
 
+def _same_contact_name(left: str, right: str) -> bool:
+    return " ".join(left.split()).strip().lower() == " ".join(right.split()).strip().lower()
+
+
+def _pin_seeded_assistant(contacts: list[dict[str, str]], seeded_contact: dict[str, str]) -> list[dict[str, str]]:
+    seeded_name = str(seeded_contact.get("name", "")).strip()
+    seeded_trait = str(seeded_contact.get("trait", "")).strip() or "observant"
+    if not seeded_name:
+        return contacts
+
+    matched = next((contact for contact in contacts if _same_contact_name(str(contact.get("name", "")), seeded_name)), None)
+    pinned = [
+        {
+            "name": seeded_name,
+            "role": "assistant",
+            "trait": (
+                str(matched.get("trait", "")).strip()
+                if matched is not None and str(matched.get("trait", "")).strip()
+                else seeded_trait
+            ),
+        }
+    ]
+    for contact in contacts:
+        name = str(contact.get("name", "")).strip()
+        if not name or _same_contact_name(name, seeded_name):
+            continue
+        pinned.append(
+            {
+                "name": name,
+                "role": "contact",
+                "trait": str(contact.get("trait", "")).strip() or "observant",
+            }
+        )
+    return pinned
+
+
 def _normalize_actionable_objective_language(objective: str, assistant_name: str, suspect_name: str) -> str:
     normalized = " ".join(objective.split())
     if not normalized:
@@ -329,7 +365,7 @@ class DefaultCharacterDesignerAgent:
             parsed = parse_character_designer_output(payload)
         except StoryAgentContractError as exc:
             raise RuntimeError(f"CharacterDesigner contract validation failed: {exc}") from exc
-        return {"contacts": parsed["contacts"][:3]}
+        return {"contacts": _pin_seeded_assistant(list(parsed["contacts"]), contacts[0])[:3]}
 
 
 class DefaultPlotDesignerAgent:

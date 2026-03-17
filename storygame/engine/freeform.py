@@ -13,7 +13,8 @@ from storygame.llm.story_agents.agents import _chat_complete as _story_agent_cha
 from storygame.llm.story_agents.agents import _json_from_text as _story_agent_json_from_text
 
 _TOPIC_TOKEN = re.compile(r"[^a-z0-9]+")
-_ASK_TARGET_PATTERN = re.compile(r"\bask\s+([a-z0-9_]+)\b")
+_ASK_TARGET_PATTERN = re.compile(r"\bask\s+([a-z0-9_ .'-]{1,60}?)(?:\s+about\b|$)", re.IGNORECASE)
+_DIRECT_ADDRESS_PATTERN = re.compile(r"^\s*([A-Za-z][A-Za-z .'-]{0,60})\s*,")
 _ALLOWED_TOPIC_FLAGS = {
     "signal",
     "rumor",
@@ -122,15 +123,31 @@ class RuleBasedFreeformProposalAdapter:
                 return dialog_payload, action_payload
 
         visible_npcs = room_npcs(state, player_location(state))
+        direct_address_match = _DIRECT_ADDRESS_PATTERN.match(raw_input)
+        direct_address_candidate = direct_address_match.group(1).strip() if direct_address_match is not None else ""
 
-        ask_target_match = _ASK_TARGET_PATTERN.search(text)
-        target = ask_target_match.group(1) if ask_target_match is not None else ""
+        target = _visible_npc_match(state, direct_address_candidate) if direct_address_candidate else ""
+        explicit_target_requested = bool(direct_address_candidate)
+        ask_target_match = _ASK_TARGET_PATTERN.search(raw_input)
+        if not target and ask_target_match is not None:
+            explicit_target_requested = True
+            target = _visible_npc_match(state, ask_target_match.group(1))
         if not target:
             for npc_id in visible_npcs:
+                npc = state.world.npcs.get(npc_id)
                 if npc_id in text:
                     target = npc_id
                     break
-        if not target and visible_npcs:
+                if npc is None:
+                    continue
+                normalized_name = _normalize_target(npc.name)
+                if normalized_name and normalized_name in text:
+                    target = npc_id
+                    break
+                if any(name_part and name_part in text for name_part in (_normalize_target(part) for part in npc.name.split())):
+                    target = npc_id
+                    break
+        if not target and visible_npcs and not explicit_target_requested:
             target = visible_npcs[0]
 
         intent = "ask_about"
@@ -172,6 +189,8 @@ class RuleBasedFreeformProposalAdapter:
         }
         speaker = target or "narrator"
         response = _dialog_line(intent=intent, target=target, topic=topic)
+        if explicit_target_requested and not target:
+            response = "No one here answers that. Try speaking to someone in the room."
         dialog_payload = {"speaker": speaker, "text": response, "tone": "in_world"}
         return dialog_payload, action_payload
 
@@ -189,6 +208,25 @@ def _resolve_freeform_mode() -> str:
 
 def _normalize_target(value: str) -> str:
     return _TOPIC_TOKEN.sub("_", value.strip().lower()).strip("_")
+
+
+def _visible_npc_match(state: GameState, raw_target: str) -> str:
+    candidate = _normalize_target(raw_target)
+    if not candidate:
+        return ""
+
+    visible_npcs = room_npcs(state, player_location(state))
+    for npc_id in visible_npcs:
+        if npc_id == candidate:
+            return npc_id
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        if _normalize_target(npc.name) == candidate:
+            return npc_id
+        if candidate in tuple(_normalize_target(part) for part in npc.name.split()):
+            return npc_id
+    return ""
 
 
 def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str]:

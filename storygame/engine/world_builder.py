@@ -35,7 +35,7 @@ _TONE_KEYWORDS: dict[str, tuple[str, ...]] = {
 
 _ROOM_TEMPLATES: dict[str, tuple[str, ...]] = {
     "sci-fi": ("dock_hub", "market_arcade", "archive_node", "lab_ring", "tower_array", "command_core"),
-    "mystery": ("front_steps", "market_lane", "records_office", "safehouse", "watch_tower", "old_chapel"),
+    "mystery": ("front_steps", "foyer", "market_lane", "records_office", "safehouse", "watch_tower", "old_chapel"),
     "romance": ("courtyard", "cafe_row", "garden_path", "gallery_hall", "river_walk", "lantern_square"),
     "adventure": ("camp", "trailhead", "cliff_pass", "ruin_gate", "inner_chamber", "return_camp"),
     "action": ("safe_flat", "alley_junction", "control_room", "warehouse", "checkpoint", "extraction_point"),
@@ -360,6 +360,25 @@ def select_story_outline(
 
 
 def _build_map_for_genre(genre: str) -> dict[str, Any]:
+    if genre == "mystery":
+        return {
+            "rooms": list(_ROOM_TEMPLATES[genre]),
+            "paths": [
+                {"direction": "north", "from": "front_steps", "to": "foyer"},
+                {"direction": "south", "from": "foyer", "to": "front_steps"},
+                {"direction": "east", "from": "foyer", "to": "market_lane"},
+                {"direction": "west", "from": "market_lane", "to": "foyer"},
+                {"direction": "north", "from": "market_lane", "to": "records_office"},
+                {"direction": "south", "from": "records_office", "to": "market_lane"},
+                {"direction": "east", "from": "records_office", "to": "safehouse"},
+                {"direction": "west", "from": "safehouse", "to": "records_office"},
+                {"direction": "north", "from": "safehouse", "to": "watch_tower"},
+                {"direction": "south", "from": "watch_tower", "to": "safehouse"},
+                {"direction": "east", "from": "watch_tower", "to": "old_chapel"},
+                {"direction": "west", "from": "old_chapel", "to": "watch_tower"},
+            ],
+        }
+
     room_ids = _ROOM_TEMPLATES[genre]
     paths: list[dict[str, str]] = []
     directions = ("north", "east", "north", "east", "north")

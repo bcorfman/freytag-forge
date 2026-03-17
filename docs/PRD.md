@@ -140,6 +140,7 @@ flowchart LR
   - Default freeform adapter attempts an LLM planner first (strict `DialogProposal`/`ActionProposal` JSON contracts).
   - Planner outputs are either mapped to deterministic engine actions (for canonical IF intents) or handled as bounded `freeform_roleplay`.
   - If planner output is invalid/unavailable, deterministic fallback proposal logic is used.
+- Deterministic fallback dialogue routing resolves explicit NPC names against the visible cast before falling back, so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
 - Freeform adapters produce `DialogProposal` + `ActionProposal`.
 - Engine policy maps proposals into bounded `StateUpdateEnvelope` fact deltas before commit.
 - Unknown or out-of-policy freeform intents now use a generic policy fallback that still records deterministic world-state facts (intent/target flags) and applies bounded story deltas, rather than silently no-oping.
@@ -150,9 +151,11 @@ flowchart LR
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
 - Room presentation now uses cached long/short descriptions per location: `LOOK` renders long form; non-LOOK turns render short form.
+- Mystery navigation now matches the room copy: `front_steps` leads north into a `foyer` rather than directly into the outdoor lane chain.
 - Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
 - Opening/goal language is normalized to keep assistant-role continuity (for example, `first contact` instead of conflicting `first witness` phrasing when the assistant is the first NPC partner).
 - When plot/objective text frames the assistant as a suspect, objective language is rewritten to target a separate suspect contact (or a generic suspect fallback) so the assistant remains an ally role in the opening.
+- Character-designer output is normalized so the seeded opening contact remains the assistant, keeping room presence, cast planning, and opening narration aligned.
 - Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
