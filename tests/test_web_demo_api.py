@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -229,3 +230,21 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     assert response.status_code == 503
     payload = response.json()
     assert payload["status"] == "service_unavailable"
+
+
+def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("backend unavailable"),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 7}).json()["session_id"]
+    with caplog.at_level(logging.WARNING):
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert response.status_code == 503
+    assert "Narrator failed" in caplog.text
+    assert "backend unavailable" in caplog.text

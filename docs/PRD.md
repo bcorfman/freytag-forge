@@ -108,6 +108,7 @@ flowchart LR
   - `quota_exhausted` (HTTP 429),
   - `service_unavailable` (HTTP 503),
   - `ok` (HTTP 200).
+- Hosted demo fail-closed narrator responses are also logged server-side with the underlying upstream error string for operator diagnosis while preserving generic client-facing error payloads.
 
 ## Feature Details
 ### Beat Realization
