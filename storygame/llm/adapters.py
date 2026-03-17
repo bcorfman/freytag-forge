@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -229,13 +230,21 @@ class CloudflareWorkersAIAdapter:
         worker_url: str | None = None,
         token: str | None = None,
         timeout: float | None = None,
+        retries: int | None = None,
+        retry_backoff_ms: int | None = None,
     ) -> None:
         env_worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "")
         env_token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
         env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "20.0")
+        env_retries = os.getenv("CLOUDFLARE_RETRIES", "1")
+        env_retry_backoff_ms = os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250")
         self.worker_url = worker_url.strip() if worker_url is not None else env_worker_url.strip()
         self.token = token.strip() if token is not None else env_token.strip()
         self.timeout = timeout if timeout is not None else float(env_timeout.strip())
+        self.retries = retries if retries is not None else int(env_retries.strip())
+        self.retry_backoff_ms = (
+            retry_backoff_ms if retry_backoff_ms is not None else int(env_retry_backoff_ms.strip())
+        )
 
     def generate(self, context: NarrationContext) -> str:
         if not self.worker_url:
@@ -261,18 +270,33 @@ class CloudflareWorkersAIAdapter:
             method="POST",
             headers=headers,
         )
-        try:
-            with urllib.request.urlopen(http_request, timeout=self.timeout) as response:
-                response_bytes = response.read()
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            if exc.code == 429 and ("AI_QUOTA_EXCEEDED" in detail or "quota" in detail.lower()):
-                raise RuntimeError(f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED {detail}") from exc
-            raise RuntimeError(f"Cloudflare Workers AI request failed: {exc.code} {detail}") from exc
-        except urllib.error.URLError as exc:
-            raise RuntimeError(f"Cannot reach Cloudflare Worker endpoint. Error: {exc}.") from exc
-        except Exception as exc:  # noqa: BLE001
-            raise RuntimeError("Cloudflare Workers AI request failed.") from exc
+        attempt = 0
+        while True:
+            try:
+                with urllib.request.urlopen(http_request, timeout=self.timeout) as response:
+                    response_bytes = response.read()
+                break
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace")
+                if exc.code == 429 and ("AI_QUOTA_EXCEEDED" in detail or "quota" in detail.lower()):
+                    raise RuntimeError(f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED {detail}") from exc
+                if 500 <= exc.code <= 599 and attempt < self.retries:
+                    self._sleep_before_retry(attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError(f"Cloudflare Workers AI request failed: {exc.code} {detail}") from exc
+            except urllib.error.URLError as exc:
+                if attempt < self.retries:
+                    self._sleep_before_retry(attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError(f"Cannot reach Cloudflare Worker endpoint. Error: {exc}.") from exc
+            except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, socket.timeout) and attempt < self.retries:
+                    self._sleep_before_retry(attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError("Cloudflare Workers AI request failed.") from exc
 
         parsed = json.loads(response_bytes.decode("utf-8"))
         narration = str(parsed.get("narration", "")).strip()
@@ -284,6 +308,12 @@ class CloudflareWorkersAIAdapter:
             except Exception as exc:  # noqa: BLE001
                 raise RuntimeError("Cloudflare Workers AI response had unexpected shape.") from exc
         raise RuntimeError("Cloudflare Workers AI response missing expected narration content.")
+
+    def _sleep_before_retry(self, attempt: int) -> None:
+        delay_ms = self.retry_backoff_ms * (attempt + 1)
+        if delay_ms <= 0:
+            return
+        time.sleep(delay_ms / 1000.0)
 
 
 def describe_prompt(context: NarrationContext) -> str:

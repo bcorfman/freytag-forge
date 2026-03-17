@@ -450,6 +450,80 @@ def test_cloudflare_adapter_maps_quota_http_error(monkeypatch):
         adapter.generate(_build_context())
 
 
+def test_cloudflare_adapter_retries_transient_http_5xx_then_succeeds(monkeypatch):
+    attempts = {"count": 0}
+
+    def _fake_urlopen(*_args, **_kwargs):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise urllib.error.HTTPError(
+                "https://demo.example.workers.dev/api/narrate",
+                503,
+                "Service Unavailable",
+                None,
+                io.BytesIO(b'{"code":"AI_UPSTREAM_ERROR","message":"temporary"}'),
+            )
+        return _FakeResponse('{"narration":"Recovered narration."}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.time.sleep", lambda _seconds: None)
+
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        retries=1,
+        retry_backoff_ms=0,
+    )
+    assert adapter.generate(_build_context()) == "Recovered narration."
+    assert attempts["count"] == 2
+
+
+def test_cloudflare_adapter_retries_url_error_then_succeeds(monkeypatch):
+    attempts = {"count": 0}
+
+    def _fake_urlopen(*_args, **_kwargs):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise urllib.error.URLError("temporary network down")
+        return _FakeResponse('{"narration":"Recovered narration."}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.time.sleep", lambda _seconds: None)
+
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        retries=1,
+        retry_backoff_ms=0,
+    )
+    assert adapter.generate(_build_context()) == "Recovered narration."
+    assert attempts["count"] == 2
+
+
+def test_cloudflare_adapter_does_not_retry_http_403(monkeypatch):
+    attempts = {"count": 0}
+
+    def _fake_urlopen(*_args, **_kwargs):
+        attempts["count"] += 1
+        raise urllib.error.HTTPError(
+            "https://demo.example.workers.dev/api/narrate",
+            403,
+            "Forbidden",
+            None,
+            io.BytesIO(b"error code: 1010"),
+        )
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.time.sleep", lambda _seconds: None)
+
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        retries=2,
+        retry_backoff_ms=0,
+    )
+    with pytest.raises(RuntimeError, match="403"):
+        adapter.generate(_build_context())
+    assert attempts["count"] == 1
+
+
 def test_cloudflare_adapter_wraps_url_error(monkeypatch):
     def _fake_urlopen(*_args, **_kwargs):
         raise urllib.error.URLError("network down")

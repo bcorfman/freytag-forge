@@ -103,6 +103,7 @@ flowchart LR
   - per-IP daily turn cap,
   - per-session turn cap.
 - Cloudflare demo narrator env inputs (`CLOUDFLARE_WORKER_URL`, `CLOUDFLARE_WORKER_TOKEN`, `CLOUDFLARE_TIMEOUT`) are normalized at adapter boundaries to avoid whitespace-driven deploy breakage.
+- Cloudflare demo narrator requests use bounded retries for transient upstream failures (network errors and HTTP 5xx), while still failing fast on hard errors like 403/429.
 - Demo `/api/v1/turn` now returns typed fail-closed statuses for hosted clients:
   - `rate_limited` (HTTP 429),
   - `quota_exhausted` (HTTP 429),
@@ -241,6 +242,8 @@ flowchart LR
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
 - `CLOUDFLARE_TIMEOUT` (default `20.0`)
+- `CLOUDFLARE_RETRIES` (default `1`)
+- `CLOUDFLARE_RETRY_BACKOFF_MS` (default `250`)
 
 ### Demo API guardrails
 - `SESSION_TTL_SECONDS` (app default 1800)
