@@ -5,7 +5,7 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import apply_fact_ops, player_location, room_npcs
+from storygame.engine.facts import apply_fact_ops, player_location, room_items, room_npcs
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.state import Event, GameState
@@ -20,6 +20,7 @@ _ALLOWED_TOPIC_FLAGS = {
     "rumor",
     "rumors",
     "ledger",
+    "appearance",
     "objective",
     "bell",
 }
@@ -29,8 +30,13 @@ _TOPIC_STOPWORDS = {"the", "a", "an", "about", "of", "to"}
 _PROGRESSIVE_TOKENS = {"inspect", "examine", "investigate", "search", "review", "analyze", "question", "ask"}
 _ESCALATION_TOKENS = {"threaten", "attack", "assault", "harm", "violence"}
 _CASE_FILE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bcase\s+file\b")
+_LEDGER_PAGE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bledger\s+page\b")
 _QUOTED_DIALOGUE_PATTERN = re.compile(r"""["']([^"']+)["']""")
 _PLACE_QUESTION_PATTERN = re.compile(r"\b(this place|here|what do you make of|what do you think of)\b", re.IGNORECASE)
+_APPEARANCE_QUESTION_PATTERN = re.compile(
+    r"\b(what are you wearing|what're you wearing|wearing|clothes|clothing|coat|dress|uniform|outfit)\b",
+    re.IGNORECASE,
+)
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -171,6 +177,8 @@ class RuleBasedFreeformProposalAdapter:
         elif "threat" in text or "warn" in text:
             intent = "threaten"
             topic = ""
+        elif _APPEARANCE_QUESTION_PATTERN.search(raw_input):
+            topic = "appearance"
         elif re.search(r"\b(goal|goals|objective|objectives)\b", text):
             topic = "objective"
         elif "about" in text:
@@ -347,6 +355,11 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
             return f"{speaker} says, 'The room is thin on comfort and thick with loose ends. We should search it carefully.'"
         if topic in {"objective", "goal", "goals"} and state is not None:
             return f"{speaker} says, 'Our current objective is clear: {state.active_goal}'"
+        if topic in {"appearance", "clothing", "clothes", "wearing"}:
+            return (
+                f"{speaker} says, 'I'm wearing a dark field coat, practical boots, and clothes meant for bad weather "
+                "and worse conversations. I dressed for work, not display.'"
+            )
         if topic in {"rumor", "rumors"}:
             return (
                 f"{speaker} says, 'Rumors are noisy unless we anchor them. Ask about a person, item, "
@@ -386,6 +399,22 @@ def _apply_raw_command_overrides(
             "tone": "in_world",
         }
         return parse_action_proposal(action), parse_dialog_proposal(dialog)
+    visible_items = room_items(state, player_location(state))
+    if _LEDGER_PAGE_COMMAND.search(lowered) and (
+        "ledger_page" in visible_items or "ledger_page" in state.player.inventory
+    ):
+        action = {
+            "intent": "read_ledger_page",
+            "targets": ["ledger_page"],
+            "arguments": {"source_command": "read_ledger_page"},
+            "proposed_effects": ["reviewed_ledger_page"],
+        }
+        dialog = {
+            "speaker": "narrator",
+            "text": "You study the ledger page and pull out a useful thread: a missing payment entry tied to tonight's visit.",
+            "tone": "in_world",
+        }
+        return parse_action_proposal(action), parse_dialog_proposal(dialog)
     return action_proposal, dialog_proposal
 
 
@@ -409,6 +438,20 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             "retract": [],
             "numeric_delta": [],
             "reasons": ["freeform:read_case_file"],
+        }
+
+    if intent == "read_ledger_page":
+        visible_items = room_items(state, player_location(state))
+        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory:
+            return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_LEDGER_PAGE"]}
+        return {
+            "assert": [
+                {"fact": ["flag", "player", "reviewed_ledger_page"]},
+                {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
+            ],
+            "retract": [],
+            "numeric_delta": [{"key": "trust:daria_stone:player", "delta": 0.03}],
+            "reasons": ["freeform:read_ledger_page"],
         }
 
     if not targets or intent not in _ALLOWED_INTENTS:
@@ -474,9 +517,13 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
         return 0.0, 0.0
     if "POLICY_MISSING_CASE_FILE" in reasons:
         return 0.0, 0.0
+    if "POLICY_MISSING_LEDGER_PAGE" in reasons:
+        return 0.0, 0.0
 
     progress = 0.01
     tension = 0.01
+    if "freeform:read_ledger_page" in reasons:
+        return 0.03, 0.01
     if any(token in intent for token in _PROGRESSIVE_TOKENS):
         progress += 0.01
     if any(token in intent for token in _ESCALATION_TOKENS):
@@ -508,7 +555,13 @@ def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, An
     npc = state.world.npcs.get(speaker_id)
     speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
     quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
-    spoken = quoted_match.group(1).strip() if quoted_match is not None else text.strip(" \"'")
+    if '"' in text:
+        double_quoted = re.search(r'"([^"]+)"', text)
+        spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")
+    elif " says, '" in text and text.endswith("'"):
+        spoken = text.split(" says, '", 1)[1][:-1].strip()
+    else:
+        spoken = quoted_match.group(1).strip() if quoted_match is not None else text.strip(" \"'")
     if not spoken:
         spoken = text
     return f'{speaker_name} says: "{spoken}"'
