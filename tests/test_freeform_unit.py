@@ -76,6 +76,17 @@ def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None
     assert dialog["speaker"] == "daria_stone"
 
 
+def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
+    state = build_default_state(seed=412, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what do you make of this place?")
+
+    assert action["targets"] == ["daria_stone"]
+    assert action["arguments"]["topic"] == "place"
+    assert "ledger page" in dialog["text"].lower()
+    assert "mud" in dialog["text"].lower()
+
+
 def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> None:
     state = build_default_state(seed=411, genre="thriller")
 
