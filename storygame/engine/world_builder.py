@@ -334,6 +334,18 @@ def _extract_character_names(outline_text: str) -> list[str]:
     return names
 
 
+def _normalize_character_names_for_genre(genre: str, names: list[str]) -> list[str]:
+    if genre != "mystery":
+        return names
+
+    normalized: list[str] = ["Daria Stone"]
+    for name in names:
+        if name.strip().lower() == "daria stone":
+            continue
+        normalized.append(name)
+    return normalized
+
+
 def select_story_outline(
     genre: str,
     seed: int,
@@ -409,7 +421,10 @@ def build_world_package(
         session_length=normalized_length,
         seed=seed,
     )
-    character_names = _extract_character_names(outline["outline"])
+    character_names = _normalize_character_names_for_genre(
+        normalized_genre,
+        _extract_character_names(outline["outline"]),
+    )
     map_section = _build_map_for_genre(normalized_genre)
     item_ids = list(_ITEM_TEMPLATES[normalized_genre])
     beat_candidates = list(curve["obligatory_moments"])

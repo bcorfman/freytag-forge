@@ -77,7 +77,7 @@ def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None
 
 
 def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> None:
-    state = build_default_state(seed=411)
+    state = build_default_state(seed=411, genre="thriller")
 
     dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what do you make of this place?")
 

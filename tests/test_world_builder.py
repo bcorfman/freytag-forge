@@ -154,6 +154,20 @@ def test_generated_npcs_use_binary_pronouns() -> None:
     assert all(npc.pronouns in {"he/him", "she/her"} for npc in state.world.npcs.values())
 
 
+def test_mystery_world_package_pins_daria_stone_as_first_contact() -> None:
+    package = build_world_package(genre="mystery", session_length="short", seed=103, tone="dark")
+
+    assert package["entities"]["npcs"][0] == "Daria Stone"
+
+
+def test_mystery_start_room_places_daria_stone_beside_player() -> None:
+    state = build_default_state(seed=104, genre="mystery", tone="dark")
+    start_npc_id = state.world.rooms[state.player.location].npc_ids[0]
+
+    assert start_npc_id == "daria_stone"
+    assert state.world.npcs[start_npc_id].name == "Daria Stone"
+
+
 def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
     state = build_default_state(seed=102, genre="mystery")
 
