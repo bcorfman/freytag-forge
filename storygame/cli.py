@@ -310,6 +310,31 @@ def _raw_input_requests_goal(raw_input: str) -> bool:
     return re.search(r"\b(goal|goals|objective|objectives)\b", lowered) is not None
 
 
+def _should_prefer_proposal_resolution(
+    raw_input: str,
+    fallback_action: Action,
+    planner_dialog_payload: dict[str, Any] | None,
+    planner_action_payload: dict[str, Any] | None,
+) -> bool:
+    if planner_action_payload is None or planner_dialog_payload is None:
+        return False
+    if fallback_action.kind in {ActionKind.HELP, ActionKind.QUIT, ActionKind.SAVE, ActionKind.LOAD}:
+        return False
+
+    lowered = raw_input.strip().lower()
+    intent = str(planner_action_payload.get("intent", "")).strip().lower()
+    speaker = str(planner_dialog_payload.get("speaker", "")).strip().lower()
+
+    conversational_intents = {"ask_about", "greet", "apologize", "threaten", "read_case_file", "inspect", "knock"}
+    if intent in conversational_intents:
+        return True
+    if fallback_action.kind == ActionKind.TALK:
+        return True
+    if speaker not in {"", "narrator", "player"}:
+        return True
+    return bool(re.search(r"\b(ask|tell|say|speak|talk|who|what|why|how)\b", lowered) or "," in lowered)
+
+
 def _context_goal_for_turn(raw_input: str, goal: str, turn_index: int) -> str:
     if turn_index <= 0:
         return goal
@@ -641,12 +666,19 @@ def run_turn(
     fallback_action = parse_command(raw)
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
+    prefer_proposal_resolution = False
     try:
         planner_dialog_payload, planner_action_payload = freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(planner_action_payload)
         planner_action_payload = normalized_action_payload
+        prefer_proposal_resolution = _should_prefer_proposal_resolution(
+            raw_input,
+            fallback_action,
+            planner_dialog_payload,
+            normalized_action_payload,
+        )
         proposal_action = _action_from_proposal(raw_input, normalized_action_payload)
-        if proposal_action.kind != ActionKind.UNKNOWN:
+        if proposal_action.kind != ActionKind.UNKNOWN and not prefer_proposal_resolution:
             effective_action = proposal_action
     except Exception as exc:
         planner_parse_error = str(exc)
@@ -662,16 +694,16 @@ def run_turn(
         blocked_state.pending_high_impact_assessment = dict(impact_assessment)
         return blocked_state, _high_impact_warning_lines(impact_assessment), effective_action.raw, "impact_gate", True
 
-    if effective_action.kind == ActionKind.UNKNOWN:
+    if effective_action.kind == ActionKind.UNKNOWN or prefer_proposal_resolution:
         if planner_dialog_payload is not None and planner_action_payload is not None:
             freeform = resolve_freeform_roleplay_with_proposals(
                 preturn_state,
-                effective_action.raw,
+                raw_input,
                 planner_dialog_payload,
                 planner_action_payload,
             )
         else:
-            freeform = resolve_freeform_roleplay(preturn_state, effective_action.raw, freeform_adapter)
+            freeform = resolve_freeform_roleplay(preturn_state, raw_input, freeform_adapter)
         next_state = freeform["state"]
         events = [freeform["event"]]
         freeform_policy_debug = {
@@ -679,6 +711,7 @@ def run_turn(
             "state_update_envelope": dict(freeform["state_update_envelope"]),
             "fact_ops": list(freeform["event"].metadata.get("fact_ops", [])),
             "planner_error": planner_parse_error,
+            "proposal_first": prefer_proposal_resolution,
             "story_delta": {
                 "progress": freeform["event"].delta_progress,
                 "tension": freeform["event"].delta_tension,
@@ -688,6 +721,7 @@ def run_turn(
             events.insert(0, replan_event)
         beat_type = "freeform_roleplay"
         template_key = "freeform_roleplay"
+        effective_action = _action_from_proposal(raw_input, freeform["action_proposal"])
     else:
         next_state, events, beat_type, template_key = advance_turn(preturn_state, effective_action, rng)
         if replan_event is not None:
