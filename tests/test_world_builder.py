@@ -152,3 +152,13 @@ def test_generated_npcs_use_binary_pronouns() -> None:
     state = build_default_state(seed=101, genre="mystery")
     assert state.world.npcs
     assert all(npc.pronouns in {"he/him", "she/her"} for npc in state.world.npcs.values())
+
+
+def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
+    state = build_default_state(seed=102, genre="mystery")
+
+    assert state.player.location == "front_steps"
+    assert state.world.rooms["front_steps"].exits["north"] == "foyer"
+
+    next_state, _events, _beat, _template = advance_turn(state, parse_command("go north"), Random(102))
+    assert next_state.player.location == "foyer"

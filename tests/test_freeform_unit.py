@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from storygame.engine import freeform as freeform_module
+from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
@@ -11,6 +12,7 @@ from storygame.engine.freeform import (
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
+from storygame.engine.state import Npc
 from storygame.engine.world import build_default_state
 
 
@@ -52,6 +54,35 @@ def test_rule_based_adapter_propose_intent_paths() -> None:
 
     _dialog, action = adapter.propose(state, "I warn you")
     assert action["intent"] == "threaten"
+
+
+def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None:
+    state = build_default_state(seed=410)
+    room = state.world.rooms[state.player.location]
+    room.npc_ids = ("daria_stone",)
+    state.world.npcs["daria_stone"] = Npc(
+        id="daria_stone",
+        name="Daria Stone",
+        description="Daria watches the room closely.",
+        dialogue="Ask directly.",
+        identity="assistant",
+        pronouns="she/her",
+    )
+    initialize_world_facts(state)
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what do you make of this place?")
+
+    assert action["targets"] == ["daria_stone"]
+    assert dialog["speaker"] == "daria_stone"
+
+
+def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> None:
+    state = build_default_state(seed=411)
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what do you make of this place?")
+
+    assert action["targets"] == []
+    assert dialog["speaker"] == "narrator"
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:

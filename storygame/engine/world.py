@@ -100,6 +100,8 @@ def _item_kind_for_index(index: int) -> str:
 def _room_name_for_display(room_id: str, genre: str) -> str:
     if genre == "mystery" and room_id == "front_steps":
         return "Outside The Mansion"
+    if genre == "mystery" and room_id == "foyer":
+        return "Mansion Foyer"
     return _humanize_identifier(room_id)
 
 
@@ -109,6 +111,11 @@ def _room_description(room_id: str, genre: str, tone: str) -> str:
         return (
             "Broad stone steps rise to a carved oak door framed by weathered columns. "
             "A brass lantern burns beside the entrance and fresh mud marks the path from the street."
+        )
+    if genre == "mystery" and room_id == "foyer":
+        return (
+            "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long "
+            "hall stretching deeper into the mansion."
         )
     return (
         f"The {location} is laid out for close inspection, with worn surfaces and practical routes that can be "

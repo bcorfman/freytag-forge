@@ -201,7 +201,8 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
         ),
     )
     contacts = char_agent.run(state, architect)
-    assert contacts["contacts"][0]["name"] == "Daria Stone"
+    seeded_name = state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
+    assert contacts["contacts"][0]["name"] == seeded_name
 
     # Plot success
     monkeypatch.setattr(
@@ -276,6 +277,31 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
         room.npc_ids = ()
     with pytest.raises(RuntimeError, match="requires at least one NPC"):
         DefaultCharacterDesignerAgent("openai").run(empty_state, architect)
+
+
+def test_character_designer_pins_seeded_opening_contact_as_assistant(monkeypatch) -> None:
+    state = build_default_state(seed=512)
+    architect = {"protagonist_name": "Noah Kade"}
+    seeded_npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    seeded_name = state.world.npcs[seeded_npc_id].name
+    alternate_name = next(npc.name for npc_id, npc in state.world.npcs.items() if npc_id != seeded_npc_id)
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "contacts": [
+                    {"name": alternate_name, "role": "assistant", "trait": "sharp"},
+                    {"name": seeded_name, "role": "contact", "trait": "observant"},
+                ]
+            }
+        ),
+    )
+
+    contacts = DefaultCharacterDesignerAgent("openai").run(state, architect)
+
+    assert contacts["contacts"][0]["name"] == seeded_name
+    assert contacts["contacts"][0]["role"] == "assistant"
 
 
 def test_story_replan_agent_branches() -> None:
