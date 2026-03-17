@@ -222,6 +222,8 @@ class OllamaAdapter:
 
 
 class CloudflareWorkersAIAdapter:
+    USER_AGENT = "FreytagForgeDemo/1.0"
+
     def __init__(
         self,
         worker_url: str | None = None,
@@ -247,7 +249,10 @@ class CloudflareWorkersAIAdapter:
             "trace_id": trace_id,
             "session_id": "",
         }
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": self.USER_AGENT,
+        }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         http_request = urllib.request.Request(

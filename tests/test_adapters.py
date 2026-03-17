@@ -397,12 +397,16 @@ def test_cloudflare_adapter_requires_worker_url(monkeypatch):
 
 
 def test_cloudflare_adapter_success_parses_narration(monkeypatch):
+    observed: dict[str, object] = {}
+
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed["user_agent"] = request.headers.get("User-agent")
         return _FakeResponse('{"narration":"Cloudflare narration response.","model":"demo-model"}')
 
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate", token="t")
     assert adapter.generate(_build_context()) == "Cloudflare narration response."
+    assert observed["user_agent"] == "FreytagForgeDemo/1.0"
 
 
 def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
@@ -411,6 +415,7 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed["url"] = request.full_url
         observed["auth"] = request.headers.get("Authorization")
+        observed["user_agent"] = request.headers.get("User-agent")
         observed["timeout"] = timeout
         return _FakeResponse('{"narration":"Cloudflare narration response."}')
 
@@ -424,6 +429,7 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
     assert observed == {
         "url": "https://demo.example.workers.dev/api/narrate",
         "auth": "Bearer secret-token",
+        "user_agent": "FreytagForgeDemo/1.0",
         "timeout": 7.5,
     }
 
