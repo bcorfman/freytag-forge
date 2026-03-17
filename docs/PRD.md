@@ -172,16 +172,18 @@ flowchart LR
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
 - Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
-- Turn output retains an explicit LLM narration line when generation succeeds; if downstream review strips it, the original narration is reattached.
+- Turn output retains explicit LLM narration only when that narration is still the right player-facing surface; if downstream review strips a non-dialogue narration line, the original narration is reattached.
 - Turn narration is action-grounded: if a generated narration omits meaningful tokens from the player’s command, a deterministic action-reference prefix is added.
-- Per-turn rendering is LLM-first: when narrator output is available, deterministic room/event blocks are not shown; deterministic room/event rendering remains fallback-only for empty/invalid narrator proposals.
+- Per-turn rendering is hybrid: narrator output can replace deterministic room/event blocks for ordinary turns, but direct conversational freeform turns preserve bounded NPC dialogue lines instead of being rewritten into narrator prose.
 - Coherence contract failures are fail-soft for turn rendering: revision-directive contract errors trigger a direct narrator fallback for that turn rather than exposing internal contract error strings to the player.
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is planner-first: gameplay inputs are interpreted through the LLM/freeform action proposal path, then mapped into deterministic engine actions or bounded freeform envelopes.
 - Deterministic parser paths are retained as control-plane/fallback guards (`save`, `load`, `quit`, and planner-failure fallback) so state mutation remains reproducible.
 - Freeform NPC replies are normalized to explicit dialogue format: `<Character> says: "<reply>"`.
-- Freeform turns also run through the same narrator/coherence pipeline as command turns, so player prompts receive an LLM narration response in addition to policy-bounded state updates.
+- Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
+- Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
+- Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation.
 - Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, event timing, and NPC behavior.
