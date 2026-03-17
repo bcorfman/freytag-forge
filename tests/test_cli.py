@@ -569,6 +569,42 @@ def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_poli
     assert after_knock.player.flags.get("freeform_intent_knock") is True
 
 
+def test_run_turn_read_ledger_page_uses_shared_freeform_path():
+    state = build_default_state(seed=884)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "read the ledger page",
+        Random(884),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert next_state.player.flags.get("reviewed_ledger_page") is True
+    assert next_state.progress > state.progress
+    assert any("ledger" in line.lower() for line in lines)
+
+
+def test_run_turn_appearance_question_gets_specific_dialogue():
+    state = build_default_state(seed=885)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what are you wearing?",
+        Random(885),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any("wearing" in line.lower() for line in lines)
+    assert not any("rumors are noisy" in line.lower() for line in lines)
+
+
 def test_run_turn_unknown_input_includes_narrator_output_when_available():
     state = build_default_state(seed=881)
     next_state, lines, _action_raw, beat_type, continued = run_turn(
