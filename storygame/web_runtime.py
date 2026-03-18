@@ -100,6 +100,22 @@ def build_bootstrap_response_payload(
     scope_id: str,
     story_director: StoryDirector,
 ) -> dict[str, Any]:
+    return build_bootstrap_response_payload_from_lines(
+        state,
+        command,
+        scope_field,
+        scope_id,
+        story_director.compose_opening(state),
+    )
+
+
+def build_bootstrap_response_payload_from_lines(
+    state: GameState,
+    command: str,
+    scope_field: str,
+    scope_id: str,
+    opening_lines: list[str],
+) -> dict[str, Any]:
     return {
         scope_field: scope_id,
         "command": command,
@@ -107,7 +123,7 @@ def build_bootstrap_response_payload(
         "beat": "setup_scene",
         "continued": True,
         "lines": [
-            *_with_paragraph_spacing(story_director.compose_opening(state)),
+            *_with_paragraph_spacing(opening_lines),
             "",
             _room_lines(state, long_form=True),
         ],
