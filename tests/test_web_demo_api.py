@@ -128,7 +128,11 @@ def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tm
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
-def test_demo_bootstrap_succeeds_without_openai_story_agent_credentials(tmp_path, monkeypatch):
+def test_demo_bootstrap_uses_demo_opening_path_without_openai_story_agent_credentials(
+    tmp_path,
+    monkeypatch,
+    caplog,
+):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
@@ -140,13 +144,15 @@ def test_demo_bootstrap_succeeds_without_openai_story_agent_credentials(tmp_path
     )
     session_id = client.post("/api/v1/session", json={"seed": 52}).json()["session_id"]
 
-    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    with caplog.at_level(logging.WARNING):
+        turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert turn.status_code == 200
     payload = turn.json()
     assert payload["status"] == "ok"
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
-    assert any("You are" in line for line in payload["lines"])
+    assert any("kept a low profile for years" in line for line in payload["lines"])
+    assert "Opening generation fell back" not in caplog.text
 
 
 def test_demo_first_substantive_command_does_not_repeat_opening_text(tmp_path):

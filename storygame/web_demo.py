@@ -22,7 +22,7 @@ from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web_runtime import (
     ScopedSaveStore,
-    build_bootstrap_response_payload,
+    build_bootstrap_response_payload_from_lines,
     build_turn_response_payload,
     execute_turn,
     is_bootstrap_command,
@@ -215,6 +215,17 @@ def create_demo_app(
             raise HTTPException(status_code=404, detail=f"Unknown or expired session_id '{session_id}'.")
         return session
 
+    def _compose_demo_opening(state: GameState) -> list[str]:
+        story_plan = dict(state.world_package.get("story_plan", {}))
+        opening_lines = [str(line).strip() for line in story_plan.get("setup_paragraphs", ()) if str(line).strip()]
+        if not opening_lines:
+            room = state.world.rooms[state.player.location]
+            opening_lines = [
+                f"{room.name} waits at the edge of the investigation.",
+                f"Your first objective is immediate: {state.active_goal}",
+            ]
+        return active_output_editor.review_opening(opening_lines, state.active_goal)
+
     @app.get("/api/v1/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse()
@@ -258,12 +269,12 @@ def create_demo_app(
         start_state = session.state
         bootstrap_only = session.turns_used == 0 and is_bootstrap_command(payload.command)
         if bootstrap_only:
-            payload_body = build_bootstrap_response_payload(
+            payload_body = build_bootstrap_response_payload_from_lines(
                 start_state,
                 payload.command,
                 "session_id",
                 payload.session_id,
-                active_story_director,
+                _compose_demo_opening(start_state),
             )
             payload_body["status"] = "ok"
             return TurnResponse.model_validate(payload_body)

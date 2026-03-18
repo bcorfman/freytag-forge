@@ -152,6 +152,7 @@ flowchart LR
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:
   - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
   - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
+  - hosted bootstrap/opening is composed from the seeded `world_package.story_plan.setup_paragraphs` path plus normal output editing, not from the local story-agent opening planner,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
 - Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
