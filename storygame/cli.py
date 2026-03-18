@@ -379,6 +379,16 @@ def _contains_repeated_goal_copy(text: str, raw_input: str, active_goal: str) ->
     return bool(lowered_goal and lowered_goal in lowered and ("goal" in lowered or "objective" in lowered))
 
 
+def _should_render_room_block(
+    previous_state: GameState,
+    next_state: GameState,
+    action: Action,
+) -> bool:
+    if action.kind == ActionKind.LOOK:
+        return True
+    return previous_state.player.location != next_state.player.location
+
+
 def _write_transcript_line(handle: TextIO | None, line: str) -> None:
     if handle is None:
         return
@@ -789,13 +799,14 @@ def run_turn(
             turn_text = f"{room_name}\n{turn_text}"
         lines: list[str] = [turn_text]
     else:
-        lines = [
-            _room_lines(
-                next_state,
-                long_form=effective_action.kind == ActionKind.LOOK
-                or (state.turn_index == 0 and effective_action.kind == ActionKind.UNKNOWN),
+        lines = []
+        if _should_render_room_block(state, next_state, effective_action):
+            lines.append(
+                _room_lines(
+                    next_state,
+                    long_form=effective_action.kind == ActionKind.LOOK,
+                )
             )
-        ]
         if effective_action.kind == ActionKind.INVENTORY:
             lines.extend(_inventory_lines(next_state))
         event_line = _event_lines(events, debug=debug)
@@ -874,7 +885,8 @@ def run_turn(
     lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
     lines = _suppress_repeated_goal_copy(lines, raw_input, next_state.active_goal)
     if not lines:
-        lines = [_room_lines(next_state, long_form=effective_action.kind == ActionKind.LOOK)]
+        lines = [_room_lines(next_state, long_form=True)] if effective_action.kind == ActionKind.LOOK else [""]
+        lines = [line for line in lines if line]
 
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
     if (

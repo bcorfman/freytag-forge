@@ -94,3 +94,41 @@ def test_room_presentation_uses_short_on_move_and_long_on_look():
     )
     look_cache = looked_state.world_package["room_presentation_cache"][destination]
     assert look_cache["long"] in look_lines[0]
+
+
+def test_same_room_followup_turn_does_not_repeat_room_block():
+    state = build_default_state(seed=37, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "take the ledger page",
+        Random(37),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type != "setup_scene"
+    room = next_state.world.rooms[next_state.player.location]
+    assert not any(line.startswith(room.name + "\n") for line in lines)
+    assert not any(room.description in line for line in lines)
+    assert any("clue noted:" in line.lower() for line in lines)
+
+
+def test_same_room_freeform_reply_does_not_repeat_room_block():
+    state = build_default_state(seed=38, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what are you wearing?",
+        Random(38),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    room = next_state.world.rooms[next_state.player.location]
+    assert not any(line.startswith(room.name + "\n") for line in lines)
+    assert not any(room.description in line for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)

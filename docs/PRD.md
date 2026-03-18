@@ -145,6 +145,7 @@ flowchart LR
   - `GET /api/v1/health`
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
+- Local web and hosted demo share the same `storygame.web_runtime` turn/bootstrap orchestration so story execution stays aligned across surfaces.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
 - Hosted-demo sessions use explicit TTL expiry with server-side `session_id` continuity.
 - Demo app save/load slots are scoped by `session_id` for deterministic isolation.
@@ -218,6 +219,7 @@ flowchart LR
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
+- First substantive command parity is shared across local web and hosted demo; surface differences should be operational only, not story-path differences.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation now fails soft: if narrator-opening contract parsing fails, a deterministic fallback opening is used instead of surfacing a 500 error.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).

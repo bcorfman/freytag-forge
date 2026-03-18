@@ -45,6 +45,13 @@ def _short_text(value: str, max_len: int) -> str:
     return value[: max_len - 3] + "..."
 
 
+def _clean_topic_text(value: str) -> str:
+    cleaned = value.strip().strip(" ,.;:!?")
+    normalized = _normalize_target(cleaned)
+    tokens = [token for token in normalized.split("_") if token and token not in _TOPIC_STOPWORDS]
+    return " ".join(tokens).strip()
+
+
 class FreeformProposalAdapter(Protocol):
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]: ...
 
@@ -161,7 +168,7 @@ class RuleBasedFreeformProposalAdapter:
             topic = ""
             if "about" in text:
                 intent = "ask_about"
-                topic = text.split("about", 1)[1].strip() or "rumors"
+                topic = _clean_topic_text(text.split("about", 1)[1]) or "rumors"
         if re.search(r"\b(examine|inspect|read|review)\b", text):
             intent = "inspect"
             topic = ""
@@ -182,7 +189,7 @@ class RuleBasedFreeformProposalAdapter:
         elif re.search(r"\b(goal|goals|objective|objectives)\b", text):
             topic = "objective"
         elif "about" in text:
-            topic = text.split("about", 1)[1].strip() or "rumors"
+            topic = _clean_topic_text(text.split("about", 1)[1]) or "rumors"
         elif _PLACE_QUESTION_PATTERN.search(raw_input):
             topic = "place"
 
@@ -224,6 +231,27 @@ def _resolve_freeform_mode() -> str:
 
 def _normalize_target(value: str) -> str:
     return _TOPIC_TOKEN.sub("_", value.strip().lower()).strip("_")
+
+
+def _find_relevant_item(state: GameState, raw_topic: str) -> str:
+    topic = _normalize_target(raw_topic)
+    if not topic:
+        return ""
+
+    room = state.world.rooms[state.player.location]
+    candidate_item_ids = tuple(dict.fromkeys((*state.player.inventory, *room.item_ids)))
+    for item_id in candidate_item_ids:
+        if item_id == topic or topic in item_id:
+            return item_id
+        item = state.world.items.get(item_id)
+        if item is None:
+            continue
+        normalized_name = _normalize_target(item.name)
+        if normalized_name == topic or topic in normalized_name:
+            return item_id
+        if any(part and part == topic for part in normalized_name.split("_")):
+            return item_id
+    return ""
 
 
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
@@ -339,6 +367,14 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
     if intent == "threaten":
         return f"{speaker} narrows their eyes. 'Threats won't help us solve this.'"
     if topic:
+        if state is not None:
+            relevant_item_id = _find_relevant_item(state, topic)
+            if relevant_item_id:
+                item = state.world.items[relevant_item_id]
+                item_name = item.name.lower()
+                if item.clue_text:
+                    return f"{speaker} says, 'The {item_name} matters because {item.clue_text.lower()}'"
+                return f"{speaker} says, 'The {item_name} is worth keeping close. It may matter before we're through here.'"
         if topic == "place" and state is not None:
             room = state.world.rooms[state.player.location]
             if room.id == "front_steps":
@@ -362,8 +398,8 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
             )
         if topic in {"rumor", "rumors"}:
             return (
-                f"{speaker} says, 'Rumors are noisy unless we anchor them. Ask about a person, item, "
-                "or place, and I can give you something usable.'"
+                f"{speaker} says, 'Most rumors fall apart under pressure. Ask about a person, item, "
+                "or place, and I can give you something we can actually use.'"
             )
         return f"{speaker} says, 'About {topic}: be specific and I'll answer what I can.'"
     return f"{speaker} studies you. 'Give me a specific question.'"

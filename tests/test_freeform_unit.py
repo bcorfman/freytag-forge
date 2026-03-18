@@ -21,8 +21,10 @@ def test_dialog_line_variants_cover_intents_and_missing_target() -> None:
     assert "nods once" in _dialog_line("greet", "mina", "")
     assert "all right" in _dialog_line("apologize", "mina", "").lower()
     assert "threats won't help" in _dialog_line("threaten", "mina", "").lower()
-    ask_line = _dialog_line("ask_about", "mina", "ledger").lower()
-    assert "about ledger" in ask_line
+    state = build_default_state(seed=400, genre="mystery")
+    ask_line = _dialog_line("ask_about", "daria_stone", "ledger", state).lower()
+    assert "ledger" in ask_line
+    assert "be specific" not in ask_line
     assert "follow the signal" not in ask_line
     assert "their voice" not in ask_line
     assert "specific question" in _dialog_line("ask_about", "mina", "").lower()
@@ -214,6 +216,18 @@ def test_rule_based_adapter_handles_appearance_questions_with_contextual_reply()
     assert action["arguments"]["topic"] == "appearance"
     assert action["targets"] == ["daria_stone"]
     assert "wearing" in dialog["text"].lower()
+
+
+def test_rule_based_adapter_handles_ledger_questions_with_contextual_reply() -> None:
+    state = build_default_state(seed=414, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what about the ledger page?")
+
+    assert action["intent"] == "ask_about"
+    assert action["arguments"]["topic"] == "ledger page"
+    assert action["targets"] == ["daria_stone"]
+    assert "ledger" in dialog["text"].lower()
+    assert "be specific" not in dialog["text"].lower()
 
 
 def test_resolve_freeform_roleplay_with_proposals_uses_provided_payloads() -> None:

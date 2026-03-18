@@ -13,14 +13,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator, _transcript_command_echo, run_turn
+from storygame.cli import _build_narrator
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.plot.freytag import get_phase
+from storygame.web_runtime import (
+    ScopedSaveStore,
+    build_bootstrap_response_payload,
+    build_turn_response_payload,
+    execute_turn,
+    is_bootstrap_command,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,43 +41,6 @@ class _DemoSession:
         self.rng = rng
         self.expires_at = expires_at
         self.turns_used = 0
-
-
-class _ScopedSaveStore:
-    def __init__(self, store: SqliteSaveStore, scope: str) -> None:
-        self._store = store
-        self._scope = scope
-
-    def _slot(self, slot: str) -> str:
-        return f"{self._scope}:{slot}"
-
-    def save_run(
-        self,
-        slot: str,
-        state: GameState,
-        rng: Random,
-        raw_command: str = "save",
-        action_kind: str = "save",
-        beat_type: str | None = None,
-        template_key: str | None = None,
-        transcript: list[str] | None = None,
-        judge_decision: dict[str, str] | None = None,
-    ) -> None:
-        self._store.save_run(
-            self._slot(slot),
-            state,
-            rng,
-            raw_command=raw_command,
-            action_kind=action_kind,
-            beat_type=beat_type,
-            template_key=template_key,
-            transcript=transcript,
-            judge_decision=judge_decision,
-        )
-
-    def load_run(self, slot: str) -> tuple[GameState, Random]:
-        return self._store.load_run(self._slot(slot))
-
 
 class SessionCreateRequest(BaseModel):
     seed: int | None = None
@@ -286,8 +255,20 @@ def create_demo_app(
                 "quota_exhausted",
                 "Session turn cap reached for this demo session.",
             )
-        scoped_store = _ScopedSaveStore(store, payload.session_id)
-        next_state, lines, action_raw, beat_type, continued = run_turn(
+        start_state = session.state
+        bootstrap_only = session.turns_used == 0 and is_bootstrap_command(payload.command)
+        if bootstrap_only:
+            payload_body = build_bootstrap_response_payload(
+                start_state,
+                payload.command,
+                "session_id",
+                payload.session_id,
+                active_story_director,
+            )
+            payload_body["status"] = "ok"
+            return TurnResponse.model_validate(payload_body)
+        scoped_store = ScopedSaveStore(store, payload.session_id)
+        result = execute_turn(
             session.state,
             payload.command,
             session.rng,
@@ -299,39 +280,25 @@ def create_demo_app(
             output_editor=active_output_editor,
             story_director=active_story_director,
         )
-        narrator_error = _narrator_fail_closed(list(lines))
+        narrator_error = _narrator_fail_closed(result.lines)
         if narrator_error is not None:
             return narrator_error
-        session.state = next_state
+        session.state = result.next_state
         session.turns_used += 1
         _touch(session)
 
-        room = next_state.world.rooms[next_state.player.location]
-        response_state = StateSnapshot(
-            session_id=payload.session_id,
-            location=next_state.player.location,
-            room_name=room.name,
-            inventory=list(next_state.player.inventory),
-            genre=next_state.story_genre,
-            tone=next_state.story_tone,
-            session_length=next_state.session_length,
-            plot_curve_id=next_state.plot_curve_id,
-            story_outline_id=next_state.story_outline_id,
-            objective=next_state.active_goal,
-            phase=str(get_phase(next_state.progress)),
-            progress=next_state.progress,
-            tension=next_state.tension,
-            turn_index=next_state.turn_index,
+        payload_body = build_turn_response_payload(
+            result.next_state,
+            payload.command,
+            result.action_raw,
+            result.beat,
+            result.continued,
+            result.lines,
+            "session_id",
+            payload.session_id,
         )
-        return TurnResponse(
-            session_id=payload.session_id,
-            command=payload.command,
-            action_raw=action_raw,
-            beat=beat_type,
-            continued=continued,
-            lines=[_transcript_command_echo(payload.command), *list(lines)],
-            state=response_state,
-        )
+        payload_body["status"] = "ok"
+        return TurnResponse.model_validate(payload_body)
 
     @app.on_event("shutdown")
     def _close_store() -> None:

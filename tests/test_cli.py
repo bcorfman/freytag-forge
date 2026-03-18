@@ -516,7 +516,7 @@ def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.player.flags.get("asked_ledger_daria_stone") is True
-    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
     assert any("wanted it hidden" in line.lower() for line in lines)
 
 
@@ -533,7 +533,7 @@ def test_run_turn_talk_command_uses_freeform_dialogue_by_default():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
     assert next_state.player.flags.get("greeted_daria_stone") is True
 
 
@@ -600,9 +600,26 @@ def test_run_turn_appearance_question_gets_specific_dialogue():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
     assert any("wearing" in line.lower() for line in lines)
     assert not any("rumors are noisy" in line.lower() for line in lines)
+
+
+def test_run_turn_ledger_question_gets_specific_dialogue():
+    state = build_default_state(seed=886)
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what about the ledger page?",
+        Random(886),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("ledger" in line.lower() for line in lines)
+    assert not any("be specific" in line.lower() for line in lines)
 
 
 def test_run_turn_unknown_input_includes_narrator_output_when_available():
@@ -635,7 +652,7 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
     assert not any("the night is tense" in line.lower() for line in lines)
 
 
@@ -656,7 +673,7 @@ def test_run_turn_prefers_bounded_dialogue_over_freeform_narrator_prose():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith("Daria says:") for line in lines)
+    assert any(line.startswith("Daria Stone says:") for line in lines)
     assert not any("as i stand outside the mansion" in line.lower() for line in lines)
     assert not any("i need to get oriented" in line.lower() for line in lines)
 
@@ -685,8 +702,7 @@ def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
-    assert any("Daria is nearby" in line for line in lines)
-    assert not any("Daria Stone is nearby" in line for line in lines)
+    assert not any("is nearby" in line for line in lines)
     assert any(line.startswith('Daria says: "') for line in lines)
     assert not any(line.startswith('Daria Stone says: "') for line in lines)
 
@@ -725,7 +741,7 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
-    assert any("Daria Stone and Daria Quill are nearby" in line for line in lines)
+    assert not any("are nearby" in line for line in lines)
     assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
