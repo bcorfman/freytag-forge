@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import socket
@@ -29,6 +30,8 @@ from storygame.llm.story_agents.prompts import (
     build_story_architect_prompt,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
     try:
@@ -42,6 +45,21 @@ def _json_from_text(text: str) -> dict[str, Any] | None:
         return json.loads(match.group(0))
     except Exception:
         return None
+
+
+def _paragraphs_from_text(text: str) -> list[str]:
+    stripped = text.strip().strip('"').strip("'")
+    if not stripped:
+        return []
+    paragraphs = [segment.strip() for segment in re.split(r"\n\s*\n", stripped) if segment.strip()]
+    return paragraphs
+
+
+def _short_raw_response(text: str, limit: int = 280) -> str:
+    normalized = " ".join(text.split()).strip()
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 3] + "..."
 
 
 def _chat_complete(mode: str, system: str, user: str) -> str:
@@ -508,12 +526,25 @@ class DefaultNarratorOpeningAgent:
 
         opening = [paragraph_1, paragraph_2, paragraph_3, paragraph_4]
         system, user = build_narrator_opening_prompt("\n\n".join(opening))
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        raw_response = _chat_complete(self._mode, system, user)
+        payload = _json_from_text(raw_response)
         if payload is None:
+            prose_paragraphs = _paragraphs_from_text(raw_response)
+            if len(prose_paragraphs) >= 3:
+                parsed = parse_narrator_opening_output({"paragraphs": prose_paragraphs[:4]})
+                return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
+            _LOGGER.warning(
+                "NarratorOpening raw response could not be parsed as JSON or prose paragraphs: %s",
+                _short_raw_response(raw_response),
+            )
             raise RuntimeError("NarratorOpening agent returned non-JSON content.")
         try:
             parsed = parse_narrator_opening_output(payload)
         except StoryAgentContractError as exc:
+            _LOGGER.warning(
+                "NarratorOpening contract validation failed with raw response: %s",
+                _short_raw_response(raw_response),
+            )
             raise RuntimeError(f"NarratorOpening contract validation failed: {exc}") from exc
         return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
 
