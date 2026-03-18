@@ -45,16 +45,26 @@ class StoryDirector:
         self._story_replan = DefaultStoryReplanAgent(mode) if story_replan is None else story_replan
 
     def compose_opening(self, state: GameState) -> list[str]:
-        architect = self._story_architect.run(state)
-        cast = self._character_designer.run(state, architect)
-        plan = self._plot_designer.run(state, architect, cast)
+        architect: dict[str, object] = {}
+        cast: dict[str, object] = {}
+        plan: dict[str, object] = {}
+        planning_failed = False
+        try:
+            architect = self._story_architect.run(state)
+            cast = self._character_designer.run(state, architect)
+            plan = self._plot_designer.run(state, architect, cast)
+        except RuntimeError:
+            planning_failed = True
         with ThreadPoolExecutor(max_workers=2) as executor:
             room_future = executor.submit(self._ensure_room_presentation_cache, state, architect, cast, plan)
-            opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
-            try:
-                opening = opening_future.result()
-            except RuntimeError:
+            if planning_failed:
                 opening = self._fallback_opening_lines(state, architect, cast, plan)
+            else:
+                opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
+                try:
+                    opening = opening_future.result()
+                except RuntimeError:
+                    opening = self._fallback_opening_lines(state, architect, cast, plan)
             room_future.result()
         return self._output_editor.review_opening(opening, state.active_goal)
 

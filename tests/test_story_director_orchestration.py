@@ -82,6 +82,11 @@ class _RaisingNarrator:
         raise RuntimeError("NarratorOpening agent returned non-JSON content.")
 
 
+class _RaisingArchitect:
+    def run(self, state):  # noqa: ANN001, ARG002
+        raise RuntimeError("OPENAI_API_KEY is required for story-agent execution.")
+
+
 class _StubReplan:
     def run(self, state, disruption):  # noqa: ANN001
         return {
@@ -203,3 +208,21 @@ def test_story_director_opening_falls_back_when_narrator_agent_fails():
     opening = director.compose_opening(state)
     assert opening
     assert all(line.startswith("edited:") for line in opening)
+
+
+def test_story_director_opening_falls_back_when_story_architect_agent_fails():
+    state = build_default_state(seed=12)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_RaisingArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_StubNarrator(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+    assert opening
+    assert all(line.startswith("edited:") for line in opening)
+    assert any("You are" in line for line in opening)
