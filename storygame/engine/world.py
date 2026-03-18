@@ -97,6 +97,21 @@ def _item_kind_for_index(index: int) -> str:
     return "evidence"
 
 
+def _item_clue_text(item_id: str, genre: str, primary_goal: str) -> str:
+    if genre == "mystery":
+        if item_id == "case_file":
+            return "The case file pins down the victim timeline and highlights the first credible lead."
+        if item_id == "ledger_page":
+            return "The ledger page records a missing payment tied to the mansion and tonight's visit."
+        if item_id == "route_key":
+            return "The route key marks a service passage someone expected to use after dark."
+
+    cleaned_goal = primary_goal.strip().rstrip(".")
+    if not cleaned_goal:
+        return "A concrete lead tied to your current objective."
+    return f"A concrete lead tied to your current objective: {cleaned_goal}."
+
+
 def _room_name_for_display(room_id: str, genre: str) -> str:
     if genre == "mystery" and room_id == "front_steps":
         return "Outside The Mansion"
@@ -126,6 +141,7 @@ def _room_description(room_id: str, genre: str, tone: str) -> str:
 def _build_items(package: dict) -> dict[str, Item]:
     item_ids = tuple(package["item_graph"]["items"])
     primary_goal = str(package["goals"]["primary"])
+    genre = str(package["genre"])
     items: dict[str, Item] = {}
     for index, item_id in enumerate(item_ids):
         kind = _item_kind_for_index(index)
@@ -133,10 +149,10 @@ def _build_items(package: dict) -> dict[str, Item]:
             id=item_id,
             name=_humanize_identifier(item_id),
             description=f"An important {kind} tied to your current objective.",
-            tags=("quest", package["genre"], kind),
+            tags=("quest", genre, kind),
             kind=kind,
             delta_progress=0.07 + (0.02 * min(index, 3)),
-            clue_text=f"It may help with: {primary_goal}",
+            clue_text=_item_clue_text(item_id, genre, primary_goal),
         )
 
     # Always include a baseline utility item for stable command flow.

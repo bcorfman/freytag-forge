@@ -104,9 +104,40 @@ def test_demo_session_create_then_turn_flow(tmp_path):
     assert turn_payload["status"] == "ok"
     assert turn_payload["session_id"] == session_id
     assert turn_payload["lines"]
-    assert turn_payload["lines"][0].startswith(">LOOK")
-    assert turn_payload["state"]["turn_index"] == 1
+    assert turn_payload["beat"] == "setup_scene"
+    assert turn_payload["state"]["turn_index"] == 0
     assert turn_payload["state"]["session_id"] == session_id
+
+    next_turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
+    assert next_turn.status_code == 200
+    next_payload = next_turn.json()
+    assert next_payload["lines"][0].startswith(">GO NORTH")
+    assert next_payload["state"]["turn_index"] == 1
+
+
+def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_path):
+    client = _client(tmp_path)
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["beat"] == "setup_scene"
+    assert payload["lines"]
+    assert payload["state"]["turn_index"] == 0
+    assert any(payload["state"]["room_name"] in line for line in payload["lines"])
+
+
+def test_demo_first_substantive_command_does_not_repeat_opening_text(tmp_path):
+    client = _client(tmp_path)
+    session_id = client.post("/api/v1/session", json={"seed": 43}).json()["session_id"]
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "Daria, knock on the door"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["beat"] != "setup_scene"
+    assert payload["state"]["turn_index"] == 1
+    assert payload["lines"][0].startswith(">DARIA, KNOCK ON THE DOOR")
 
 
 def test_demo_turn_unknown_session_returns_404(tmp_path):
@@ -163,9 +194,12 @@ def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
     first = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert first.status_code == 200
 
-    second = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
-    assert second.status_code == 429
-    payload = second.json()
+    second = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
+    assert second.status_code == 200
+
+    third = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert third.status_code == 429
+    payload = third.json()
     assert payload["status"] == "quota_exhausted"
     assert "turn cap" in payload["detail"].lower()
 
@@ -179,17 +213,20 @@ def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
             narrator=StubNarrator(),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
-            ip_rate_limit_per_min=1,
+            ip_rate_limit_per_min=2,
             now_fn=clock,
         )
     )
     session_a = client.post("/api/v1/session", json={"seed": 1}).json()["session_id"]
     session_b = client.post("/api/v1/session", json={"seed": 2}).json()["session_id"]
 
-    first = client.post("/api/v1/turn", json={"session_id": session_a, "command": "look"})
+    bootstrap = client.post("/api/v1/turn", json={"session_id": session_a, "command": "look"})
+    assert bootstrap.status_code == 200
+
+    first = client.post("/api/v1/turn", json={"session_id": session_a, "command": "go north"})
     assert first.status_code == 200
 
-    second = client.post("/api/v1/turn", json={"session_id": session_b, "command": "look"})
+    second = client.post("/api/v1/turn", json={"session_id": session_b, "command": "go north"})
     assert second.status_code == 429
     payload = second.json()
     assert payload["status"] == "rate_limited"
@@ -205,17 +242,20 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
             ip_rate_limit_per_min=10,
-            ip_daily_turn_cap=1,
+            ip_daily_turn_cap=2,
             now_fn=clock,
         )
     )
     session_a = client.post("/api/v1/session", json={"seed": 3}).json()["session_id"]
     session_b = client.post("/api/v1/session", json={"seed": 4}).json()["session_id"]
 
-    first = client.post("/api/v1/turn", json={"session_id": session_a, "command": "look"})
+    bootstrap = client.post("/api/v1/turn", json={"session_id": session_a, "command": "look"})
+    assert bootstrap.status_code == 200
+
+    first = client.post("/api/v1/turn", json={"session_id": session_a, "command": "go north"})
     assert first.status_code == 200
 
-    second = client.post("/api/v1/turn", json={"session_id": session_b, "command": "look"})
+    second = client.post("/api/v1/turn", json={"session_id": session_b, "command": "go north"})
     assert second.status_code == 429
     payload = second.json()
     assert payload["status"] == "rate_limited"
@@ -233,7 +273,9 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
         )
     )
     session_id = client.post("/api/v1/session", json={"seed": 5}).json()["session_id"]
-    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert bootstrap.status_code == 200
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
     assert response.status_code == 429
     payload = response.json()
     assert payload["status"] == "quota_exhausted"
@@ -250,7 +292,9 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
         )
     )
     session_id = client.post("/api/v1/session", json={"seed": 6}).json()["session_id"]
-    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert bootstrap.status_code == 200
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
     assert response.status_code == 503
     payload = response.json()
     assert payload["status"] == "service_unavailable"
@@ -267,8 +311,10 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
         )
     )
     session_id = client.post("/api/v1/session", json={"seed": 7}).json()["session_id"]
+    bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert bootstrap.status_code == 200
     with caplog.at_level(logging.WARNING):
-        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
     assert response.status_code == 503
     assert "Narrator failed" in caplog.text
     assert "backend unavailable" in caplog.text

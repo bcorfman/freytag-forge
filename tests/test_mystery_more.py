@@ -25,6 +25,16 @@ def test_take_item_message_branches_for_item_kinds() -> None:
     assert take_item_message(junk) == "take_success"
 
 
+def test_mystery_ledger_page_uses_specific_clue_text_not_goal_boilerplate() -> None:
+    state = build_default_state(seed=614, genre="mystery", tone="dark")
+    ledger_page = state.world.items["ledger_page"]
+    message = take_item_message(ledger_page)
+
+    assert message.startswith("Clue noted:")
+    assert "define and confront the core conflict" not in message.lower()
+    assert "payment" in message.lower() or "ledger" in message.lower()
+
+
 def test_caseboard_lines_fallback_lead_when_no_items_or_npcs() -> None:
     state = build_default_state(seed=613)
     room = state.world.rooms[state.player.location]

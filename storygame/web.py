@@ -11,57 +11,26 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator, _room_lines, _transcript_command_echo, _with_paragraph_spacing, run_turn
+from storygame.cli import _build_narrator
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import Narrator, SilentNarrator
+from storygame.llm.adapters import Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.plot.freytag import get_phase
+from storygame.web_runtime import (
+    ScopedSaveStore,
+    build_bootstrap_response_payload,
+    build_turn_response_payload,
+    execute_turn,
+    is_bootstrap_command,
+)
 
 
 @dataclass
 class _SessionState:
     state: GameState
     rng: Random
-
-
-class _ScopedSaveStore:
-    def __init__(self, store: SqliteSaveStore, scope: str) -> None:
-        self._store = store
-        self._scope = scope
-
-    def _slot(self, slot: str) -> str:
-        return f"{self._scope}:{slot}"
-
-    def save_run(
-        self,
-        slot: str,
-        state: GameState,
-        rng: Random,
-        raw_command: str = "save",
-        action_kind: str = "save",
-        beat_type: str | None = None,
-        template_key: str | None = None,
-        transcript: list[str] | None = None,
-        judge_decision: dict[str, str] | None = None,
-    ) -> None:
-        self._store.save_run(
-            self._slot(slot),
-            state,
-            rng,
-            raw_command=raw_command,
-            action_kind=action_kind,
-            beat_type=beat_type,
-            template_key=template_key,
-            transcript=transcript,
-            judge_decision=judge_decision,
-        )
-
-    def load_run(self, slot: str) -> tuple[GameState, Random]:
-        return self._store.load_run(self._slot(slot))
-
 
 class TurnRequest(BaseModel):
     command: str
@@ -158,46 +127,24 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'.")
 
         start_state = session.state
-        bootstrap_only = session_started and payload.command.strip().lower() in {"", "look", "start"}
+        bootstrap_only = session_started and is_bootstrap_command(payload.command)
         if bootstrap_only:
-            room = start_state.world.rooms[start_state.player.location]
-            response_state = StateSnapshot(
-                run_id=run_id,
-                location=start_state.player.location,
-                room_name=room.name,
-                inventory=list(start_state.player.inventory),
-                genre=start_state.story_genre,
-                tone=start_state.story_tone,
-                session_length=start_state.session_length,
-                plot_curve_id=start_state.plot_curve_id,
-                story_outline_id=start_state.story_outline_id,
-                objective=start_state.active_goal,
-                phase=str(get_phase(start_state.progress)),
-                progress=start_state.progress,
-                tension=start_state.tension,
-                turn_index=start_state.turn_index,
-            )
-            return TurnResponse(
-                run_id=run_id,
-                command=payload.command,
-                action_raw=payload.command,
-                beat="setup_scene",
-                continued=True,
-                lines=[
-                    *_with_paragraph_spacing(active_story_director.compose_opening(start_state)),
-                    "",
-                    _room_lines(start_state, long_form=True),
-                ],
-                state=response_state,
+            return TurnResponse.model_validate(
+                build_bootstrap_response_payload(
+                    start_state,
+                    payload.command,
+                    "run_id",
+                    run_id,
+                    active_story_director,
+                )
             )
 
-        scoped_store = _ScopedSaveStore(store, run_id)
-        turn_narrator: Narrator = SilentNarrator() if session_started else active_narrator
-        next_state, lines, action_raw, beat_type, continued = run_turn(
+        scoped_store = ScopedSaveStore(store, run_id)
+        result = execute_turn(
             start_state,
             payload.command,
             session.rng,
-            turn_narrator,
+            active_narrator,
             narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
@@ -206,33 +153,18 @@ def create_app(
             story_director=active_story_director,
         )
 
-        room = next_state.world.rooms[next_state.player.location]
-        sessions[run_id].state = next_state
-        response_lines = [_transcript_command_echo(payload.command), *list(lines)]
-        response_state = StateSnapshot(
-            run_id=run_id,
-            location=next_state.player.location,
-            room_name=room.name,
-            inventory=list(next_state.player.inventory),
-            genre=next_state.story_genre,
-            tone=next_state.story_tone,
-            session_length=next_state.session_length,
-            plot_curve_id=next_state.plot_curve_id,
-            story_outline_id=next_state.story_outline_id,
-            objective=next_state.active_goal,
-            phase=str(get_phase(next_state.progress)),
-            progress=next_state.progress,
-            tension=next_state.tension,
-            turn_index=next_state.turn_index,
-        )
-        return TurnResponse(
-            run_id=run_id,
-            command=payload.command,
-            action_raw=action_raw,
-            beat=beat_type,
-            continued=continued,
-            lines=response_lines,
-            state=response_state,
+        sessions[run_id].state = result.next_state
+        return TurnResponse.model_validate(
+            build_turn_response_payload(
+                result.next_state,
+                payload.command,
+                result.action_raw,
+                result.beat,
+                result.continued,
+                result.lines,
+                "run_id",
+                run_id,
+            )
         )
 
     @app.on_event("shutdown")
