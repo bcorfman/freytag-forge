@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import threading
 
 from storygame.engine.state import Event
@@ -210,6 +211,26 @@ def test_story_director_opening_falls_back_when_narrator_agent_fails():
     assert all(line.startswith("edited:") for line in opening)
 
 
+def test_story_director_logs_when_opening_falls_back_after_narrator_failure(caplog):
+    state = build_default_state(seed=11)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_RaisingNarrator(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    with caplog.at_level(logging.WARNING):
+        opening = director.compose_opening(state)
+
+    assert opening
+    assert "Opening generation fell back after narrator-opening failure" in caplog.text
+    assert "NarratorOpening agent returned non-JSON content." in caplog.text
+
+
 def test_story_director_opening_falls_back_when_story_architect_agent_fails():
     state = build_default_state(seed=12)
     director = StoryDirector(
@@ -226,3 +247,23 @@ def test_story_director_opening_falls_back_when_story_architect_agent_fails():
     assert opening
     assert all(line.startswith("edited:") for line in opening)
     assert any("You are" in line for line in opening)
+
+
+def test_story_director_logs_when_opening_falls_back_after_planning_failure(caplog):
+    state = build_default_state(seed=12)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_RaisingArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_StubPlot(),
+        narrator_opening=_StubNarrator(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    with caplog.at_level(logging.WARNING):
+        opening = director.compose_opening(state)
+
+    assert opening
+    assert "Opening generation fell back after planning failure" in caplog.text
+    assert "OPENAI_API_KEY is required for story-agent execution." in caplog.text
