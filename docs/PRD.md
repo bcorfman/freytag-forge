@@ -141,11 +141,19 @@ flowchart LR
 
 ### Web Surfaces
 - `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
+- Local/dev web uses the normal local narrator stack and story-agent stack:
+  - narrator mode resolved from OpenAI/Ollama configuration,
+  - opening/bootstrap planning may use the normal story-agent path,
+  - and local misconfiguration may surface directly during development.
 - `storygame.web_demo` is the hosted-demo API surface:
   - `GET /api/v1/health`
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
-- Local web and hosted demo share the same `storygame.web_runtime` turn/bootstrap orchestration so story execution stays aligned across surfaces.
+- Hosted demo is a separate deployment surface with different narrator/backend assumptions:
+  - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
+  - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
+  - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
+- Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
 - Hosted-demo sessions use explicit TTL expiry with server-side `session_id` continuity.
 - Demo app save/load slots are scoped by `session_id` for deterministic isolation.
@@ -218,8 +226,9 @@ flowchart LR
 - Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
+- Hosted-demo bootstrap is an explicit compatibility boundary: it must remain playable without `OPENAI_API_KEY`, even when local web/bootstrap still uses OpenAI/Ollama story-agent paths.
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
-- First substantive command parity is shared across local web and hosted demo; surface differences should be operational only, not story-path differences.
+- First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation now fails soft: if narrator-opening contract parsing fails, a deterministic fallback opening is used instead of surfacing a 500 error.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).

@@ -20,6 +20,9 @@ Hard rules:
 - NPC dialogue should generally be LLM-authored from deterministic context. Do not replace ordinary in-scope conversations with canned deterministic lines unless explicitly required as a validated fallback.
 - High-impact or out-of-scope actions must require explicit confirmation before state mutation, then trigger deterministic replan markers so goals, NPC behavior, and consequences can adapt coherently.
 - Preserve explicit typed proposal/validation boundaries. Prefer contract types and adapters for runtime turn proposals over ad-hoc dict plumbing or special-case command branches.
+- Treat `storygame.web` and `storygame.web_demo` as separate deployment surfaces with different narrator/backend assumptions. Shared helpers are allowed only below that adapter boundary.
+- Do not centralize bootstrap/opening generation in a way that makes hosted demo depend on local OpenAI story-agent credentials. Hosted demo must remain playable without `OPENAI_API_KEY` when configured to use the Cloudflare Worker / Llama path.
+- When refactoring web surfaces, preserve story/output parity where possible, but do not erase legitimate deployment differences such as hosted fail-closed behavior, Cloudflare-backed narration, or credential boundaries.
 
 Dependency/testability:
 - Write tests first, then write the code to match the tests (TDD), then update the docs to reflect the new/updated code once it works.
