@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import logging
 
 from storygame.engine.state import Event, GameState
 from storygame.llm.output_editor import OutputEditor, build_output_editor
@@ -18,6 +19,8 @@ from storygame.llm.story_agents.agents import (
     StoryArchitectAgent,
     StoryReplanAgent,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class StoryDirector:
@@ -49,12 +52,15 @@ class StoryDirector:
         cast: dict[str, object] = {}
         plan: dict[str, object] = {}
         planning_failed = False
+        planning_error = ""
         try:
             architect = self._story_architect.run(state)
             cast = self._character_designer.run(state, architect)
             plan = self._plot_designer.run(state, architect, cast)
-        except RuntimeError:
+        except RuntimeError as exc:
             planning_failed = True
+            planning_error = str(exc)
+            _LOGGER.warning("Opening generation fell back after planning failure: %s", planning_error)
         with ThreadPoolExecutor(max_workers=2) as executor:
             room_future = executor.submit(self._ensure_room_presentation_cache, state, architect, cast, plan)
             if planning_failed:
@@ -63,7 +69,8 @@ class StoryDirector:
                 opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
                 try:
                     opening = opening_future.result()
-                except RuntimeError:
+                except RuntimeError as exc:
+                    _LOGGER.warning("Opening generation fell back after narrator-opening failure: %s", str(exc))
                     opening = self._fallback_opening_lines(state, architect, cast, plan)
             room_future.result()
         return self._output_editor.review_opening(opening, state.active_goal)
