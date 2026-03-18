@@ -92,6 +92,14 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
     assert agent_module._chat_complete("ollama", "s", "u") == "ok-ollama"
 
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        return _FakeResponse('{"narration":"ok-cloudflare"}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
+
 
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -146,6 +154,10 @@ def test_chat_complete_error_paths(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _bad_ollama)
     with pytest.raises(RuntimeError, match="Ollama story-agent request failed"):
         agent_module._chat_complete("ollama", "s", "u")
+
+    monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
+    with pytest.raises(RuntimeError, match="CLOUDFLARE_WORKER_URL"):
+        agent_module._chat_complete("cloudflare", "s", "u")
 
     with pytest.raises(ValueError, match="require mode"):
         agent_module._chat_complete("invalid", "s", "u")

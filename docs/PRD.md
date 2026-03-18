@@ -152,7 +152,7 @@ flowchart LR
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:
   - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
   - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
-  - hosted bootstrap/opening is composed from the seeded `world_package.story_plan.setup_paragraphs` path plus normal output editing, not from the local story-agent opening planner,
+  - hosted bootstrap/opening still uses story planning plus direct LLM-authored scene prose, but it must do so through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
 - Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
@@ -228,6 +228,7 @@ flowchart LR
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
 - Hosted-demo bootstrap is an explicit compatibility boundary: it must remain playable without `OPENAI_API_KEY`, even when local web/bootstrap still uses OpenAI/Ollama story-agent paths.
+- Opening prose should feel materially consistent across CLI, local web, and hosted demo: every surface should use direct LLM-authored scene prose grounded in the same planned story context, even if different backend adapters are used underneath.
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
 - First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.

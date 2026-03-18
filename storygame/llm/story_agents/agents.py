@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlparse, urlunparse
 from typing import Any, Protocol
+from uuid import uuid4
 
 from storygame.engine.state import GameState
 from storygame.llm.story_agents.contracts import (
@@ -109,7 +112,71 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "Ollama story-agent request failed across endpoints. "
             f"model={model}. attempts={' | '.join(errors)}"
         )
-    raise ValueError("Story agents require mode 'openai' or 'ollama'.")
+    if mode == "cloudflare":
+        worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
+        token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
+        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "20.0").strip())
+        retries = int(os.getenv("CLOUDFLARE_RETRIES", "1").strip())
+        retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
+        if not worker_url:
+            raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
+
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "FreytagForgeDemo/1.0",
+        }
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        request_payload = {
+            "system": system,
+            "user": user,
+            "trace_id": uuid4().hex,
+            "session_id": "",
+        }
+        http_request = urllib.request.Request(
+            worker_url,
+            data=json.dumps(request_payload).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+        attempt = 0
+        while True:
+            try:
+                with urllib.request.urlopen(http_request, timeout=timeout) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                narration = str(payload.get("narration", "")).strip()
+                if narration:
+                    return narration
+                if "choices" in payload:
+                    return str(payload["choices"][0]["message"]["content"]).strip()
+                raise RuntimeError("Cloudflare story-agent response missing expected content.")
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace")
+                if 500 <= exc.code <= 599 and attempt < retries:
+                    _sleep_before_retry(retry_backoff_ms, attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError(f"Cloudflare story-agent request failed: {exc.code} {detail}") from exc
+            except urllib.error.URLError as exc:
+                if attempt < retries:
+                    _sleep_before_retry(retry_backoff_ms, attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
+            except Exception as exc:
+                if isinstance(exc, socket.timeout) and attempt < retries:
+                    _sleep_before_retry(retry_backoff_ms, attempt)
+                    attempt += 1
+                    continue
+                raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
+    raise ValueError("Story agents require mode 'openai', 'ollama', or 'cloudflare'.")
+
+
+def _sleep_before_retry(retry_backoff_ms: int, attempt: int) -> None:
+    delay_ms = retry_backoff_ms * (attempt + 1)
+    if delay_ms <= 0:
+        return
+    time.sleep(delay_ms / 1000.0)
 
 
 def _resolve_ollama_endpoints(raw_url: str) -> tuple[str, ...]:
