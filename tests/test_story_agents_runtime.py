@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import urllib.error
 
 import pytest
@@ -251,6 +252,13 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     assert "their posture" not in opening_with_named_contact[0].lower()
     assert "daria stone's posture" in opening_with_named_contact[0].lower()
 
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: "p1.\n\np2.\n\np3.",
+    )
+    prose_opening = narr_agent.run(state, architect, cast, plan)
+    assert prose_opening == ["p1.", "p2.", "p3."]
+
     # Room presentation success
     monkeypatch.setattr(
         "storygame.llm.story_agents.agents._chat_complete",
@@ -289,6 +297,26 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
         room.npc_ids = ()
     with pytest.raises(RuntimeError, match="requires at least one NPC"):
         DefaultCharacterDesignerAgent("openai").run(empty_state, architect)
+
+
+def test_narrator_opening_logs_raw_response_when_contract_validation_fails(monkeypatch, caplog) -> None:
+    state = build_default_state(seed=503)
+    architect = {"protagonist_name": "Noah Kade", "protagonist_background": "A detective."}
+    cast = {"contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}]}
+    plan = {"assistant_name": "Daria Stone", "actionable_objective": "Start with the case file."}
+    narr_agent = DefaultNarratorOpeningAgent("openai")
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps({"paragraphs": ["only one"]}),
+    )
+
+    with caplog.at_level(logging.WARNING):
+        with pytest.raises(RuntimeError, match="contract validation failed"):
+            narr_agent.run(state, architect, cast, plan)
+
+    assert "NarratorOpening contract validation failed with raw response" in caplog.text
+    assert '{"paragraphs": ["only one"]}' in caplog.text
 
 
 def test_character_designer_pins_seeded_opening_contact_as_assistant(monkeypatch) -> None:
