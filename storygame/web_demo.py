@@ -20,17 +20,9 @@ from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web_runtime import (
-    ScopedSaveStore,
-    build_bootstrap_response_payload_from_lines,
-    build_turn_response_payload,
-    execute_turn,
-    is_bootstrap_command,
-)
+from storygame.web_runtime import ScopedSaveStore, build_bootstrap_response_payload, build_turn_response_payload, execute_turn, is_bootstrap_command
 
 _LOGGER = logging.getLogger(__name__)
-
-
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -138,8 +130,9 @@ def create_demo_app(
         else narrator
     )
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
+    story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
     active_story_director = (
-        StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
+        StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
     )
     resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
     app.add_middleware(
@@ -215,17 +208,6 @@ def create_demo_app(
             raise HTTPException(status_code=404, detail=f"Unknown or expired session_id '{session_id}'.")
         return session
 
-    def _compose_demo_opening(state: GameState) -> list[str]:
-        story_plan = dict(state.world_package.get("story_plan", {}))
-        opening_lines = [str(line).strip() for line in story_plan.get("setup_paragraphs", ()) if str(line).strip()]
-        if not opening_lines:
-            room = state.world.rooms[state.player.location]
-            opening_lines = [
-                f"{room.name} waits at the edge of the investigation.",
-                f"Your first objective is immediate: {state.active_goal}",
-            ]
-        return active_output_editor.review_opening(opening_lines, state.active_goal)
-
     @app.get("/api/v1/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse()
@@ -269,12 +251,12 @@ def create_demo_app(
         start_state = session.state
         bootstrap_only = session.turns_used == 0 and is_bootstrap_command(payload.command)
         if bootstrap_only:
-            payload_body = build_bootstrap_response_payload_from_lines(
+            payload_body = build_bootstrap_response_payload(
                 start_state,
                 payload.command,
                 "session_id",
                 payload.session_id,
-                _compose_demo_opening(start_state),
+                active_story_director,
             )
             payload_body["status"] = "ok"
             return TurnResponse.model_validate(payload_body)

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import json
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
+from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
 from storygame.web_demo import _build_demo_narrator, create_demo_app
 from tests.narrator_stubs import StubNarrator
@@ -40,6 +42,20 @@ class _FailingNarrator:
 
     def generate(self, _context):  # noqa: ANN001
         raise RuntimeError(self._error_message)
+
+
+class _FakeResponse:
+    def __init__(self, body: str) -> None:
+        self._body = body.encode("utf-8")
+
+    def read(self) -> bytes:
+        return self._body
+
+    def __enter__(self) -> _FakeResponse:
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        return None
 
 
 def _client(tmp_path, clock: _Clock | None = None) -> TestClient:
@@ -128,14 +144,48 @@ def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tm
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
-def test_demo_bootstrap_uses_demo_opening_path_without_openai_story_agent_credentials(
+def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_credentials(
     tmp_path,
     monkeypatch,
     caplog,
 ):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
-    monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    observed_requests: list[dict[str, str]] = []
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed_requests.append(json.loads(request.data.decode("utf-8")))
+        body = observed_requests[-1]
+        system = body.get("system", "")
+        if "Story Architect Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"secrets_to_hide\\":[\\"secret\\"],\\"tone\\":\\"mysterious\\"}"}'
+            )
+        if "Character Designer Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}]}"}'
+            )
+        if "Plot Designer Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file, scan the grounds, and decide which lead to press first.\\"}"}'
+            )
+        if "Narrator Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion, its stone still holding the last of the day\\\\u2019s heat.\\",\\"You are Noah Kade, a detective haunted by an old failure, and Daria Stone keeps close beside you with the case file already in hand.\\",\\"Tonight\\\\u2019s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\\" ]}"}'
+            )
+        if "Room Presentation Agent" in system:
+            room_payload = {
+                "rooms": [
+                    {"room_id": room_id, "long": f"Long {room.name}.", "short": f"Short {room.name}."}
+                    for room_id, room in build_default_state(seed=52).world.rooms.items()
+                ]
+            }
+            return _FakeResponse('{"narration":' + json.dumps(json.dumps(room_payload)) + "}")
+        raise AssertionError(f"Unexpected system prompt: {system}")
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -151,7 +201,9 @@ def test_demo_bootstrap_uses_demo_opening_path_without_openai_story_agent_creden
     assert payload["status"] == "ok"
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
-    assert any("kept a low profile for years" in line for line in payload["lines"])
+    assert any("The evening air bites at your skin" in line for line in payload["lines"])
+    assert any("You are Noah Kade" in line for line in payload["lines"])
+    assert any("Tonight" in line and "work is practical before it is grand" in line for line in payload["lines"])
     assert "Opening generation fell back" not in caplog.text
 
 
