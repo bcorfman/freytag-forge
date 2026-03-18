@@ -23,6 +23,17 @@ class _StubPlot:
         return {"assistant_name": "Stub Ally", "actionable_objective": "Open the case file first."}
 
 
+class _BadPlot:
+    def run(self, state, architect, cast):  # noqa: ANN001, ARG002
+        return {
+            "assistant_name": "Daria Stone",
+            "actionable_objective": (
+                "Create a character profile for the tech-savvy detective, including their background, "
+                "skills, and motivations, to effectively investigate the string of grisly murders."
+            ),
+        }
+
+
 class _StubNarrator:
     def run(self, state, architect, cast, plan):  # noqa: ANN001
         return [
@@ -231,6 +242,24 @@ def test_story_director_logs_when_opening_falls_back_after_narrator_failure(capl
     assert "NarratorOpening agent returned non-JSON content." in caplog.text
 
 
+def test_story_director_narrator_failure_prefers_seeded_story_plan_over_bad_planner_fields():
+    state = build_default_state(seed=11)
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_architect=_StubArchitect(),
+        character_designer=_StubCharacter(),
+        plot_designer=_BadPlot(),
+        narrator_opening=_RaisingNarrator(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+
+    assert any("has kept a low profile for years" in line for line in opening)
+    assert not any("Create a character profile" in line for line in opening)
+
+
 def test_story_director_opening_falls_back_when_story_architect_agent_fails():
     state = build_default_state(seed=12)
     director = StoryDirector(
@@ -246,7 +275,7 @@ def test_story_director_opening_falls_back_when_story_architect_agent_fails():
     opening = director.compose_opening(state)
     assert opening
     assert all(line.startswith("edited:") for line in opening)
-    assert any("You are" in line for line in opening)
+    assert any("has kept a low profile for years" in line for line in opening)
 
 
 def test_story_director_logs_when_opening_falls_back_after_planning_failure(caplog):

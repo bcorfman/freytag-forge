@@ -82,6 +82,10 @@ class StoryDirector:
         cast: dict[str, object],
         plan: dict[str, object],
     ) -> list[str]:
+        story_plan = dict(state.world_package.get("story_plan", {}))
+        seeded_lines = [str(line).strip() for line in story_plan.get("setup_paragraphs", ()) if str(line).strip()]
+        if seeded_lines:
+            return seeded_lines
         room = state.world.rooms[state.player.location]
         protagonist = str(architect.get("protagonist_name", "")).strip() or "the detective"
         background = str(architect.get("protagonist_background", "")).strip()
