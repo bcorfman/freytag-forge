@@ -28,6 +28,8 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Phase: {payload['phase']}\n"
         f"Tension: {payload['tension']:.2f}\n"
         f"Location: {payload['room_name']}\n"
+        f"Protagonist: {payload['protagonist_name']}\n"
+        f"Assistant anchor: {payload['assistant_name']}\n"
         f"Visible items: {', '.join(payload['visible_items'])}\n"
         f"Visible NPCs: {', '.join(payload['visible_npcs'])}\n"
         f"Soft memory hints (non-authoritative): {', '.join(payload['memory_fragments'])}\n"

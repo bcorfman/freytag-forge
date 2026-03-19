@@ -37,6 +37,15 @@ _APPEARANCE_QUESTION_PATTERN = re.compile(
     r"\b(what are you wearing|what're you wearing|wearing|clothes|clothing|coat|dress|uniform|outfit)\b",
     re.IGNORECASE,
 )
+_PLAYER_APPEARANCE_QUESTION_PATTERN = re.compile(r"\bwhat am i wearing\b", re.IGNORECASE)
+_REMOVE_COAT_REQUEST_PATTERN = re.compile(r"\b(take off|remove)\s+(?:your\s+)?coat\b", re.IGNORECASE)
+_SERVICE_PASSAGE_PATTERN = re.compile(r"\bservice\s+passage\b", re.IGNORECASE)
+_SERVICE_PASSAGE_LOCATION_PATTERN = re.compile(
+    r"\b(where is|where's|located|location|take me to|show me|lead me to|how do we get to)\b",
+    re.IGNORECASE,
+)
+_ROUTE_KEY_PATTERN = re.compile(r"\broute\s+key\b|\bkey\b", re.IGNORECASE)
+_CONVERSATIONAL_WORD_PATTERN = re.compile(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE)
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -50,6 +59,36 @@ def _clean_topic_text(value: str) -> str:
     normalized = _normalize_target(cleaned)
     tokens = [token for token in normalized.split("_") if token and token not in _TOPIC_STOPWORDS]
     return " ".join(tokens).strip()
+
+
+def _is_conversational_input(raw_input: str, first_word: str, explicit_target_requested: bool) -> bool:
+    if explicit_target_requested:
+        return True
+    if first_word in {"talk", "speak", "speak_to", "speakto", "hello", "hi", "greet", "ask", "tell"}:
+        return True
+    return _CONVERSATIONAL_WORD_PATTERN.search(raw_input) is not None
+
+
+def _topic_from_raw_input(raw_input: str, text: str) -> str:
+    if _REMOVE_COAT_REQUEST_PATTERN.search(raw_input):
+        return "remove coat request"
+    if _PLAYER_APPEARANCE_QUESTION_PATTERN.search(raw_input):
+        return "player appearance"
+    if _SERVICE_PASSAGE_PATTERN.search(raw_input):
+        if _SERVICE_PASSAGE_LOCATION_PATTERN.search(raw_input):
+            return "service passage location"
+        return "service passage"
+    if _ROUTE_KEY_PATTERN.search(raw_input):
+        return "route key"
+    if _APPEARANCE_QUESTION_PATTERN.search(raw_input):
+        return "appearance"
+    if re.search(r"\b(goal|goals|objective|objectives)\b", text):
+        return "objective"
+    if "about" in text:
+        return _clean_topic_text(text.split("about", 1)[1]) or "rumors"
+    if _PLACE_QUESTION_PATTERN.search(raw_input):
+        return "place"
+    return "rumors"
 
 
 class FreeformProposalAdapter(Protocol):
@@ -158,7 +197,12 @@ class RuleBasedFreeformProposalAdapter:
                 if any(name_part and name_part in text for name_part in (_normalize_target(part) for part in npc.name.split())):
                     target = npc_id
                     break
-        if not target and visible_npcs and not explicit_target_requested:
+        if (
+            not target
+            and visible_npcs
+            and not explicit_target_requested
+            and _is_conversational_input(raw_input, first, explicit_target_requested)
+        ):
             target = visible_npcs[0]
 
         intent = "ask_about"
@@ -184,14 +228,8 @@ class RuleBasedFreeformProposalAdapter:
         elif "threat" in text or "warn" in text:
             intent = "threaten"
             topic = ""
-        elif _APPEARANCE_QUESTION_PATTERN.search(raw_input):
-            topic = "appearance"
-        elif re.search(r"\b(goal|goals|objective|objectives)\b", text):
-            topic = "objective"
-        elif "about" in text:
-            topic = _clean_topic_text(text.split("about", 1)[1]) or "rumors"
-        elif _PLACE_QUESTION_PATTERN.search(raw_input):
-            topic = "place"
+        else:
+            topic = _topic_from_raw_input(raw_input, text)
 
         targets: list[str] = [target] if target else []
         if intent in {"inspect", "knock"}:
@@ -367,6 +405,25 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
     if intent == "threaten":
         return f"{speaker} narrows their eyes. 'Threats won't help us solve this.'"
     if topic:
+        if topic == "player appearance":
+            return (
+                f"{speaker} says, 'You look like you dressed for fieldwork: weatherproof layers, practical shoes, "
+                "and whatever you could carry without slowing down. Nothing ornamental, nothing wasted.'"
+            )
+        if topic == "remove coat request":
+            return (
+                f"{speaker} says, 'No. The coat stays on. Ask about the case if you want something useful out of me.'"
+            )
+        if topic in {"service passage", "service passage location"}:
+            return (
+                f"{speaker} says, 'If the route key means what it looks like, the service passage should branch off "
+                "the mansion interior beyond the foyer. Someone expected to move through it after dark without using the main halls.'"
+            )
+        if topic == "route key":
+            return (
+                f"{speaker} says, 'The route key matters because it marks a service passage someone expected to use "
+                "after dark. If we press inside, that passage is worth finding.'"
+            )
         if state is not None:
             relevant_item_id = _find_relevant_item(state, topic)
             if relevant_item_id:

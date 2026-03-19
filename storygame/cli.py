@@ -889,12 +889,14 @@ def run_turn(
         lines = [line for line in lines if line]
 
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
+    reviewed_lines = [_rewrite_known_npc_names(next_state, line) for line in reviewed_lines if line]
+    reviewed_lines = _suppress_repeated_goal_copy(reviewed_lines, raw_input, next_state.active_goal)
     if (
         narration
         and not _contains_repeated_goal_copy(narration, raw_input, next_state.active_goal)
         and not _has_similar_narration(reviewed_lines, narration)
     ):
-        reviewed_lines.append(narration)
+        reviewed_lines.append(_rewrite_known_npc_names(next_state, narration))
     return next_state, reviewed_lines, effective_action.raw, beat_type, True
 
 
