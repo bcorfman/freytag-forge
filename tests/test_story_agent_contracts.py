@@ -105,3 +105,19 @@ def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
     assert plot["assistant_name"] == "Daria Stone"
     assert plot["actionable_objective"].endswith(".")
     assert all(paragraph.endswith((".", "!", "?")) for paragraph in opening["paragraphs"])
+
+
+def test_narrator_opening_contract_accepts_wrapped_draft_shape() -> None:
+    opening = parse_narrator_opening_output(
+        {
+            "draft": {
+                "paragraphs": [
+                    "first paragraph",
+                    "second paragraph",
+                    "third paragraph",
+                ]
+            }
+        }
+    )
+
+    assert len(opening["paragraphs"]) == 3
