@@ -15,6 +15,44 @@ from storygame.engine.parser import Action, ActionKind
 from storygame.engine.state import Event, GameState
 
 
+def _normalize_item_phrase(value: str) -> str:
+    return value.strip().lower().replace(" ", "_")
+
+
+def _resolve_room_item_target(state: GameState, room_id: str, target: str) -> str:
+    visible_items = room_items(state, room_id)
+    if target in visible_items:
+        return target
+
+    normalized_target = _normalize_item_phrase(target)
+    matches: list[str] = []
+    for item_id in visible_items:
+        if normalized_target == item_id:
+            matches.append(item_id)
+            continue
+        item = state.world.items.get(item_id)
+        if item is None:
+            continue
+        normalized_name = _normalize_item_phrase(item.name)
+        if normalized_target == normalized_name:
+            matches.append(item_id)
+            continue
+        target_tokens = tuple(token for token in normalized_target.split("_") if token)
+        item_tokens = tuple(token for token in item_id.split("_") if token)
+        name_tokens = tuple(token for token in normalized_name.split("_") if token)
+        if normalized_target and (
+            normalized_target in item_tokens
+            or normalized_target in name_tokens
+            or (target_tokens and all(token in item_tokens or token in name_tokens for token in target_tokens))
+        ):
+            matches.append(item_id)
+
+    deduped = tuple(dict.fromkeys(matches))
+    if len(deduped) == 1:
+        return deduped[0]
+    return target
+
+
 def _find_exit(state: GameState, room_id: str, target: str) -> tuple[str, str] | None:
     exits = room_paths(state, room_id)
     if target in exits:
@@ -169,7 +207,8 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
         return _commit()
 
     if action.kind == ActionKind.TAKE:
-        if action.target not in room_items(next_state, room_id):
+        resolved_target = _resolve_room_item_target(next_state, room_id, action.target)
+        if resolved_target not in room_items(next_state, room_id):
             events.append(
                 Event(
                     type="take_failed",
@@ -181,13 +220,13 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
             )
             return _commit()
 
-        item = next_state.world.items[action.target]
+        item = next_state.world.items[resolved_target]
         if not item.portable:
             events.append(
                 Event(
                     type="take_failed",
                     message_key="take_failed_not_portable",
-                    entities=(action.target,),
+                    entities=(resolved_target,),
                     turn_index=next_state.turn_index,
                 )
             )
@@ -197,7 +236,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
             Event(
                 type="take",
                 message_key=take_item_message(item),
-                entities=(action.target,),
+                entities=(resolved_target,),
                 delta_progress=item.delta_progress,
                 delta_tension=0.02,
                 tags=("world", "quest_item" if "quest" in item.tags else "world_item"),
@@ -206,8 +245,8 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     "item_kind": item.kind,
                     "item_name": item.name,
                     "fact_ops": [
-                        {"op": "retract", "fact": ("room_item", room_id, action.target)},
-                        {"op": "assert", "fact": ("holding", "player", action.target)},
+                        {"op": "retract", "fact": ("room_item", room_id, resolved_target)},
+                        {"op": "assert", "fact": ("holding", "player", resolved_target)},
                     ],
                 },
             )

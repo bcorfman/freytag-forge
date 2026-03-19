@@ -745,6 +745,38 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
+def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
+    state = build_default_state(seed=88335)
+    looked_state, _first_lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "look",
+        Random(88335),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+
+    class _ReintroducingDirector(_StubSetupDirector):
+        def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+            return ['Daria Stone says: "Keep your eyes on the ledger."']
+
+    final_state, lines, _action_raw, beat_type, continued = run_turn(
+        looked_state,
+        "Daria, hello",
+        Random(88335),
+        SilentNarrator(),
+        debug=False,
+        story_director=_ReintroducingDirector(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert final_state.turn_index == 2
+    assert any(line.startswith('Daria says: "') for line in lines)
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+
+
 def test_run_turn_suppresses_repeated_goal_copy_after_opening():
     state = build_default_state(seed=8834)
     goal_line = f"Your immediate objective is clear: {state.active_goal}"

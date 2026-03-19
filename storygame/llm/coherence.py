@@ -456,6 +456,8 @@ def _context_with_memory_fragment(context: NarrationContext, fragment: str) -> N
     return NarrationContext(
         room_name=context.room_name,
         room_description=context.room_description,
+        protagonist_name=context.protagonist_name,
+        assistant_name=context.assistant_name,
         visible_items=context.visible_items,
         visible_npcs=context.visible_npcs,
         npc_facts=context.npc_facts,

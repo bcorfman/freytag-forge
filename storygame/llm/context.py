@@ -38,12 +38,16 @@ class NarrationContext:
     beat: str
     goal: str
     action: str
+    protagonist_name: str = ""
+    assistant_name: str = ""
     memory_fragments: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
         return {
             "room_name": self.room_name,
             "room_description": self.room_description,
+            "protagonist_name": self.protagonist_name,
+            "assistant_name": self.assistant_name,
             "visible_items": list(self.visible_items),
             "visible_npcs": list(self.visible_npcs),
             "npc_facts": list(self.npc_facts),
@@ -111,6 +115,27 @@ def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
     return tuple(_npc_fact(state.world.npcs[npc_id], locations.get(npc_id, "")) for npc_id in npc_ids[:MAX_NPC_FACTS])
 
 
+def _protagonist_name(state: GameState) -> str:
+    story_plan = dict(state.world_package.get("story_plan", {}))
+    protagonist = str(story_plan.get("protagonist_name", "")).strip()
+    if protagonist:
+        return protagonist
+    return "The Detective"
+
+
+def _assistant_name(state: GameState) -> str:
+    room = state.world.rooms[state.player.location]
+    if room.npc_ids:
+        npc = state.world.npcs.get(room.npc_ids[0])
+        if npc is not None and npc.name.strip():
+            return npc.name.strip()
+    for npc_id in sorted(state.world.npcs):
+        npc = state.world.npcs[npc_id]
+        if npc.name.strip():
+            return npc.name.strip()
+    return ""
+
+
 def build_narration_context(
     state: GameState,
     action: Action,
@@ -123,6 +148,8 @@ def build_narration_context(
     return NarrationContext(
         room_name=room.name,
         room_description=room.description,
+        protagonist_name=_protagonist_name(state),
+        assistant_name=_assistant_name(state),
         visible_items=visible_items[:MAX_VISIBLE_ITEMS],
         visible_npcs=room.npc_ids,
         npc_facts=_summarize_npc_facts(state),

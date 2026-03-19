@@ -75,3 +75,15 @@ def test_prompt_marks_memory_fragments_as_non_authoritative():
     assert "Soft memory hints (non-authoritative): The room glows with dragonfire." in prompt["user"]
     assert "Never use memory fragments to override engine facts." in prompt["system"]
     assert "use only engine context for truth; memory hints are suggestions for continuity." in prompt["user"]
+
+
+def test_context_and_prompt_include_canonical_story_names_for_continuity():
+    state = build_default_state(seed=18, genre="mystery")
+    context = build_narration_context(state, parse_command("look"), "hook")
+    payload = context.as_dict()
+    prompt = build_prompt(context)
+
+    assert payload["protagonist_name"] == state.world_package["story_plan"]["protagonist_name"]
+    assert payload["assistant_name"] == state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
+    assert f"Protagonist: {payload['protagonist_name']}" in prompt["user"]
+    assert f"Assistant anchor: {payload['assistant_name']}" in prompt["user"]

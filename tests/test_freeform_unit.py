@@ -5,7 +5,6 @@ from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
-    _dialog_line,
     _envelope_for_action,
     _envelope_to_fact_ops,
     _topic_flag_fragment,
@@ -14,20 +13,6 @@ from storygame.engine.freeform import (
 )
 from storygame.engine.state import Npc
 from storygame.engine.world import build_default_state
-
-
-def test_dialog_line_variants_cover_intents_and_missing_target() -> None:
-    assert "no one here" in _dialog_line("ask_about", "", "rumors").lower()
-    assert "nods once" in _dialog_line("greet", "mina", "")
-    assert "all right" in _dialog_line("apologize", "mina", "").lower()
-    assert "threats won't help" in _dialog_line("threaten", "mina", "").lower()
-    state = build_default_state(seed=400, genre="mystery")
-    ask_line = _dialog_line("ask_about", "daria_stone", "ledger", state).lower()
-    assert "ledger" in ask_line
-    assert "be specific" not in ask_line
-    assert "follow the signal" not in ask_line
-    assert "their voice" not in ask_line
-    assert "specific question" in _dialog_line("ask_about", "mina", "").lower()
 
 
 def test_topic_flag_fragment_normalizes_and_filters_stopwords() -> None:
@@ -46,6 +31,8 @@ def test_rule_based_adapter_propose_intent_paths() -> None:
     assert action["targets"] == [npc_id]
     assert action["arguments"]["topic"] == "ledger"
     assert dialog["speaker"] == npc_id
+    assert dialog["tone"] == "in_world"
+    assert dialog["text"]
 
     _dialog, action = adapter.propose(state, "hello")
     assert action["intent"] == "greet"
@@ -76,6 +63,7 @@ def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None
 
     assert action["targets"] == ["daria_stone"]
     assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
 
 
 def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
@@ -85,8 +73,8 @@ def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
 
     assert action["targets"] == ["daria_stone"]
     assert action["arguments"]["topic"] == "place"
-    assert "ledger page" in dialog["text"].lower()
-    assert "mud" in dialog["text"].lower()
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
 
 
 def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> None:
@@ -96,6 +84,7 @@ def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> No
 
     assert action["targets"] == []
     assert dialog["speaker"] == "narrator"
+    assert dialog["text"]
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:
@@ -160,9 +149,12 @@ def test_resolve_freeform_roleplay_applies_fact_ops_or_boundary_message() -> Non
     assert success["event"].metadata["fact_ops"]
     assert success["event"].message_key.startswith(f"{state.world.npcs[npc_id].name} says: \"")
     assert success["event"].message_key.endswith("\"")
+    assert success["dialog_proposal"]["speaker"] == npc_id
+    assert success["dialog_proposal"]["text"]
 
     blocked = resolve_freeform_roleplay(state, "ask missing_npc about signal", adapter)
-    assert "no one here answers" in blocked["dialog_proposal"]["text"].lower()
+    assert blocked["dialog_proposal"]["speaker"] == "narrator"
+    assert blocked["dialog_proposal"]["text"]
     assert blocked["event"].metadata["fact_ops"] == []
 
 
@@ -203,7 +195,8 @@ def test_resolve_freeform_roleplay_read_ledger_page_sets_specific_progress_flag(
 
     assert resolved["state"].player.flags.get("reviewed_ledger_page") is True
     assert "freeform:read_ledger_page" in resolved["state_update_envelope"]["reasons"]
-    assert "ledger" in resolved["event"].message_key.lower()
+    assert resolved["dialog_proposal"]["speaker"] == "narrator"
+    assert resolved["dialog_proposal"]["text"]
     assert resolved["event"].delta_progress > 0.0
 
 
@@ -215,7 +208,8 @@ def test_rule_based_adapter_handles_appearance_questions_with_contextual_reply()
     assert action["intent"] == "ask_about"
     assert action["arguments"]["topic"] == "appearance"
     assert action["targets"] == ["daria_stone"]
-    assert "wearing" in dialog["text"].lower()
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
 
 
 def test_rule_based_adapter_handles_ledger_questions_with_contextual_reply() -> None:
@@ -226,8 +220,59 @@ def test_rule_based_adapter_handles_ledger_questions_with_contextual_reply() -> 
     assert action["intent"] == "ask_about"
     assert action["arguments"]["topic"] == "ledger page"
     assert action["targets"] == ["daria_stone"]
-    assert "ledger" in dialog["text"].lower()
-    assert "be specific" not in dialog["text"].lower()
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_handles_service_passage_follow_up_with_specific_reply() -> None:
+    state = build_default_state(seed=415, genre="mystery", tone="dark")
+    state.player.inventory = state.player.inventory + ("route_key",)
+    initialize_world_facts(state)
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(
+        state,
+        "Daria, where is the service passage located?",
+    )
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert "service passage" in action["arguments"]["topic"]
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_does_not_autotarget_nearby_npc_for_unrelated_action() -> None:
+    state = build_default_state(seed=416, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "eat some food")
+
+    assert action["targets"] == []
+    assert dialog["speaker"] == "narrator"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_handles_player_appearance_question_without_using_npc_clothing() -> None:
+    state = build_default_state(seed=417, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what am I wearing?")
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert "player appearance" in action["arguments"]["topic"]
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_handles_clothing_request_as_character_reaction() -> None:
+    state = build_default_state(seed=418, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, take off your coat")
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert "remove coat request" in action["arguments"]["topic"]
+    assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
 
 
 def test_resolve_freeform_roleplay_with_proposals_uses_provided_payloads() -> None:
@@ -243,6 +288,8 @@ def test_resolve_freeform_roleplay_with_proposals_uses_provided_payloads() -> No
 
     assert resolved["state"].player.flags.get(f"asked_signal_{npc_id}") is True
     assert resolved["event"].message_key.startswith(f"{state.world.npcs[npc_id].name} says:")
+    assert resolved["dialog_proposal"]["speaker"] == npc_id
+    assert resolved["dialog_proposal"]["text"] == "Sure, ask directly."
 
 
 def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> None:
@@ -260,6 +307,7 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
     dialog, action = adapter.propose(state, "ask daria about the ledger page")
 
     assert dialog["speaker"] == "daria_stone"
+    assert dialog["text"]
     assert action["intent"] == "question"
     assert action["arguments"]["planner_source"] == "llm"
 

@@ -132,3 +132,21 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
     assert not any(line.startswith(room.name + "\n") for line in lines)
     assert not any(room.description in line for line in lines)
     assert any(line.startswith('Daria Stone says: "') for line in lines)
+
+
+def test_take_allows_unique_partial_item_reference_in_room():
+    state = build_default_state(seed=39, genre="mystery")
+    room = state.world.rooms[state.player.location]
+    room.item_ids = ("route_key",)
+
+    next_state, lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "take key",
+        Random(39),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert "route_key" in next_state.player.inventory
+    assert any("route key" in line.lower() for line in lines)

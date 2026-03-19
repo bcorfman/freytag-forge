@@ -213,11 +213,15 @@ flowchart LR
   - their replies should usually be LLM-authored from deterministic context,
   - their knowledge, trust, availability, and goals remain deterministically tracked,
   - and their output must remain consistent with visible facts and prior reveals.
+  - fallback dialogue must not auto-target a nearby NPC for unrelated player actions; if the player did not clearly address someone, the fallback should stay narrator-scoped or ask for clarification.
+  - fallback dialogue must preserve identity continuity by grounding narrator and NPC outputs to the canonical protagonist and assistant names already in state.
+- Item references should resolve unique shorthand naturally during deterministic validation (for example `take key` should resolve to `route key` when only one key is present and visible).
 
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
 - Turn output is room-first.
 - Room output uses plain title + prose layout (no bracketed room labels, no event bullet prefixes).
+- Once an NPC has been introduced, later dialogue speaker labels should shorten to first-name-only when unambiguous, including after output-editor review.
 - Room presentation now uses cached long/short descriptions per location: `LOOK` renders long form; non-LOOK turns render short form.
 - Mystery navigation now matches the room copy: `front_steps` leads north into a `foyer` rather than directly into the outdoor lane chain.
 - Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
