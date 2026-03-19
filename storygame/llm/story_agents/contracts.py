@@ -218,8 +218,13 @@ def parse_plot_designer_output(payload: dict) -> PlotDesignerOutput:
 
 
 def parse_narrator_opening_output(payload: dict) -> NarratorOpeningOutput:
+    normalized_payload = payload
+    if "paragraphs" not in normalized_payload:
+        draft = normalized_payload.get("draft")
+        if isinstance(draft, dict) and "paragraphs" in draft:
+            normalized_payload = dict(draft)
     try:
-        model = _NarratorOpeningModel.model_validate(payload)
+        model = _NarratorOpeningModel.model_validate(normalized_payload)
     except ValidationError as exc:
         raise _raise_contract_error("NARRATOR_OPENING_CONTRACT_INVALID", exc) from exc
     paragraphs = [_ensure_terminal_punctuation(paragraph) for paragraph in model.paragraphs if _trim_sentence(paragraph)]
