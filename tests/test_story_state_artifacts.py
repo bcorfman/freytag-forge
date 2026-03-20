@@ -51,6 +51,22 @@ def test_story_state_includes_story_hash_and_trace(tmp_path):
     assert state_payload["story_markdown_sha256"] == hashlib.sha256(story_text.encode("utf-8")).hexdigest()
 
 
+def test_story_state_payload_prefers_fact_backed_active_goal(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=102)
+    state.turn_index = 2
+    state.active_goal = "stale in-memory goal"
+    state.world_facts.assert_fact("active_goal", "Press the strongest lead from the case file.")
+
+    with SqliteSaveStore(db_path) as store:
+        store.save_run("fact_goal_slot", state, Random(8))
+
+    artifact_dir = db_path.parent / "story_artifacts" / "fact_goal_slot"
+    state_payload = load_story_state_payload(artifact_dir / STORY_STATE_FILE)
+
+    assert state_payload["active_goal"] == "Press the strongest lead from the case file."
+
+
 def test_save_run_rejects_tampered_story_markdown(tmp_path, caplog):
     db_path = tmp_path / "saves.sqlite"
     state = build_default_state(seed=88)

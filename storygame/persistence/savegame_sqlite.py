@@ -9,6 +9,7 @@ from pathlib import Path
 from random import Random
 from typing import Any
 
+from storygame.engine.facts import active_story_goal, set_active_story_goal
 from storygame.engine.state import Event, EventLog, GameState
 from storygame.engine.world import build_default_state
 from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
@@ -72,7 +73,7 @@ def serialize_state(state: GameState) -> dict[str, Any]:
         "progress": state.progress,
         "tension": state.tension,
         "turn_index": state.turn_index,
-        "active_goal": state.active_goal,
+        "active_goal": active_story_goal(state),
         "beat_history": list(state.beat_history),
         "player": {
             "location": state.player.location,
@@ -108,6 +109,7 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
     state.tension = float(payload["tension"])
     state.turn_index = int(payload["turn_index"])
     state.active_goal = payload["active_goal"]
+    set_active_story_goal(state, state.active_goal)
     state.beat_history = tuple(payload.get("beat_history", []))
     state.player.location = payload["player"]["location"]
     state.player.inventory = tuple(payload["player"]["inventory"])

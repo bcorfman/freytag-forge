@@ -5,6 +5,7 @@ import json
 import logging
 from pathlib import Path
 
+from storygame.engine.facts import active_story_goal
 from storygame.engine.state import GameState
 from storygame.plot.freytag import get_phase
 
@@ -35,7 +36,7 @@ def build_story_state_payload(
         "story_outline_id": state.story_outline_id,
         "world_package": state.world_package,
         "turn_index": state.turn_index,
-        "active_goal": state.active_goal,
+        "active_goal": active_story_goal(state),
         "progress": state.progress,
         "tension": state.tension,
         "phase": get_phase(state.progress),

@@ -5,7 +5,7 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import apply_fact_ops, player_location, room_items, room_npcs
+from storygame.engine.facts import active_story_goal, apply_fact_ops, player_location, room_items, room_npcs
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.state import Event, GameState
@@ -325,7 +325,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     ]
     payload = {
         "player_input": raw_input,
-        "goal": state.active_goal,
+        "goal": active_story_goal(state),
         "turn_index": state.turn_index,
         "room": {
             "id": room.id,
@@ -447,7 +447,7 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
                 return f"{speaker} says, 'Nothing here feels settled. We clear this room, then push {exits[0]}.'"
             return f"{speaker} says, 'The room is thin on comfort and thick with loose ends. We should search it carefully.'"
         if topic in {"objective", "goal", "goals"} and state is not None:
-            return f"{speaker} says, 'Our current objective is clear: {state.active_goal}'"
+            return f"{speaker} says, 'Our current objective is clear: {active_story_goal(state)}'"
         if topic in {"appearance", "clothing", "clothes", "wearing"}:
             return (
                 f"{speaker} says, 'I'm wearing a dark field coat, practical boots, and clothes meant for bad weather "
@@ -527,6 +527,8 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             "assert": [
                 {"fact": ["flag", "player", "reviewed_case_file"]},
                 {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
+                {"fact": ["discovered_clue", "case_file"]},
+                {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
             ],
             "retract": [],
             "numeric_delta": [],
@@ -541,6 +543,14 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             "assert": [
                 {"fact": ["flag", "player", "reviewed_ledger_page"]},
                 {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
+                {"fact": ["discovered_clue", "ledger_page"]},
+                {
+                    "fact": [
+                        "discovered_lead",
+                        "ledger_page",
+                        "The ledger page exposes a missing payment entry tied to tonight's visit.",
+                    ]
+                },
             ],
             "retract": [],
             "numeric_delta": [{"key": "trust:daria_stone:player", "delta": 0.03}],

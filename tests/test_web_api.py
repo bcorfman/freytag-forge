@@ -156,6 +156,33 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
+def test_bootstrap_response_state_prefers_fact_backed_objective(tmp_path):
+    class _FactGoalDirector:
+        def compose_opening(self, state):  # noqa: ANN001
+            state.active_goal = "stale in-memory goal"
+            state.world_facts.assert_fact("active_goal", "Review the case file and press the strongest lead.")
+            state.world_package["llm_story_bundle"] = {"opening_paragraphs": ["Opening line."]}
+            return ["Opening line."]
+
+        def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+            return lines
+
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator("Opening line."),
+            output_editor=_PassThroughEditor(),
+            story_director=_FactGoalDirector(),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["state"]["objective"] == "Review the case file and press the strongest lead."
+
+
 def test_bootstrap_only_response_prefers_narrator_opening_over_placeholder_story_plan(tmp_path):
     client = TestClient(
         create_app(

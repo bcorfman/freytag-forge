@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from storygame.engine.impact import assess_player_command, requires_high_impact_confirmation
+from storygame.engine.impact import assess_player_command, replan_scope_for_assessment, requires_high_impact_confirmation
 from storygame.engine.parser import parse_command
 from storygame.engine.world import build_default_state
 
@@ -34,6 +34,7 @@ def test_assess_player_command_critical_path_with_multiple_risk_dimensions() -> 
     assert "weapon_use_signal" in assessment["reasons"]
     assert len(assessment["consequences"]) <= 3
     assert requires_high_impact_confirmation(assessment) is True
+    assert replan_scope_for_assessment(assessment) == "goal_change"
 
 
 def test_assess_player_command_detects_violence_against_present_npc() -> None:
@@ -45,3 +46,12 @@ def test_assess_player_command_detects_violence_against_present_npc() -> None:
     assert "violent_action" in assessment["reasons"]
     assert "violence_against_present_npc" in assessment["reasons"]
     assert assessment["dimensions"]["goal_violation"] > 0.0
+
+
+def test_assess_player_command_can_limit_replan_to_light_scope() -> None:
+    state = build_default_state(seed=304)
+    action = parse_command("spray graffiti on statue")
+    assessment = assess_player_command(state, "spray graffiti on statue", action)
+
+    assert requires_high_impact_confirmation(assessment) is False
+    assert replan_scope_for_assessment(assessment) == "light"

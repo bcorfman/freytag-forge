@@ -7,14 +7,23 @@ def build_story_bootstrap_prompt(
     premise: str,
     genre: str,
     tone: str,
+    session_length: str,
+    beat_candidates: list[str],
     contacts_seed: list[dict],
     opening_room: dict[str, object],
+    rooms_seed: list[dict[str, object]],
+    items_seed: list[dict[str, object]],
     inventory_seed: list[str],
 ) -> tuple[str, str]:
     system = (
         "You are Story Bootstrap Agent. Return JSON only with keys: "
         "protagonist_name, protagonist_background, assistant_name, actionable_objective, primary_goal, "
-        "secondary_goals, hidden_threads, reveal_schedule, contacts, opening_paragraphs. "
+        "secondary_goals, expanded_outline, story_beats, villains, timed_events, clue_placements, "
+        "hidden_threads, reveal_schedule, contacts, opening_paragraphs. "
+        "story_beats must map the whole story arc for the requested session length. "
+        "villains must explain motive, means, and opportunity. "
+        "clue_placements must use exact provided item_id and room_id values and should keep meaningful clues hidden in plausible places. "
+        "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
         "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
     )
@@ -23,8 +32,12 @@ def build_story_bootstrap_prompt(
             "premise": premise,
             "genre": genre,
             "tone": tone,
+            "session_length": session_length,
+            "beat_candidates": beat_candidates,
             "contacts_seed": contacts_seed,
             "opening_room": opening_room,
+            "rooms_seed": rooms_seed,
+            "items_seed": items_seed,
             "inventory_seed": inventory_seed,
         },
         ensure_ascii=True,
@@ -102,4 +115,28 @@ def build_room_presentation_prompt(
         "Avoid vague filler and avoid unexplained mystery wording."
     )
     user = json.dumps({"genre": genre, "tone": tone, "rooms": rooms}, ensure_ascii=True)
+    return system, user
+
+
+def build_story_bootstrap_critique_prompt(
+    premise: str,
+    bootstrap_bundle: dict[str, object],
+    rooms_seed: list[dict[str, object]],
+    items_seed: list[dict[str, object]],
+) -> tuple[str, str]:
+    system = (
+        "You are Story Bootstrap Critic. Return JSON only with keys verdict, continuity_summary, issues. "
+        "Be harsh. Reject plans where clue placement is implausible, villains lack motive/means/opportunity, "
+        "timed events do not fit the map or cast, or the payoff and coordination do not make causal sense. "
+        "Use verdict='accepted' only when the story plan is coherent."
+    )
+    user = json.dumps(
+        {
+            "premise": premise,
+            "bootstrap_bundle": bootstrap_bundle,
+            "rooms_seed": rooms_seed,
+            "items_seed": items_seed,
+        },
+        ensure_ascii=True,
+    )
     return system, user

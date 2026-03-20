@@ -28,6 +28,37 @@ def test_story_agent_contracts_accept_valid_payloads():
             "actionable_objective": "Review the case file and choose the first lead.",
             "primary_goal": "Expose the buried conspiracy behind the murders.",
             "secondary_goals": ["Find the missing witness."],
+            "expanded_outline": "Investigate the murders, expose the conspiracy, and survive the retaliation.",
+            "story_beats": [
+                {"beat_id": "hook", "summary": "Arrive at the estate and assess the scene.", "min_progress": 0.0},
+                {"beat_id": "midpoint", "summary": "Identify the conspiracy behind the killings.", "min_progress": 0.5},
+                {"beat_id": "climax", "summary": "Confront the killer with proof.", "min_progress": 0.85},
+            ],
+            "villains": [
+                {
+                    "name": "Magistrate Voss",
+                    "motive": "Protect the conspiracy.",
+                    "means": "Control over hired killers and records.",
+                    "opportunity": "Direct access to the estate and witnesses.",
+                }
+            ],
+            "timed_events": [
+                {
+                    "event_id": "butler_warning",
+                    "summary": "The butler quietly warns that someone is destroying records.",
+                    "min_turn": 2,
+                    "location": "foyer",
+                    "participants": ["Mina Cole"],
+                }
+            ],
+            "clue_placements": [
+                {
+                    "item_id": "case_file",
+                    "room_id": "front_steps",
+                    "clue_text": "The file highlights the victim timeline.",
+                    "hidden_reason": "It was tucked under the detective's arm on arrival.",
+                }
+            ],
             "hidden_threads": ["The assistant knows more than she admits."],
             "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
             "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
@@ -53,6 +84,7 @@ def test_story_agent_contracts_accept_valid_payloads():
     )
 
     assert bootstrap["assistant_name"] == "Mina Cole"
+    assert bootstrap["villains"][0]["name"] == "Magistrate Voss"
     assert architect["protagonist_name"] == "Noah Kade"
     assert cast["contacts"][0]["name"] == "Mina Cole"
     assert plot["assistant_name"] == "Mina Cole"
@@ -77,12 +109,24 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
         "A detective returns.",
         "mystery",
         "dark",
+        "medium",
+        ["hook", "midpoint", "climax"],
         [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
-        {"name": "Outside The Mansion", "description": "Cold stone.", "items": ["case file"], "npcs": ["Mina Cole"]},
+        {
+            "room_id": "front_steps",
+            "name": "Outside The Mansion",
+            "description": "Cold stone.",
+            "items": ["case_file"],
+            "npcs": ["Mina Cole"],
+        },
+        [{"room_id": "front_steps", "name": "Outside The Mansion", "description": "Cold stone.", "items": ["case_file"], "npcs": ["Mina Cole"], "exits": {"north": "foyer"}}],
+        [{"item_id": "case_file", "name": "Case File", "description": "Folder.", "kind": "clue"}],
         ["field kit"],
     )
     assert "json only" in system.lower()
     assert "opening_paragraphs" in system
+    assert "story_beats" in system
+    assert "villains" in system
     assert "premise" in user.lower()
 
     system, user = build_story_architect_prompt("A detective returns.", "Noah", "mystery", "dark")
@@ -109,6 +153,37 @@ def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
             "actionable_objective": "Objective: Review the case file first",
             "primary_goal": "Primary goal: Expose the conspiracy",
             "secondary_goals": ["  Find the witness  ", ""],
+            "expanded_outline": "Outline: Follow the murders to the buried conspiracy",
+            "story_beats": [
+                {"beat_id": "hook", "summary": "The estate opens under heavy rain", "min_progress": 0.0},
+                {"beat_id": "midpoint", "summary": "The route key reveals the conspiracy", "min_progress": 0.5},
+                {"beat_id": "climax", "summary": "Confront the mastermind", "min_progress": 0.85},
+            ],
+            "villains": [
+                {
+                    "name": "Name: Magistrate Voss",
+                    "motive": "Motive: protect the conspiracy",
+                    "means": "Means: hired killers",
+                    "opportunity": "Opportunity: access to the estate",
+                }
+            ],
+            "timed_events": [
+                {
+                    "event_id": "warning",
+                    "summary": "A warning reaches the foyer",
+                    "min_turn": 2,
+                    "location": "foyer",
+                    "participants": [" Daria Stone ", ""],
+                }
+            ],
+            "clue_placements": [
+                {
+                    "item_id": "route_key",
+                    "room_id": "watch_tower",
+                    "clue_text": "The key opens the service route",
+                    "hidden_reason": "Hidden behind a loose stone",
+                }
+            ],
             "hidden_threads": ["  buried ledger  ", ""],
             "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
             "contacts": [
@@ -149,6 +224,7 @@ def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
 
     assert bootstrap["protagonist_name"] == "Noah Kade"
     assert bootstrap["contacts"][0]["name"] == "Daria Stone"
+    assert bootstrap["villains"][0]["name"] == "Magistrate Voss"
     assert bootstrap["opening_paragraphs"][0].endswith(".")
     assert architect["protagonist_name"] == "Noah Kade"
     assert architect["protagonist_background"].endswith(".")

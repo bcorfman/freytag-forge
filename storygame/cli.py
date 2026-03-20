@@ -15,7 +15,7 @@ from storygame.engine.freeform import (
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
-from storygame.engine.impact import assess_player_command, requires_high_impact_confirmation
+from storygame.engine.impact import assess_player_command, replan_scope_for_assessment, requires_high_impact_confirmation
 from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
@@ -235,7 +235,7 @@ def _high_impact_warning_lines(assessment: dict[str, Any]) -> list[str]:
     impact_class = str(assessment.get("impact_class", "high")).upper()
     consequences = [str(item).strip() for item in assessment.get("consequences", []) if str(item).strip()]
     lines = [
-        f"High-impact action detected ({impact_class}). This may alter goals, NPC behavior, and event timing.",
+        f"Goal-breaking action detected ({impact_class}). This would rupture the current story goals, NPC behavior, and event timing.",
     ]
     lines.extend(consequences[:2])
     lines.append("Type PROCEED to continue or CANCEL to abort.")
@@ -248,11 +248,13 @@ def _record_major_disruption(
     raw_command: str,
     assessment: dict[str, Any],
 ) -> None:
+    replan_scope = replan_scope_for_assessment(assessment)
     state.player.flags["story_replan_required"] = True
     state.player.flags["story_bounds_overridden"] = True
     state.world_package["story_replan_context"] = {
         "command": raw_command,
         "impact_class": str(assessment.get("impact_class", "high")),
+        "replan_scope": replan_scope,
         "reasons": list(assessment.get("reasons", [])),
         "turn_index": state.turn_index,
     }

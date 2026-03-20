@@ -42,3 +42,19 @@ def test_move_and_take_update_facts_and_legacy_views() -> None:
     assert after_take.world_facts.holds("holding", "player", item_id)
     assert not after_take.world_facts.holds("room_item", destination, item_id)
     assert item_id in after_take.player.inventory
+
+
+def test_taking_clue_or_evidence_asserts_discovered_lead_facts() -> None:
+    state = build_default_state(seed=7, genre="mystery")
+    start_room = state.world.rooms[state.player.location]
+    target_item_id = next(
+        item_id
+        for item_id in start_room.item_ids
+        if state.world.items[item_id].kind in {"clue", "evidence"} and state.world.items[item_id].clue_text
+    )
+
+    next_state, _events = apply_action(state, parse_command(f"take {target_item_id}"), Random(7))
+
+    assert next_state.world_facts.holds("discovered_clue", target_item_id)
+    discovered_leads = next_state.world_facts.query("discovered_lead", target_item_id, None)
+    assert discovered_leads

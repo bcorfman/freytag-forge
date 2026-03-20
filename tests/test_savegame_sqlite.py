@@ -59,6 +59,20 @@ def test_save_and_load_roundtrip_preserves_state_and_rng(tmp_path):
     assert loaded_rng.getstate() == rng.getstate()
 
 
+def test_save_and_load_roundtrip_prefers_fact_backed_active_goal(tmp_path):
+    db_path = tmp_path / "saves.sqlite"
+    state = build_default_state(seed=13, genre="mystery")
+    state.active_goal = "stale in-memory goal"
+    state.world_facts.assert_fact("active_goal", "Review the route key and question Daria.")
+
+    with SqliteSaveStore(db_path) as store:
+        store.save_run("goal_slot", state, Random(44))
+        loaded_state, _loaded_rng = store.load_run("goal_slot")
+
+    assert loaded_state.active_goal == "Review the route key and question Daria."
+    assert loaded_state.world_facts.holds("active_goal", "Review the route key and question Daria.")
+
+
 def test_load_nonexistent_slot_raises_value_error(tmp_path):
     db_path = tmp_path / "saves.sqlite"
     with SqliteSaveStore(db_path) as store, pytest.raises(ValueError, match="No save exists"):

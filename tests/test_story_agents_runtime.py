@@ -210,6 +210,37 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
                 "actionable_objective": "Review the case file and press the strongest lead.",
                 "primary_goal": "Expose the conspiracy behind the murders.",
                 "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Paid enforcers.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [
+                    {
+                        "event_id": "warning",
+                        "summary": "A servant warns that records are burning.",
+                        "min_turn": 2,
+                        "location": "foyer",
+                        "participants": ["Daria Stone"],
+                    }
+                ],
+                "clue_placements": [
+                    {
+                        "item_id": "route_key",
+                        "room_id": "watch_tower",
+                        "clue_text": "The route key marks the killer's exit path.",
+                        "hidden_reason": "It was hidden inside a cracked stone cap.",
+                    }
+                ],
                 "hidden_threads": ["The route key links the assistant to the mansion."],
                 "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
                 "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
@@ -219,6 +250,7 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
     )
     result = agent.run(state)
     assert result["assistant_name"] == "Daria Stone"
+    assert result["villains"][0]["name"] == "Magistrate Voss"
     assert len(result["opening_paragraphs"]) == 3
 
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "not-json")

@@ -244,10 +244,20 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                 metadata={
                     "item_kind": item.kind,
                     "item_name": item.name,
-                    "fact_ops": [
+                    "fact_ops": (
+                        [
                         {"op": "retract", "fact": ("room_item", room_id, resolved_target)},
                         {"op": "assert", "fact": ("holding", "player", resolved_target)},
-                    ],
+                        ]
+                        + (
+                            [
+                                {"op": "assert", "fact": ("discovered_clue", resolved_target)},
+                                {"op": "assert", "fact": ("discovered_lead", resolved_target, item.clue_text)},
+                            ]
+                            if item.kind in {"clue", "evidence"} and item.clue_text
+                            else []
+                        )
+                    ),
                 },
             )
         )

@@ -200,6 +200,18 @@ def test_resolve_freeform_roleplay_read_ledger_page_sets_specific_progress_flag(
     assert resolved["event"].delta_progress > 0.0
 
 
+def test_freeform_objective_reply_prefers_fact_backed_goal() -> None:
+    state = build_default_state(seed=409)
+    state.active_goal = "stale in-memory goal"
+    state.world_facts.assert_fact("active_goal", "Press the strongest lead from the case file.")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what is our objective?")
+
+    assert action["intent"] == "ask_about"
+    assert action["arguments"]["topic"] == "objective"
+    assert "Press the strongest lead from the case file." in dialog["text"]
+
+
 def test_rule_based_adapter_handles_appearance_questions_with_contextual_reply() -> None:
     state = build_default_state(seed=413, genre="mystery", tone="dark")
 

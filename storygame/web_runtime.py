@@ -5,6 +5,7 @@ from typing import Any
 
 from storygame.cli import run_turn
 from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing
+from storygame.engine.facts import active_story_goal
 from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
@@ -87,7 +88,7 @@ def build_state_snapshot_payload(
         "session_length": state.session_length,
         "plot_curve_id": state.plot_curve_id,
         "story_outline_id": state.story_outline_id,
-        "objective": state.active_goal,
+        "objective": active_story_goal(state),
         "phase": str(get_phase(state.progress)),
         "progress": state.progress,
         "tension": state.tension,
@@ -148,7 +149,7 @@ def _bootstrap_opening_from_narrator(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw]
-    return output_editor.review_opening(paragraphs[:4], state.active_goal)
+    return output_editor.review_opening(paragraphs[:4], active_story_goal(state))
 
 
 def build_bootstrap_response_payload_from_lines(

@@ -79,11 +79,41 @@ def test_prompt_marks_memory_fragments_as_non_authoritative():
 
 def test_context_and_prompt_include_canonical_story_names_for_continuity():
     state = build_default_state(seed=18, genre="mystery")
+    state.world_package["llm_story_bundle"] = {
+        "protagonist_name": "Noah Kade",
+        "protagonist_background": "A detective haunted by an old failure.",
+        "assistant_name": state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name,
+        "contacts": [
+            {
+                "name": state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name,
+                "role": "assistant",
+                "trait": "observant",
+            }
+        ],
+    }
     context = build_narration_context(state, parse_command("look"), "hook")
     payload = context.as_dict()
     prompt = build_prompt(context)
 
-    assert payload["protagonist_name"] == state.world_package["story_plan"]["protagonist_name"]
+    assert payload["protagonist_name"] == "Noah Kade"
     assert payload["assistant_name"] == state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
+    assert payload["protagonist_background"] == "A detective haunted by an old failure."
+    assert payload["assistant_role"] == "assistant"
     assert f"Protagonist: {payload['protagonist_name']}" in prompt["user"]
+    assert f"Protagonist background: {payload['protagonist_background']}" in prompt["user"]
     assert f"Assistant anchor: {payload['assistant_name']}" in prompt["user"]
+    assert "Assistant role: assistant" in prompt["user"]
+
+
+def test_context_can_resolve_assistant_identity_from_facts_without_bundle() -> None:
+    state = build_default_state(seed=19, genre="mystery")
+    state.world_package["llm_story_bundle"] = {}
+    state.world_package["story_cast"] = {}
+    state.world_facts.assert_fact("assistant_name", "Daria Stone")
+    state.world_facts.assert_fact("npc_role", "Daria Stone", "assistant")
+
+    context = build_narration_context(state, parse_command("look"), "hook")
+    payload = context.as_dict()
+
+    assert payload["assistant_name"] == "Daria Stone"
+    assert payload["assistant_role"] == "assistant"
