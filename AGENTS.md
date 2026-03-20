@@ -20,6 +20,8 @@ Hard rules:
 - NPC dialogue should generally be LLM-authored from deterministic context. Do not replace ordinary in-scope conversations with canned deterministic lines unless explicitly required as a validated fallback.
 - Fallback dialogue must not auto-target the nearest NPC for unrelated player actions. If the player did not clearly address someone, keep the reply narrator-scoped or ask for clarification.
 - Preserve protagonist/assistant identity continuity in narrator context and output editing. Do not let room-entry or reviewed prose invent replacement names for already-canonical characters.
+- Mystery bootstrap/opening should preserve a canonical male detective identity and name consistently across opening prose, turn narration, and reviewed output. Use `Detective Elias Wren` unless an explicitly approved contract changes that canon everywhere.
+- Preserve role and clue continuity across bootstrap text, opening text, and turn-based text. Do not let the same character be both assistant and suspect at once without an explicit in-story change, and do not let the same clue be both held by a character and simultaneously placed elsewhere in the scene.
 - Opening/bootstrap planning should prefer a single cached story-bootstrap agent call over multiple narrow planning calls. Do not reintroduce seeded setup/objective/public-setting text as the authoritative runtime story plan.
 - The player must be allowed to attempt any gameplay action or story move. Do not treat surprising, disruptive, or goal-breaking prompts as forbidden at the gameplay layer.
 - High-impact actions must require explicit confirmation before state mutation only when they would break the current story goals beyond repair.
@@ -31,6 +33,7 @@ Hard rules:
 - Do not centralize bootstrap/opening generation in a way that makes hosted demo depend on local OpenAI story-agent credentials. Hosted demo must remain playable without `OPENAI_API_KEY` when configured to use the Cloudflare Worker / Llama path.
 - When refactoring web surfaces, preserve story/output parity where possible, but do not erase legitimate deployment differences such as hosted fail-closed behavior, Cloudflare-backed narration, or credential boundaries.
 - Treat sub-10-second total story-agent latency per turn as an engineering goal. Prefer fewer LLM round-trips, cached bootstrap outputs, and shared contracts over multi-call orchestration when behavior can be preserved.
+- Opening/story editors and judge-critic passes must make the full opening cohesive before display and should treat role contradictions, duplicated clue locations, and impossible scene facts as blocking coherence failures, not minor polish issues.
 
 Dependency/testability:
 - Write tests first, then write the code to match the tests (TDD), then update the docs to reflect the new/updated code once it works.

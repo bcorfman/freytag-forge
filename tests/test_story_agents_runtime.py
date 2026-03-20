@@ -11,6 +11,7 @@ from storygame.engine.world import build_default_state
 from storygame.llm.story_agents import agents as agent_module
 from storygame.llm.story_agents.agents import (
     DefaultStoryBootstrapAgent,
+    DefaultStoryBootstrapCriticAgent,
     DefaultCharacterDesignerAgent,
     DefaultNarratorOpeningAgent,
     DefaultPlotDesignerAgent,
@@ -256,6 +257,64 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "not-json")
     with pytest.raises(RuntimeError, match="non-JSON"):
         agent.run(state)
+
+
+def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypatch) -> None:
+    state = build_default_state(seed=551)
+    agent = DefaultStoryBootstrapCriticAgent("openai")
+    bundle = {
+        "protagonist_name": "Detective Elias Wren",
+        "protagonist_background": "A detective on one final case.",
+        "assistant_name": "Daria Stone",
+        "actionable_objective": "Question Daria Stone about her involvement and inspect the front steps.",
+        "primary_goal": "Expose the conspiracy behind the murders.",
+        "secondary_goals": ["Find the missing witness."],
+        "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+        "story_beats": [
+            {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+            {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+            {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+        ],
+        "villains": [
+            {
+                "name": "Magistrate Voss",
+                "motive": "Protect the conspiracy.",
+                "means": "Paid enforcers.",
+                "opportunity": "Access to the estate.",
+            }
+        ],
+        "timed_events": [],
+        "clue_placements": [
+            {
+                "item_id": "ledger_page",
+                "room_id": "front_steps",
+                "clue_text": "The ledger page marks a missing payment.",
+                "hidden_reason": "Someone tried to keep it out of the official file.",
+            }
+        ],
+        "hidden_threads": ["The ledger page links the assistant to the mansion."],
+        "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+        "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+        "opening_paragraphs": [
+            "Rain needles the stone as you reach the front steps.",
+            "Daria Stone, your assistant, keeps the ledger page in hand.",
+            "The ledger page is wedged into the stones in front of the mansion.",
+            "You are here to question Daria Stone about her involvement before you go inside.",
+        ],
+    }
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {"verdict": "accepted", "continuity_summary": "Looks fine.", "issues": []}
+        ),
+    )
+
+    result = agent.run(state, bundle)
+
+    assert result["verdict"] == "revise"
+    assert any("assistant" in issue.lower() for issue in result["issues"])
+    assert any("ledger page" in issue.lower() for issue in result["issues"])
 
 
 def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> None:

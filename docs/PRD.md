@@ -94,6 +94,7 @@ Current runtime generation is package-driven.
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
 - Multi-critic evaluation executes critic runs in parallel per round while preserving deterministic output ordering for judge inputs.
+- Critics and judge inputs must include canonical opening facts so review can reject contradictions between opening text and turn-based text, especially role conflicts, duplicated clue locations, and impossible physical staging.
 - `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).
 - Opening/bootstrap orchestration should prefer a single story-bootstrap agent call that returns protagonist identity, assistant/contact plan, actionable objective, longer-term goals, reveal schedule, and player-facing opening paragraphs in one contract.
 - Legacy multi-agent opening chains (architect -> character -> plot -> narrator) are compatibility/fallback paths only; they are not the preferred runtime path because they waste latency budget.
@@ -200,7 +201,9 @@ flowchart LR
 - Runtime map/entity/item realization is derived from `world_package` (selected from outline + curve templates) rather than static scene constants.
 - Deterministic world packages may still seed map/entity/item topology, but seeded setup objectives, default primary objectives, public-setting paragraphs, and story-plan prose are no longer authoritative runtime content.
 - Runtime goals, reveal threads, protagonist identity, assistant identity, timed story events, and opening prose should come from the LLM bootstrap contract and be persisted back into canonical fact-backed runtime state for later deterministic validation/replay.
+- Mystery bootstrap should establish a canonical detective identity up front, including a fixed male detective name carried consistently through opening prose, turn narration, narrator context, and output editing.
 - Accepted bootstrap outputs should also establish canonical assistant/contact relationship facts, villain facts, clue-placement facts, and timed-event participant facts.
+- Accepted bootstrap outputs must also establish canonical role exclusivity and clue custody/location facts for the opening scene so later narration can validate who is the assistant, who is a suspect, and where each clue physically is.
 - Predicate and rule packs are YAML-defined:
   - `data/predicates/core.yaml`
   - `data/predicates/genres/<genre>.yaml`
@@ -240,9 +243,13 @@ flowchart LR
 - Room presentation now uses cached long/short descriptions per location: `LOOK` renders long form; non-LOOK turns render short form.
 - Mystery navigation now matches the room copy: `front_steps` leads north into a `foyer` rather than directly into the outdoor lane chain.
 - Story prompts enforce opening-scene guidance for turn 0 (3-4 paragraphs with who/where/immediate objective).
+- Mystery openings use a named male detective protagonist. Default mystery bootstrap/output guidance should treat the detective as `Detective Elias Wren` unless a future explicitly-approved contract replaces that canonical default everywhere.
 - Opening/goal language is normalized to keep assistant-role continuity (for example, `first contact` instead of conflicting `first witness` phrasing when the assistant is the first NPC partner).
 - When plot/objective text frames the assistant as a suspect, objective language is rewritten to target a separate suspect contact (or a generic suspect fallback) so the assistant remains an ally role in the opening.
 - Character-designer output is normalized so the seeded opening contact remains the assistant, keeping room presence, cast planning, and opening narration aligned.
+- Opening and early-turn text must agree on each named character's role. A character cannot simultaneously be the detective's assistant/contact and the suspect currently being questioned unless that role change is explicitly established in-story and reflected in canonical facts.
+- Opening and early-turn text must agree on clue custody and placement. If a character is holding a clue item, the same clue must not also be described as lying in the environment or discovered elsewhere in the same scene.
+- Clue placement should favor plausible mystery staging. Story/bootstrap generation, editing, and review should avoid exposing critical evidence in implausibly open locations when a more coherent custodian or concealment is already established.
 - Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
@@ -255,7 +262,9 @@ flowchart LR
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
+- The opening-scene story editor must make the full opening cohesive across bootstrap paragraphs and the first turn-facing text, reconciling role labels, clue ownership, physical placement, and other scene facts into one consistent version before anything is shown to the player.
 - Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
+- Critic/judge review must treat assistant-vs-suspect contradictions, duplicated clue presence (for example, a page both held by Daria and wedged in the stones), and similarly impossible scene facts as blocking coherence failures rather than minor style issues.
 - Turn output retains explicit LLM narration only when that narration is still the right player-facing surface; if downstream review strips a non-dialogue narration line, the original narration is reattached.
 - Turn narration is action-grounded: if a generated narration omits meaningful tokens from the player’s command, a deterministic action-reference prefix is added.
 - Per-turn rendering is hybrid: narrator output can replace deterministic room/event blocks for ordinary turns, but direct conversational freeform turns preserve bounded NPC dialogue lines instead of being rewritten into narrator prose.

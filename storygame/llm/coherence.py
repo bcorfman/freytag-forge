@@ -35,6 +35,10 @@ MOTION_MARKER_PATTERN = re.compile(r"\b(go|head|move|walk|run|sprint|toward|towa
 ROOM_LOCATION_PATTERN = re.compile(r"\bin ([a-z][a-z0-9_ ]+)\b", re.IGNORECASE)
 WITH_ITEM_PATTERN = re.compile(r"\bwith the ([a-z][a-z0-9_ -]+)\b", re.IGNORECASE)
 CARDINAL_PATTERN = re.compile(r"\b(north|south|east|west|up|down)\b", re.IGNORECASE)
+_ASSISTANT_SUSPECT_PATTERN = re.compile(
+    r"\b(suspect|witness|being questioned|you are questioning|you question|questioning)\b",
+    re.IGNORECASE,
+)
 
 
 class CoherenceResult(TypedDict):
@@ -326,6 +330,35 @@ class _BeatTransitionLegalityValidator:
             "passed": False,
             "reason_codes": ("VLD_BEAT_ILLEGAL_FOR_PHASE",),
             "details": f"phase={context.phase},beat={context.beat}",
+        }
+
+
+class _AssistantRoleConsistencyValidator:
+    validator_id = "assistant_role_consistency"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        assistant_name = context.assistant_name.strip().lower()
+        assistant_role = context.assistant_role.strip().lower()
+        lower_narration = narration.lower()
+        if not assistant_name or assistant_role != "assistant":
+            return {
+                "validator_id": self.validator_id,
+                "passed": True,
+                "reason_codes": (),
+                "details": "",
+            }
+        if assistant_name in lower_narration and _ASSISTANT_SUSPECT_PATTERN.search(lower_narration):
+            return {
+                "validator_id": self.validator_id,
+                "passed": False,
+                "reason_codes": ("VLD_ASSISTANT_ROLE_CONTRADICTION",),
+                "details": f"assistant_name={context.assistant_name}",
+            }
+        return {
+            "validator_id": self.validator_id,
+            "passed": True,
+            "reason_codes": (),
+            "details": "",
         }
 
 
@@ -831,6 +864,7 @@ def build_default_coherence_gate(
         _EntityReachabilityValidator(),
         _InventoryLocationConsistencyValidator(),
         _CommittedStateContradictionValidator(),
+        _AssistantRoleConsistencyValidator(),
         _BeatTransitionLegalityValidator(),
     )
     return CoherenceGate(

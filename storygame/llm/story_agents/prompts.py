@@ -20,11 +20,13 @@ def build_story_bootstrap_prompt(
         "protagonist_name, protagonist_background, assistant_name, actionable_objective, primary_goal, "
         "secondary_goals, expanded_outline, story_beats, villains, timed_events, clue_placements, "
         "hidden_threads, reveal_schedule, contacts, opening_paragraphs. "
+        "For mystery stories, use a named male detective protagonist and keep that identity stable in opening_paragraphs. "
         "story_beats must map the whole story arc for the requested session length. "
         "villains must explain motive, means, and opportunity. "
         "clue_placements must use exact provided item_id and room_id values and should keep meaningful clues hidden in plausible places. "
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
+        "Do not frame the assistant as the suspect currently being questioned, and do not place the same clue both in someone's hand and out in the open. "
         "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
     )
     user = json.dumps(
@@ -49,7 +51,8 @@ def build_story_architect_prompt(premise: str, protagonist_hint: str, genre: str
     system = (
         "You are Story Architect Agent. Return JSON only with keys: "
         "protagonist_name, protagonist_background, secrets_to_hide, tone. "
-        "Keep spoilers out of protagonist_background."
+        "Keep spoilers out of protagonist_background. "
+        "For mystery stories, make the protagonist a named male detective."
     )
     user = json.dumps(
         {
@@ -97,7 +100,8 @@ def build_narrator_opening_prompt(opening_draft: str) -> tuple[str, str]:
     system = (
         "You are Narrator Agent. Return JSON only with key paragraphs (3 to 4 paragraphs). "
         "Second person voice, no spoilers, no meta-game phrasing. "
-        "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns."
+        "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns. "
+        "Keep assistant roles, suspect roles, and clue placement physically consistent across all paragraphs."
     )
     user = json.dumps({"opening_draft": opening_draft}, ensure_ascii=True)
     return system, user
@@ -127,7 +131,9 @@ def build_story_bootstrap_critique_prompt(
     system = (
         "You are Story Bootstrap Critic. Return JSON only with keys verdict, continuity_summary, issues. "
         "Be harsh. Reject plans where clue placement is implausible, villains lack motive/means/opportunity, "
-        "timed events do not fit the map or cast, or the payoff and coordination do not make causal sense. "
+        "timed events do not fit the map or cast, the assistant is also framed as the current suspect, "
+        "or the same clue appears both in a character's custody and elsewhere in the opening. "
+        "Reject physically impossible opening staging and role contradictions. "
         "Use verdict='accepted' only when the story plan is coherent."
     )
     user = json.dumps(

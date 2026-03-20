@@ -10,6 +10,7 @@ from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
 from storygame.llm.context import build_narration_context
+from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
 from storygame.llm.output_editor import OutputEditor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -152,7 +153,16 @@ def _bootstrap_opening_from_narrator(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw]
-    return output_editor.review_opening(paragraphs[:4], active_story_goal(state))
+    coherent_paragraphs = cohere_opening_lines(
+        paragraphs[:4],
+        state.story_genre,
+        context.protagonist_name,
+        context.assistant_name,
+        active_story_goal(state),
+        item_labels_for_opening(tuple(state.world.items.keys())),
+        tuple(npc.name for npc in state.world.npcs.values() if npc.name.strip()),
+    )
+    return output_editor.review_opening(coherent_paragraphs, active_story_goal(state))
 
 
 def build_bootstrap_response_payload_from_lines(

@@ -7,6 +7,7 @@ from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
 from storygame.engine.state import EventLog, GameState, Npc
 from storygame.plot.freytag import get_phase
+from storygame.story_canon import canonical_detective_name
 
 MAX_RECENT_EVENTS = 5
 MAX_VISIBLE_ITEMS = 6
@@ -124,16 +125,16 @@ def _protagonist_name(state: GameState) -> str:
     profile = protagonist_profile(state)
     protagonist = profile["name"].strip()
     if protagonist:
-        return protagonist
+        return canonical_detective_name(state.story_genre, protagonist)
     bundle = dict(state.world_package.get("llm_story_bundle", {}))
     protagonist = str(bundle.get("protagonist_name", "")).strip()
     if protagonist:
-        return protagonist
+        return canonical_detective_name(state.story_genre, protagonist)
     story_plan = dict(state.world_package.get("story_plan", {}))
     protagonist = str(story_plan.get("protagonist_name", "")).strip()
     if protagonist:
-        return protagonist
-    return "The Detective"
+        return canonical_detective_name(state.story_genre, protagonist)
+    return canonical_detective_name(state.story_genre, "")
 
 
 def _assistant_name(state: GameState) -> str:

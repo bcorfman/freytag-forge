@@ -1004,7 +1004,7 @@ def test_setup_phase_lines_place_identity_after_environment_and_use_named_contac
     joined = "\n".join(lines).lower()
 
     assert lines[0].lower() == "the situation is still taking shape, and the facts in front of you are incomplete."
-    assert lines[1].lower() == "you are the detective."
+    assert lines[1].lower() == "you are detective elias wren."
     assert "premise:" not in joined
     assert "has kept a low profile" not in joined
 
