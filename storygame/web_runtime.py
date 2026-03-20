@@ -5,8 +5,10 @@ from typing import Any
 
 from storygame.cli import run_turn
 from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing
+from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
+from storygame.llm.context import build_narration_context
 from storygame.llm.output_editor import OutputEditor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -99,14 +101,54 @@ def build_bootstrap_response_payload(
     scope_field: str,
     scope_id: str,
     story_director: StoryDirector,
+    narrator: Narrator,
+    output_editor: OutputEditor,
 ) -> dict[str, Any]:
+    opening_lines = _llm_bootstrap_opening_lines(state, story_director, narrator, output_editor)
     return build_bootstrap_response_payload_from_lines(
         state,
         command,
         scope_field,
         scope_id,
-        story_director.compose_opening(state),
+        opening_lines,
     )
+
+
+def _llm_bootstrap_opening_lines(
+    state: GameState,
+    story_director: StoryDirector,
+    narrator: Narrator,
+    output_editor: OutputEditor,
+) -> list[str]:
+    opening_lines = story_director.compose_opening(state)
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+    if bundle_lines:
+        return opening_lines
+
+    narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
+    if narrator_lines:
+        return narrator_lines
+
+    raise RuntimeError("Web bootstrap requires an LLM-authored opening.")
+
+
+def _bootstrap_opening_from_narrator(
+    state: GameState,
+    narrator: Narrator,
+    output_editor: OutputEditor,
+) -> list[str]:
+    context = build_narration_context(state, parse_command("look"), "setup_scene")
+    try:
+        raw = str(narrator.generate(context)).strip()
+    except RuntimeError:
+        return []
+    if not raw:
+        return []
+    paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
+    if not paragraphs:
+        paragraphs = [raw]
+    return output_editor.review_opening(paragraphs[:4], state.active_goal)
 
 
 def build_bootstrap_response_payload_from_lines(

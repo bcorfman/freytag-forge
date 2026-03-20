@@ -136,6 +136,8 @@ def create_app(
                     "run_id",
                     run_id,
                     active_story_director,
+                    active_narrator,
+                    active_output_editor,
                 )
             )
 

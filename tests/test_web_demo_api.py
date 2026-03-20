@@ -11,6 +11,8 @@ from storygame.llm.adapters import CloudflareWorkersAIAdapter
 from storygame.web_demo import _build_demo_narrator, create_demo_app
 from tests.narrator_stubs import StubNarrator
 
+_OPENING_TEXT = "Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."
+
 
 class _PassThroughEditor:
     def review_opening(self, lines, active_goal):  # noqa: ANN001
@@ -23,6 +25,16 @@ class _PassThroughEditor:
 class _StubDirector:
     def compose_opening(self, state):  # noqa: ANN001
         return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
+        return lines
+
+
+class _BundleDirector:
+    def compose_opening(self, state):  # noqa: ANN001
+        lines = ("Rain needles the stone.", "Daria keeps the file close.", "The case starts now.")
+        state.world_package["llm_story_bundle"] = {"opening_paragraphs": lines}
+        return list(lines)
 
     def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
         return lines
@@ -65,7 +77,7 @@ def _client(tmp_path, clock: _Clock | None = None) -> TestClient:
         create_demo_app(
             save_db_path=db_path,
             narrator_mode="openai",
-            narrator=StubNarrator(),
+            narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
             now_fn=now_fn,
@@ -132,7 +144,15 @@ def test_demo_session_create_then_turn_flow(tmp_path):
 
 
 def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_path):
-    client = _client(tmp_path)
+    client = TestClient(
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+            )
+    )
     session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
 
     turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
@@ -142,6 +162,46 @@ def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tm
     assert payload["lines"]
     assert payload["state"]["turn_index"] == 0
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
+
+
+def test_demo_bootstrap_prefers_narrator_opening_over_placeholder_story_plan(tmp_path):
+    client = TestClient(
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+            )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert any("Rain needles the stone." in line for line in payload["lines"])
+    assert any("Daria keeps the file close." in line for line in payload["lines"])
+    assert not any("The situation is still taking shape" in line for line in payload["lines"])
+
+
+def test_demo_bootstrap_requires_llm_authored_opening_and_fails_closed(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+    assert turn.status_code == 503
+    assert turn.json() == {
+        "status": "service_unavailable",
+        "detail": "Narration service is temporarily unavailable.",
+    }
 
 
 def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_credentials(
@@ -219,13 +279,13 @@ def test_demo_session_expiry_is_enforced(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     db_path = tmp_path / "web_demo_saves.sqlite"
     client = TestClient(
-        create_demo_app(
-            save_db_path=db_path,
-            narrator_mode="openai",
-            narrator=StubNarrator(),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-            session_ttl_seconds=60,
+            create_demo_app(
+                save_db_path=db_path,
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+                session_ttl_seconds=60,
             now_fn=clock,
         )
     )
@@ -247,13 +307,13 @@ def test_demo_narrator_defaults_to_cloudflare_when_worker_url_set(monkeypatch):
 
 def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=StubNarrator(),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-            session_turn_cap=1,
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+                session_turn_cap=1,
         )
     )
     created = client.post("/api/v1/session", json={"seed": 41})
@@ -275,13 +335,13 @@ def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
 def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=StubNarrator(),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-            ip_rate_limit_per_min=2,
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+                ip_rate_limit_per_min=2,
             now_fn=clock,
         )
     )
@@ -303,13 +363,13 @@ def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
 def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=StubNarrator(),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-            ip_rate_limit_per_min=10,
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=StubNarrator(_OPENING_TEXT),
+                output_editor=_PassThroughEditor(),
+                story_director=_StubDirector(),
+                ip_rate_limit_per_min=10,
             ip_daily_turn_cap=2,
             now_fn=clock,
         )
@@ -332,13 +392,13 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
 
 def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=_FailingNarrator("AI_QUOTA_EXCEEDED"),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-        )
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=_FailingNarrator("AI_QUOTA_EXCEEDED"),
+                output_editor=_PassThroughEditor(),
+                story_director=_BundleDirector(),
+            )
     )
     session_id = client.post("/api/v1/session", json={"seed": 5}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
@@ -351,13 +411,13 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
 
 def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=_FailingNarrator("backend unavailable"),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-        )
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=_FailingNarrator("backend unavailable"),
+                output_editor=_PassThroughEditor(),
+                story_director=_BundleDirector(),
+            )
     )
     session_id = client.post("/api/v1/session", json={"seed": 6}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
@@ -370,13 +430,13 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
 
 def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     client = TestClient(
-        create_demo_app(
-            save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
-            narrator=_FailingNarrator("backend unavailable"),
-            output_editor=_PassThroughEditor(),
-            story_director=_StubDirector(),
-        )
+            create_demo_app(
+                save_db_path=tmp_path / "web_demo_saves.sqlite",
+                narrator_mode="openai",
+                narrator=_FailingNarrator("backend unavailable"),
+                output_editor=_PassThroughEditor(),
+                story_director=_BundleDirector(),
+            )
     )
     session_id = client.post("/api/v1/session", json={"seed": 7}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
