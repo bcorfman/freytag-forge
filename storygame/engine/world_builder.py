@@ -61,8 +61,8 @@ _ITEM_TEMPLATES: dict[str, tuple[str, ...]] = {
 
 _DEFAULT_SETUP_OBJECTIVES: dict[str, str] = {
     "mystery": "Review the case file, question your first contact, and identify the strongest lead.",
-    "thriller": "Stabilize the situation, verify your intel, and secure the first trustworthy contact.",
-    "horror": "Survey the immediate threat, gather protective tools, and establish a safe next move.",
+    "thriller": "Get oriented, verify your intel, and secure the first trustworthy contact.",
+    "horror": "Get oriented, survey the immediate threat, and establish a safe next move.",
 }
 
 _DEFAULT_PRIMARY_OBJECTIVES: dict[str, str] = {
@@ -86,27 +86,6 @@ def _trim_goal_fragment(text: str, max_len: int = 120) -> str:
         return normalized
     shortened = normalized[:max_len].rsplit(" ", 1)[0].strip()
     return shortened if shortened else normalized[:max_len]
-
-
-def _sanitize_goal_anchor(anchor: str) -> str:
-    cleaned = _trim_goal_fragment(anchor, max_len=140)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,:;-")
-    cleaned = re.sub(r"\b(is|was|are|were)\s+tasked\s+with$", "", cleaned, flags=re.IGNORECASE).strip(" ,;:-")
-    cleaned = re.sub(r"\b(tasked|assigned|ordered|forced)\s+to$", "", cleaned, flags=re.IGNORECASE).strip(" ,;:-")
-    return cleaned
-
-
-def _anchor_is_non_actionable(anchor: str) -> bool:
-    lowered = anchor.lower().strip()
-    if not lowered:
-        return True
-    if "is tasked with" in lowered or "are tasked with" in lowered:
-        return True
-    if lowered.startswith(("a detective", "an investigator", "you, a detective", "you are a detective")):
-        return True
-    if lowered.endswith(("tasked with", "assigned to", "ordered to", "forced to")):
-        return True
-    return False
 
 
 def _outline_fragments(outline_text: str) -> list[str]:
@@ -136,25 +115,17 @@ def _outline_fragments(outline_text: str) -> list[str]:
 
 def _build_outline_goals(genre: str, outline_text: str, beat_candidates: list[str]) -> dict[str, Any]:
     fragments = _outline_fragments(outline_text)
-    anchor = fragments[0] if fragments else _clean_outline_sentence(outline_text)
-    anchor = _sanitize_goal_anchor(anchor)
-    use_anchor = not _anchor_is_non_actionable(anchor)
-
-    if use_anchor:
-        setup = f"Get oriented and secure your first reliable lead: {anchor}."
-        primary = f"Define and confront the core conflict: {anchor}."
-    else:
-        setup = _DEFAULT_SETUP_OBJECTIVES.get(
-            genre,
-            "Survey the situation, confirm your first lead, and choose a concrete next action.",
-        )
-        primary = _DEFAULT_PRIMARY_OBJECTIVES.get(
-            genre,
-            f"Define and confront the core conflict in this {genre} scenario.",
-        )
+    setup = _DEFAULT_SETUP_OBJECTIVES.get(
+        genre,
+        "Survey the situation, confirm your first lead, and choose a concrete next action.",
+    )
+    primary = _DEFAULT_PRIMARY_OBJECTIVES.get(
+        genre,
+        f"Define and confront the core conflict in this {genre} scenario.",
+    )
 
     secondary: list[str] = []
-    for fragment in fragments[1:3]:
+    for fragment in fragments[:2]:
         secondary.append(f"Pursue this emerging thread: {fragment}.")
     for moment in beat_candidates:
         if len(secondary) >= 3:
@@ -162,18 +133,6 @@ def _build_outline_goals(genre: str, outline_text: str, beat_candidates: list[st
         secondary.append(f"Reach beat: {moment}")
 
     return {"setup": setup, "primary": primary, "secondary": secondary[:3]}
-
-
-def _select_protagonist_name(seed: int, genre: str) -> str:
-    names = (
-        "Rowan Vale",
-        "Mara Quinn",
-        "Elias Ward",
-        "Sable Mercer",
-        "Noah Kade",
-        "Iris Holloway",
-    )
-    return names[_stable_hash(f"{genre}|{seed}|protagonist") % len(names)]
 
 
 def _split_setup_and_future_threads(outline_text: str) -> tuple[str, tuple[str, ...]]:
@@ -203,38 +162,13 @@ def _split_setup_and_future_threads(outline_text: str) -> tuple[str, tuple[str, 
     hidden_text = _trim_goal_fragment(normalized[split_index:].strip(" ,;"), max_len=420)
     return public_setup, (hidden_text,) if hidden_text else ()
 
-
-def _public_setting_line(genre: str) -> str:
-    settings = {
-        "mystery": "The estate stands at the edge of a rain-soaked district where every visitor brings a new rumor.",
-        "thriller": "The residence overlooks a restless city perimeter where patrol lights never fully go dark.",
-        "horror": "The house sits beyond a fog-bound road where the wind carries sounds that never resolve.",
-        "fantasy": "The manor rises above old stone paths and watchfires that mark the border of a fragile realm.",
-    }
-    return settings.get(
-        genre,
-        "The residence is isolated from the nearest town, with only a narrow road and uncertain weather beyond it.",
+def _build_story_plan(outline_text: str, goals: dict[str, Any]) -> dict[str, Any]:
+    _public_setup, hidden_threads = _split_setup_and_future_threads(outline_text)
+    setup_paragraphs = (
+        "The situation is still taking shape, and the facts in front of you are incomplete.",
+        "You are The Detective.",
+        f"Your first objective is clear: {goals['setup']}",
     )
-
-
-def _build_story_plan(genre: str, seed: int, outline_text: str, goals: dict[str, Any]) -> dict[str, Any]:
-    protagonist_name = _select_protagonist_name(seed, genre)
-    public_setup, hidden_threads = _split_setup_and_future_threads(outline_text)
-    if not public_setup:
-        public_setup = _trim_goal_fragment(
-            str(goals["setup"]).replace("Get oriented and secure your first reliable lead: ", "")
-        )
-
-    setup_paragraphs = [
-        (
-            f"{protagonist_name} has kept a low profile for years, taking only the work that can be handled in silence. "
-            f"{public_setup}."
-        ),
-        _public_setting_line(genre),
-        f"The first practical objective is simple and immediate: {goals['setup']}",
-        "What this case truly means is still hidden; the larger truths should surface only as the investigation advances.",
-    ]
-
     reveal_schedule = tuple(
         {
             "thread_index": index,
@@ -244,8 +178,8 @@ def _build_story_plan(genre: str, seed: int, outline_text: str, goals: dict[str,
     )
 
     return {
-        "protagonist_name": protagonist_name,
-        "setup_paragraphs": tuple(setup_paragraphs),
+        "protagonist_name": "The Detective",
+        "setup_paragraphs": setup_paragraphs,
         "hidden_threads": hidden_threads,
         "reveal_schedule": reveal_schedule,
     }
@@ -429,7 +363,7 @@ def build_world_package(
     item_ids = list(_ITEM_TEMPLATES[normalized_genre])
     beat_candidates = list(curve["obligatory_moments"])
     goals = _build_outline_goals(normalized_genre, str(outline["outline"]), beat_candidates)
-    story_plan = _build_story_plan(normalized_genre, seed, str(outline["outline"]), goals)
+    story_plan = _build_story_plan(str(outline["outline"]), goals)
 
     trigger_seeds = [
         {"name": moment, "trigger": f"beat:{moment}", "effect": "advance_tension"}
