@@ -169,7 +169,7 @@ class StoryDirector:
         assistant_name = str(plan.get("assistant_name", "")).strip()
         contacts = cast.get("contacts", [])
         assistant_role = str(contacts[0].get("role", "")).strip() if contacts else ""
-        objective = str(plan.get("actionable_objective", state.active_goal)).strip() or state.active_goal
+        objective = state.active_goal or str(plan.get("actionable_objective", "")).strip()
         identity_line = f"You are {protagonist}."
         if background:
             identity_line = f"You are {protagonist}, {background.rstrip('.')}."

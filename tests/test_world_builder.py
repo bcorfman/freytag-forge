@@ -48,7 +48,7 @@ def test_build_world_package_has_required_sections() -> None:
     assert package["trigger_seeds"]
 
 
-def test_build_world_package_derives_goals_from_outline_text(tmp_path) -> None:
+def test_build_world_package_uses_generic_placeholder_goals_until_bootstrap(tmp_path) -> None:
     outlines = tmp_path / "story_outlines.yaml"
     outlines.write_text(
         textwrap.dedent(
@@ -74,9 +74,10 @@ def test_build_world_package_derives_goals_from_outline_text(tmp_path) -> None:
 
     primary = package["goals"]["primary"].lower()
     setup = package["goals"]["setup"].lower()
-    assert "mayor vanished" in primary
-    assert "lantern festival" in setup
-    assert "relay route" not in primary
+    assert primary == "uncover who is behind the case and why the truth was buried."
+    assert setup == "review the case file, question your first contact, and identify the strongest lead."
+    assert "mayor vanished" not in primary
+    assert "lantern festival" not in setup
 
 
 def test_active_goal_starts_with_setup_then_refines_to_primary() -> None:
@@ -92,7 +93,7 @@ def test_active_goal_starts_with_setup_then_refines_to_primary() -> None:
     assert state.active_goal == primary_goal
 
 
-def test_story_agent_plan_expands_setup_and_hides_future_spoilers(tmp_path) -> None:
+def test_story_plan_seeds_only_hidden_threads_for_later_bootstrap(tmp_path) -> None:
     outlines = tmp_path / "story_outlines.yaml"
     outlines.write_text(
         textwrap.dedent(
@@ -114,11 +115,13 @@ def test_story_agent_plan_expands_setup_and_hides_future_spoilers(tmp_path) -> N
     )
 
     plan = package["story_plan"]
-    assert plan["protagonist_name"]
-    assert len(plan["setup_paragraphs"]) in {3, 4}
+    assert plan["protagonist_name"] == "The Detective"
+    assert len(plan["setup_paragraphs"]) == 3
     opening_text = "\n".join(plan["setup_paragraphs"]).lower()
     assert "choice between justice and mercy" not in opening_text
     assert "confrontation with the ghosts of his past" not in opening_text
+    assert "you are the detective" in opening_text
+    assert "your first objective is clear" in opening_text
 
     hidden_text = "\n".join(plan["hidden_threads"]).lower()
     assert "choice between justice and mercy" in hidden_text

@@ -68,7 +68,7 @@ make test
 - Planner-first turn routing: player input is interpreted through the LLM/freeform action planner first.
 - Deterministic simulation boundary: world facts, inventory/location state, events, beat progression, and persistence remain deterministic.
 - Coherence gate on narration: narrator output is evaluated by deterministic validators + multi-critic judge loop before final player-facing output.
-- Story-agent opening pipeline: architect -> character -> plot, then narrator opening + room presentation cache.
+- Story bootstrap prefers a single LLM bootstrap bundle for protagonist identity, actionable goals, reveal threads, and opening prose; world-builder seeds only generic fallback placeholders plus hidden-thread metadata.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history with trace linkage.
 
 For full architecture and design details, see [docs/PRD.md](docs/PRD.md).
