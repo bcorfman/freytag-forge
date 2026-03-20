@@ -121,11 +121,14 @@ def _llm_bootstrap_opening_lines(
     narrator: Narrator,
     output_editor: OutputEditor,
 ) -> list[str]:
-    opening_lines = story_director.compose_opening(state)
-    bundle = dict(state.world_package.get("llm_story_bundle", {}))
-    bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
-    if bundle_lines:
-        return opening_lines
+    try:
+        opening_lines = story_director.compose_opening(state)
+        bundle = dict(state.world_package.get("llm_story_bundle", {}))
+        bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+        if bundle_lines:
+            return opening_lines
+    except RuntimeError:
+        opening_lines = []
 
     narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
     if narrator_lines:

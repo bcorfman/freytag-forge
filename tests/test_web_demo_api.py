@@ -40,6 +40,14 @@ class _BundleDirector:
         return lines
 
 
+class _RaisingDirector:
+    def compose_opening(self, state):  # noqa: ANN001, ARG002
+        raise RuntimeError("Story bootstrap unavailable.")
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+        return lines
+
+
 class _Clock:
     def __init__(self, now: datetime) -> None:
         self.now = now
@@ -202,6 +210,26 @@ def test_demo_bootstrap_requires_llm_authored_opening_and_fails_closed(tmp_path)
         "status": "service_unavailable",
         "detail": "Narration service is temporarily unavailable.",
     }
+
+
+def test_demo_bootstrap_falls_through_to_narrator_when_story_bootstrap_fails(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["status"] == "ok"
+    assert any("Rain needles the stone." in line for line in payload["lines"])
 
 
 def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_credentials(

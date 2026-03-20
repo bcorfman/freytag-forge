@@ -22,6 +22,14 @@ class _StubDirector:
         return lines
 
 
+class _RaisingDirector:
+    def compose_opening(self, state):  # noqa: ANN001, ARG002
+        raise RuntimeError("Story bootstrap unavailable.")
+
+    def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+        return lines
+
+
 def _client(tmp_path):
     db_path = tmp_path / "web_saves.sqlite"
     return TestClient(
@@ -220,6 +228,23 @@ def test_bootstrap_only_response_requires_llm_authored_opening(tmp_path):
         assert "LLM-authored opening" in str(exc)
     else:
         raise AssertionError("Expected bootstrap-only web opening to fail without LLM-authored prose.")
+
+
+def test_bootstrap_only_response_uses_narrator_when_story_bootstrap_fails(tmp_path):
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator("Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert any("Rain needles the stone." in line for line in payload["lines"])
 
 
 def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):
