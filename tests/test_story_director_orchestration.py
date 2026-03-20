@@ -305,7 +305,7 @@ def test_story_director_narrator_failure_prefers_seeded_story_plan_over_bad_plan
 
     opening = director.compose_opening(state)
 
-    assert any("facts in front of you are incomplete" in line for line in opening)
+    assert any("waits in tense silence as the case begins" in line for line in opening)
     assert not any("Create a character profile" in line for line in opening)
 
 
@@ -324,7 +324,7 @@ def test_story_director_opening_falls_back_when_story_architect_agent_fails():
     opening = director.compose_opening(state)
     assert opening
     assert all(line.startswith("edited:") for line in opening)
-    assert any("facts in front of you are incomplete" in line for line in opening)
+    assert any("waits in tense silence as the case begins" in line for line in opening)
 
 
 def test_story_director_logs_when_opening_falls_back_after_planning_failure(caplog):
