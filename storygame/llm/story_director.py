@@ -7,6 +7,7 @@ from storygame.engine.state import Event, GameState
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_agents.agents import (
     CharacterDesignerAgent,
+    DefaultStoryBootstrapAgent,
     DefaultCharacterDesignerAgent,
     DefaultNarratorOpeningAgent,
     DefaultPlotDesignerAgent,
@@ -16,6 +17,7 @@ from storygame.llm.story_agents.agents import (
     NarratorOpeningAgent,
     PlotDesignerAgent,
     RoomPresentationAgent,
+    StoryBootstrapAgent,
     StoryArchitectAgent,
     StoryReplanAgent,
 )
@@ -28,6 +30,7 @@ class StoryDirector:
         self,
         mode: str,
         output_editor: OutputEditor | None = None,
+        story_bootstrap: StoryBootstrapAgent | None = None,
         story_architect: StoryArchitectAgent | None = None,
         character_designer: CharacterDesignerAgent | None = None,
         plot_designer: PlotDesignerAgent | None = None,
@@ -36,6 +39,7 @@ class StoryDirector:
         story_replan: StoryReplanAgent | None = None,
     ) -> None:
         self._output_editor = build_output_editor(mode) if output_editor is None else output_editor
+        self._story_bootstrap = DefaultStoryBootstrapAgent(mode) if story_bootstrap is None else story_bootstrap
         self._story_architect = DefaultStoryArchitectAgent(mode) if story_architect is None else story_architect
         self._character_designer = (
             DefaultCharacterDesignerAgent(mode) if character_designer is None else character_designer
@@ -46,8 +50,50 @@ class StoryDirector:
             DefaultRoomPresentationAgent(mode) if room_presentation is None else room_presentation
         )
         self._story_replan = DefaultStoryReplanAgent(mode) if story_replan is None else story_replan
+        self._uses_legacy_opening_path = any(
+            component is not None
+            for component in (story_architect, character_designer, plot_designer, narrator_opening)
+        )
 
     def compose_opening(self, state: GameState) -> list[str]:
+        if self._uses_legacy_opening_path:
+            return self._compose_opening_legacy(state)
+        return self._compose_opening_bootstrap(state)
+
+    def _compose_opening_bootstrap(self, state: GameState) -> list[str]:
+        planning_failed = False
+        planning_error = ""
+        bundle: dict[str, object] = {}
+        try:
+            bundle = self._story_bootstrap.run(state)
+            self._apply_story_bundle(state, bundle)
+        except RuntimeError as exc:
+            planning_failed = True
+            planning_error = str(exc)
+            _LOGGER.warning("Opening generation fell back after planning failure: %s", planning_error)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            room_future = executor.submit(
+                self._ensure_room_presentation_cache,
+                state,
+                bundle,
+                {"contacts": list(bundle.get("contacts", []))},
+                {
+                    "assistant_name": str(bundle.get("assistant_name", "")),
+                    "actionable_objective": str(bundle.get("actionable_objective", state.active_goal)),
+                },
+            )
+            if planning_failed:
+                opening = self._fallback_opening_lines(state, {}, {}, {})
+            else:
+                opening = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+                if not opening:
+                    _LOGGER.warning("Opening generation fell back after narrator-opening failure: empty bootstrap opening.")
+                    opening = self._fallback_opening_lines(state, bundle, {"contacts": list(bundle.get("contacts", []))}, bundle)
+            room_future.result()
+        return self._output_editor.review_opening(opening, state.active_goal)
+
+    def _compose_opening_legacy(self, state: GameState) -> list[str]:
         architect: dict[str, object] = {}
         cast: dict[str, object] = {}
         plan: dict[str, object] = {}
@@ -75,6 +121,33 @@ class StoryDirector:
             room_future.result()
         return self._output_editor.review_opening(opening, state.active_goal)
 
+    def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
+        contacts = list(bundle.get("contacts", []))
+        opening_paragraphs = tuple(
+            str(paragraph).strip() for paragraph in bundle.get("opening_paragraphs", ()) if str(paragraph).strip()
+        )
+        story_plan = {
+            "protagonist_name": str(bundle.get("protagonist_name", "")).strip(),
+            "setup_paragraphs": opening_paragraphs,
+            "hidden_threads": tuple(
+                str(thread).strip() for thread in bundle.get("hidden_threads", ()) if str(thread).strip()
+            ),
+            "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
+        }
+        goals = {
+            "setup": str(bundle.get("actionable_objective", "")).strip(),
+            "primary": str(bundle.get("primary_goal", "")).strip(),
+            "secondary": tuple(
+                str(goal).strip() for goal in bundle.get("secondary_goals", ()) if str(goal).strip()
+            ),
+        }
+        state.world_package["llm_story_bundle"] = dict(bundle)
+        state.world_package["story_plan"] = story_plan
+        state.world_package["goals"] = goals
+        state.world_package["story_cast"] = {"contacts": contacts}
+        if goals["setup"]:
+            state.active_goal = goals["setup"]
+
     def _fallback_opening_lines(
         self,
         state: GameState,
@@ -82,6 +155,10 @@ class StoryDirector:
         cast: dict[str, object],
         plan: dict[str, object],
     ) -> list[str]:
+        bundle = dict(state.world_package.get("llm_story_bundle", {}))
+        bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+        if bundle_lines:
+            return bundle_lines
         story_plan = dict(state.world_package.get("story_plan", {}))
         seeded_lines = [str(line).strip() for line in story_plan.get("setup_paragraphs", ()) if str(line).strip()]
         if seeded_lines:

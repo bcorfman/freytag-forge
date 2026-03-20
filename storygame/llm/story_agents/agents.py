@@ -20,9 +20,11 @@ from storygame.llm.story_agents.contracts import (
     parse_narrator_opening_output,
     parse_plot_designer_output,
     parse_room_presentation_output,
+    parse_story_bootstrap_output,
     parse_story_architect_output,
 )
 from storygame.llm.story_agents.prompts import (
+    build_story_bootstrap_prompt,
     build_character_designer_prompt,
     build_narrator_opening_prompt,
     build_plot_designer_prompt,
@@ -370,6 +372,10 @@ class StoryArchitectAgent(Protocol):
     def run(self, state: GameState) -> dict[str, Any]: ...
 
 
+class StoryBootstrapAgent(Protocol):
+    def run(self, state: GameState) -> dict[str, Any]: ...
+
+
 class CharacterDesignerAgent(Protocol):
     def run(self, state: GameState, architect: dict[str, Any]) -> dict[str, Any]: ...
 
@@ -420,6 +426,67 @@ class DefaultStoryArchitectAgent:
         except StoryAgentContractError as exc:
             raise RuntimeError(f"StoryArchitect contract validation failed: {exc}") from exc
         return dict(parsed)
+
+
+class DefaultStoryBootstrapAgent:
+    def __init__(self, mode: str) -> None:
+        self._mode = mode
+
+    def run(self, state: GameState) -> dict[str, Any]:
+        room = state.world.rooms[state.player.location]
+        contacts_seed: list[dict[str, str]] = []
+        for room_state in state.world.rooms.values():
+            for npc_id in room_state.npc_ids:
+                npc = state.world.npcs.get(npc_id)
+                if npc is None:
+                    continue
+                contacts_seed.append(
+                    {
+                        "name": npc.name,
+                        "role": "assistant" if not contacts_seed else "contact",
+                        "trait": "observant",
+                    }
+                )
+        if not contacts_seed:
+            raise RuntimeError("StoryBootstrap requires at least one NPC contact in world state.")
+
+        system, user = build_story_bootstrap_prompt(
+            _summary_premise(state),
+            state.story_genre,
+            state.story_tone,
+            contacts_seed[:3],
+            {
+                "name": room.name,
+                "description": room.description,
+                "items": [item.replace("_", " ") for item in room.item_ids],
+                "npcs": [state.world.npcs[npc_id].name for npc_id in room.npc_ids if npc_id in state.world.npcs],
+            },
+            [item.replace("_", " ") for item in state.player.inventory[:3]],
+        )
+        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        if payload is None:
+            raise RuntimeError("StoryBootstrap agent returned non-JSON content.")
+        try:
+            parsed = parse_story_bootstrap_output(payload)
+        except StoryAgentContractError as exc:
+            raise RuntimeError(f"StoryBootstrap contract validation failed: {exc}") from exc
+
+        contacts = _pin_seeded_assistant(list(parsed["contacts"]), contacts_seed[0])[:3]
+        assistant_name = str(parsed["assistant_name"]).strip() or contacts[0]["name"]
+        suspect_name = _pick_suspect_name(contacts, assistant_name)
+        normalized = dict(parsed)
+        normalized["contacts"] = contacts
+        normalized["assistant_name"] = assistant_name
+        normalized["actionable_objective"] = _normalize_actionable_objective_language(
+            str(parsed["actionable_objective"]),
+            assistant_name,
+            suspect_name,
+        )
+        normalized["opening_paragraphs"] = _normalize_assistant_references(
+            list(parsed["opening_paragraphs"]),
+            assistant_name,
+        )
+        return normalized
 
 
 class DefaultCharacterDesignerAgent:

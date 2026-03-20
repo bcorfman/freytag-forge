@@ -19,6 +19,24 @@ class CharacterContact(TypedDict):
     trait: str
 
 
+class StoryRevealScheduleEntry(TypedDict):
+    thread_index: int
+    min_progress: float
+
+
+class StoryBootstrapOutput(TypedDict):
+    protagonist_name: str
+    protagonist_background: str
+    assistant_name: str
+    actionable_objective: str
+    primary_goal: str
+    secondary_goals: list[str]
+    hidden_threads: list[str]
+    reveal_schedule: list[StoryRevealScheduleEntry]
+    contacts: list[CharacterContact]
+    opening_paragraphs: list[str]
+
+
 class StoryArchitectOutput(TypedDict):
     protagonist_name: str
     protagonist_background: str
@@ -79,6 +97,28 @@ class _CharacterDesignerModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     contacts: list[_CharacterContactModel] = Field(min_length=1, max_length=8)
+
+
+class _RevealScheduleEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    thread_index: int = Field(ge=0)
+    min_progress: float = Field(ge=0.0, le=1.0)
+
+
+class _StoryBootstrapModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    protagonist_name: str = Field(min_length=1, max_length=80)
+    protagonist_background: str = Field(min_length=1, max_length=500)
+    assistant_name: str = Field(min_length=1, max_length=80)
+    actionable_objective: str = Field(min_length=1, max_length=300)
+    primary_goal: str = Field(min_length=1, max_length=300)
+    secondary_goals: list[str] = Field(default_factory=list, max_length=4)
+    hidden_threads: list[str] = Field(default_factory=list, max_length=6)
+    reveal_schedule: list[_RevealScheduleEntryModel] = Field(default_factory=list, max_length=6)
+    contacts: list[_CharacterContactModel] = Field(min_length=1, max_length=8)
+    opening_paragraphs: list[str] = Field(min_length=3, max_length=4)
 
 
 class _PlotDesignerModel(BaseModel):
@@ -196,6 +236,56 @@ def parse_character_designer_output(payload: dict) -> CharacterDesignerOutput:
     if not normalized_contacts:
         raise StoryAgentContractError("CHARACTER_DESIGNER_CONTRACT_INVALID", "contacts:missing_valid_contact")
     return cast(CharacterDesignerOutput, {"contacts": normalized_contacts})
+
+
+def parse_story_bootstrap_output(payload: dict) -> StoryBootstrapOutput:
+    try:
+        model = _StoryBootstrapModel.model_validate(payload)
+    except ValidationError as exc:
+        raise _raise_contract_error("STORY_BOOTSTRAP_CONTRACT_INVALID", exc) from exc
+    parsed = model.model_dump(mode="python")
+    contacts = parse_character_designer_output({"contacts": parsed["contacts"]})["contacts"]
+    normalized = {
+        "protagonist_name": _strip_label(str(parsed["protagonist_name"]), ("name", "protagonist")),
+        "protagonist_background": _ensure_terminal_punctuation(
+            _strip_label(str(parsed["protagonist_background"]), ("background", "history"))
+        ),
+        "assistant_name": _strip_label(str(parsed["assistant_name"]), ("assistant_name", "assistant", "name")),
+        "actionable_objective": _ensure_terminal_punctuation(
+            _strip_label(str(parsed["actionable_objective"]), ("actionable_objective", "objective"))
+        ),
+        "primary_goal": _ensure_terminal_punctuation(
+            _strip_label(str(parsed["primary_goal"]), ("primary_goal", "primary", "goal"))
+        ),
+        "secondary_goals": [
+            _ensure_terminal_punctuation(str(goal))
+            for goal in parsed["secondary_goals"]
+            if _trim_sentence(str(goal))
+        ],
+        "hidden_threads": [
+            _ensure_terminal_punctuation(str(thread))
+            for thread in parsed["hidden_threads"]
+            if _trim_sentence(str(thread))
+        ],
+        "reveal_schedule": [
+            {
+                "thread_index": int(entry["thread_index"]),
+                "min_progress": float(entry["min_progress"]),
+            }
+            for entry in parsed["reveal_schedule"]
+        ],
+        "contacts": contacts,
+        "opening_paragraphs": parse_narrator_opening_output({"paragraphs": parsed["opening_paragraphs"]})["paragraphs"],
+    }
+    if not normalized["protagonist_name"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "protagonist_name:min_length")
+    if not normalized["assistant_name"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "assistant_name:min_length")
+    if not normalized["actionable_objective"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "actionable_objective:min_length")
+    if not normalized["primary_goal"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "primary_goal:min_length")
+    return cast(StoryBootstrapOutput, normalized)
 
 
 def parse_plot_designer_output(payload: dict) -> PlotDesignerOutput:

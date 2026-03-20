@@ -159,21 +159,9 @@ def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_crede
         observed_requests.append(json.loads(request.data.decode("utf-8")))
         body = observed_requests[-1]
         system = body.get("system", "")
-        if "Story Architect Agent" in system:
+        if "Story Bootstrap Agent" in system:
             return _FakeResponse(
-                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"secrets_to_hide\\":[\\"secret\\"],\\"tone\\":\\"mysterious\\"}"}'
-            )
-        if "Character Designer Agent" in system:
-            return _FakeResponse(
-                '{"narration":"{\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}]}"}'
-            )
-        if "Plot Designer Agent" in system:
-            return _FakeResponse(
-                '{"narration":"{\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file, scan the grounds, and decide which lead to press first.\\"}"}'
-            )
-        if "Narrator Agent" in system:
-            return _FakeResponse(
-                '{"narration":"{\\"paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion, its stone still holding the last of the day\\\\u2019s heat.\\",\\"You are Noah Kade, a detective haunted by an old failure, and Daria Stone keeps close beside you with the case file already in hand.\\",\\"Tonight\\\\u2019s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\\" ]}"}'
+                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file, scan the grounds, and decide which lead to press first.\\",\\"primary_goal\\":\\"Expose the conspiracy behind the murders.\\",\\"secondary_goals\\":[\\"Find the witness who saw the exchange.\\"],\\"hidden_threads\\":[\\"The route key ties a trusted contact to the mansion.\\"],\\"reveal_schedule\\":[{\\"thread_index\\":0,\\"min_progress\\":0.55}],\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}],\\"opening_paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion, its stone still holding the last of the day\\\\u2019s heat.\\",\\"You are Noah Kade, a detective haunted by an old failure, and Daria Stone keeps close beside you with the case file already in hand.\\",\\"Tonight\\\\u2019s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\\" ]}"}'
             )
         if "Room Presentation Agent" in system:
             room_payload = {
@@ -205,6 +193,7 @@ def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_crede
     assert any("You are Noah Kade" in line for line in payload["lines"])
     assert any("Tonight" in line and "work is practical before it is grand" in line for line in payload["lines"])
     assert "Opening generation fell back" not in caplog.text
+    assert any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
 
 
 def test_demo_first_substantive_command_does_not_repeat_opening_text(tmp_path):

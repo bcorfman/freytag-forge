@@ -3,6 +3,35 @@ from __future__ import annotations
 import json
 
 
+def build_story_bootstrap_prompt(
+    premise: str,
+    genre: str,
+    tone: str,
+    contacts_seed: list[dict],
+    opening_room: dict[str, object],
+    inventory_seed: list[str],
+) -> tuple[str, str]:
+    system = (
+        "You are Story Bootstrap Agent. Return JSON only with keys: "
+        "protagonist_name, protagonist_background, assistant_name, actionable_objective, primary_goal, "
+        "secondary_goals, hidden_threads, reveal_schedule, contacts, opening_paragraphs. "
+        "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
+        "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
+    )
+    user = json.dumps(
+        {
+            "premise": premise,
+            "genre": genre,
+            "tone": tone,
+            "contacts_seed": contacts_seed,
+            "opening_room": opening_room,
+            "inventory_seed": inventory_seed,
+        },
+        ensure_ascii=True,
+    )
+    return system, user
+
+
 def build_story_architect_prompt(premise: str, protagonist_hint: str, genre: str, tone: str) -> tuple[str, str]:
     system = (
         "You are Story Architect Agent. Return JSON only with keys: "
