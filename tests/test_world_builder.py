@@ -115,12 +115,12 @@ def test_story_plan_seeds_only_hidden_threads_for_later_bootstrap(tmp_path) -> N
     )
 
     plan = package["story_plan"]
-    assert plan["protagonist_name"] == "The Detective"
+    assert plan["protagonist_name"] == "Detective Elias Wren"
     assert len(plan["setup_paragraphs"]) == 3
     opening_text = "\n".join(plan["setup_paragraphs"]).lower()
     assert "choice between justice and mercy" not in opening_text
     assert "confrontation with the ghosts of his past" not in opening_text
-    assert "you are the detective" in opening_text
+    assert "you are detective elias wren" in opening_text
     assert "your first objective is clear" in opening_text
 
     hidden_text = "\n".join(plan["hidden_threads"]).lower()

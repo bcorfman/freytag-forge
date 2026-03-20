@@ -13,6 +13,7 @@ from typing import Any, Protocol
 from uuid import uuid4
 
 from storygame.engine.state import GameState
+from storygame.llm.opening_coherence import item_labels_for_opening, opening_coherence_issues
 from storygame.llm.story_agents.contracts import (
     RoomPresentationOutput,
     StoryAgentContractError,
@@ -33,6 +34,7 @@ from storygame.llm.story_agents.prompts import (
     build_room_presentation_prompt,
     build_story_architect_prompt,
 )
+from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -450,8 +452,9 @@ class DefaultStoryArchitectAgent:
 
     def run(self, state: GameState) -> dict[str, Any]:
         premise = _summary_premise(state)
-        protagonist = (
-            str(state.world_package.get("story_plan", {}).get("protagonist_name", "")).strip() or "The Detective"
+        protagonist = canonical_detective_name(
+            state.story_genre,
+            str(state.world_package.get("story_plan", {}).get("protagonist_name", "")).strip(),
         )
         system, user = build_story_architect_prompt(premise, protagonist, state.story_genre, state.story_tone)
         payload = _json_from_text(_chat_complete(self._mode, system, user))
@@ -461,7 +464,9 @@ class DefaultStoryArchitectAgent:
             parsed = parse_story_architect_output(payload)
         except StoryAgentContractError as exc:
             raise RuntimeError(f"StoryArchitect contract validation failed: {exc}") from exc
-        return dict(parsed)
+        normalized = dict(parsed)
+        normalized["protagonist_name"] = canonical_detective_name(state.story_genre, str(parsed["protagonist_name"]))
+        return normalized
 
 
 class DefaultStoryBootstrapAgent:
@@ -518,6 +523,7 @@ class DefaultStoryBootstrapAgent:
         assistant_name = str(parsed["assistant_name"]).strip() or contacts[0]["name"]
         suspect_name = _pick_suspect_name(contacts, assistant_name)
         normalized = dict(parsed)
+        normalized["protagonist_name"] = canonical_detective_name(state.story_genre, str(parsed["protagonist_name"]))
         normalized["contacts"] = contacts
         normalized["assistant_name"] = assistant_name
         normalized["actionable_objective"] = _normalize_actionable_objective_language(
@@ -558,9 +564,23 @@ class DefaultStoryBootstrapCriticAgent:
         if payload is None:
             raise RuntimeError("StoryBootstrapCritic agent returned non-JSON content.")
         try:
-            return dict(parse_story_bootstrap_critique_output(payload))
+            critique = dict(parse_story_bootstrap_critique_output(payload))
         except StoryAgentContractError as exc:
             raise RuntimeError(f"StoryBootstrapCritic contract validation failed: {exc}") from exc
+        issues = opening_coherence_issues(
+            [str(line).strip() for line in bootstrap_bundle.get("opening_paragraphs", ()) if str(line).strip()],
+            str(bootstrap_bundle.get("assistant_name", "")).strip(),
+            str(bootstrap_bundle.get("actionable_objective", "")).strip(),
+            item_labels_for_opening(tuple(state.world.items.keys())),
+            tuple(str(contact.get("name", "")).strip() for contact in bootstrap_bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
+        )
+        if issues:
+            critique["verdict"] = "revise"
+            critique["continuity_summary"] = (
+                "Opening plan has role or clue continuity conflicts that must be resolved before play begins."
+            )
+            critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
+        return critique
 
 
 class DefaultCharacterDesignerAgent:
@@ -626,7 +646,9 @@ class DefaultNarratorOpeningAgent:
 
     def run(self, state: GameState, architect: dict[str, Any], cast: dict[str, Any], plan: dict[str, Any]) -> list[str]:
         room = state.world.rooms[state.player.location]
-        protagonist = str(architect.get("protagonist_name", "")).strip() or "the detective"
+        protagonist = canonical_detective_name(state.story_genre, str(architect.get("protagonist_name", "")).strip())
+        if not protagonist:
+            protagonist = canonical_detective_name(state.story_genre, "")
         background = str(architect.get("protagonist_background", "")).strip()
         contacts = cast.get("contacts", [])
         assistant_name = str(plan.get("assistant_name", "")).strip()

@@ -173,6 +173,14 @@ class _StubEditor:
         return [f"turn:{line}" for line in lines]
 
 
+class _PassThroughEditor:
+    def review_opening(self, lines, active_goal):  # noqa: ANN001
+        return list(lines)
+
+    def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
+        return list(lines)
+
+
 def test_story_director_supports_swappable_agent_components():
     state = build_default_state(seed=7)
     director = StoryDirector(
@@ -233,6 +241,68 @@ def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outpu
     assert state.world_facts.holds("story_hidden_thread", "A magistrate paid to bury the first murder.")
     assert state.world_facts.holds("story_reveal_schedule", "0", "0.55")
     assert state.world_facts.holds("planned_event_participant", "warning", "Daria Stone")
+
+
+def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -> None:
+    class _InconsistentBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            return {
+                "protagonist_name": "Detective Elias Wren",
+                "protagonist_background": "A detective dragged back for one last case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Question Daria Stone about her involvement and inspect the front steps.",
+                "primary_goal": "Expose the conspiracy behind the killing.",
+                "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Trace the ledger, expose the conspiracy, and corner the mastermind.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the mansion approach.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Trace the ledger trail.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Corner the mastermind.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Control over evidence.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [],
+                "clue_placements": [
+                    {
+                        "item_id": "ledger_page",
+                        "room_id": "front_steps",
+                        "clue_text": "The ledger page shows a missing payment.",
+                        "hidden_reason": "Someone tried to keep it out of the official file.",
+                    }
+                ],
+                "hidden_threads": ["The ledger page links the household to a payoff."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": [
+                    "Rain needles the stone as you reach the front steps.",
+                    "Daria Stone, your assistant, keeps the ledger page tight in her hand.",
+                    "The ledger page is wedged into the wet stones in front of the mansion.",
+                    "You are here to question Daria Stone about her involvement before you go inside.",
+                ],
+            }
+
+    state = build_default_state(seed=702)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_InconsistentBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+    combined = "\n".join(opening).lower()
+
+    assert "question daria stone about her involvement" not in combined
+    assert "wedged into the wet stones" not in combined
+    assert combined.count("ledger page") >= 1
+    assert "assistant" in combined
 
 
 def test_story_director_uses_swappable_replan_component():

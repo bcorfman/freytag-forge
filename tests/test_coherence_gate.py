@@ -361,6 +361,44 @@ def test_validator_rejects_non_visible_npc_name_presence_claims():
     assert "VLD_NPC_NOT_VISIBLE" in reason_codes
 
 
+def test_validator_rejects_assistant_as_current_suspect_contradiction():
+    gate = build_default_coherence_gate()
+    context = NarrationContext(
+        room_name="Front Steps",
+        room_description="Rain-dark stone and a shut mansion door.",
+        visible_items=("ledger_page",),
+        visible_npcs=("daria_stone",),
+        npc_facts=(
+            {
+                "id": "daria_stone",
+                "name": "Daria Stone",
+                "pronouns": "she/her",
+                "identity": "your assistant; observant",
+                "description": "Your assistant watches the door and keeps close.",
+                "location": "front_steps",
+            },
+        ),
+        exits=("north",),
+        inventory=("case_file",),
+        recent_events=(),
+        phase="exposition",
+        tension=0.2,
+        beat="hook",
+        goal="Review the case file and identify which suspect to press first.",
+        action="look",
+        protagonist_name="Detective Elias Wren",
+        protagonist_background="A detective pulled into one final case.",
+        assistant_name="Daria Stone",
+        assistant_role="assistant",
+        memory_fragments=(),
+    )
+
+    reports = gate.validate_candidate(context, "Daria Stone waits at your side as the suspect you are questioning.")
+    reason_codes = {reason for report in reports if not report["passed"] for reason in report["reason_codes"]}
+
+    assert "VLD_ASSISTANT_ROLE_CONTRADICTION" in reason_codes
+
+
 def test_revision_directive_for_continuity_includes_setup_and_spoiler_checks():
     reports: tuple[CritiqueReport, ...] = (
         {

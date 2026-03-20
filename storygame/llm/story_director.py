@@ -5,6 +5,7 @@ import logging
 
 from storygame.engine.facts import active_story_goal, replace_fact_group, set_active_story_goal
 from storygame.engine.state import Event, GameState
+from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_agents.agents import (
     CharacterDesignerAgent,
@@ -24,6 +25,7 @@ from storygame.llm.story_agents.agents import (
     StoryArchitectAgent,
     StoryReplanAgent,
 )
+from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +96,16 @@ class StoryDirector:
             if not opening:
                 raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
             room_future.result()
-        return self._output_editor.review_opening(opening, active_story_goal(state))
+        coherent_opening = cohere_opening_lines(
+            opening,
+            state.story_genre,
+            str(bundle.get("protagonist_name", "")).strip(),
+            str(bundle.get("assistant_name", "")).strip(),
+            str(bundle.get("actionable_objective", active_story_goal(state))).strip(),
+            item_labels_for_opening(tuple(state.world.items.keys())),
+            tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
+        )
+        return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 
     def _compose_opening_legacy(self, state: GameState) -> list[str]:
         architect = self._story_architect.run(state)
@@ -105,15 +116,25 @@ class StoryDirector:
             opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
             opening = opening_future.result()
             room_future.result()
-        return self._output_editor.review_opening(opening, active_story_goal(state))
+        coherent_opening = cohere_opening_lines(
+            opening,
+            state.story_genre,
+            str(architect.get("protagonist_name", "")).strip(),
+            str(plan.get("assistant_name", "")).strip(),
+            str(plan.get("actionable_objective", active_story_goal(state))).strip(),
+            item_labels_for_opening(tuple(state.world.items.keys())),
+            tuple(str(contact.get("name", "")).strip() for contact in cast.get("contacts", ()) if str(contact.get("name", "")).strip()),
+        )
+        return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
         contacts = list(bundle.get("contacts", []))
+        protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
         opening_paragraphs = tuple(
             str(paragraph).strip() for paragraph in bundle.get("opening_paragraphs", ()) if str(paragraph).strip()
         )
         story_plan = {
-            "protagonist_name": str(bundle.get("protagonist_name", "")).strip(),
+            "protagonist_name": protagonist_name,
             "protagonist_background": str(bundle.get("protagonist_background", "")).strip(),
             "setup_paragraphs": opening_paragraphs,
             "expanded_outline": str(bundle.get("expanded_outline", "")).strip(),
@@ -126,6 +147,7 @@ class StoryDirector:
             ),
             "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
         }
+        bundle["protagonist_name"] = protagonist_name
         goals = {
             "setup": str(bundle.get("actionable_objective", "")).strip(),
             "primary": str(bundle.get("primary_goal", "")).strip(),

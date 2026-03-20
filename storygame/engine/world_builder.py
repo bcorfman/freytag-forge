@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 from storygame.plot.curves import normalize_session_length, select_curve_template
+from storygame.story_canon import DEFAULT_MYSTERY_DETECTIVE_NAME
 
 _ALLOWED_GENRES = (
     "sci-fi",
@@ -166,7 +167,7 @@ def _build_story_plan(outline_text: str, goals: dict[str, Any]) -> dict[str, Any
     _public_setup, hidden_threads = _split_setup_and_future_threads(outline_text)
     setup_paragraphs = (
         "The situation is still taking shape, and the facts in front of you are incomplete.",
-        "You are The Detective.",
+        f"You are {DEFAULT_MYSTERY_DETECTIVE_NAME}.",
         f"Your first objective is clear: {goals['setup']}",
     )
     reveal_schedule = tuple(
@@ -178,7 +179,7 @@ def _build_story_plan(outline_text: str, goals: dict[str, Any]) -> dict[str, Any
     )
 
     return {
-        "protagonist_name": "The Detective",
+        "protagonist_name": DEFAULT_MYSTERY_DETECTIVE_NAME,
         "setup_paragraphs": setup_paragraphs,
         "hidden_threads": hidden_threads,
         "reveal_schedule": reveal_schedule,
