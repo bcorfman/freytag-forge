@@ -139,13 +139,60 @@ def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):
 
 
 def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_path):
-    client = _client(tmp_path)
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator("Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        )
+    )
     response = client.post("/turn", json={"command": "start", "seed": 91})
     assert response.status_code == 200
     payload = response.json()
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
+
+
+def test_bootstrap_only_response_prefers_narrator_opening_over_placeholder_story_plan(tmp_path):
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator("Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert any("Rain needles the stone." in line for line in payload["lines"])
+    assert any("Daria keeps the file close." in line for line in payload["lines"])
+    assert not any("The situation is still taking shape" in line for line in payload["lines"])
+
+
+def test_bootstrap_only_response_requires_llm_authored_opening(tmp_path):
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+        ),
+        raise_server_exceptions=True,
+    )
+
+    try:
+        client.post("/turn", json={"command": "start", "seed": 91})
+    except RuntimeError as exc:
+        assert "LLM-authored opening" in str(exc)
+    else:
+        raise AssertionError("Expected bootstrap-only web opening to fail without LLM-authored prose.")
 
 
 def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):

@@ -251,13 +251,23 @@ def create_demo_app(
         start_state = session.state
         bootstrap_only = session.turns_used == 0 and is_bootstrap_command(payload.command)
         if bootstrap_only:
-            payload_body = build_bootstrap_response_payload(
-                start_state,
-                payload.command,
-                "session_id",
-                payload.session_id,
-                active_story_director,
-            )
+            try:
+                payload_body = build_bootstrap_response_payload(
+                    start_state,
+                    payload.command,
+                    "session_id",
+                    payload.session_id,
+                    active_story_director,
+                    active_narrator,
+                    active_output_editor,
+                )
+            except RuntimeError as exc:
+                _LOGGER.warning("Bootstrap opening unavailable: %s", str(exc))
+                return _error_response(
+                    503,
+                    "service_unavailable",
+                    "Narration service is temporarily unavailable.",
+                )
             payload_body["status"] = "ok"
             return TurnResponse.model_validate(payload_body)
         scoped_store = ScopedSaveStore(store, payload.session_id)
