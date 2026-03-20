@@ -19,12 +19,14 @@ from storygame.llm.story_agents.contracts import (
     parse_character_designer_output,
     parse_narrator_opening_output,
     parse_plot_designer_output,
+    parse_story_bootstrap_critique_output,
     parse_room_presentation_output,
     parse_story_bootstrap_output,
     parse_story_architect_output,
 )
 from storygame.llm.story_agents.prompts import (
     build_story_bootstrap_prompt,
+    build_story_bootstrap_critique_prompt,
     build_character_designer_prompt,
     build_narrator_opening_prompt,
     build_plot_designer_prompt,
@@ -249,6 +251,36 @@ def _summary_premise(state: GameState) -> str:
     return premise
 
 
+def _rooms_seed(state: GameState) -> list[dict[str, object]]:
+    rooms: list[dict[str, object]] = []
+    for room_id, room in state.world.rooms.items():
+        rooms.append(
+            {
+                "room_id": room_id,
+                "name": room.name,
+                "description": room.description,
+                "items": [item_id for item_id in room.item_ids],
+                "npcs": [state.world.npcs[npc_id].name for npc_id in room.npc_ids if npc_id in state.world.npcs],
+                "exits": dict(room.exits),
+            }
+        )
+    return rooms
+
+
+def _items_seed(state: GameState) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+    for item_id, item in state.world.items.items():
+        items.append(
+            {
+                "item_id": item_id,
+                "name": item.name,
+                "description": item.description,
+                "kind": item.kind,
+            }
+        )
+    return items
+
+
 def _normalize_background_clause(background: str) -> str:
     cleaned = " ".join(background.split()).strip(" ,")
     if not cleaned:
@@ -376,6 +408,10 @@ class StoryBootstrapAgent(Protocol):
     def run(self, state: GameState) -> dict[str, Any]: ...
 
 
+class StoryBootstrapCriticAgent(Protocol):
+    def run(self, state: GameState, bootstrap_bundle: dict[str, Any]) -> dict[str, Any]: ...
+
+
 class CharacterDesignerAgent(Protocol):
     def run(self, state: GameState, architect: dict[str, Any]) -> dict[str, Any]: ...
 
@@ -450,17 +486,24 @@ class DefaultStoryBootstrapAgent:
         if not contacts_seed:
             raise RuntimeError("StoryBootstrap requires at least one NPC contact in world state.")
 
+        rooms_seed = _rooms_seed(state)
+        items_seed = _items_seed(state)
         system, user = build_story_bootstrap_prompt(
             _summary_premise(state),
             state.story_genre,
             state.story_tone,
+            state.session_length,
+            list(state.world_package.get("beat_candidates", ())),
             contacts_seed[:3],
             {
+                "room_id": state.player.location,
                 "name": room.name,
                 "description": room.description,
-                "items": [item.replace("_", " ") for item in room.item_ids],
+                "items": [item_id for item_id in room.item_ids],
                 "npcs": [state.world.npcs[npc_id].name for npc_id in room.npc_ids if npc_id in state.world.npcs],
             },
+            rooms_seed,
+            items_seed,
             [item.replace("_", " ") for item in state.player.inventory[:3]],
         )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
@@ -486,7 +529,38 @@ class DefaultStoryBootstrapAgent:
             list(parsed["opening_paragraphs"]),
             assistant_name,
         )
+        normalized["timed_events"] = [
+            event
+            for event in normalized.get("timed_events", [])
+            if str(event.get("location", "")).strip() in state.world.rooms
+        ]
+        normalized["clue_placements"] = [
+            entry
+            for entry in normalized.get("clue_placements", [])
+            if str(entry.get("item_id", "")).strip() in state.world.items
+            and str(entry.get("room_id", "")).strip() in state.world.rooms
+        ]
         return normalized
+
+
+class DefaultStoryBootstrapCriticAgent:
+    def __init__(self, mode: str) -> None:
+        self._mode = mode
+
+    def run(self, state: GameState, bootstrap_bundle: dict[str, Any]) -> dict[str, Any]:
+        system, user = build_story_bootstrap_critique_prompt(
+            _summary_premise(state),
+            bootstrap_bundle,
+            _rooms_seed(state),
+            _items_seed(state),
+        )
+        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        if payload is None:
+            raise RuntimeError("StoryBootstrapCritic agent returned non-JSON content.")
+        try:
+            return dict(parse_story_bootstrap_critique_output(payload))
+        except StoryAgentContractError as exc:
+            raise RuntimeError(f"StoryBootstrapCritic contract validation failed: {exc}") from exc
 
 
 class DefaultCharacterDesignerAgent:
@@ -624,9 +698,13 @@ class DefaultStoryReplanAgent:
         impact_class = str(disruption.get("impact_class", "high")).strip().lower()
         reasons = tuple(str(reason).strip().lower() for reason in disruption.get("reasons", ()) if str(reason).strip())
         command = str(disruption.get("command", "")).strip()
+        replan_scope = str(disruption.get("replan_scope", "goal_change")).strip().lower()
 
         high_violence = "violent_action" in reasons or "criminal_behavior" in reasons or "authority_target" in reasons
-        if impact_class == "critical" or high_violence:
+        if replan_scope != "goal_change":
+            new_goal = ""
+            note = "The story adjusts around your last choice, but the case itself still points to the same core objective."
+        elif impact_class == "critical" or high_violence:
             new_goal = "Manage the fallout from your last choice while evading immediate institutional consequences."
             note = "The story shifts hard: consequences are now active, and former allies may no longer be reliable."
         else:
@@ -638,6 +716,7 @@ class DefaultStoryReplanAgent:
             "note": note,
             "impact_class": impact_class,
             "trigger_command": command,
+            "replan_scope": replan_scope,
             "mode": self._mode,
         }
 

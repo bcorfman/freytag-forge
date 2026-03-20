@@ -14,6 +14,24 @@ from storygame.llm.story_agents.contracts import (
 
 
 def test_story_bootstrap_contract_rejects_empty_normalized_fields() -> None:
+    valid_story_shape = {
+        "expanded_outline": "Investigate the killings, expose the conspiracy, and confront the mastermind.",
+        "story_beats": [
+            {"beat_id": "hook", "summary": "Arrive at the estate.", "min_progress": 0.0},
+            {"beat_id": "midpoint", "summary": "Trace the conspiracy.", "min_progress": 0.5},
+            {"beat_id": "climax", "summary": "Confront the mastermind.", "min_progress": 0.85},
+        ],
+        "villains": [
+            {
+                "name": "Magistrate Voss",
+                "motive": "Protect the conspiracy.",
+                "means": "Control over hired enforcers.",
+                "opportunity": "Access to the estate and witnesses.",
+            }
+        ],
+        "timed_events": [],
+        "clue_placements": [],
+    }
     with pytest.raises(StoryAgentContractError, match="protagonist_name:min_length"):
         parse_story_bootstrap_output(
             {
@@ -27,6 +45,7 @@ def test_story_bootstrap_contract_rejects_empty_normalized_fields() -> None:
                 "reveal_schedule": [],
                 "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
                 "opening_paragraphs": ["p1", "p2", "p3"],
+                **valid_story_shape,
             }
         )
 
@@ -43,6 +62,7 @@ def test_story_bootstrap_contract_rejects_empty_normalized_fields() -> None:
                 "reveal_schedule": [],
                 "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
                 "opening_paragraphs": ["p1", "p2", "p3"],
+                **valid_story_shape,
             }
         )
 

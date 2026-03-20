@@ -65,10 +65,11 @@ make test
 ```
 
 ## Architecture (Focused Summary)
-- Planner-first turn routing: player input is interpreted through the LLM/freeform action planner first.
-- Deterministic simulation boundary: world facts, inventory/location state, events, beat progression, and persistence remain deterministic.
-- Coherence gate on narration: narrator output is evaluated by deterministic validators + multi-critic judge loop before final player-facing output.
-- Story bootstrap prefers a single LLM bootstrap bundle for protagonist identity, actionable goals, reveal threads, and opening prose; world-builder seeds only generic fallback placeholders plus hidden-thread metadata.
-- Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history with trace linkage.
+- Planner-first turn routing: ordinary gameplay is interpreted through the LLM/freeform proposal path first, with parser handling kept to control-plane commands and resilience fallback.
+- Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, and reveal state.
+- LLM-authored story layer: bootstrap/opening prose, turn narration, and NPC dialogue are authored by LLMs but must stay grounded in deterministic facts.
+- Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; accepted outputs are persisted back into runtime facts.
+- Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
+- Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.
 
 For full architecture and design details, see [docs/PRD.md](docs/PRD.md).

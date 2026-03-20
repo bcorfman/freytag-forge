@@ -24,6 +24,40 @@ class StoryRevealScheduleEntry(TypedDict):
     min_progress: float
 
 
+class StoryBeatEntry(TypedDict):
+    beat_id: str
+    summary: str
+    min_progress: float
+
+
+class StoryVillainEntry(TypedDict):
+    name: str
+    motive: str
+    means: str
+    opportunity: str
+
+
+class TimedStoryEventEntry(TypedDict):
+    event_id: str
+    summary: str
+    min_turn: int
+    location: str
+    participants: list[str]
+
+
+class CluePlacementEntry(TypedDict):
+    item_id: str
+    room_id: str
+    clue_text: str
+    hidden_reason: str
+
+
+class StoryBootstrapCritique(TypedDict):
+    verdict: str
+    continuity_summary: str
+    issues: list[str]
+
+
 class StoryBootstrapOutput(TypedDict):
     protagonist_name: str
     protagonist_background: str
@@ -31,6 +65,11 @@ class StoryBootstrapOutput(TypedDict):
     actionable_objective: str
     primary_goal: str
     secondary_goals: list[str]
+    expanded_outline: str
+    story_beats: list[StoryBeatEntry]
+    villains: list[StoryVillainEntry]
+    timed_events: list[TimedStoryEventEntry]
+    clue_placements: list[CluePlacementEntry]
     hidden_threads: list[str]
     reveal_schedule: list[StoryRevealScheduleEntry]
     contacts: list[CharacterContact]
@@ -106,6 +145,42 @@ class _RevealScheduleEntryModel(BaseModel):
     min_progress: float = Field(ge=0.0, le=1.0)
 
 
+class _StoryBeatEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    beat_id: str = Field(min_length=1, max_length=80)
+    summary: str = Field(min_length=1, max_length=240)
+    min_progress: float = Field(ge=0.0, le=1.0)
+
+
+class _StoryVillainEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name: str = Field(min_length=1, max_length=80)
+    motive: str = Field(min_length=1, max_length=240)
+    means: str = Field(min_length=1, max_length=240)
+    opportunity: str = Field(min_length=1, max_length=240)
+
+
+class _TimedStoryEventEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    event_id: str = Field(min_length=1, max_length=80)
+    summary: str = Field(min_length=1, max_length=240)
+    min_turn: int = Field(ge=0, le=200)
+    location: str = Field(min_length=1, max_length=80)
+    participants: list[str] = Field(default_factory=list, max_length=8)
+
+
+class _CluePlacementEntryModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    item_id: str = Field(min_length=1, max_length=80)
+    room_id: str = Field(min_length=1, max_length=80)
+    clue_text: str = Field(min_length=1, max_length=300)
+    hidden_reason: str = Field(min_length=1, max_length=240)
+
+
 class _StoryBootstrapModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -115,6 +190,11 @@ class _StoryBootstrapModel(BaseModel):
     actionable_objective: str = Field(min_length=1, max_length=300)
     primary_goal: str = Field(min_length=1, max_length=300)
     secondary_goals: list[str] = Field(default_factory=list, max_length=4)
+    expanded_outline: str = Field(min_length=1, max_length=1200)
+    story_beats: list[_StoryBeatEntryModel] = Field(default_factory=list, min_length=3, max_length=8)
+    villains: list[_StoryVillainEntryModel] = Field(default_factory=list, min_length=1, max_length=4)
+    timed_events: list[_TimedStoryEventEntryModel] = Field(default_factory=list, max_length=8)
+    clue_placements: list[_CluePlacementEntryModel] = Field(default_factory=list, max_length=12)
     hidden_threads: list[str] = Field(default_factory=list, max_length=6)
     reveal_schedule: list[_RevealScheduleEntryModel] = Field(default_factory=list, max_length=6)
     contacts: list[_CharacterContactModel] = Field(min_length=1, max_length=8)
@@ -146,6 +226,14 @@ class _RoomPresentationModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     rooms: list[_RoomPresentationEntryModel] = Field(min_length=1, max_length=64)
+
+
+class _StoryBootstrapCritiqueModel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    verdict: str = Field(min_length=1, max_length=40)
+    continuity_summary: str = Field(min_length=1, max_length=400)
+    issues: list[str] = Field(default_factory=list, max_length=8)
 
 
 def _raise_contract_error(code: str, exc: ValidationError) -> StoryAgentContractError:
@@ -262,6 +350,53 @@ def parse_story_bootstrap_output(payload: dict) -> StoryBootstrapOutput:
             for goal in parsed["secondary_goals"]
             if _trim_sentence(str(goal))
         ],
+        "expanded_outline": _ensure_terminal_punctuation(
+            _strip_label(str(parsed["expanded_outline"]), ("expanded_outline", "outline"))
+        ),
+        "story_beats": [
+            {
+                "beat_id": _trim_sentence(str(entry["beat_id"])),
+                "summary": _ensure_terminal_punctuation(str(entry["summary"])),
+                "min_progress": float(entry["min_progress"]),
+            }
+            for entry in parsed["story_beats"]
+            if _trim_sentence(str(entry["beat_id"])) and _trim_sentence(str(entry["summary"]))
+        ],
+        "villains": [
+            {
+                "name": _strip_label(str(entry["name"]), ("name", "villain")),
+                "motive": _ensure_terminal_punctuation(str(entry["motive"])),
+                "means": _ensure_terminal_punctuation(str(entry["means"])),
+                "opportunity": _ensure_terminal_punctuation(str(entry["opportunity"])),
+            }
+            for entry in parsed["villains"]
+            if _trim_sentence(str(entry["name"]))
+        ],
+        "timed_events": [
+            {
+                "event_id": _trim_sentence(str(entry["event_id"])),
+                "summary": _ensure_terminal_punctuation(str(entry["summary"])),
+                "min_turn": int(entry["min_turn"]),
+                "location": _trim_sentence(str(entry["location"])),
+                "participants": [
+                    _trim_sentence(str(name))
+                    for name in entry["participants"]
+                    if _trim_sentence(str(name))
+                ],
+            }
+            for entry in parsed["timed_events"]
+            if _trim_sentence(str(entry["event_id"])) and _trim_sentence(str(entry["location"]))
+        ],
+        "clue_placements": [
+            {
+                "item_id": _trim_sentence(str(entry["item_id"])),
+                "room_id": _trim_sentence(str(entry["room_id"])),
+                "clue_text": _ensure_terminal_punctuation(str(entry["clue_text"])),
+                "hidden_reason": _ensure_terminal_punctuation(str(entry["hidden_reason"])),
+            }
+            for entry in parsed["clue_placements"]
+            if _trim_sentence(str(entry["item_id"])) and _trim_sentence(str(entry["room_id"]))
+        ],
         "hidden_threads": [
             _ensure_terminal_punctuation(str(thread))
             for thread in parsed["hidden_threads"]
@@ -285,6 +420,12 @@ def parse_story_bootstrap_output(payload: dict) -> StoryBootstrapOutput:
         raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "actionable_objective:min_length")
     if not normalized["primary_goal"]:
         raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "primary_goal:min_length")
+    if not normalized["expanded_outline"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "expanded_outline:min_length")
+    if not normalized["story_beats"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "story_beats:min_length")
+    if not normalized["villains"]:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CONTRACT_INVALID", "villains:min_length")
     return cast(StoryBootstrapOutput, normalized)
 
 
@@ -345,3 +486,19 @@ def parse_room_presentation_output(payload: dict, room_ids: tuple[str, ...]) -> 
     if len(normalized_rooms) < len(room_ids):
         raise StoryAgentContractError("ROOM_PRESENTATION_CONTRACT_INVALID", "rooms:missing_required_room_ids")
     return cast(RoomPresentationOutput, {"rooms": normalized_rooms})
+
+
+def parse_story_bootstrap_critique_output(payload: dict) -> StoryBootstrapCritique:
+    try:
+        model = _StoryBootstrapCritiqueModel.model_validate(payload)
+    except ValidationError as exc:
+        raise _raise_contract_error("STORY_BOOTSTRAP_CRITIQUE_CONTRACT_INVALID", exc) from exc
+    parsed = model.model_dump(mode="python")
+    normalized = {
+        "verdict": _trim_sentence(str(parsed["verdict"])).lower(),
+        "continuity_summary": _ensure_terminal_punctuation(str(parsed["continuity_summary"])),
+        "issues": [_ensure_terminal_punctuation(str(issue)) for issue in parsed["issues"] if _trim_sentence(str(issue))],
+    }
+    if normalized["verdict"] not in {"accepted", "revise"}:
+        raise StoryAgentContractError("STORY_BOOTSTRAP_CRITIQUE_CONTRACT_INVALID", "verdict:invalid_choice")
+    return cast(StoryBootstrapCritique, normalized)

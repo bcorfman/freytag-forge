@@ -46,3 +46,16 @@ def test_caseboard_lines_fallback_lead_when_no_items_or_npcs() -> None:
     joined = "\n".join(lines).lower()
     assert "explore adjacent rooms" in joined
     assert "latest beat" not in joined
+
+
+def test_caseboard_lines_prefer_fact_backed_goal_and_discovered_leads() -> None:
+    state = build_default_state(seed=615)
+    state.active_goal = "stale in-memory goal"
+    state.world_facts.assert_fact("active_goal", "Review the route key and press Daria for the next lead.")
+    state.world_facts.assert_fact("discovered_lead", "route_key", "The route key opens the hidden service passage.")
+
+    lines = caseboard_lines(state)
+    joined = "\n".join(lines)
+
+    assert "Review the route key and press Daria for the next lead." in joined
+    assert "The route key opens the hidden service passage." in joined

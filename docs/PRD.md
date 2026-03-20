@@ -63,11 +63,16 @@ Current runtime generation is package-driven.
   - the player used an explicit control-plane command,
   - the LLM proposal is invalid,
   - the proposal fails deterministic validators,
-  - or the requested action is intentionally out of story scope.
-- Out-of-scope or high-impact actions are handled by explicit confirmation:
-  - engine explains why the action exceeds current story bounds,
+  - or the requested action cannot be mapped into a bounded deterministic commit.
+- The player must be allowed to attempt any action or story move. Nothing is off limits at the gameplay layer; the system should adapt the story and fact state to the player prompt whenever a bounded commit is still possible.
+- Goal-breaking actions are handled by explicit confirmation only when the requested prompt would break the current story goals beyond repair:
+  - engine explains why the action would rupture the current story-goal structure,
   - player chooses `PROCEED` or `CANCEL`,
-  - confirmed `PROCEED` triggers deterministic state markers plus story replanning of goals, NPC behavior, likely consequences, and event timing.
+  - this confirmation interruption must happen before the official LLM-authored response to the original prompt,
+  - confirmed `PROCEED` triggers deterministic state markers plus story replanning of NPC behavior, likely consequences, and event timing,
+  - only player-confirmed major disruptions may change core story goals,
+  - lighter confirmed disruptions should adapt around the current goal rather than rewriting it,
+  - after `PROCEED`, the game should generate the official LLM-authored response to that same original prompt under the updated fact state.
 - Product intent for runtime feel:
   - the game should feel like a responsive story simulation with deterministic enforcement,
   - not a classic command parser with LLM text layered on top.
@@ -76,7 +81,7 @@ Current runtime generation is package-driven.
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
 - Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`) and proposal-failure fallback.
-- Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, etc.) with legacy object views synchronized for compatibility.
+- Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
@@ -135,9 +140,11 @@ flowchart LR
 
 ### Persistence + Canonical Artifacts
 - `storygame.persistence.savegame_sqlite` stores run snapshots/events/transcripts.
+- Save/load must preserve the fact-backed active goal and restore it back into canonical runtime facts on load.
 - `storygame.persistence.story_state` emits canonical turn artifacts:
   - `StoryState.json`
   - `STORY.md`
+- Artifact payloads and markdown should report the fact-backed active goal rather than stale in-memory fallback fields.
 - Artifact integrity is enforced by hash checks and orchestrator-only write constraints.
 - Each artifact trace includes `parent_story_state_sha256` to link canonical snapshots across persisted turns.
 - Per-turn artifact history is retained under `story_artifacts/<slot>/turns/<turn_index>/`.
@@ -192,7 +199,8 @@ flowchart LR
 ### World Builder Interfaces
 - Runtime map/entity/item realization is derived from `world_package` (selected from outline + curve templates) rather than static scene constants.
 - Deterministic world packages may still seed map/entity/item topology, but seeded setup objectives, default primary objectives, public-setting paragraphs, and story-plan prose are no longer authoritative runtime content.
-- Runtime goals, reveal threads, protagonist identity, assistant identity, and opening prose should come from the LLM bootstrap contract and be persisted back into runtime state for later deterministic validation/replay.
+- Runtime goals, reveal threads, protagonist identity, assistant identity, timed story events, and opening prose should come from the LLM bootstrap contract and be persisted back into canonical fact-backed runtime state for later deterministic validation/replay.
+- Accepted bootstrap outputs should also establish canonical assistant/contact relationship facts, villain facts, clue-placement facts, and timed-event participant facts.
 - Predicate and rule packs are YAML-defined:
   - `data/predicates/core.yaml`
   - `data/predicates/genres/<genre>.yaml`
@@ -208,12 +216,14 @@ flowchart LR
   - Default runtime adapter attempts an LLM proposal first for ordinary gameplay inputs.
   - Proposal outputs are interpreted as candidate story actions and candidate story consequences, not just parser aliases.
   - Deterministic fallback command parsing is a resilience path, not the dominant authored path.
+- Ordinary prompts should be treated as adaptation opportunities, not scope violations. The runtime should prefer mutating canonical facts and replanning around the player’s actual input over refusing the action outright.
 - Deterministic fallback dialogue routing resolves explicit NPC names against the visible cast before falling back, so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
 - Runtime adapters produce dialogue, action, event, and state-delta proposals.
 - Engine policy maps proposals into bounded deterministic fact deltas before commit.
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
-- Unknown or out-of-policy intents use a generic policy fallback only as a last resort and must still preserve narrative continuity.
+- Unknown or weakly-specified intents use a generic policy fallback only as a last resort and must still preserve narrative continuity while adapting to the player’s prompt.
 - Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
+- Story-significant item inspection/acquisition should assert deterministic discovery facts (for example `discovered_clue` and `discovered_lead`) so later narration, caseboard output, and continuity checks can rely on canonical discoveries instead of prose memory alone.
 - NPCs are stateful story actors:
   - their replies should usually be LLM-authored from deterministic context,
   - their knowledge, trust, availability, and goals remain deterministically tracked,
@@ -241,7 +251,7 @@ flowchart LR
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
 - First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
-- Opening generation now fails soft: if narrator-opening contract parsing fails, a deterministic fallback opening is used instead of surfacing a 500 error.
+- Opening generation must remain LLM-authored. If bootstrap/opening generation fails, the surface should fail closed instead of fabricating deterministic opening prose.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
@@ -258,9 +268,12 @@ flowchart LR
 - Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
+- Caseboard, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
-- High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation.
-- Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt goals, NPC behavior, object significance, event timing, likely consequences, and future room framing.
+- High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation only when they would break current story goals beyond repair.
+- Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt NPC behavior, object significance, event timing, likely consequences, and future room framing.
+- Replan context includes whether the disruption is a light adaptation or a player-confirmed goal-change event.
+- Goal-breaking confirmation must interrupt before the official response to the triggering prompt; after `PROCEED`, the system should answer that original prompt under the new fact state rather than substituting a different authored action.
 - Transcript command echo uses `>COMMAND` format.
 - CLI/replay transcripts insert a blank line before each `>COMMAND` echo for readability between turns.
 - Web turn response lines now prepend `>COMMAND` each turn for transcript-style continuity in clients.
@@ -299,7 +312,9 @@ flowchart LR
   - ordinary turns must remain LLM-proposal-first,
   - deterministic systems must remain commit authorities,
   - parser fallback must stay secondary,
-  - high-impact/out-of-scope actions must require confirmation before mutation,
+  - the player must be allowed to attempt any story move,
+  - confirmation must occur only when the requested move would break current goals beyond repair,
+  - that confirmation must occur before the official response to the original prompt,
   - and tests must lock these behaviors in before refactors land.
 - If implementation begins drifting back toward parser-dominant turn handling, update `AGENTS.md` with explicit architecture rules or a required checklist for proposal-first routing and validation boundaries.
 

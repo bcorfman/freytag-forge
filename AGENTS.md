@@ -21,7 +21,10 @@ Hard rules:
 - Fallback dialogue must not auto-target the nearest NPC for unrelated player actions. If the player did not clearly address someone, keep the reply narrator-scoped or ask for clarification.
 - Preserve protagonist/assistant identity continuity in narrator context and output editing. Do not let room-entry or reviewed prose invent replacement names for already-canonical characters.
 - Opening/bootstrap planning should prefer a single cached story-bootstrap agent call over multiple narrow planning calls. Do not reintroduce seeded setup/objective/public-setting text as the authoritative runtime story plan.
-- High-impact or out-of-scope actions must require explicit confirmation before state mutation, then trigger deterministic replan markers so goals, NPC behavior, and consequences can adapt coherently.
+- The player must be allowed to attempt any gameplay action or story move. Do not treat surprising, disruptive, or goal-breaking prompts as forbidden at the gameplay layer.
+- High-impact actions must require explicit confirmation before state mutation only when they would break the current story goals beyond repair.
+- When confirmation is required, interrupt before generating the official LLM-authored response to the original prompt. On `PROCEED`, commit disruption facts, replan if needed, then generate the official response to that same player prompt.
+- If the player prompt does not break current goals beyond repair, the engine must adapt the fact database and story state to the prompt rather than refusing it as out-of-scope.
 - Preserve explicit typed proposal/validation boundaries. Prefer contract types and adapters for runtime turn proposals over ad-hoc dict plumbing or special-case command branches.
 - Deterministic item validation should resolve unique visible shorthand naturally (for example `take key` -> `route_key` when unambiguous) instead of forcing the player to restate full internal item labels.
 - Treat `storygame.web` and `storygame.web_demo` as separate deployment surfaces with different narrator/backend assumptions. Shared helpers are allowed only below that adapter boundary.

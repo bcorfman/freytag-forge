@@ -927,6 +927,26 @@ def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption(
     assert any("story shifts" in line.lower() for line in replanned_lines)
 
 
+def test_run_turn_recoverable_disruption_adapts_without_confirmation_gate() -> None:
+    state = build_default_state(seed=991)
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "spray graffiti on statue",
+        Random(991),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert beat_type != "impact_gate"
+    assert action_raw == "spray graffiti on statue"
+    assert next_state.turn_index == 1
+    assert next_state.pending_high_impact_command == ""
+    assert next_state.player.flags.get("story_replan_required") is not True
+    assert not any("type proceed" in line.lower() for line in lines)
+
+
 def test_run_turn_applies_output_editor_before_returning_lines():
     class _PassThroughEditor:
         def review_opening(self, lines, active_goal):  # noqa: ANN001

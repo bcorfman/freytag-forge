@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from storygame.engine.facts import active_story_goal, discovered_leads
 from storygame.engine.state import GameState, Item, Npc, Room
 
 ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence"}
@@ -52,7 +53,7 @@ def npc_talk_message(state: GameState, npc: Npc, first_talk: bool) -> str:
 
 def caseboard_lines(state: GameState) -> tuple[str, ...]:
     known_facts = [
-        f"Current objective: {state.active_goal}",
+        f"Current objective: {active_story_goal(state)}",
         f"Progress is {state.progress:.2f} with tension {state.tension:.2f}.",
     ]
     if state.beat_history:
@@ -63,11 +64,11 @@ def caseboard_lines(state: GameState) -> tuple[str, ...]:
         "Which NPC or item can unlock the next progression step?",
     ]
 
-    leads: list[str] = []
+    leads = [entry["text"] for entry in discovered_leads(state)]
     room = state.world.rooms[state.player.location]
-    if room.item_ids:
+    if not leads and room.item_ids:
         leads.append(f"Inspect available items in {room.name}.")
-    if room.npc_ids:
+    if len(leads) < 3 and room.npc_ids:
         leads.append(f"Question {room.npc_ids[0].replace('_', ' ')} for new context.")
     if not leads:
         leads.append("Explore adjacent rooms to gather more context.")

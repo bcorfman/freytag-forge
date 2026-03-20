@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from storygame.engine.facts import active_story_goal, assistant_name, assistant_role, protagonist_profile
 from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
 from storygame.engine.state import EventLog, GameState, Npc
@@ -39,7 +40,9 @@ class NarrationContext:
     goal: str
     action: str
     protagonist_name: str = ""
+    protagonist_background: str = ""
     assistant_name: str = ""
+    assistant_role: str = ""
     memory_fragments: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
@@ -60,6 +63,8 @@ class NarrationContext:
             "goal": self.goal,
             "action": self.action,
             "memory_fragments": list(self.memory_fragments),
+            "protagonist_background": self.protagonist_background,
+            "assistant_role": self.assistant_role,
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -116,6 +121,10 @@ def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
 
 
 def _protagonist_name(state: GameState) -> str:
+    profile = protagonist_profile(state)
+    protagonist = profile["name"].strip()
+    if protagonist:
+        return protagonist
     bundle = dict(state.world_package.get("llm_story_bundle", {}))
     protagonist = str(bundle.get("protagonist_name", "")).strip()
     if protagonist:
@@ -128,10 +137,13 @@ def _protagonist_name(state: GameState) -> str:
 
 
 def _assistant_name(state: GameState) -> str:
+    resolved = assistant_name(state).strip()
+    if resolved:
+        return resolved
     bundle = dict(state.world_package.get("llm_story_bundle", {}))
-    assistant_name = str(bundle.get("assistant_name", "")).strip()
-    if assistant_name:
-        return assistant_name
+    bundle_assistant_name = str(bundle.get("assistant_name", "")).strip()
+    if bundle_assistant_name:
+        return bundle_assistant_name
     room = state.world.rooms[state.player.location]
     if room.npc_ids:
         npc = state.world.npcs.get(room.npc_ids[0])
@@ -141,6 +153,40 @@ def _assistant_name(state: GameState) -> str:
         npc = state.world.npcs[npc_id]
         if npc.name.strip():
             return npc.name.strip()
+    return ""
+
+
+def _protagonist_background(state: GameState) -> str:
+    profile = protagonist_profile(state)
+    if profile["background"].strip():
+        return profile["background"].strip()
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    background = str(bundle.get("protagonist_background", "")).strip()
+    if background:
+        return background
+    story_plan = dict(state.world_package.get("story_plan", {}))
+    return str(story_plan.get("protagonist_background", "")).strip()
+
+
+def _assistant_role(state: GameState) -> str:
+    resolved_assistant = _assistant_name(state)
+    role = assistant_role(state, resolved_assistant)
+    if role:
+        return role
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    assistant_name = str(bundle.get("assistant_name", "")).strip().lower()
+    contacts = bundle.get("contacts", ())
+    for contact in contacts:
+        if not isinstance(contact, dict):
+            continue
+        if str(contact.get("name", "")).strip().lower() == assistant_name:
+            return str(contact.get("role", "")).strip()
+    story_cast = dict(state.world_package.get("story_cast", {}))
+    for contact in story_cast.get("contacts", ()):
+        if not isinstance(contact, dict):
+            continue
+        if str(contact.get("name", "")).strip().lower() == _assistant_name(state).strip().lower():
+            return str(contact.get("role", "")).strip()
     return ""
 
 
@@ -157,7 +203,9 @@ def build_narration_context(
         room_name=room.name,
         room_description=room.description,
         protagonist_name=_protagonist_name(state),
+        protagonist_background=_protagonist_background(state),
         assistant_name=_assistant_name(state),
+        assistant_role=_assistant_role(state),
         visible_items=visible_items[:MAX_VISIBLE_ITEMS],
         visible_npcs=room.npc_ids,
         npc_facts=_summarize_npc_facts(state),
@@ -170,6 +218,6 @@ def build_narration_context(
         phase=get_phase(state.progress),
         tension=state.tension,
         beat=beat,
-        goal=state.active_goal,
+        goal=active_story_goal(state),
         action=action.raw,
     )

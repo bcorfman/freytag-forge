@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Protocol
 
+from storygame.engine.facts import active_story_goal
 from storygame.engine.state import Event, GameState
 from storygame.plot.freytag import get_phase
 
@@ -75,7 +76,7 @@ def _goal_tags(goal: str) -> tuple[str, ...]:
 def _extract_event_notes(state: GameState, events: list[Event]) -> list[tuple[str, str, tuple[str, ...]]]:
     phase = get_phase(state.progress)
     room_tag = f"room_{normalize_tag(state.player.location)}"
-    goal_tags = _goal_tags(state.active_goal)
+    goal_tags = _goal_tags(active_story_goal(state))
     notes: list[tuple[str, str, tuple[str, ...]]] = []
 
     for event in events:

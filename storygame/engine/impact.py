@@ -42,9 +42,6 @@ _CRIME_TERMS = {
 _AUTHORITY_TERMS = {"police", "officer", "deputy", "sheriff", "guard"}
 _PUBLIC_SPACE_TERMS = {"school", "hospital", "church", "station", "sign", "statue"}
 _IRREVERSIBLE_TERMS = {"explode", "ignite", "burn", "jump", "destroy"}
-_CONFIRMATION_CLASSES = {"high", "critical"}
-
-
 class ImpactAssessment(TypedDict):
     score: float
     impact_class: str
@@ -154,4 +151,19 @@ def assess_player_command(state: GameState, raw: str, action: Action) -> ImpactA
 
 
 def requires_high_impact_confirmation(assessment: ImpactAssessment) -> bool:
-    return assessment["impact_class"] in _CONFIRMATION_CLASSES
+    return replan_scope_for_assessment(assessment) == "goal_change"
+
+
+def replan_scope_for_assessment(assessment: ImpactAssessment) -> str:
+    reasons = set(assessment["reasons"])
+    dimensions = assessment["dimensions"]
+    impact_class = assessment["impact_class"]
+    if impact_class == "critical":
+        return "goal_change"
+    if "self_harm_risk" in reasons or "violence_against_present_npc" in reasons:
+        return "goal_change"
+    if "authority_target" in reasons and dimensions.get("timeline_disruption", 0.0) >= 0.35:
+        return "goal_change"
+    if dimensions.get("goal_violation", 0.0) >= 0.35:
+        return "goal_change"
+    return "light"
