@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from storygame.llm.story_agents.contracts import (
+    parse_story_bootstrap_output,
     StoryAgentContractError,
     parse_character_designer_output,
     parse_narrator_opening_output,
@@ -10,6 +11,7 @@ from storygame.llm.story_agents.contracts import (
     parse_story_architect_output,
 )
 from storygame.llm.story_agents.prompts import (
+    build_story_bootstrap_prompt,
     build_character_designer_prompt,
     build_narrator_opening_prompt,
     build_plot_designer_prompt,
@@ -18,6 +20,20 @@ from storygame.llm.story_agents.prompts import (
 
 
 def test_story_agent_contracts_accept_valid_payloads():
+    bootstrap = parse_story_bootstrap_output(
+        {
+            "protagonist_name": "Noah Kade",
+            "protagonist_background": "A detective returning for one last case.",
+            "assistant_name": "Mina Cole",
+            "actionable_objective": "Review the case file and choose the first lead.",
+            "primary_goal": "Expose the buried conspiracy behind the murders.",
+            "secondary_goals": ["Find the missing witness."],
+            "hidden_threads": ["The assistant knows more than she admits."],
+            "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+            "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
+            "opening_paragraphs": ["p1", "p2", "p3"],
+        }
+    )
     architect = parse_story_architect_output(
         {
             "protagonist_name": "Noah Kade",
@@ -36,6 +52,7 @@ def test_story_agent_contracts_accept_valid_payloads():
         {"paragraphs": ["p1", "p2", "p3"]}
     )
 
+    assert bootstrap["assistant_name"] == "Mina Cole"
     assert architect["protagonist_name"] == "Noah Kade"
     assert cast["contacts"][0]["name"] == "Mina Cole"
     assert plot["assistant_name"] == "Mina Cole"
@@ -43,6 +60,8 @@ def test_story_agent_contracts_accept_valid_payloads():
 
 
 def test_story_agent_contracts_reject_invalid_shapes():
+    with pytest.raises(StoryAgentContractError):
+        parse_story_bootstrap_output({"protagonist_name": "", "assistant_name": ""})
     with pytest.raises(StoryAgentContractError):
         parse_story_architect_output({"protagonist_name": "", "tone": "dark"})
     with pytest.raises(StoryAgentContractError):
@@ -54,6 +73,18 @@ def test_story_agent_contracts_reject_invalid_shapes():
 
 
 def test_story_agent_prompts_contain_contract_and_json_instruction():
+    system, user = build_story_bootstrap_prompt(
+        "A detective returns.",
+        "mystery",
+        "dark",
+        [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
+        {"name": "Outside The Mansion", "description": "Cold stone.", "items": ["case file"], "npcs": ["Mina Cole"]},
+        ["field kit"],
+    )
+    assert "json only" in system.lower()
+    assert "opening_paragraphs" in system
+    assert "premise" in user.lower()
+
     system, user = build_story_architect_prompt("A detective returns.", "Noah", "mystery", "dark")
     assert "json only" in system.lower()
     assert "protagonist_name" in system
@@ -70,6 +101,24 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
 
 
 def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
+    bootstrap = parse_story_bootstrap_output(
+        {
+            "protagonist_name": "Name: Noah Kade",
+            "protagonist_background": "Background: A detective returning for one last case",
+            "assistant_name": "assistant_name: Daria Stone",
+            "actionable_objective": "Objective: Review the case file first",
+            "primary_goal": "Primary goal: Expose the conspiracy",
+            "secondary_goals": ["  Find the witness  ", ""],
+            "hidden_threads": ["  buried ledger  ", ""],
+            "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+            "contacts": [
+                {"name": "Characters:", "role": "assistant", "trait": "observant"},
+                {"name": "Name: Daria Stone", "role": "Role: assistant", "trait": "Trait: observant"},
+            ],
+            "opening_paragraphs": ["first paragraph", "second paragraph", "third paragraph"],
+            "unused": {"ignored": True},
+        }
+    )
     architect = parse_story_architect_output(
         {
             "protagonist_name": "Name: Noah Kade",
@@ -98,6 +147,9 @@ def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
         {"paragraphs": ["first paragraph", "second paragraph.", "third paragraph"], "other": "ignored"}
     )
 
+    assert bootstrap["protagonist_name"] == "Noah Kade"
+    assert bootstrap["contacts"][0]["name"] == "Daria Stone"
+    assert bootstrap["opening_paragraphs"][0].endswith(".")
     assert architect["protagonist_name"] == "Noah Kade"
     assert architect["protagonist_background"].endswith(".")
     assert architect["tone"] == "dark"

@@ -90,7 +90,10 @@ Current runtime generation is package-driven.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
 - Multi-critic evaluation executes critic runs in parallel per round while preserving deterministic output ordering for judge inputs.
 - `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).
-- Opening orchestration runs dependency-ordered stages first (architect -> character -> plot), then executes room-presentation caching and narrator opening generation in parallel to reduce latency.
+- Opening/bootstrap orchestration should prefer a single story-bootstrap agent call that returns protagonist identity, assistant/contact plan, actionable objective, longer-term goals, reveal schedule, and player-facing opening paragraphs in one contract.
+- Legacy multi-agent opening chains (architect -> character -> plot -> narrator) are compatibility/fallback paths only; they are not the preferred runtime path because they waste latency budget.
+- Story/bootstrap planning should be cached into runtime state once and reused rather than recomputed from deterministic seeded goal text.
+- Overall latency goal: keep all story-agent interactions under 10 seconds per turn, biasing toward fewer LLM round-trips over many narrow agent calls.
 - `storygame.llm.story_agents.prompts` defines per-agent prompt templates.
 - `storygame.llm.story_agents.contracts` defines per-agent JSON contracts and parsers.
 - Story-agent parsers enforce required JSON keys but normalize lightweight label/punctuation variants and ignore non-contract extra fields to reduce brittle generation failures.
@@ -188,6 +191,8 @@ flowchart LR
 
 ### World Builder Interfaces
 - Runtime map/entity/item realization is derived from `world_package` (selected from outline + curve templates) rather than static scene constants.
+- Deterministic world packages may still seed map/entity/item topology, but seeded setup objectives, default primary objectives, public-setting paragraphs, and story-plan prose are no longer authoritative runtime content.
+- Runtime goals, reveal threads, protagonist identity, assistant identity, and opening prose should come from the LLM bootstrap contract and be persisted back into runtime state for later deterministic validation/replay.
 - Predicate and rule packs are YAML-defined:
   - `data/predicates/core.yaml`
   - `data/predicates/genres/<genre>.yaml`

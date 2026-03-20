@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from storygame.llm.story_agents.contracts import (
+    parse_story_bootstrap_output,
     StoryAgentContractError,
     parse_character_designer_output,
     parse_narrator_opening_output,
@@ -10,6 +11,40 @@ from storygame.llm.story_agents.contracts import (
     parse_room_presentation_output,
     parse_story_architect_output,
 )
+
+
+def test_story_bootstrap_contract_rejects_empty_normalized_fields() -> None:
+    with pytest.raises(StoryAgentContractError, match="protagonist_name:min_length"):
+        parse_story_bootstrap_output(
+            {
+                "protagonist_name": "Name: ",
+                "protagonist_background": "Background: detective",
+                "assistant_name": "Mina",
+                "actionable_objective": "Review the case file.",
+                "primary_goal": "Solve the case.",
+                "secondary_goals": [],
+                "hidden_threads": [],
+                "reveal_schedule": [],
+                "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": ["p1", "p2", "p3"],
+            }
+        )
+
+    with pytest.raises(StoryAgentContractError, match="assistant_name:min_length"):
+        parse_story_bootstrap_output(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective.",
+                "assistant_name": "assistant_name: ",
+                "actionable_objective": "Review the case file.",
+                "primary_goal": "Solve the case.",
+                "secondary_goals": [],
+                "hidden_threads": [],
+                "reveal_schedule": [],
+                "contacts": [{"name": "Mina Cole", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": ["p1", "p2", "p3"],
+            }
+        )
 
 
 def test_story_architect_contract_rejects_empty_normalized_fields() -> None:

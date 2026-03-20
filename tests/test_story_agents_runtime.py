@@ -10,6 +10,7 @@ import pytest
 from storygame.engine.world import build_default_state
 from storygame.llm.story_agents import agents as agent_module
 from storygame.llm.story_agents.agents import (
+    DefaultStoryBootstrapAgent,
     DefaultCharacterDesignerAgent,
     DefaultNarratorOpeningAgent,
     DefaultPlotDesignerAgent,
@@ -192,6 +193,36 @@ def test_story_architect_agent_success_and_failures(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "{}")
     monkeypatch.setattr("storygame.llm.story_agents.agents.parse_story_architect_output", _raise_contract)
     with pytest.raises(RuntimeError, match="contract validation failed"):
+        agent.run(state)
+
+
+def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
+    state = build_default_state(seed=550)
+    agent = DefaultStoryBootstrapAgent("openai")
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective on one final case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file and press the strongest lead.",
+                "primary_goal": "Expose the conspiracy behind the murders.",
+                "secondary_goals": ["Find the missing witness."],
+                "hidden_threads": ["The route key links the assistant to the mansion."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": ["p1", "p2", "p3"],
+            }
+        ),
+    )
+    result = agent.run(state)
+    assert result["assistant_name"] == "Daria Stone"
+    assert len(result["opening_paragraphs"]) == 3
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "not-json")
+    with pytest.raises(RuntimeError, match="non-JSON"):
         agent.run(state)
 
 

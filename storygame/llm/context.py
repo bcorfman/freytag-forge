@@ -116,6 +116,10 @@ def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
 
 
 def _protagonist_name(state: GameState) -> str:
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    protagonist = str(bundle.get("protagonist_name", "")).strip()
+    if protagonist:
+        return protagonist
     story_plan = dict(state.world_package.get("story_plan", {}))
     protagonist = str(story_plan.get("protagonist_name", "")).strip()
     if protagonist:
@@ -124,6 +128,10 @@ def _protagonist_name(state: GameState) -> str:
 
 
 def _assistant_name(state: GameState) -> str:
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    assistant_name = str(bundle.get("assistant_name", "")).strip()
+    if assistant_name:
+        return assistant_name
     room = state.world.rooms[state.player.location]
     if room.npc_ids:
         npc = state.world.npcs.get(room.npc_ids[0])

@@ -11,8 +11,33 @@ from storygame.plot.beat_manager import select_beat
 from storygame.plot.tension import apply_tension_events
 
 
+def _goal_bundle(state: GameState) -> dict[str, object]:
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    if bundle:
+        return {
+            "setup": str(bundle.get("actionable_objective", "")).strip(),
+            "primary": str(bundle.get("primary_goal", "")).strip(),
+            "secondary": tuple(
+                str(goal).strip() for goal in bundle.get("secondary_goals", ()) if str(goal).strip()
+            ),
+        }
+    return dict(state.world_package.get("goals", {}))
+
+
+def _story_plan_bundle(state: GameState) -> dict[str, object]:
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    if bundle:
+        return {
+            "hidden_threads": tuple(
+                str(thread).strip() for thread in bundle.get("hidden_threads", ()) if str(thread).strip()
+            ),
+            "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
+        }
+    return dict(state.world_package.get("story_plan", {}))
+
+
 def _refresh_active_goal(state: GameState) -> None:
-    goals = state.world_package.get("goals", {})
+    goals = _goal_bundle(state)
     setup_goal = str(goals.get("setup", "")).strip()
     primary_goal = str(goals.get("primary", "")).strip()
     secondary_goals = tuple(str(goal).strip() for goal in goals.get("secondary", ()) if str(goal).strip())
@@ -30,8 +55,7 @@ def _refresh_active_goal(state: GameState) -> None:
 
 
 def _story_reveal_events(state: GameState) -> list[Event]:
-    package = state.world_package
-    story_plan = package.get("story_plan", {})
+    story_plan = _story_plan_bundle(state)
     hidden_threads = tuple(
         str(thread).strip() for thread in story_plan.get("hidden_threads", ()) if str(thread).strip()
     )

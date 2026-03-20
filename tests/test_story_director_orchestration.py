@@ -13,6 +13,22 @@ class _StubArchitect:
         return {"protagonist_name": "Stub Protagonist"}
 
 
+class _StubBootstrap:
+    def run(self, state):  # noqa: ANN001
+        return {
+            "protagonist_name": "Stub Protagonist",
+            "protagonist_background": "A detective on the edge of failure.",
+            "assistant_name": "Stub Ally",
+            "actionable_objective": "Open the case file first.",
+            "primary_goal": "Expose the larger conspiracy behind the killings.",
+            "secondary_goals": ["Find the witness who saw the exchange."],
+            "hidden_threads": ["A magistrate paid to bury the first murder."],
+            "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+            "contacts": [{"name": "Stub Ally", "role": "assistant", "trait": "sharp"}],
+            "opening_paragraphs": ["P1", "P2", "P3"],
+        }
+
+
 class _StubCharacter:
     def run(self, state, architect):  # noqa: ANN001
         return {"contacts": [{"name": "Stub Ally", "role": "assistant", "trait": "sharp"}]}
@@ -99,6 +115,11 @@ class _RaisingArchitect:
         raise RuntimeError("OPENAI_API_KEY is required for story-agent execution.")
 
 
+class _RaisingBootstrap:
+    def run(self, state):  # noqa: ANN001, ARG002
+        raise RuntimeError("BOOTSTRAP_TIMEOUT")
+
+
 class _StubReplan:
     def run(self, state, disruption):  # noqa: ANN001
         return {
@@ -139,6 +160,34 @@ def test_story_director_supports_swappable_agent_components():
         [Event(type="story_event", message_key="Reminder")],
     )
     assert reviewed_turn[0].startswith("turn:")
+
+
+def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outputs():
+    state = build_default_state(seed=701)
+    state.world_package["story_plan"] = {
+        "protagonist_name": "Seeded Name",
+        "setup_paragraphs": ("Seeded opening.",),
+        "hidden_threads": (),
+        "reveal_schedule": (),
+    }
+    state.world_package["goals"] = {"setup": "Seeded setup.", "primary": "Seeded primary.", "secondary": ()}
+
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_bootstrap=_StubBootstrap(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+
+    assert opening == ["edited:P1", "edited:P2", "edited:P3"]
+    assert state.active_goal == "Open the case file first."
+    assert state.world_package["goals"]["setup"] == "Open the case file first."
+    assert state.world_package["goals"]["primary"] == "Expose the larger conspiracy behind the killings."
+    assert state.world_package["story_plan"]["protagonist_name"] == "Stub Protagonist"
+    assert state.world_package["story_plan"]["setup_paragraphs"] == ("P1", "P2", "P3")
+    assert state.world_package["llm_story_bundle"]["assistant_name"] == "Stub Ally"
 
 
 def test_story_director_uses_swappable_replan_component():
