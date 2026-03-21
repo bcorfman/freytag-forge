@@ -94,6 +94,7 @@ Current runtime generation is package-driven.
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
 - Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`).
+- Navigation and inventory affordances remain deterministic engine commands even within the story-first runtime surface: `inventory`/`i` must list held items, and directional aliases like `n`/`north`/`go north`/`walk north` (and corresponding east/west/south/up/down variants) must resolve to canonical map movement with a deterministic failure message when no such exit exists.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.

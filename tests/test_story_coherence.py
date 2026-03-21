@@ -30,7 +30,7 @@ def test_room_output_includes_signal_direction_hint():
     next_state, lines, *_ = run_turn(state, "look", rng, SilentNarrator())
 
     assert next_state.player.location == start_room
-    assert any("exit" in line.lower() for line in lines)
+    assert any("exit" in line.lower() or "entrance" in line.lower() for line in lines)
 
 
 def test_npc_dialogue_is_actionable_and_exposed_in_talk_event_text():

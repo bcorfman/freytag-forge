@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import logging
+from typing import cast
 
 from storygame.engine.facts import (
     active_story_goal,
@@ -87,19 +88,21 @@ class StoryDirector:
                 + str(critique.get("continuity_summary", "")).strip()
             )
         self._apply_story_bundle(state, bundle)
+        contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
 
         with ThreadPoolExecutor(max_workers=2) as executor:
             room_future = executor.submit(
                 self._ensure_room_presentation_cache,
                 state,
                 bundle,
-                {"contacts": list(bundle.get("contacts", []))},
+                {"contacts": list(contacts)},
                 {
                     "assistant_name": str(bundle.get("assistant_name", "")),
                     "actionable_objective": str(bundle.get("actionable_objective", active_story_goal(state))),
                 },
             )
-            opening = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+            opening = [str(line).strip() for line in opening_lines if str(line).strip()]
             if not opening:
                 raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
             room_future.result()
@@ -110,39 +113,45 @@ class StoryDirector:
             str(bundle.get("assistant_name", "")).strip(),
             str(bundle.get("actionable_objective", active_story_goal(state))).strip(),
             item_labels_for_opening(tuple(state.world.items.keys())),
-            tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
+            tuple(str(contact.get("name", "")).strip() for contact in contacts if str(contact.get("name", "")).strip()),
         )
         self._reconcile_opening_facts(state, coherent_opening, bundle)
         self._sync_opening_room_presentation(state, coherent_opening)
         return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
-        contacts = list(bundle.get("contacts", []))
-        protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
-        opening_paragraphs = tuple(
-            str(paragraph).strip() for paragraph in bundle.get("opening_paragraphs", ()) if str(paragraph).strip()
+        contacts = list(cast(list[dict[str, object]], bundle.get("contacts", [])))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
+        story_beats = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("story_beats", ()))
+        villains = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("villains", ()))
+        timed_events = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("timed_events", ()))
+        clue_placements = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...],
+            bundle.get("clue_placements", ()),
         )
+        secondary_goals = cast(list[str] | tuple[str, ...], bundle.get("secondary_goals", ()))
+        hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
+        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
+        bootstrap_critique = cast(dict[str, object], bundle.get("bootstrap_critique", {}))
+        protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
+        opening_paragraphs = tuple(str(paragraph).strip() for paragraph in opening_lines if str(paragraph).strip())
         story_plan = {
             "protagonist_name": protagonist_name,
             "protagonist_background": str(bundle.get("protagonist_background", "")).strip(),
             "setup_paragraphs": opening_paragraphs,
             "expanded_outline": str(bundle.get("expanded_outline", "")).strip(),
-            "story_beats": tuple(bundle.get("story_beats", ())),
-            "villains": tuple(bundle.get("villains", ())),
-            "timed_events": tuple(bundle.get("timed_events", ())),
-            "clue_placements": tuple(bundle.get("clue_placements", ())),
-            "hidden_threads": tuple(
-                str(thread).strip() for thread in bundle.get("hidden_threads", ()) if str(thread).strip()
-            ),
-            "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
+            "story_beats": tuple(story_beats),
+            "villains": tuple(villains),
+            "timed_events": tuple(timed_events),
+            "clue_placements": tuple(clue_placements),
+            "hidden_threads": tuple(str(thread).strip() for thread in hidden_threads if str(thread).strip()),
+            "reveal_schedule": tuple(reveal_schedule),
         }
         bundle["protagonist_name"] = protagonist_name
         goals = {
             "setup": str(bundle.get("actionable_objective", "")).strip(),
             "primary": str(bundle.get("primary_goal", "")).strip(),
-            "secondary": tuple(
-                str(goal).strip() for goal in bundle.get("secondary_goals", ()) if str(goal).strip()
-            ),
+            "secondary": tuple(str(goal).strip() for goal in secondary_goals if str(goal).strip()),
         }
         state.world_package["llm_story_bundle"] = dict(bundle)
         state.world_package["story_plan"] = story_plan
@@ -150,8 +159,8 @@ class StoryDirector:
         state.world_package["story_cast"] = {"contacts": contacts}
         self._apply_story_bundle_facts(state, bundle, contacts, goals)
         self._apply_contacts_to_world(state, contacts, str(bundle.get("assistant_name", "")).strip())
-        self._apply_clue_placements_to_world(state, list(bundle.get("clue_placements", ())))
-        state.world_package["bootstrap_critique"] = dict(bundle.get("bootstrap_critique", {}))
+        self._apply_clue_placements_to_world(state, list(clue_placements))
+        state.world_package["bootstrap_critique"] = dict(bootstrap_critique)
         if goals["setup"]:
             state.active_goal = goals["setup"]
             set_active_story_goal(state, state.active_goal)
@@ -164,11 +173,20 @@ class StoryDirector:
         goals: dict[str, object],
     ) -> None:
         goal_facts: list[tuple[str, ...]] = []
+        secondary_goals = cast(tuple[str, ...], goals.get("secondary", ()))
+        villains = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("villains", ()))
+        clue_placements = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...],
+            bundle.get("clue_placements", ()),
+        )
+        timed_events = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("timed_events", ()))
+        hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
+        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
         if str(goals.get("setup", "")).strip():
             goal_facts.append(("story_goal", "setup", str(goals["setup"]).strip()))
         if str(goals.get("primary", "")).strip():
             goal_facts.append(("story_goal", "primary", str(goals["primary"]).strip()))
-        for goal in goals.get("secondary", ()):
+        for goal in secondary_goals:
             if str(goal).strip():
                 goal_facts.append(("story_goal", "secondary", str(goal).strip()))
         replace_fact_group(state, "story_goal", tuple(goal_facts))
@@ -214,7 +232,7 @@ class StoryDirector:
         )
 
         villain_facts: list[tuple[str, ...]] = []
-        for villain in bundle.get("villains", ()):
+        for villain in villains:
             if not isinstance(villain, dict):
                 continue
             name = str(villain.get("name", "")).strip()
@@ -238,7 +256,7 @@ class StoryDirector:
         )
 
         clue_facts: list[tuple[str, ...]] = []
-        for entry in bundle.get("clue_placements", ()):
+        for entry in clue_placements:
             if not isinstance(entry, dict):
                 continue
             item_id = str(entry.get("item_id", "")).strip()
@@ -260,16 +278,18 @@ class StoryDirector:
         )
 
         timed_event_facts: list[tuple[str, ...]] = []
-        for event in bundle.get("timed_events", ()):
+        for event in timed_events:
             if not isinstance(event, dict):
                 continue
             event_id = str(event.get("event_id", "")).strip()
             summary = str(event.get("summary", "")).strip()
-            min_turn = str(int(event.get("min_turn", 0)))
+            min_turn_value = cast(int | str, event.get("min_turn", 0))
+            min_turn = str(int(min_turn_value))
             location = str(event.get("location", "")).strip()
+            participants = cast(list[str] | tuple[str, ...], event.get("participants", ()))
             if event_id and summary and location:
                 timed_event_facts.append(("planned_event", event_id, summary, min_turn, location))
-            for participant in event.get("participants", ()):
+            for participant in participants:
                 if event_id and str(participant).strip():
                     timed_event_facts.append(("planned_event_participant", event_id, str(participant).strip()))
         replace_fact_group(state, "planned_event", tuple(fact for fact in timed_event_facts if fact[0] == "planned_event"))
@@ -281,17 +301,19 @@ class StoryDirector:
 
         hidden_thread_facts = tuple(
             ("story_hidden_thread", str(thread).strip())
-            for thread in bundle.get("hidden_threads", ())
+            for thread in hidden_threads
             if str(thread).strip()
         )
         replace_fact_group(state, "story_hidden_thread", hidden_thread_facts)
 
         reveal_schedule_facts: list[tuple[str, ...]] = []
-        for entry in bundle.get("reveal_schedule", ()):
+        for entry in reveal_schedule:
             if not isinstance(entry, dict):
                 continue
-            thread_index = str(int(entry.get("thread_index", -1)))
-            min_progress = str(float(entry.get("min_progress", 1.0)))
+            thread_index_value = cast(int | str, entry.get("thread_index", -1))
+            min_progress_value = cast(float | int | str, entry.get("min_progress", 1.0))
+            thread_index = str(int(thread_index_value))
+            min_progress = str(float(min_progress_value))
             if thread_index == "-1":
                 continue
             reveal_schedule_facts.append(("story_reveal_schedule", thread_index, min_progress))
