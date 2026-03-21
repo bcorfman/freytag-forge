@@ -23,6 +23,15 @@ class SilentNarrator:
         return ""
 
 
+def _max_tokens_for_context(context: NarrationContext, env_var: str, default_turn_limit: int, default_opening_limit: int) -> int:
+    configured = os.getenv(env_var, "").strip()
+    if configured:
+        return int(configured)
+    if context.beat == "setup_scene":
+        return default_opening_limit
+    return default_turn_limit
+
+
 class OpenAIAdapter:
     def __init__(
         self,
@@ -52,7 +61,7 @@ class OpenAIAdapter:
                 {"role": "user", "content": payload["user"]},
             ],
             "temperature": float(os.getenv("OPENAI_TEMPERATURE", "0.2")),
-            "max_tokens": int(os.getenv("OPENAI_MAX_TOKENS", "512")),
+            "max_tokens": _max_tokens_for_context(context, "OPENAI_MAX_TOKENS", 512, 1100),
         }
         http_request = urllib.request.Request(
             self.base_url,
@@ -99,9 +108,10 @@ class OllamaAdapter:
 
     def generate(self, context: NarrationContext) -> str:
         payload = build_prompt(context)
+        max_tokens = _max_tokens_for_context(context, "OLLAMA_MAX_TOKENS", 512, 1100)
         request_common = {
             "temperature": float(os.getenv("OLLAMA_TEMPERATURE", "0.2")),
-            "num_predict": int(os.getenv("OLLAMA_MAX_TOKENS", "512")),
+            "num_predict": max_tokens,
         }
         endpoints = self._normalized_endpoints()
         attempt_errors: list[str] = []

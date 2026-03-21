@@ -45,6 +45,11 @@ class NarrationContext:
     assistant_name: str = ""
     assistant_role: str = ""
     memory_fragments: tuple[str, ...] = ()
+    conversation_intent: str = ""
+    conversation_topic: str = ""
+    addressed_npc_id: str = ""
+    addressed_npc_name: str = ""
+    prefer_npc_reply: bool = False
 
     def as_dict(self) -> dict:
         return {
@@ -66,6 +71,11 @@ class NarrationContext:
             "memory_fragments": list(self.memory_fragments),
             "protagonist_background": self.protagonist_background,
             "assistant_role": self.assistant_role,
+            "conversation_intent": self.conversation_intent,
+            "conversation_topic": self.conversation_topic,
+            "addressed_npc_id": self.addressed_npc_id,
+            "addressed_npc_name": self.addressed_npc_name,
+            "prefer_npc_reply": self.prefer_npc_reply,
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -119,6 +129,35 @@ def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
     locations = _npc_locations(state)
     npc_ids = sorted(state.world.npcs.keys())
     return tuple(_npc_fact(state.world.npcs[npc_id], locations.get(npc_id, "")) for npc_id in npc_ids[:MAX_NPC_FACTS])
+
+
+def _latest_freeform_focus(state: GameState) -> dict[str, object]:
+    events = tuple(reversed(state.event_log.events))
+    for event in events:
+        if event.type != "freeform_roleplay":
+            continue
+        metadata = event.metadata
+        action_proposal = metadata.get("action_proposal", {})
+        if not isinstance(action_proposal, dict):
+            return {}
+        intent = str(action_proposal.get("intent", "")).strip()
+        targets = action_proposal.get("targets", ())
+        if not isinstance(targets, (list, tuple)) or not targets:
+            return {"conversation_intent": intent, "conversation_topic": "", "prefer_npc_reply": False}
+        target_id = str(targets[0]).strip()
+        npc = state.world.npcs.get(target_id)
+        arguments = action_proposal.get("arguments", {})
+        topic = ""
+        if isinstance(arguments, dict):
+            topic = str(arguments.get("topic", "")).strip()
+        return {
+            "conversation_intent": intent,
+            "conversation_topic": topic,
+            "addressed_npc_id": target_id,
+            "addressed_npc_name": npc.name if npc is not None else "",
+            "prefer_npc_reply": bool(target_id and intent in {"ask_about", "greet", "apologize", "threaten"}),
+        }
+    return {}
 
 
 def _protagonist_name(state: GameState) -> str:
@@ -199,6 +238,7 @@ def build_narration_context(
 ) -> NarrationContext:
     room = state.world.rooms[state.player.location]
     visible_items, _junk_count = room_item_groups(state, room)
+    freeform_focus = _latest_freeform_focus(state)
 
     return NarrationContext(
         room_name=room.name,
@@ -221,4 +261,9 @@ def build_narration_context(
         beat=beat,
         goal=active_story_goal(state),
         action=action.raw,
+        conversation_intent=str(freeform_focus.get("conversation_intent", "")),
+        conversation_topic=str(freeform_focus.get("conversation_topic", "")),
+        addressed_npc_id=str(freeform_focus.get("addressed_npc_id", "")),
+        addressed_npc_name=str(freeform_focus.get("addressed_npc_name", "")),
+        prefer_npc_reply=bool(freeform_focus.get("prefer_npc_reply", False)),
     )

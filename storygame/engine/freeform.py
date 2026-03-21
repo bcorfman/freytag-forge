@@ -357,7 +357,7 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
 class LlmFreeformProposalAdapter:
     def __init__(self, mode: str | None = None, fallback: FreeformProposalAdapter | None = None) -> None:
         self._mode = _resolve_freeform_mode() if mode is None else mode
-        self._fallback = RuleBasedFreeformProposalAdapter() if fallback is None else fallback
+        self._fallback = fallback
 
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
@@ -372,12 +372,14 @@ class LlmFreeformProposalAdapter:
             action_payload["arguments"] = arguments
             return dialog_payload, action_payload
         except Exception as exc:
-            dialog_payload, action_payload = self._fallback.propose(state, raw_input)
-            arguments = dict(action_payload["arguments"])
-            arguments["planner_source"] = "fallback"
-            arguments["planner_error"] = _short_text(str(exc), 120)
-            action_payload["arguments"] = arguments
-            return dialog_payload, action_payload
+            if self._fallback is not None:
+                dialog_payload, action_payload = self._fallback.propose(state, raw_input)
+                arguments = dict(action_payload["arguments"])
+                arguments["planner_source"] = "fallback"
+                arguments["planner_error"] = _short_text(str(exc), 120)
+                action_payload["arguments"] = arguments
+                return dialog_payload, action_payload
+            raise RuntimeError(f"FREEFORM_PLANNER_UNAVAILABLE: {_short_text(str(exc), 120)}") from exc
 
 
 def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:

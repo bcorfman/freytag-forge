@@ -20,6 +20,7 @@ from storygame.cli import (
     run_replay,
     run_turn,
 )
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Npc, Room
 from storygame.engine.world import build_default_state
@@ -431,6 +432,7 @@ def test_run_turn_debug_includes_freeform_policy_diagnostics():
         Random(241),
         SilentNarrator(),
         debug=True,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert any("[debug] freeform_policy " in line for line in lines)
@@ -450,6 +452,7 @@ def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
         Random(88),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -520,7 +523,7 @@ def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
     assert any("wanted it hidden" in line.lower() for line in lines)
 
 
-def test_run_turn_talk_command_uses_freeform_dialogue_by_default():
+def test_run_turn_talk_command_fails_closed_without_llm_planner():
     state = build_default_state(seed=222)
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
@@ -532,10 +535,9 @@ def test_run_turn_talk_command_uses_freeform_dialogue_by_default():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any("greet daria stone" in line.lower() or "greet daria" in line.lower() for line in lines)
-    assert not any(line.startswith('Daria Stone says: "') for line in lines)
-    assert next_state.player.flags.get("greeted_daria_stone") is True
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert next_state.player.flags.get("greeted_daria_stone") is not True
 
 
 def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
@@ -546,6 +548,7 @@ def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_poli
         Random(883),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -561,6 +564,7 @@ def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_poli
         Random(883),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -578,6 +582,7 @@ def test_run_turn_read_ledger_page_uses_shared_freeform_path():
         Random(884),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -588,7 +593,7 @@ def test_run_turn_read_ledger_page_uses_shared_freeform_path():
     assert any("ledger" in line.lower() for line in lines)
 
 
-def test_run_turn_appearance_question_gets_specific_dialogue():
+def test_run_turn_appearance_question_fails_closed_without_llm_planner():
     state = build_default_state(seed=885)
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
@@ -600,10 +605,9 @@ def test_run_turn_appearance_question_gets_specific_dialogue():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any("ask daria stone about their appearance" in line.lower() for line in lines)
-    assert not any(line.startswith("Daria") and "says:" in line for line in lines)
-    assert next_state.player.flags.get("asked_appearance_daria_stone") is True
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert next_state.player.flags.get("asked_appearance_daria_stone") is not True
 
 
 def test_run_turn_ledger_question_gets_specific_dialogue():
@@ -614,6 +618,7 @@ def test_run_turn_ledger_question_gets_specific_dialogue():
         Random(886),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -631,6 +636,7 @@ def test_run_turn_unknown_input_includes_narrator_output_when_available():
         Random(881),
         StubNarrator("You press for specifics, and the rumor sharpens into a usable lead."),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -648,6 +654,7 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
         Random(882),
         StubNarrator("The night is tense and everyone watches in silence."),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -670,6 +677,7 @@ def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
             "that I need to get oriented before anything else."
         ),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -699,6 +707,7 @@ def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
         Random(8832),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -739,6 +748,7 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
         Random(8833),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -772,6 +782,7 @@ def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
         SilentNarrator(),
         debug=False,
         story_director=_ReintroducingDirector(),
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -808,6 +819,7 @@ def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
         Random(8835),
         StubNarrator(goal_line),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -825,6 +837,7 @@ def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
         Random(89),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -860,6 +873,7 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
         Random(97),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     canceled_state, cancel_lines, _cancel_raw, cancel_beat, _cancel_continued = run_turn(
@@ -879,6 +893,7 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
         Random(97),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
     proceeded_state, proceed_lines, _proceed_raw, proceed_beat, proceed_continued = run_turn(
         warned_state,
@@ -886,6 +901,7 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
         Random(97),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert proceed_continued is True
@@ -905,6 +921,7 @@ def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption(
         Random(98),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
     state, _proceed_lines, _proceed_raw, _proceed_beat, _proceed_continued = run_turn(
         state,
@@ -912,6 +929,7 @@ def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption(
         Random(98),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
     assert state.player.flags.get("story_replan_required") is True
     prior_goal = state.active_goal
@@ -940,6 +958,7 @@ def test_run_turn_recoverable_disruption_adapts_without_confirmation_gate() -> N
         Random(991),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True

@@ -347,6 +347,13 @@ def _context_goal_for_turn(raw_input: str, goal: str, turn_index: int) -> str:
     return ""
 
 
+def _freeform_unavailable_lines(detail: str = "") -> list[str]:
+    line = "Story response unavailable: LLM planning is required for this turn."
+    if detail:
+        return [f"{line} {detail}"]
+    return [line]
+
+
 def _has_bounded_dialogue_event(events: list[Event], debug: bool = False) -> bool:
     if debug:
         return False
@@ -713,7 +720,12 @@ def run_turn(
         blocked_state.pending_high_impact_assessment = dict(impact_assessment)
         return blocked_state, _high_impact_warning_lines(impact_assessment), effective_action.raw, "impact_gate", True
 
-    if effective_action.kind == ActionKind.UNKNOWN or prefer_proposal_resolution:
+    requires_freeform_resolution = (
+        effective_action.kind == ActionKind.UNKNOWN
+        or prefer_proposal_resolution
+        or (fallback_action.kind == ActionKind.TALK and planner_dialog_payload is None and planner_action_payload is None)
+    )
+    if requires_freeform_resolution:
         if planner_dialog_payload is not None and planner_action_payload is not None:
             freeform = resolve_freeform_roleplay_with_proposals(
                 preturn_state,
@@ -722,7 +734,10 @@ def run_turn(
                 planner_action_payload,
             )
         else:
-            freeform = resolve_freeform_roleplay(preturn_state, raw_input, freeform_adapter)
+            detail = planner_parse_error.strip()
+            if detail.startswith("FREEFORM_PLANNER_UNAVAILABLE:"):
+                return state.clone(), _freeform_unavailable_lines(detail.removeprefix("FREEFORM_PLANNER_UNAVAILABLE:").strip()), raw_input, "freeform_roleplay", True
+            return state.clone(), _freeform_unavailable_lines(detail), raw_input, "freeform_roleplay", True
         next_state = freeform["state"]
         events = [freeform["event"]]
         freeform_policy_debug = {
