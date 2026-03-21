@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from storygame.cli import _build_narrator
+from storygame.engine.freeform import LlmFreeformProposalAdapter
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator
@@ -96,6 +97,7 @@ def create_app(
     resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
     active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
+    active_freeform_adapter = LlmFreeformProposalAdapter(mode=resolved_narrator_mode)
     active_story_director = (
         StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
     )
@@ -147,6 +149,7 @@ def create_app(
             payload.command,
             session.rng,
             active_narrator,
+            active_freeform_adapter,
             narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,

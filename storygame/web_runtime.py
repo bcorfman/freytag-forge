@@ -5,6 +5,7 @@ from typing import Any
 
 from storygame.cli import run_turn
 from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing
+from storygame.engine.freeform import FreeformProposalAdapter
 from storygame.engine.facts import active_story_goal
 from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
@@ -213,6 +214,7 @@ def execute_turn(
     command: str,
     rng: Random,
     narrator: Narrator,
+    freeform_adapter: FreeformProposalAdapter,
     narrator_mode: str,
     debug: bool,
     save_store: ScopedSaveStore,
@@ -225,6 +227,7 @@ def execute_turn(
         command,
         rng,
         narrator,
+        freeform_adapter=freeform_adapter,
         narrator_mode=narrator_mode,
         debug=debug,
         save_store=save_store,
