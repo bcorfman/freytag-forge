@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from storygame.engine.facts import active_story_goal, assistant_name, assistant_role, protagonist_profile
+from storygame.engine.facts import (
+    active_story_goal,
+    assistant_name,
+    assistant_role,
+    planned_story_events,
+    protagonist_profile,
+    story_goals,
+)
 from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
 from storygame.engine.state import EventLog, GameState, Npc
@@ -39,7 +46,9 @@ class NarrationContext:
     tension: float
     beat: str
     goal: str
-    action: str
+    goal_stack: dict = None
+    planned_events: tuple[dict, ...] = ()
+    action: str = ""
     protagonist_name: str = ""
     protagonist_background: str = ""
     assistant_name: str = ""
@@ -67,6 +76,8 @@ class NarrationContext:
             "tension": self.tension,
             "beat": self.beat,
             "goal": self.goal,
+            "goal_stack": dict(self.goal_stack or {}),
+            "planned_events": list(self.planned_events),
             "action": self.action,
             "memory_fragments": list(self.memory_fragments),
             "protagonist_background": self.protagonist_background,
@@ -260,6 +271,8 @@ def build_narration_context(
         tension=state.tension,
         beat=beat,
         goal=active_story_goal(state),
+        goal_stack=story_goals(state),
+        planned_events=planned_story_events(state),
         action=action.raw,
         conversation_intent=str(freeform_focus.get("conversation_intent", "")),
         conversation_topic=str(freeform_focus.get("conversation_topic", "")),

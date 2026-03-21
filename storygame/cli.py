@@ -739,7 +739,7 @@ def run_turn(
                 return state.clone(), _freeform_unavailable_lines(detail.removeprefix("FREEFORM_PLANNER_UNAVAILABLE:").strip()), raw_input, "freeform_roleplay", True
             return state.clone(), _freeform_unavailable_lines(detail), raw_input, "freeform_roleplay", True
         next_state = freeform["state"]
-        events = [freeform["event"]]
+        events = list(freeform["events"])
         freeform_policy_debug = {
             "action_proposal": dict(freeform["action_proposal"]),
             "state_update_envelope": dict(freeform["state_update_envelope"]),

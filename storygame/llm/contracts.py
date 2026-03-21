@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -12,6 +12,7 @@ MAX_FEEDBACK_CHARS = 280
 MAX_INSTRUCTION_CHARS = 320
 MAX_NARRATION_CHARS = 3000
 MAX_PATCH_OPERATIONS = 24
+MAX_DIALOGUE_LINES = 8
 
 
 class ContractValidationError(ValueError):
@@ -78,6 +79,40 @@ class RevisionDirective(TypedDict):
     focus_dimensions: tuple[str, ...]
     instruction: str
     rationale: str
+
+
+class FactMutation(TypedDict):
+    fact: tuple[str, ...]
+
+
+class NumericDelta(TypedDict):
+    key: str
+    delta: float
+
+
+class StateDeltaProposal(TypedDict):
+    assert_ops: tuple[FactMutation, ...]
+    retract_ops: tuple[FactMutation, ...]
+    numeric_delta: tuple[NumericDelta, ...]
+    reasons: tuple[str, ...]
+
+
+class SemanticActionProposal(TypedDict):
+    action_id: str
+    action_type: str
+    actor_id: str
+    target_id: str
+    item_id: str
+    location_id: str
+
+
+class TurnProposal(TypedDict):
+    turn_id: str
+    intent: str
+    narration: str
+    dialogue_lines: tuple[str, ...]
+    semantic_actions: tuple[SemanticActionProposal, ...]
+    state_delta: StateDeltaProposal
 
 
 class _ScoreVectorModel(BaseModel):
@@ -164,6 +199,50 @@ class _RevisionDirectiveModel(BaseModel):
     rationale: str = Field(min_length=1, max_length=MAX_RATIONALE_CHARS)
 
 
+class _FactMutationModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fact: tuple[str, ...] = Field(min_length=2)
+
+
+class _NumericDeltaModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str = Field(min_length=1, max_length=80)
+    delta: float
+
+
+class _StateDeltaProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    assert_ops: tuple[_FactMutationModel, ...] = Field(default=(), alias="assert")
+    retract_ops: tuple[_FactMutationModel, ...] = Field(default=(), alias="retract")
+    numeric_delta: tuple[_NumericDeltaModel, ...] = ()
+    reasons: tuple[str, ...] = ()
+
+
+class _SemanticActionProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action_id: str = Field(min_length=1, max_length=80)
+    action_type: str = Field(min_length=1, max_length=40)
+    actor_id: str = Field(default="player", min_length=1, max_length=80)
+    target_id: str = Field(default="", max_length=80)
+    item_id: str = Field(default="", max_length=80)
+    location_id: str = Field(default="", max_length=80)
+
+
+class _TurnProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    turn_id: str = Field(min_length=1, max_length=80)
+    intent: str = Field(min_length=1, max_length=80)
+    narration: str = Field(min_length=1, max_length=MAX_NARRATION_CHARS)
+    dialogue_lines: tuple[str, ...] = Field(default=(), max_length=MAX_DIALOGUE_LINES)
+    semantic_actions: tuple[_SemanticActionProposalModel, ...] = Field(default=(), max_length=12)
+    state_delta: _StateDeltaProposalModel
+
+
 def _build_validation_error(
     code: str,
     contract_name: str,
@@ -213,6 +292,14 @@ def parse_revision_directive(payload: dict[str, object]) -> RevisionDirective:
     except ValidationError as exc:
         raise _build_validation_error("CONTRACT_INVALID_REVISION_DIRECTIVE", "RevisionDirective", exc) from exc
     return cast(RevisionDirective, model.model_dump(mode="python"))
+
+
+def parse_turn_proposal(payload: dict[str, Any]) -> TurnProposal:
+    try:
+        model = _TurnProposalModel.model_validate(payload)
+    except ValidationError as exc:
+        raise _build_validation_error("CONTRACT_INVALID_TURN_PROPOSAL", "TurnProposal", exc) from exc
+    return cast(TurnProposal, model.model_dump(mode="python", by_alias=True))
 
 
 def narration_to_agent_proposal(agent_id: str, narration: str) -> AgentProposal:
