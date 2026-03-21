@@ -15,9 +15,10 @@ Hard rules:
 - Use `uv run python` (never plain `python`).
 - Define and use explicit Protocols/adapters for interfaces; validate at boundaries instead of ad-hoc attribute probes.
 - Ordinary gameplay turns must remain LLM-proposal-first. Do not introduce parser-first or command-table-first routing for normal story turns.
-- Deterministic systems are commit authorities, not primary turn authors. LLM outputs may propose dialogue, story actions, events, and bounded consequences; deterministic code validates and commits accepted deltas.
+- Deterministic systems are commit authorities for NPC initial locations, NPC stable traits, timed story events, player characteristics, item locations/characteristics, map topology/room characteristics, story goals, puzzles, clues, and world-state mutations through the fact store. LLM outputs may propose dialogue, action framing, and bounded consequences around those facts; deterministic code validates and commits accepted deltas.
 - Parser handling must stay limited to control-plane commands (`save`, `load`, `quit`, `help`) and proposal-failure fallback. Do not let parser fallback become the dominant authored path.
 - NPC dialogue should generally be LLM-authored from deterministic context. Do not replace ordinary in-scope conversations with canned deterministic lines unless explicitly required as a validated fallback.
+- Opening prose, turn narration, NPC dialogue, and in-scope action framing should be LLM-authored from deterministic facts. Do not let narration invent parallel state that is not representable in the fact store.
 - Fallback dialogue must not auto-target the nearest NPC for unrelated player actions. If the player did not clearly address someone, keep the reply narrator-scoped or ask for clarification.
 - Preserve protagonist/assistant identity continuity in narrator context and output editing. Do not let room-entry or reviewed prose invent replacement names for already-canonical characters.
 - Mystery bootstrap/opening should preserve a canonical male detective identity and name consistently across opening prose, turn narration, and reviewed output. Use `Detective Elias Wren` unless an explicitly approved contract changes that canon everywhere.
@@ -28,6 +29,7 @@ Hard rules:
 - When confirmation is required, interrupt before generating the official LLM-authored response to the original prompt. On `PROCEED`, commit disruption facts, replan if needed, then generate the official response to that same player prompt.
 - If the player prompt does not break current goals beyond repair, the engine must adapt the fact database and story state to the prompt rather than refusing it as out-of-scope.
 - Preserve explicit typed proposal/validation boundaries. Prefer contract types and adapters for runtime turn proposals over ad-hoc dict plumbing or special-case command branches.
+- Goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location must remain assertable/retractable fact-store data, and narration must read from those facts rather than carrying its own competing truth.
 - Deterministic item validation should resolve unique visible shorthand naturally (for example `take key` -> `route_key` when unambiguous) instead of forcing the player to restate full internal item labels.
 - Treat `storygame.web` and `storygame.web_demo` as separate deployment surfaces with different narrator/backend assumptions. Shared helpers are allowed only below that adapter boundary.
 - Do not centralize bootstrap/opening generation in a way that makes hosted demo depend on local OpenAI story-agent credentials. Hosted demo must remain playable without `OPENAI_API_KEY` when configured to use the Cloudflare Worker / Llama path.

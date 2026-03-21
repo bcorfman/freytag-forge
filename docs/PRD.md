@@ -45,20 +45,33 @@ Current runtime generation is package-driven.
 ## Architecture Overview
 ### Design Delta: LLM-Driven Runtime Within Deterministic Guardrails
 - Ordinary gameplay turns are story-first, not parser-first.
-- The LLM is the default author of:
-  - NPC dialogue,
-  - immediate turn framing,
-  - in-scope action interpretation,
-  - candidate story consequences,
-  - candidate beat/event suggestions.
 - Deterministic systems remain the sole authority for:
+  - NPC initial locations,
+  - NPC stable traits,
+  - timed story events,
+  - player characteristics,
+  - item locations and item characteristics,
+  - map topology and room characteristics,
+  - story goals,
+  - puzzles,
+  - clues,
   - world-state commits,
+  - world-state mutations through the fact store,
   - fact validation,
   - inventory/location legality,
   - map reachability,
   - persistence,
   - replay signatures,
   - bounded acceptance/rejection of LLM proposals.
+- The LLM is the default author of:
+  - opening prose,
+  - turn narration,
+  - NPC dialogue,
+  - immediate turn framing,
+  - in-scope action interpretation,
+  - story presentation around deterministic facts,
+  - candidate story consequences,
+  - candidate beat/event suggestions.
 - The engine must not reduce ordinary turns to a small parser command set unless:
   - the player used an explicit control-plane command,
   - the LLM proposal is invalid,
@@ -82,6 +95,7 @@ Current runtime generation is package-driven.
 - Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
 - Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`) and proposal-failure fallback.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
+- Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
@@ -204,6 +218,7 @@ flowchart LR
 - Mystery bootstrap should establish a canonical detective identity up front, including a fixed male detective name carried consistently through opening prose, turn narration, narrator context, and output editing.
 - Accepted bootstrap outputs should also establish canonical assistant/contact relationship facts, villain facts, clue-placement facts, and timed-event participant facts.
 - Accepted bootstrap outputs must also establish canonical role exclusivity and clue custody/location facts for the opening scene so later narration can validate who is the assistant, who is a suspect, and where each clue physically is.
+- Narration, including opening prose, must read from canonical facts and present those facts diegetically rather than inventing a parallel story state outside the fact store.
 - Predicate and rule packs are YAML-defined:
   - `data/predicates/core.yaml`
   - `data/predicates/genres/<genre>.yaml`
@@ -259,6 +274,7 @@ flowchart LR
 - First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation must remain LLM-authored. If bootstrap/opening generation fails, the surface should fail closed instead of fabricating deterministic opening prose.
+- Opening prose is still LLM-authored, but it must be authored from deterministic fact-backed context rather than from an untracked side-plan that can diverge from world state.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.

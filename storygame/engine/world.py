@@ -297,6 +297,15 @@ def build_default_state(
         active_goal=str(package["goals"].get("setup", package["goals"]["primary"])),
     )
     initialize_world_facts(state)
+    if package["genre"] == "mystery":
+        start_room_npcs = state.world.rooms[start_room].npc_ids
+        if start_room_npcs:
+            assistant_id = start_room_npcs[0]
+            assistant = state.world.npcs.get(assistant_id)
+            if assistant is not None and assistant.name.strip():
+                state.world_facts.assert_fact("assistant_name", assistant.name.strip())
+                state.world_facts.assert_fact("npc_role", assistant.name.strip(), "assistant")
+                state.world_facts.assert_fact("npc_relationship", assistant.name.strip(), "player", "assistant")
     sync_legacy_views(state)
     return state
 

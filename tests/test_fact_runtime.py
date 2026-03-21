@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from random import Random
 
+from storygame.engine.facts import apply_fact_ops
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.world import build_default_state
@@ -58,3 +59,42 @@ def test_taking_clue_or_evidence_asserts_discovered_lead_facts() -> None:
     assert next_state.world_facts.holds("discovered_clue", target_item_id)
     discovered_leads = next_state.world_facts.query("discovered_lead", target_item_id, None)
     assert discovered_leads
+
+
+def test_assistant_follows_player_move_via_fact_store_updates() -> None:
+    state = build_default_state(seed=21, genre="mystery")
+    start_room = state.player.location
+    assistant_id = state.world.rooms[start_room].npc_ids[0]
+    direction, destination = next(iter(state.world.rooms[start_room].exits.items()))
+
+    next_state, events = apply_action(state, parse_command(direction), Random(21))
+
+    assert any(event.type == "move" for event in events)
+    assert next_state.world_facts.holds("npc_at", assistant_id, destination)
+    assert assistant_id in next_state.world.rooms[destination].npc_ids
+    assert assistant_id not in next_state.world.rooms[start_room].npc_ids
+
+
+def test_assistant_can_be_marked_absent_and_stop_following() -> None:
+    state = build_default_state(seed=22, genre="mystery")
+    start_room = state.player.location
+    assistant_id = state.world.rooms[start_room].npc_ids[0]
+    direction, destination = next(iter(state.world.rooms[start_room].exits.items()))
+    apply_fact_ops(state, [{"op": "assert", "fact": ("npc_absent", assistant_id)}])
+
+    next_state, _events = apply_action(state, parse_command(direction), Random(22))
+
+    assert next_state.world_facts.holds("npc_at", assistant_id, start_room)
+    assert not next_state.world_facts.holds("npc_at", assistant_id, destination)
+
+
+def test_generic_npc_location_assert_updates_fact_store_and_legacy_views() -> None:
+    state = build_default_state(seed=23, genre="mystery")
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    destination = next(room_id for room_id in state.world.rooms if room_id != state.player.location)
+
+    apply_fact_ops(state, [{"op": "assert", "fact": ("npc_at", npc_id, destination)}])
+
+    npc_locations = state.world_facts.query("npc_at", npc_id, None)
+    assert npc_locations == (("npc_at", npc_id, destination),)
+    assert npc_id in state.world.rooms[destination].npc_ids

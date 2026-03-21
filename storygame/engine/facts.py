@@ -252,10 +252,23 @@ def discovered_leads(state) -> tuple[dict[str, str], ...]:
     )
 
 
+def npc_location(state, npc_id: str) -> str:
+    locations = state.world_facts.query("npc_at", npc_id, None)
+    if locations:
+        return locations[0][2]
+    return ""
+
+
 def apply_fact_ops(state, ops: list[FactOp] | tuple[FactOp, ...]) -> None:
     for op in ops:
         if op["op"] == "assert":
             predicate, *terms = op["fact"]
+            if predicate == "npc_at" and len(terms) == 2:
+                for fact in state.world_facts.query("npc_at", terms[0], None):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
+            if predicate == "at" and len(terms) == 2 and terms[0] == "player":
+                for fact in state.world_facts.query("at", "player", None):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
             state.world_facts.assert_fact(predicate, *terms)
             continue
         if op["op"] == "retract":
