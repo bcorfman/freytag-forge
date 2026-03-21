@@ -30,7 +30,7 @@ def test_rule_based_adapter_propose_intent_paths() -> None:
     assert action["intent"] == "ask_about"
     assert action["targets"] == [npc_id]
     assert action["arguments"]["topic"] == "ledger"
-    assert dialog["speaker"] == npc_id
+    assert dialog["speaker"] == "narrator"
     assert dialog["tone"] == "in_world"
     assert dialog["text"]
 
@@ -62,7 +62,7 @@ def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None
     dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, what do you make of this place?")
 
     assert action["targets"] == ["daria_stone"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -73,7 +73,7 @@ def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
 
     assert action["targets"] == ["daria_stone"]
     assert action["arguments"]["topic"] == "place"
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -148,9 +148,8 @@ def test_resolve_freeform_roleplay_applies_fact_ops_or_boundary_message() -> Non
     assert success["state"].player.flags.get(f"asked_signal_{npc_id}") is True
     assert success["event"].type == "freeform_roleplay"
     assert success["event"].metadata["fact_ops"]
-    assert success["event"].message_key.startswith(f"{state.world.npcs[npc_id].name} says: \"")
-    assert success["event"].message_key.endswith("\"")
-    assert success["dialog_proposal"]["speaker"] == npc_id
+    assert "ask" in success["event"].message_key.lower()
+    assert success["dialog_proposal"]["speaker"] == "narrator"
     assert success["dialog_proposal"]["text"]
 
     blocked = resolve_freeform_roleplay(state, "ask missing_npc about signal", adapter)
@@ -211,6 +210,7 @@ def test_freeform_objective_reply_prefers_fact_backed_goal() -> None:
     assert action["intent"] == "ask_about"
     assert action["arguments"]["topic"] == "objective"
     assert "Press the strongest lead from the case file." in dialog["text"]
+    assert dialog["speaker"] == "narrator"
 
 
 def test_rule_based_adapter_handles_appearance_questions_with_contextual_reply() -> None:
@@ -221,7 +221,7 @@ def test_rule_based_adapter_handles_appearance_questions_with_contextual_reply()
     assert action["intent"] == "ask_about"
     assert action["arguments"]["topic"] == "appearance"
     assert action["targets"] == ["daria_stone"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -233,7 +233,7 @@ def test_rule_based_adapter_handles_ledger_questions_with_contextual_reply() -> 
     assert action["intent"] == "ask_about"
     assert action["arguments"]["topic"] == "ledger page"
     assert action["targets"] == ["daria_stone"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -250,7 +250,7 @@ def test_rule_based_adapter_handles_service_passage_follow_up_with_specific_repl
     assert action["intent"] == "ask_about"
     assert action["targets"] == ["daria_stone"]
     assert "service passage" in action["arguments"]["topic"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -272,7 +272,7 @@ def test_rule_based_adapter_handles_player_appearance_question_without_using_npc
     assert action["intent"] == "ask_about"
     assert action["targets"] == ["daria_stone"]
     assert "player appearance" in action["arguments"]["topic"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
 
@@ -284,8 +284,22 @@ def test_rule_based_adapter_handles_clothing_request_as_character_reaction() -> 
     assert action["intent"] == "ask_about"
     assert action["targets"] == ["daria_stone"]
     assert "remove coat request" in action["arguments"]["topic"]
-    assert dialog["speaker"] == "daria_stone"
+    assert dialog["speaker"] == "narrator"
     assert dialog["text"]
+
+
+def test_rule_based_adapter_fallback_dialogue_stays_generic_for_npc_questions() -> None:
+    state = build_default_state(seed=419, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, take off your coat and boots")
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert dialog["speaker"] == "narrator"
+    lower = dialog["text"].lower()
+    assert "ask" in lower or "press" in lower
+    assert "coat stays on" not in lower
+    assert "most rumors fall apart" not in lower
 
 
 def test_resolve_freeform_roleplay_with_proposals_uses_provided_payloads() -> None:

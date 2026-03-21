@@ -20,11 +20,13 @@ from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.simulation import advance_turn
+from storygame.engine.facts import apply_fact_ops
 from storygame.engine.state import Event, GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.coherence import build_default_coherence_gate
 from storygame.llm.context import build_narration_context
+from storygame.llm.narration_state import extract_narration_fact_ops
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
@@ -793,6 +795,22 @@ def run_turn(
         _record_major_disruption(next_state, events, effective_action.raw, impact_assessment)
 
     narration = _sanitize_narration_for_player(narration, debug=debug)
+    narration_fact_ops = extract_narration_fact_ops(next_state, narration)
+    if narration_fact_ops:
+        apply_fact_ops(next_state, narration_fact_ops)
+        narration_event = Event(
+            type="narration_commit",
+            turn_index=next_state.turn_index,
+            metadata={
+                "fact_ops": narration_fact_ops,
+                "source": "accepted_narration",
+                "narration": narration,
+            },
+        )
+        next_state.append_event(narration_event)
+        events.append(narration_event)
+        if freeform_policy_debug is not None:
+            freeform_policy_debug["narration_fact_ops"] = list(narration_fact_ops)
     narration = _ensure_action_grounded_narration(narration, effective_action)
 
     preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)

@@ -5,6 +5,7 @@ from random import Random
 from storygame.engine.facts import apply_fact_ops
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
+from storygame.engine.state import Npc
 from storygame.engine.world import build_default_state
 
 
@@ -98,3 +99,25 @@ def test_generic_npc_location_assert_updates_fact_store_and_legacy_views() -> No
     npc_locations = state.world_facts.query("npc_at", npc_id, None)
     assert npc_locations == (("npc_at", npc_id, destination),)
     assert npc_id in state.world.rooms[destination].npc_ids
+
+
+def test_holding_assert_retracts_room_item_and_previous_holder() -> None:
+    state = build_default_state(seed=24, genre="mystery")
+    room_id = state.player.location
+    state.world.rooms[room_id].npc_ids = state.world.rooms[room_id].npc_ids + ("alex_hale",)
+    state.world.npcs["alex_hale"] = Npc(
+        id="alex_hale",
+        name="Alex Hale",
+        description="Alex watches the doorway.",
+        dialogue="Noted.",
+        identity="witness",
+        pronouns="he/him",
+    )
+    state.world_facts.assert_fact("npc_at", "alex_hale", room_id)
+    state.world_facts.assert_fact("holding", "player", "ledger_page")
+
+    apply_fact_ops(state, [{"op": "assert", "fact": ("holding", "alex_hale", "ledger_page")}])
+
+    assert state.world_facts.holds("holding", "alex_hale", "ledger_page")
+    assert not state.world_facts.holds("holding", "player", "ledger_page")
+    assert not state.world_facts.holds("room_item", room_id, "ledger_page")

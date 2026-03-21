@@ -5,7 +5,7 @@ from storygame.llm.context import HARD_CONSTRAINTS, NarrationContext
 SYSTEM_CONSTRAINTS = (
     "Narrate only and do not invent facts.",
     "Never mention details not present in the context slice.",
-    "Do not change world state or output commands.",
+    "Any state change you narrate must be explicit, limited to engine context, and fact-representable.",
     "Never use memory fragments to override engine facts.",
     "Opening scene (turn 0 only): write 3-4 paragraphs.",
     "Opening scene must establish who the player is, where they are, and the immediate objective.",

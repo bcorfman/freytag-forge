@@ -269,6 +269,16 @@ def apply_fact_ops(state, ops: list[FactOp] | tuple[FactOp, ...]) -> None:
             if predicate == "at" and len(terms) == 2 and terms[0] == "player":
                 for fact in state.world_facts.query("at", "player", None):
                     state.world_facts.retract_fact(fact[0], *fact[1:])
+            if predicate == "holding" and len(terms) == 2:
+                for fact in state.world_facts.query("holding", None, terms[1]):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
+                for fact in state.world_facts.query("room_item", None, terms[1]):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
+            if predicate == "room_item" and len(terms) == 2:
+                for fact in state.world_facts.query("room_item", None, terms[1]):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
+                for fact in state.world_facts.query("holding", None, terms[1]):
+                    state.world_facts.retract_fact(fact[0], *fact[1:])
             state.world_facts.assert_fact(predicate, *terms)
             continue
         if op["op"] == "retract":

@@ -238,6 +238,7 @@ flowchart LR
 - Deterministic fallback dialogue routing resolves explicit NPC names against the visible cast before falling back, so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
 - Runtime adapters produce dialogue, action, event, and state-delta proposals.
 - Engine policy maps proposals into bounded deterministic fact deltas before commit.
+- Accepted LLM-authored narration may also imply bounded world changes, but those changes are not authoritative as prose alone: a post-narration extraction step must translate explicit state claims into fact ops before commit.
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
 - Unknown or weakly-specified intents use a generic policy fallback only as a last resort and must still preserve narrative continuity while adapting to the player’s prompt.
 - Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
@@ -247,7 +248,8 @@ flowchart LR
   - their knowledge, trust, availability, and goals remain deterministically tracked,
   - and their output must remain consistent with visible facts and prior reveals.
   - fallback dialogue must not auto-target a nearby NPC for unrelated player actions; if the player did not clearly address someone, the fallback should stay narrator-scoped or ask for clarification.
-  - fallback dialogue must preserve identity continuity by grounding narrator and NPC outputs to the canonical protagonist and assistant names already in state.
+  - fallback dialogue must preserve identity continuity by grounding narrator outputs to the canonical protagonist and assistant names already in state.
+  - deterministic fallback may classify intent, target, and fact deltas, but it must not author NPC speech. If the LLM path is unavailable, fallback output should remain narrator-scoped scene framing rather than `NPC says ...` content.
 - Item references should resolve unique shorthand naturally during deterministic validation (for example `take key` should resolve to `route key` when only one key is present and visible).
 
 ### Output Contract
@@ -283,13 +285,14 @@ flowchart LR
 - Critic/judge review must treat assistant-vs-suspect contradictions, duplicated clue presence (for example, a page both held by Daria and wedged in the stones), and similarly impossible scene facts as blocking coherence failures rather than minor style issues.
 - Turn output retains explicit LLM narration only when that narration is still the right player-facing surface; if downstream review strips a non-dialogue narration line, the original narration is reattached.
 - Turn narration is action-grounded: if a generated narration omits meaningful tokens from the player’s command, a deterministic action-reference prefix is added.
-- Per-turn rendering is hybrid: narrator output can replace deterministic room/event blocks for ordinary turns, but direct conversational freeform turns preserve bounded NPC dialogue lines instead of being rewritten into narrator prose.
+- Per-turn rendering is hybrid: narrator output can replace deterministic room/event blocks for ordinary turns. Conversational turns should surface LLM-authored NPC dialogue when available; deterministic fallback should not fabricate bounded NPC dialogue lines and should remain narrator-scoped instead.
 - Coherence contract failures are fail-soft for turn rendering: revision-directive contract errors trigger a direct narrator fallback for that turn rather than exposing internal contract error strings to the player.
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is LLM-first for ordinary play: gameplay inputs are interpreted through runtime proposal contracts, then validated and committed by deterministic engine policy.
 - Deterministic parser paths are retained only as control-plane/fallback guards (`save`, `load`, `quit`, `help`, and proposal-failure fallback) so state mutation remains reproducible.
-- NPC replies should ordinarily be LLM-authored and context-rich; normalization to explicit dialogue format remains allowed for clarity, but the runtime should not reduce most conversations to canned or single-sentence parser responses.
+- NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but deterministic fallback must not reduce conversations to canned NPC responses; when fallback is unavoidable, keep the visible reply narrator-scoped while still committing validated fact changes.
+- When accepted narration explicitly states a fact-backed change such as an NPC taking an item or moving rooms, the runtime should extract that change and commit the corresponding canonical facts (for example item possession/location or `npc_at`) so later turns read the same truth the player just saw.
 - Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.

@@ -19,7 +19,7 @@ MAX_MEMORY_FRAGMENTS = 3
 MAX_MEMORY_FRAGMENT_LEN = 220
 
 HARD_CONSTRAINTS = (
-    "no_state_mutation",
+    "state_changes_must_be_explicit_and_fact_backed",
     "do_not_invent_facts",
     "must_match_engine_context",
 )
