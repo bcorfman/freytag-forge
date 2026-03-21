@@ -31,7 +31,7 @@ def _normalize_token(value: str) -> str:
 
 
 def _normalize_direction(value: str) -> str:
-    normalized = _normalize_token(value)
+    normalized = _normalize_token(value).strip(" ,.;:!?")
     direction_aliases = {
         "n": "north",
         "s": "south",
@@ -75,7 +75,7 @@ def parse_command(raw: str) -> Action:
     if words[0] in {"quit", "exit", "leave"}:
         return Action(ActionKind.QUIT, raw=raw)
 
-    if words[0] in {"go", "move", "travel", "walk"}:
+    if words[0] in {"go", "move", "travel", "walk", "climb"}:
         if len(words) < 2:
             return Action(ActionKind.UNKNOWN, target="", raw=raw)
         target = _normalize_direction(" ".join(words[1:]))

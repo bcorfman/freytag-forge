@@ -194,7 +194,7 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
         if len(exits) == 1:
             if room.id == "front_steps":
                 pieces.append(
-                    f"The main exit from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
+                    f"The main entrance from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
                 )
             else:
                 pieces.append(f"The single obvious exit leads {exits[0]}.")

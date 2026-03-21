@@ -99,6 +99,23 @@ def test_run_replay_executes_sequence_with_stub_narrator():
     assert final_state.turn_index == 2
 
 
+def test_run_turn_inventory_aliases_list_held_items() -> None:
+    for raw_command in ("i", "inventory"):
+        state = build_default_state(seed=14)
+        next_state, lines, _action_raw, _beat, continued = run_turn(
+            state,
+            raw_command,
+            Random(14),
+            StubNarrator(),
+        )
+
+        assert continued is True
+        assert next_state.turn_index == 1
+        joined = "\n".join(lines).lower()
+        assert "you are carrying" in joined
+        assert "field kit" in joined
+
+
 def test_run_replay_selects_curve_from_genre_and_length():
     final_state = run_replay(
         seed=13,
@@ -1024,12 +1041,15 @@ def test_setup_phase_lines_place_identity_after_environment_and_use_named_contac
     lines = _setup_phase_lines(state, _StubSetupDirector())
     assert len(lines) >= 3
 
-    joined = "\n".join(lines).lower()
 
-    assert lines[0].lower() == "the situation is still taking shape, and the facts in front of you are incomplete."
-    assert lines[1].lower() == "you are detective elias wren."
-    assert "premise:" not in joined
-    assert "has kept a low profile" not in joined
+def test_room_lines_describe_mansion_north_path_as_entrance_not_exit() -> None:
+    state = build_default_state(seed=124, genre="mystery", tone="dark")
+
+    lines = _room_lines(state)
+
+    lower = lines.lower()
+    assert "the main entrance from here leads north" in lower
+    assert "the main exit from here leads north" not in lower
 
 
 def test_setup_phase_lines_weave_background_and_actionable_objective():

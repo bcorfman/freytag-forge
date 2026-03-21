@@ -84,10 +84,10 @@ def test_per_turn_room_block_follows_expected_section_order():
     assert room_block[0] == room.name
     assert room.description in room_block[1]
 
-    exit_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower())
+    direction_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower() or "entrance" in line.lower())
     item_indices = [i for i, line in enumerate(room_block) if "you can see" in line.lower()]
     if item_indices:
-        assert item_indices[0] < exit_index
+        assert item_indices[0] < direction_index
 
     npc_line_indices = [
         i for i, line in enumerate(room_block) if " is here." in line.lower() or " are here." in line.lower()
