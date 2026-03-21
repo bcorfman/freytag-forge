@@ -339,6 +339,25 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> None:
+    state = build_default_state(seed=4051)
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"I dress for weather, not ceremony.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":[],"proposed_effects":["asked:appearance"]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Daria, what are you wearing?")
+
+    assert dialog["speaker"] == "daria_stone"
+    assert action["intent"] == "ask_about"
+    assert tuple(action["targets"]) == ("daria_stone",)
+    assert action["arguments"]["planner_source"] == "llm"
+
+
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:
     state = build_default_state(seed=406)
 
