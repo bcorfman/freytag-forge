@@ -69,7 +69,7 @@ def test_story_goal_is_specific_and_not_just_follow_bell_signal():
     assert len(goal) > 40
 
 
-def test_npcs_do_not_follow_player_between_rooms_without_trigger():
+def test_assistant_follows_player_between_rooms_by_default():
     state = build_default_state(seed=19)
     rng = Random(19)
     first_npc = state.world.rooms[state.player.location].npc_ids[0].replace("_", " ")
@@ -80,4 +80,4 @@ def test_npcs_do_not_follow_player_between_rooms_without_trigger():
 
     assert moved_state.player.location == destination
     combined = "\n".join(lines).lower()
-    assert f"{first_npc} is here" not in combined
+    assert first_npc in combined

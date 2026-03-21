@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from storygame.engine.facts import (
     apply_fact_ops,
+    assistant_name,
     event_fact_ops,
+    npc_location,
     player_inventory,
     player_location,
     rebuild_facts_from_legacy_views,
@@ -61,6 +63,37 @@ def _find_exit(state: GameState, room_id: str, target: str) -> tuple[str, str] |
         if destination == target:
             return direction, destination
     return None
+
+
+def _assistant_npc_id(state: GameState) -> str:
+    resolved_name = assistant_name(state).strip().lower()
+    if not resolved_name:
+        return ""
+    for npc_id, npc in state.world.npcs.items():
+        if npc.name.strip().lower() == resolved_name:
+            return npc_id
+    return ""
+
+
+def _assistant_follow_is_suppressed(state: GameState, npc_id: str) -> bool:
+    if not npc_id:
+        return True
+    if state.world_facts.query("npc_absent", npc_id):
+        return True
+    if state.world_facts.query("npc_assignment", npc_id, None):
+        return True
+    if state.world_facts.query("npc_presence_mode", npc_id, "independent"):
+        return True
+    return False
+
+
+def _assistant_follow_fact_ops(state: GameState, origin: str, destination: str) -> list[dict[str, object]]:
+    npc_id = _assistant_npc_id(state)
+    if not npc_id or _assistant_follow_is_suppressed(state, npc_id):
+        return []
+    if npc_location(state, npc_id) != origin:
+        return []
+    return [{"op": "assert", "fact": ("npc_at", npc_id, destination)}]
 
 
 def _use_event(
@@ -201,6 +234,7 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                         {"op": "retract", "fact": ("at", "player", room_id)},
                         {"op": "assert", "fact": ("at", "player", destination)},
                     ]
+                    + _assistant_follow_fact_ops(next_state, room_id, destination)
                 },
             )
         )
