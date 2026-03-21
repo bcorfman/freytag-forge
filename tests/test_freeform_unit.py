@@ -339,7 +339,7 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
-def test_llm_freeform_adapter_falls_back_when_planner_errors(monkeypatch) -> None:
+def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:
     state = build_default_state(seed=406)
 
     def _boom(mode: str, system: str, user: str) -> str:  # noqa: ARG001
@@ -347,8 +347,10 @@ def test_llm_freeform_adapter_falls_back_when_planner_errors(monkeypatch) -> Non
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
     adapter = LlmFreeformProposalAdapter(mode="openai")
-    dialog, action = adapter.propose(state, "hello")
-
-    assert dialog["text"]
-    assert action["arguments"]["planner_source"] == "fallback"
-    assert "planner unavailable" in action["arguments"]["planner_error"]
+    try:
+        adapter.propose(state, "hello")
+    except RuntimeError as exc:
+        assert "FREEFORM_PLANNER_UNAVAILABLE" in str(exc)
+        assert "planner unavailable" in str(exc)
+    else:
+        raise AssertionError("Expected planner failure to fail closed.")

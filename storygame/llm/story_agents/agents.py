@@ -37,6 +37,7 @@ from storygame.llm.story_agents.prompts import (
 from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
+_STORY_AGENT_MAX_TOKENS = 1400
 
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
@@ -80,7 +81,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "model": model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": 0.2,
-            "max_tokens": 900,
+            "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
         http_request = urllib.request.Request(
             base_url,
@@ -227,13 +228,13 @@ def _build_ollama_request(endpoint: str, model: str, system: str, user: str) -> 
             "model": model,
             "prompt": f"{system}\n\n{user}",
             "stream": False,
-            "options": {"temperature": 0.2, "num_predict": 900},
+            "options": {"temperature": 0.2, "num_predict": _STORY_AGENT_MAX_TOKENS},
         }
     return {
         "model": model,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "stream": False,
-        "options": {"temperature": 0.2, "num_predict": 900},
+        "options": {"temperature": 0.2, "num_predict": _STORY_AGENT_MAX_TOKENS},
     }
 
 

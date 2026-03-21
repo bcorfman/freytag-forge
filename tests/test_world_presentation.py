@@ -3,6 +3,7 @@ from __future__ import annotations
 from random import Random
 
 from storygame.cli import _room_lines, run_turn
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.world import build_default_state
@@ -61,6 +62,7 @@ def test_unknown_non_command_routes_to_freeform_roleplay():
         Random(34),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -124,6 +126,7 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
         Random(38),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True

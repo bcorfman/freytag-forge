@@ -82,12 +82,15 @@ def test_actionable_objective_normalizer_keeps_assistant_out_of_suspect_language
 
 def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
+    captured_requests: list[dict[str, object]] = []
 
     def _openai_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        captured_requests.append(json.loads(request.data.decode("utf-8")))
         return _FakeResponse('{"choices":[{"message":{"content":"ok-openai"}}]}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _openai_urlopen)
     assert agent_module._chat_complete("openai", "s", "u") == "ok-openai"
+    assert int(captured_requests[-1]["max_tokens"]) >= 1400
 
     def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         return _FakeResponse('{"message":{"content":"ok-ollama"}}')

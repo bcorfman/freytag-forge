@@ -16,6 +16,11 @@ def _build_context():
     return build_narration_context(state, parse_command("look"), "hook")
 
 
+def _build_opening_context():
+    state = build_default_state(seed=12)
+    return build_narration_context(state, parse_command("look"), "setup_scene")
+
+
 class _FakeResponse:
     def __init__(self, body: str) -> None:
         self._body = body.encode("utf-8")
@@ -70,6 +75,24 @@ def test_openai_adapter_bad_payload_shape(monkeypatch):
     adapter = OpenAIAdapter()
     with pytest.raises(RuntimeError, match="OpenAI API response missing expected message content"):
         adapter.generate(context)
+
+
+def test_openai_adapter_uses_larger_token_budget_for_opening(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "fake")
+    context = _build_opening_context()
+    captured: dict[str, object] = {}
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        import json
+
+        captured["payload"] = json.loads(request.data.decode("utf-8"))
+        return _FakeResponse('{"choices":[{"message":{"content":"Opening text."}}]}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+
+    adapter = OpenAIAdapter()
+    assert adapter.generate(context) == "Opening text."
+    assert int(captured["payload"]["max_tokens"]) >= 900
 
 
 def test_ollama_adapter_fallback_to_generate(monkeypatch):

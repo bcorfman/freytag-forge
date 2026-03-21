@@ -294,8 +294,9 @@ def test_demo_first_substantive_command_does_not_repeat_opening_text(tmp_path):
     assert response.status_code == 200
     payload = response.json()
     assert payload["beat"] != "setup_scene"
-    assert payload["state"]["turn_index"] == 1
+    assert payload["state"]["turn_index"] == 0
     assert payload["lines"][0].startswith(">DARIA, KNOCK ON THE DOOR")
+    assert any("story response unavailable" in line.lower() for line in payload["lines"])
 
 
 def test_demo_turn_unknown_session_returns_404(tmp_path):

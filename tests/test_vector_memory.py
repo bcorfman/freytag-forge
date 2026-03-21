@@ -3,6 +3,7 @@ from __future__ import annotations
 from random import Random
 
 from storygame.cli import run_turn
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.llm.context import NarrationContext
@@ -84,6 +85,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             _CaptureNarrator(),
             memory_store=memory_store,
             memory_slot="run",
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
 
     assert captured

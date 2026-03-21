@@ -11,6 +11,7 @@ SYSTEM_CONSTRAINTS = (
     "Opening scene must establish who the player is, where they are, and the immediate objective.",
     "Opening scene should use concrete sensory details and atmosphere grounded in known context.",
     "Turn format after opening: room name, room description, items naturally in prose, exits, then NPC interactions or background events.",
+    "For conversational freeform turns with an addressed NPC, prefer a direct in-world reply from that NPC and do not restate the room block first.",
     "Spoiler discipline: do not reveal later twists early.",
 )
 
@@ -32,6 +33,10 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Protagonist background: {payload['protagonist_background']}\n"
         f"Assistant anchor: {payload['assistant_name']}\n"
         f"Assistant role: {payload['assistant_role']}\n"
+        f"Addressed NPC: {payload['addressed_npc_name']}\n"
+        f"Conversation intent: {payload['conversation_intent']}\n"
+        f"Conversation topic: {payload['conversation_topic']}\n"
+        f"Prefer NPC reply: {payload['prefer_npc_reply']}\n"
         f"Visible items: {', '.join(payload['visible_items'])}\n"
         f"Visible NPCs: {', '.join(payload['visible_npcs'])}\n"
         f"Soft memory hints (non-authoritative): {', '.join(payload['memory_fragments'])}\n"

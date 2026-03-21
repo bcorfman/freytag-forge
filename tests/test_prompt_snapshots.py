@@ -1,6 +1,7 @@
 from random import Random
 
 from storygame.engine.parser import parse_command
+from storygame.engine.state import Event
 from storygame.engine.simulation import advance_turn
 from storygame.engine.world import build_default_state
 from storygame.llm.context import build_narration_context
@@ -55,3 +56,29 @@ def test_prompt_includes_if_storytelling_quality_checklist():
     assert "exits" in system_text
     assert "npc interactions or background events" in system_text
     assert "do not reveal later twists early" in system_text
+
+
+def test_prompt_instructs_npc_reply_for_addressed_freeform_turns():
+    state = build_default_state(seed=3, genre="mystery")
+    state.append_event(
+        Event(
+            type="freeform_roleplay",
+            turn_index=1,
+            metadata={
+                "action_proposal": {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "appearance"},
+                },
+                "dialog_proposal": {"speaker": "narrator", "text": "fallback", "tone": "in_world"},
+            },
+        )
+    )
+    context = build_narration_context(state, parse_command("Daria, what are you wearing?"), "freeform_roleplay")
+
+    prompt = build_prompt(context)
+
+    assert "For conversational freeform turns with an addressed NPC" in prompt["system"]
+    assert "prefer a direct in-world reply from that NPC" in prompt["system"]
+    assert "Addressed NPC: Daria Stone" in prompt["user"]
+    assert "Conversation topic: appearance" in prompt["user"]

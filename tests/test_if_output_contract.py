@@ -4,6 +4,7 @@ import json
 from random import Random
 
 from storygame.cli import main, run_turn
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import SilentNarrator
 from tests.narrator_stubs import StubNarrator
@@ -107,6 +108,7 @@ def test_unknown_non_command_input_uses_in_world_roleplay_response():
         Random(32),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert any(npc_name in line.lower() for line in lines)

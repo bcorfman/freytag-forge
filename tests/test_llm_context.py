@@ -1,3 +1,4 @@
+from storygame.engine.state import Event
 from random import Random
 
 from storygame.engine.parser import parse_command
@@ -117,3 +118,30 @@ def test_context_can_resolve_assistant_identity_from_facts_without_bundle() -> N
 
     assert payload["assistant_name"] == "Daria Stone"
     assert payload["assistant_role"] == "assistant"
+
+
+def test_context_includes_latest_freeform_conversation_focus() -> None:
+    state = build_default_state(seed=20, genre="mystery")
+    state.append_event(
+        Event(
+            type="freeform_roleplay",
+            turn_index=1,
+            metadata={
+                "action_proposal": {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "appearance"},
+                },
+                "dialog_proposal": {"speaker": "narrator", "text": "fallback", "tone": "in_world"},
+            },
+        )
+    )
+
+    context = build_narration_context(state, parse_command("Daria, what are you wearing?"), "freeform_roleplay")
+    payload = context.as_dict()
+
+    assert payload["conversation_intent"] == "ask_about"
+    assert payload["conversation_topic"] == "appearance"
+    assert payload["addressed_npc_id"] == "daria_stone"
+    assert payload["addressed_npc_name"] == "Daria Stone"
+    assert payload["prefer_npc_reply"] is True
