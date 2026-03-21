@@ -286,6 +286,41 @@ def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_crede
     assert any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
 
 
+def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentials(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    observed_requests: list[dict[str, str]] = []
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed_requests.append(json.loads(request.data.decode("utf-8")))
+        body = observed_requests[-1]
+        system = body.get("system", "")
+        if "Freeform Action Planner Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"dialog_proposal\\":{\\"speaker\\":\\"daria_stone\\",\\"text\\":\\"I keep to practical clothes. The weather here punishes vanity.\\",\\"tone\\":\\"in_world\\"},\\"action_proposal\\":{\\"intent\\":\\"ask_about\\",\\"targets\\":[\\"daria_stone\\"],\\"arguments\\":{\\"topic\\":\\"appearance\\"},\\"proposed_effects\\":[\\"asked:appearance\\"]}}"}'
+            )
+        return _FakeResponse('{"narration":"Daria says: \\"I keep to practical clothes. The weather here punishes vanity.\\""}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 52}).json()["session_id"]
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "Daria, tell me about your outfit"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["state"]["turn_index"] == 1
+    assert any("practical clothes" in line.lower() for line in payload["lines"])
+    assert any("Freeform Action Planner Agent" in request.get("system", "") for request in observed_requests)
+
+
 def test_demo_first_substantive_command_does_not_repeat_opening_text(tmp_path):
     client = _client(tmp_path)
     session_id = client.post("/api/v1/session", json={"seed": 43}).json()["session_id"]

@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from storygame.cli import _build_narrator
+from storygame.engine.freeform import LlmFreeformProposalAdapter
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
@@ -131,6 +132,7 @@ def create_demo_app(
     )
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
+    active_freeform_adapter = LlmFreeformProposalAdapter(mode=story_director_mode)
     active_story_director = (
         StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
     )
@@ -276,6 +278,7 @@ def create_demo_app(
             payload.command,
             session.rng,
             active_narrator,
+            active_freeform_adapter,
             narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
