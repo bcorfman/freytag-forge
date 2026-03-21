@@ -11,7 +11,7 @@ from typing import Any
 
 from storygame.engine.facts import active_story_goal, set_active_story_goal
 from storygame.engine.state import Event, EventLog, GameState
-from storygame.engine.world import build_default_state
+from storygame.engine.world import build_default_state, build_state_from_bootstrap_plan
 from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
 
 
@@ -89,16 +89,26 @@ def serialize_state(state: GameState) -> dict[str, Any]:
 
 
 def deserialize_state(payload: dict[str, Any]) -> GameState:
-    state = build_default_state(
-        seed=int(payload["seed"]),
-        genre=str(payload.get("story_genre", "mystery")),
-        session_length=str(payload.get("session_length", "medium")),
-        tone=str(payload.get("story_tone", "neutral")),
-    )
+    world_package_payload = dict(payload.get("world_package", {}))
+    bootstrap_plan = world_package_payload.get("bootstrap_plan")
+    if isinstance(bootstrap_plan, dict):
+        state = build_state_from_bootstrap_plan(
+            seed=int(payload["seed"]),
+            plan=bootstrap_plan,
+            tone=str(payload.get("story_tone", "neutral")),
+            session_length=str(payload.get("session_length", "medium")),
+        )
+    else:
+        state = build_default_state(
+            seed=int(payload["seed"]),
+            genre=str(payload.get("story_genre", "mystery")),
+            session_length=str(payload.get("session_length", "medium")),
+            tone=str(payload.get("story_tone", "neutral")),
+        )
     state.story_tone = str(payload.get("story_tone", state.story_tone))
     state.plot_curve_id = str(payload.get("plot_curve_id", state.plot_curve_id))
     state.story_outline_id = str(payload.get("story_outline_id", state.story_outline_id))
-    state.world_package = dict(payload.get("world_package", state.world_package))
+    state.world_package = world_package_payload if world_package_payload else dict(state.world_package)
     raw_facts = payload.get("world_facts", [])
     state.world_facts.replace_all(tuple(tuple(fact) for fact in raw_facts))
     state.fact_metrics = {str(key): float(value) for key, value in dict(payload.get("fact_metrics", {})).items()}

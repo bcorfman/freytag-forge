@@ -8,21 +8,13 @@ from storygame.engine.state import Event, GameState
 from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_agents.agents import (
-    CharacterDesignerAgent,
     DefaultStoryBootstrapAgent,
     DefaultStoryBootstrapCriticAgent,
-    DefaultCharacterDesignerAgent,
-    DefaultNarratorOpeningAgent,
-    DefaultPlotDesignerAgent,
     DefaultRoomPresentationAgent,
-    DefaultStoryArchitectAgent,
     DefaultStoryReplanAgent,
-    NarratorOpeningAgent,
-    PlotDesignerAgent,
     RoomPresentationAgent,
     StoryBootstrapAgent,
     StoryBootstrapCriticAgent,
-    StoryArchitectAgent,
     StoryReplanAgent,
 )
 from storygame.story_canon import canonical_detective_name
@@ -37,10 +29,10 @@ class StoryDirector:
         output_editor: OutputEditor | None = None,
         story_bootstrap: StoryBootstrapAgent | None = None,
         story_bootstrap_critic: StoryBootstrapCriticAgent | None = None,
-        story_architect: StoryArchitectAgent | None = None,
-        character_designer: CharacterDesignerAgent | None = None,
-        plot_designer: PlotDesignerAgent | None = None,
-        narrator_opening: NarratorOpeningAgent | None = None,
+        story_architect=None,
+        character_designer=None,
+        plot_designer=None,
+        narrator_opening=None,
         room_presentation: RoomPresentationAgent | None = None,
         story_replan: StoryReplanAgent | None = None,
     ) -> None:
@@ -49,24 +41,15 @@ class StoryDirector:
         self._story_bootstrap_critic = (
             DefaultStoryBootstrapCriticAgent(mode) if story_bootstrap_critic is None else story_bootstrap_critic
         )
-        self._story_architect = DefaultStoryArchitectAgent(mode) if story_architect is None else story_architect
-        self._character_designer = (
-            DefaultCharacterDesignerAgent(mode) if character_designer is None else character_designer
-        )
-        self._plot_designer = DefaultPlotDesignerAgent(mode) if plot_designer is None else plot_designer
-        self._narrator_opening = DefaultNarratorOpeningAgent(mode) if narrator_opening is None else narrator_opening
         self._room_presentation = (
             DefaultRoomPresentationAgent(mode) if room_presentation is None else room_presentation
         )
         self._story_replan = DefaultStoryReplanAgent(mode) if story_replan is None else story_replan
-        self._uses_legacy_opening_path = any(
-            component is not None
-            for component in (story_architect, character_designer, plot_designer, narrator_opening)
+        self._ignored_legacy_components = any(
+            component is not None for component in (story_architect, character_designer, plot_designer, narrator_opening)
         )
 
     def compose_opening(self, state: GameState) -> list[str]:
-        if self._uses_legacy_opening_path:
-            return self._compose_opening_legacy(state)
         return self._compose_opening_bootstrap(state)
 
     def _compose_opening_bootstrap(self, state: GameState) -> list[str]:
@@ -104,26 +87,6 @@ class StoryDirector:
             str(bundle.get("actionable_objective", active_story_goal(state))).strip(),
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
-        )
-        return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
-
-    def _compose_opening_legacy(self, state: GameState) -> list[str]:
-        architect = self._story_architect.run(state)
-        cast = self._character_designer.run(state, architect)
-        plan = self._plot_designer.run(state, architect, cast)
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            room_future = executor.submit(self._ensure_room_presentation_cache, state, architect, cast, plan)
-            opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
-            opening = opening_future.result()
-            room_future.result()
-        coherent_opening = cohere_opening_lines(
-            opening,
-            state.story_genre,
-            str(architect.get("protagonist_name", "")).strip(),
-            str(plan.get("assistant_name", "")).strip(),
-            str(plan.get("actionable_objective", active_story_goal(state))).strip(),
-            item_labels_for_opening(tuple(state.world.items.keys())),
-            tuple(str(contact.get("name", "")).strip() for contact in cast.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
         return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 

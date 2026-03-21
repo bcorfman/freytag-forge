@@ -97,9 +97,14 @@ Current runtime generation is package-driven.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
+- `storygame.engine.bootstrap` validates LLM-expanded outline bootstrap plans before runtime state is realized.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
+- `storygame.engine.world` also supports bootstrap-plan realization for sessions that start from a simple author outline expanded into structured characters, items, goals, and trigger specs.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
+- `storygame.engine.semantic_actions` normalizes committed semantic turn actions into canonical events plus fact-backed world mutations.
+- `storygame.engine.triggers` evaluates unified action-trigger and turn-trigger specs against committed semantic events and canonical facts.
+- `storygame.engine.turn_runtime` provides an additive proposal-first turn path for structured semantic turn proposals, deterministic commits, and follow-up trigger execution.
 - A dedicated turn-orchestration layer accepts structured candidate proposals from the LLM and commits only validated deltas to canonical world state.
 - Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 

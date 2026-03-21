@@ -5,10 +5,12 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import active_story_goal, apply_fact_ops, player_location, room_items, room_npcs
+from storygame.engine.facts import active_story_goal, player_location, room_items, room_npcs
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.state import Event, GameState
+from storygame.engine.turn_runtime import execute_turn_proposal
+from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.story_agents.agents import _chat_complete as _story_agent_chat_complete
 from storygame.llm.story_agents.agents import _json_from_text as _story_agent_json_from_text
 
@@ -88,6 +90,7 @@ class FreeformProposalAdapter(Protocol):
 
 class FreeformResolution(TypedDict):
     state: GameState
+    events: list[Event]
     event: Event
     action_proposal: dict[str, Any]
     dialog_proposal: dict[str, Any]
@@ -592,6 +595,8 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
     reasons = tuple(str(value) for value in envelope["reasons"])
     if "POLICY_TARGET_NOT_PRESENT" in reasons:
         return 0.0, 0.0
+    if "POLICY_NO_TARGET" in reasons:
+        return 0.0, 0.0
     if "POLICY_MISSING_CASE_FILE" in reasons:
         return 0.0, 0.0
     if "POLICY_MISSING_LEDGER_PAGE" in reasons:
@@ -610,6 +615,21 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
     return progress, tension
 
 
+def _envelope_with_story_deltas(action_proposal: dict[str, Any], envelope: dict[str, Any]) -> dict[str, Any]:
+    progress_delta, tension_delta = _story_deltas_for_freeform(action_proposal, envelope)
+    numeric_delta = list(envelope["numeric_delta"])
+    if progress_delta != 0.0:
+        numeric_delta.append({"key": "progress", "delta": progress_delta})
+    if tension_delta != 0.0:
+        numeric_delta.append({"key": "tension", "delta": tension_delta})
+    return {
+        "assert": list(envelope["assert"]),
+        "retract": list(envelope["retract"]),
+        "numeric_delta": numeric_delta,
+        "reasons": list(envelope["reasons"]),
+    }
+
+
 def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     fact_ops: list[dict[str, Any]] = []
     for mutation in envelope["assert"]:
@@ -619,6 +639,63 @@ def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     for metric in envelope["numeric_delta"]:
         fact_ops.append({"op": "numeric_delta", "key": metric["key"], "delta": metric["delta"]})
     return fact_ops
+
+
+def _semantic_actions_for_freeform(
+    state: GameState,
+    action_proposal: dict[str, Any],
+    envelope: dict[str, Any],
+) -> tuple[dict[str, Any], ...]:
+    intent = str(action_proposal["intent"]).strip().lower()
+    targets = tuple(str(target) for target in action_proposal["targets"])
+    if "POLICY_TARGET_NOT_PRESENT" in tuple(str(reason) for reason in envelope["reasons"]):
+        return ()
+
+    if intent == "read_case_file":
+        return (
+            {
+                "action_id": "freeform-read-case-file",
+                "action_type": "inspect_item",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "case_file",
+                "location_id": player_location(state),
+            },
+        )
+    if intent == "read_ledger_page":
+        return (
+            {
+                "action_id": "freeform-read-ledger-page",
+                "action_type": "inspect_item",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "ledger_page",
+                "location_id": player_location(state),
+            },
+        )
+    if intent in _ALLOWED_INTENTS and targets:
+        return (
+            {
+                "action_id": f"freeform-{intent}",
+                "action_type": intent,
+                "actor_id": "player",
+                "target_id": targets[0],
+                "item_id": "",
+                "location_id": player_location(state),
+            },
+        )
+    if intent:
+        return (
+            {
+                "action_id": f"freeform-{intent}",
+                "action_type": intent,
+                "actor_id": "player",
+                "target_id": targets[0] if targets else "",
+                "item_id": "",
+                "location_id": player_location(state),
+            },
+        )
+    return ()
 
 
 def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, Any]) -> str:
@@ -661,18 +738,15 @@ def resolve_freeform_roleplay_with_proposals(
     dialog_payload: dict[str, Any],
     action_payload: dict[str, Any],
 ) -> FreeformResolution:
-    next_state = state.clone()
-    next_state.turn_index += 1
-
     dialog_proposal = parse_dialog_proposal(dialog_payload)
     action_proposal = parse_action_proposal(action_payload)
     action_proposal, dialog_proposal = _apply_raw_command_overrides(
-        next_state,
+        state,
         raw_input,
         action_proposal,
         dialog_proposal,
     )
-    envelope = parse_state_update_envelope(_envelope_for_action(next_state, action_proposal))
+    envelope = parse_state_update_envelope(_envelope_for_action(state, action_proposal))
     if "POLICY_TARGET_NOT_PRESENT" in envelope["reasons"]:
         dialog_proposal = parse_dialog_proposal(
             {
@@ -681,13 +755,33 @@ def resolve_freeform_roleplay_with_proposals(
                 "tone": "boundary",
             }
         )
+    envelope = parse_state_update_envelope(_envelope_with_story_deltas(action_proposal, envelope))
 
-    fact_ops = _envelope_to_fact_ops(envelope)
-    if fact_ops:
-        apply_fact_ops(next_state, fact_ops)
+    turn_proposal = parse_turn_proposal(
+        {
+            "turn_id": f"freeform-{state.turn_index + 1}",
+            "intent": str(action_proposal["intent"]),
+            "narration": str(dialog_proposal["text"]),
+            "dialogue_lines": (),
+            "semantic_actions": _semantic_actions_for_freeform(state, action_proposal, envelope),
+            "state_delta": envelope,
+        }
+    )
+    runtime_result = execute_turn_proposal(state, turn_proposal, None)
+    next_state = runtime_result["state"]
+    committed_events = list(runtime_result["events"])
+    committed_fact_ops: list[dict[str, Any]] = _envelope_to_fact_ops(envelope)
+    for committed_event in committed_events:
+        fact_ops = committed_event.metadata.get("fact_ops", ())
+        if isinstance(fact_ops, (list, tuple)):
+            committed_fact_ops.extend(dict(op) for op in fact_ops)
+        numeric_delta = committed_event.metadata.get("numeric_delta", ())
+        if isinstance(numeric_delta, (list, tuple)):
+            committed_fact_ops.extend({"op": "numeric_delta", "key": entry["key"], "delta": entry["delta"]} for entry in numeric_delta)
 
-    delta_progress, delta_tension = _story_deltas_for_freeform(action_proposal, envelope)
-    event = Event(
+    delta_progress = max(0.0, next_state.progress - state.progress)
+    delta_tension = max(0.0, next_state.tension - state.tension)
+    compatibility_event = Event(
         type="freeform_roleplay",
         message_key=_format_character_reply_line(next_state, dialog_proposal),
         entities=tuple(action_proposal["targets"]),
@@ -699,15 +793,16 @@ def resolve_freeform_roleplay_with_proposals(
             "action_proposal": action_proposal,
             "dialog_proposal": dialog_proposal,
             "state_update_envelope": envelope,
-            "fact_ops": fact_ops,
+            "fact_ops": committed_fact_ops,
+            "committed_event_types": [event.type for event in committed_events],
         },
     )
-    next_state.append_event(event)
-    next_state.progress = max(0.0, min(1.0, next_state.progress + delta_progress))
-    next_state.tension = max(0.0, min(1.0, next_state.tension + delta_tension))
+    next_state.append_event(compatibility_event)
+    committed_events.append(compatibility_event)
     return {
         "state": next_state,
-        "event": event,
+        "events": committed_events,
+        "event": compatibility_event,
         "action_proposal": action_proposal,
         "dialog_proposal": dialog_proposal,
         "state_update_envelope": envelope,

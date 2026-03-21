@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 
-from storygame.engine.facts import initialize_world_facts, sync_legacy_views
+from storygame.engine.bootstrap import validate_bootstrap_plan
+from storygame.engine.facts import initialize_world_facts, replace_fact_group, set_active_story_goal, sync_legacy_views
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
 
@@ -313,3 +314,139 @@ def build_default_state(
 def build_tiny_state(seed: int) -> GameState:
     # Tiny state now reuses the same world-generation pipeline with a short profile.
     return build_default_state(seed=seed, genre="mystery", session_length="short", tone="neutral")
+
+
+def build_state_from_bootstrap_plan(
+    seed: int,
+    plan: dict[str, object],
+    tone: str = "neutral",
+    session_length: str = "medium",
+) -> GameState:
+    validate_bootstrap_plan(plan)
+
+    plan_locations = tuple(plan["locations"])
+    plan_characters = tuple(plan["characters"])
+    plan_items = tuple(plan["items"])
+    protagonist_id = str(plan["protagonist_id"])
+    protagonist = next(character for character in plan_characters if character["id"] == protagonist_id)
+
+    items: dict[str, Item] = {}
+    for spec in plan_items:
+        items[str(spec["id"])] = Item(
+            id=str(spec["id"]),
+            name=str(spec["name"]),
+            description=str(spec["description"]),
+            portable=bool(spec["portable"]),
+            tags=tuple(str(trait) for trait in spec["stable_traits"]),
+            kind=str(spec["kind"]),
+        )
+
+    npcs: dict[str, Npc] = {}
+    for spec in plan_characters:
+        if spec["id"] == protagonist_id:
+            continue
+        pronouns = "he/him" if "male" in spec["stable_traits"] else "they/them"
+        npcs[str(spec["id"])] = Npc(
+            id=str(spec["id"]),
+            name=str(spec["name"]),
+            description=str(spec["description"]),
+            dialogue=f"{spec['name']} weighs the situation before replying.",
+            identity=str(spec["role"]),
+            pronouns=pronouns,
+            tags=tuple(str(trait) for trait in spec["stable_traits"]),
+        )
+
+    items_by_room: dict[str, list[str]] = {str(location["id"]): [] for location in plan_locations}
+    npc_ids_by_room: dict[str, list[str]] = {str(location["id"]): [] for location in plan_locations}
+    for spec in plan_characters:
+        if spec["id"] == protagonist_id:
+            continue
+        npc_ids_by_room[str(spec["location_id"])].append(str(spec["id"]))
+    for spec in plan_items:
+        location_id = str(spec["location_id"])
+        if location_id:
+            items_by_room[location_id].append(str(spec["id"]))
+
+    rooms: dict[str, Room] = {}
+    for location in plan_locations:
+        room_id = str(location["id"])
+        rooms[room_id] = Room(
+            id=room_id,
+            name=str(location["name"]),
+            description=str(location["description"]),
+            exits=dict(location["exits"]),
+            item_ids=tuple(items_by_room[room_id]),
+            npc_ids=tuple(npc_ids_by_room[room_id]),
+        )
+
+    opening_inventory = tuple(str(item_id) for item_id in protagonist["inventory"])
+    player = PlayerState(
+        location=str(protagonist["location_id"]),
+        inventory=opening_inventory,
+        flags={"started": True},
+    )
+    world = WorldState(rooms=rooms, items=items, npcs=npcs)
+    world_package = {
+        "bootstrap_plan": dict(plan),
+        "trigger_specs": tuple(plan["triggers"]),
+        "outline": {"id": str(plan["outline_id"]), "source_text": ""},
+        "goals": {
+            "setup": "",
+            "primary": next(
+                (str(goal["summary"]) for goal in plan["goals"] if str(goal["kind"]) == "primary"),
+                "",
+            ),
+            "secondary": tuple(
+                str(goal["summary"]) for goal in plan["goals"] if str(goal["kind"]) not in {"primary", "setup"}
+            ),
+        },
+    }
+    state = GameState(
+        seed=seed,
+        player=player,
+        world=world,
+        story_genre="bootstrap",
+        story_tone=tone,
+        session_length=session_length,
+        plot_curve_id="bootstrap_dynamic",
+        story_outline_id=str(plan["outline_id"]),
+        world_package=world_package,
+        active_goal=next((str(goal["summary"]) for goal in plan["goals"] if str(goal["status"]) == "active"), ""),
+    )
+    initialize_world_facts(state)
+
+    for spec in plan_characters:
+        if spec["id"] == protagonist_id:
+            continue
+        state.world_facts.assert_fact("npc_role", str(spec["name"]), str(spec["role"]))
+        for trait in spec["stable_traits"]:
+            state.world_facts.assert_fact("npc_stable_trait", str(spec["id"]), str(trait))
+        for trait in spec["dynamic_traits"]:
+            state.world_facts.assert_fact("npc_dynamic_trait", str(spec["id"]), str(trait))
+
+    for spec in plan_items:
+        holder_id = str(spec["holder_id"])
+        if holder_id:
+            holder = "player" if holder_id == protagonist_id else holder_id
+            state.world_facts.assert_fact("holding", holder, str(spec["id"]))
+        for trait in spec["stable_traits"]:
+            state.world_facts.assert_fact("item_stable_trait", str(spec["id"]), str(trait))
+        for trait in spec["dynamic_traits"]:
+            state.world_facts.assert_fact("item_dynamic_trait", str(spec["id"]), str(trait))
+
+    story_goal_facts = tuple(("story_goal", str(goal["kind"]), str(goal["summary"])) for goal in plan["goals"])
+    replace_fact_group(state, "story_goal", story_goal_facts)
+    if protagonist["name"]:
+        replace_fact_group(state, "player_name", (("player_name", str(protagonist["name"])),))
+    active_goal = next((str(goal["summary"]) for goal in plan["goals"] if str(goal["status"]) == "active"), "")
+    if active_goal:
+        set_active_story_goal(state, active_goal)
+    assistant = next((character for character in plan_characters if str(character["role"]) == "assistant"), None)
+    if assistant is not None:
+        assistant_name = str(assistant["name"]).strip()
+        if assistant_name:
+            replace_fact_group(state, "assistant_name", (("assistant_name", assistant_name),))
+            state.world_facts.assert_fact("npc_relationship", assistant_name, "player", "assistant")
+
+    sync_legacy_views(state)
+    return state
