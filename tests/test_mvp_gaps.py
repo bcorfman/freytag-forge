@@ -88,7 +88,8 @@ def test_narration_output_ignores_non_fact_backed_mutation_claims():
 def test_narration_output_commits_explicit_item_transfer_to_fact_store():
     state = build_default_state(seed=171, genre="mystery")
     start_room = state.player.location
-    assert "ledger_page" in state.world.rooms[start_room].item_ids
+    assert "ledger_page" not in state.world.rooms[start_room].item_ids
+    assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
 
     next_state, _lines, *_ = run_turn(
         state,

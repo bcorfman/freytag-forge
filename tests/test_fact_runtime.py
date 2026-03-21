@@ -51,7 +51,7 @@ def test_taking_clue_or_evidence_asserts_discovered_lead_facts() -> None:
     start_room = state.world.rooms[state.player.location]
     target_item_id = next(
         item_id
-        for item_id in start_room.item_ids
+        for item_id in (*start_room.item_ids, *(fact[2] for fact in state.world_facts.query("holding", "daria_stone", None)))
         if state.world.items[item_id].kind in {"clue", "evidence"} and state.world.items[item_id].clue_text
     )
 

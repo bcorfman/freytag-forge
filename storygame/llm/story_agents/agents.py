@@ -575,6 +575,7 @@ class DefaultStoryBootstrapCriticAgent:
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bootstrap_bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
+        issues.extend(_bootstrap_clue_staging_issues(bootstrap_bundle))
         if issues:
             critique["verdict"] = "revise"
             critique["continuity_summary"] = (
@@ -582,6 +583,22 @@ class DefaultStoryBootstrapCriticAgent:
             )
             critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
         return critique
+
+
+def _bootstrap_clue_staging_issues(bootstrap_bundle: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    for entry in bootstrap_bundle.get("clue_placements", ()):
+        if not isinstance(entry, dict):
+            continue
+        item_id = str(entry.get("item_id", "")).strip().lower()
+        room_id = str(entry.get("room_id", "")).strip().lower()
+        if room_id != "front_steps":
+            continue
+        if item_id == "ledger_page":
+            issues.append("The ledger page cannot be left exposed on the front steps; move it indoors or into Daria Stone's custody.")
+        elif item_id == "route_key":
+            issues.append("The route key should not be lying exposed on the front steps; hide it in a plausible location or place it in someone's custody.")
+    return issues
 
 
 class DefaultCharacterDesignerAgent:

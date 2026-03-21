@@ -37,9 +37,11 @@ Hard rules:
 - When refactoring web surfaces, preserve story/output parity where possible, but do not erase legitimate deployment differences such as hosted fail-closed behavior, Cloudflare-backed narration, or credential boundaries.
 - Treat sub-10-second total story-agent latency per turn as an engineering goal. Prefer fewer LLM round-trips, cached bootstrap outputs, and shared contracts over multi-call orchestration when behavior can be preserved.
 - Opening/story editors and judge-critic passes must make the full opening cohesive before display and should treat role contradictions, duplicated clue locations, and impossible scene facts as blocking coherence failures, not minor polish issues.
+- Accepted opening text is allowed to correct canonical opening facts, and those corrections must be committed back into the fact store before display. Treat opening-driven reconciliation as a general-purpose requirement for role continuity, NPC proximity/location, clue or item custody, and room-description facts, not as a one-off patch for a single item or scene.
 
 Dependency/testability:
 - Write tests first, then write the code to match the tests (TDD), then update the docs to reflect the new/updated code once it works.
+- When adding or fixing opening/bootstrap coherence behavior, add varied regression coverage that proves the fact store is reconciled from accepted opening text across multiple categories. Do not stop at a single bespoke example if the rule is meant to be general.
 - Sustain project-wide test coverage at `>=90%` on every change; verify with `uv run pytest -q` and do not merge changes that drop coverage below this threshold.
 - Accept dependencies via constructors; avoid hidden instantiation inside methods.
 - Avoid circular dependencies.

@@ -98,7 +98,11 @@ def initialize_world_facts(state) -> None:
 
 
 def rebuild_facts_from_legacy_views(state) -> None:
-    preserved = tuple(fact for fact in state.world_facts.all() if fact[0] not in _LEGACY_FACT_PREDICATES)
+    preserved = tuple(
+        fact
+        for fact in state.world_facts.all()
+        if fact[0] not in _LEGACY_FACT_PREDICATES or (fact[0] == "holding" and len(fact) >= 3 and fact[1] != "player")
+    )
     initialize_world_facts(state)
     for fact in preserved:
         state.world_facts.assert_fact(fact[0], *fact[1:])

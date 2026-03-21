@@ -320,6 +320,40 @@ def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypa
     assert any("ledger page" in issue.lower() for issue in result["issues"])
 
 
+def test_story_bootstrap_critic_rejects_ledger_page_left_on_front_steps(monkeypatch) -> None:
+    state = build_default_state(seed=552)
+    agent = DefaultStoryBootstrapCriticAgent("openai")
+    bundle = {
+        "assistant_name": "Daria Stone",
+        "actionable_objective": "Review the grounds and decide which lead to press first.",
+        "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+        "clue_placements": [
+            {
+                "item_id": "ledger_page",
+                "room_id": "front_steps",
+                "clue_text": "The ledger page marks a missing payment.",
+                "hidden_reason": "Wind left it half-caught in the stonework.",
+            }
+        ],
+        "opening_paragraphs": [
+            "Rain needles the stone as you approach the mansion.",
+            "Daria Stone watches the drive while the ledger page lies in plain sight on the front steps.",
+            "The work begins before you even cross the threshold.",
+        ],
+    }
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {"verdict": "accepted", "continuity_summary": "Looks fine.", "issues": []}
+        ),
+    )
+
+    result = agent.run(state, bundle)
+
+    assert result["verdict"] == "revise"
+    assert any("front steps" in issue.lower() for issue in result["issues"])
+
+
 def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> None:
     state = build_default_state(seed=503)
     architect = {"protagonist_name": "Noah Kade", "protagonist_background": "A detective."}

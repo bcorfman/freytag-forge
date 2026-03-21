@@ -26,6 +26,24 @@ from storygame.llm.story_agents.agents import (
 from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
+_ASSISTANT_ROLE_CUE = "your assistant"
+_ASSISTANT_NEARBY_CUES = ("beside you", "at your side", "keeps close beside you", "close beside you")
+_ITEM_HOLDING_CUES = (
+    "keeps",
+    "holds",
+    "carries",
+    "in hand",
+    "in her hand",
+    "in his hand",
+    "in their hand",
+    "coat pocket",
+    "jacket pocket",
+    "tucked into",
+)
+
+
+def _normalize_opening_line(line: str) -> str:
+    return " ".join(line.strip().lower().split())
 
 
 class StoryDirector:
@@ -94,6 +112,7 @@ class StoryDirector:
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
+        self._reconcile_opening_facts(state, coherent_opening, bundle)
         self._sync_opening_room_presentation(state, coherent_opening)
         return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 
@@ -344,6 +363,103 @@ class StoryDirector:
         if holding_ops:
             apply_fact_ops(state, holding_ops)
 
+    def _assistant_npc_id(self, state: GameState, assistant_name: str) -> str:
+        normalized_assistant = assistant_name.strip().lower()
+        if not normalized_assistant:
+            return ""
+        for npc_id, npc in state.world.npcs.items():
+            if npc.name.strip().lower() == normalized_assistant:
+                return npc_id
+        return ""
+
+    def _reconcile_opening_facts(
+        self,
+        state: GameState,
+        opening_lines: list[str],
+        bundle: dict[str, object],
+    ) -> None:
+        assistant_name = str(bundle.get("assistant_name", "")).strip()
+        assistant_npc_id = self._assistant_npc_id(state, assistant_name)
+        if not assistant_npc_id:
+            return
+        normalized_lines = tuple(_normalize_opening_line(line) for line in opening_lines if line.strip())
+        assistant_token = assistant_name.lower()
+        assistant_lines = tuple(line for line in normalized_lines if assistant_token in line)
+        if not assistant_lines:
+            return
+
+        self._reconcile_assistant_role_from_opening(state, assistant_name, assistant_npc_id, assistant_lines)
+        self._reconcile_assistant_location_from_opening(state, assistant_npc_id, assistant_lines)
+        self._reconcile_item_custody_from_opening(state, assistant_npc_id, assistant_lines)
+
+    def _reconcile_assistant_role_from_opening(
+        self,
+        state: GameState,
+        assistant_name: str,
+        assistant_npc_id: str,
+        assistant_lines: tuple[str, ...],
+    ) -> None:
+        if not any(_ASSISTANT_ROLE_CUE in line for line in assistant_lines):
+            return
+        replace_fact_group(
+            state,
+            "npc_role",
+            tuple(
+                fact
+                for fact in state.world_facts.all()
+                if fact[0] == "npc_role" and fact[1] != assistant_name
+            )
+            + (("npc_role", assistant_name, "assistant"),),
+        )
+        replace_fact_group(
+            state,
+            "npc_relationship",
+            tuple(
+                fact
+                for fact in state.world_facts.all()
+                if fact[0] == "npc_relationship" and fact[1] != assistant_name
+            )
+            + (("npc_relationship", assistant_name, "player", "assistant"),),
+        )
+        npc = state.world.npcs[assistant_npc_id]
+        npc.identity = "your assistant; observant"
+        npc.description = f"{npc.name} serves as your assistant in the case and carries an observant demeanor."
+        npc.dialogue = f"{npc.name} keeps the focus on {active_story_goal(state)}"
+
+    def _reconcile_assistant_location_from_opening(
+        self,
+        state: GameState,
+        assistant_npc_id: str,
+        assistant_lines: tuple[str, ...],
+    ) -> None:
+        if any(cue in line for line in assistant_lines for cue in _ASSISTANT_NEARBY_CUES):
+            apply_fact_ops(state, [{"op": "assert", "fact": ("npc_at", assistant_npc_id, state.player.location)}])
+
+    def _reconcile_item_custody_from_opening(
+        self,
+        state: GameState,
+        assistant_npc_id: str,
+        assistant_lines: tuple[str, ...],
+    ) -> None:
+        clue_room_facts = tuple(fact for fact in state.world_facts.all() if fact[0] == "clue_room")
+        clue_holder_facts = tuple(fact for fact in state.world_facts.all() if fact[0] == "clue_holder")
+        updated = False
+        for item_id, item in state.world.items.items():
+            item_token = item.name.strip().lower()
+            if not item_token:
+                continue
+            if not any(item_token in line and any(cue in line for cue in _ITEM_HOLDING_CUES) for line in assistant_lines):
+                continue
+            apply_fact_ops(state, [{"op": "assert", "fact": ("holding", assistant_npc_id, item_id)}])
+            clue_room_facts = tuple(fact for fact in clue_room_facts if fact[1] != item_id)
+            clue_holder_facts = tuple(fact for fact in clue_holder_facts if fact[1] != item_id) + (
+                ("clue_holder", item_id, assistant_npc_id),
+            )
+            updated = True
+        if updated:
+            replace_fact_group(state, "clue_room", clue_room_facts)
+            replace_fact_group(state, "clue_holder", clue_holder_facts)
+
     def _sync_opening_room_presentation(self, state: GameState, opening_lines: list[str]) -> None:
         room = state.world.rooms[state.player.location]
         cache = state.world_package.setdefault("room_presentation_cache", {})
@@ -373,6 +489,14 @@ class StoryDirector:
             merged_long = f"{short_line} {existing['long']}".strip()
         cache[room.id] = {"long": merged_long, "short": short_line}
         room.description = merged_long
+        replace_fact_group(
+            state,
+            "room_description",
+            tuple(
+                ("room_description", room_id, room.description)
+                for room_id, room in state.world.rooms.items()
+            ),
+        )
 
     def _ensure_room_presentation_cache(
         self,

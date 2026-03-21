@@ -100,7 +100,8 @@ def test_sequence_trigger_matches_ordered_event_steps_within_window():
     state = build_default_state(seed=5)
     room_id = state.player.location
     npc_id = state.world.rooms[room_id].npc_ids[0]
-    item_id = state.world.rooms[room_id].item_ids[0]
+    room_items = state.world.rooms[room_id].item_ids
+    item_id = room_items[0] if room_items else "ledger_page"
     state.turn_index = 4
     state.player.flags[f"talked_{npc_id}"] = True
     state.event_log = state.event_log.extend(

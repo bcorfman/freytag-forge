@@ -3,7 +3,12 @@ from __future__ import annotations
 import re
 
 from storygame.engine.bootstrap import validate_bootstrap_plan
-from storygame.engine.facts import initialize_world_facts, replace_fact_group, set_active_story_goal, sync_legacy_views
+from storygame.engine.facts import (
+    initialize_world_facts,
+    replace_fact_group,
+    set_active_story_goal,
+    sync_legacy_views,
+)
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
 
@@ -237,6 +242,21 @@ def _build_rooms(package: dict, items: dict[str, Item], npcs: dict[str, Npc]) ->
     return rooms
 
 
+def _remove_room_item(rooms: dict[str, Room], item_id: str) -> None:
+    for room in rooms.values():
+        if item_id in room.item_ids:
+            room.item_ids = tuple(value for value in room.item_ids if value != item_id)
+
+
+def _seed_default_mystery_opening(rooms: dict[str, Room]) -> dict[str, str]:
+    seeded_holding: dict[str, str] = {}
+    _remove_room_item(rooms, "case_file")
+    _remove_room_item(rooms, "ledger_page")
+    if "daria_stone" in {npc_id for room in rooms.values() for npc_id in room.npc_ids}:
+        seeded_holding["ledger_page"] = "daria_stone"
+    return seeded_holding
+
+
 def build_default_state(
     seed: int,
     genre: str = "mystery",
@@ -263,22 +283,9 @@ def build_default_state(
     start_room_state.item_ids = tuple(
         item_id for item_id in start_room_state.item_ids if item_id not in opening_inventory
     )
-    if not start_room_state.item_ids:
-        replacement_item = ""
-        replacement_room = ""
-        for room_id, room_state in rooms.items():
-            for item_id in room_state.item_ids:
-                if item_id not in opening_inventory:
-                    replacement_item = item_id
-                    replacement_room = room_id
-                    break
-            if replacement_item:
-                break
-        if replacement_item:
-            start_room_state.item_ids = (replacement_item,)
-            if replacement_room and replacement_room != start_room:
-                source_room = rooms[replacement_room]
-                source_room.item_ids = tuple(item_id for item_id in source_room.item_ids if item_id != replacement_item)
+    seeded_holding: dict[str, str] = {}
+    if package["genre"] == "mystery":
+        seeded_holding = _seed_default_mystery_opening(rooms)
 
     player = PlayerState(
         location=start_room, inventory=tuple(dict.fromkeys(opening_inventory)), flags={"started": True}
@@ -307,6 +314,9 @@ def build_default_state(
                 state.world_facts.assert_fact("assistant_name", assistant.name.strip())
                 state.world_facts.assert_fact("npc_role", assistant.name.strip(), "assistant")
                 state.world_facts.assert_fact("npc_relationship", assistant.name.strip(), "player", "assistant")
+        for item_id, holder_id in seeded_holding.items():
+            if item_id in state.world.items and holder_id in state.world.npcs:
+                state.world_facts.assert_fact("holding", holder_id, item_id)
     sync_legacy_views(state)
     return state
 
