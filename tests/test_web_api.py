@@ -164,6 +164,34 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
+def test_bootstrap_response_filters_duplicate_room_name_from_opening(tmp_path):
+    class _DuplicateRoomHeaderDirector:
+        def compose_opening(self, state):  # noqa: ANN001
+            state.world_package["llm_story_bundle"] = {
+                "opening_paragraphs": ["Outside The Mansion", "Rain needles the stone.", "Daria keeps the file close."]
+            }
+            return ["Outside The Mansion", "Rain needles the stone.", "Daria keeps the file close."]
+
+        def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+            return lines
+
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_DuplicateRoomHeaderDirector(),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["lines"].count("Outside The Mansion") == 0
+    assert sum(1 for line in payload["lines"] if line.startswith("Outside The Mansion\n")) == 1
+
+
 def test_bootstrap_response_state_prefers_fact_backed_objective(tmp_path):
     class _FactGoalDirector:
         def compose_opening(self, state):  # noqa: ANN001

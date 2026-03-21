@@ -184,6 +184,53 @@ def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outpu
     assert state.world_facts.holds("planned_event_participant", "warning", "Daria Stone")
 
 
+def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_needed() -> None:
+    class _FrontStepsClueBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["clue_placements"] = [
+                {
+                    "item_id": "ledger_page",
+                    "room_id": state.player.location,
+                    "clue_text": "The ledger page proves the payment was staged.",
+                    "hidden_reason": "It was folded into Daria's notes before you arrived.",
+                }
+            ]
+            return payload
+
+    state = build_default_state(seed=703)
+    if "ledger_page" not in state.world.items:
+        return
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_FrontStepsClueBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    assert "ledger_page" not in state.world.rooms[state.player.location].item_ids
+    assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
+
+
+def test_story_director_seeds_start_room_presentation_from_opening() -> None:
+    state = build_default_state(seed=704)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    room_cache = state.world_package["room_presentation_cache"][state.player.location]
+    assert room_cache["short"].startswith("P1.")
+
+
 def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -> None:
     class _InconsistentBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
@@ -385,4 +432,3 @@ def test_story_director_raises_when_bootstrap_agent_returns_empty_opening() -> N
 
     with pytest.raises(RuntimeError, match="empty opening_paragraphs"):
         director.compose_opening(state)
-

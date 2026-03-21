@@ -173,6 +173,18 @@ def build_bootstrap_response_payload_from_lines(
     scope_id: str,
     opening_lines: list[str],
 ) -> dict[str, Any]:
+    room = state.world.rooms[state.player.location]
+    cache = state.world_package.get("room_presentation_cache", {})
+    room_cache = cache.get(room.id, {})
+    banned_lines = {
+        room.name.strip().lower(),
+        room.description.strip().lower(),
+        str(room_cache.get("long", "")).strip().lower(),
+        str(room_cache.get("short", "")).strip().lower(),
+    }
+    filtered_opening = [
+        line for line in opening_lines if line.strip() and line.strip().lower() not in banned_lines
+    ]
     return {
         scope_field: scope_id,
         "command": command,
@@ -180,9 +192,9 @@ def build_bootstrap_response_payload_from_lines(
         "beat": "setup_scene",
         "continued": True,
         "lines": [
-            *_with_paragraph_spacing(opening_lines),
+            *_with_paragraph_spacing(filtered_opening),
             "",
-            _room_lines(state, long_form=True),
+            _room_lines(state, long_form=False),
         ],
         "state": build_state_snapshot_payload(state, scope_field, scope_id),
     }
