@@ -3,7 +3,13 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 import logging
 
-from storygame.engine.facts import active_story_goal, replace_fact_group, set_active_story_goal
+from storygame.engine.facts import (
+    active_story_goal,
+    apply_fact_ops,
+    rebuild_facts_from_legacy_views,
+    replace_fact_group,
+    set_active_story_goal,
+)
 from storygame.engine.state import Event, GameState
 from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
 from storygame.llm.output_editor import OutputEditor, build_output_editor
@@ -88,6 +94,7 @@ class StoryDirector:
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
+        self._sync_opening_room_presentation(state, coherent_opening)
         return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
@@ -301,6 +308,14 @@ class StoryDirector:
         if not valid_entries:
             return
         room_items = {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()}
+        holding_ops: list[dict[str, object]] = []
+        assistant_name = str(state.world_package.get("llm_story_bundle", {}).get("assistant_name", "")).strip().lower()
+        assistant_npc_id = ""
+        if assistant_name:
+            for npc_id, npc in state.world.npcs.items():
+                if npc.name.strip().lower() == assistant_name:
+                    assistant_npc_id = npc_id
+                    break
         for entry in valid_entries:
             item_id = str(entry.get("item_id", "")).strip()
             room_id = str(entry.get("room_id", "")).strip()
@@ -309,18 +324,55 @@ class StoryDirector:
             for current_room_id, item_ids in room_items.items():
                 if item_id in item_ids:
                     room_items[current_room_id] = [value for value in item_ids if value != item_id]
-            room_items[room_id].append(item_id)
             item = state.world.items[item_id]
             item.clue_text = str(entry.get("clue_text", "")).strip() or item.clue_text
             hidden_reason = str(entry.get("hidden_reason", "")).strip()
             if hidden_reason:
                 item.description = f"{item.description.rstrip('.')} Hidden because {hidden_reason.rstrip('.')}."
+            if room_id == state.player.location and assistant_npc_id and assistant_npc_id in state.world.rooms[room_id].npc_ids:
+                holding_ops.append({"op": "assert", "fact": ("holding", assistant_npc_id, item_id)})
+                state.world_facts.assert_fact("clue_holder", item_id, assistant_npc_id)
+                continue
+            room_items[room_id].append(item_id)
         for room_id, item_ids in room_items.items():
             deduped: list[str] = []
             for item_id in item_ids:
                 if item_id not in deduped:
                     deduped.append(item_id)
             state.world.rooms[room_id].item_ids = tuple(deduped)
+        rebuild_facts_from_legacy_views(state)
+        if holding_ops:
+            apply_fact_ops(state, holding_ops)
+
+    def _sync_opening_room_presentation(self, state: GameState, opening_lines: list[str]) -> None:
+        room = state.world.rooms[state.player.location]
+        cache = state.world_package.setdefault("room_presentation_cache", {})
+        existing = cache.get(
+            room.id,
+            {
+                "long": room.description,
+                "short": room.description.split(".")[0].strip() + ".",
+            },
+        )
+        anchor_line = next(
+            (
+                line.strip()
+                for line in opening_lines
+                if line.strip() and line.strip().lower() != room.name.strip().lower()
+            ),
+            "",
+        )
+        if not anchor_line:
+            return
+        first_sentence = anchor_line.split(".")[0].strip().rstrip(".")
+        if not first_sentence:
+            return
+        short_line = f"{first_sentence}."
+        merged_long = existing["long"]
+        if first_sentence.lower() not in existing["long"].lower():
+            merged_long = f"{short_line} {existing['long']}".strip()
+        cache[room.id] = {"long": merged_long, "short": short_line}
+        room.description = merged_long
 
     def _ensure_room_presentation_cache(
         self,
