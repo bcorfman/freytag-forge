@@ -24,6 +24,8 @@ def build_story_bootstrap_prompt(
         "story_beats must map the whole story arc for the requested session length. "
         "villains must explain motive, means, and opportunity. "
         "clue_placements must use exact provided item_id and room_id values and should keep meaningful clues hidden in plausible places. "
+        "Do not place fragile paper clues like ledger pages out in open exterior approach areas such as the driveway or front steps. "
+        "If the opening scene needs an immediately relevant clue at the entrance, put it in the assistant/contact's custody rather than leaving it exposed on the ground. "
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
         "Do not frame the assistant as the suspect currently being questioned, and do not place the same clue both in someone's hand and out in the open. "
@@ -133,6 +135,7 @@ def build_story_bootstrap_critique_prompt(
         "Be harsh. Reject plans where clue placement is implausible, villains lack motive/means/opportunity, "
         "timed events do not fit the map or cast, the assistant is also framed as the current suspect, "
         "or the same clue appears both in a character's custody and elsewhere in the opening. "
+        "Reject opening plans that leave fragile paper clues like ledger pages exposed on exterior approach areas such as front steps, the driveway, or the ground outside. "
         "Reject physically impossible opening staging and role contradictions. "
         "Use verdict='accepted' only when the story plan is coherent."
     )

@@ -179,3 +179,11 @@ def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
 
     next_state, _events, _beat, _template = advance_turn(state, parse_command("go north"), Random(102))
     assert next_state.player.location == "foyer"
+
+
+def test_mystery_default_state_does_not_pull_fallback_item_into_start_room() -> None:
+    state = build_default_state(seed=105, genre="mystery")
+
+    assert state.world.rooms["front_steps"].item_ids == ()
+    assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
+    assert "route_key" not in state.world.rooms["front_steps"].item_ids

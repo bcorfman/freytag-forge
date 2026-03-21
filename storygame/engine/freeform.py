@@ -285,6 +285,14 @@ def _find_relevant_item(state: GameState, raw_topic: str) -> str:
     return ""
 
 
+def _nearby_holder_for_item(state: GameState, item_id: str) -> str:
+    room_id = player_location(state)
+    for npc_id in room_npcs(state, room_id):
+        if state.world_facts.holds("holding", npc_id, item_id):
+            return npc_id
+    return ""
+
+
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
     candidate = _normalize_target(raw_target)
     if not candidate:
@@ -473,8 +481,9 @@ def _apply_raw_command_overrides(
         }
         return parse_action_proposal(action), parse_dialog_proposal(dialog)
     visible_items = room_items(state, player_location(state))
+    nearby_ledger_holder = _nearby_holder_for_item(state, "ledger_page")
     if _LEDGER_PAGE_COMMAND.search(lowered) and (
-        "ledger_page" in visible_items or "ledger_page" in state.player.inventory
+        "ledger_page" in visible_items or "ledger_page" in state.player.inventory or nearby_ledger_holder
     ):
         action = {
             "intent": "read_ledger_page",
@@ -517,21 +526,25 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
 
     if intent == "read_ledger_page":
         visible_items = room_items(state, player_location(state))
-        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory:
+        nearby_holder = _nearby_holder_for_item(state, "ledger_page")
+        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory and not nearby_holder:
             return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_LEDGER_PAGE"]}
+        assert_ops = [
+            {"fact": ["flag", "player", "reviewed_ledger_page"]},
+            {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
+            {"fact": ["discovered_clue", "ledger_page"]},
+            {
+                "fact": [
+                    "discovered_lead",
+                    "ledger_page",
+                    "The ledger page exposes a missing payment entry tied to tonight's visit.",
+                ]
+            },
+        ]
+        if nearby_holder:
+            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "ledger_page"]})
         return {
-            "assert": [
-                {"fact": ["flag", "player", "reviewed_ledger_page"]},
-                {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
-                {"fact": ["discovered_clue", "ledger_page"]},
-                {
-                    "fact": [
-                        "discovered_lead",
-                        "ledger_page",
-                        "The ledger page exposes a missing payment entry tied to tonight's visit.",
-                    ]
-                },
-            ],
+            "assert": assert_ops,
             "retract": [],
             "numeric_delta": [{"key": "trust:daria_stone:player", "delta": 0.03}],
             "reasons": ["freeform:read_ledger_page"],

@@ -215,6 +215,129 @@ def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_nee
     assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
 
 
+def test_story_director_reconciles_assistant_role_facts_from_opening_text() -> None:
+    class _MislabeledAssistantBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["contacts"] = [{"name": "Daria Stone", "role": "witness", "trait": "observant"}]
+            payload["opening_paragraphs"] = [
+                "Rain needles the stone as you reach the mansion steps.",
+                "Daria Stone, your assistant, waits beside you with a tight, professional calm.",
+                "You need to sort the first lead before either of you goes inside.",
+            ]
+            return payload
+
+    state = build_default_state(seed=705)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_MislabeledAssistantBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    assert state.world_facts.holds("npc_role", "Daria Stone", "assistant")
+    assert state.world_facts.holds("npc_relationship", "Daria Stone", "player", "assistant")
+    assert not state.world_facts.holds("npc_role", "Daria Stone", "witness")
+    assert state.world.npcs["daria_stone"].identity.startswith("your assistant")
+
+
+def test_story_director_moves_assistant_to_player_room_when_opening_says_beside_you() -> None:
+    class _NearbyAssistantBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = [
+                "The drive is slick with rain as you approach the estate.",
+                "Daria Stone keeps close beside you, watching the dark windows.",
+                "You both pause at the threshold before committing to the next lead.",
+            ]
+            return payload
+
+    state = build_default_state(seed=706)
+    state.world.rooms[state.player.location].npc_ids = ()
+    state.world.rooms["foyer"].npc_ids = tuple(dict.fromkeys((*state.world.rooms["foyer"].npc_ids, "daria_stone")))
+    state.world_facts.retract_fact("npc_at", "daria_stone", state.player.location)
+    state.world_facts.assert_fact("npc_at", "daria_stone", "foyer")
+
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_NearbyAssistantBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    assert state.world_facts.holds("npc_at", "daria_stone", state.player.location)
+    assert "daria_stone" in state.world.rooms[state.player.location].npc_ids
+    assert "daria_stone" not in state.world.rooms["foyer"].npc_ids
+
+
+def test_story_director_moves_item_into_assistant_custody_when_opening_says_she_has_it() -> None:
+    class _HeldKeyBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["clue_placements"] = [
+                {
+                    "item_id": "route_key",
+                    "room_id": "watch_tower",
+                    "clue_text": "The route key marks the escape route.",
+                    "hidden_reason": "It was hidden in the tower masonry.",
+                }
+            ]
+            payload["opening_paragraphs"] = [
+                "Cold air slides down the drive as the mansion looms ahead.",
+                "Daria Stone keeps the route key tucked into her coat pocket while she studies the door.",
+                "You arrive knowing the first break in the case is already in hand.",
+            ]
+            return payload
+
+    state = build_default_state(seed=707)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_HeldKeyBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    assert state.world_facts.holds("holding", "daria_stone", "route_key")
+    assert not state.world_facts.query("room_item", None, "route_key")
+    assert not state.world_facts.query("clue_room", "route_key", None)
+
+
+def test_story_director_syncs_room_description_fact_from_opening_text() -> None:
+    class _OpeningAnchorBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = [
+                "A rusted fountain leans beside the front steps beneath the failing light.",
+                "Daria Stone checks the windows while you take in the grounds.",
+                "The estate feels watched before you ever touch the door.",
+            ]
+            return payload
+
+    state = build_default_state(seed=708)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_OpeningAnchorBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    room_description_facts = state.world_facts.query("room_description", state.player.location, None)
+    assert room_description_facts
+    assert "rusted fountain leans beside the front steps" in room_description_facts[0][2].lower()
+
+
 def test_story_director_seeds_start_room_presentation_from_opening() -> None:
     state = build_default_state(seed=704)
     director = StoryDirector(
