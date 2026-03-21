@@ -342,7 +342,12 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
 def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     intent = _normalize_target(str(action_payload.get("intent", "")))
     targets = [_normalize_target(str(target)) for target in action_payload.get("targets", [])]
-    arguments = {str(k): str(v) for k, v in action_payload.get("arguments", {}).items()}
+    raw_arguments = action_payload.get("arguments", {})
+    arguments = (
+        {str(k): str(v) for k, v in raw_arguments.items()}
+        if isinstance(raw_arguments, dict)
+        else {}
+    )
     proposed_effects = [str(effect) for effect in action_payload.get("proposed_effects", [])]
     if intent:
         arguments.setdefault("planner_intent_raw", intent)
