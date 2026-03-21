@@ -600,9 +600,8 @@ def test_run_turn_appearance_question_gets_specific_dialogue():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
     assert any("wearing" in line.lower() for line in lines)
-    assert not any("rumors are noisy" in line.lower() for line in lines)
+    assert next_state.player.flags.get("asked_appearance_daria_stone") is True
 
 
 def test_run_turn_ledger_question_gets_specific_dialogue():
@@ -619,7 +618,7 @@ def test_run_turn_ledger_question_gets_specific_dialogue():
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
     assert any("ledger" in line.lower() for line in lines)
-    assert not any("be specific" in line.lower() for line in lines)
+    assert next_state.player.flags.get("asked_ledger_daria_stone") is True
 
 
 def test_run_turn_unknown_input_includes_narrator_output_when_available():
@@ -652,11 +651,12 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
-    assert not any("the night is tense" in line.lower() for line in lines)
+    assert any("the night is tense" in line.lower() for line in lines)
+    assert any('you act on "ask daria about the signal"' in line.lower() for line in lines)
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
 
 
-def test_run_turn_prefers_bounded_dialogue_over_freeform_narrator_prose():
+def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
     state = build_default_state(seed=8831)
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
@@ -673,9 +673,9 @@ def test_run_turn_prefers_bounded_dialogue_over_freeform_narrator_prose():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith("Daria Stone says:") for line in lines)
-    assert not any("as i stand outside the mansion" in line.lower() for line in lines)
-    assert not any("i need to get oriented" in line.lower() for line in lines)
+    assert any("as i stand outside the mansion" in line.lower() for line in lines)
+    assert any("i need to get oriented" in line.lower() for line in lines)
+    assert not any(line.startswith("Daria Stone says:") for line in lines)
 
 
 def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():

@@ -15,15 +15,6 @@ from storygame.llm.story_agents.agents import _json_from_text as _story_agent_js
 _TOPIC_TOKEN = re.compile(r"[^a-z0-9]+")
 _ASK_TARGET_PATTERN = re.compile(r"\bask\s+([a-z0-9_ .'-]{1,60}?)(?:\s+about\b|$)", re.IGNORECASE)
 _DIRECT_ADDRESS_PATTERN = re.compile(r"^\s*([A-Za-z][A-Za-z .'-]{0,60})\s*,")
-_ALLOWED_TOPIC_FLAGS = {
-    "signal",
-    "rumor",
-    "rumors",
-    "ledger",
-    "appearance",
-    "objective",
-    "bell",
-}
 _ALLOWED_INTENTS = {"ask_about", "greet", "apologize", "threaten"}
 _PER_TURN_DELTA_BOUND = 0.15
 _TOPIC_STOPWORDS = {"the", "a", "an", "about", "of", "to"}
@@ -252,7 +243,7 @@ class RuleBasedFreeformProposalAdapter:
         response = _dialog_line(intent=intent, target=target, topic=topic, state=state)
         if explicit_target_requested and not target:
             response = "No one here answers that. Try speaking to someone in the room."
-        dialog_payload = {"speaker": speaker, "text": response, "tone": "in_world"}
+        dialog_payload = {"speaker": target or "narrator", "text": response, "tone": "in_world"}
         return dialog_payload, action_payload
 
 
@@ -583,11 +574,8 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
 
     if intent == "ask_about":
         topic = _topic_flag_fragment(action_proposal["arguments"].get("topic", "rumors"))
-        if topic not in _ALLOWED_TOPIC_FLAGS:
-            reasons.append("POLICY_TOPIC_BLOCKED")
-        else:
-            assert_ops.append({"fact": ["flag", "player", f"asked_{topic}_{target}"]})
-            trust_delta = 0.05
+        assert_ops.append({"fact": ["flag", "player", f"asked_{topic}_{target}"]})
+        trust_delta = 0.05
     elif intent == "greet":
         assert_ops.append({"fact": ["flag", "player", f"greeted_{target}"]})
         trust_delta = 0.02

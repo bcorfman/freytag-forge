@@ -351,6 +351,11 @@ def _has_bounded_dialogue_event(events: list[Event], debug: bool = False) -> boo
     for event in events:
         message = _public_event_message(event.message_key)
         if ' says: "' in message:
+            action_proposal = event.metadata.get("action_proposal", {})
+            arguments = action_proposal.get("arguments", {}) if isinstance(action_proposal, dict) else {}
+            planner_source = str(arguments.get("planner_source", "")).strip().lower()
+            if planner_source == "fallback":
+                continue
             return True
     return False
 

@@ -105,11 +105,12 @@ def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) ->
     assert "POLICY_GENERIC_FREEFORM" in disallowed["reasons"]
     assert any(op["fact"][2].startswith("freeform_intent_") for op in disallowed["assert"])
 
-    blocked = _envelope_for_action(
+    broad_topic = _envelope_for_action(
         state,
         {"intent": "ask_about", "targets": [npc_id], "arguments": {"topic": "forbidden topic"}},
     )
-    assert "POLICY_TOPIC_BLOCKED" in blocked["reasons"]
+    assert any("asked_forbidden" in op["fact"][2] for op in broad_topic["assert"])
+    assert broad_topic["numeric_delta"][0]["delta"] > 0.0
 
     allowed = _envelope_for_action(
         state,
