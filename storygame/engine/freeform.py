@@ -239,11 +239,10 @@ class RuleBasedFreeformProposalAdapter:
             "arguments": {"topic": topic} if topic else {},
             "proposed_effects": [f"{intent}:{targets[0] if targets else 'none'}"],
         }
-        speaker = target or "narrator"
         response = _dialog_line(intent=intent, target=target, topic=topic, state=state)
         if explicit_target_requested and not target:
             response = "No one here answers that. Try speaking to someone in the room."
-        dialog_payload = {"speaker": target or "narrator", "text": response, "tone": "in_world"}
+        dialog_payload = {"speaker": "narrator", "text": response, "tone": "in_world"}
         return dialog_payload, action_payload
 
 
@@ -388,69 +387,49 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
             return "You focus on the details and search for a usable clue."
         if intent == "knock":
             return "Your knock echoes through the entryway."
-        return "Only the tide answers; no one here responds to that."
+        return "You leave the remark hanging in the room with no clear respondent."
     if intent == "greet":
-        return f"{speaker} nods once. 'Good to see you. What do you need?'"
+        return f"You greet {speaker} and wait for the conversation to start."
     if intent == "apologize":
-        return f"{speaker} exhales. 'All right. Let's move forward.'"
+        return f"You apologize to {speaker} and watch for any shift in the mood."
     if intent == "threaten":
-        return f"{speaker} narrows their eyes. 'Threats won't help us solve this.'"
+        return f"You put pressure on {speaker}, testing how far the exchange will bend."
     if topic:
         if topic == "player appearance":
-            return (
-                f"{speaker} says, 'You look like you dressed for fieldwork: weatherproof layers, practical shoes, "
-                "and whatever you could carry without slowing down. Nothing ornamental, nothing wasted.'"
-            )
+            return f"You ask {speaker} to size up your appearance and wait for the answer."
         if topic == "remove coat request":
-            return (
-                f"{speaker} says, 'No. The coat stays on. Ask about the case if you want something useful out of me.'"
-            )
+            return f"You press {speaker} to remove part of their outfit and wait to see how they respond."
         if topic in {"service passage", "service passage location"}:
-            return (
-                f"{speaker} says, 'If the route key means what it looks like, the service passage should branch off "
-                "the mansion interior beyond the foyer. Someone expected to move through it after dark without using the main halls.'"
-            )
+            return f"You ask {speaker} about the service passage and hold on the implication of a hidden route."
         if topic == "route key":
-            return (
-                f"{speaker} says, 'The route key matters because it marks a service passage someone expected to use "
-                "after dark. If we press inside, that passage is worth finding.'"
-            )
+            return f"You ask {speaker} about the route key and wait for its importance to become clear."
         if state is not None:
             relevant_item_id = _find_relevant_item(state, topic)
             if relevant_item_id:
                 item = state.world.items[relevant_item_id]
                 item_name = item.name.lower()
                 if item.clue_text:
-                    return f"{speaker} says, 'The {item_name} matters because {item.clue_text.lower()}'"
-                return f"{speaker} says, 'The {item_name} is worth keeping close. It may matter before we're through here.'"
+                    return f"You ask {speaker} about the {item_name}, especially what it implies for the case."
+                return f"You ask {speaker} about the {item_name} and wait for a useful read on it."
         if topic == "place" and state is not None:
             room = state.world.rooms[state.player.location]
             if room.id == "front_steps":
-                return (
-                    f"{speaker} says, 'The mud marks are fresh, and that ledger page did not land there by accident. "
-                    "This entryway is already telling us where to start.'"
-                )
+                return f"You ask {speaker} what they make of the front steps and the signs the weather has not erased."
             if room.item_ids:
                 first_item = room.item_ids[0].replace("_", " ")
-                return f"{speaker} says, 'This room matters because of the {first_item}. I'd start there before we move on.'"
+                return f"You ask {speaker} what stands out here, with the {first_item} already drawing attention."
             exits = sorted(room.exits.keys())
             if exits:
-                return f"{speaker} says, 'Nothing here feels settled. We clear this room, then push {exits[0]}.'"
-            return f"{speaker} says, 'The room is thin on comfort and thick with loose ends. We should search it carefully.'"
+                return f"You ask {speaker} what this room suggests before either of you pushes {exits[0]}."
+            return f"You ask {speaker} for a read on the room and hold on the details that matter."
         if topic in {"objective", "goal", "goals"} and state is not None:
-            return f"{speaker} says, 'Our current objective is clear: {active_story_goal(state)}'"
+            return f"You check the objective with {speaker}: {active_story_goal(state)}"
         if topic in {"appearance", "clothing", "clothes", "wearing"}:
-            return (
-                f"{speaker} says, 'I'm wearing a dark field coat, practical boots, and clothes meant for bad weather "
-                "and worse conversations. I dressed for work, not display.'"
-            )
+            return f"You ask {speaker} about their appearance and wait for the answer."
         if topic in {"rumor", "rumors"}:
-            return (
-                f"{speaker} says, 'Most rumors fall apart under pressure. Ask about a person, item, "
-                "or place, and I can give you something we can actually use.'"
-            )
-        return f"{speaker} says, 'About {topic}: be specific and I'll answer what I can.'"
-    return f"{speaker} studies you. 'Give me a specific question.'"
+            return f"You ask {speaker} for anything useful that has been going around."
+        return f"You ask {speaker} about {topic} and wait for the reply."
+    return f"You turn to {speaker}, but the exchange needs a more specific question."
 
 
 def _topic_flag_fragment(raw_topic: str) -> str:

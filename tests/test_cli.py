@@ -533,7 +533,8 @@ def test_run_turn_talk_command_uses_freeform_dialogue_by_default():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
+    assert any("greet daria stone" in line.lower() or "greet daria" in line.lower() for line in lines)
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
     assert next_state.player.flags.get("greeted_daria_stone") is True
 
 
@@ -600,7 +601,8 @@ def test_run_turn_appearance_question_gets_specific_dialogue():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any("wearing" in line.lower() for line in lines)
+    assert any("ask daria stone about their appearance" in line.lower() for line in lines)
+    assert not any(line.startswith("Daria") and "says:" in line for line in lines)
     assert next_state.player.flags.get("asked_appearance_daria_stone") is True
 
 
@@ -703,7 +705,8 @@ def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
     assert not any("is nearby" in line for line in lines)
-    assert any(line.startswith('Daria says: "') for line in lines)
+    assert any("ask daria what they make" in line.lower() for line in lines)
+    assert not any(line.startswith('Daria says: "') for line in lines)
     assert not any(line.startswith('Daria Stone says: "') for line in lines)
 
 
@@ -742,7 +745,8 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
     assert not any("are nearby" in line for line in lines)
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
+    assert any("ask daria stone" in line.lower() for line in lines)
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
 
 
 def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():

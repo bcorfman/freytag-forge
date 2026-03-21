@@ -67,11 +67,11 @@ def test_context_contains_hard_constraints_and_short_recent_messages():
     payload = context.as_dict()
 
     assert "do_not_invent_facts" in payload["constraints"]
-    assert "no_state_mutation" in payload["constraints"]
+    assert "state_changes_must_be_explicit_and_fact_backed" in payload["constraints"]
     assert len(payload["recent_events"][0]["message_key"]) <= MAX_EVENT_MESSAGE_LEN
 
 
-def test_narration_output_does_not_mutate_state():
+def test_narration_output_ignores_non_fact_backed_mutation_claims():
     seed = 17
     rng_a = Random(seed)
     rng_b = Random(seed)
@@ -83,6 +83,25 @@ def test_narration_output_does_not_mutate_state():
     next_b, _lines_b, *_ = run_turn(state_b, "look", rng_b, MaliciousNarrator())
 
     assert next_a.replay_signature() == next_b.replay_signature()
+
+
+def test_narration_output_commits_explicit_item_transfer_to_fact_store():
+    state = build_default_state(seed=171, genre="mystery")
+    start_room = state.player.location
+    assert "ledger_page" in state.world.rooms[start_room].item_ids
+
+    next_state, _lines, *_ = run_turn(
+        state,
+        "look",
+        Random(171),
+        StubNarrator("Daria Stone takes the ledger page and folds it into her coat pocket."),
+    )
+
+    assert next_state.world_facts.holds("holding", "daria_stone", "ledger_page")
+    assert not next_state.world_facts.holds("room_item", start_room, "ledger_page")
+    narration_events = [event for event in next_state.event_log.events if event.type == "narration_commit"]
+    assert narration_events
+    assert narration_events[-1].metadata["fact_ops"]
 
 
 def test_regression_script_hits_climax_band_before_resolution():

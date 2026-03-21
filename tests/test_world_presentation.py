@@ -131,7 +131,8 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
     room = next_state.world.rooms[next_state.player.location]
     assert not any(line.startswith(room.name + "\n") for line in lines)
     assert not any(room.description in line for line in lines)
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
+    assert any("ask daria stone about their appearance" in line.lower() for line in lines)
+    assert not any(line.startswith("Daria Stone says:") for line in lines)
 
 
 def test_take_allows_unique_partial_item_reference_in_room():
