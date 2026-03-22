@@ -96,7 +96,7 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
     payload = context.as_dict()
     prompt = build_prompt(context)
 
-    assert payload["protagonist_name"] == "Noah Kade"
+    assert payload["protagonist_name"] == "Detective Elias Wren"
     assert payload["assistant_name"] == state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
     assert payload["protagonist_background"] == "A detective haunted by an old failure."
     assert payload["assistant_role"] == "assistant"
@@ -104,6 +104,7 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
     assert f"Protagonist background: {payload['protagonist_background']}" in prompt["user"]
     assert f"Assistant anchor: {payload['assistant_name']}" in prompt["user"]
     assert "Assistant role: assistant" in prompt["user"]
+    assert "Noah Kade" not in prompt["user"]
 
 
 def test_context_can_resolve_assistant_identity_from_facts_without_bundle() -> None:

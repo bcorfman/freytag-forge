@@ -3,6 +3,7 @@ from __future__ import annotations
 from random import Random
 
 from storygame.cli import _room_lines, run_turn
+from storygame.engine.facts import protagonist_profile
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
@@ -29,6 +30,13 @@ def test_starting_state_avoids_meta_room_text_and_starts_with_kit():
     assert "neutral mystery scene" not in room.description.lower()
     assert "field_kit" in state.player.inventory
     assert "field_kit" not in room.item_ids
+
+
+def test_mystery_starting_state_seeds_canonical_protagonist_name_fact():
+    state = build_default_state(seed=351, genre="mystery")
+
+    assert protagonist_profile(state)["name"] == "Detective Elias Wren"
+    assert state.world_facts.holds("player_name", "Detective Elias Wren")
 
 
 def test_context_filters_inventory_to_actionable_items():
@@ -132,9 +140,10 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     room = next_state.world.rooms[next_state.player.location]
+    assert next_state.turn_index == 0
     assert not any(line.startswith(room.name + "\n") for line in lines)
     assert not any(room.description in line for line in lines)
-    assert any("ask daria stone about their appearance" in line.lower() for line in lines)
+    assert any("story response unavailable" in line.lower() for line in lines)
     assert not any(line.startswith("Daria Stone says:") for line in lines)
 
 
