@@ -11,6 +11,7 @@ from storygame.engine.facts import (
 )
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
+from storygame.story_canon import canonical_detective_name
 
 
 def _humanize_identifier(value: str) -> str:
@@ -306,6 +307,12 @@ def build_default_state(
     )
     initialize_world_facts(state)
     if package["genre"] == "mystery":
+        protagonist_name = canonical_detective_name(
+            package["genre"],
+            str(package.get("story_plan", {}).get("protagonist_name", "")).strip(),
+        )
+        if protagonist_name:
+            replace_fact_group(state, "player_name", (("player_name", protagonist_name),))
         start_room_npcs = state.world.rooms[start_room].npc_ids
         if start_room_npcs:
             assistant_id = start_room_npcs[0]

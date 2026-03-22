@@ -338,6 +338,35 @@ def test_story_director_syncs_room_description_fact_from_opening_text() -> None:
     assert "rusted fountain leans beside the front steps" in room_description_facts[0][2].lower()
 
 
+def test_story_director_carries_car_arrival_detail_into_opening_room_facts() -> None:
+    class _CarArrivalBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = [
+                "Detective Elias Wren steps out of his car onto the gravel driveway below the mansion steps.",
+                "Daria Stone waits under the columns, watching the drive and the unattended car.",
+                "The first impression of the estate is the approach itself: gravel, stone, and a tense silence.",
+            ]
+            return payload
+
+    state = build_default_state(seed=709)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_CarArrivalBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    room_description_facts = state.world_facts.query("room_description", state.player.location, None)
+    assert room_description_facts
+    description = room_description_facts[0][2].lower()
+    assert "car" in description
+    assert "gravel driveway" in description
+
+
 def test_story_director_seeds_start_room_presentation_from_opening() -> None:
     state = build_default_state(seed=704)
     director = StoryDirector(

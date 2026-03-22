@@ -3,7 +3,6 @@ from __future__ import annotations
 from random import Random
 
 from storygame.cli import run_turn
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.llm.context import NarrationContext
@@ -62,6 +61,18 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             captured.append(context)
             return ""
 
+    class _NpcReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": npc_id, "text": "Keep your eyes open. Something here still doesn't add up.", "tone": "in_world"},
+                {
+                    "intent": "greet",
+                    "targets": [npc_id],
+                    "arguments": {"planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     with SqliteVectorMemory(db_path) as memory_store:
         memory_store.add_memory(
             "run",
@@ -85,7 +96,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             _CaptureNarrator(),
             memory_store=memory_store,
             memory_slot="run",
-            freeform_adapter=RuleBasedFreeformProposalAdapter(),
+            freeform_adapter=_NpcReplyAdapter(),
         )
 
     assert captured

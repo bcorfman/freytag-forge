@@ -5,7 +5,7 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import active_story_goal, player_location, room_items, room_npcs
+from storygame.engine.facts import active_story_goal, player_location, protagonist_profile, room_items, room_npcs
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.state import Event, GameState
@@ -39,6 +39,15 @@ _SERVICE_PASSAGE_LOCATION_PATTERN = re.compile(
 )
 _ROUTE_KEY_PATTERN = re.compile(r"\broute\s+key\b|\bkey\b", re.IGNORECASE)
 _CONVERSATIONAL_WORD_PATTERN = re.compile(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE)
+_HIDDEN_FREEFORM_MESSAGE_KEYS = {
+    "query",
+    "ask_about",
+    "greet",
+    "apologize",
+    "threaten",
+    "inspect",
+    "knock",
+}
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -345,7 +354,9 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "dialog_proposal requires: speaker, text, tone. "
         "action_proposal requires: intent, targets, arguments, proposed_effects. "
         "Use only entities from provided context. "
-        "For uncertain targets, use an empty targets list and a generic intent."
+        "For uncertain targets, use an empty targets list and a generic intent. "
+        "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
+        "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary."
     )
     return system, json.dumps(payload, ensure_ascii=True)
 
@@ -711,16 +722,23 @@ def _semantic_actions_for_freeform(
     return ()
 
 
-def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, Any]) -> str:
+def _format_character_reply_line(
+    state: GameState,
+    dialog_proposal: dict[str, Any],
+    action_proposal: dict[str, Any],
+) -> str:
     speaker_id = str(dialog_proposal.get("speaker", "")).strip()
     text = " ".join(str(dialog_proposal.get("text", "")).split()).strip()
     if not text:
         return ""
-    if speaker_id in {"", "narrator", "player"}:
+    normalized_speaker = _normalized_dialog_speaker_id(state, speaker_id, action_proposal)
+    if normalized_speaker in {"", "narrator"}:
         return text
+    if normalized_speaker == "player":
+        return f'{_player_speaker_name(state)} says: "{text.strip(" \"\'")}"'
 
-    npc = state.world.npcs.get(speaker_id)
-    speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
+    npc = state.world.npcs.get(normalized_speaker)
+    speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
     quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
     if '"' in text:
         double_quoted = re.search(r'"([^"]+)"', text)
@@ -732,6 +750,35 @@ def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, An
     if not spoken:
         spoken = text
     return f'{speaker_name} says: "{spoken}"'
+
+
+def _player_speaker_name(state: GameState) -> str:
+    profile_name = protagonist_profile(state).get("name", "").strip()
+    if profile_name:
+        cleaned = profile_name.removeprefix("Detective ").strip()
+        return cleaned.split(" ")[0] if cleaned else "You"
+    return "You"
+
+
+def _normalized_dialog_speaker_id(state: GameState, speaker_id: str, action_proposal: dict[str, Any]) -> str:
+    normalized = _normalize_target(speaker_id)
+    if normalized in {"", "narrator"}:
+        return "narrator"
+    if normalized in {"player", "you", "user", "detective", "detective_elias_wren", "elias", "elias_wren"}:
+        return "player"
+    if normalized in state.world.npcs:
+        return normalized
+    matched_npc = _visible_npc_match(state, speaker_id)
+    if matched_npc:
+        return matched_npc
+    if normalized in {"ai_assistant", "assistant"}:
+        targets = action_proposal.get("targets", ())
+        if isinstance(targets, (list, tuple)):
+            for target in targets:
+                candidate = _normalize_target(str(target))
+                if candidate in state.world.npcs:
+                    return candidate
+    return normalized or "narrator"
 
 
 def resolve_freeform_roleplay(
@@ -796,7 +843,7 @@ def resolve_freeform_roleplay_with_proposals(
     delta_tension = max(0.0, next_state.tension - state.tension)
     compatibility_event = Event(
         type="freeform_roleplay",
-        message_key=_format_character_reply_line(next_state, dialog_proposal),
+        message_key=_format_character_reply_line(next_state, dialog_proposal, action_proposal),
         entities=tuple(action_proposal["targets"]),
         tags=("dialog", "freeform"),
         delta_progress=delta_progress,

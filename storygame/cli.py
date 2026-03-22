@@ -12,6 +12,7 @@ from rich.console import Console
 from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
+    _HIDDEN_FREEFORM_MESSAGE_KEYS,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
@@ -294,6 +295,8 @@ def _public_event_message(message_key: str) -> str:
     }
     if message in clarification_messages:
         return clarification_messages[message]
+    if message.lower() in _HIDDEN_FREEFORM_MESSAGE_KEYS:
+        return ""
     # Hide engine-like keys in normal mode (for example: move_success, take_failed).
     if "_" in message and " " not in message:
         return ""
@@ -352,6 +355,84 @@ def _freeform_unavailable_lines(detail: str = "") -> list[str]:
     if detail:
         return [f"{line} {detail}"]
     return [line]
+
+
+def _normalized_dialogue_text(value: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+
+
+def _is_conversational_freeform_request(raw_input: str, fallback_action: Action) -> bool:
+    lowered = raw_input.strip().lower()
+    if fallback_action.kind == ActionKind.TALK:
+        return True
+    return bool(re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how)\b", lowered))
+
+
+def _is_parroting_dialogue(raw_input: str, dialog_payload: dict[str, Any]) -> bool:
+    speaker = str(dialog_payload.get("speaker", "")).strip().lower()
+    if speaker in {"", "narrator", "player"}:
+        return False
+    text = str(dialog_payload.get("text", "")).strip()
+    if not text:
+        return True
+    normalized_text = _normalized_dialogue_text(text)
+    normalized_input = _normalized_dialogue_text(raw_input)
+    if not normalized_text or not normalized_input:
+        return False
+    if "you asked me" in normalized_text or "you told me" in normalized_text:
+        return True
+    input_tokens = tuple(token for token in normalized_input.split() if len(token) >= 3)
+    if not input_tokens:
+        return False
+    overlap = sum(1 for token in input_tokens if token in normalized_text)
+    return overlap / len(input_tokens) >= 0.75
+
+
+def _targeted_conversation_requires_npc_reply(
+    fallback_action: Action,
+    planner_action_payload: dict[str, Any],
+) -> bool:
+    if fallback_action.kind == ActionKind.TALK:
+        return True
+    targets = planner_action_payload.get("targets", ())
+    return isinstance(targets, (list, tuple)) and any(str(target).strip() for target in targets)
+
+
+def _is_invalid_targeted_dialogue_speaker(
+    planner_dialog_payload: dict[str, Any],
+    planner_action_payload: dict[str, Any],
+) -> bool:
+    targets = planner_action_payload.get("targets", ())
+    if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
+        return False
+    speaker = re.sub(r"[^a-z0-9]+", "_", str(planner_dialog_payload.get("speaker", "")).strip().lower()).strip("_")
+    return speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}
+
+
+def _freeform_dialogue_policy_error(
+    raw_input: str,
+    fallback_action: Action,
+    planner_dialog_payload: dict[str, Any] | None,
+    planner_action_payload: dict[str, Any] | None,
+) -> str:
+    if planner_dialog_payload is None or planner_action_payload is None:
+        return ""
+    if not _is_conversational_freeform_request(raw_input, fallback_action):
+        return ""
+    if _targeted_conversation_requires_npc_reply(fallback_action, planner_action_payload) and _is_invalid_targeted_dialogue_speaker(
+        planner_dialog_payload,
+        planner_action_payload,
+    ):
+        return "LLM-authored conversational turns must return an in-character NPC reply, not player or narrator text."
+    arguments = planner_action_payload.get("arguments", {})
+    planner_source = str(arguments.get("planner_source", "")).strip().lower() if isinstance(arguments, dict) else ""
+    targets = planner_action_payload.get("targets", ())
+    has_target = isinstance(targets, (list, tuple)) and any(str(target).strip() for target in targets)
+    if planner_source == "fallback" and has_target:
+        return "LLM-authored NPC dialogue is required for conversational turns."
+    if _is_parroting_dialogue(raw_input, planner_dialog_payload):
+        return "Conversational NPC dialogue must answer in character instead of repeating the player's prompt."
+    return ""
 
 
 def _has_bounded_dialogue_event(events: list[Event], debug: bool = False) -> bool:
@@ -697,6 +778,17 @@ def run_turn(
         planner_dialog_payload, planner_action_payload = freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(planner_action_payload)
         planner_action_payload = normalized_action_payload
+        dialogue_policy_error = _freeform_dialogue_policy_error(
+            raw_input,
+            fallback_action,
+            planner_dialog_payload,
+            normalized_action_payload,
+        )
+        if dialogue_policy_error:
+            planner_dialog_payload = None
+            planner_action_payload = None
+            planner_parse_error = f"FREEFORM_PLANNER_UNAVAILABLE: {dialogue_policy_error}"
+            raise RuntimeError(planner_parse_error)
         prefer_proposal_resolution = _should_prefer_proposal_resolution(
             raw_input,
             fallback_action,
