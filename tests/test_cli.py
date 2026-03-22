@@ -503,6 +503,30 @@ def test_run_turn_uses_planner_action_for_deterministic_take_path():
     assert not any("you don't see that here" in line.lower() for line in lines)
 
 
+def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
+    def _unexpected_advance_turn(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("advance_turn should not be used for ordinary directional turns")
+
+    monkeypatch.setattr("storygame.cli.advance_turn", _unexpected_advance_turn)
+    state = build_default_state(seed=2201)
+    direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
+    destination = state.world.rooms[state.player.location].exits[direction]
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        direction,
+        Random(2201),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert action_raw == direction
+    assert next_state.player.location == destination
+    assert beat_type != "freeform_roleplay"
+    assert lines
+
+
 def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
     class _PlannerConversationAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

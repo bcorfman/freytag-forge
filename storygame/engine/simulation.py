@@ -157,17 +157,12 @@ def apply_events_to_state(state: GameState, events: list[Event]) -> GameState:
     return state
 
 
-def advance_turn(
+def run_post_commit_story(
     state: GameState,
-    action: Action,
+    action_events: list[Event],
     rng: Random,
 ) -> tuple[GameState, list[Event], str, str]:
-    world_state, action_events = apply_action(state, action, rng)
-
-    next_state = world_state.clone()
-    next_state.append_events(action_events)
-    next_state = apply_events_to_state(next_state, action_events)
-    refresh_scene_state(next_state, turn_focus_from_action(next_state, action))
+    next_state = state.clone()
 
     beat = select_beat(next_state, rng)
     next_state.append_beat(beat.type)
@@ -192,8 +187,25 @@ def advance_turn(
         next_state.append_events(timed_events)
         next_state = apply_events_to_state(next_state, timed_events)
 
-    all_events = action_events + narrative_events + reveal_events + timed_events
+    all_events = narrative_events + reveal_events + timed_events
     return next_state, all_events, beat.type, template_key
+
+
+def advance_turn(
+    state: GameState,
+    action: Action,
+    rng: Random,
+) -> tuple[GameState, list[Event], str, str]:
+    world_state, action_events = apply_action(state, action, rng)
+
+    next_state = world_state.clone()
+    next_state.append_events(action_events)
+    next_state = apply_events_to_state(next_state, action_events)
+    refresh_scene_state(next_state, turn_focus_from_action(next_state, action))
+
+    next_state, followup_events, beat_type, template_key = run_post_commit_story(next_state, action_events, rng)
+    all_events = action_events + followup_events
+    return next_state, all_events, beat_type, template_key
 
 
 def run_command_sequence(

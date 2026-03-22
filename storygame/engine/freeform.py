@@ -822,11 +822,31 @@ def resolve_freeform_roleplay_with_proposals(
     turn_proposal = parse_turn_proposal(
         {
             "turn_id": f"freeform-{state.turn_index + 1}",
-            "intent": str(action_proposal["intent"]),
+            "mode": "conversation" if action_proposal["targets"] else "scene",
+            "player_intent": {
+                "summary": str(action_proposal["intent"]),
+                "addressed_npc_id": str(action_proposal["targets"][0]) if action_proposal["targets"] else "",
+                "target_ids": tuple(str(target) for target in action_proposal["targets"]),
+                "item_ids": (),
+                "location_id": player_location(state),
+            },
+            "scene_framing": {
+                "focus": str(action_proposal["arguments"].get("topic", "")),
+                "dramatic_question": "",
+                "player_approach": "",
+            },
+            "npc_dialogue": {
+                "speaker_id": _normalized_dialog_speaker_id(state, str(dialog_proposal.get("speaker", "")), action_proposal),
+                "text": str(dialog_proposal["text"]),
+            },
             "narration": str(dialog_proposal["text"]),
-            "dialogue_lines": (),
             "semantic_actions": _semantic_actions_for_freeform(state, action_proposal, envelope),
             "state_delta": envelope,
+            "beat_hints": {
+                "escalation": "none",
+                "reveal_thread_ids": (),
+                "obstacle_mode": "",
+            },
         }
     )
     runtime_result = execute_turn_proposal(state, turn_proposal, None)

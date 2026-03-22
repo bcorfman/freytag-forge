@@ -23,6 +23,30 @@ def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[dict[str, Any],
         state.fact_metrics[key] = state.fact_metrics.get(key, 0.0) + delta
 
 
+def _format_npc_dialogue_line(state: GameState, npc_dialogue: dict[str, Any]) -> str:
+    speaker_id = str(npc_dialogue.get("speaker_id", "")).strip()
+    text = " ".join(str(npc_dialogue.get("text", "")).split()).strip()
+    if not speaker_id or not text:
+        return ""
+    npc = state.world.npcs.get(speaker_id)
+    speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
+    return f'{speaker_name} says: "{text}"'
+
+
+def _dialogue_lines_from_proposal(state: GameState, proposal: dict[str, Any]) -> tuple[str, ...]:
+    line = _format_npc_dialogue_line(state, proposal.get("npc_dialogue", {}))
+    if not line:
+        return ()
+    return (line,)
+
+
+def _proposal_intent_summary(proposal: dict[str, Any]) -> str:
+    player_intent = proposal.get("player_intent", {})
+    if isinstance(player_intent, dict):
+        return str(player_intent.get("summary", "")).strip()
+    return ""
+
+
 def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> dict[str, Any]:  # noqa: ARG001
     next_state = state.clone()
     next_state.turn_index += 1
@@ -58,5 +82,6 @@ def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> di
         "state": next_state,
         "events": events,
         "accepted_narration": proposal["narration"],
-        "dialogue_lines": proposal["dialogue_lines"],
+        "dialogue_lines": _dialogue_lines_from_proposal(next_state, proposal),
+        "intent_summary": _proposal_intent_summary(proposal),
     }

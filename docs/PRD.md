@@ -140,6 +140,7 @@ Current runtime generation is package-driven.
   - `EventProposal`
   - `StateDeltaProposal`
   - `ReplanProposal`
+- Ordinary turn orchestration now treats `TurnProposal` as the shared runtime contract for both LLM-authored freeform turns and parser-normalized deterministic aliases such as movement, take, inventory, and look. Control-plane commands (`save`, `load`, `quit`, `help`) stay outside that contract.
 - A valid runtime proposal may suggest:
   - dialogue,
   - room-facing narration,

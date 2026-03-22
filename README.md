@@ -1,6 +1,6 @@
 # Freytag Forge
 
-Freytag Forge is a story-first detective RPG in your terminal/browser: you type what you do, the world reacts, and the narrative stays coherent across turns with deterministic state tracking under the hood.
+Freytag Forge is a story-first detective RPG in your terminal/browser: you type what you do, the world reacts, and the narrative stays coherent across turns with deterministic fact-backed state under the hood.
 
 ## A Quick Taste
 ```text
@@ -48,11 +48,13 @@ make run
 Then open `http://127.0.0.1:8000`.
 
 ## Usage Commands
-Core gameplay commands:
-- `look`, `go <direction>`, `take <item>`, `talk <npc>`, `use <item> on <target>`, `inventory`
+Ordinary gameplay:
+- Natural-language inputs are the default path.
+- Deterministic aliases like `look`, `go <direction>`, `take <item>`, `talk <npc>`, `use <item> on <target>`, and `inventory` are normalized into the same proposal/commit runtime instead of using a separate parser-authored experience.
+- Directional shortcuts like `n`, `s`, `e`, `w`, `u`, `d` resolve to canonical movement.
 
 Meta commands:
-- `save <slot>`, `load <slot>`, `quit`
+- `save <slot>`, `load <slot>`, `quit`, `help`
 
 Replay + transcript:
 ```bash
@@ -65,9 +67,10 @@ make test
 ```
 
 ## Architecture (Focused Summary)
-- Planner-first turn routing: ordinary gameplay is interpreted through the LLM/freeform proposal path first, with parser handling kept to control-plane commands and resilience fallback.
-- Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, and reveal state.
+- Proposal-first turn routing: ordinary gameplay now runs through a shared `TurnProposal` contract, including parser-normalized deterministic actions like movement, look, take, use, and inventory. Parser handling is retained only for control-plane commands.
+- Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, reveal state, and scene/dramatic state.
 - LLM-authored story layer: bootstrap/opening prose, turn narration, and NPC dialogue are authored by LLMs but must stay grounded in deterministic facts.
+- Scene + dramatic facts: current scene framing, dramatic question, player approach, beat phase/role, and pressure are fact-backed so narration and NPC behavior read from committed story state.
 - Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; accepted outputs are persisted back into runtime facts.
 - Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.

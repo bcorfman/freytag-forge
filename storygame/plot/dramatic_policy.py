@@ -142,7 +142,10 @@ def turn_focus_from_action(state, action) -> dict[str, str]:  # noqa: ANN001
 
 
 def turn_focus_from_proposal(state, proposal: dict[str, Any]) -> dict[str, str]:  # noqa: ANN401
-    intent = str(proposal.get("intent", "")).strip()
+    player_intent = proposal.get("player_intent", {})
+    intent = ""
+    if isinstance(player_intent, dict):
+        intent = str(player_intent.get("summary", "")).strip()
     target_name = ""
     topic = ""
     semantic_actions = proposal.get("semantic_actions", ())
