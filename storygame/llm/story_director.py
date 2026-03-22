@@ -7,7 +7,6 @@ from typing import cast
 from storygame.engine.facts import (
     active_story_goal,
     apply_fact_ops,
-    rebuild_facts_from_legacy_views,
     replace_fact_group,
     set_active_story_goal,
 )
@@ -348,8 +347,7 @@ class StoryDirector:
         valid_entries = [entry for entry in placements if isinstance(entry, dict)]
         if not valid_entries:
             return
-        room_items = {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()}
-        holding_ops: list[dict[str, object]] = []
+        fact_ops: list[dict[str, object]] = []
         assistant_name = str(state.world_package.get("llm_story_bundle", {}).get("assistant_name", "")).strip().lower()
         assistant_npc_id = ""
         if assistant_name:
@@ -362,28 +360,22 @@ class StoryDirector:
             room_id = str(entry.get("room_id", "")).strip()
             if item_id not in state.world.items or room_id not in state.world.rooms:
                 continue
-            for current_room_id, item_ids in room_items.items():
-                if item_id in item_ids:
-                    room_items[current_room_id] = [value for value in item_ids if value != item_id]
             item = state.world.items[item_id]
             item.clue_text = str(entry.get("clue_text", "")).strip() or item.clue_text
             hidden_reason = str(entry.get("hidden_reason", "")).strip()
             if hidden_reason:
                 item.description = f"{item.description.rstrip('.')} Hidden because {hidden_reason.rstrip('.')}."
             if room_id == state.player.location and assistant_npc_id and assistant_npc_id in state.world.rooms[room_id].npc_ids:
-                holding_ops.append({"op": "assert", "fact": ("holding", assistant_npc_id, item_id)})
-                state.world_facts.assert_fact("clue_holder", item_id, assistant_npc_id)
+                fact_ops.append({"op": "assert", "fact": ("holding", assistant_npc_id, item_id)})
+                for fact in state.world_facts.query("clue_room", item_id, None):
+                    fact_ops.append({"op": "retract", "fact": fact})
+                for fact in state.world_facts.query("clue_holder", item_id, None):
+                    fact_ops.append({"op": "retract", "fact": fact})
+                fact_ops.append({"op": "assert", "fact": ("clue_holder", item_id, assistant_npc_id)})
                 continue
-            room_items[room_id].append(item_id)
-        for room_id, item_ids in room_items.items():
-            deduped: list[str] = []
-            for item_id in item_ids:
-                if item_id not in deduped:
-                    deduped.append(item_id)
-            state.world.rooms[room_id].item_ids = tuple(deduped)
-        rebuild_facts_from_legacy_views(state)
-        if holding_ops:
-            apply_fact_ops(state, holding_ops)
+            fact_ops.append({"op": "assert", "fact": ("room_item", room_id, item_id)})
+        if fact_ops:
+            apply_fact_ops(state, fact_ops)
 
     def _assistant_npc_id(self, state: GameState, assistant_name: str) -> str:
         normalized_assistant = assistant_name.strip().lower()
