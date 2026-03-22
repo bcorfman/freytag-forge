@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from storygame.engine.fact_commit import ProjectionUpdater, ValidatedFactCommitter
+
 Fact = tuple[str, ...]
 FactOp = dict[str, Any]
 _LEGACY_FACT_PREDICATES = {
@@ -142,23 +144,15 @@ def room_locked(state, room_id: str) -> dict[str, str]:
 
 
 def sync_legacy_views(state) -> None:
-    state.player.location = player_location(state)
-    state.player.inventory = player_inventory(state)
-    state.player.flags = player_flags(state)
-
-    for room_id, room in state.world.rooms.items():
-        room.exits = room_paths(state, room_id)
-        room.locked_exits = room_locked(state, room_id)
-        room.item_ids = room_items(state, room_id)
-        room.npc_ids = room_npcs(state, room_id)
+    ProjectionUpdater().refresh_from_facts(state)
 
 
 def replace_fact_group(state, predicate: str, facts: tuple[Fact, ...]) -> None:
     existing = tuple(fact for fact in state.world_facts.all() if fact and fact[0] == predicate)
-    for fact in existing:
-        state.world_facts.retract_fact(fact[0], *fact[1:])
-    for fact in facts:
-        state.world_facts.assert_fact(fact[0], *fact[1:])
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    ops.extend({"op": "assert", "fact": fact} for fact in facts)
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source=f"replace_fact_group:{predicate}")
 
 
 def active_story_goal(state) -> str:
@@ -169,11 +163,11 @@ def active_story_goal(state) -> str:
 
 
 def set_active_story_goal(state, goal: str) -> None:
-    existing = tuple(fact for fact in state.world_facts.query("active_goal", None))
-    for fact in existing:
-        state.world_facts.retract_fact(fact[0], *fact[1:])
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in state.world_facts.query("active_goal", None)]
     if goal.strip():
-        state.world_facts.assert_fact("active_goal", goal.strip())
+        ops.append({"op": "assert", "fact": ("active_goal", goal.strip())})
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source="set_active_story_goal")
 
 
 def story_goals(state) -> dict[str, object]:
@@ -264,38 +258,8 @@ def npc_location(state, npc_id: str) -> str:
 
 
 def apply_fact_ops(state, ops: list[FactOp] | tuple[FactOp, ...]) -> None:
-    for op in ops:
-        if op["op"] == "assert":
-            predicate, *terms = op["fact"]
-            if predicate == "npc_at" and len(terms) == 2:
-                for fact in state.world_facts.query("npc_at", terms[0], None):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "at" and len(terms) == 2 and terms[0] == "player":
-                for fact in state.world_facts.query("at", "player", None):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "holding" and len(terms) == 2:
-                for fact in state.world_facts.query("holding", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-                for fact in state.world_facts.query("room_item", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "room_item" and len(terms) == 2:
-                for fact in state.world_facts.query("room_item", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-                for fact in state.world_facts.query("holding", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            state.world_facts.assert_fact(predicate, *terms)
-            continue
-        if op["op"] == "retract":
-            predicate, *terms = op["fact"]
-            state.world_facts.retract_fact(predicate, *terms)
-            continue
-        if op["op"] == "numeric_delta":
-            key = str(op["key"])
-            delta = float(op["delta"])
-            state.fact_metrics[key] = state.fact_metrics.get(key, 0.0) + delta
-            continue
-        raise ValueError(f"Unsupported fact op '{op['op']}'.")
-    sync_legacy_views(state)
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source="apply_fact_ops")
 
 
 def event_fact_ops(event) -> tuple[FactOp, ...]:

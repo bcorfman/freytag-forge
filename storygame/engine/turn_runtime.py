@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from storygame.engine.facts import apply_fact_ops, rebuild_facts_from_legacy_views
+from storygame.engine.facts import apply_fact_ops
 from storygame.engine.semantic_actions import commit_semantic_action
 from storygame.engine.state import Event, GameState
 from storygame.engine.triggers import evaluate_triggers
@@ -23,7 +23,6 @@ def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[dict[str, Any],
 
 def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> dict[str, Any]:  # noqa: ARG001
     next_state = state.clone()
-    rebuild_facts_from_legacy_views(next_state)
     next_state.turn_index += 1
 
     events: list[Event] = []

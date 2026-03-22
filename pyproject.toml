@@ -36,6 +36,7 @@ dev = [
 addopts = [
     "--cov=storygame",
     "--cov-branch",
+    "--cov-fail-under=90",
     "--cov-report=term",
 ]
 testpaths = ["tests"]

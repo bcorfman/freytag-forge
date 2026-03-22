@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from random import Random
 
+import pytest
+
 from storygame.engine.bootstrap import validate_bootstrap_plan
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_state_from_bootstrap_plan
@@ -179,6 +181,33 @@ def test_turn_runtime_does_not_mutate_state_from_narration_only() -> None:
     assert not result["state"].world_facts.holds("holding", "player", "case_file")
     assert not result["state"].world_facts.holds("flag", "player", "case_file_found")
     assert all(event.type != "trigger" for event in result["events"])
+
+
+def test_turn_runtime_prefers_canonical_facts_over_stale_legacy_views() -> None:
+    state = _state()
+    state.world.rooms["study"].item_ids = state.world.rooms["study"].item_ids + ("forged_note",)
+    proposal = parse_turn_proposal(
+        {
+            "turn_id": "turn-stale-legacy",
+            "intent": "search",
+            "narration": "You reach for a forged note that is not really there.",
+            "dialogue_lines": [],
+            "semantic_actions": [
+                {
+                    "action_id": "take-fake-note",
+                    "action_type": "take_item",
+                    "actor_id": "player",
+                    "target_id": "",
+                    "item_id": "forged_note",
+                    "location_id": "study",
+                }
+            ],
+            "state_delta": {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+        }
+    )
+
+    with pytest.raises(ValueError, match="forged_note"):
+        execute_turn_proposal(state, proposal, Random(6))
 
 
 def test_turn_runtime_fires_turn_trigger_once_when_turn_threshold_is_reached() -> None:
