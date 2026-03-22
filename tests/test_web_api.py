@@ -275,6 +275,30 @@ def test_bootstrap_only_response_uses_narrator_when_story_bootstrap_fails(tmp_pa
     assert any("Rain needles the stone." in line for line in payload["lines"])
 
 
+def test_bootstrap_only_response_rejects_invalid_narrator_opening(tmp_path):
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "Rain needles the stone.\n\n"
+                "Daria Stone, your assistant, keeps the ledger page in hand.\n\n"
+                "The ledger page lies exposed on the front steps."
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        ),
+        raise_server_exceptions=True,
+    )
+
+    try:
+        client.post("/turn", json={"command": "start", "seed": 91})
+    except RuntimeError as exc:
+        assert "Opening validation failed" in str(exc)
+    else:
+        raise AssertionError("Expected invalid narrator bootstrap opening to fail closed.")
+
+
 def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):
     client = _client(tmp_path)
     response = client.post("/turn", json={"command": "Daria, knock on the door", "seed": 22})

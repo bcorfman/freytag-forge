@@ -11,7 +11,11 @@ from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
 from storygame.llm.context import build_narration_context
-from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
+from storygame.llm.opening_coherence import (
+    item_labels_for_opening,
+    opening_coherence_issues,
+    opening_fact_parity_issues,
+)
 from storygame.llm.output_editor import OutputEditor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
@@ -154,16 +158,38 @@ def _bootstrap_opening_from_narrator(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw]
-    coherent_paragraphs = cohere_opening_lines(
-        paragraphs[:4],
-        state.story_genre,
-        context.protagonist_name,
+    opening_lines = paragraphs[:4]
+    item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
+    assistant_npc_id = next(
+        (
+            npc_id
+            for npc_id, npc in state.world.npcs.items()
+            if npc.name.strip().lower() == context.assistant_name.strip().lower()
+        ),
+        "",
+    )
+    issues = opening_coherence_issues(
+        opening_lines,
         context.assistant_name,
         active_story_goal(state),
-        item_labels_for_opening(tuple(state.world.items.keys())),
+        item_labels,
         tuple(npc.name for npc in state.world.npcs.values() if npc.name.strip()),
     )
-    return output_editor.review_opening(coherent_paragraphs, active_story_goal(state))
+    issues.extend(
+        opening_fact_parity_issues(
+            opening_lines,
+            context.assistant_name,
+            "assistant" if context.assistant_name else "",
+            bool(assistant_npc_id) and state.world_facts.holds("npc_at", assistant_npc_id, state.player.location),
+            item_labels,
+            item_labels_for_opening(
+                tuple(fact[2] for fact in state.world_facts.query("holding", assistant_npc_id, None) if len(fact) > 2)
+            ),
+        )
+    )
+    if issues:
+        raise RuntimeError("Opening validation failed: " + "; ".join(dict.fromkeys(issues)))
+    return output_editor.review_opening(opening_lines, active_story_goal(state))
 
 
 def build_bootstrap_response_payload_from_lines(

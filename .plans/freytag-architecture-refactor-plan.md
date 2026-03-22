@@ -365,10 +365,14 @@ Keep the current package split, but reorganize responsibilities like this:
 - Done criteria: ordinary turns no longer route through `advance_turn`; parser is control-plane only
 
 ### Phase 4: Bootstrap/Openings From Facts
-- [ ] In progress
+- [x] Done
 - [x] Canonical bootstrap clue placement now commits through the fact boundary
-- [ ] Remove opening truth-repair helpers (`_reconcile_opening_facts`, `_sync_opening_room_presentation`) from the accepted-opening path
-- [ ] Replace repair-oriented opening assertions with validator-oriented behavior
+- [x] Remove opening truth-repair helpers (`_reconcile_opening_facts`, `_sync_opening_room_presentation`) from the accepted-opening path
+- [x] Remove `opening_coherence.cohere_opening_lines` from the accepted-opening/runtime truth path
+- [x] Replace repair-oriented opening assertions with validator-oriented behavior
+- [x] Validate narrator-fallback web openings against committed facts and fail closed on mismatch
+- [x] Preserve separate local-web and hosted-demo bootstrap behavior while sharing opening parity validation below the adapter boundary
+- [x] Update product docs/README examples to describe validator-first opening behavior instead of repair-after-generation
 - Goal: remove prose-first opening reconciliation
 - Files: `llm/story_director.py`, `llm/story_agents/agents.py`, `llm/opening_coherence.py`, `engine/world.py`, `web_runtime.py`
 - Risks: stricter bootstrap validation may increase bootstrap failure rate before prompts are adjusted
@@ -377,6 +381,15 @@ Keep the current package split, but reorganize responsibilities like this:
 
 ### Phase 5: Freytag Operationalization
 - [ ] Not started
+- [ ] Introduce a deterministic `BeatPolicy` that reads canonical scene/dramatic facts instead of selecting beats from `progress`/`tension` buckets alone
+- [ ] Make `beat_phase`, `beat_role`, `scene_pressure`, `current_obstacle_mode`, and `reveal_opportunity` first-class runtime inputs to incident/trigger selection
+- [ ] Move reveal scheduling and timed story progression out of `simulation.py` fallback chains and into fact-driven dramatic policy services
+- [ ] Update narration-context building so scene framing, dramatic question, and NPC pressure cues come from committed dramatic facts before compatibility fallbacks
+- [ ] Ensure NPC behavior/escalation policy consumes `npc_scene_goal`, `npc_stance`, `npc_trust`, and active conflict state instead of room-local trust deltas alone
+- [ ] Replace random beat selection with deterministic legality checks keyed to phase, role, reveal budget, and obstacle mode
+- [ ] Thread dramatic-policy outputs through post-commit turn execution so validated turn consequences can alter pressure/reveal availability without parser-era incident shortcuts
+- [ ] Add regression coverage proving phase/role changes alter reveal timing, escalation legality, scene framing, and consequence classes
+- [ ] Remove or demote compatibility-only progress/tension fallback paths once dramatic facts fully drive beat selection
 - Goal: replace beat metadata with deterministic dramatic policy
 - Files: `plot/beat_manager.py`, `engine/incidents.py`, `engine/triggers.py`, `engine/simulation.py`, `llm/context.py`
 - Risks: over-constraining scenes and making turns feel repetitive
@@ -385,6 +398,16 @@ Keep the current package split, but reorganize responsibilities like this:
 
 ### Phase 6: Latency + Surface Cleanup
 - [ ] Not started
+- [ ] Collapse ordinary-turn orchestration to one structured LLM call on the fast path, with at most one bounded retry/revision call on recoverable failure
+- [ ] Remove normal-turn multi-agent/coherence passes that are no longer justified after proposal validation and deterministic commit
+- [ ] Count and assert LLM calls per ordinary turn in tests so regressions back to multi-call hot paths fail fast
+- [ ] Split remaining CLI/web turn responsibilities into explicit gateway/orchestrator/render/persistence boundaries where that simplifies call flow
+- [ ] Keep bootstrap/opening and ordinary-turn latency budgets visible via telemetry in local and hosted surfaces
+- [ ] Preserve hosted-demo fail-closed semantics and Cloudflare-backed bootstrap/narration differences while deleting duplicated local/demo glue where behavior is actually shared
+- [ ] Eliminate stale compatibility branches that still assume parser-authored ordinary turns or post-hoc narration repair
+- [ ] Re-check room/bootstrap rendering paths so they do not reintroduce extra editor/coherence passes after phase 4 validation changes
+- [ ] Add parity and adapter coverage for local web vs hosted demo after orchestration cleanup, including unavailable-service and fallback paths
+- [ ] Document the final fast-path contract and latency expectations once the cleanup lands
 - Goal: hit the hot-path budget and remove normal-turn multi-agent/coherence overhead
 - Files: `cli.py`, `llm/coherence.py`, `llm/story_director.py`, `web_runtime.py`, `web.py`, `web_demo.py`
 - Risks: losing some prose polish during transition

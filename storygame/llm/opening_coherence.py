@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import re
-
-from storygame.story_canon import canonical_detective_name
-
 _SUPPORT_ROLE_TERMS = ("assistant", "ally", "partner", "contact", "confidant")
 _SUSPECT_ROLE_TERMS = ("suspect", "culprit", "killer", "mastermind")
 _QUESTION_TARGET_TERMS = ("question", "interrogate", "interview", "press", "confront", "accuse")
+_ASSISTANT_NEARBY_TERMS = ("beside you", "at your side", "keeps close beside you", "close beside you")
 _ITEM_HOLDING_TERMS = (
     "holds",
     "holding",
@@ -17,11 +14,15 @@ _ITEM_HOLDING_TERMS = (
     "clutches",
     "clutching",
     "in hand",
+    "coat pocket",
+    "jacket pocket",
+    "tucked into",
 )
 _ITEM_EXPOSED_TERMS = (
     "wedged",
     "lodged",
     "lying",
+    "exposed",
     "resting",
     "rests",
     "in the stones",
@@ -113,38 +114,6 @@ def _question_target_claims(text: str, character_aliases: dict[str, tuple[str, .
     return claims
 
 
-def _rewrite_question_target_reference(
-    text: str,
-    character_name: str,
-    replacement_label: str,
-    aliases: tuple[str, ...] = (),
-) -> str:
-    rewritten = text
-    name_aliases = tuple(dict.fromkeys((character_name.strip(), *aliases)))
-    for alias in name_aliases:
-        escaped_name = re.escape(alias)
-        for verb in _QUESTION_TARGET_TERMS:
-            rewritten = re.sub(
-                rf"\b{verb}\s+{escaped_name}\b",
-                f"{verb} {replacement_label}",
-                rewritten,
-                flags=re.IGNORECASE,
-            )
-        rewritten = re.sub(
-            rf"\b{escaped_name}'s involvement\b",
-            f"{replacement_label}'s involvement",
-            rewritten,
-            flags=re.IGNORECASE,
-        )
-        rewritten = re.sub(
-            rf"\babout\s+{escaped_name}\b",
-            f"about {replacement_label}",
-            rewritten,
-            flags=re.IGNORECASE,
-        )
-    return rewritten
-
-
 def item_labels_for_opening(item_ids: tuple[str, ...]) -> tuple[str, ...]:
     labels: list[str] = []
     for item_id in item_ids:
@@ -201,65 +170,60 @@ def opening_coherence_issues(
     return issues
 
 
-def cohere_opening_lines(
+def opening_fact_parity_issues(
     opening_lines: list[str],
-    genre: str,
-    protagonist_name: str,
     assistant_name: str,
-    actionable_objective: str,
+    assistant_role: str,
+    assistant_present: bool,
     item_labels: tuple[str, ...],
-    character_names: tuple[str, ...] = (),
+    assistant_held_item_labels: tuple[str, ...],
 ) -> list[str]:
-    canonical_name = canonical_detective_name(genre, protagonist_name)
-    revised = [_normalized_line(line) for line in opening_lines if _normalized_line(line)]
-    known_names = _deduped_character_names(assistant_name, character_names)
-    aliases = _character_aliases(known_names)
-    support_claims = _support_role_claims(revised, aliases)
-    question_claims = _question_target_claims(" ".join(revised), aliases)
-    question_claims.update(_question_target_claims(actionable_objective, aliases))
-    holder_by_item: dict[str, str] = {}
+    issues: list[str] = []
+    normalized_lines = [_normalized_line(line) for line in opening_lines if _normalized_line(line)]
+    normalized_assistant = _normalize_name(assistant_name)
+    normalized_role = " ".join(assistant_role.split()).strip().lower()
+    held_labels = {_normalized_line(label).lower() for label in assistant_held_item_labels if _normalized_line(label)}
+    seen_messages: set[str] = set()
 
-    for index, line in enumerate(revised):
+    if not normalized_assistant:
+        return issues
+
+    assistant_lines = [line for line in normalized_lines if normalized_assistant in line.lower()]
+    for line in assistant_lines:
         lowered = line.lower()
-        if canonical_name and lowered in {"you are the detective.", "you are detective.", "you are the detective"}:
-            revised[index] = f"You are {canonical_name}."
-
-    for line in revised:
-        lowered = line.lower()
-        for name, name_aliases in aliases.items():
-            if not any(alias in lowered for alias in name_aliases):
-                continue
-            if not _contains_any(lowered, _ITEM_HOLDING_TERMS):
-                continue
-            for label in item_labels:
-                if label in lowered:
-                    holder_by_item[label] = name
-
-    for index, line in enumerate(revised):
-        lowered = line.lower()
-        for name, name_aliases in aliases.items():
-            if not any(alias in lowered for alias in name_aliases):
-                continue
-            if name in support_claims and name in question_claims and _contains_any(lowered, _QUESTION_TARGET_TERMS):
-                revised[index] = _rewrite_question_target_reference(line, name, "the strongest suspect", name_aliases)
-                lowered = revised[index].lower()
-            if name in support_claims and _contains_any(lowered, _SUSPECT_ROLE_TERMS):
-                role_label = "assistant and first contact" if name == assistant_name else "ally contact"
-                revised[index] = f"{name} remains your {role_label} while you decide which suspect to press first."
-                lowered = revised[index].lower()
-        for label, holder_name in holder_by_item.items():
-            if label in lowered and _contains_any(lowered, _ITEM_EXPOSED_TERMS):
-                revised[index] = f"{holder_name} keeps the {label} in hand rather than leaving it exposed."
-                break
-
-    if assistant_name and assistant_name in support_claims and assistant_name in question_claims:
-        objective_rewritten = _rewrite_question_target_reference(
-            actionable_objective,
-            assistant_name,
-            "the strongest suspect",
-            aliases.get(assistant_name, ()),
+        if _contains_any(lowered, _SUPPORT_ROLE_TERMS) and normalized_role != "assistant":
+            message = (
+                f"{assistant_name} is described as your assistant/contact in the opening, "
+                f"but committed facts mark that role as {assistant_role or 'unset'}."
+            )
+            if message not in seen_messages:
+                issues.append(message)
+                seen_messages.add(message)
+        if _contains_any(lowered, _ASSISTANT_NEARBY_TERMS) and not assistant_present:
+            message = (
+                f"{assistant_name} is staged beside the player in the opening, "
+                "but committed facts place them elsewhere."
+            )
+            if message not in seen_messages:
+                issues.append(message)
+                seen_messages.add(message)
+        if not _contains_any(lowered, _ITEM_HOLDING_TERMS):
+            continue
+        mentioned = tuple(
+            label
+            for label in item_labels
+            if label in lowered
         )
-        if objective_rewritten != actionable_objective:
-            revised.append(objective_rewritten)
+        if mentioned:
+            for label in mentioned:
+                if label in held_labels:
+                    continue
+                message = (
+                    f"The opening gives {assistant_name} custody of the {label}, "
+                    "but committed facts do not."
+                )
+                if message not in seen_messages:
+                    issues.append(message)
+                    seen_messages.add(message)
 
-    return revised[:4]
+    return issues

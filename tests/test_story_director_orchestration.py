@@ -215,7 +215,7 @@ def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_nee
     assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
 
 
-def test_story_director_reconciles_assistant_role_facts_from_opening_text() -> None:
+def test_story_director_rejects_opening_that_conflicts_with_assistant_role_facts() -> None:
     class _MislabeledAssistantBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
             payload = dict(_StubBootstrap().run(state))
@@ -236,15 +236,11 @@ def test_story_director_reconciles_assistant_role_facts_from_opening_text() -> N
         room_presentation=_StubRoomPresentation(),
     )
 
-    director.compose_opening(state)
-
-    assert state.world_facts.holds("npc_role", "Daria Stone", "assistant")
-    assert state.world_facts.holds("npc_relationship", "Daria Stone", "player", "assistant")
-    assert not state.world_facts.holds("npc_role", "Daria Stone", "witness")
-    assert state.world.npcs["daria_stone"].identity.startswith("your assistant")
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
 
 
-def test_story_director_moves_assistant_to_player_room_when_opening_says_beside_you() -> None:
+def test_story_director_rejects_opening_that_conflicts_with_assistant_location_facts() -> None:
     class _NearbyAssistantBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
             payload = dict(_StubBootstrap().run(state))
@@ -269,14 +265,11 @@ def test_story_director_moves_assistant_to_player_room_when_opening_says_beside_
         room_presentation=_StubRoomPresentation(),
     )
 
-    director.compose_opening(state)
-
-    assert state.world_facts.holds("npc_at", "daria_stone", state.player.location)
-    assert "daria_stone" in state.world.rooms[state.player.location].npc_ids
-    assert "daria_stone" not in state.world.rooms["foyer"].npc_ids
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
 
 
-def test_story_director_moves_item_into_assistant_custody_when_opening_says_she_has_it() -> None:
+def test_story_director_rejects_opening_that_conflicts_with_item_custody_facts() -> None:
     class _HeldKeyBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
             payload = dict(_StubBootstrap().run(state))
@@ -304,67 +297,8 @@ def test_story_director_moves_item_into_assistant_custody_when_opening_says_she_
         room_presentation=_StubRoomPresentation(),
     )
 
-    director.compose_opening(state)
-
-    assert state.world_facts.holds("holding", "daria_stone", "route_key")
-    assert not state.world_facts.query("room_item", None, "route_key")
-    assert not state.world_facts.query("clue_room", "route_key", None)
-
-
-def test_story_director_syncs_room_description_fact_from_opening_text() -> None:
-    class _OpeningAnchorBootstrap:
-        def run(self, state):  # noqa: ANN001, ARG002
-            payload = dict(_StubBootstrap().run(state))
-            payload["opening_paragraphs"] = [
-                "A rusted fountain leans beside the front steps beneath the failing light.",
-                "Daria Stone checks the windows while you take in the grounds.",
-                "The estate feels watched before you ever touch the door.",
-            ]
-            return payload
-
-    state = build_default_state(seed=708)
-    director = StoryDirector(
-        "mock",
-        output_editor=_PassThroughEditor(),
-        story_bootstrap=_OpeningAnchorBootstrap(),
-        story_bootstrap_critic=_StubBootstrapCritic(),
-        room_presentation=_StubRoomPresentation(),
-    )
-
-    director.compose_opening(state)
-
-    room_description_facts = state.world_facts.query("room_description", state.player.location, None)
-    assert room_description_facts
-    assert "rusted fountain leans beside the front steps" in room_description_facts[0][2].lower()
-
-
-def test_story_director_carries_car_arrival_detail_into_opening_room_facts() -> None:
-    class _CarArrivalBootstrap:
-        def run(self, state):  # noqa: ANN001, ARG002
-            payload = dict(_StubBootstrap().run(state))
-            payload["opening_paragraphs"] = [
-                "Detective Elias Wren steps out of his car onto the gravel driveway below the mansion steps.",
-                "Daria Stone waits under the columns, watching the drive and the unattended car.",
-                "The first impression of the estate is the approach itself: gravel, stone, and a tense silence.",
-            ]
-            return payload
-
-    state = build_default_state(seed=709)
-    director = StoryDirector(
-        "mock",
-        output_editor=_PassThroughEditor(),
-        story_bootstrap=_CarArrivalBootstrap(),
-        story_bootstrap_critic=_StubBootstrapCritic(),
-        room_presentation=_StubRoomPresentation(),
-    )
-
-    director.compose_opening(state)
-
-    room_description_facts = state.world_facts.query("room_description", state.player.location, None)
-    assert room_description_facts
-    description = room_description_facts[0][2].lower()
-    assert "car" in description
-    assert "gravel driveway" in description
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
 
 
 def test_story_director_seeds_start_room_presentation_from_opening() -> None:
@@ -380,10 +314,10 @@ def test_story_director_seeds_start_room_presentation_from_opening() -> None:
     director.compose_opening(state)
 
     room_cache = state.world_package["room_presentation_cache"][state.player.location]
-    assert room_cache["short"].startswith("P1.")
+    assert room_cache["short"] == "Short Outside The Mansion."
 
 
-def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -> None:
+def test_story_director_rejects_inconsistent_bootstrap_opening_before_editor() -> None:
     class _InconsistentBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
             return {
@@ -436,13 +370,8 @@ def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -
         room_presentation=_StubRoomPresentation(),
     )
 
-    opening = director.compose_opening(state)
-    combined = "\n".join(opening).lower()
-
-    assert "question daria stone about her involvement" not in combined
-    assert "wedged into the wet stones" not in combined
-    assert combined.count("ledger page") >= 1
-    assert "assistant" in combined
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
 
 
 def test_story_director_uses_swappable_replan_component():

@@ -232,6 +232,31 @@ def test_demo_bootstrap_falls_through_to_narrator_when_story_bootstrap_fails(tmp
     assert any("Rain needles the stone." in line for line in payload["lines"])
 
 
+def test_demo_bootstrap_rejects_invalid_narrator_opening_and_fails_closed(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "Rain needles the stone.\n\n"
+                "Daria Stone, your assistant, keeps the ledger page in hand.\n\n"
+                "The ledger page lies exposed on the front steps."
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 503
+    assert turn.json() == {
+        "status": "service_unavailable",
+        "detail": "Narration service is temporarily unavailable.",
+    }
+
+
 def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_credentials(
     tmp_path,
     monkeypatch,
@@ -249,7 +274,7 @@ def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_crede
         system = body.get("system", "")
         if "Story Bootstrap Agent" in system:
             return _FakeResponse(
-                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file, scan the grounds, and decide which lead to press first.\\",\\"primary_goal\\":\\"Expose the conspiracy behind the murders.\\",\\"secondary_goals\\":[\\"Find the witness who saw the exchange.\\"],\\"expanded_outline\\":\\"Review the estate, uncover the conspiracy, and force the mastermind into the open.\\",\\"story_beats\\":[{\\"beat_id\\":\\"hook\\",\\"summary\\":\\"Survey the estate.\\",\\"min_progress\\":0.0},{\\"beat_id\\":\\"midpoint\\",\\"summary\\":\\"Reveal the conspiracy.\\",\\"min_progress\\":0.5},{\\"beat_id\\":\\"climax\\",\\"summary\\":\\"Confront the mastermind.\\",\\"min_progress\\":0.85}],\\"villains\\":[{\\"name\\":\\"Magistrate Voss\\",\\"motive\\":\\"Protect the conspiracy.\\",\\"means\\":\\"Hired killers and influence.\\",\\"opportunity\\":\\"Access to the estate and records.\\"}],\\"timed_events\\":[{\\"event_id\\":\\"warning\\",\\"summary\\":\\"A servant warns that records are burning.\\",\\"min_turn\\":2,\\"location\\":\\"foyer\\",\\"participants\\":[\\"Daria Stone\\"]}],\\"clue_placements\\":[{\\"item_id\\":\\"route_key\\",\\"room_id\\":\\"watch_tower\\",\\"clue_text\\":\\"The route key points to the hidden service passage.\\",\\"hidden_reason\\":\\"It was hidden in the tower stonework.\\"}],\\"hidden_threads\\":[\\"The route key ties a trusted contact to the mansion.\\"],\\"reveal_schedule\\":[{\\"thread_index\\":0,\\"min_progress\\":0.55}],\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}],\\"opening_paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion, its stone still holding the last of the day\\\\u2019s heat.\\",\\"You are Noah Kade, a detective haunted by an old failure, and Daria Stone keeps close beside you with the case file already in hand.\\",\\"Tonight\\\\u2019s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\\" ]}"}'
+                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file, scan the grounds, and decide which lead to press first.\\",\\"primary_goal\\":\\"Expose the conspiracy behind the murders.\\",\\"secondary_goals\\":[\\"Find the witness who saw the exchange.\\"],\\"expanded_outline\\":\\"Review the estate, uncover the conspiracy, and force the mastermind into the open.\\",\\"story_beats\\":[{\\"beat_id\\":\\"hook\\",\\"summary\\":\\"Survey the estate.\\",\\"min_progress\\":0.0},{\\"beat_id\\":\\"midpoint\\",\\"summary\\":\\"Reveal the conspiracy.\\",\\"min_progress\\":0.5},{\\"beat_id\\":\\"climax\\",\\"summary\\":\\"Confront the mastermind.\\",\\"min_progress\\":0.85}],\\"villains\\":[{\\"name\\":\\"Magistrate Voss\\",\\"motive\\":\\"Protect the conspiracy.\\",\\"means\\":\\"Hired killers and influence.\\",\\"opportunity\\":\\"Access to the estate and records.\\"}],\\"timed_events\\":[{\\"event_id\\":\\"warning\\",\\"summary\\":\\"A servant warns that records are burning.\\",\\"min_turn\\":2,\\"location\\":\\"foyer\\",\\"participants\\":[\\"Daria Stone\\"]}],\\"clue_placements\\":[{\\"item_id\\":\\"route_key\\",\\"room_id\\":\\"watch_tower\\",\\"clue_text\\":\\"The route key points to the hidden service passage.\\",\\"hidden_reason\\":\\"It was hidden in the tower stonework.\\"}],\\"hidden_threads\\":[\\"The route key ties a trusted contact to the mansion.\\"],\\"reveal_schedule\\":[{\\"thread_index\\":0,\\"min_progress\\":0.55}],\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}],\\"opening_paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion, its stone still holding the last of the day\\\\u2019s heat.\\",\\"You are Noah Kade, a detective haunted by an old failure, and Daria Stone studies the foyer windows from inside the estate.\\",\\"Tonight\\\\u2019s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\\" ]}"}'
             )
         if "Story Bootstrap Critic" in system:
             return _FakeResponse('{"narration":"{\\"verdict\\":\\"accepted\\",\\"continuity_summary\\":\\"The plan is coherent.\\",\\"issues\\":[]}"}')
