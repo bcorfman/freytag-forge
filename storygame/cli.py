@@ -20,12 +20,15 @@ from storygame.engine.impact import assess_player_command, replan_scope_for_asse
 from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
-from storygame.engine.simulation import advance_turn
-from storygame.engine.facts import apply_fact_ops
+from storygame.engine.rules import apply_action
+from storygame.engine.simulation import advance_turn, run_post_commit_story
+from storygame.engine.facts import apply_fact_ops, rebuild_facts_from_legacy_views
 from storygame.engine.state import Event, GameState
+from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.coherence import build_default_coherence_gate
+from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.context import build_narration_context
 from storygame.llm.narration_state import extract_narration_fact_ops
 from storygame.llm.output_editor import OutputEditor, build_output_editor
@@ -315,6 +318,124 @@ def _event_lines(events, debug: bool = False) -> str:
         return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
     public_lines = [_public_event_message(event.message_key) for event in events]
     return "\n".join(message for message in public_lines if message)
+
+
+def _proposal_mode_for_action(action: Action) -> str:
+    if action.kind in {ActionKind.MOVE, ActionKind.TAKE, ActionKind.USE}:
+        return "physical"
+    if action.kind in {ActionKind.LOOK}:
+        return "investigation"
+    return "scene"
+
+
+def _preview_state_delta(preview_events: list[Event], skip_facts: tuple[tuple[str, ...], ...] = ()) -> dict[str, Any]:
+    skip = set(skip_facts)
+    assert_ops: list[dict[str, Any]] = []
+    retract_ops: list[dict[str, Any]] = []
+    numeric_delta: list[dict[str, float]] = []
+    reasons: list[str] = []
+    for event in preview_events:
+        fact_ops = event.metadata.get("fact_ops", ())
+        if isinstance(fact_ops, (list, tuple)):
+            for fact_op in fact_ops:
+                predicate = str(fact_op.get("op", "")).strip()
+                fact = tuple(str(part) for part in fact_op.get("fact", ()))
+                if not fact or fact in skip:
+                    continue
+                if predicate == "assert":
+                    assert_ops.append({"fact": list(fact)})
+                elif predicate == "retract":
+                    retract_ops.append({"fact": list(fact)})
+        if event.delta_progress != 0.0:
+            numeric_delta.append({"key": "progress", "delta": event.delta_progress})
+        if event.delta_tension != 0.0:
+            numeric_delta.append({"key": "tension", "delta": event.delta_tension})
+        if event.type:
+            reasons.append(event.type)
+    return {
+        "assert": assert_ops,
+        "retract": retract_ops,
+        "numeric_delta": numeric_delta,
+        "reasons": reasons,
+    }
+
+
+def _semantic_actions_for_action(state: GameState, action: Action, preview_events: list[Event]) -> tuple[dict[str, Any], ...]:
+    room_id = state.player.location
+    if action.kind == ActionKind.MOVE and preview_events and preview_events[0].type == "move":
+        destination = preview_events[0].entities[1] if len(preview_events[0].entities) > 1 else ""
+        return (
+            {
+                "action_id": f"move-{state.turn_index + 1}",
+                "action_type": "move_to",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "",
+                "location_id": destination,
+            },
+        )
+    if action.kind == ActionKind.TAKE and preview_events and preview_events[0].type == "take":
+        item_id = preview_events[0].entities[0] if preview_events[0].entities else action.target
+        if item_id in state.world.rooms[room_id].item_ids:
+            return (
+                {
+                    "action_id": f"take-{state.turn_index + 1}",
+                    "action_type": "take_item",
+                    "actor_id": "player",
+                    "target_id": "",
+                    "item_id": item_id,
+                    "location_id": room_id,
+                },
+            )
+    if action.kind == ActionKind.USE and preview_events and preview_events[0].type == "use":
+        item_id = action.target.split(":", maxsplit=1)[0]
+        target_id = action.target.split(":", maxsplit=1)[1] if ":" in action.target else ""
+        return (
+            {
+                "action_id": f"use-{state.turn_index + 1}",
+                "action_type": "use_item",
+                "actor_id": "player",
+                "target_id": target_id,
+                "item_id": item_id,
+                "location_id": room_id,
+            },
+        )
+    return ()
+
+
+def _structured_turn_proposal_for_action(state: GameState, action: Action, preview_events: list[Event]) -> dict[str, Any]:
+    semantic_actions = _semantic_actions_for_action(state, action, preview_events)
+    skipped_fact_ops: tuple[tuple[str, ...], ...] = ()
+    if semantic_actions:
+        semantic_action = semantic_actions[0]
+        if semantic_action["action_type"] == "move_to":
+            skipped_fact_ops = (("at", "player", semantic_action["location_id"]),)
+        elif semantic_action["action_type"] == "take_item":
+            skipped_fact_ops = (
+                ("room_item", state.player.location, semantic_action["item_id"]),
+                ("holding", "player", semantic_action["item_id"]),
+            )
+    return {
+        "turn_id": f"cli-{state.turn_index + 1}",
+        "mode": _proposal_mode_for_action(action),
+        "player_intent": {
+            "summary": action.kind.value,
+            "addressed_npc_id": "",
+            "target_ids": (),
+            "item_ids": (),
+            "location_id": state.player.location,
+        },
+        "scene_framing": {
+            "focus": action.raw,
+            "dramatic_question": "",
+            "player_approach": "",
+        },
+        "semantic_actions": semantic_actions,
+        "state_delta": _preview_state_delta(preview_events, skipped_fact_ops),
+        "npc_dialogue": {"speaker_id": "", "text": ""},
+        "narration": "",
+        "beat_hints": {"escalation": "none", "reveal_thread_ids": (), "obstacle_mode": ""},
+    }
 
 
 def _raw_input_requests_goal(raw_input: str) -> bool:
@@ -854,7 +975,18 @@ def run_turn(
         template_key = "freeform_roleplay"
         effective_action = _action_from_proposal(raw_input, freeform["action_proposal"])
     else:
-        next_state, events, beat_type, template_key = advance_turn(preturn_state, effective_action, rng)
+        _preview_state, preview_events = apply_action(preturn_state, effective_action, rng)
+        proposal_source_state = preturn_state.clone()
+        rebuild_facts_from_legacy_views(proposal_source_state)
+        deterministic_proposal = parse_turn_proposal(
+            _structured_turn_proposal_for_action(preturn_state, effective_action, preview_events)
+        )
+        runtime_result = execute_turn_proposal(proposal_source_state, deterministic_proposal, rng)
+        next_state = runtime_result["state"]
+        proposal_action_events = [event for event in runtime_result["events"] if event.type == "semantic_action"]
+        post_commit_seed_events = proposal_action_events or preview_events
+        next_state, followup_events, beat_type, template_key = run_post_commit_story(next_state, post_commit_seed_events, rng)
+        events = list(preview_events) + list(runtime_result["events"]) + list(followup_events)
         if replan_event is not None:
             events.insert(0, replan_event)
 

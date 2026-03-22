@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Literal, TypedDict, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -106,13 +107,41 @@ class SemanticActionProposal(TypedDict):
     location_id: str
 
 
+class PlayerIntentProposal(TypedDict):
+    summary: str
+    addressed_npc_id: str
+    target_ids: tuple[str, ...]
+    item_ids: tuple[str, ...]
+    location_id: str
+
+
+class SceneFramingProposal(TypedDict):
+    focus: str
+    dramatic_question: str
+    player_approach: str
+
+
+class NpcDialogueProposal(TypedDict):
+    speaker_id: str
+    text: str
+
+
+class BeatHintsProposal(TypedDict):
+    escalation: str
+    reveal_thread_ids: tuple[str, ...]
+    obstacle_mode: str
+
+
 class TurnProposal(TypedDict):
     turn_id: str
-    intent: str
+    mode: str
+    player_intent: PlayerIntentProposal
+    scene_framing: SceneFramingProposal
+    npc_dialogue: NpcDialogueProposal
     narration: str
-    dialogue_lines: tuple[str, ...]
     semantic_actions: tuple[SemanticActionProposal, ...]
     state_delta: StateDeltaProposal
+    beat_hints: BeatHintsProposal
 
 
 class _ScoreVectorModel(BaseModel):
@@ -150,7 +179,7 @@ class _AgentProposalModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     agent_id: str = Field(min_length=1, max_length=80)
-    narration: str = Field(min_length=1, max_length=MAX_NARRATION_CHARS)
+    narration: str = Field(default="", max_length=MAX_NARRATION_CHARS)
     story_patch: _StoryPatchModel
     rationale: str = Field(min_length=1, max_length=MAX_RATIONALE_CHARS)
 
@@ -232,15 +261,108 @@ class _SemanticActionProposalModel(BaseModel):
     location_id: str = Field(default="", max_length=80)
 
 
+class _PlayerIntentProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    summary: str = Field(min_length=1, max_length=160)
+    addressed_npc_id: str = Field(default="", max_length=80)
+    target_ids: tuple[str, ...] = Field(default=(), max_length=8)
+    item_ids: tuple[str, ...] = Field(default=(), max_length=8)
+    location_id: str = Field(default="", max_length=80)
+
+
+class _SceneFramingProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    focus: str = Field(default="", max_length=160)
+    dramatic_question: str = Field(default="", max_length=240)
+    player_approach: str = Field(default="", max_length=80)
+
+
+class _NpcDialogueProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    speaker_id: str = Field(default="", max_length=80)
+    text: str = Field(default="", max_length=MAX_NARRATION_CHARS)
+
+
+class _BeatHintsProposalModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    escalation: Literal["none", "soft", "hard"] = "none"
+    reveal_thread_ids: tuple[str, ...] = Field(default=(), max_length=8)
+    obstacle_mode: str = Field(default="", max_length=80)
+
+
 class _TurnProposalModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     turn_id: str = Field(min_length=1, max_length=80)
-    intent: str = Field(min_length=1, max_length=80)
-    narration: str = Field(min_length=1, max_length=MAX_NARRATION_CHARS)
-    dialogue_lines: tuple[str, ...] = Field(default=(), max_length=MAX_DIALOGUE_LINES)
+    mode: Literal["scene", "conversation", "physical", "social", "investigation"] = "scene"
+    player_intent: _PlayerIntentProposalModel
+    scene_framing: _SceneFramingProposalModel = _SceneFramingProposalModel()
+    npc_dialogue: _NpcDialogueProposalModel = _NpcDialogueProposalModel()
+    narration: str = Field(default="", max_length=MAX_NARRATION_CHARS)
     semantic_actions: tuple[_SemanticActionProposalModel, ...] = Field(default=(), max_length=12)
     state_delta: _StateDeltaProposalModel
+    beat_hints: _BeatHintsProposalModel = _BeatHintsProposalModel()
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_legacy_turn_shape(cls, payload: Any) -> Any:
+        if not isinstance(payload, dict):
+            return payload
+        if "player_intent" in payload or "mode" in payload:
+            return payload
+        legacy_intent = str(payload.get("intent", "")).strip()
+        if not legacy_intent:
+            return payload
+        semantic_actions = payload.get("semantic_actions", ())
+        target_ids: list[str] = []
+        item_ids: list[str] = []
+        location_id = ""
+        if isinstance(semantic_actions, (list, tuple)):
+            for action in semantic_actions:
+                if not isinstance(action, dict):
+                    continue
+                target_id = str(action.get("target_id", "")).strip()
+                item_id = str(action.get("item_id", "")).strip()
+                action_location_id = str(action.get("location_id", "")).strip()
+                if target_id:
+                    target_ids.append(target_id)
+                if item_id:
+                    item_ids.append(item_id)
+                if action_location_id and not location_id:
+                    location_id = action_location_id
+        speaker_id, dialogue_text = _legacy_dialogue_line_to_npc_dialogue(payload.get("dialogue_lines", ()))
+        return {
+            "turn_id": payload.get("turn_id", ""),
+            "mode": _mode_from_legacy_intent(legacy_intent),
+            "player_intent": {
+                "summary": legacy_intent,
+                "addressed_npc_id": target_ids[0] if target_ids else "",
+                "target_ids": target_ids,
+                "item_ids": item_ids,
+                "location_id": location_id,
+            },
+            "scene_framing": {
+                "focus": "",
+                "dramatic_question": "",
+                "player_approach": "",
+            },
+            "semantic_actions": semantic_actions,
+            "state_delta": payload.get("state_delta", {}),
+            "npc_dialogue": {
+                "speaker_id": speaker_id,
+                "text": dialogue_text,
+            },
+            "narration": payload.get("narration", ""),
+            "beat_hints": {
+                "escalation": "none",
+                "reveal_thread_ids": (),
+                "obstacle_mode": "",
+            },
+        }
 
 
 def _build_validation_error(
@@ -252,6 +374,32 @@ def _build_validation_error(
     location = ".".join(str(chunk) for chunk in first["loc"])
     detail = f"{location}:{first['type']}"
     return ContractValidationError(code=code, contract_name=contract_name, detail=detail)
+
+
+def _mode_from_legacy_intent(intent: str) -> str:
+    normalized = intent.strip().lower()
+    if normalized in {"ask_about", "greet", "apologize", "threaten", "question", "query"}:
+        return "conversation"
+    if normalized in {"take", "take_item", "move", "move_to", "use"}:
+        return "physical"
+    if normalized in {"inspect", "inspect_item", "read_case_file", "read_ledger_page", "search"}:
+        return "investigation"
+    return "scene"
+
+
+def _legacy_dialogue_line_to_npc_dialogue(value: Any) -> tuple[str, str]:
+    if not isinstance(value, (list, tuple)) or not value:
+        return "", ""
+    first_line = str(value[0]).strip()
+    if not first_line:
+        return "", ""
+    match = re.match(r'^(?P<speaker>[^"]+?) says: "(?P<text>.*)"$', first_line)
+    if match is None:
+        return "", ""
+    speaker = match.group("speaker").strip()
+    text = match.group("text").strip()
+    normalized_speaker = speaker.lower().replace(" ", "_")
+    return normalized_speaker, text
 
 
 def parse_story_patch(payload: dict[str, object]) -> StoryPatch:

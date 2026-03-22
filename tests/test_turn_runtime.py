@@ -301,3 +301,83 @@ def test_save_and_load_preserve_bootstrap_world_package_and_triggered_state(tmp_
     assert loaded_state.world_package["bootstrap_plan"]["outline_id"] == "estate_runtime"
     assert loaded_state.world_facts.holds("flag", "player", "case_file_found")
     assert loaded_state.world_facts.holds("holding", "player", "case_file")
+
+
+def test_parse_turn_proposal_accepts_v2_shape() -> None:
+    proposal = parse_turn_proposal(
+        {
+            "turn_id": "turn-v2",
+            "mode": "conversation",
+            "player_intent": {
+                "summary": "Ask Mara about the ledger.",
+                "addressed_npc_id": "mara_vale",
+                "target_ids": ["mara_vale"],
+                "item_ids": ["case_file"],
+                "location_id": "study",
+            },
+            "scene_framing": {
+                "focus": "Mara's reaction to the missing ledger.",
+                "dramatic_question": "Will Mara admit what she saw before dawn?",
+                "player_approach": "question",
+            },
+            "semantic_actions": [
+                {
+                    "action_id": "question-mara",
+                    "action_type": "question_npc",
+                    "actor_id": "player",
+                    "target_id": "mara_vale",
+                    "item_id": "",
+                    "location_id": "study",
+                }
+            ],
+            "state_delta": {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+            "npc_dialogue": {"speaker_id": "mara_vale", "text": "The ledger was already gone when I arrived."},
+            "narration": "Mara lowers her voice and answers without looking up.",
+            "beat_hints": {"escalation": "soft", "reveal_thread_ids": ["ledger"], "obstacle_mode": "guarded"},
+        }
+    )
+
+    assert proposal["mode"] == "conversation"
+    assert proposal["player_intent"]["summary"] == "Ask Mara about the ledger."
+    assert proposal["npc_dialogue"]["speaker_id"] == "mara_vale"
+    assert proposal["beat_hints"]["obstacle_mode"] == "guarded"
+
+
+def test_turn_runtime_surfaces_v2_npc_dialogue_as_dialogue_lines() -> None:
+    state = _state()
+    proposal = parse_turn_proposal(
+        {
+            "turn_id": "turn-v2-dialogue",
+            "mode": "conversation",
+            "player_intent": {
+                "summary": "Ask Mara about the ledger.",
+                "addressed_npc_id": "mara_vale",
+                "target_ids": ["mara_vale"],
+                "item_ids": [],
+                "location_id": "study",
+            },
+            "scene_framing": {
+                "focus": "Mara's answer",
+                "dramatic_question": "What does Mara know about the ledger?",
+                "player_approach": "question",
+            },
+            "semantic_actions": [
+                {
+                    "action_id": "question-mara",
+                    "action_type": "question_npc",
+                    "actor_id": "player",
+                    "target_id": "mara_vale",
+                    "item_id": "",
+                    "location_id": "study",
+                }
+            ],
+            "state_delta": {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["conversation"]},
+            "npc_dialogue": {"speaker_id": "mara_vale", "text": "The ledger was moved before dawn."},
+            "narration": "Mara narrows her eyes before answering.",
+            "beat_hints": {"escalation": "none", "reveal_thread_ids": [], "obstacle_mode": "guarded"},
+        }
+    )
+
+    result = execute_turn_proposal(state, proposal, Random(8))
+
+    assert result["dialogue_lines"] == ('Mara Vale says: "The ledger was moved before dawn."',)

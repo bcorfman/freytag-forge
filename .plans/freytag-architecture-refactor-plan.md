@@ -353,7 +353,11 @@ Keep the current package split, but reorganize responsibilities like this:
 - Done criteria: `build_narration_context` reads scene facts; Freytag behavior no longer depends only on `progress`/`tension`
 
 ### Phase 3: Turn Proposal V2
-- [ ] Not started
+- [x] Introduce `TurnProposalV2` shape in `llm/contracts.py` with compatibility parsing for legacy callers
+- [x] Route freeform proposal construction through the V2 runtime contract
+- [x] Route ordinary deterministic turns through proposal execution plus post-commit beat/event handling instead of `advance_turn`
+- [x] Keep parser handling limited to control-plane commands while preserving deterministic movement/inventory/take/use affordances through proposal normalization
+- [x] Add regression coverage for V2 contract parsing, V2 NPC dialogue surfacing, and no-`advance_turn` ordinary directional turns
 - Goal: make ordinary turns uniformly proposal-first
 - Files: `llm/contracts.py`, `engine/freeform.py`, `engine/turn_runtime.py`, `cli.py`, `engine/interfaces.py`
 - Risks: breaking directional aliases and current freeform affordances
