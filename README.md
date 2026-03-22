@@ -6,11 +6,11 @@ Freytag Forge is a story-first detective RPG in your terminal/browser: you type 
 ```text
 Outside The Mansion
 Broad stone steps rise to a carved oak door framed by weathered columns.
-A torn ledger page lies half-caught in a crack between the stones near the bottom step.
-Daria Stone is nearby, watching your next move.
+Daria Stone waits just inside the foyer windows, watching your next move.
+Rain slicks the stone and leaves the brass door handle cold under your hand.
 
->PICK UP THE LEDGER PAGE
-Clue noted: Half-burned ledger page with initials that match the victim's diary.
+>LOOK THROUGH THE FOYER WINDOW
+The foyer beyond the glass is lit in amber bands. Daria lifts the case file a little, signaling that the first useful lead is already inside.
 
 >DARIA, WHAT DO YOU MAKE OF THIS?
 Daria says: "The initials aren't random. Start with whoever had access to the archives tonight."
@@ -71,7 +71,7 @@ make test
 - Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, reveal state, and scene/dramatic state.
 - LLM-authored story layer: bootstrap/opening prose, turn narration, and NPC dialogue are authored by LLMs but must stay grounded in deterministic facts.
 - Scene + dramatic facts: current scene framing, dramatic question, player approach, beat phase/role, and pressure are fact-backed so narration and NPC behavior read from committed story state.
-- Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; accepted outputs are persisted back into runtime facts.
+- Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; facts commit first, then opening prose is validated against those facts and fails closed on mismatch.
 - Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.
 
