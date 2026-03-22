@@ -5,6 +5,7 @@ from random import Random
 import pytest
 
 from storygame.engine.bootstrap import validate_bootstrap_plan
+from storygame.engine.scene_state import scene_snapshot
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_state_from_bootstrap_plan
 from storygame.llm.bootstrap_contracts import parse_bootstrap_plan
@@ -181,6 +182,42 @@ def test_turn_runtime_does_not_mutate_state_from_narration_only() -> None:
     assert not result["state"].world_facts.holds("holding", "player", "case_file")
     assert not result["state"].world_facts.holds("flag", "player", "case_file_found")
     assert all(event.type != "trigger" for event in result["events"])
+
+
+def test_turn_runtime_refreshes_scene_facts_from_conversational_proposal() -> None:
+    state = _state()
+    state.progress = 0.4
+    proposal = parse_turn_proposal(
+        {
+            "turn_id": "turn-conversation",
+            "intent": "ask_about",
+            "narration": "Mara narrows her eyes and answers your question about the ledger.",
+            "dialogue_lines": ["Mara Vale says: \"The ledger was moved before dawn.\""],
+            "semantic_actions": [
+                {
+                    "action_id": "question-mara",
+                    "action_type": "ask_about",
+                    "actor_id": "player",
+                    "target_id": "mara_vale",
+                    "item_id": "",
+                    "location_id": "study",
+                }
+            ],
+            "state_delta": {
+                "assert": [],
+                "retract": [],
+                "numeric_delta": [{"key": "trust:mara_vale:player", "delta": 0.05}],
+                "reasons": ["conversation"],
+            },
+        }
+    )
+
+    result = execute_turn_proposal(state, proposal, Random(8))
+    snapshot = scene_snapshot(result["state"])
+
+    assert snapshot["player_approach"] == "question"
+    assert snapshot["beat_role"] == "reveal"
+    assert "Mara Vale" in snapshot["dramatic_question"]
 
 
 def test_turn_runtime_prefers_canonical_facts_over_stale_legacy_views() -> None:

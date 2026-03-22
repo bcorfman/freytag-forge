@@ -4,11 +4,13 @@ import re
 
 from storygame.engine.bootstrap import validate_bootstrap_plan
 from storygame.engine.facts import (
+    apply_fact_ops,
     initialize_world_facts,
     replace_fact_group,
     set_active_story_goal,
     sync_legacy_views,
 )
+from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
 from storygame.story_canon import canonical_detective_name
@@ -318,13 +320,19 @@ def build_default_state(
             assistant_id = start_room_npcs[0]
             assistant = state.world.npcs.get(assistant_id)
             if assistant is not None and assistant.name.strip():
-                state.world_facts.assert_fact("assistant_name", assistant.name.strip())
-                state.world_facts.assert_fact("npc_role", assistant.name.strip(), "assistant")
-                state.world_facts.assert_fact("npc_relationship", assistant.name.strip(), "player", "assistant")
+                apply_fact_ops(
+                    state,
+                    [
+                        {"op": "assert", "fact": ("assistant_name", assistant.name.strip())},
+                        {"op": "assert", "fact": ("npc_role", assistant.name.strip(), "assistant")},
+                        {"op": "assert", "fact": ("npc_relationship", assistant.name.strip(), "player", "assistant")},
+                    ],
+                )
         for item_id, holder_id in seeded_holding.items():
             if item_id in state.world.items and holder_id in state.world.npcs:
-                state.world_facts.assert_fact("holding", holder_id, item_id)
+                apply_fact_ops(state, [{"op": "assert", "fact": ("holding", holder_id, item_id)}])
     sync_legacy_views(state)
+    refresh_scene_state(state)
     return state
 
 
@@ -432,24 +440,28 @@ def build_state_from_bootstrap_plan(
     )
     initialize_world_facts(state)
 
+    bootstrap_ops: list[dict[str, object]] = []
     for spec in plan_characters:
         if spec["id"] == protagonist_id:
             continue
-        state.world_facts.assert_fact("npc_role", str(spec["name"]), str(spec["role"]))
+        bootstrap_ops.append({"op": "assert", "fact": ("npc_role", str(spec["name"]), str(spec["role"]))})
         for trait in spec["stable_traits"]:
-            state.world_facts.assert_fact("npc_stable_trait", str(spec["id"]), str(trait))
+            bootstrap_ops.append({"op": "assert", "fact": ("npc_stable_trait", str(spec["id"]), str(trait))})
         for trait in spec["dynamic_traits"]:
-            state.world_facts.assert_fact("npc_dynamic_trait", str(spec["id"]), str(trait))
+            bootstrap_ops.append({"op": "assert", "fact": ("npc_dynamic_trait", str(spec["id"]), str(trait))})
 
     for spec in plan_items:
         holder_id = str(spec["holder_id"])
         if holder_id:
             holder = "player" if holder_id == protagonist_id else holder_id
-            state.world_facts.assert_fact("holding", holder, str(spec["id"]))
+            bootstrap_ops.append({"op": "assert", "fact": ("holding", holder, str(spec["id"]))})
         for trait in spec["stable_traits"]:
-            state.world_facts.assert_fact("item_stable_trait", str(spec["id"]), str(trait))
+            bootstrap_ops.append({"op": "assert", "fact": ("item_stable_trait", str(spec["id"]), str(trait))})
         for trait in spec["dynamic_traits"]:
-            state.world_facts.assert_fact("item_dynamic_trait", str(spec["id"]), str(trait))
+            bootstrap_ops.append({"op": "assert", "fact": ("item_dynamic_trait", str(spec["id"]), str(trait))})
+
+    if bootstrap_ops:
+        apply_fact_ops(state, bootstrap_ops)
 
     story_goal_facts = tuple(("story_goal", str(goal["kind"]), str(goal["summary"])) for goal in plan["goals"])
     replace_fact_group(state, "story_goal", story_goal_facts)
@@ -463,7 +475,8 @@ def build_state_from_bootstrap_plan(
         assistant_name = str(assistant["name"]).strip()
         if assistant_name:
             replace_fact_group(state, "assistant_name", (("assistant_name", assistant_name),))
-            state.world_facts.assert_fact("npc_relationship", assistant_name, "player", "assistant")
+            apply_fact_ops(state, [{"op": "assert", "fact": ("npc_relationship", assistant_name, "player", "assistant")}])
 
     sync_legacy_views(state)
+    refresh_scene_state(state)
     return state

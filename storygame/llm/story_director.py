@@ -161,8 +161,7 @@ class StoryDirector:
         self._apply_clue_placements_to_world(state, list(clue_placements))
         state.world_package["bootstrap_critique"] = dict(bootstrap_critique)
         if goals["setup"]:
-            state.active_goal = goals["setup"]
-            set_active_story_goal(state, state.active_goal)
+            set_active_story_goal(state, goals["setup"])
 
     def _apply_story_bundle_facts(
         self,
@@ -546,15 +545,19 @@ class StoryDirector:
         replan_scope = str(plan.get("replan_scope", disruption.get("replan_scope", "goal_change"))).strip().lower()
         new_goal = str(plan.get("new_active_goal", "")).strip()
         if replan_scope == "goal_change" and new_goal:
-            state.active_goal = new_goal
             goals = dict(state.world_package.get("goals", {}))
             goals["primary"] = new_goal
             goals["setup"] = new_goal
             state.world_package["goals"] = goals
             set_active_story_goal(state, new_goal)
         state.world_package["story_replan_plan"] = dict(plan)
-        state.player.flags["story_replan_required"] = False
-        state.player.flags["story_replanned"] = True
+        apply_fact_ops(
+            state,
+            [
+                {"op": "retract", "fact": ("flag", "player", "story_replan_required")},
+                {"op": "assert", "fact": ("flag", "player", "story_replanned")},
+            ],
+        )
         note = str(plan.get("note", "")).strip() or "The story shifts in response to your prior choice."
         return Event(
             type="story_replan",

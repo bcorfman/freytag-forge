@@ -111,6 +111,22 @@ class InvariantValidator:
             )
         if predicate == "active_goal" and len(terms) == 1:
             return tuple(existing for existing in facts if existing[0] == "active_goal")
+        if predicate == "current_scene" and len(terms) == 1:
+            return tuple(existing for existing in facts if existing[0] == "current_scene")
+        if predicate == "scene_location" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == ("scene_location", terms[0]))
+        if predicate == "scene_objective" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == ("scene_objective", terms[0]))
+        if predicate == "dramatic_question" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == ("dramatic_question", terms[0]))
+        if predicate == "scene_pressure" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == ("scene_pressure", terms[0]))
+        if predicate == "beat_phase" and len(terms) == 1:
+            return tuple(existing for existing in facts if existing[0] == "beat_phase")
+        if predicate == "beat_role" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == ("beat_role", terms[0]))
+        if predicate == "player_approach" and len(terms) == 1:
+            return tuple(existing for existing in facts if existing[0] == "player_approach")
         if predicate == "assistant_name" and len(terms) == 1:
             return tuple(existing for existing in facts if existing[0] == "assistant_name")
         if predicate == "player_name" and len(terms) == 1:
@@ -127,6 +143,7 @@ class InvariantValidator:
         self._validate_npc_locations(facts)
         self._validate_item_containers(facts)
         self._validate_active_goal(facts)
+        self._validate_scene_state(facts)
         self._validate_roles(facts)
 
     def _validate_player_location(self, facts: set[Fact]) -> None:
@@ -159,6 +176,19 @@ class InvariantValidator:
         active_goals = {fact[1] for fact in facts if fact[0] == "active_goal" and len(fact) == 2}
         if len(active_goals) > 1:
             raise ValueError("active_goal must remain unique")
+
+    def _validate_scene_state(self, facts: set[Fact]) -> None:
+        current_scenes = {fact[1] for fact in facts if fact[0] == "current_scene" and len(fact) == 2}
+        if len(current_scenes) > 1:
+            raise ValueError("current_scene must remain unique")
+
+        beat_phases = {fact[1] for fact in facts if fact[0] == "beat_phase" and len(fact) == 2}
+        if len(beat_phases) > 1:
+            raise ValueError("beat_phase must remain unique")
+
+        approaches = {fact[1] for fact in facts if fact[0] == "player_approach" and len(fact) == 2}
+        if len(approaches) > 1:
+            raise ValueError("player_approach must remain unique")
 
     def _validate_roles(self, facts: set[Fact]) -> None:
         roles_by_name: dict[str, set[str]] = {}

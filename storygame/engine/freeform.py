@@ -8,11 +8,13 @@ from typing import Any, Protocol, TypedDict
 from storygame.engine.facts import active_story_goal, player_location, protagonist_profile, room_items, room_npcs
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
+from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.story_agents.agents import _chat_complete as _story_agent_chat_complete
 from storygame.llm.story_agents.agents import _json_from_text as _story_agent_json_from_text
+from storygame.plot.dramatic_policy import turn_focus_from_freeform
 
 _TOPIC_TOKEN = re.compile(r"[^a-z0-9]+")
 _ASK_TARGET_PATTERN = re.compile(r"\bask\s+([a-z0-9_ .'-]{1,60}?)(?:\s+about\b|$)", re.IGNORECASE)
@@ -859,6 +861,7 @@ def resolve_freeform_roleplay_with_proposals(
     )
     next_state.append_event(compatibility_event)
     committed_events.append(compatibility_event)
+    refresh_scene_state(next_state, turn_focus_from_freeform(next_state, action_proposal))
     return {
         "state": next_state,
         "events": committed_events,

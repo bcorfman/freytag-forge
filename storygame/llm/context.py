@@ -6,14 +6,16 @@ from storygame.engine.facts import (
     active_story_goal,
     assistant_name,
     assistant_role,
+    npc_stance_toward_player,
+    npc_trust_toward_player,
     planned_story_events,
     protagonist_profile,
     story_goals,
 )
 from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
+from storygame.engine.scene_state import scene_snapshot
 from storygame.engine.state import EventLog, GameState, Npc
-from storygame.plot.freytag import get_phase
 from storygame.story_canon import canonical_detective_name
 
 MAX_RECENT_EVENTS = 5
@@ -47,6 +49,7 @@ class NarrationContext:
     beat: str
     goal: str
     goal_stack: dict = None
+    scene: dict = None
     planned_events: tuple[dict, ...] = ()
     action: str = ""
     protagonist_name: str = ""
@@ -77,6 +80,7 @@ class NarrationContext:
             "beat": self.beat,
             "goal": self.goal,
             "goal_stack": dict(self.goal_stack or {}),
+            "scene": dict(self.scene or {}),
             "planned_events": list(self.planned_events),
             "action": self.action,
             "memory_fragments": list(self.memory_fragments),
@@ -111,6 +115,8 @@ def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
         "identity": _short_text(npc.identity, MAX_NPC_DESCRIPTION_LEN),
         "description": _short_text(npc.description, MAX_NPC_DESCRIPTION_LEN),
         "location": location,
+        "stance_to_player": "",
+        "trust_to_player": "",
     }
 
 
@@ -139,7 +145,13 @@ def _npc_locations(state: GameState) -> dict[str, str]:
 def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
     locations = _npc_locations(state)
     npc_ids = sorted(state.world.npcs.keys())
-    return tuple(_npc_fact(state.world.npcs[npc_id], locations.get(npc_id, "")) for npc_id in npc_ids[:MAX_NPC_FACTS])
+    facts: list[dict[str, str]] = []
+    for npc_id in npc_ids[:MAX_NPC_FACTS]:
+        fact = _npc_fact(state.world.npcs[npc_id], locations.get(npc_id, ""))
+        fact["stance_to_player"] = npc_stance_toward_player(state, npc_id)
+        fact["trust_to_player"] = npc_trust_toward_player(state, npc_id)
+        facts.append(fact)
+    return tuple(facts)
 
 
 def _latest_freeform_focus(state: GameState) -> dict[str, object]:
@@ -250,6 +262,18 @@ def build_narration_context(
     room = state.world.rooms[state.player.location]
     visible_items, _junk_count = room_item_groups(state, room)
     freeform_focus = _latest_freeform_focus(state)
+    scene = scene_snapshot(state)
+    scene_payload = {
+        "id": str(scene["scene_id"]),
+        "location_id": str(scene["location_id"]),
+        "objective": str(scene["scene_objective"]),
+        "dramatic_question": str(scene["dramatic_question"]),
+        "pressure": str(scene["pressure"]),
+        "beat_phase": str(scene["beat_phase"]),
+        "beat_role": str(scene["beat_role"]),
+        "player_approach": str(scene["player_approach"]),
+        "participants": list(scene["participants"]),
+    }
 
     return NarrationContext(
         room_name=room.name,
@@ -267,11 +291,12 @@ def build_narration_context(
             _short_text(frag, MAX_MEMORY_FRAGMENT_LEN) for frag in memory_fragments[:MAX_MEMORY_FRAGMENTS]
         ),
         recent_events=_summarize_recent_events(state.event_log),
-        phase=get_phase(state.progress),
+        phase=str(scene["beat_phase"]),
         tension=state.tension,
         beat=beat,
         goal=active_story_goal(state),
         goal_stack=story_goals(state),
+        scene=scene_payload,
         planned_events=planned_story_events(state),
         action=action.raw,
         conversation_intent=str(freeform_focus.get("conversation_intent", "")),

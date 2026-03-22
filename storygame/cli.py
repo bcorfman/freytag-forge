@@ -252,8 +252,13 @@ def _record_major_disruption(
     assessment: dict[str, Any],
 ) -> None:
     replan_scope = replan_scope_for_assessment(assessment)
-    state.player.flags["story_replan_required"] = True
-    state.player.flags["story_bounds_overridden"] = True
+    apply_fact_ops(
+        state,
+        [
+            {"op": "assert", "fact": ("flag", "player", "story_replan_required")},
+            {"op": "assert", "fact": ("flag", "player", "story_bounds_overridden")},
+        ],
+    )
     state.world_package["story_replan_context"] = {
         "command": raw_command,
         "impact_class": str(assessment.get("impact_class", "high")),

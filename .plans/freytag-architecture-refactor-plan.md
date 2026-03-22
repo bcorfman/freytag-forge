@@ -333,7 +333,7 @@ Keep the current package split, but reorganize responsibilities like this:
 - [x] Remove `rebuild_facts_from_legacy_views` from the ordinary proposal path in `engine.turn_runtime.execute_turn_proposal`
 - [x] Route bootstrap clue placement in `llm.story_director` through canonical fact commits instead of room-object mutation plus rebuild
 - [x] Add invariant/regression tests for player-location uniqueness, item-container uniqueness, active-goal uniqueness, role exclusivity, and proposal-path fact authority
-- [ ] Route every remaining runtime mutation path through the validated commit boundary
+- [x] Route every remaining runtime mutation path through the validated commit boundary
 - Goal: make one mutation gateway authoritative without rewriting the whole runtime.
 - Files: `engine/facts.py`, `engine/state.py`, `engine/world.py`, `engine/rules.py`, `engine/turn_runtime.py`, `llm/story_director.py`
 - Risks: hidden direct mutations to `rooms`, `player`, `active_goal`
@@ -341,7 +341,11 @@ Keep the current package split, but reorganize responsibilities like this:
 - Done criteria: every runtime mutation route goes through one validated fact commit service
 
 ### Phase 2: Scene/Dramatic Facts
-- [ ] Not started
+- [x] Introduce canonical scene-state helpers and seed default/bootstrap states with scene and dramatic facts
+- [x] Route `build_narration_context` through canonical scene facts with NPC stance/trust lookups
+- [x] Make beat selection prefer canonical `beat_phase` / `beat_role` facts before legacy `progress` fallback
+- [x] Add a fuller dramatic-policy module and route parser/proposal/freeform turns through it before beat selection
+- [x] Move direct-address conversational behavior onto explicit scene facts (`player_approach`, `dramatic_question`, `beat_role`) beyond context shaping
 - Goal: add first-class scene and dramatic state while keeping current gameplay working
 - Files: new `engine/scene_state.py`, `plot/beat_manager.py` replacement, `llm/context.py`, `engine/simulation.py`
 - Risks: narration context drift during transition
