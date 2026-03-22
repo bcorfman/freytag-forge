@@ -3,9 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from storygame.engine.facts import apply_fact_ops
+from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.semantic_actions import commit_semantic_action
 from storygame.engine.state import Event, GameState
 from storygame.engine.triggers import evaluate_triggers
+from storygame.plot.dramatic_policy import turn_focus_from_proposal
 
 
 def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[dict[str, Any], ...] | list[dict[str, Any]]) -> None:
@@ -49,6 +51,8 @@ def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> di
         _apply_numeric_deltas(next_state, event.metadata.get("numeric_delta", ()))
         events.append(event)
         next_state.append_event(event)
+
+    refresh_scene_state(next_state, turn_focus_from_proposal(next_state, proposal))
 
     return {
         "state": next_state,

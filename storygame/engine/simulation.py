@@ -5,6 +5,7 @@ from random import Random
 from storygame.engine.events import apply_event_template, select_event
 from storygame.engine.facts import (
     active_story_goal,
+    apply_fact_ops,
     hidden_story_threads,
     planned_story_events,
     reveal_schedule,
@@ -14,8 +15,10 @@ from storygame.engine.facts import (
 from storygame.engine.incidents import realize_beat_incident
 from storygame.engine.parser import Action
 from storygame.engine.rules import apply_action
+from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
 from storygame.plot.beat_manager import select_beat
+from storygame.plot.dramatic_policy import turn_focus_from_action
 from storygame.plot.tension import apply_tension_events
 
 
@@ -64,18 +67,15 @@ def _refresh_active_goal(state: GameState) -> None:
     secondary_goals = tuple(str(goal).strip() for goal in goals.get("secondary", ()) if str(goal).strip())
 
     if setup_goal and state.turn_index <= 3 and state.progress < 0.2:
-        state.active_goal = setup_goal
         set_active_story_goal(state, setup_goal)
         return
 
     if secondary_goals and state.progress >= 0.75:
-        state.active_goal = secondary_goals[0]
-        set_active_story_goal(state, state.active_goal)
+        set_active_story_goal(state, secondary_goals[0])
         return
 
     if primary_goal:
-        state.active_goal = primary_goal
-        set_active_story_goal(state, state.active_goal)
+        set_active_story_goal(state, primary_goal)
 
 
 def _story_reveal_events(state: GameState) -> list[Event]:
@@ -102,7 +102,7 @@ def _story_reveal_events(state: GameState) -> list[Event]:
             continue
 
         reveal_text = hidden_threads[thread_index]
-        state.player.flags[flag] = True
+        apply_fact_ops(state, [{"op": "assert", "fact": ("flag", "player", flag)}])
         reveal_events.append(
             Event(
                 type="story_reveal",
@@ -129,7 +129,7 @@ def _timed_story_events(state: GameState) -> list[Event]:
         flag = f"timed_story_event_{event_id}"
         if state.player.flags.get(flag, False):
             continue
-        state.player.flags[flag] = True
+        apply_fact_ops(state, [{"op": "assert", "fact": ("flag", "player", flag)}])
         emitted.append(
             Event(
                 type="timed_story_event",
@@ -146,12 +146,14 @@ def _timed_story_events(state: GameState) -> list[Event]:
 def apply_events_to_state(state: GameState, events: list[Event]) -> GameState:
     if not events:
         _refresh_active_goal(state)
+        refresh_scene_state(state)
         return state
     for event in events:
         state.progress = max(0.0, min(1.0, state.progress + event.delta_progress))
         state.tension = state.tension + event.delta_tension
     state = apply_tension_events(state, events)
     _refresh_active_goal(state)
+    refresh_scene_state(state)
     return state
 
 
@@ -165,6 +167,7 @@ def advance_turn(
     next_state = world_state.clone()
     next_state.append_events(action_events)
     next_state = apply_events_to_state(next_state, action_events)
+    refresh_scene_state(next_state, turn_focus_from_action(next_state, action))
 
     beat = select_beat(next_state, rng)
     next_state.append_beat(beat.type)
