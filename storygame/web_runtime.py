@@ -18,6 +18,7 @@ from storygame.llm.opening_coherence import (
     opening_fact_parity_issues,
 )
 from storygame.llm.output_editor import OutputEditor
+from storygame.llm.story_agents.contracts import StoryAgentContractError, parse_narrator_opening_output
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
@@ -140,6 +141,21 @@ def _sanitize_assistant_targeting(text: str, assistant_name: str) -> str:
     return normalized
 
 
+def _normalized_narrator_opening_paragraphs(raw: str, assistant_name: str) -> list[str]:
+    paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
+    if not paragraphs:
+        paragraphs = [raw.strip()]
+    trimmed = list(paragraphs[:4])
+    while len(trimmed) > 3 and trimmed[-1][-1:] not in ".!?":
+        trimmed.pop()
+    sanitized = [_sanitize_assistant_targeting(paragraph, assistant_name) for paragraph in trimmed]
+    try:
+        parsed = parse_narrator_opening_output({"paragraphs": sanitized})
+    except StoryAgentContractError as exc:
+        raise RuntimeError(f"Opening contract validation failed: {exc}") from exc
+    return list(parsed["paragraphs"])
+
+
 def build_bootstrap_response_payload(
     state: GameState,
     command: str,
@@ -247,10 +263,7 @@ def _bootstrap_opening_from_narrator(
         return []
     if not raw:
         return []
-    paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
-    if not paragraphs:
-        paragraphs = [raw]
-    opening_lines = [_sanitize_assistant_targeting(paragraph, context.assistant_name) for paragraph in paragraphs[:4]]
+    opening_lines = _normalized_narrator_opening_paragraphs(raw, context.assistant_name)
     item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
     assistant_npc_id = next(
         (
