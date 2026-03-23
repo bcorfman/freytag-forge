@@ -80,6 +80,24 @@ def test_actionable_objective_normalizer_keeps_assistant_out_of_suspect_language
     assert "the suspect's involvement" in fallback.lower()
 
 
+def test_actionable_objective_normalizer_rewrites_direct_questions_to_assistant() -> None:
+    normalized = _normalize_actionable_objective_language(
+        "Question Daria Stone about the foyer and inspect the front steps.",
+        "Daria Stone",
+        "Victor Hale",
+    )
+    assert "question daria stone" not in normalized.lower()
+    assert "consult daria stone" in normalized.lower()
+
+    alias_normalized = _normalize_actionable_objective_language(
+        "Ask Daria what she noticed before anyone else slips away.",
+        "Daria Stone",
+        "",
+    )
+    assert "ask daria" not in alias_normalized.lower()
+    assert "consult daria" in alias_normalized.lower()
+
+
 def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
     captured_requests: list[dict[str, object]] = []
