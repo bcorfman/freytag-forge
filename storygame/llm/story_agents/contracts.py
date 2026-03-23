@@ -258,6 +258,24 @@ def _strip_label(value: str, labels: tuple[str, ...]) -> str:
     return cleaned
 
 
+_OPENING_DIRECTIVE_LABELS = (
+    "room name:",
+    "room description:",
+    "items:",
+    "exits:",
+    "npc interactions:",
+    "background events:",
+)
+
+
+def _looks_like_opening_directive_paragraph(value: str) -> bool:
+    normalized = _trim_sentence(value).lower()
+    if not normalized:
+        return False
+    matches = sum(1 for label in _OPENING_DIRECTIVE_LABELS if label in normalized)
+    return matches >= 2
+
+
 def _ensure_terminal_punctuation(text: str) -> str:
     cleaned = _trim_sentence(text)
     if not cleaned:
@@ -458,7 +476,11 @@ def parse_narrator_opening_output(payload: dict) -> NarratorOpeningOutput:
         model = _NarratorOpeningModel.model_validate(normalized_payload)
     except ValidationError as exc:
         raise _raise_contract_error("NARRATOR_OPENING_CONTRACT_INVALID", exc) from exc
-    paragraphs = [_ensure_terminal_punctuation(paragraph) for paragraph in model.paragraphs if _trim_sentence(paragraph)]
+    paragraphs = [
+        _ensure_terminal_punctuation(paragraph)
+        for paragraph in model.paragraphs
+        if _trim_sentence(paragraph) and not _looks_like_opening_directive_paragraph(paragraph)
+    ]
     if len(paragraphs) < 3:
         raise StoryAgentContractError("NARRATOR_OPENING_CONTRACT_INVALID", "paragraphs:min_length")
     return cast(NarratorOpeningOutput, {"paragraphs": paragraphs[:4]})

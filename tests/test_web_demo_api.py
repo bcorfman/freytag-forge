@@ -229,6 +229,32 @@ def test_demo_bootstrap_prefers_narrator_opening_over_placeholder_story_plan(tmp
     assert not any("The situation is still taking shape" in line for line in payload["lines"])
 
 
+def test_demo_bootstrap_filters_directive_shaped_opening_paragraphs(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "The lantern throws a warm pool of light across the front steps.\n\n"
+                "Daria Stone waits beside you, case file in hand.\n\n"
+                "The evening feels still enough for the smallest sound to matter.\n\n"
+                "Room name: Front Steps Room description: Broad stone steps rise to a carved oak door. "
+                "Items: arrival_sedan Exits: north NPC interactions: Daria Stone stands beside you. "
+                "Background events: None."
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert not any("Room name:" in line for line in payload["lines"])
+
+
 def test_demo_bootstrap_requires_llm_authored_opening_and_fails_closed(tmp_path):
     client = TestClient(
         create_demo_app(
