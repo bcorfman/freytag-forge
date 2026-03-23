@@ -110,8 +110,15 @@ def build_bootstrap_response_payload(
     story_director: StoryDirector,
     narrator: Narrator,
     output_editor: OutputEditor,
+    use_fast_story_director_opening: bool = False,
 ) -> dict[str, Any]:
-    opening_lines = _llm_bootstrap_opening_lines(state, story_director, narrator, output_editor)
+    opening_lines = _llm_bootstrap_opening_lines(
+        state,
+        story_director,
+        narrator,
+        output_editor,
+        use_fast_story_director_opening=use_fast_story_director_opening,
+    )
     return build_bootstrap_response_payload_from_lines(
         state,
         command,
@@ -121,26 +128,72 @@ def build_bootstrap_response_payload(
     )
 
 
+def bootstrap_failure_debug_payload(
+    state: GameState,
+    command: str,
+    scope_field: str,
+    scope_id: str,
+) -> dict[str, Any]:
+    room = state.world.rooms[state.player.location]
+    bundle = dict(state.world_package.get("llm_story_bundle", {}))
+    opening_paragraphs = [
+        str(line).strip()
+        for line in bundle.get("opening_paragraphs", ())
+        if str(line).strip()
+    ]
+    return {
+        scope_field: scope_id,
+        "command": command,
+        "turn_index": state.turn_index,
+        "location": state.player.location,
+        "room_name": room.name,
+        "active_goal": active_story_goal(state),
+        "assistant_name": str(bundle.get("assistant_name", "")).strip(),
+        "bundle_actionable_objective": str(bundle.get("actionable_objective", "")).strip(),
+        "bundle_opening_paragraphs": opening_paragraphs[:4],
+    }
+
+
 def _llm_bootstrap_opening_lines(
     state: GameState,
     story_director: StoryDirector,
     narrator: Narrator,
     output_editor: OutputEditor,
+    use_fast_story_director_opening: bool = False,
 ) -> list[str]:
+    story_director_error = ""
     try:
-        opening_lines = story_director.compose_opening(state)
+        if use_fast_story_director_opening:
+            opening_lines = story_director.compose_opening_fast(state)
+        else:
+            opening_lines = story_director.compose_opening(state)
         bundle = dict(state.world_package.get("llm_story_bundle", {}))
         bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
         if bundle_lines:
             return opening_lines
-    except RuntimeError:
+    except RuntimeError as exc:
+        story_director_error = str(exc).strip()
         opening_lines = []
 
-    narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
-    if narrator_lines:
-        return narrator_lines
+    try:
+        narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
+        if narrator_lines:
+            return narrator_lines
+    except RuntimeError as exc:
+        narrator_error = str(exc).strip()
+        if story_director_error:
+            raise RuntimeError(
+                "Bootstrap opening failed after story-director fallback: "
+                f"story_director={story_director_error}; narrator={narrator_error}"
+            ) from exc
+        raise
 
-    raise RuntimeError("Web bootstrap requires an LLM-authored opening.")
+    if story_director_error:
+        raise RuntimeError(
+            "Web bootstrap requires an LLM-authored opening. "
+            f"story_director={story_director_error}; narrator=empty"
+        )
+    raise RuntimeError("Web bootstrap requires an LLM-authored opening. narrator=empty")
 
 
 def _bootstrap_opening_from_narrator(

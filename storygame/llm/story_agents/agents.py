@@ -140,8 +140,8 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
     if mode == "cloudflare":
         worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
         token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
-        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "20.0").strip())
-        retries = int(os.getenv("CLOUDFLARE_RETRIES", "1").strip())
+        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
+        retries = int(os.getenv("CLOUDFLARE_RETRIES", "0").strip())
         retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
         if not worker_url:
             raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
@@ -306,22 +306,25 @@ def _build_identity_intro_sentence(protagonist: str, background: str) -> str:
     return f"You are {protagonist}, {identity_clause}."
 
 
-def _normalize_assistant_references(paragraphs: list[str], assistant_name: str) -> list[str]:
+def _normalize_assistant_references(
+    paragraphs: list[str],
+    assistant_name: str,
+    suspect_name: str = "",
+) -> list[str]:
     if not assistant_name:
         return paragraphs
     normalized: list[str] = []
     for paragraph in paragraphs:
-        if assistant_name.lower() not in paragraph.lower():
-            normalized.append(paragraph)
-            continue
-        updated = re.sub(r"\bthey are\b", f"{assistant_name} is", paragraph, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey're\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey have\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey've\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\btheirs\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\btheir\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthem\b", assistant_name, updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey\b", assistant_name, updated, flags=re.IGNORECASE)
+        updated = _normalize_actionable_objective_language(paragraph, assistant_name, suspect_name)
+        if assistant_name.lower() in updated.lower():
+            updated = re.sub(r"\bthey are\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey're\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey have\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey've\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\btheirs\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\btheir\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthem\b", assistant_name, updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey\b", assistant_name, updated, flags=re.IGNORECASE)
         normalized.append(updated)
     return normalized
 
@@ -546,6 +549,7 @@ class DefaultStoryBootstrapAgent:
         normalized["opening_paragraphs"] = _normalize_assistant_references(
             list(parsed["opening_paragraphs"]),
             assistant_name,
+            suspect_name,
         )
         normalized["timed_events"] = [
             event
@@ -724,7 +728,7 @@ class DefaultNarratorOpeningAgent:
             prose_paragraphs = _paragraphs_from_text(raw_response)
             if len(prose_paragraphs) >= 3:
                 parsed = parse_narrator_opening_output({"paragraphs": prose_paragraphs[:4]})
-                return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
+                return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name, suspect_name)
             _LOGGER.warning(
                 "NarratorOpening raw response could not be parsed as JSON or prose paragraphs: %s",
                 _short_raw_response(raw_response),
@@ -738,7 +742,7 @@ class DefaultNarratorOpeningAgent:
                 _short_raw_response(raw_response),
             )
             raise RuntimeError(f"NarratorOpening contract validation failed: {exc}") from exc
-        return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
+        return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name, suspect_name)
 
 
 class DefaultStoryReplanAgent:

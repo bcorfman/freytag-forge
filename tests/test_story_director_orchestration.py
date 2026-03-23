@@ -184,6 +184,47 @@ def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outpu
     assert state.world_facts.holds("planned_event_participant", "warning", "Daria Stone")
 
 
+def test_story_director_fast_opening_skips_critic_editor_and_remote_room_generation():
+    class _ObservedCritic:
+        def __init__(self) -> None:
+            self.called = False
+
+        def run(self, state, bootstrap_bundle):  # noqa: ANN001, ARG002
+            self.called = True
+            return {"verdict": "accepted", "continuity_summary": "Coherent plan.", "issues": []}
+
+    class _ObservedEditor:
+        def __init__(self) -> None:
+            self.opening_calls = 0
+
+        def review_opening(self, lines, active_goal):  # noqa: ANN001
+            self.opening_calls += 1
+            return [f"edited:{line}" for line in lines]
+
+        def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
+            return list(lines)
+
+    state = build_default_state(seed=704)
+    critic = _ObservedCritic()
+    editor = _ObservedEditor()
+    room_presentation = _ObservedRoomPresentation()
+    director = StoryDirector(
+        "mock",
+        output_editor=editor,
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=critic,
+        room_presentation=room_presentation,
+    )
+
+    opening = director.compose_opening_fast(state)
+
+    assert opening == ["P1", "P2", "P3"]
+    assert critic.called is False
+    assert editor.opening_calls == 0
+    assert room_presentation.called is False
+    assert state.active_goal == "Open the case file first."
+
+
 def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_needed() -> None:
     class _FrontStepsClueBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
