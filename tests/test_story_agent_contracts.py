@@ -253,3 +253,23 @@ def test_narrator_opening_contract_accepts_wrapped_draft_shape() -> None:
     )
 
     assert len(opening["paragraphs"]) == 3
+
+
+def test_narrator_opening_contract_drops_directive_shaped_paragraphs() -> None:
+    opening = parse_narrator_opening_output(
+        {
+            "paragraphs": [
+                "The lantern throws a warm pool of light across the front steps.",
+                "Daria Stone waits beside you, case file in hand.",
+                "The evening feels still enough for the smallest sound to matter.",
+                (
+                    "Room name: Front Steps Room description: Broad stone steps rise to a carved oak door. "
+                    "Items: arrival_sedan Exits: north NPC interactions: Daria Stone stands beside you. "
+                    "Background events: None."
+                ),
+            ]
+        }
+    )
+
+    assert len(opening["paragraphs"]) == 3
+    assert not any("room name:" in paragraph.lower() for paragraph in opening["paragraphs"])
