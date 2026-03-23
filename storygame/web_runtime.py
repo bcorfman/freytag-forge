@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import re
 from random import Random
 from typing import Any
 
 from storygame.cli import run_turn
 from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing
 from storygame.engine.freeform import FreeformProposalAdapter
-from storygame.engine.facts import active_story_goal
+from storygame.engine.facts import active_story_goal, assistant_name as resolved_assistant_name
 from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
@@ -102,6 +103,43 @@ def build_state_snapshot_payload(
     }
 
 
+def _sanitize_assistant_targeting(text: str, assistant_name: str) -> str:
+    normalized = " ".join(text.split())
+    if not normalized or not assistant_name:
+        return normalized
+    assistant_references = [assistant_name]
+    assistant_parts = assistant_name.split()
+    if assistant_parts:
+        assistant_references.append(assistant_parts[0])
+    for assistant_reference in tuple(dict.fromkeys(reference for reference in assistant_references if reference)):
+        assistant_pattern = re.escape(assistant_reference)
+        normalized = re.sub(
+            rf"\b(question|interrogate|interview|press|confront|accuse|ask)\s+{assistant_pattern}\b",
+            f"consult {assistant_reference}",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        normalized = re.sub(
+            rf"\b{assistant_pattern}'s involvement\b",
+            "the suspect's involvement",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        normalized = re.sub(
+            rf"\binvolvement of {assistant_pattern}\b",
+            "involvement of the suspect",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        normalized = re.sub(
+            rf"\babout {assistant_pattern} involvement\b",
+            "about the suspect's involvement",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+    return normalized
+
+
 def build_bootstrap_response_payload(
     state: GameState,
     command: str,
@@ -141,6 +179,7 @@ def bootstrap_failure_debug_payload(
         for line in bundle.get("opening_paragraphs", ())
         if str(line).strip()
     ]
+    assistant = str(bundle.get("assistant_name", "")).strip() or resolved_assistant_name(state).strip()
     return {
         scope_field: scope_id,
         "command": command,
@@ -148,7 +187,7 @@ def bootstrap_failure_debug_payload(
         "location": state.player.location,
         "room_name": room.name,
         "active_goal": active_story_goal(state),
-        "assistant_name": str(bundle.get("assistant_name", "")).strip(),
+        "assistant_name": assistant,
         "bundle_actionable_objective": str(bundle.get("actionable_objective", "")).strip(),
         "bundle_opening_paragraphs": opening_paragraphs[:4],
     }
@@ -211,7 +250,7 @@ def _bootstrap_opening_from_narrator(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw]
-    opening_lines = paragraphs[:4]
+    opening_lines = [_sanitize_assistant_targeting(paragraph, context.assistant_name) for paragraph in paragraphs[:4]]
     item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
     assistant_npc_id = next(
         (
