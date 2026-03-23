@@ -62,6 +62,9 @@ class StoryDirector:
     def compose_opening(self, state: GameState) -> list[str]:
         return self._compose_opening_bootstrap(state)
 
+    def compose_opening_fast(self, state: GameState) -> list[str]:
+        return self._compose_opening_bootstrap_fast(state)
+
     def _compose_opening_bootstrap(self, state: GameState) -> list[str]:
         bundle: dict[str, object] = {}
         bundle = self._story_bootstrap.run(state)
@@ -95,6 +98,19 @@ class StoryDirector:
         if validation_issues:
             raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
         return self._output_editor.review_opening(opening, active_story_goal(state))
+
+    def _compose_opening_bootstrap_fast(self, state: GameState) -> list[str]:
+        bundle = self._story_bootstrap.run(state)
+        self._apply_story_bundle(state, bundle)
+        contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
+        opening = [str(line).strip() for line in opening_lines if str(line).strip()]
+        if not opening:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
+        validation_issues = self._opening_validation_issues(state, opening, bundle, contacts)
+        if validation_issues:
+            raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
+        return opening
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
         contacts = list(cast(list[dict[str, object]], bundle.get("contacts", [])))

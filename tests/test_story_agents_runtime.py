@@ -125,6 +125,21 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
 
 
+def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.delenv("CLOUDFLARE_TIMEOUT", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_RETRIES", raising=False)
+    observed: dict[str, object] = {}
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed["timeout"] = timeout
+        return _FakeResponse('{"narration":"ok-cloudflare"}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
+    assert observed["timeout"] == 8.0
+
+
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
@@ -278,6 +293,61 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "not-json")
     with pytest.raises(RuntimeError, match="non-JSON"):
         agent.run(state)
+
+
+def test_story_bootstrap_agent_normalizes_assistant_targeting_in_opening_paragraphs(monkeypatch) -> None:
+    state = build_default_state(seed=553)
+    agent = DefaultStoryBootstrapAgent("openai")
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective on one final case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file and inspect the front steps.",
+                "primary_goal": "Expose the conspiracy behind the murders.",
+                "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Paid enforcers.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [],
+                "clue_placements": [
+                    {
+                        "item_id": "route_key",
+                        "room_id": "watch_tower",
+                        "clue_text": "The route key marks the killer's exit path.",
+                        "hidden_reason": "It was hidden inside a cracked stone cap.",
+                    }
+                ],
+                "hidden_threads": ["The route key links the assistant to the mansion."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": [
+                    "Rain needles the stone as you reach the front steps.",
+                    "Daria Stone, your assistant, keeps the ledger page tight in her hand.",
+                    "You are here to question Daria Stone about her involvement before you go inside.",
+                ],
+            }
+        ),
+    )
+
+    result = agent.run(state)
+
+    assert any("consult Daria Stone" in paragraph for paragraph in result["opening_paragraphs"])
+    assert not any("question Daria Stone" in paragraph for paragraph in result["opening_paragraphs"])
 
 
 def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypatch) -> None:

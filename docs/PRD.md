@@ -180,7 +180,7 @@ flowchart LR
 - `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
 - Local/dev web uses the normal local narrator stack and story-agent stack:
   - narrator mode resolved from OpenAI/Ollama configuration,
-  - opening/bootstrap planning may use the normal story-agent path,
+  - opening/bootstrap planning should use the same single-bootstrap-call fast opening path as hosted demo, with deterministic validation on the critical path,
   - and local misconfiguration may surface directly during development.
 - `storygame.web_demo` is the hosted-demo API surface:
   - `GET /api/v1/health`
@@ -190,6 +190,7 @@ flowchart LR
   - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
   - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
   - hosted bootstrap/opening still uses story planning plus direct LLM-authored scene prose, but it must do so through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - hosted demo opening should use the same single-bootstrap-call fast opening path as local web, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
 - Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
@@ -398,8 +399,8 @@ flowchart LR
 ### Cloudflare Workers adapter (demo mode)
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
-- `CLOUDFLARE_TIMEOUT` (default `20.0`)
-- `CLOUDFLARE_RETRIES` (default `1`)
+- `CLOUDFLARE_TIMEOUT` (default `8.0`)
+- `CLOUDFLARE_RETRIES` (default `0`)
 - `CLOUDFLARE_RETRY_BACKOFF_MS` (default `250`)
 
 ### Hosted demo frontend / CORS

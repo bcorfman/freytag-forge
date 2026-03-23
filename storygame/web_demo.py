@@ -21,7 +21,14 @@ from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web_runtime import ScopedSaveStore, build_bootstrap_response_payload, build_turn_response_payload, execute_turn, is_bootstrap_command
+from storygame.web_runtime import (
+    ScopedSaveStore,
+    bootstrap_failure_debug_payload,
+    build_bootstrap_response_payload,
+    build_turn_response_payload,
+    execute_turn,
+    is_bootstrap_command,
+)
 
 _LOGGER = logging.getLogger(__name__)
 def _utc_now() -> datetime:
@@ -133,6 +140,7 @@ def create_demo_app(
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
     active_freeform_adapter = LlmFreeformProposalAdapter(mode=story_director_mode)
+    use_fast_story_director_opening = story_director is None
     active_story_director = (
         StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
     )
@@ -262,9 +270,19 @@ def create_demo_app(
                     active_story_director,
                     active_narrator,
                     active_output_editor,
+                    use_fast_story_director_opening=use_fast_story_director_opening,
                 )
             except RuntimeError as exc:
-                _LOGGER.warning("Bootstrap opening unavailable: %s", str(exc))
+                _LOGGER.warning(
+                    "Bootstrap opening unavailable: %s | debug=%s",
+                    str(exc),
+                    bootstrap_failure_debug_payload(
+                        start_state,
+                        payload.command,
+                        "session_id",
+                        payload.session_id,
+                    ),
+                )
                 return _error_response(
                     503,
                     "service_unavailable",

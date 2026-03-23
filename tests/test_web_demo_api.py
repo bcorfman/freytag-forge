@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
+from storygame.llm.story_director import StoryDirector
 from storygame.web_demo import _build_demo_narrator, create_demo_app
 from tests.narrator_stubs import StubNarrator
 
@@ -172,6 +173,42 @@ def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tm
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
+def test_demo_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkeypatch):
+    observed = {"fast": 0}
+    original_fast = StoryDirector.compose_opening_fast
+    original_slow = StoryDirector.compose_opening
+
+    def _fast(self, state):  # noqa: ANN001
+        observed["fast"] += 1
+        lines = ["Fast opening one.", "Fast opening two.", "Fast opening three."]
+        state.world_package["llm_story_bundle"] = {
+            "opening_paragraphs": tuple(lines),
+            "assistant_name": "Daria Stone",
+            "actionable_objective": "Open the case file first.",
+        }
+        return list(lines)
+
+    def _slow(self, state):  # noqa: ANN001, ARG002
+        raise AssertionError("web_demo should not use the slow compose_opening path by default")
+
+    monkeypatch.setattr(StoryDirector, "compose_opening_fast", _fast)
+    monkeypatch.setattr(StoryDirector, "compose_opening", _slow)
+
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    assert observed["fast"] == 1
+
+
 def test_demo_bootstrap_prefers_narrator_opening_over_placeholder_story_plan(tmp_path):
     client = TestClient(
             create_demo_app(
@@ -255,6 +292,72 @@ def test_demo_bootstrap_rejects_invalid_narrator_opening_and_fails_closed(tmp_pa
         "status": "service_unavailable",
         "detail": "Narration service is temporarily unavailable.",
     }
+
+
+def test_demo_bootstrap_failure_logs_debug_context_for_railway(tmp_path, caplog):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    with caplog.at_level(logging.WARNING):
+        turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 503
+    assert "Bootstrap opening unavailable" in caplog.text
+    assert "Story bootstrap unavailable." in caplog.text
+    assert "debug=" in caplog.text
+    assert session_id in caplog.text
+    assert "'command': 'look'" in caplog.text
+    assert "'active_goal':" in caplog.text
+    assert "'room_name':" in caplog.text
+
+
+def test_demo_bootstrap_failure_logs_bundle_opening_context(tmp_path, caplog):
+    class _InvalidBundleDirector:
+        def compose_opening(self, state):  # noqa: ANN001
+            lines = (
+                "Rain needles the stone.",
+                "Daria Stone, your assistant, keeps the ledger page in hand.",
+                "You are here to question Daria Stone about her involvement before you go inside.",
+            )
+            state.world_package["llm_story_bundle"] = {
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file first.",
+                "opening_paragraphs": lines,
+            }
+            raise RuntimeError(
+                "Opening validation failed: Daria Stone is framed as an assistant/contact and the direct question target at the same time."
+            )
+
+        def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+            return lines
+
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_InvalidBundleDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    with caplog.at_level(logging.WARNING):
+        turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 503
+    assert "assistant/contact and the direct question target" in caplog.text
+    assert "bundle_opening_paragraphs" in caplog.text
+    assert "question Daria Stone about her involvement" in caplog.text
+    assert "bundle_actionable_objective" in caplog.text
 
 
 def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_credentials(
@@ -353,6 +456,51 @@ def test_demo_bootstrap_normalizes_assistant_question_objective_from_story_agent
     payload = turn.json()
     assert payload["status"] == "ok"
     assert any("consult Daria Stone" in line for line in payload["lines"])
+
+
+def test_demo_bootstrap_normalizes_assistant_targeting_inside_opening_paragraphs(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        body = json.loads(request.data.decode("utf-8"))
+        system = body.get("system", "")
+        if "Story Bootstrap Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Review the case file and inspect the front steps.\\",\\"primary_goal\\":\\"Expose the conspiracy behind the murders.\\",\\"secondary_goals\\":[\\"Find the witness who saw the exchange.\\"],\\"expanded_outline\\":\\"Review the estate, uncover the conspiracy, and force the mastermind into the open.\\",\\"story_beats\\":[{\\"beat_id\\":\\"hook\\",\\"summary\\":\\"Survey the estate.\\",\\"min_progress\\":0.0},{\\"beat_id\\":\\"midpoint\\",\\"summary\\":\\"Reveal the conspiracy.\\",\\"min_progress\\":0.5},{\\"beat_id\\":\\"climax\\",\\"summary\\":\\"Confront the mastermind.\\",\\"min_progress\\":0.85}],\\"villains\\":[{\\"name\\":\\"Magistrate Voss\\",\\"motive\\":\\"Protect the conspiracy.\\",\\"means\\":\\"Hired killers and influence.\\",\\"opportunity\\":\\"Access to the estate and records.\\"}],\\"timed_events\\":[],\\"clue_placements\\":[{\\"item_id\\":\\"route_key\\",\\"room_id\\":\\"watch_tower\\",\\"clue_text\\":\\"The route key points to the hidden service passage.\\",\\"hidden_reason\\":\\"It was hidden in the tower stonework.\\"}],\\"hidden_threads\\":[\\"The route key ties a trusted contact to the mansion.\\"],\\"reveal_schedule\\":[{\\"thread_index\\":0,\\"min_progress\\":0.55}],\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}],\\"opening_paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion.\\",\\"Daria Stone, your assistant, studies the foyer windows from inside the estate.\\",\\"You are here to question Daria Stone about her involvement before you go inside.\\" ]}"}'
+            )
+        if "Story Bootstrap Critic" in system:
+            return _FakeResponse('{"narration":"{\\"verdict\\":\\"accepted\\",\\"continuity_summary\\":\\"The plan is coherent.\\",\\"issues\\":[]}"}')
+        if "Room Presentation Agent" in system:
+            room_payload = {
+                "rooms": [
+                    {"room_id": room_id, "long": f"Long {room.name}.", "short": f"Short {room.name}."}
+                    for room_id, room in build_default_state(seed=52).world.rooms.items()
+                ]
+            }
+            return _FakeResponse('{"narration":' + json.dumps(json.dumps(room_payload)) + "}")
+        raise AssertionError(f"Unexpected system prompt: {system}")
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 52}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["status"] == "ok"
+    assert any("consult Daria Stone" in line for line in payload["lines"])
+    assert not any("question Daria Stone" in line for line in payload["lines"])
 
 
 def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentials(tmp_path, monkeypatch):

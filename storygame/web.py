@@ -98,6 +98,7 @@ def create_app(
     active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     active_freeform_adapter = LlmFreeformProposalAdapter(mode=resolved_narrator_mode)
+    use_fast_story_director_opening = story_director is None
     active_story_director = (
         StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
     )
@@ -140,6 +141,7 @@ def create_app(
                     active_story_director,
                     active_narrator,
                     active_output_editor,
+                    use_fast_story_director_opening=use_fast_story_director_opening,
                 )
             )
 

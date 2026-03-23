@@ -245,8 +245,8 @@ class CloudflareWorkersAIAdapter:
     ) -> None:
         env_worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "")
         env_token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
-        env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "20.0")
-        env_retries = os.getenv("CLOUDFLARE_RETRIES", "1")
+        env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "8.0")
+        env_retries = os.getenv("CLOUDFLARE_RETRIES", "0")
         env_retry_backoff_ms = os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250")
         self.worker_url = worker_url.strip() if worker_url is not None else env_worker_url.strip()
         self.token = token.strip() if token is not None else env_token.strip()
