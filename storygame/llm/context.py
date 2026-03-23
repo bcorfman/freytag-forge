@@ -114,6 +114,7 @@ def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
         "pronouns": npc.pronouns,
         "identity": _short_text(npc.identity, MAX_NPC_DESCRIPTION_LEN),
         "description": _short_text(npc.description, MAX_NPC_DESCRIPTION_LEN),
+        "appearance": _short_text(npc.appearance, MAX_NPC_DESCRIPTION_LEN),
         "location": location,
         "stance_to_player": "",
         "trust_to_player": "",

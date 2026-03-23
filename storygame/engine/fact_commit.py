@@ -29,6 +29,10 @@ class ProjectionUpdater:
             fact_npc_ids = tuple(fact[1] for fact in state.world_facts.query("npc_at", None, room_id))
             room.item_ids = self._preserve_room_order(room.item_ids, fact_item_ids)
             room.npc_ids = self._preserve_room_order(room.npc_ids, fact_npc_ids)
+        for npc_id, npc in state.world.npcs.items():
+            appearance_facts = state.world_facts.query("npc_appearance", npc_id, None)
+            if appearance_facts:
+                npc.appearance = appearance_facts[0][2]
 
     def _preserve_room_order(self, current_ids: tuple[str, ...], fact_ids: tuple[str, ...]) -> tuple[str, ...]:
         ordered = [entity_id for entity_id in current_ids if entity_id in fact_ids]

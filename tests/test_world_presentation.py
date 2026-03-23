@@ -125,6 +125,15 @@ def test_same_room_followup_turn_does_not_repeat_room_block():
     assert any("clue noted:" in line.lower() for line in lines)
 
 
+def test_mystery_room_block_mentions_arrival_car() -> None:
+    state = build_default_state(seed=381, genre="mystery")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert "sedan" in room_block.lower()
+    assert "drive" in room_block.lower()
+
+
 def test_same_room_freeform_reply_does_not_repeat_room_block():
     state = build_default_state(seed=38, genre="mystery")
 

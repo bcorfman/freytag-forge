@@ -30,7 +30,7 @@ from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.coherence import build_default_coherence_gate
 from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.context import build_narration_context
-from storygame.llm.narration_state import extract_narration_fact_ops
+from storygame.llm.narration_state import dialogue_fact_conflict, extract_dialogue_fact_ops, extract_narration_fact_ops
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
@@ -187,6 +187,11 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
             pieces.append(
                 "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
             )
+        elif room.id == "front_steps" and "arrival_sedan" in actionable_items:
+            remaining = tuple(item for item in visible_items if item != "arrival sedan")
+            pieces.append("A dark sedan waits by the drive where it dropped you off.")
+            if remaining:
+                pieces.append(f"You can also see {_joined_with_and(remaining)} within easy reach.")
         else:
             pieces.append(f"You can see {_joined_with_and(visible_items)} within easy reach.")
     if junk_count > 0:
@@ -536,6 +541,7 @@ def _is_invalid_targeted_dialogue_speaker(
 
 
 def _freeform_dialogue_policy_error(
+    state: GameState,
     raw_input: str,
     fallback_action: Action,
     planner_dialog_payload: dict[str, Any] | None,
@@ -558,6 +564,11 @@ def _freeform_dialogue_policy_error(
         return "LLM-authored NPC dialogue is required for conversational turns."
     if _is_parroting_dialogue(raw_input, planner_dialog_payload):
         return "Conversational NPC dialogue must answer in character instead of repeating the player's prompt."
+    speaker = str(planner_dialog_payload.get("speaker", "")).strip()
+    topic = str(arguments.get("topic", "")).strip() if isinstance(arguments, dict) else ""
+    fact_conflict = dialogue_fact_conflict(state, speaker, str(planner_dialog_payload.get("text", "")), topic)
+    if fact_conflict:
+        return fact_conflict
     return ""
 
 
@@ -905,6 +916,7 @@ def run_turn(
         normalized_action_payload = parse_action_proposal(planner_action_payload)
         planner_action_payload = normalized_action_payload
         dialogue_policy_error = _freeform_dialogue_policy_error(
+            preturn_state,
             raw_input,
             fallback_action,
             planner_dialog_payload,
@@ -1055,6 +1067,27 @@ def run_turn(
         events.append(narration_event)
         if freeform_policy_debug is not None:
             freeform_policy_debug["narration_fact_ops"] = list(narration_fact_ops)
+    if requires_freeform_resolution and planner_dialog_payload is not None and planner_action_payload is not None:
+        dialogue_fact_ops = extract_dialogue_fact_ops(
+            next_state,
+            str(planner_dialog_payload.get("speaker", "")),
+            str(planner_dialog_payload.get("text", "")),
+            str(planner_action_payload.get("arguments", {}).get("topic", "")),
+        )
+        if dialogue_fact_ops:
+            apply_fact_ops(next_state, dialogue_fact_ops)
+            dialogue_fact_event = Event(
+                type="dialogue_commit",
+                turn_index=next_state.turn_index,
+                metadata={
+                    "fact_ops": dialogue_fact_ops,
+                    "source": "accepted_dialogue",
+                    "speaker": str(planner_dialog_payload.get("speaker", "")),
+                    "text": str(planner_dialog_payload.get("text", "")),
+                },
+            )
+            next_state.append_event(dialogue_fact_event)
+            events.append(dialogue_fact_event)
     narration = _ensure_action_grounded_narration(narration, effective_action)
 
     preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)

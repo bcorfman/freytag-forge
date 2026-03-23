@@ -23,6 +23,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
     payload = context.as_dict()
     npc_facts_line = ", ".join(
         f"{fact['name']} [{fact['pronouns']}] ({fact['identity']}) @ {fact['location']}"
+        + (f" appearance={fact['appearance']}" if str(fact.get("appearance", "")).strip() else "")
         for fact in payload["npc_facts"]
     )
     user = (
