@@ -818,6 +818,79 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
+def test_run_turn_targeted_appearance_reply_commits_new_fact_without_leaking_action_key() -> None:
+    class _AppearanceAdapter:
+        def __init__(self, npc_id: str) -> None:
+            self._npc_id = npc_id
+
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": self._npc_id, "text": "I'm wearing a slate coat and rain-dark gloves.", "tone": "in_world"},
+                {
+                    "intent": "examine",
+                    "targets": [self._npc_id],
+                    "arguments": {"topic": "appearance", "planner_source": "llm"},
+                    "proposed_effects": ["asked:appearance"],
+                },
+            )
+
+    state = build_default_state(seed=88334, genre="thriller")
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    npc_name = state.world.npcs[npc_id].name
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        f"{npc_name}, what are you wearing?",
+        Random(88334),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_AppearanceAdapter(npc_id),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert not any(line.strip().lower() == "examine" for line in lines)
+    assert any('says: "I\'m wearing a slate coat and rain-dark gloves."' in line for line in lines)
+    assert next_state.world_facts.holds("npc_appearance", npc_id, "a slate coat and rain-dark gloves")
+
+
+def test_run_turn_fails_closed_for_targeted_appearance_reply_that_conflicts_with_fact_backed_appearance() -> None:
+    class _ConflictingAppearanceAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "daria_stone", "text": "I'm wearing a simple yet elegant dress.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "appearance", "planner_source": "llm"},
+                    "proposed_effects": ["asked:appearance"],
+                },
+            )
+
+    state = build_default_state(seed=88339, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what are you wearing?",
+        Random(88339),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ConflictingAppearanceAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert not any(line.startswith('Daria says: "') for line in lines)
+    assert next_state.world_facts.holds(
+        "npc_appearance",
+        "daria_stone",
+        "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun",
+    )
+
+
 def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
     class _NpcReplyAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

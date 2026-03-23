@@ -36,6 +36,15 @@ def test_context_includes_required_fields_and_limits():
     assert npc_fact["location"] in state.world.rooms
 
 
+def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
+    state = build_default_state(seed=107, genre="mystery")
+
+    context = build_narration_context(state, parse_command("look"), "hook")
+    payload = context.as_dict()
+
+    assert "arrival_sedan" in payload["visible_items"]
+
+
 def test_context_includes_memory_fragments_without_overriding_facts():
     state = build_default_state(seed=11)
     room_name = state.world.rooms[state.player.location].name

@@ -89,6 +89,7 @@ class Npc:
     description: str
     dialogue: str
     identity: str = ""
+    appearance: str = ""
     pronouns: str = "they/them"
     tags: tuple[str, ...] = ()
     delta_progress: float = 0.0

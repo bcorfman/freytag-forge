@@ -184,6 +184,22 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     assert resolved["event"].delta_progress > 0.0
 
 
+def test_resolve_freeform_roleplay_read_case_file_allows_nearby_assistant_holder() -> None:
+    state = build_default_state(seed=414, genre="mystery")
+    assert "case_file" not in state.player.inventory
+    assert state.world_facts.holds("holding", "daria_stone", "case_file")
+    adapter = RuleBasedFreeformProposalAdapter()
+
+    resolved = resolve_freeform_roleplay(state, "review the case file", adapter)
+
+    assert resolved["state"].player.flags.get("reviewed_case_file") is True
+    assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
+    assert any(
+        tuple(mutation["fact"]) == ("reviewed_with_holder", "daria_stone", "case_file")
+        for mutation in resolved["state_update_envelope"]["assert"]
+    )
+
+
 def test_resolve_freeform_roleplay_read_ledger_page_sets_specific_progress_flag() -> None:
     state = build_default_state(seed=408)
     room = state.world.rooms[state.player.location]
@@ -335,7 +351,7 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
 
     assert dialog["speaker"] == "daria_stone"
     assert dialog["text"]
-    assert action["intent"] == "question"
+    assert action["intent"] == "ask_about"
     assert action["arguments"]["planner_source"] == "llm"
 
 

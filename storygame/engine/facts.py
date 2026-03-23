@@ -24,6 +24,7 @@ _LEGACY_FACT_PREDICATES = {
     "npc_trait",
     "npc_identity",
     "npc_pronouns",
+    "npc_appearance",
 }
 
 
@@ -94,6 +95,8 @@ def initialize_world_facts(state) -> None:
         facts.assert_fact("npc_trait", npc_id, npc.description)
         if npc.identity:
             facts.assert_fact("npc_identity", npc_id, npc.identity)
+        if npc.appearance:
+            facts.assert_fact("npc_appearance", npc_id, npc.appearance)
         if npc.pronouns:
             facts.assert_fact("npc_pronouns", npc_id, npc.pronouns)
     state.world_facts = facts

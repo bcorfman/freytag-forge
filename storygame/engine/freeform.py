@@ -331,6 +331,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "name": state.world.npcs[npc_id].name,
             "identity": state.world.npcs[npc_id].identity,
             "description": state.world.npcs[npc_id].description,
+            "appearance": state.world.npcs[npc_id].appearance,
         }
         for npc_id in room.npc_ids
         if npc_id in state.world.npcs
@@ -358,13 +359,23 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "Use only entities from provided context. "
         "For uncertain targets, use an empty targets list and a generic intent. "
         "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
-        "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary."
+        "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
+        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details."
     )
     return system, json.dumps(payload, ensure_ascii=True)
 
 
+def _normalize_intent(intent: str) -> str:
+    normalized = _normalize_target(intent)
+    if normalized in {"examine", "inspect", "review", "read", "analyze"}:
+        return "inspect"
+    if normalized in {"ask", "question", "query"}:
+        return "ask_about"
+    return normalized
+
+
 def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
-    intent = _normalize_target(str(action_payload.get("intent", "")))
+    intent = _normalize_intent(str(action_payload.get("intent", "")))
     targets = [_normalize_target(str(target)) for target in action_payload.get("targets", [])]
     raw_arguments = action_payload.get("arguments", {})
     arguments = (
@@ -480,7 +491,8 @@ def _apply_raw_command_overrides(
     dialog_proposal: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     lowered = raw_input.strip().lower()
-    if _CASE_FILE_COMMAND.search(lowered) and "case_file" in state.player.inventory:
+    nearby_case_file_holder = _nearby_holder_for_item(state, "case_file")
+    if _CASE_FILE_COMMAND.search(lowered) and ("case_file" in state.player.inventory or nearby_case_file_holder):
         action = {
             "intent": "read_case_file",
             "targets": ["case_file"],
@@ -523,15 +535,19 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
         return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_NO_TARGET"]}
 
     if intent == "read_case_file":
-        if "case_file" not in state.player.inventory:
+        nearby_holder = _nearby_holder_for_item(state, "case_file")
+        if "case_file" not in state.player.inventory and not nearby_holder:
             return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_CASE_FILE"]}
+        assert_ops = [
+            {"fact": ["flag", "player", "reviewed_case_file"]},
+            {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
+            {"fact": ["discovered_clue", "case_file"]},
+            {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
+        ]
+        if nearby_holder:
+            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})
         return {
-            "assert": [
-                {"fact": ["flag", "player", "reviewed_case_file"]},
-                {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
-                {"fact": ["discovered_clue", "case_file"]},
-                {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
-            ],
+            "assert": assert_ops,
             "retract": [],
             "numeric_delta": [],
             "reasons": ["freeform:read_case_file"],

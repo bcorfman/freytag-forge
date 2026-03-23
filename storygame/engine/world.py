@@ -172,6 +172,15 @@ def _build_items(package: dict) -> dict[str, Item]:
         tags=("tool",),
         kind="tool",
     )
+    if genre == "mystery":
+        items["arrival_sedan"] = Item(
+            id="arrival_sedan",
+            name="Arrival Sedan",
+            description="A dark sedan waits by the drive, its engine cooled after the trip to the mansion.",
+            tags=("vehicle", genre),
+            kind="vehicle",
+            portable=False,
+        )
     return items
 
 
@@ -179,12 +188,18 @@ def _build_npcs(package: dict) -> dict[str, Npc]:
     npcs: dict[str, Npc] = {}
     for index, npc_name in enumerate(package["entities"]["npcs"]):
         npc_id = _slugify_name(npc_name)
+        description = f"{npc_name} watches the situation carefully."
+        appearance = ""
+        if package["genre"] == "mystery" and npc_id == "daria_stone":
+            appearance = "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"
+            description = f"{npc_name} watches the situation carefully in {appearance}."
         npcs[npc_id] = Npc(
             id=npc_id,
             name=npc_name,
-            description=f"{npc_name} watches the situation carefully.",
+            description=description,
             dialogue=f"Stay focused on the objective: {package['goals']['primary']}",
             identity=f"{package['genre']} world participant",
+            appearance=appearance,
             pronouns=_infer_binary_pronouns(npc_name),
             tags=(package["genre"],),
             delta_progress=0.05 if index < 3 else 0.0,
@@ -255,7 +270,11 @@ def _seed_default_mystery_opening(rooms: dict[str, Room]) -> dict[str, str]:
     seeded_holding: dict[str, str] = {}
     _remove_room_item(rooms, "case_file")
     _remove_room_item(rooms, "ledger_page")
+    front_steps = rooms.get("front_steps")
+    if front_steps is not None and "arrival_sedan" not in front_steps.item_ids:
+        front_steps.item_ids = tuple(dict.fromkeys((*front_steps.item_ids, "arrival_sedan")))
     if "daria_stone" in {npc_id for room in rooms.values() for npc_id in room.npc_ids}:
+        seeded_holding["case_file"] = "daria_stone"
         seeded_holding["ledger_page"] = "daria_stone"
     return seeded_holding
 
@@ -279,7 +298,7 @@ def build_default_state(
 
     start_room = package["map"]["rooms"][0]
     opening_inventory: list[str] = ["field_kit"]
-    if package["genre"] == "mystery" and "case_file" in items:
+    if package["genre"] != "mystery" and "case_file" in items:
         opening_inventory.append("case_file")
 
     start_room_state = rooms[start_room]
@@ -331,6 +350,8 @@ def build_default_state(
         for item_id, holder_id in seeded_holding.items():
             if item_id in state.world.items and holder_id in state.world.npcs:
                 apply_fact_ops(state, [{"op": "assert", "fact": ("holding", holder_id, item_id)}])
+        if "arrival_sedan" in state.world.items:
+            apply_fact_ops(state, [{"op": "assert", "fact": ("room_item", start_room, "arrival_sedan")}])
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state
