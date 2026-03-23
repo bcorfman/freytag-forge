@@ -269,6 +269,31 @@ def test_demo_bootstrap_falls_through_to_narrator_when_story_bootstrap_fails(tmp
     assert any("Rain needles the stone." in line for line in payload["lines"])
 
 
+def test_demo_bootstrap_fallback_narrator_normalizes_assistant_targeting_before_validation(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "Rain needles the stone.\n\n"
+                "Daria Stone, your assistant, studies the foyer windows.\n\n"
+                "You need to question Daria Stone about her involvement before you go inside."
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["status"] == "ok"
+    assert any("consult Daria Stone" in line for line in payload["lines"])
+    assert not any("question Daria Stone" in line for line in payload["lines"])
+
+
 def test_demo_bootstrap_rejects_invalid_narrator_opening_and_fails_closed(tmp_path):
     client = TestClient(
         create_demo_app(
