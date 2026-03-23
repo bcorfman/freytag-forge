@@ -10,6 +10,8 @@ SYSTEM_CONSTRAINTS = (
     "Opening scene (turn 0 only): write 3-4 paragraphs.",
     "Opening scene must establish who the player is, where they are, and the immediate objective.",
     "Opening scene should use concrete sensory details and atmosphere grounded in known context.",
+    "Opening scene must stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory.",
+    "Do not invent extra furniture, desks, tables, papers, or document staging that are not present in the context slice.",
     "Turn format after opening: room name, room description, items naturally in prose, exits, then NPC interactions or background events.",
     "For conversational freeform turns with an addressed NPC, prefer a direct in-world reply from that NPC and do not restate the room block first.",
     "Spoiler discipline: do not reveal later twists early.",
@@ -34,6 +36,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Scene pressure: {payload['scene'].get('pressure', '')}\n"
         f"Player approach: {payload['scene'].get('player_approach', '')}\n"
         f"Location: {payload['room_name']}\n"
+        f"Room description: {payload['room_description']}\n"
         f"Protagonist: {payload['protagonist_name']}\n"
         f"Protagonist background: {payload['protagonist_background']}\n"
         f"Assistant anchor: {payload['assistant_name']}\n"
@@ -47,6 +50,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Soft memory hints (non-authoritative): {', '.join(payload['memory_fragments'])}\n"
         f"Canonical NPC facts: {npc_facts_line}\n"
         f"Inventory: {', '.join(payload['inventory'])}\n"
+        f"Exits: {', '.join(payload['exits'])}\n"
         f"Recent events: {[e['message_key'] for e in payload['recent_events']]}\n"
         f"Active goal: {payload['goal']}\n"
         f"Hard constraints: {', '.join(HARD_CONSTRAINTS)}\n"
