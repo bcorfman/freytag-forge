@@ -381,25 +381,36 @@ def _normalize_actionable_objective_language(objective: str, assistant_name: str
         normalized = re.sub(r"\bfirst witness\b", "first contact", normalized, flags=re.IGNORECASE)
         normalized = re.sub(r"\bquestion your witness\b", "question your contact", normalized, flags=re.IGNORECASE)
         suspect_label = suspect_name or "the suspect"
-        assistant_pattern = re.escape(assistant_name)
-        normalized = re.sub(
-            rf"\b{assistant_pattern}'s involvement\b",
-            f"{suspect_label}'s involvement",
-            normalized,
-            flags=re.IGNORECASE,
-        )
-        normalized = re.sub(
-            rf"\binvolvement of {assistant_pattern}\b",
-            f"involvement of {suspect_label}",
-            normalized,
-            flags=re.IGNORECASE,
-        )
-        normalized = re.sub(
-            rf"\babout {assistant_pattern} involvement\b",
-            f"about {suspect_label}'s involvement",
-            normalized,
-            flags=re.IGNORECASE,
-        )
+        assistant_references = [assistant_name]
+        assistant_parts = assistant_name.split()
+        if assistant_parts:
+            assistant_references.append(assistant_parts[0])
+        for assistant_reference in tuple(dict.fromkeys(reference for reference in assistant_references if reference)):
+            assistant_pattern = re.escape(assistant_reference)
+            normalized = re.sub(
+                rf"\b{assistant_pattern}'s involvement\b",
+                f"{suspect_label}'s involvement",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\binvolvement of {assistant_pattern}\b",
+                f"involvement of {suspect_label}",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\babout {assistant_pattern} involvement\b",
+                f"about {suspect_label}'s involvement",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\b(question|interrogate|interview|press|confront|accuse|ask)\s+{assistant_pattern}\b",
+                f"consult {assistant_reference}",
+                normalized,
+                flags=re.IGNORECASE,
+            )
     return normalized
 
 

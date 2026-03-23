@@ -311,6 +311,50 @@ def test_demo_bootstrap_uses_cloudflare_story_agent_opening_without_openai_crede
     assert any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
 
 
+def test_demo_bootstrap_normalizes_assistant_question_objective_from_story_agent(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        body = json.loads(request.data.decode("utf-8"))
+        system = body.get("system", "")
+        if "Story Bootstrap Agent" in system:
+            return _FakeResponse(
+                '{"narration":"{\\"protagonist_name\\":\\"Noah Kade\\",\\"protagonist_background\\":\\"A detective haunted by an old failure.\\",\\"assistant_name\\":\\"Daria Stone\\",\\"actionable_objective\\":\\"Question Daria Stone about the foyer and inspect the front steps.\\",\\"primary_goal\\":\\"Expose the conspiracy behind the murders.\\",\\"secondary_goals\\":[\\"Find the witness who saw the exchange.\\"],\\"expanded_outline\\":\\"Review the estate, uncover the conspiracy, and force the mastermind into the open.\\",\\"story_beats\\":[{\\"beat_id\\":\\"hook\\",\\"summary\\":\\"Survey the estate.\\",\\"min_progress\\":0.0},{\\"beat_id\\":\\"midpoint\\",\\"summary\\":\\"Reveal the conspiracy.\\",\\"min_progress\\":0.5},{\\"beat_id\\":\\"climax\\",\\"summary\\":\\"Confront the mastermind.\\",\\"min_progress\\":0.85}],\\"villains\\":[{\\"name\\":\\"Magistrate Voss\\",\\"motive\\":\\"Protect the conspiracy.\\",\\"means\\":\\"Hired killers and influence.\\",\\"opportunity\\":\\"Access to the estate and records.\\"}],\\"timed_events\\":[],\\"clue_placements\\":[{\\"item_id\\":\\"route_key\\",\\"room_id\\":\\"watch_tower\\",\\"clue_text\\":\\"The route key points to the hidden service passage.\\",\\"hidden_reason\\":\\"It was hidden in the tower stonework.\\"}],\\"hidden_threads\\":[\\"The route key ties a trusted contact to the mansion.\\"],\\"reveal_schedule\\":[{\\"thread_index\\":0,\\"min_progress\\":0.55}],\\"contacts\\":[{\\"name\\":\\"Daria Stone\\",\\"role\\":\\"assistant\\",\\"trait\\":\\"observant\\"}],\\"opening_paragraphs\\":[\\"The evening air bites at your skin as you approach the mansion.\\",\\"You are Noah Kade, and Daria Stone studies the foyer windows from inside the estate.\\",\\"Tonight\\\\u2019s work is practical before it is grand: consult Daria Stone about the foyer and inspect the front steps.\\" ]}"}'
+            )
+        if "Story Bootstrap Critic" in system:
+            return _FakeResponse('{"narration":"{\\"verdict\\":\\"accepted\\",\\"continuity_summary\\":\\"The plan is coherent.\\",\\"issues\\":[]}"}')
+        if "Room Presentation Agent" in system:
+            room_payload = {
+                "rooms": [
+                    {"room_id": room_id, "long": f"Long {room.name}.", "short": f"Short {room.name}."}
+                    for room_id, room in build_default_state(seed=52).world.rooms.items()
+                ]
+            }
+            return _FakeResponse('{"narration":' + json.dumps(json.dumps(room_payload)) + "}")
+        raise AssertionError(f"Unexpected system prompt: {system}")
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 52}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["status"] == "ok"
+    assert any("consult Daria Stone" in line for line in payload["lines"])
+
+
 def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentials(tmp_path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
