@@ -294,6 +294,33 @@ def test_demo_bootstrap_fallback_narrator_normalizes_assistant_targeting_before_
     assert not any("question Daria Stone" in line for line in payload["lines"])
 
 
+def test_demo_bootstrap_fallback_drops_truncated_fourth_paragraph(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "Detective Elias Wren stood at the entrance of the grand mansion, the warm sunlight catching on the stonework.\n\n"
+                "As he stepped onto the front steps, Daria Stone watched him from beside the heavy door.\n\n"
+                "\"Good morning, Detective Wren,\" Daria said. \"I've been expecting you.\"\n\n"
+                "Detective Wren's eyes scanned the area, taking in the manicured lawn and the perfectly trimmed hedges. A small, sleek car was parked by the side of the driveway, its"
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    payload = turn.json()
+    assert payload["status"] == "ok"
+    assert not any("its." in line for line in payload["lines"])
+    assert not any("its" == line.strip() for line in payload["lines"])
+    assert not any("small, sleek car" in line for line in payload["lines"])
+
+
 def test_demo_bootstrap_rejects_invalid_narrator_opening_and_fails_closed(tmp_path):
     client = TestClient(
         create_demo_app(
