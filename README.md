@@ -74,6 +74,7 @@ make test
 - Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; facts commit first, then opening prose is validated against those facts and fails closed on mismatch.
 - Bootstrap objective guardrail: assistant/contact objectives and opening paragraphs are normalized away from suspect-style questioning language before opening validation so hosted demo openings stay playable when the upstream model phrases the first move poorly.
 - Web opening path: both web surfaces now use a single bootstrap call plus deterministic validation on the opening critical path, skipping bootstrap critique, remote room-presentation generation, and opening editor passes until after first paint.
+- Opening grounding: bootstrap and narrator opening prompts now carry canonical room description, exits, visible NPCs, visible items, and inventory constraints so the first scene stays anchored to deterministic location facts instead of relying on ad hoc post-hoc cleanup.
 - Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.
 

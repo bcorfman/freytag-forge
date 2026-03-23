@@ -28,6 +28,8 @@ def build_story_bootstrap_prompt(
         "If the opening scene needs an immediately relevant clue at the entrance, put it in the assistant/contact's custody rather than leaving it exposed on the ground. "
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
+        "opening_paragraphs must stay materially consistent with opening_room description, exits, visible NPCs, visible items, and inventory_seed. "
+        "Do not invent extra furniture, worksurfaces, papers, desks, tables, or document piles that are not supported by opening_room, items_seed, or inventory_seed. "
         "Do not frame the assistant as the suspect currently being questioned, and do not place the same clue both in someone's hand and out in the open. "
         "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
     )
@@ -103,7 +105,9 @@ def build_narrator_opening_prompt(opening_draft: str) -> tuple[str, str]:
         "You are Narrator Agent. Return JSON only with key paragraphs (3 to 4 paragraphs). "
         "Second person voice, no spoilers, no meta-game phrasing. "
         "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns. "
-        "Keep assistant roles, suspect roles, and clue placement physically consistent across all paragraphs."
+        "Keep assistant roles, suspect roles, and clue placement physically consistent across all paragraphs. "
+        "Stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory from the draft. "
+        "Do not invent extra furniture, desks, tables, papers, or document staging that the draft does not support."
     )
     user = json.dumps({"opening_draft": opening_draft}, ensure_ascii=True)
     return system, user
