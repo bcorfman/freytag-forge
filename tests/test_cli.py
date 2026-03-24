@@ -701,6 +701,71 @@ def test_run_turn_talk_command_fails_closed_without_llm_planner():
     assert next_state.player.flags.get("greeted_daria_stone") is not True
 
 
+def test_run_turn_fails_closed_for_parroting_npc_dialogue() -> None:
+    class _ParrotingAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "You asked me which witness is uncooperative.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "witness", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88337, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, which witness is uncooperative?",
+        Random(88337),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ParrotingAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_allows_legitimate_npc_answer_that_reuses_topic_words() -> None:
+    class _LegitimateAnswerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {
+                    "speaker": "daria_stone",
+                    "text": "The uncooperative witness is the groundskeeper; he clams up whenever the ledger comes up.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "witness", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883371, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, which witness is uncooperative?",
+        Random(883371),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_LegitimateAnswerAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("groundskeeper" in line.lower() for line in lines)
+    assert not any("story response unavailable" in line.lower() for line in lines)
+
+
 def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
     state = build_default_state(seed=883)
     after_examine, _lines, _action_raw, beat_type, continued = run_turn(
