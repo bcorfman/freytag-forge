@@ -13,6 +13,7 @@ from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
     _HIDDEN_FREEFORM_MESSAGE_KEYS,
+    _dialogue_contains_code_artifact,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
@@ -553,7 +554,7 @@ def _is_conversational_freeform_request(raw_input: str, fallback_action: Action)
     lowered = raw_input.strip().lower()
     if fallback_action.kind == ActionKind.TALK:
         return True
-    return bool(re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how)\b", lowered))
+    return bool(re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|summarize|explain)\b", lowered) or "," in lowered)
 
 
 def _is_parroting_dialogue(raw_input: str, dialog_payload: dict[str, Any]) -> bool:
@@ -582,6 +583,9 @@ def _targeted_conversation_requires_npc_reply(
 ) -> bool:
     if fallback_action.kind == ActionKind.TALK:
         return True
+    intent = str(planner_action_payload.get("intent", "")).strip().lower()
+    if intent not in {"ask_about", "greet", "apologize", "threaten", "query"}:
+        return False
     targets = planner_action_payload.get("targets", ())
     return isinstance(targets, (list, tuple)) and any(str(target).strip() for target in targets)
 
@@ -594,7 +598,12 @@ def _is_invalid_targeted_dialogue_speaker(
     if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
         return False
     speaker = re.sub(r"[^a-z0-9]+", "_", str(planner_dialog_payload.get("speaker", "")).strip().lower()).strip("_")
-    return speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}
+    if speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}:
+        return True
+    if speaker in {"ai_assistant", "assistant"}:
+        return False
+    primary_target = str(next((target for target in targets if str(target).strip()), "")).strip().lower()
+    return bool(primary_target and speaker != primary_target)
 
 
 def _freeform_dialogue_policy_error(
@@ -621,6 +630,8 @@ def _freeform_dialogue_policy_error(
         return "LLM-authored NPC dialogue is required for conversational turns."
     if _is_parroting_dialogue(raw_input, planner_dialog_payload):
         return "Conversational NPC dialogue must answer in character instead of repeating the player's prompt."
+    if _dialogue_contains_code_artifact(planner_dialog_payload):
+        return "Conversational NPC dialogue must stay in-world and must not leak code or implementation artifacts."
     speaker = str(planner_dialog_payload.get("speaker", "")).strip()
     topic = str(arguments.get("topic", "")).strip() if isinstance(arguments, dict) else ""
     fact_conflict = dialogue_fact_conflict(state, speaker, str(planner_dialog_payload.get("text", "")), topic)

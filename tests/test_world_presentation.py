@@ -120,9 +120,14 @@ def test_room_presentation_short_description_uses_complete_clause_not_ellipsis_o
     destination = moved_state.player.location
     cache = moved_state.world_package["room_presentation_cache"][destination]
 
-    assert cache["short"] == "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long hall."
+    assert (
+        cache["short"]
+        == "The foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead."
+    )
     assert "..." not in cache["short"]
-    assert move_lines[0].startswith("Mansion Foyer\nThe foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long hall.")
+    assert move_lines[0].startswith(
+        "Mansion Foyer\nThe foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead."
+    )
 
 
 def test_move_room_block_announces_follower_before_npc_presence_line() -> None:

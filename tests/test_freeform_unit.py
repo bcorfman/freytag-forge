@@ -618,6 +618,59 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_na
     assert action["intent"] == "ask_about"
 
 
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_wrong_npc_answers(monkeypatch) -> None:
+    state = build_default_state(seed=40513, genre="mystery")
+    state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
+    state.player.location = "foyer"
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The victim was found upstairs after midnight.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+            '{"dialog_proposal":{"speaker":"olivia_thompson","text":"She was dead before the staff started lying to each other.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
+
+    assert dialog["speaker"] == "olivia_thompson"
+    assert "dead before the staff" in dialog["text"]
+    assert action["intent"] == "ask_about"
+
+
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_artifact(monkeypatch) -> None:
+    state = build_default_state(seed=40514, genre="mystery")
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"getStringExtra from the case file is not available yet, but it is extensive.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":["asked:case_file"]}}',
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file fixes the victim timeline, names the last verified witness, and points us to the strongest lead inside.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":["asked:case_file"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Daria, summarize the case file for me")
+
+    assert dialog["speaker"] == "daria_stone"
+    assert "getStringExtra" not in dialog["text"]
+    assert "victim timeline" in dialog["text"]
+    assert action["intent"] == "ask_about"
+
+
 def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(monkeypatch) -> None:
     state = build_default_state(seed=40512, genre="mystery")
     responses = iter(
