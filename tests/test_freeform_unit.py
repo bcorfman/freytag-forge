@@ -5,6 +5,7 @@ from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
+    _freeform_planner_prompt,
     _envelope_for_action,
     _envelope_to_fact_ops,
     _topic_flag_fragment,
@@ -171,6 +172,27 @@ def test_resolve_freeform_roleplay_applies_generic_policy_for_arbitrary_intents(
     knock = resolve_freeform_roleplay(state, "Daria, knock on the door", adapter)
     assert knock["state"].player.flags.get("freeform_intent_knock") is True
     assert knock["event"].delta_progress > 0.0
+
+
+def test_resolve_freeform_roleplay_strips_unsolicited_npc_targeting_from_world_action() -> None:
+    state = build_default_state(seed=416, genre="mystery")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "get in car",
+        {"speaker": "daria_stone", "text": "What brings you to the mansion at this hour?", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "arrival", "planner_source": "llm"},
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["action_proposal"]["targets"] == ()
+    assert resolved["action_proposal"]["intent"] == "freeform"
+    assert resolved["dialog_proposal"]["speaker"] == "narrator"
+    assert "daria stone says" not in resolved["event"].message_key.lower()
 
 
 def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() -> None:
@@ -372,6 +394,18 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
     assert action["intent"] == "ask_about"
     assert tuple(action["targets"]) == ("daria_stone",)
     assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
+    state = build_default_state(seed=4052, genre="mystery")
+
+    _system, user = _freeform_planner_prompt(state, "Daria, what are you wearing?")
+
+    assert '"scene_facts"' in user
+    assert "drove your own sedan" in user
+    assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
+    assert '"id": "arrival_sedan"' in user
+    assert '"state": "parked_by_drive"' in user
 
 
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:

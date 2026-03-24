@@ -1029,6 +1029,39 @@ def test_run_turn_fails_closed_when_targeted_conversation_returns_player_speaker
     assert not any(line.startswith('You says: "') for line in lines)
 
 
+def test_run_turn_keeps_non_addressed_world_actions_scene_scoped() -> None:
+    class _NpcHijackAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "What brings you to the mansion at this hour?", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "arrival", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883381, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "get in car",
+        Random(883381),
+        StubNarrator("You head for your sedan and reach for the driver's door."),
+        debug=False,
+        freeform_adapter=_NpcHijackAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert action_raw == "get in car"
+    assert next_state.turn_index == 1
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+    assert not any("story response unavailable" in line.lower() for line in lines)
+    assert any("driver's door" in line.lower() for line in lines)
+
+
 def test_run_turn_maps_ai_assistant_speaker_to_target_npc_name() -> None:
     class _AssistantSpeakerAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

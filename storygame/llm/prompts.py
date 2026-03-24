@@ -24,7 +24,19 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
     npc_facts_line = ", ".join(
         f"{fact['name']} [{fact['pronouns']}] ({fact['identity']}) @ {fact['location']}"
         + (f" appearance={fact['appearance']}" if str(fact.get("appearance", "")).strip() else "")
+        + (f" relation={fact['relationship_to_player']}" if str(fact.get("relationship_to_player", "")).strip() else "")
+        + (f" purpose={fact['scene_purpose']}" if str(fact.get("scene_purpose", "")).strip() else "")
         for fact in payload["npc_facts"]
+    )
+    item_facts_line = "; ".join(
+        (
+            f"{fact['name']} [{fact['kind']}; portable={fact['portable']}"
+            + (f"; owner={fact['owner']}" if str(fact.get("owner", "")).strip() else "")
+            + (f"; driver={fact['driver']}" if str(fact.get("driver", "")).strip() else "")
+            + (f"; state={fact['state']}" if str(fact.get("state", "")).strip() else "")
+            + f"]: {fact['description']}"
+        )
+        for fact in payload["item_facts"]
     )
     user = (
         f"Action: {payload['action']}\n"
@@ -38,6 +50,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Player approach: {payload['scene'].get('player_approach', '')}\n"
         f"Location: {payload['room_name']}\n"
         f"Room description: {payload['room_description']}\n"
+        f"Scene facts: {' | '.join(payload['scene_facts'])}\n"
         f"Protagonist: {payload['protagonist_name']}\n"
         f"Protagonist background: {payload['protagonist_background']}\n"
         f"Assistant anchor: {payload['assistant_name']}\n"
@@ -47,6 +60,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Conversation topic: {payload['conversation_topic']}\n"
         f"Prefer NPC reply: {payload['prefer_npc_reply']}\n"
         f"Visible items: {', '.join(payload['visible_items'])}\n"
+        f"Visible item facts: {item_facts_line}\n"
         f"Visible NPCs: {', '.join(payload['visible_npcs'])}\n"
         f"Soft memory hints (non-authoritative): {', '.join(payload['memory_fragments'])}\n"
         f"Canonical NPC facts: {npc_facts_line}\n"

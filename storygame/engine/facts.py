@@ -273,6 +273,54 @@ def protagonist_profile(state) -> dict[str, str]:
     }
 
 
+def player_context_facts(state) -> tuple[dict[str, str], ...]:
+    return tuple(
+        {
+            "key": fact[1],
+            "text": fact[2],
+        }
+        for fact in state.world_facts.query("player_context", None, None)
+    )
+
+
+def npc_relationship_to_player(state, npc_name: str) -> str:
+    normalized = npc_name.strip().lower()
+    if not normalized:
+        return ""
+    for fact in state.world_facts.query("npc_relationship", None, "player", None):
+        if fact[1].strip().lower() == normalized:
+            return fact[3]
+    return ""
+
+
+def npc_scene_purpose(state, npc_id: str) -> str:
+    facts = state.world_facts.query("npc_scene_purpose", npc_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_owner(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_owner", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_driver(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_driver", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_state(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_state", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
 def hidden_story_threads(state) -> tuple[str, ...]:
     return tuple(fact[1] for fact in state.world_facts.query("story_hidden_thread", None))
 
