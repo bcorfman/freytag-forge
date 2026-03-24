@@ -14,6 +14,7 @@ def build_story_bootstrap_prompt(
     rooms_seed: list[dict[str, object]],
     items_seed: list[dict[str, object]],
     inventory_seed: list[str],
+    opening_facts: dict[str, object],
 ) -> tuple[str, str]:
     system = (
         "You are Story Bootstrap Agent. Return JSON only with keys: "
@@ -24,13 +25,10 @@ def build_story_bootstrap_prompt(
         "story_beats must map the whole story arc for the requested session length. "
         "villains must explain motive, means, and opportunity. "
         "clue_placements must use exact provided item_id and room_id values and should keep meaningful clues hidden in plausible places. "
-        "Do not place fragile paper clues like ledger pages out in open exterior approach areas such as the driveway or front steps. "
-        "If the opening scene needs an immediately relevant clue at the entrance, put it in the assistant/contact's custody rather than leaving it exposed on the ground. "
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
         "opening_paragraphs must stay materially consistent with opening_room description, exits, visible NPCs, visible items, and inventory_seed. "
-        "Do not invent extra furniture, worksurfaces, papers, desks, tables, or document piles that are not supported by opening_room, items_seed, or inventory_seed. "
-        "Do not frame the assistant as the suspect currently being questioned, and do not place the same clue both in someone's hand and out in the open. "
+        "Treat opening_facts as canonical opening state for role, custody, scene-purpose, and pending-knowledge continuity; do not contradict opening_facts. "
         "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
     )
     user = json.dumps(
@@ -45,6 +43,7 @@ def build_story_bootstrap_prompt(
             "rooms_seed": rooms_seed,
             "items_seed": items_seed,
             "inventory_seed": inventory_seed,
+            "opening_facts": opening_facts,
         },
         ensure_ascii=True,
     )
@@ -85,31 +84,33 @@ def build_character_designer_prompt(protagonist_name: str, contacts_seed: list[d
     return system, user
 
 
-def build_plot_designer_prompt(active_goal: str, assistant_name: str) -> tuple[str, str]:
+def build_plot_designer_prompt(active_goal: str, assistant_name: str, assistant_facts: dict[str, object]) -> tuple[str, str]:
     system = (
         "You are Plot Designer Agent. Return JSON only with keys assistant_name and actionable_objective. "
-        "actionable_objective must be concrete and immediately playable."
+        "actionable_objective must be concrete and immediately playable. "
+        "Treat assistant_facts as canonical role and scene-purpose context when shaping the objective."
     )
     user = json.dumps(
         {
             "active_goal": active_goal,
             "assistant_name": assistant_name,
+            "assistant_facts": assistant_facts,
         },
         ensure_ascii=True,
     )
     return system, user
 
 
-def build_narrator_opening_prompt(opening_draft: str) -> tuple[str, str]:
+def build_narrator_opening_prompt(opening_draft: str, opening_facts: dict[str, object]) -> tuple[str, str]:
     system = (
         "You are Narrator Agent. Return JSON only with key paragraphs (3 to 4 paragraphs). "
-        "Second person voice, no spoilers, no meta-game phrasing. "
+        "Second person voice, present tense, no spoilers, no meta-game phrasing. "
         "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns. "
-        "Keep assistant roles, suspect roles, and clue placement physically consistent across all paragraphs. "
         "Stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory from the draft. "
+        "Treat opening_facts as canonical state for role, custody, scene-purpose, and pending-knowledge continuity; do not contradict opening_facts. "
         "Do not invent extra furniture, desks, tables, papers, or document staging that the draft does not support."
     )
-    user = json.dumps({"opening_draft": opening_draft}, ensure_ascii=True)
+    user = json.dumps({"opening_draft": opening_draft, "opening_facts": opening_facts}, ensure_ascii=True)
     return system, user
 
 
@@ -133,14 +134,13 @@ def build_story_bootstrap_critique_prompt(
     bootstrap_bundle: dict[str, object],
     rooms_seed: list[dict[str, object]],
     items_seed: list[dict[str, object]],
+    opening_facts: dict[str, object],
 ) -> tuple[str, str]:
     system = (
         "You are Story Bootstrap Critic. Return JSON only with keys verdict, continuity_summary, issues. "
         "Be harsh. Reject plans where clue placement is implausible, villains lack motive/means/opportunity, "
-        "timed events do not fit the map or cast, the assistant is also framed as the current suspect, "
-        "or the same clue appears both in a character's custody and elsewhere in the opening. "
-        "Reject opening plans that leave fragile paper clues like ledger pages exposed on exterior approach areas such as front steps, the driveway, or the ground outside. "
-        "Reject physically impossible opening staging and role contradictions. "
+        "timed events do not fit the map or cast, or canonical opening_facts are contradicted. "
+        "Reject physically impossible opening staging, role contradictions, and custody/location contradictions. "
         "Use verdict='accepted' only when the story plan is coherent."
     )
     user = json.dumps(
@@ -149,6 +149,7 @@ def build_story_bootstrap_critique_prompt(
             "bootstrap_bundle": bootstrap_bundle,
             "rooms_seed": rooms_seed,
             "items_seed": items_seed,
+            "opening_facts": opening_facts,
         },
         ensure_ascii=True,
     )
