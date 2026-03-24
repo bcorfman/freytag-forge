@@ -98,8 +98,26 @@ def _shorten_line(value: str, max_chars: int) -> str:
     text = value.strip()
     if len(text) <= max_chars:
         return text
-    cut = text[:max_chars].rstrip(" ,;:")
-    return f"{cut}..."
+    for delimiter in (". ", "; ", ": ", ", "):
+        head, separator, _tail = text.partition(delimiter)
+        candidate = f"{head.strip()}{'.' if delimiter != '. ' else ''}".strip()
+        if separator and candidate and len(candidate) <= max_chars:
+            return candidate
+    words = text.split()
+    if not words:
+        return text
+    shortened: list[str] = []
+    for word in words:
+        candidate = " ".join((*shortened, word)).strip()
+        if len(candidate) > max_chars:
+            break
+        shortened.append(word)
+    if not shortened:
+        return text
+    sentence = " ".join(shortened).rstrip(" ,;:")
+    if sentence[-1] not in ".!?":
+        sentence = f"{sentence}."
+    return sentence
 
 
 def _cached_room_presentation(state: GameState, room_id: str) -> dict[str, str]:

@@ -11,15 +11,18 @@ from rich.console import Console
 from storygame.cli import (
     _build_memory_tag_set,
     _build_narrator,
+    _cached_room_presentation,
     _emit_cli_line,
     _event_lines,
     _room_lines,
     _setup_phase_lines,
+    _shorten_line,
     _write_transcript_line,
     main,
     run_replay,
     run_turn,
 )
+from storygame.engine.events import EventTemplate, apply_event_template
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Npc, Room
@@ -80,6 +83,106 @@ def test_event_lines_hide_engine_keys_unless_debug():
     debug_text = _event_lines(events, debug=True)
     assert "move_success" in debug_text
     assert "talk:" in debug_text
+
+
+def test_cold_wind_event_message_stays_location_agnostic() -> None:
+    state = build_default_state(seed=52, genre="mystery")
+    state.player.location = "foyer"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(52))
+
+    assert events[0].message_key == "A cold draft slips in from the drive."
+    assert "streets" not in events[0].message_key.lower()
+
+
+def test_cold_wind_event_uses_current_room_street_fact_when_outdoors() -> None:
+    state = build_default_state(seed=521, genre="drama")
+    state.player.location = "main_street"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(521))
+
+    assert events[0].message_key == "A cold wind runs along the street."
+
+
+def test_cold_wind_event_falls_back_when_no_supported_outside_source_exists() -> None:
+    state = build_default_state(seed=522, genre="mystery")
+    state.world.rooms["sealed_archive"] = Room(
+        id="sealed_archive",
+        name="Sealed Archive",
+        description="A sealed archive with stone walls and no visible openings.",
+        exits={},
+    )
+    state.player.location = "sealed_archive"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(522))
+
+    assert events[0].message_key == "A cold draft slips in from outside."
+
+
+def test_shorten_line_prefers_complete_clause_over_ellipsis() -> None:
+    text = (
+        "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles "
+        "and a long hall stretching deeper into the mansion."
+    )
+
+    shortened = _shorten_line(text, 60)
+
+    assert shortened == "The foyer opens beneath a dim chandelier."
+    assert "..." not in shortened
+
+
+def test_shorten_line_returns_short_text_unchanged() -> None:
+    assert _shorten_line("A complete sentence.", 80) == "A complete sentence."
+
+
+def test_shorten_line_falls_back_to_word_boundary_with_period() -> None:
+    shortened = _shorten_line("alpha beta gamma delta", 10)
+
+    assert shortened == "alpha beta."
+    assert "..." not in shortened
+
+
+def test_non_contextual_event_template_keeps_original_message() -> None:
+    state = build_default_state(seed=53, genre="mystery")
+    template = EventTemplate(
+        key="pressure_rising",
+        message_key="The city tightens, as if holding its breath.",
+        tags=("escalation",),
+        delta_tension=0.06,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(53))
+
+    assert events[0].message_key == "The city tightens, as if holding its breath."
+
+
+def test_cached_room_presentation_reuses_existing_entry() -> None:
+    state = build_default_state(seed=54, genre="mystery")
+    state.world_package["room_presentation_cache"] = {
+        "foyer": {"long": "Cached long.", "short": "Cached short."}
+    }
+
+    presentation = _cached_room_presentation(state, "foyer")
+
+    assert presentation == {"long": "Cached long.", "short": "Cached short."}
 
 
 def test_room_lines_when_empty_room_has_no_optional_sections():
