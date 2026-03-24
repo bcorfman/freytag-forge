@@ -731,15 +731,34 @@ class LlmFreeformProposalAdapter:
         system: str,
         user: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        dialog_payload, action_payload = self._parse_planner_response(state, raw_input, system, user)
+        dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, system, user)
         if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(dialog_payload, action_payload):
             retry_system = (
                 system
                 + " Retry because the player directly addressed a visible NPC. "
                 + "Return that NPC as dialog_proposal.speaker and provide only that NPC's in-character reply."
             )
-            dialog_payload, action_payload = self._parse_planner_response(state, raw_input, retry_system, user)
+            dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, retry_system, user)
         return dialog_payload, action_payload
+
+    def _parse_planner_response_with_retries(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        try:
+            return self._parse_planner_response(state, raw_input, system, user)
+        except ValueError as exc:
+            if str(exc) != "planner_non_json":
+                raise
+            retry_system = (
+                system
+                + " Your previous reply was invalid because it was not JSON. "
+                + "Retry now and return JSON only, with no prose before or after the object."
+            )
+            return self._parse_planner_response(state, raw_input, retry_system, user)
 
     def _parse_planner_response(
         self,
