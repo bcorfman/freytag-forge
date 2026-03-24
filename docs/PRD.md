@@ -190,7 +190,8 @@ flowchart LR
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:
   - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
   - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
-  - hosted bootstrap/opening still uses story planning plus direct LLM-authored scene prose, but it must do so through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - hosted bootstrap/opening still uses direct LLM-authored scene prose through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - when the hosted backend cannot satisfy the story-bootstrap JSON contract, hosted demo bootstrap should fall back to a prose opening path over that same backend rather than failing the whole opening on contract shape alone,
   - hosted demo opening should use the same single-bootstrap-call fast opening path as local web, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
 - Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
