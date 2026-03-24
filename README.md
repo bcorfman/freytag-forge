@@ -1,4 +1,5 @@
 # Freytag Forge
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
 
 Freytag Forge is a story-first detective RPG in your terminal/browser: you type what you do, the world reacts, and the narrative stays coherent across turns with deterministic fact-backed state under the hood.
 
