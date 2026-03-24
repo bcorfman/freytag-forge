@@ -106,6 +106,25 @@ def test_room_presentation_uses_short_on_move_and_long_on_look():
     assert look_cache["long"] in look_lines[0]
 
 
+def test_room_presentation_short_description_uses_complete_clause_not_ellipsis_on_move():
+    state = build_default_state(seed=361, genre="mystery")
+
+    moved_state, move_lines, _action_raw, _beat_type, _continued = run_turn(
+        state,
+        "north",
+        Random(361),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    destination = moved_state.player.location
+    cache = moved_state.world_package["room_presentation_cache"][destination]
+
+    assert cache["short"] == "The foyer opens beneath a dim chandelier."
+    assert "..." not in cache["short"]
+    assert move_lines[0].startswith("Mansion Foyer\nThe foyer opens beneath a dim chandelier.")
+
+
 def test_same_room_followup_turn_does_not_repeat_room_block():
     state = build_default_state(seed=37, genre="mystery")
 
