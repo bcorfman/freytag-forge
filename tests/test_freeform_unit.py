@@ -8,6 +8,7 @@ from storygame.engine.freeform import (
     _freeform_planner_prompt,
     _normalized_movement_action_payload,
     _room_environment,
+    _scene_scoped_dialog_override,
     _semantic_exit_direction,
     _envelope_for_action,
     _envelope_to_fact_ops,
@@ -89,6 +90,26 @@ def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> No
     assert action["targets"] == []
     assert dialog["speaker"] == "narrator"
     assert dialog["text"]
+
+
+def test_scene_scoped_dialog_override_handles_car_door_and_generic_player_echoes() -> None:
+    state = build_default_state(seed=413, genre="mystery", tone="dark")
+
+    sedan_dialog = _scene_scoped_dialog_override(
+        state,
+        "open car door",
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
+    assert sedan_dialog["speaker"] == "narrator"
+    assert "sedan's door" in sedan_dialog["text"].lower()
+
+    generic_dialog = _scene_scoped_dialog_override(
+        state,
+        "use lantern",
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
+    assert generic_dialog["speaker"] == "narrator"
+    assert generic_dialog["text"] == "You focus on the immediate action."
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:

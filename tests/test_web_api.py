@@ -162,6 +162,7 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     payload = response.json()
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
+    assert payload["lines"][0].startswith(">START")
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 

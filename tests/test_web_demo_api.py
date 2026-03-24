@@ -169,6 +169,7 @@ def test_demo_bootstrap_only_response_includes_opening_and_initial_room_block(tm
     payload = turn.json()
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
+    assert payload["lines"][0].startswith(">LOOK")
     assert payload["state"]["turn_index"] == 0
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 

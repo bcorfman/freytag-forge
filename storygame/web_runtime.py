@@ -387,6 +387,7 @@ def build_bootstrap_response_payload_from_lines(
         "beat": "setup_scene",
         "continued": True,
         "lines": [
+            _transcript_command_echo(command),
             *_with_paragraph_spacing(filtered_opening),
             "",
             _room_lines(state, long_form=False),

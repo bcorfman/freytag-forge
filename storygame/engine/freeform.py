@@ -94,6 +94,7 @@ _INDOOR_ROOM_TOKENS = {
     "mansion",
     "interior",
 }
+_LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE)
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -656,7 +657,37 @@ def _scope_normalized_proposals(
             "text": "You act on the scene before anyone answers.",
             "tone": "in_world",
         }
+    elif speaker == "player":
+        normalized_dialog = _scene_scoped_dialog_override(state, raw_input, action_payload)
     return normalized_dialog, normalized_action
+
+
+def _scene_scoped_dialog_override(
+    state: GameState,
+    raw_input: str,
+    action_payload: dict[str, Any],
+) -> dict[str, Any]:
+    normalized_input = _normalize_target(raw_input).replace("_", " ")
+    visible_items = set(room_items(state, player_location(state)))
+    if "arrival_sedan" in visible_items and any(token in normalized_input for token in ("car", "sedan", "door")):
+        return {
+            "speaker": "narrator",
+            "text": "You reach for the sedan's door, testing what gives before you commit further.",
+            "tone": "in_world",
+        }
+
+    text = " ".join(str(action_payload.get("intent", "")).split()).strip()
+    if _LOW_SIGNAL_PLAYER_ECHO_PATTERN.search(raw_input) or not text or text == "freeform":
+        return {
+            "speaker": "narrator",
+            "text": "You focus on the immediate action.",
+            "tone": "in_world",
+        }
+    return {
+        "speaker": "narrator",
+        "text": "You act on the scene before anyone answers.",
+        "tone": "in_world",
+    }
 
 
 class LlmFreeformProposalAdapter:

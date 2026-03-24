@@ -1184,6 +1184,39 @@ def test_run_turn_keeps_non_addressed_world_actions_scene_scoped() -> None:
     assert any("driver's door" in line.lower() for line in lines)
 
 
+def test_run_turn_normalizes_scene_scoped_player_echo_for_car_door_action() -> None:
+    class _PlayerEchoAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "player", "text": "open car door", "tone": "in_world"},
+                {
+                    "intent": "freeform",
+                    "targets": [],
+                    "arguments": {},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883382, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "open car door",
+        Random(883382),
+        StubNarrator(),
+        debug=False,
+        freeform_adapter=_PlayerEchoAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert action_raw == "open car door"
+    assert next_state.turn_index == 1
+    assert not any(line.startswith('Elias says: "') for line in lines)
+    assert not any(line.startswith('You says: "') for line in lines)
+    assert any("sedan" in line.lower() or "door" in line.lower() for line in lines)
+
+
 def test_run_turn_maps_ai_assistant_speaker_to_target_npc_name() -> None:
     class _AssistantSpeakerAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

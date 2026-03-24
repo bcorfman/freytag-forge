@@ -225,6 +225,55 @@ def test_story_director_fast_opening_skips_critic_editor_and_remote_room_generat
     assert state.active_goal == "Open the case file first."
 
 
+def test_story_director_strips_low_signal_body_mechanics_from_opening() -> None:
+    class _BodyMechanicsBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = [
+                "You stand at the base of the broad stone steps, gazing up at the carved oak door framed by weathered columns.",
+                (
+                    "You look at Daria, taking in her appearance and the file folder in her hand. "
+                    "You have heel-toe weight distribution, with your weight evenly distributed between both feet. "
+                    "Your eyes are fixed on Daria."
+                ),
+                "Outside the mansion, the mud marks and lantern light make the place feel newly disturbed.",
+            ]
+            return payload
+
+    state = build_default_state(seed=706)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_BodyMechanicsBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    opening = director.compose_opening(state)
+
+    assert all("heel-toe weight distribution" not in line.lower() for line in opening)
+    assert all("weight evenly distributed between both feet" not in line.lower() for line in opening)
+    assert all(
+        "heel-toe weight distribution" not in line.lower()
+        for line in state.world_package["story_plan"]["setup_paragraphs"]
+    )
+
+
+def test_story_director_sanitize_opening_paragraphs_ignores_empty_and_non_sequence_inputs() -> None:
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    assert director._sanitize_opening_paragraphs("not-a-sequence") == []
+    assert director._sanitize_opening_paragraphs([" ", "The lantern burns beside the door."]) == [
+        "The lantern burns beside the door."
+    ]
+
+
 def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_needed() -> None:
     class _FrontStepsClueBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
