@@ -42,6 +42,10 @@ _SERVICE_PASSAGE_LOCATION_PATTERN = re.compile(
 )
 _ROUTE_KEY_PATTERN = re.compile(r"\broute\s+key\b|\bkey\b", re.IGNORECASE)
 _CONVERSATIONAL_WORD_PATTERN = re.compile(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE)
+_MOVEMENT_PHRASE_PATTERN = re.compile(
+    r"\b(enter|head|go|walk|step|move|return|back|inside|outside|indoors|outdoors|door|entrance|exit)\b",
+    re.IGNORECASE,
+)
 _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "query",
     "ask_about",
@@ -52,6 +56,44 @@ _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "knock",
 }
 _EXPLICIT_CONVERSATION_HEADS = {"talk", "speak", "speak_to", "speakto", "ask", "tell", "say", "hello", "hi", "greet"}
+_OUTDOOR_ROOM_TOKENS = {
+    "outside",
+    "steps",
+    "street",
+    "lane",
+    "road",
+    "square",
+    "gate",
+    "yard",
+    "camp",
+    "trail",
+    "woods",
+    "courtyard",
+    "walk",
+    "path",
+    "drive",
+}
+_INDOOR_ROOM_TOKENS = {
+    "foyer",
+    "hall",
+    "office",
+    "safehouse",
+    "tower",
+    "chapel",
+    "clinic",
+    "room",
+    "platform",
+    "vault",
+    "corridor",
+    "chamber",
+    "cellar",
+    "sanctum",
+    "newsroom",
+    "apartment",
+    "house",
+    "mansion",
+    "interior",
+}
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -194,6 +236,22 @@ class RuleBasedFreeformProposalAdapter:
                 }
                 return dialog_payload, action_payload
 
+        semantic_move_direction = _semantic_exit_direction(state, raw_input)
+        if semantic_move_direction:
+            return (
+                {
+                    "speaker": "narrator",
+                    "text": "You commit to the nearest clear route and move through it.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "move",
+                    "targets": [semantic_move_direction],
+                    "arguments": {"semantic_navigation": "true"},
+                    "proposed_effects": [f"move:{semantic_move_direction}"],
+                },
+            )
+
         visible_npcs = room_npcs(state, player_location(state))
         direct_address_match = _DIRECT_ADDRESS_PATTERN.match(raw_input)
         direct_address_candidate = direct_address_match.group(1).strip() if direct_address_match is not None else ""
@@ -314,6 +372,129 @@ def _find_relevant_item(state: GameState, raw_topic: str) -> str:
     return ""
 
 
+def _movement_requested(raw_input: str) -> bool:
+    return _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
+
+
+def _room_navigation_text(room) -> str:  # noqa: ANN001
+    return f" {room.id.replace('_', ' ')} {room.name.lower()} {room.description.lower()} "
+
+
+def _room_environment(room) -> str:  # noqa: ANN001
+    text = _room_navigation_text(room)
+    if any(token in text for token in _OUTDOOR_ROOM_TOKENS):
+        return "outdoor"
+    if any(token in text for token in _INDOOR_ROOM_TOKENS):
+        return "indoor"
+    return "unknown"
+
+
+def _exit_match_score(
+    state: GameState,
+    raw_input: str,
+    direction: str,
+    destination_room_id: str,
+) -> int:
+    text = f" {_normalize_target(raw_input).replace('_', ' ')} "
+    current_room = state.world.rooms[state.player.location]
+    destination_room = state.world.rooms[destination_room_id]
+    destination_text = _room_navigation_text(destination_room)
+    current_text = _room_navigation_text(current_room)
+    score = 0
+
+    if f" {direction} " in text:
+        score += 10
+    if destination_room.name and destination_room.name.lower() in text:
+        score += 8
+    destination_id_text = destination_room_id.replace("_", " ")
+    if destination_id_text in text:
+        score += 7
+
+    destination_environment = _room_environment(destination_room)
+    current_environment = _room_environment(current_room)
+    inward_request = any(phrase in text for phrase in (" enter ", " inside ", " indoors ", " into ", " head in ", " go in "))
+    outward_request = any(
+        phrase in text for phrase in (" outside ", " outdoors ", " back outside ", " back out ", " out ", " leave ")
+    )
+    door_request = any(phrase in text for phrase in (" door ", " front door ", " entrance "))
+
+    if destination_environment == "indoor" and inward_request:
+        score += 4
+    if destination_environment == "outdoor" and outward_request:
+        score += 4
+    if current_environment == "outdoor" and destination_environment == "indoor" and any(
+        phrase in text for phrase in (" mansion ", " front door ", " entrance ", " head in ", " enter ")
+    ):
+        score += 5
+    if current_environment == "indoor" and destination_environment == "outdoor" and any(
+        phrase in text for phrase in (" outside ", " back ", " back outside ", " drive ", " steps ")
+    ):
+        score += 5
+    if door_request and " door " in current_text and len(current_room.exits) == 1:
+        score += 3
+
+    if destination_environment == "outdoor":
+        if " outside " in destination_text and " outside " in text:
+            score += 2
+        if " drive " in destination_text and " drive " in text:
+            score += 4
+        if " street " in destination_text and " street " in text:
+            score += 4
+        if " lane " in destination_text and " lane " in text:
+            score += 4
+        if " road " in destination_text and " road " in text:
+            score += 4
+        if " path " in destination_text and " path " in text:
+            score += 4
+    return score
+
+
+def _semantic_exit_direction(state: GameState, raw_input: str) -> str:
+    if _explicit_npc_address_requested(raw_input):
+        return ""
+    if not _movement_requested(raw_input):
+        return ""
+    room = state.world.rooms[state.player.location]
+    if not room.exits:
+        return ""
+    scored: list[tuple[int, str]] = []
+    for direction, destination_room_id in room.exits.items():
+        score = _exit_match_score(state, raw_input, direction, destination_room_id)
+        if score > 0:
+            scored.append((score, direction))
+    if not scored:
+        return ""
+    scored.sort(reverse=True)
+    best_score, best_direction = scored[0]
+    if len(scored) > 1 and scored[1][0] == best_score:
+        return ""
+    return best_direction if best_score > 0 else ""
+
+
+def _normalized_movement_action_payload(state: GameState, raw_input: str, action_payload: dict[str, Any]) -> dict[str, Any]:
+    intent = str(action_payload.get("intent", "")).strip().lower()
+    targets = [str(target) for target in action_payload.get("targets", ())]
+    move_direction = _semantic_exit_direction(state, raw_input)
+    if not move_direction:
+        return action_payload
+    if intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
+        normalized = dict(action_payload)
+        normalized["intent"] = "move"
+        normalized["targets"] = [move_direction]
+        arguments = dict(normalized.get("arguments", {}))
+        arguments.setdefault("semantic_navigation", "true")
+        normalized["arguments"] = arguments
+        normalized["proposed_effects"] = [f"move:{move_direction}"]
+        return normalized
+    room = state.world.rooms[state.player.location]
+    if intent in {"move", "go", "walk", "travel"} and targets and targets[0] not in room.exits:
+        normalized = dict(action_payload)
+        normalized["targets"] = [move_direction]
+        normalized["proposed_effects"] = [f"move:{move_direction}"]
+        return normalized
+    return action_payload
+
+
 def _nearby_holder_for_item(state: GameState, item_id: str) -> str:
     room_id = player_location(state)
     for npc_id in room_npcs(state, room_id):
@@ -382,6 +563,14 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "visible_item_names": [str(fact["name"]).strip() for fact in item_facts if str(fact["name"]).strip()],
             "visible_items": item_facts,
             "exits": sorted(room.exits.keys()),
+            "exit_facts": [
+                {
+                    "direction": direction,
+                    "destination_name": state.world.rooms[destination].name,
+                    "destination_description": state.world.rooms[destination].description,
+                }
+                for direction, destination in sorted(room.exits.items())
+            ],
         },
         "npc_facts": npc_facts,
         "inventory": list(state.player.inventory),
@@ -482,7 +671,8 @@ class LlmFreeformProposalAdapter:
             if payload is None:
                 raise ValueError("planner_non_json")
             dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
-            action_payload = parse_action_proposal(_normalize_action_payload(dict(payload.get("action_proposal", {}))))
+            raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
+            action_payload = parse_action_proposal(_normalized_movement_action_payload(state, raw_input, raw_action_payload))
             dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
@@ -491,6 +681,7 @@ class LlmFreeformProposalAdapter:
         except Exception as exc:
             if self._fallback is not None:
                 dialog_payload, action_payload = self._fallback.propose(state, raw_input)
+                action_payload = _normalized_movement_action_payload(state, raw_input, action_payload)
                 dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
                 arguments = dict(action_payload["arguments"])
                 arguments["planner_source"] = "fallback"

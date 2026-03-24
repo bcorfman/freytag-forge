@@ -323,6 +323,7 @@ flowchart LR
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is LLM-first for ordinary play: gameplay inputs are interpreted through runtime proposal contracts, then validated and committed by deterministic engine policy.
+- Navigation should also support semantic movement phrasing at the proposal layer, not only bare compass directions. Inputs like `enter the mansion`, `head in the front door`, or `go back outside` should be resolved from current-room and destination-room exit facts, and they should commit only when they map to one unique legal exit.
 - Deterministic parser paths are retained only for control-plane commands (`save`, `load`, `quit`, `help`); ordinary gameplay should not degrade into parser-authored fallback turns.
 - NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but the runtime must fail closed rather than substituting deterministic NPC or narrator replies when ordinary conversational authorship is unavailable.
 - NPC conversational payloads must answer in character rather than simply repeating or paraphrasing the player's prompt. Prompt-parroting dialogue is a blocking coherence failure for roleplay turns.

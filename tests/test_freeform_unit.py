@@ -6,13 +6,16 @@ from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
     _freeform_planner_prompt,
+    _normalized_movement_action_payload,
+    _room_environment,
+    _semantic_exit_direction,
     _envelope_for_action,
     _envelope_to_fact_ops,
     _topic_flag_fragment,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
-from storygame.engine.state import Npc
+from storygame.engine.state import Npc, Room
 from storygame.engine.world import build_default_state
 
 
@@ -312,6 +315,27 @@ def test_rule_based_adapter_does_not_autotarget_nearby_npc_for_unrelated_action(
     assert dialog["text"]
 
 
+def test_rule_based_adapter_resolves_semantic_navigation_to_unique_exit() -> None:
+    state = build_default_state(seed=420, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "enter the mansion")
+
+    assert action["intent"] == "move"
+    assert action["targets"] == ["north"]
+    assert dialog["speaker"] == "narrator"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_keeps_addressed_navigation_as_conversation() -> None:
+    state = build_default_state(seed=4201, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, should we head inside?")
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert dialog["speaker"] == "narrator"
+
+
 def test_rule_based_adapter_handles_player_appearance_question_without_using_npc_clothing() -> None:
     state = build_default_state(seed=417, genre="mystery", tone="dark")
 
@@ -387,6 +411,110 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_adapter_normalizes_semantic_move_target_to_exit_direction(monkeypatch) -> None:
+    state = build_default_state(seed=4053, genre="mystery")
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"narrator","text":"You head through the front door.","tone":"in_world"},'
+            '"action_proposal":{"intent":"move","targets":["mansion"],"arguments":{},'
+            '"proposed_effects":["move:mansion"]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "enter the mansion")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_semantic_exit_direction_resolves_outdoor_return_route() -> None:
+    state = build_default_state(seed=40531, genre="mystery")
+    state.player.location = "foyer"
+
+    assert _semantic_exit_direction(state, "go back outside") == "south"
+
+
+def test_room_environment_classifies_mystery_start_rooms() -> None:
+    state = build_default_state(seed=405311, genre="mystery")
+
+    assert _room_environment(state.world.rooms["front_steps"]) == "outdoor"
+    assert _room_environment(state.world.rooms["foyer"]) == "indoor"
+
+
+def test_semantic_exit_direction_returns_empty_when_no_exit_semantics_match() -> None:
+    state = build_default_state(seed=40532, genre="mystery")
+
+    assert _semantic_exit_direction(state, "head somewhere") == ""
+
+
+def test_semantic_exit_direction_returns_empty_when_room_has_no_exits() -> None:
+    state = build_default_state(seed=405321, genre="mystery")
+    state.world.rooms["sealed_archive"] = Room(
+        id="sealed_archive",
+        name="Sealed Archive",
+        description="A sealed archive with stone walls and no visible doors.",
+        exits={},
+    )
+    state.player.location = "sealed_archive"
+
+    assert _semantic_exit_direction(state, "enter the archive") == ""
+
+
+def test_normalized_movement_action_payload_leaves_non_movement_intent_unchanged() -> None:
+    state = build_default_state(seed=40533, genre="mystery")
+    payload = {
+        "intent": "ask_about",
+        "targets": ["daria_stone"],
+        "arguments": {"topic": "arrival"},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "ask daria about the arrival", payload)
+
+    assert normalized == payload
+
+
+def test_normalized_movement_action_payload_converts_generic_freeform_to_move() -> None:
+    state = build_default_state(seed=40534, genre="mystery")
+    payload = {
+        "intent": "freeform",
+        "targets": [],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "head in the front door", payload)
+
+    assert normalized["intent"] == "move"
+    assert normalized["targets"] == ["north"]
+    assert normalized["arguments"]["semantic_navigation"] == "true"
+
+
+def test_normalized_movement_action_payload_rewrites_invalid_move_target() -> None:
+    state = build_default_state(seed=40535, genre="mystery")
+    payload = {
+        "intent": "move",
+        "targets": ["mansion"],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "enter the mansion", payload)
+
+    assert normalized["targets"] == ["north"]
+    assert normalized["proposed_effects"] == ["move:north"]
+
+
+def test_semantic_exit_direction_prefers_destination_name_match() -> None:
+    state = build_default_state(seed=40536, genre="mystery")
+
+    assert _semantic_exit_direction(state, "head to the foyer") == "north"
+
+
 def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> None:
     state = build_default_state(seed=4051)
 
@@ -406,6 +534,23 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatch) -> None:
+    state = build_default_state(seed=4054, genre="mystery")
+
+    def _boom(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        raise RuntimeError("planner unavailable")
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
+    adapter = LlmFreeformProposalAdapter(mode="openai", fallback=RuleBasedFreeformProposalAdapter())
+    dialog, action = adapter.propose(state, "head in the front door")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "fallback"
+    assert "planner unavailable" in action["arguments"]["planner_error"]
+
+
 def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     state = build_default_state(seed=4052, genre="mystery")
 
@@ -417,6 +562,7 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     assert '"name": "dark sedan"' in user
     assert '"state": "parked_by_drive"' in user
     assert '"visible_item_names": ["dark sedan"]' in user
+    assert '"exit_facts": [{"direction": "north", "destination_name": "Mansion Foyer"' in user
     assert '"visible_item_ids"' not in user
 
 

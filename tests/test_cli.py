@@ -630,6 +630,25 @@ def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(mon
     assert lines
 
 
+def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None:
+    state = build_default_state(seed=2202, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "enter the mansion",
+        Random(2202),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type != "freeform_roleplay"
+    assert action_raw == "enter the mansion"
+    assert next_state.player.location == "foyer"
+    assert any("Mansion Foyer" in line for line in lines)
+
+
 def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
     class _PlannerConversationAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

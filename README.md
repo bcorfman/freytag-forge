@@ -68,6 +68,7 @@ make test
 
 ## Architecture (Focused Summary)
 - Proposal-first turn routing: ordinary gameplay now runs through a shared `TurnProposal` contract, including parser-normalized deterministic actions like movement, look, take, use, and inventory. Parser handling is retained only for control-plane commands.
+- Semantic navigation: freeform movement phrases like `enter the mansion`, `head in the front door`, or `go back outside` are resolved proposal-first from room exit facts and then committed through the same deterministic movement boundary as canonical directions when the match is unique.
 - Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, reveal state, and scene/dramatic state.
 - LLM-authored story layer: bootstrap/opening prose, turn narration, and NPC dialogue are authored by LLMs but must stay grounded in deterministic facts.
 - Scene + dramatic facts: current scene framing, dramatic question, player approach, beat phase/role, and pressure are fact-backed so narration and NPC behavior read from committed story state.
