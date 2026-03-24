@@ -129,6 +129,7 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     assert "story_beats" in system
     assert "villains" in system
     assert "opening_paragraphs must stay materially consistent with opening_room description, exits, visible npcs, visible items, and inventory_seed" in system.lower()
+    assert "prioritize character setup over scenic repetition" in system.lower()
     assert "opening_facts as canonical opening state" in system.lower()
     assert "opening_facts" in user.lower()
     assert "premise" in user.lower()
@@ -148,6 +149,7 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     system, user = build_narrator_opening_prompt("draft", {"scene_facts": ["You have not reviewed the case file yet."]})
     assert "paragraphs" in system
     assert "present tense" in system.lower()
+    assert "favor character background, motivation, communication, and relationship tension" in system.lower()
     assert "stay materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system.lower()
     assert "opening_facts as canonical state" in system.lower()
     assert "opening_facts" in user.lower()

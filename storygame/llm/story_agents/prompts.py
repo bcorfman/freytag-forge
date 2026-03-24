@@ -28,6 +28,8 @@ def build_story_bootstrap_prompt(
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
         "opening_paragraphs must stay materially consistent with opening_room description, exits, visible NPCs, visible items, and inventory_seed. "
+        "Prioritize character setup over scenic repetition: establish protagonist background, motivation, communication, and relationships first. "
+        "Do not spend multiple paragraphs restating the opening_room surroundings unless those details directly change character intent, conflict, or stakes. "
         "Treat opening_facts as canonical opening state for role, custody, scene-purpose, and pending-knowledge continuity; do not contradict opening_facts. "
         "Use only provided context. Keep spoilers out of opening_paragraphs and protagonist_background."
     )
@@ -107,6 +109,8 @@ def build_narrator_opening_prompt(opening_draft: str, opening_facts: dict[str, o
         "Second person voice, present tense, no spoilers, no meta-game phrasing. "
         "When referring to named NPCs in the draft, prefer explicit names over ambiguous pronouns. "
         "Stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory from the draft. "
+        "Favor character background, motivation, communication, and relationship tension over repeated atmospheric room description. "
+        "Keep environmental detail only when it changes how the characters read the moment or what they do next. "
         "Treat opening_facts as canonical state for role, custody, scene-purpose, and pending-knowledge continuity; do not contradict opening_facts. "
         "Do not invent extra furniture, desks, tables, papers, or document staging that the draft does not support."
     )

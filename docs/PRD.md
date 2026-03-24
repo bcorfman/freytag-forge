@@ -327,11 +327,14 @@ flowchart LR
 - Deterministic parser paths are retained only for control-plane commands (`save`, `load`, `quit`, `help`); ordinary gameplay should not degrade into parser-authored fallback turns.
 - NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but the runtime must fail closed rather than substituting deterministic NPC or narrator replies when ordinary conversational authorship is unavailable.
 - NPC conversational payloads must answer in character rather than simply repeating or paraphrasing the player's prompt. Prompt-parroting dialogue is a blocking coherence failure for roleplay turns.
+- Scene-scoped world interactions must never surface player-speech echoes as the authored response; if planning produces a player-line echo for an environmental action, deterministic normalization should convert it back into scene narration.
 - When accepted narration explicitly states a fact-backed change such as an NPC taking an item or moving rooms, the runtime should extract that change and commit the corresponding canonical facts (for example item possession/location or `npc_at`) so later turns read the same truth the player just saw.
 - Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
 - Caseboard, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
+- Opening cleanup should strip low-signal body-mechanics filler before display so the opening stays focused on actionable scene facts and character continuity.
+- Opening generation should prioritize character background, motivation, communication, and relationships. Repeating room or weather description already covered by the room block is only useful when it materially changes character intent, tension, or the immediate objective.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation only when they would break current story goals beyond repair.
 - Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt NPC behavior, object significance, event timing, likely consequences, and future room framing.

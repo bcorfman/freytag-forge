@@ -768,15 +768,18 @@ class DefaultNarratorOpeningAgent:
         )
         identity_intro = _build_identity_intro_sentence(protagonist, background)
         paragraph_1 = (
-            f"The air around the {room.name.lower()} bites with evening cold as damp stone keeps the day's last heat "
-            "and distant traffic thins into rumor."
+            f"{assistant_name} has you at the threshold of {room.name.lower()} before hesitation can settle in. "
+            "The case is already asking what kind of judgment you still trust yourself to make."
         )
         paragraph_2 = (
             f"{identity_intro} {carry_line} "
             f"{assistant_name} stays close as your {assistant_role or 'assistant'}, "
             f"{assistant_name}'s tone {assistant_trait or 'measured'} while {assistant_name} waits for your first instruction."
         )
-        paragraph_3 = "Your history sits just behind your eyes, unresolved but sharp enough to focus your judgment."
+        paragraph_3 = (
+            "What presses on you now is not the weather or the stone, but the old failure in your background and "
+            "the question of whether this case is a last duty, a last chance, or both."
+        )
         objective = _normalize_actionable_objective_language(
             str(plan.get("actionable_objective", state.active_goal)).strip(),
             assistant_name,
