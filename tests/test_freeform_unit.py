@@ -5,13 +5,20 @@ from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
+    _format_character_reply_line,
+    _freeform_planner_prompt,
+    _has_invalid_targeted_dialogue_speaker,
+    _normalized_movement_action_payload,
+    _room_environment,
+    _scene_scoped_dialog_override,
+    _semantic_exit_direction,
     _envelope_for_action,
     _envelope_to_fact_ops,
     _topic_flag_fragment,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
-from storygame.engine.state import Npc
+from storygame.engine.state import Npc, Room
 from storygame.engine.world import build_default_state
 
 
@@ -85,6 +92,62 @@ def test_rule_based_adapter_does_not_fallback_for_missing_direct_address() -> No
     assert action["targets"] == []
     assert dialog["speaker"] == "narrator"
     assert dialog["text"]
+
+
+def test_scene_scoped_dialog_override_handles_car_door_and_generic_player_echoes() -> None:
+    state = build_default_state(seed=413, genre="mystery", tone="dark")
+
+    sedan_dialog = _scene_scoped_dialog_override(
+        state,
+        "open car door",
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
+    assert sedan_dialog["speaker"] == "narrator"
+    assert "sedan's door" in sedan_dialog["text"].lower()
+
+    generic_dialog = _scene_scoped_dialog_override(
+        state,
+        "use lantern",
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
+    assert generic_dialog["speaker"] == "narrator"
+    assert generic_dialog["text"] == "You focus on the immediate action."
+
+
+def test_format_character_reply_line_preserves_contractions_and_wrapped_quotes() -> None:
+    state = build_default_state(seed=414, genre="mystery", tone="dark")
+
+    contraction_line = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": "I'm here to bring you inside.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    quoted_line = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": '"Keep your voice down."', "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert contraction_line == 'Daria Stone says: "I\'m here to bring you inside."'
+    assert quoted_line == 'Daria Stone says: "Keep your voice down."'
+
+
+def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_named_npc() -> None:
+    assert _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "player", "text": "I answer myself.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    assert not _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "daria_stone", "text": "Ask quickly.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+
+def test_invalid_targeted_dialogue_speaker_ignores_empty_targets() -> None:
+    assert not _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "narrator", "text": "No target.", "tone": "in_world"},
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:
@@ -173,6 +236,27 @@ def test_resolve_freeform_roleplay_applies_generic_policy_for_arbitrary_intents(
     assert knock["event"].delta_progress > 0.0
 
 
+def test_resolve_freeform_roleplay_strips_unsolicited_npc_targeting_from_world_action() -> None:
+    state = build_default_state(seed=416, genre="mystery")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "get in car",
+        {"speaker": "daria_stone", "text": "What brings you to the mansion at this hour?", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "arrival", "planner_source": "llm"},
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["action_proposal"]["targets"] == ()
+    assert resolved["action_proposal"]["intent"] == "freeform"
+    assert resolved["dialog_proposal"]["speaker"] == "narrator"
+    assert "daria stone says" not in resolved["event"].message_key.lower()
+
+
 def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() -> None:
     state = build_default_state(seed=407)
     adapter = RuleBasedFreeformProposalAdapter()
@@ -182,6 +266,32 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     assert resolved["state"].player.flags.get("reviewed_case_file") is True
     assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
     assert resolved["event"].delta_progress > 0.0
+    assert not resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_status",
+        "You have not reviewed the case file yet, so its contents are still unknown to you.",
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_status",
+        "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+    )
+
+
+def test_resolve_freeform_roleplay_read_case_file_allows_nearby_assistant_holder() -> None:
+    state = build_default_state(seed=414, genre="mystery")
+    assert "case_file" not in state.player.inventory
+    assert state.world_facts.holds("holding", "daria_stone", "case_file")
+    adapter = RuleBasedFreeformProposalAdapter()
+
+    resolved = resolve_freeform_roleplay(state, "review the case file", adapter)
+
+    assert resolved["state"].player.flags.get("reviewed_case_file") is True
+    assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
+    assert any(
+        tuple(mutation["fact"]) == ("reviewed_with_holder", "daria_stone", "case_file")
+        for mutation in resolved["state_update_envelope"]["assert"]
+    )
 
 
 def test_resolve_freeform_roleplay_read_ledger_page_sets_specific_progress_flag() -> None:
@@ -264,6 +374,27 @@ def test_rule_based_adapter_does_not_autotarget_nearby_npc_for_unrelated_action(
     assert dialog["text"]
 
 
+def test_rule_based_adapter_resolves_semantic_navigation_to_unique_exit() -> None:
+    state = build_default_state(seed=420, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "enter the mansion")
+
+    assert action["intent"] == "move"
+    assert action["targets"] == ["north"]
+    assert dialog["speaker"] == "narrator"
+    assert dialog["text"]
+
+
+def test_rule_based_adapter_keeps_addressed_navigation_as_conversation() -> None:
+    state = build_default_state(seed=4201, genre="mystery", tone="dark")
+
+    dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "Daria, should we head inside?")
+
+    assert action["intent"] == "ask_about"
+    assert action["targets"] == ["daria_stone"]
+    assert dialog["speaker"] == "narrator"
+
+
 def test_rule_based_adapter_handles_player_appearance_question_without_using_npc_clothing() -> None:
     state = build_default_state(seed=417, genre="mystery", tone="dark")
 
@@ -335,8 +466,112 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
 
     assert dialog["speaker"] == "daria_stone"
     assert dialog["text"]
-    assert action["intent"] == "question"
+    assert action["intent"] == "ask_about"
     assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_llm_freeform_adapter_normalizes_semantic_move_target_to_exit_direction(monkeypatch) -> None:
+    state = build_default_state(seed=4053, genre="mystery")
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"narrator","text":"You head through the front door.","tone":"in_world"},'
+            '"action_proposal":{"intent":"move","targets":["mansion"],"arguments":{},'
+            '"proposed_effects":["move:mansion"]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "enter the mansion")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_semantic_exit_direction_resolves_outdoor_return_route() -> None:
+    state = build_default_state(seed=40531, genre="mystery")
+    state.player.location = "foyer"
+
+    assert _semantic_exit_direction(state, "go back outside") == "south"
+
+
+def test_room_environment_classifies_mystery_start_rooms() -> None:
+    state = build_default_state(seed=405311, genre="mystery")
+
+    assert _room_environment(state.world.rooms["front_steps"]) == "outdoor"
+    assert _room_environment(state.world.rooms["foyer"]) == "indoor"
+
+
+def test_semantic_exit_direction_returns_empty_when_no_exit_semantics_match() -> None:
+    state = build_default_state(seed=40532, genre="mystery")
+
+    assert _semantic_exit_direction(state, "head somewhere") == ""
+
+
+def test_semantic_exit_direction_returns_empty_when_room_has_no_exits() -> None:
+    state = build_default_state(seed=405321, genre="mystery")
+    state.world.rooms["sealed_archive"] = Room(
+        id="sealed_archive",
+        name="Sealed Archive",
+        description="A sealed archive with stone walls and no visible doors.",
+        exits={},
+    )
+    state.player.location = "sealed_archive"
+
+    assert _semantic_exit_direction(state, "enter the archive") == ""
+
+
+def test_normalized_movement_action_payload_leaves_non_movement_intent_unchanged() -> None:
+    state = build_default_state(seed=40533, genre="mystery")
+    payload = {
+        "intent": "ask_about",
+        "targets": ["daria_stone"],
+        "arguments": {"topic": "arrival"},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "ask daria about the arrival", payload)
+
+    assert normalized == payload
+
+
+def test_normalized_movement_action_payload_converts_generic_freeform_to_move() -> None:
+    state = build_default_state(seed=40534, genre="mystery")
+    payload = {
+        "intent": "freeform",
+        "targets": [],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "head in the front door", payload)
+
+    assert normalized["intent"] == "move"
+    assert normalized["targets"] == ["north"]
+    assert normalized["arguments"]["semantic_navigation"] == "true"
+
+
+def test_normalized_movement_action_payload_rewrites_invalid_move_target() -> None:
+    state = build_default_state(seed=40535, genre="mystery")
+    payload = {
+        "intent": "move",
+        "targets": ["mansion"],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "enter the mansion", payload)
+
+    assert normalized["targets"] == ["north"]
+    assert normalized["proposed_effects"] == ["move:north"]
+
+
+def test_semantic_exit_direction_prefers_destination_name_match() -> None:
+    state = build_default_state(seed=40536, genre="mystery")
+
+    assert _semantic_exit_direction(state, "head to the foyer") == "north"
 
 
 def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> None:
@@ -356,6 +591,140 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
     assert action["intent"] == "ask_about"
     assert tuple(action["targets"]) == ("daria_stone",)
     assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_narrator(monkeypatch) -> None:
+    state = build_default_state(seed=40511, genre="mystery")
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"narrator","text":"You ask Olivia about the victim.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+            '{"dialog_proposal":{"speaker":"olivia_thompson","text":"He was already dead by the time I reached the hall.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
+
+    assert dialog["speaker"] == "olivia_thompson"
+    assert "already dead" in dialog["text"]
+    assert action["intent"] == "ask_about"
+
+
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_wrong_npc_answers(monkeypatch) -> None:
+    state = build_default_state(seed=40513, genre="mystery")
+    state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
+    state.player.location = "foyer"
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The victim was found upstairs after midnight.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+            '{"dialog_proposal":{"speaker":"olivia_thompson","text":"She was dead before the staff started lying to each other.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
+
+    assert dialog["speaker"] == "olivia_thompson"
+    assert "dead before the staff" in dialog["text"]
+    assert action["intent"] == "ask_about"
+
+
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_artifact(monkeypatch) -> None:
+    state = build_default_state(seed=40514, genre="mystery")
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"getStringExtra from the case file is not available yet, but it is extensive.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":["asked:case_file"]}}',
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file fixes the victim timeline, names the last verified witness, and points us to the strongest lead inside.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":["asked:case_file"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Daria, summarize the case file for me")
+
+    assert dialog["speaker"] == "daria_stone"
+    assert "getStringExtra" not in dialog["text"]
+    assert "victim timeline" in dialog["text"]
+    assert action["intent"] == "ask_about"
+
+
+def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(monkeypatch) -> None:
+    state = build_default_state(seed=40512, genre="mystery")
+    responses = iter(
+        (
+            "You head toward the mansion entrance.",
+            '{"dialog_proposal":{"speaker":"narrator","text":"You head through the front door.","tone":"in_world"},'
+            '"action_proposal":{"intent":"move","targets":["mansion"],"arguments":{},'
+            '"proposed_effects":["move:mansion"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "HEAD INTO THE MANSION")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatch) -> None:
+    state = build_default_state(seed=4054, genre="mystery")
+
+    def _boom(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        raise RuntimeError("planner unavailable")
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
+    adapter = LlmFreeformProposalAdapter(mode="openai", fallback=RuleBasedFreeformProposalAdapter())
+    dialog, action = adapter.propose(state, "head in the front door")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "fallback"
+    assert "planner unavailable" in action["arguments"]["planner_error"]
+
+
+def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
+    state = build_default_state(seed=4052, genre="mystery")
+
+    _system, user = _freeform_planner_prompt(state, "Daria, what are you wearing?")
+
+    assert '"scene_facts"' in user
+    assert "drove your own sedan" in user
+    assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
+    assert '"name": "dark sedan"' in user
+    assert '"state": "parked_by_drive"' in user
+    assert '"visible_item_names": ["dark sedan"]' in user
+    assert '"exit_facts": [{"direction": "north", "destination_name": "Mansion Foyer"' in user
+    assert '"visible_item_ids"' not in user
 
 
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:

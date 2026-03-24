@@ -36,6 +36,34 @@ def test_context_includes_required_fields_and_limits():
     assert npc_fact["location"] in state.world.rooms
 
 
+def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
+    state = build_default_state(seed=107, genre="mystery")
+
+    context = build_narration_context(state, parse_command("look"), "hook")
+    payload = context.as_dict()
+
+    assert "arrival_sedan" in payload["visible_items"]
+    assert any("drove your own sedan" in fact.lower() for fact in payload["scene_facts"])
+    assert any(item["id"] == "arrival_sedan" and item["state"] == "parked_by_drive" for item in payload["item_facts"])
+    assert any(
+        fact["id"] == "daria_stone"
+        and fact["relationship_to_player"] == "assistant"
+        and "case file" in fact["scene_purpose"].lower()
+        for fact in payload["npc_facts"]
+    )
+    assert any("have not reviewed the case file yet" in fact.lower() for fact in payload["scene_facts"])
+
+
+def test_prompt_uses_item_labels_not_internal_ids_for_visible_items() -> None:
+    state = build_default_state(seed=108, genre="mystery")
+
+    context = build_narration_context(state, parse_command("look"), "hook")
+    prompt = build_prompt(context)
+
+    assert "Visible items: dark sedan" in prompt["user"]
+    assert "arrival_sedan" not in prompt["user"]
+
+
 def test_context_includes_memory_fragments_without_overriding_facts():
     state = build_default_state(seed=11)
     room_name = state.world.rooms[state.player.location].name
@@ -96,7 +124,7 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
     payload = context.as_dict()
     prompt = build_prompt(context)
 
-    assert payload["protagonist_name"] == "Noah Kade"
+    assert payload["protagonist_name"] == "Detective Elias Wren"
     assert payload["assistant_name"] == state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
     assert payload["protagonist_background"] == "A detective haunted by an old failure."
     assert payload["assistant_role"] == "assistant"
@@ -104,6 +132,7 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
     assert f"Protagonist background: {payload['protagonist_background']}" in prompt["user"]
     assert f"Assistant anchor: {payload['assistant_name']}" in prompt["user"]
     assert "Assistant role: assistant" in prompt["user"]
+    assert "Noah Kade" not in prompt["user"]
 
 
 def test_context_can_resolve_assistant_identity_from_facts_without_bundle() -> None:

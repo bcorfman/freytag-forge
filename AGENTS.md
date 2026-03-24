@@ -18,6 +18,8 @@ Hard rules:
 - Deterministic systems are commit authorities for NPC initial locations, NPC stable traits, timed story events, player characteristics, item locations/characteristics, map topology/room characteristics, story goals, puzzles, clues, and world-state mutations through the fact store. LLM outputs may propose dialogue, action framing, and bounded consequences around those facts; deterministic code validates and commits accepted deltas.
 - Parser handling must stay limited to control-plane commands (`save`, `load`, `quit`, `help`). Ordinary gameplay turns must not degrade into parser-authored substitutes.
 - NPC dialogue should generally be LLM-authored from deterministic context. If the runtime cannot obtain an LLM-authored conversational proposal, fail closed for that turn rather than fabricating deterministic NPC dialogue or narrator scaffolding.
+- LLM-authored NPC dialogue must answer in character rather than merely restating or paraphrasing the player's prompt. Prompt-parroting conversational payloads are coherence failures and must be rejected before display.
+- When the player directly addresses or questions a visible NPC, the accepted conversational proposal must come back with that NPC as the dialogue speaker. Do not surface player-speech echoes or narrator summaries in place of the NPC reply.
 - Opening prose, turn narration, NPC dialogue, and in-scope action framing should be LLM-authored from deterministic facts. Do not let narration invent parallel state that is not representable in the fact store.
 - If accepted LLM narration explicitly introduces a bounded state change, convert that prose into validated fact-store ops before finalizing the turn. Do not leave visible item/location/relationship changes as prose-only state.
 - Do not auto-target the nearest NPC for unrelated player actions. If the player did not clearly address someone, the LLM path should stay narrator-scoped or ask for clarification.
@@ -37,9 +39,11 @@ Hard rules:
 - When refactoring web surfaces, preserve story/output parity where possible, but do not erase legitimate deployment differences such as hosted fail-closed behavior, Cloudflare-backed narration, or credential boundaries.
 - Treat sub-10-second total story-agent latency per turn as an engineering goal. Prefer fewer LLM round-trips, cached bootstrap outputs, and shared contracts over multi-call orchestration when behavior can be preserved.
 - Opening/story editors and judge-critic passes must make the full opening cohesive before display and should treat role contradictions, duplicated clue locations, and impossible scene facts as blocking coherence failures, not minor polish issues.
+- Accepted opening text is allowed to correct canonical opening facts, and those corrections must be committed back into the fact store before display. Treat opening-driven reconciliation as a general-purpose requirement for role continuity, NPC proximity/location, clue or item custody, and room-description facts, not as a one-off patch for a single item or scene.
 
 Dependency/testability:
 - Write tests first, then write the code to match the tests (TDD), then update the docs to reflect the new/updated code once it works.
+- When adding or fixing opening/bootstrap coherence behavior, add varied regression coverage that proves the fact store is reconciled from accepted opening text across multiple categories. Do not stop at a single bespoke example if the rule is meant to be general.
 - Sustain project-wide test coverage at `>=90%` on every change; verify with `uv run pytest -q` and do not merge changes that drop coverage below this threshold.
 - Accept dependencies via constructors; avoid hidden instantiation inside methods.
 - Avoid circular dependencies.

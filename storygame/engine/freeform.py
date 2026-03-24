@@ -5,12 +5,17 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import active_story_goal, apply_fact_ops, player_location, room_items, room_npcs
+from storygame.engine.facts import active_story_goal, player_location, protagonist_profile, room_items, room_npcs
+from storygame.engine.facts import item_driver, item_owner, item_state, npc_scene_purpose, player_context_facts
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
+from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
+from storygame.engine.turn_runtime import execute_turn_proposal
+from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.story_agents.agents import _chat_complete as _story_agent_chat_complete
 from storygame.llm.story_agents.agents import _json_from_text as _story_agent_json_from_text
+from storygame.plot.dramatic_policy import turn_focus_from_freeform
 
 _TOPIC_TOKEN = re.compile(r"[^a-z0-9]+")
 _ASK_TARGET_PATTERN = re.compile(r"\bask\s+([a-z0-9_ .'-]{1,60}?)(?:\s+about\b|$)", re.IGNORECASE)
@@ -22,7 +27,7 @@ _PROGRESSIVE_TOKENS = {"inspect", "examine", "investigate", "search", "review", 
 _ESCALATION_TOKENS = {"threaten", "attack", "assault", "harm", "violence"}
 _CASE_FILE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bcase\s+file\b")
 _LEDGER_PAGE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bledger\s+page\b")
-_QUOTED_DIALOGUE_PATTERN = re.compile(r"""["']([^"']+)["']""")
+_DOUBLE_QUOTED_DIALOGUE_PATTERN = re.compile(r'"([^"]+)"')
 _PLACE_QUESTION_PATTERN = re.compile(r"\b(this place|here|what do you make of|what do you think of)\b", re.IGNORECASE)
 _APPEARANCE_QUESTION_PATTERN = re.compile(
     r"\b(what are you wearing|what're you wearing|wearing|clothes|clothing|coat|dress|uniform|outfit)\b",
@@ -37,6 +42,60 @@ _SERVICE_PASSAGE_LOCATION_PATTERN = re.compile(
 )
 _ROUTE_KEY_PATTERN = re.compile(r"\broute\s+key\b|\bkey\b", re.IGNORECASE)
 _CONVERSATIONAL_WORD_PATTERN = re.compile(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE)
+_MOVEMENT_PHRASE_PATTERN = re.compile(
+    r"\b(enter|head|go|walk|step|move|return|back|inside|outside|indoors|outdoors|door|entrance|exit)\b",
+    re.IGNORECASE,
+)
+_HIDDEN_FREEFORM_MESSAGE_KEYS = {
+    "query",
+    "ask_about",
+    "greet",
+    "apologize",
+    "threaten",
+    "inspect",
+    "knock",
+}
+_EXPLICIT_CONVERSATION_HEADS = {"talk", "speak", "speak_to", "speakto", "ask", "tell", "say", "hello", "hi", "greet"}
+_OUTDOOR_ROOM_TOKENS = {
+    "outside",
+    "steps",
+    "street",
+    "lane",
+    "road",
+    "square",
+    "gate",
+    "yard",
+    "camp",
+    "trail",
+    "woods",
+    "courtyard",
+    "walk",
+    "path",
+    "drive",
+}
+_INDOOR_ROOM_TOKENS = {
+    "foyer",
+    "hall",
+    "office",
+    "safehouse",
+    "tower",
+    "chapel",
+    "clinic",
+    "room",
+    "platform",
+    "vault",
+    "corridor",
+    "chamber",
+    "cellar",
+    "sanctum",
+    "newsroom",
+    "apartment",
+    "house",
+    "mansion",
+    "interior",
+}
+_LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE)
+_CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -58,6 +117,22 @@ def _is_conversational_input(raw_input: str, first_word: str, explicit_target_re
     if first_word in {"talk", "speak", "speak_to", "speakto", "hello", "hi", "greet", "ask", "tell"}:
         return True
     return _CONVERSATIONAL_WORD_PATTERN.search(raw_input) is not None
+
+
+def _explicit_npc_address_requested(raw_input: str) -> bool:
+    stripped = raw_input.strip()
+    if not stripped:
+        return False
+    if _DIRECT_ADDRESS_PATTERN.match(stripped):
+        return True
+    if _ASK_TARGET_PATTERN.search(stripped):
+        return True
+    words = stripped.lower().split()
+    if not words:
+        return False
+    if words[0] in _EXPLICIT_CONVERSATION_HEADS:
+        return True
+    return parse_command(raw_input).kind == ActionKind.TALK
 
 
 def _topic_from_raw_input(raw_input: str, text: str) -> str:
@@ -88,6 +163,7 @@ class FreeformProposalAdapter(Protocol):
 
 class FreeformResolution(TypedDict):
     state: GameState
+    events: list[Event]
     event: Event
     action_proposal: dict[str, Any]
     dialog_proposal: dict[str, Any]
@@ -161,6 +237,22 @@ class RuleBasedFreeformProposalAdapter:
                     "tone": "in_world",
                 }
                 return dialog_payload, action_payload
+
+        semantic_move_direction = _semantic_exit_direction(state, raw_input)
+        if semantic_move_direction:
+            return (
+                {
+                    "speaker": "narrator",
+                    "text": "You commit to the nearest clear route and move through it.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "move",
+                    "targets": [semantic_move_direction],
+                    "arguments": {"semantic_navigation": "true"},
+                    "proposed_effects": [f"move:{semantic_move_direction}"],
+                },
+            )
 
         visible_npcs = room_npcs(state, player_location(state))
         direct_address_match = _DIRECT_ADDRESS_PATTERN.match(raw_input)
@@ -282,6 +374,137 @@ def _find_relevant_item(state: GameState, raw_topic: str) -> str:
     return ""
 
 
+def _movement_requested(raw_input: str) -> bool:
+    return _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
+
+
+def _room_navigation_text(room) -> str:  # noqa: ANN001
+    return f" {room.id.replace('_', ' ')} {room.name.lower()} {room.description.lower()} "
+
+
+def _room_environment(room) -> str:  # noqa: ANN001
+    tokens = set(re.findall(r"[a-z]+", _room_navigation_text(room)))
+    if tokens.intersection(_OUTDOOR_ROOM_TOKENS):
+        return "outdoor"
+    if tokens.intersection(_INDOOR_ROOM_TOKENS):
+        return "indoor"
+    return "unknown"
+
+
+def _exit_match_score(
+    state: GameState,
+    raw_input: str,
+    direction: str,
+    destination_room_id: str,
+) -> int:
+    text = f" {_normalize_target(raw_input).replace('_', ' ')} "
+    current_room = state.world.rooms[state.player.location]
+    destination_room = state.world.rooms[destination_room_id]
+    destination_text = _room_navigation_text(destination_room)
+    current_text = _room_navigation_text(current_room)
+    score = 0
+
+    if f" {direction} " in text:
+        score += 10
+    if destination_room.name and destination_room.name.lower() in text:
+        score += 8
+    destination_id_text = destination_room_id.replace("_", " ")
+    if destination_id_text in text:
+        score += 7
+
+    destination_environment = _room_environment(destination_room)
+    current_environment = _room_environment(current_room)
+    inward_request = any(phrase in text for phrase in (" enter ", " inside ", " indoors ", " into ", " head in ", " go in "))
+    outward_request = any(
+        phrase in text for phrase in (" outside ", " outdoors ", " back outside ", " back out ", " out ", " leave ")
+    )
+    door_request = any(phrase in text for phrase in (" door ", " front door ", " entrance "))
+
+    if destination_environment == "indoor" and inward_request:
+        score += 4
+    if destination_environment == "outdoor" and outward_request:
+        score += 4
+    if current_environment == "outdoor" and destination_environment == "indoor" and any(
+        phrase in text for phrase in (" mansion ", " front door ", " entrance ", " head in ", " enter ")
+    ):
+        score += 5
+    if current_environment == "indoor" and destination_environment == "outdoor" and any(
+        phrase in text for phrase in (" outside ", " back ", " back outside ", " drive ", " steps ")
+    ):
+        score += 5
+    if door_request and " door " in current_text and len(current_room.exits) == 1:
+        score += 3
+
+    if destination_environment == "outdoor":
+        if " outside " in destination_text and " outside " in text:
+            score += 2
+        if " drive " in destination_text and " drive " in text:
+            score += 4
+        if " street " in destination_text and " street " in text:
+            score += 4
+        if " lane " in destination_text and " lane " in text:
+            score += 4
+        if " road " in destination_text and " road " in text:
+            score += 4
+        if " path " in destination_text and " path " in text:
+            score += 4
+    return score
+
+
+def _semantic_exit_direction(state: GameState, raw_input: str) -> str:
+    if _explicit_npc_address_requested(raw_input):
+        return ""
+    if not _movement_requested(raw_input):
+        return ""
+    room = state.world.rooms[state.player.location]
+    if not room.exits:
+        return ""
+    scored: list[tuple[int, str]] = []
+    for direction, destination_room_id in room.exits.items():
+        score = _exit_match_score(state, raw_input, direction, destination_room_id)
+        if score > 0:
+            scored.append((score, direction))
+    if not scored:
+        return ""
+    scored.sort(reverse=True)
+    best_score, best_direction = scored[0]
+    if len(scored) > 1 and scored[1][0] == best_score:
+        return ""
+    return best_direction if best_score > 0 else ""
+
+
+def _normalized_movement_action_payload(state: GameState, raw_input: str, action_payload: dict[str, Any]) -> dict[str, Any]:
+    intent = str(action_payload.get("intent", "")).strip().lower()
+    targets = [str(target) for target in action_payload.get("targets", ())]
+    move_direction = _semantic_exit_direction(state, raw_input)
+    if not move_direction:
+        return action_payload
+    if intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
+        normalized = dict(action_payload)
+        normalized["intent"] = "move"
+        normalized["targets"] = [move_direction]
+        arguments = dict(normalized.get("arguments", {}))
+        arguments.setdefault("semantic_navigation", "true")
+        normalized["arguments"] = arguments
+        normalized["proposed_effects"] = [f"move:{move_direction}"]
+        return normalized
+    room = state.world.rooms[state.player.location]
+    if intent in {"move", "go", "walk", "travel"} and targets and targets[0] not in room.exits:
+        normalized = dict(action_payload)
+        normalized["targets"] = [move_direction]
+        normalized["proposed_effects"] = [f"move:{move_direction}"]
+        return normalized
+    return action_payload
+
+
+def _nearby_holder_for_item(state: GameState, item_id: str) -> str:
+    room_id = player_location(state)
+    for npc_id in room_npcs(state, room_id):
+        if state.world_facts.holds("holding", npc_id, item_id):
+            return npc_id
+    return ""
+
+
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
     candidate = _normalize_target(raw_target)
     if not candidate:
@@ -309,21 +532,47 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "name": state.world.npcs[npc_id].name,
             "identity": state.world.npcs[npc_id].identity,
             "description": state.world.npcs[npc_id].description,
+            "appearance": state.world.npcs[npc_id].appearance,
+            "scene_purpose": npc_scene_purpose(state, npc_id),
         }
         for npc_id in room.npc_ids
         if npc_id in state.world.npcs
+    ]
+    item_facts = [
+        {
+            "id": item_id,
+            "name": state.world.items[item_id].name,
+            "description": state.world.items[item_id].description,
+            "kind": state.world.items[item_id].kind,
+            "portable": state.world.items[item_id].portable,
+            "owner": item_owner(state, item_id),
+            "driver": item_driver(state, item_id),
+            "state": item_state(state, item_id),
+        }
+        for item_id in room.item_ids
+        if item_id in state.world.items
     ]
     payload = {
         "player_input": raw_input,
         "goal": active_story_goal(state),
         "turn_index": state.turn_index,
+        "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
         "room": {
             "id": room.id,
             "name": room.name,
             "description": room.description,
             "visible_npc_ids": list(room.npc_ids),
-            "visible_item_ids": list(room.item_ids),
+            "visible_item_names": [str(fact["name"]).strip() for fact in item_facts if str(fact["name"]).strip()],
+            "visible_items": item_facts,
             "exits": sorted(room.exits.keys()),
+            "exit_facts": [
+                {
+                    "direction": direction,
+                    "destination_name": state.world.rooms[destination].name,
+                    "destination_description": state.world.rooms[destination].description,
+                }
+                for direction, destination in sorted(room.exits.items())
+            ],
         },
         "npc_facts": npc_facts,
         "inventory": list(state.player.inventory),
@@ -334,13 +583,26 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "dialog_proposal requires: speaker, text, tone. "
         "action_proposal requires: intent, targets, arguments, proposed_effects. "
         "Use only entities from provided context. "
-        "For uncertain targets, use an empty targets list and a generic intent."
+        "For uncertain targets, use an empty targets list and a generic intent. "
+        "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed or questioned that NPC. "
+        "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
+        "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
+        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details."
     )
     return system, json.dumps(payload, ensure_ascii=True)
 
 
+def _normalize_intent(intent: str) -> str:
+    normalized = _normalize_target(intent)
+    if normalized in {"examine", "inspect", "review", "read", "analyze"}:
+        return "inspect"
+    if normalized in {"ask", "question", "query"}:
+        return "ask_about"
+    return normalized
+
+
 def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
-    intent = _normalize_target(str(action_payload.get("intent", "")))
+    intent = _normalize_intent(str(action_payload.get("intent", "")))
     targets = [_normalize_target(str(target)) for target in action_payload.get("targets", [])]
     raw_arguments = action_payload.get("arguments", {})
     arguments = (
@@ -359,6 +621,96 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _has_invalid_targeted_dialogue_speaker(dialog_payload: dict[str, Any], action_payload: dict[str, Any]) -> bool:
+    targets = action_payload.get("targets", ())
+    if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
+        return False
+    speaker = re.sub(r"[^a-z0-9]+", "_", str(dialog_payload.get("speaker", "")).strip().lower()).strip("_")
+    if speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}:
+        return True
+    if speaker in {"ai_assistant", "assistant"}:
+        return False
+    primary_target = str(next((target for target in targets if str(target).strip()), "")).strip().lower()
+    return bool(primary_target and speaker != primary_target)
+
+
+def _dialogue_contains_code_artifact(dialog_payload: dict[str, Any]) -> bool:
+    text = str(dialog_payload.get("text", "")).strip()
+    if not text:
+        return False
+    return _CODE_ARTIFACT_TOKEN_PATTERN.search(text) is not None
+
+
+def _scope_normalized_proposals(
+    state: GameState,
+    raw_input: str,
+    dialog_payload: dict[str, Any],
+    action_payload: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if _explicit_npc_address_requested(raw_input):
+        return dialog_payload, action_payload
+
+    visible_npcs = set(room_npcs(state, player_location(state)))
+    targets = tuple(str(target) for target in action_payload.get("targets", ()))
+    npc_targets = tuple(target for target in targets if target in visible_npcs)
+    if not npc_targets:
+        return dialog_payload, action_payload
+
+    cleaned_targets = tuple(target for target in targets if target not in visible_npcs)
+    arguments = dict(action_payload.get("arguments", {}))
+    arguments["scope_normalized"] = "scene"
+
+    intent = str(action_payload.get("intent", "")).strip().lower()
+    if not cleaned_targets and intent in _ALLOWED_INTENTS:
+        intent = "freeform"
+    normalized_action = {
+        "intent": intent or "freeform",
+        "targets": cleaned_targets,
+        "arguments": arguments,
+        "proposed_effects": tuple(str(effect) for effect in action_payload.get("proposed_effects", ())),
+    }
+
+    normalized_dialog = dialog_payload
+    speaker = _normalized_dialog_speaker_id(state, str(dialog_payload.get("speaker", "")), action_payload)
+    if speaker in visible_npcs:
+        normalized_dialog = {
+            "speaker": "narrator",
+            "text": "You act on the scene before anyone answers.",
+            "tone": "in_world",
+        }
+    elif speaker == "player":
+        normalized_dialog = _scene_scoped_dialog_override(state, raw_input, action_payload)
+    return normalized_dialog, normalized_action
+
+
+def _scene_scoped_dialog_override(
+    state: GameState,
+    raw_input: str,
+    action_payload: dict[str, Any],
+) -> dict[str, Any]:
+    normalized_input = _normalize_target(raw_input).replace("_", " ")
+    visible_items = set(room_items(state, player_location(state)))
+    if "arrival_sedan" in visible_items and any(token in normalized_input for token in ("car", "sedan", "door")):
+        return {
+            "speaker": "narrator",
+            "text": "You reach for the sedan's door, testing what gives before you commit further.",
+            "tone": "in_world",
+        }
+
+    text = " ".join(str(action_payload.get("intent", "")).split()).strip()
+    if _LOW_SIGNAL_PLAYER_ECHO_PATTERN.search(raw_input) or not text or text == "freeform":
+        return {
+            "speaker": "narrator",
+            "text": "You focus on the immediate action.",
+            "tone": "in_world",
+        }
+    return {
+        "speaker": "narrator",
+        "text": "You act on the scene before anyone answers.",
+        "tone": "in_world",
+    }
+
+
 class LlmFreeformProposalAdapter:
     def __init__(self, mode: str | None = None, fallback: FreeformProposalAdapter | None = None) -> None:
         self._mode = _resolve_freeform_mode() if mode is None else mode
@@ -367,11 +719,8 @@ class LlmFreeformProposalAdapter:
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
-            payload = _story_agent_json_from_text(_story_agent_chat_complete(self._mode, system, user))
-            if payload is None:
-                raise ValueError("planner_non_json")
-            dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
-            action_payload = parse_action_proposal(_normalize_action_payload(dict(payload.get("action_proposal", {}))))
+            dialog_payload, action_payload = self._planned_payloads(state, raw_input, system, user)
+            dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
             action_payload["arguments"] = arguments
@@ -379,12 +728,70 @@ class LlmFreeformProposalAdapter:
         except Exception as exc:
             if self._fallback is not None:
                 dialog_payload, action_payload = self._fallback.propose(state, raw_input)
+                action_payload = _normalized_movement_action_payload(state, raw_input, action_payload)
+                dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
                 arguments = dict(action_payload["arguments"])
                 arguments["planner_source"] = "fallback"
                 arguments["planner_error"] = _short_text(str(exc), 120)
                 action_payload["arguments"] = arguments
                 return dialog_payload, action_payload
             raise RuntimeError(f"FREEFORM_PLANNER_UNAVAILABLE: {_short_text(str(exc), 120)}") from exc
+
+    def _planned_payloads(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, system, user)
+        retry_reasons: list[str] = []
+        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(dialog_payload, action_payload):
+            retry_reasons.append(
+                "The player directly addressed a visible NPC, so dialog_proposal.speaker must match the addressed target and the reply must come from that NPC."
+            )
+        if _dialogue_contains_code_artifact(dialog_payload):
+            retry_reasons.append(
+                "Dialog text must stay fully in-world and must not contain code identifiers, API names, or implementation artifacts."
+            )
+        if retry_reasons:
+            retry_system = system + " Retry because " + " ".join(retry_reasons) + " Return JSON only."
+            dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, retry_system, user)
+        return dialog_payload, action_payload
+
+    def _parse_planner_response_with_retries(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        try:
+            return self._parse_planner_response(state, raw_input, system, user)
+        except ValueError as exc:
+            if str(exc) != "planner_non_json":
+                raise
+            retry_system = (
+                system
+                + " Your previous reply was invalid because it was not JSON. "
+                + "Retry now and return JSON only, with no prose before or after the object."
+            )
+            return self._parse_planner_response(state, raw_input, retry_system, user)
+
+    def _parse_planner_response(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        payload = _story_agent_json_from_text(_story_agent_chat_complete(self._mode, system, user))
+        if payload is None:
+            raise ValueError("planner_non_json")
+        dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
+        raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
+        action_payload = parse_action_proposal(_normalized_movement_action_payload(state, raw_input, raw_action_payload))
+        return dialog_payload, action_payload
 
 
 def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:
@@ -456,7 +863,8 @@ def _apply_raw_command_overrides(
     dialog_proposal: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     lowered = raw_input.strip().lower()
-    if _CASE_FILE_COMMAND.search(lowered) and "case_file" in state.player.inventory:
+    nearby_case_file_holder = _nearby_holder_for_item(state, "case_file")
+    if _CASE_FILE_COMMAND.search(lowered) and ("case_file" in state.player.inventory or nearby_case_file_holder):
         action = {
             "intent": "read_case_file",
             "targets": ["case_file"],
@@ -470,8 +878,9 @@ def _apply_raw_command_overrides(
         }
         return parse_action_proposal(action), parse_dialog_proposal(dialog)
     visible_items = room_items(state, player_location(state))
+    nearby_ledger_holder = _nearby_holder_for_item(state, "ledger_page")
     if _LEDGER_PAGE_COMMAND.search(lowered) and (
-        "ledger_page" in visible_items or "ledger_page" in state.player.inventory
+        "ledger_page" in visible_items or "ledger_page" in state.player.inventory or nearby_ledger_holder
     ):
         action = {
             "intent": "read_ledger_page",
@@ -498,37 +907,60 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
         return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_NO_TARGET"]}
 
     if intent == "read_case_file":
-        if "case_file" not in state.player.inventory:
+        nearby_holder = _nearby_holder_for_item(state, "case_file")
+        if "case_file" not in state.player.inventory and not nearby_holder:
             return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_CASE_FILE"]}
+        assert_ops = [
+            {"fact": ["flag", "player", "reviewed_case_file"]},
+            {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
+            {"fact": ["discovered_clue", "case_file"]},
+            {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
+            {
+                "fact": [
+                    "player_context",
+                    "case_file_status",
+                    "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+                ]
+            },
+        ]
+        if nearby_holder:
+            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})
         return {
-            "assert": [
-                {"fact": ["flag", "player", "reviewed_case_file"]},
-                {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
-                {"fact": ["discovered_clue", "case_file"]},
-                {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
+            "assert": assert_ops,
+            "retract": [
+                {
+                    "fact": [
+                        "player_context",
+                        "case_file_status",
+                        "You have not reviewed the case file yet, so its contents are still unknown to you.",
+                    ]
+                }
             ],
-            "retract": [],
             "numeric_delta": [],
             "reasons": ["freeform:read_case_file"],
         }
 
     if intent == "read_ledger_page":
         visible_items = room_items(state, player_location(state))
-        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory:
+        nearby_holder = _nearby_holder_for_item(state, "ledger_page")
+        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory and not nearby_holder:
             return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_LEDGER_PAGE"]}
+        assert_ops = [
+            {"fact": ["flag", "player", "reviewed_ledger_page"]},
+            {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
+            {"fact": ["discovered_clue", "ledger_page"]},
+            {
+                "fact": [
+                    "discovered_lead",
+                    "ledger_page",
+                    "The ledger page exposes a missing payment entry tied to tonight's visit.",
+                ]
+            },
+        ]
+        if nearby_holder:
+            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "ledger_page"]})
         return {
-            "assert": [
-                {"fact": ["flag", "player", "reviewed_ledger_page"]},
-                {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
-                {"fact": ["discovered_clue", "ledger_page"]},
-                {
-                    "fact": [
-                        "discovered_lead",
-                        "ledger_page",
-                        "The ledger page exposes a missing payment entry tied to tonight's visit.",
-                    ]
-                },
-            ],
+            "assert": assert_ops,
             "retract": [],
             "numeric_delta": [{"key": "trust:daria_stone:player", "delta": 0.03}],
             "reasons": ["freeform:read_ledger_page"],
@@ -592,6 +1024,8 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
     reasons = tuple(str(value) for value in envelope["reasons"])
     if "POLICY_TARGET_NOT_PRESENT" in reasons:
         return 0.0, 0.0
+    if "POLICY_NO_TARGET" in reasons:
+        return 0.0, 0.0
     if "POLICY_MISSING_CASE_FILE" in reasons:
         return 0.0, 0.0
     if "POLICY_MISSING_LEDGER_PAGE" in reasons:
@@ -610,6 +1044,21 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
     return progress, tension
 
 
+def _envelope_with_story_deltas(action_proposal: dict[str, Any], envelope: dict[str, Any]) -> dict[str, Any]:
+    progress_delta, tension_delta = _story_deltas_for_freeform(action_proposal, envelope)
+    numeric_delta = list(envelope["numeric_delta"])
+    if progress_delta != 0.0:
+        numeric_delta.append({"key": "progress", "delta": progress_delta})
+    if tension_delta != 0.0:
+        numeric_delta.append({"key": "tension", "delta": tension_delta})
+    return {
+        "assert": list(envelope["assert"]),
+        "retract": list(envelope["retract"]),
+        "numeric_delta": numeric_delta,
+        "reasons": list(envelope["reasons"]),
+    }
+
+
 def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     fact_ops: list[dict[str, Any]] = []
     for mutation in envelope["assert"]:
@@ -621,27 +1070,123 @@ def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     return fact_ops
 
 
-def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, Any]) -> str:
+def _semantic_actions_for_freeform(
+    state: GameState,
+    action_proposal: dict[str, Any],
+    envelope: dict[str, Any],
+) -> tuple[dict[str, Any], ...]:
+    intent = str(action_proposal["intent"]).strip().lower()
+    targets = tuple(str(target) for target in action_proposal["targets"])
+    if "POLICY_TARGET_NOT_PRESENT" in tuple(str(reason) for reason in envelope["reasons"]):
+        return ()
+
+    if intent == "read_case_file":
+        return (
+            {
+                "action_id": "freeform-read-case-file",
+                "action_type": "inspect_item",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "case_file",
+                "location_id": player_location(state),
+            },
+        )
+    if intent == "read_ledger_page":
+        return (
+            {
+                "action_id": "freeform-read-ledger-page",
+                "action_type": "inspect_item",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "ledger_page",
+                "location_id": player_location(state),
+            },
+        )
+    if intent in _ALLOWED_INTENTS and targets:
+        return (
+            {
+                "action_id": f"freeform-{intent}",
+                "action_type": intent,
+                "actor_id": "player",
+                "target_id": targets[0],
+                "item_id": "",
+                "location_id": player_location(state),
+            },
+        )
+    if intent:
+        return (
+            {
+                "action_id": f"freeform-{intent}",
+                "action_type": intent,
+                "actor_id": "player",
+                "target_id": targets[0] if targets else "",
+                "item_id": "",
+                "location_id": player_location(state),
+            },
+        )
+    return ()
+
+
+def _format_character_reply_line(
+    state: GameState,
+    dialog_proposal: dict[str, Any],
+    action_proposal: dict[str, Any],
+) -> str:
     speaker_id = str(dialog_proposal.get("speaker", "")).strip()
     text = " ".join(str(dialog_proposal.get("text", "")).split()).strip()
     if not text:
         return ""
-    if speaker_id in {"", "narrator", "player"}:
+    normalized_speaker = _normalized_dialog_speaker_id(state, speaker_id, action_proposal)
+    if normalized_speaker in {"", "narrator"}:
         return text
+    if normalized_speaker == "player":
+        return f'{_player_speaker_name(state)} says: "{text.strip(" \"\'")}"'
 
-    npc = state.world.npcs.get(speaker_id)
-    speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
-    quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
-    if '"' in text:
-        double_quoted = re.search(r'"([^"]+)"', text)
-        spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")
+    npc = state.world.npcs.get(normalized_speaker)
+    speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
+    double_quoted = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
+    if text.startswith('"') and text.endswith('"') and len(text) >= 2:
+        spoken = text[1:-1].strip()
     elif " says, '" in text and text.endswith("'"):
         spoken = text.split(" says, '", 1)[1][:-1].strip()
+    elif text.startswith("'") and text.endswith("'") and len(text) >= 2 and " " in text[1:-1]:
+        spoken = text[1:-1].strip()
+    elif double_quoted is not None:
+        spoken = double_quoted.group(1).strip()
     else:
-        spoken = quoted_match.group(1).strip() if quoted_match is not None else text.strip(" \"'")
+        spoken = text.strip()
     if not spoken:
         spoken = text
     return f'{speaker_name} says: "{spoken}"'
+
+
+def _player_speaker_name(state: GameState) -> str:
+    profile_name = protagonist_profile(state).get("name", "").strip()
+    if profile_name:
+        cleaned = profile_name.removeprefix("Detective ").strip()
+        return cleaned.split(" ")[0] if cleaned else "You"
+    return "You"
+
+
+def _normalized_dialog_speaker_id(state: GameState, speaker_id: str, action_proposal: dict[str, Any]) -> str:
+    normalized = _normalize_target(speaker_id)
+    if normalized in {"", "narrator"}:
+        return "narrator"
+    if normalized in {"player", "you", "user", "detective", "detective_elias_wren", "elias", "elias_wren"}:
+        return "player"
+    if normalized in state.world.npcs:
+        return normalized
+    matched_npc = _visible_npc_match(state, speaker_id)
+    if matched_npc:
+        return matched_npc
+    if normalized in {"ai_assistant", "assistant"}:
+        targets = action_proposal.get("targets", ())
+        if isinstance(targets, (list, tuple)):
+            for target in targets:
+                candidate = _normalize_target(str(target))
+                if candidate in state.world.npcs:
+                    return candidate
+    return normalized or "narrator"
 
 
 def resolve_freeform_roleplay(
@@ -661,18 +1206,18 @@ def resolve_freeform_roleplay_with_proposals(
     dialog_payload: dict[str, Any],
     action_payload: dict[str, Any],
 ) -> FreeformResolution:
-    next_state = state.clone()
-    next_state.turn_index += 1
-
     dialog_proposal = parse_dialog_proposal(dialog_payload)
     action_proposal = parse_action_proposal(action_payload)
+    dialog_proposal, action_proposal = _scope_normalized_proposals(state, raw_input, dialog_proposal, action_proposal)
+    dialog_proposal = parse_dialog_proposal(dialog_proposal)
+    action_proposal = parse_action_proposal(action_proposal)
     action_proposal, dialog_proposal = _apply_raw_command_overrides(
-        next_state,
+        state,
         raw_input,
         action_proposal,
         dialog_proposal,
     )
-    envelope = parse_state_update_envelope(_envelope_for_action(next_state, action_proposal))
+    envelope = parse_state_update_envelope(_envelope_for_action(state, action_proposal))
     if "POLICY_TARGET_NOT_PRESENT" in envelope["reasons"]:
         dialog_proposal = parse_dialog_proposal(
             {
@@ -681,15 +1226,56 @@ def resolve_freeform_roleplay_with_proposals(
                 "tone": "boundary",
             }
         )
+    envelope = parse_state_update_envelope(_envelope_with_story_deltas(action_proposal, envelope))
 
-    fact_ops = _envelope_to_fact_ops(envelope)
-    if fact_ops:
-        apply_fact_ops(next_state, fact_ops)
+    targeted_npc_conversation = bool(action_proposal["targets"]) and _explicit_npc_address_requested(raw_input)
+    turn_proposal = parse_turn_proposal(
+        {
+            "turn_id": f"freeform-{state.turn_index + 1}",
+            "mode": "conversation" if targeted_npc_conversation else "scene",
+            "player_intent": {
+                "summary": str(action_proposal["intent"]),
+                "addressed_npc_id": str(action_proposal["targets"][0]) if targeted_npc_conversation else "",
+                "target_ids": tuple(str(target) for target in action_proposal["targets"]),
+                "item_ids": (),
+                "location_id": player_location(state),
+            },
+            "scene_framing": {
+                "focus": str(action_proposal["arguments"].get("topic", "")),
+                "dramatic_question": "",
+                "player_approach": "",
+            },
+            "npc_dialogue": {
+                "speaker_id": _normalized_dialog_speaker_id(state, str(dialog_proposal.get("speaker", "")), action_proposal),
+                "text": str(dialog_proposal["text"]),
+            },
+            "narration": str(dialog_proposal["text"]),
+            "semantic_actions": _semantic_actions_for_freeform(state, action_proposal, envelope),
+            "state_delta": envelope,
+            "beat_hints": {
+                "escalation": "none",
+                "reveal_thread_ids": (),
+                "obstacle_mode": "",
+            },
+        }
+    )
+    runtime_result = execute_turn_proposal(state, turn_proposal, None)
+    next_state = runtime_result["state"]
+    committed_events = list(runtime_result["events"])
+    committed_fact_ops: list[dict[str, Any]] = _envelope_to_fact_ops(envelope)
+    for committed_event in committed_events:
+        fact_ops = committed_event.metadata.get("fact_ops", ())
+        if isinstance(fact_ops, (list, tuple)):
+            committed_fact_ops.extend(dict(op) for op in fact_ops)
+        numeric_delta = committed_event.metadata.get("numeric_delta", ())
+        if isinstance(numeric_delta, (list, tuple)):
+            committed_fact_ops.extend({"op": "numeric_delta", "key": entry["key"], "delta": entry["delta"]} for entry in numeric_delta)
 
-    delta_progress, delta_tension = _story_deltas_for_freeform(action_proposal, envelope)
-    event = Event(
+    delta_progress = max(0.0, next_state.progress - state.progress)
+    delta_tension = max(0.0, next_state.tension - state.tension)
+    compatibility_event = Event(
         type="freeform_roleplay",
-        message_key=_format_character_reply_line(next_state, dialog_proposal),
+        message_key=_format_character_reply_line(next_state, dialog_proposal, action_proposal),
         entities=tuple(action_proposal["targets"]),
         tags=("dialog", "freeform"),
         delta_progress=delta_progress,
@@ -699,15 +1285,17 @@ def resolve_freeform_roleplay_with_proposals(
             "action_proposal": action_proposal,
             "dialog_proposal": dialog_proposal,
             "state_update_envelope": envelope,
-            "fact_ops": fact_ops,
+            "fact_ops": committed_fact_ops,
+            "committed_event_types": [event.type for event in committed_events],
         },
     )
-    next_state.append_event(event)
-    next_state.progress = max(0.0, min(1.0, next_state.progress + delta_progress))
-    next_state.tension = max(0.0, min(1.0, next_state.tension + delta_tension))
+    next_state.append_event(compatibility_event)
+    committed_events.append(compatibility_event)
+    refresh_scene_state(next_state, turn_focus_from_freeform(next_state, action_proposal))
     return {
         "state": next_state,
-        "event": event,
+        "events": committed_events,
+        "event": compatibility_event,
         "action_proposal": action_proposal,
         "dialog_proposal": dialog_proposal,
         "state_update_envelope": envelope,

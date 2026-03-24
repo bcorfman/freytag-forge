@@ -457,6 +457,24 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
     }
 
 
+def test_cloudflare_adapter_uses_bounded_default_timeout_and_zero_retries(monkeypatch):
+    observed: dict[str, object] = {}
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed["timeout"] = timeout
+        return _FakeResponse('{"narration":"Cloudflare narration response."}')
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.delenv("CLOUDFLARE_TIMEOUT", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_RETRIES", raising=False)
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+
+    adapter = CloudflareWorkersAIAdapter()
+    assert adapter.generate(_build_context()) == "Cloudflare narration response."
+    assert observed["timeout"] == 8.0
+    assert adapter.retries == 0
+
+
 def test_cloudflare_adapter_maps_quota_http_error(monkeypatch):
     def _fake_urlopen(*_args, **_kwargs):
         raise urllib.error.HTTPError(

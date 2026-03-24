@@ -1,17 +1,10 @@
 from __future__ import annotations
 
-import threading
-
 import pytest
 
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
 from storygame.llm.story_director import StoryDirector
-
-
-class _StubArchitect:
-    def run(self, state):  # noqa: ANN001
-        return {"protagonist_name": "Stub Protagonist"}
 
 
 class _StubBootstrap:
@@ -66,36 +59,6 @@ class _StubBootstrapCritic:
         return {"verdict": "accepted", "continuity_summary": "Coherent plan.", "issues": []}
 
 
-class _StubCharacter:
-    def run(self, state, architect):  # noqa: ANN001
-        return {"contacts": [{"name": "Stub Ally", "role": "assistant", "trait": "sharp"}]}
-
-
-class _StubPlot:
-    def run(self, state, architect, cast):  # noqa: ANN001
-        return {"assistant_name": "Stub Ally", "actionable_objective": "Open the case file first."}
-
-
-class _BadPlot:
-    def run(self, state, architect, cast):  # noqa: ANN001, ARG002
-        return {
-            "assistant_name": "Daria Stone",
-            "actionable_objective": (
-                "Create a character profile for the tech-savvy detective, including their background, "
-                "skills, and motivations, to effectively investigate the string of grisly murders."
-            ),
-        }
-
-
-class _StubNarrator:
-    def run(self, state, architect, cast, plan):  # noqa: ANN001
-        return [
-            "P1",
-            "P2",
-            "P3",
-        ]
-
-
 class _StubRoomPresentation:
     def run(self, state, architect, cast, plan):  # noqa: ANN001
         return {
@@ -107,27 +70,12 @@ class _StubRoomPresentation:
         }
 
 
-class _ParallelAwareNarrator:
-    def __init__(self, own_started: threading.Event, other_started: threading.Event) -> None:
-        self._own_started = own_started
-        self._other_started = other_started
-        self.saw_other = False
+class _ObservedRoomPresentation:
+    def __init__(self) -> None:
+        self.called = False
 
     def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
-        self._own_started.set()
-        self.saw_other = self._other_started.wait(timeout=0.2)
-        return ["P1", "P2", "P3"]
-
-
-class _ParallelAwareRoomPresentation:
-    def __init__(self, own_started: threading.Event, other_started: threading.Event) -> None:
-        self._own_started = own_started
-        self._other_started = other_started
-        self.saw_other = False
-
-    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
-        self._own_started.set()
-        self.saw_other = self._other_started.wait(timeout=0.2)
+        self.called = True
         return {
             room_id: {
                 "long": f"Long {room.name}.",
@@ -145,11 +93,6 @@ class _RaisingRoomPresentation:
 class _RaisingNarrator:
     def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
         raise RuntimeError("NarratorOpening agent returned non-JSON content.")
-
-
-class _RaisingArchitect:
-    def run(self, state):  # noqa: ANN001, ARG002
-        raise RuntimeError("OPENAI_API_KEY is required for story-agent execution.")
 
 
 class _RaisingBootstrap:
@@ -186,10 +129,8 @@ def test_story_director_supports_swappable_agent_components():
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_StubNarrator(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
         room_presentation=_StubRoomPresentation(),
     )
 
@@ -243,7 +184,196 @@ def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outpu
     assert state.world_facts.holds("planned_event_participant", "warning", "Daria Stone")
 
 
-def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -> None:
+def test_story_director_fast_opening_skips_critic_editor_and_remote_room_generation():
+    class _ObservedCritic:
+        def __init__(self) -> None:
+            self.called = False
+
+        def run(self, state, bootstrap_bundle):  # noqa: ANN001, ARG002
+            self.called = True
+            return {"verdict": "accepted", "continuity_summary": "Coherent plan.", "issues": []}
+
+    class _ObservedEditor:
+        def __init__(self) -> None:
+            self.opening_calls = 0
+
+        def review_opening(self, lines, active_goal):  # noqa: ANN001
+            self.opening_calls += 1
+            return [f"edited:{line}" for line in lines]
+
+        def review_turn(self, lines, active_goal, turn_index, debug=False):  # noqa: ANN001
+            return list(lines)
+
+    state = build_default_state(seed=704)
+    critic = _ObservedCritic()
+    editor = _ObservedEditor()
+    room_presentation = _ObservedRoomPresentation()
+    director = StoryDirector(
+        "mock",
+        output_editor=editor,
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=critic,
+        room_presentation=room_presentation,
+    )
+
+    opening = director.compose_opening_fast(state)
+
+    assert opening == ["P1", "P2", "P3"]
+    assert critic.called is False
+    assert editor.opening_calls == 0
+    assert room_presentation.called is False
+    assert state.active_goal == "Open the case file first."
+
+
+def test_story_director_sanitize_opening_paragraphs_ignores_empty_and_non_sequence_inputs() -> None:
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    assert director._sanitize_opening_paragraphs("not-a-sequence") == []
+    assert director._sanitize_opening_paragraphs([" ", "The lantern burns beside the door."]) == [
+        "The lantern burns beside the door."
+    ]
+
+
+def test_story_director_moves_opening_scene_clue_into_assistant_custody_when_needed() -> None:
+    class _FrontStepsClueBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["clue_placements"] = [
+                {
+                    "item_id": "ledger_page",
+                    "room_id": state.player.location,
+                    "clue_text": "The ledger page proves the payment was staged.",
+                    "hidden_reason": "It was folded into Daria's notes before you arrived.",
+                }
+            ]
+            return payload
+
+    state = build_default_state(seed=703)
+    if "ledger_page" not in state.world.items:
+        return
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_FrontStepsClueBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    assert "ledger_page" not in state.world.rooms[state.player.location].item_ids
+    assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
+
+
+def test_story_director_rejects_opening_that_conflicts_with_assistant_role_facts() -> None:
+    class _MislabeledAssistantBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["contacts"] = [{"name": "Daria Stone", "role": "witness", "trait": "observant"}]
+            payload["opening_paragraphs"] = [
+                "Rain needles the stone as you reach the mansion steps.",
+                "Daria Stone, your assistant, waits beside you with a tight, professional calm.",
+                "You need to sort the first lead before either of you goes inside.",
+            ]
+            return payload
+
+    state = build_default_state(seed=705)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_MislabeledAssistantBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
+
+
+def test_story_director_rejects_opening_that_conflicts_with_assistant_location_facts() -> None:
+    class _NearbyAssistantBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = [
+                "The drive is slick with rain as you approach the estate.",
+                "Daria Stone keeps close beside you, watching the dark windows.",
+                "You both pause at the threshold before committing to the next lead.",
+            ]
+            return payload
+
+    state = build_default_state(seed=706)
+    state.world.rooms[state.player.location].npc_ids = ()
+    state.world.rooms["foyer"].npc_ids = tuple(dict.fromkeys((*state.world.rooms["foyer"].npc_ids, "daria_stone")))
+    state.world_facts.retract_fact("npc_at", "daria_stone", state.player.location)
+    state.world_facts.assert_fact("npc_at", "daria_stone", "foyer")
+
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_NearbyAssistantBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
+
+
+def test_story_director_rejects_opening_that_conflicts_with_item_custody_facts() -> None:
+    class _HeldKeyBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["clue_placements"] = [
+                {
+                    "item_id": "route_key",
+                    "room_id": "watch_tower",
+                    "clue_text": "The route key marks the escape route.",
+                    "hidden_reason": "It was hidden in the tower masonry.",
+                }
+            ]
+            payload["opening_paragraphs"] = [
+                "Cold air slides down the drive as the mansion looms ahead.",
+                "Daria Stone keeps the route key tucked into her coat pocket while she studies the door.",
+                "You arrive knowing the first break in the case is already in hand.",
+            ]
+            return payload
+
+    state = build_default_state(seed=707)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_HeldKeyBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
+
+
+def test_story_director_seeds_start_room_presentation_from_opening() -> None:
+    state = build_default_state(seed=704)
+    director = StoryDirector(
+        "mock",
+        output_editor=_PassThroughEditor(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+
+    director.compose_opening(state)
+
+    room_cache = state.world_package["room_presentation_cache"][state.player.location]
+    assert room_cache["short"] == "Short Outside The Mansion."
+
+
+def test_story_director_rejects_inconsistent_bootstrap_opening_before_editor() -> None:
     class _InconsistentBootstrap:
         def run(self, state):  # noqa: ANN001, ARG002
             return {
@@ -296,13 +426,8 @@ def test_story_director_coheres_inconsistent_bootstrap_opening_before_editor() -
         room_presentation=_StubRoomPresentation(),
     )
 
-    opening = director.compose_opening(state)
-    combined = "\n".join(opening).lower()
-
-    assert "question daria stone about her involvement" not in combined
-    assert "wedged into the wet stones" not in combined
-    assert combined.count("ledger page") >= 1
-    assert "assistant" in combined
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        director.compose_opening(state)
 
 
 def test_story_director_uses_swappable_replan_component():
@@ -312,10 +437,6 @@ def test_story_director_uses_swappable_replan_component():
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_StubNarrator(),
         story_replan=_StubReplan(),
     )
 
@@ -352,10 +473,8 @@ def test_story_director_room_presentation_falls_back_when_agent_fails():
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_StubNarrator(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
         room_presentation=_RaisingRoomPresentation(),
     )
 
@@ -365,105 +484,88 @@ def test_story_director_room_presentation_falls_back_when_agent_fails():
     assert set(room_cache.keys()) == set(state.world.rooms.keys())
 
 
-def test_story_director_parallelizes_narrator_and_room_presentation():
+def test_story_director_bootstrap_opening_still_populates_room_presentation_cache():
     state = build_default_state(seed=10)
-    narrator_started = threading.Event()
-    room_started = threading.Event()
-    narrator = _ParallelAwareNarrator(narrator_started, room_started)
-    room_presentation = _ParallelAwareRoomPresentation(room_started, narrator_started)
+    room_presentation = _ObservedRoomPresentation()
 
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=narrator,
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
         room_presentation=room_presentation,
     )
 
     opening = director.compose_opening(state)
 
     assert opening == ["edited:P1", "edited:P2", "edited:P3"]
-    assert narrator.saw_other is True
-    assert room_presentation.saw_other is True
+    assert room_presentation.called is True
 
 
-def test_story_director_opening_falls_back_when_narrator_agent_fails():
+def test_story_director_raises_when_bootstrap_agent_fails():
     state = build_default_state(seed=11)
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_RaisingNarrator(),
+        story_bootstrap=_RaisingBootstrap(),
         room_presentation=_StubRoomPresentation(),
     )
 
-    with pytest.raises(RuntimeError, match="NarratorOpening agent returned non-JSON content."):
+    with pytest.raises(RuntimeError, match="BOOTSTRAP_TIMEOUT"):
         director.compose_opening(state)
 
 
-def test_story_director_raises_when_narrator_agent_fails() -> None:
+def test_story_director_ignores_legacy_opening_components_when_bootstrap_path_is_present() -> None:
     state = build_default_state(seed=11)
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_RaisingNarrator(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        story_architect=object(),
+        character_designer=object(),
+        plot_designer=object(),
+        narrator_opening=object(),
         room_presentation=_StubRoomPresentation(),
     )
 
-    with pytest.raises(RuntimeError, match="NarratorOpening agent returned non-JSON content."):
-        director.compose_opening(state)
+    opening = director.compose_opening(state)
+    assert opening == ["edited:P1", "edited:P2", "edited:P3"]
 
 
-def test_story_director_narrator_failure_does_not_substitute_bad_planner_fields():
+def test_story_director_raises_when_bootstrap_critic_rejects() -> None:
+    class _RejectingBootstrapCritic:
+        def run(self, state, bootstrap_bundle):  # noqa: ANN001, ARG002
+            return {"verdict": "rejected", "continuity_summary": "opening conflict", "issues": ["bad role"]}
+
     state = build_default_state(seed=11)
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_StubArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_BadPlot(),
-        narrator_opening=_RaisingNarrator(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_RejectingBootstrapCritic(),
         room_presentation=_StubRoomPresentation(),
     )
 
-    with pytest.raises(RuntimeError, match="NarratorOpening agent returned non-JSON content."):
+    with pytest.raises(RuntimeError, match="Story bootstrap critique rejected plan"):
         director.compose_opening(state)
 
 
-def test_story_director_raises_when_story_architect_agent_fails():
+def test_story_director_raises_when_bootstrap_agent_returns_empty_opening() -> None:
+    class _EmptyOpeningBootstrap:
+        def run(self, state):  # noqa: ANN001, ARG002
+            payload = dict(_StubBootstrap().run(state))
+            payload["opening_paragraphs"] = []
+            return payload
+
     state = build_default_state(seed=12)
     director = StoryDirector(
         "mock",
         output_editor=_StubEditor(),
-        story_architect=_RaisingArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_StubNarrator(),
+        story_bootstrap=_EmptyOpeningBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
         room_presentation=_StubRoomPresentation(),
     )
 
-    with pytest.raises(RuntimeError, match="OPENAI_API_KEY is required for story-agent execution."):
-        director.compose_opening(state)
-
-
-def test_story_director_raises_when_planning_fails() -> None:
-    state = build_default_state(seed=12)
-    director = StoryDirector(
-        "mock",
-        output_editor=_StubEditor(),
-        story_architect=_RaisingArchitect(),
-        character_designer=_StubCharacter(),
-        plot_designer=_StubPlot(),
-        narrator_opening=_StubNarrator(),
-        room_presentation=_StubRoomPresentation(),
-    )
-
-    with pytest.raises(RuntimeError, match="OPENAI_API_KEY is required for story-agent execution."):
+    with pytest.raises(RuntimeError, match="empty opening_paragraphs"):
         director.compose_opening(state)

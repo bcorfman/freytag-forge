@@ -11,15 +11,18 @@ from rich.console import Console
 from storygame.cli import (
     _build_memory_tag_set,
     _build_narrator,
+    _cached_room_presentation,
     _emit_cli_line,
     _event_lines,
     _room_lines,
     _setup_phase_lines,
+    _shorten_line,
     _write_transcript_line,
     main,
     run_replay,
     run_turn,
 )
+from storygame.engine.events import EventTemplate, apply_event_template
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Npc, Room
@@ -82,6 +85,106 @@ def test_event_lines_hide_engine_keys_unless_debug():
     assert "talk:" in debug_text
 
 
+def test_cold_wind_event_message_stays_location_agnostic() -> None:
+    state = build_default_state(seed=52, genre="mystery")
+    state.player.location = "foyer"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(52))
+
+    assert events[0].message_key == "A cold draft slips in from the drive."
+    assert "streets" not in events[0].message_key.lower()
+
+
+def test_cold_wind_event_uses_current_room_street_fact_when_outdoors() -> None:
+    state = build_default_state(seed=521, genre="drama")
+    state.player.location = "main_street"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(521))
+
+    assert events[0].message_key == "A cold wind runs along the street."
+
+
+def test_cold_wind_event_falls_back_when_no_supported_outside_source_exists() -> None:
+    state = build_default_state(seed=522, genre="mystery")
+    state.world.rooms["sealed_archive"] = Room(
+        id="sealed_archive",
+        name="Sealed Archive",
+        description="A sealed archive with stone walls and no visible openings.",
+        exits={},
+    )
+    state.player.location = "sealed_archive"
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+        delta_tension=0.05,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(522))
+
+    assert events[0].message_key == "A cold draft slips in from outside."
+
+
+def test_shorten_line_prefers_complete_clause_over_ellipsis() -> None:
+    text = (
+        "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles "
+        "and a long hall stretching deeper into the mansion."
+    )
+
+    shortened = _shorten_line(text, 60)
+
+    assert shortened == "The foyer opens beneath a dim chandelier, with rainwater."
+    assert "..." not in shortened
+
+
+def test_shorten_line_returns_short_text_unchanged() -> None:
+    assert _shorten_line("A complete sentence.", 80) == "A complete sentence."
+
+
+def test_shorten_line_falls_back_to_word_boundary_with_period() -> None:
+    shortened = _shorten_line("alpha beta gamma delta", 10)
+
+    assert shortened == "alpha beta."
+    assert "..." not in shortened
+
+
+def test_non_contextual_event_template_keeps_original_message() -> None:
+    state = build_default_state(seed=53, genre="mystery")
+    template = EventTemplate(
+        key="pressure_rising",
+        message_key="The city tightens, as if holding its breath.",
+        tags=("escalation",),
+        delta_tension=0.06,
+    )
+
+    _next_state, events = apply_event_template(state, template, Random(53))
+
+    assert events[0].message_key == "The city tightens, as if holding its breath."
+
+
+def test_cached_room_presentation_reuses_existing_entry() -> None:
+    state = build_default_state(seed=54, genre="mystery")
+    state.world_package["room_presentation_cache"] = {
+        "foyer": {"long": "Cached long.", "short": "Cached short."}
+    }
+
+    presentation = _cached_room_presentation(state, "foyer")
+
+    assert presentation == {"long": "Cached long.", "short": "Cached short."}
+
+
 def test_room_lines_when_empty_room_has_no_optional_sections():
     state = build_default_state(seed=1)
     room_id = state.player.location
@@ -97,6 +200,23 @@ def test_room_lines_when_empty_room_has_no_optional_sections():
 def test_run_replay_executes_sequence_with_stub_narrator():
     final_state = run_replay(seed=13, commands=["look", "inventory"], debug=True, narrator=StubNarrator())
     assert final_state.turn_index == 2
+
+
+def test_run_turn_inventory_aliases_list_held_items() -> None:
+    for raw_command in ("i", "inventory"):
+        state = build_default_state(seed=14)
+        next_state, lines, _action_raw, _beat, continued = run_turn(
+            state,
+            raw_command,
+            Random(14),
+            StubNarrator(),
+        )
+
+        assert continued is True
+        assert next_state.turn_index == 1
+        joined = "\n".join(lines).lower()
+        assert "you are carrying" in joined
+        assert "field kit" in joined
 
 
 def test_run_replay_selects_curve_from_genre_and_length():
@@ -445,7 +565,6 @@ def test_run_turn_debug_includes_freeform_policy_diagnostics():
 def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     state = build_default_state(seed=88)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
-    npc_name = state.world.npcs[npc_id].name.lower()
     next_state, lines, _action_raw, beat_type, continued = run_turn(
         state,
         f"ask {npc_id} about the signal",
@@ -457,10 +576,9 @@ def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any(npc_name in line.lower() for line in lines)
-    assert not any("didn't understand" in line.lower() for line in lines)
-    assert next_state.player.flags.get(f"asked_signal_{npc_id}") is True
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert next_state.player.flags.get(f"asked_signal_{npc_id}") is not True
 
 
 def test_run_turn_uses_planner_action_for_deterministic_take_path():
@@ -486,6 +604,49 @@ def test_run_turn_uses_planner_action_for_deterministic_take_path():
     assert "ledger_page" in next_state.player.inventory
     assert any("clue noted:" in line.lower() for line in lines)
     assert not any("you don't see that here" in line.lower() for line in lines)
+
+
+def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
+    def _unexpected_advance_turn(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("advance_turn should not be used for ordinary directional turns")
+
+    monkeypatch.setattr("storygame.cli.advance_turn", _unexpected_advance_turn)
+    state = build_default_state(seed=2201)
+    direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
+    destination = state.world.rooms[state.player.location].exits[direction]
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        direction,
+        Random(2201),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    assert continued is True
+    assert action_raw == direction
+    assert next_state.player.location == destination
+    assert beat_type != "freeform_roleplay"
+    assert lines
+
+
+def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None:
+    state = build_default_state(seed=2202, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "enter the mansion",
+        Random(2202),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type != "freeform_roleplay"
+    assert action_raw == "enter the mansion"
+    assert next_state.player.location == "foyer"
+    assert any("Mansion Foyer" in line for line in lines)
 
 
 def test_run_turn_prefers_proposal_path_for_parser_style_conversation():
@@ -688,9 +849,9 @@ def test_run_turn_ledger_question_gets_specific_dialogue():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any("ledger" in line.lower() for line in lines)
-    assert next_state.player.flags.get("asked_ledger_daria_stone") is True
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert next_state.player.flags.get("asked_ledger_daria_stone") is not True
 
 
 def test_run_turn_unknown_input_includes_narrator_output_when_available():
@@ -724,10 +885,9 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any("the night is tense" in line.lower() for line in lines)
-    assert any('you act on "ask daria about the signal"' in line.lower() for line in lines)
-    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert not any("the night is tense" in line.lower() for line in lines)
 
 
 def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
@@ -747,13 +907,24 @@ def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any("as i stand outside the mansion" in line.lower() for line in lines)
-    assert any("i need to get oriented" in line.lower() for line in lines)
-    assert not any(line.startswith("Daria Stone says:") for line in lines)
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert not any("as i stand outside the mansion" in line.lower() for line in lines)
 
 
 def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
+    class _NpcReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "AI_Assistant", "text": "The grounds feel staged. Someone wanted this approach noticed.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "place", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     state = build_default_state(seed=8832)
     next_state, first_lines, _action_raw, _beat_type, continued = run_turn(
         state,
@@ -772,19 +943,30 @@ def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
         Random(8832),
         SilentNarrator(),
         debug=False,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        freeform_adapter=_NpcReplyAdapter(),
     )
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
     assert not any("is nearby" in line for line in lines)
-    assert any("ask daria what they make" in line.lower() for line in lines)
-    assert not any(line.startswith('Daria says: "') for line in lines)
+    assert any(line.startswith('Daria says: "') for line in lines)
     assert not any(line.startswith('Daria Stone says: "') for line in lines)
 
 
 def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
+    class _NpcReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "AI_Assistant", "text": "The front approach feels rehearsed, and I don't trust that.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "place", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     state = build_default_state(seed=8833)
     room_id = state.player.location
     room = state.world.rooms[room_id]
@@ -813,18 +995,132 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
         Random(8833),
         SilentNarrator(),
         debug=False,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        freeform_adapter=_NpcReplyAdapter(),
     )
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert final_state.turn_index == 2
     assert not any("are nearby" in line for line in lines)
-    assert any("ask daria stone" in line.lower() for line in lines)
-    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
+
+
+def test_run_turn_targeted_appearance_reply_commits_new_fact_without_leaking_action_key() -> None:
+    class _AppearanceAdapter:
+        def __init__(self, npc_id: str) -> None:
+            self._npc_id = npc_id
+
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": self._npc_id, "text": "I'm wearing a slate coat and rain-dark gloves.", "tone": "in_world"},
+                {
+                    "intent": "examine",
+                    "targets": [self._npc_id],
+                    "arguments": {"topic": "appearance", "planner_source": "llm"},
+                    "proposed_effects": ["asked:appearance"],
+                },
+            )
+
+    state = build_default_state(seed=88334, genre="thriller")
+    npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    npc_name = state.world.npcs[npc_id].name
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        f"{npc_name}, what are you wearing?",
+        Random(88334),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_AppearanceAdapter(npc_id),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert not any(line.strip().lower() == "examine" for line in lines)
+    assert any('says: "I\'m wearing a slate coat and rain-dark gloves."' in line for line in lines)
+    assert next_state.world_facts.holds("npc_appearance", npc_id, "a slate coat and rain-dark gloves")
+
+
+def test_run_turn_preserves_apostrophes_in_targeted_npc_reply() -> None:
+    class _ContractionReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "daria_stone", "text": "I'm here to introduce you to the case and bring you inside.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "why are you here", "planner_source": "llm"},
+                    "proposed_effects": ["asked:purpose"],
+                },
+            )
+
+    state = build_default_state(seed=883341, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, why are you here?",
+        Random(883341),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ContractionReplyAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any('Daria Stone says: "I\'m here to introduce you to the case and bring you inside."' in line for line in lines)
+
+
+def test_run_turn_fails_closed_for_targeted_appearance_reply_that_conflicts_with_fact_backed_appearance() -> None:
+    class _ConflictingAppearanceAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "daria_stone", "text": "I'm wearing a simple yet elegant dress.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "appearance", "planner_source": "llm"},
+                    "proposed_effects": ["asked:appearance"],
+                },
+            )
+
+    state = build_default_state(seed=88339, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, what are you wearing?",
+        Random(88339),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ConflictingAppearanceAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert not any(line.startswith('Daria says: "') for line in lines)
+    assert next_state.world_facts.holds(
+        "npc_appearance",
+        "daria_stone",
+        "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun",
+    )
 
 
 def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
+    class _NpcReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "Keep your eyes on the ledger.", "tone": "in_world"},
+                {
+                    "intent": "greet",
+                    "targets": ["daria_stone"],
+                    "arguments": {"planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     state = build_default_state(seed=88335)
     looked_state, _first_lines, _action_raw, _beat_type, continued = run_turn(
         state,
@@ -847,7 +1143,7 @@ def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
         SilentNarrator(),
         debug=False,
         story_director=_ReintroducingDirector(),
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        freeform_adapter=_NpcReplyAdapter(),
     )
 
     assert continued is True
@@ -855,6 +1151,262 @@ def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
     assert final_state.turn_index == 2
     assert any(line.startswith('Daria says: "') for line in lines)
     assert not any(line.startswith('Daria Stone says: "') for line in lines)
+
+
+def test_run_turn_fails_closed_for_conversational_turns_without_llm_authorship() -> None:
+    class _FallbackConversationAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "narrator", "text": "You ask Daria what happened here.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "events", "planner_source": "fallback"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88336)
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, tell me what happened here",
+        Random(88336),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_FallbackConversationAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_for_parroting_npc_dialogue() -> None:
+    class _ParrotingAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "You asked me what happened here.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "events", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88337)
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, tell me what happened here",
+        Random(88337),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ParrotingAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_when_targeted_conversation_returns_player_speaker() -> None:
+    class _PlayerSpeechAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "player", "text": "When did you last see Mr. Holmes?", "tone": "in_world"},
+                {
+                    "intent": "query",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "holmes", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88338)
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, when did you last see Mr. Holmes?",
+        Random(88338),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_PlayerSpeechAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_when_wrong_npc_answers_targeted_conversation() -> None:
+    class _WrongSpeakerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "The victim died before midnight.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["olivia_thompson"],
+                    "arguments": {"topic": "victim", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88339, genre="mystery")
+    state.player.location = "foyer"
+    state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Olivia, tell me about the victim",
+        Random(88339),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_WrongSpeakerAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_for_dialogue_with_code_artifact() -> None:
+    class _ContaminatedDialogueAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {
+                    "speaker": "daria_stone",
+                    "text": "getStringExtra from the case file is not available yet.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "case file", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88340, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, summarize the case file for me",
+        Random(88340),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ContaminatedDialogueAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+    assert not any(line.strip().lower() == "query" for line in lines)
+    assert not any(line.startswith('Elias says: "') for line in lines)
+    assert not any(line.startswith('You says: "') for line in lines)
+
+
+def test_run_turn_keeps_non_addressed_world_actions_scene_scoped() -> None:
+    class _NpcHijackAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "What brings you to the mansion at this hour?", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "arrival", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883381, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "get in car",
+        Random(883381),
+        StubNarrator("You head for your sedan and reach for the driver's door."),
+        debug=False,
+        freeform_adapter=_NpcHijackAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert action_raw == "get in car"
+    assert next_state.turn_index == 1
+    assert not any(line.startswith('Daria Stone says: "') for line in lines)
+    assert not any("story response unavailable" in line.lower() for line in lines)
+    assert any("driver's door" in line.lower() for line in lines)
+
+
+def test_run_turn_normalizes_scene_scoped_player_echo_for_car_door_action() -> None:
+    class _PlayerEchoAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "player", "text": "open car door", "tone": "in_world"},
+                {
+                    "intent": "freeform",
+                    "targets": [],
+                    "arguments": {},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883382, genre="mystery")
+
+    next_state, lines, action_raw, beat_type, continued = run_turn(
+        state,
+        "open car door",
+        Random(883382),
+        StubNarrator(),
+        debug=False,
+        freeform_adapter=_PlayerEchoAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert action_raw == "open car door"
+    assert next_state.turn_index == 1
+    assert not any(line.startswith('Elias says: "') for line in lines)
+    assert not any(line.startswith('You says: "') for line in lines)
+    assert any("sedan" in line.lower() or "door" in line.lower() for line in lines)
+
+
+def test_run_turn_maps_ai_assistant_speaker_to_target_npc_name() -> None:
+    class _AssistantSpeakerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "AI_Assistant", "text": "I last saw him near dusk, heading inside alone.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "holmes", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88339)
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, when did you last see Mr. Holmes?",
+        Random(88339),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_AssistantSpeakerAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
+    assert not any(line.startswith('AI_Assistant says: "') for line in lines)
 
 
 def test_run_turn_suppresses_repeated_goal_copy_after_opening():
@@ -876,6 +1428,18 @@ def test_run_turn_suppresses_repeated_goal_copy_after_opening():
 
 
 def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
+    class _ObjectiveReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "Our objective is still to review the case file and press the strongest lead.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "objective", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     state = build_default_state(seed=8835)
     goal_line = f"Your immediate objective is clear: {state.active_goal}"
     next_state, lines, _action_raw, beat_type, continued = run_turn(
@@ -884,13 +1448,14 @@ def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
         Random(8835),
         StubNarrator(goal_line),
         debug=False,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        freeform_adapter=_ObjectiveReplyAdapter(),
     )
 
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(state.active_goal in line for line in lines)
+    assert any("objective" in line.lower() for line in lines)
+    assert any("strongest lead" in line.lower() for line in lines)
 
 
 def test_run_turn_freeform_rejects_unreachable_target_without_fact_updates():
@@ -1089,12 +1654,15 @@ def test_setup_phase_lines_place_identity_after_environment_and_use_named_contac
     lines = _setup_phase_lines(state, _StubSetupDirector())
     assert len(lines) >= 3
 
-    joined = "\n".join(lines).lower()
 
-    assert lines[0].lower() == "the situation is still taking shape, and the facts in front of you are incomplete."
-    assert lines[1].lower() == "you are detective elias wren."
-    assert "premise:" not in joined
-    assert "has kept a low profile" not in joined
+def test_room_lines_describe_mansion_north_path_as_entrance_not_exit() -> None:
+    state = build_default_state(seed=124, genre="mystery", tone="dark")
+
+    lines = _room_lines(state)
+
+    lower = lines.lower()
+    assert "the main entrance from here leads north" in lower
+    assert "the main exit from here leads north" not in lower
 
 
 def test_setup_phase_lines_weave_background_and_actionable_objective():

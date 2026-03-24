@@ -12,6 +12,8 @@ from rich.console import Console
 from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
+    _HIDDEN_FREEFORM_MESSAGE_KEYS,
+    _dialogue_contains_code_artifact,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
@@ -19,14 +21,17 @@ from storygame.engine.impact import assess_player_command, replan_scope_for_asse
 from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
-from storygame.engine.simulation import advance_turn
-from storygame.engine.facts import apply_fact_ops
+from storygame.engine.rules import apply_action
+from storygame.engine.simulation import advance_turn, run_post_commit_story
+from storygame.engine.facts import apply_fact_ops, item_driver, item_owner, rebuild_facts_from_legacy_views
 from storygame.engine.state import Event, GameState
+from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
 from storygame.llm.coherence import build_default_coherence_gate
+from storygame.llm.contracts import parse_turn_proposal
 from storygame.llm.context import build_narration_context
-from storygame.llm.narration_state import extract_narration_fact_ops
+from storygame.llm.narration_state import dialogue_fact_conflict, extract_dialogue_fact_ops, extract_narration_fact_ops
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
@@ -94,8 +99,26 @@ def _shorten_line(value: str, max_chars: int) -> str:
     text = value.strip()
     if len(text) <= max_chars:
         return text
-    cut = text[:max_chars].rstrip(" ,;:")
-    return f"{cut}..."
+    for delimiter in (". ", "; ", ": "):
+        head, separator, _tail = text.partition(delimiter)
+        candidate = f"{head.strip()}{'.' if delimiter != '. ' else ''}".strip()
+        if separator and candidate and len(candidate) <= max_chars:
+            return candidate
+    words = text.split()
+    if not words:
+        return text
+    shortened: list[str] = []
+    for word in words:
+        candidate = " ".join((*shortened, word)).strip()
+        if len(candidate) > max_chars:
+            break
+        shortened.append(word)
+    if not shortened:
+        return text
+    sentence = " ".join(shortened).rstrip(" ,;:")
+    if sentence[-1] not in ".!?":
+        sentence = f"{sentence}."
+    return sentence
 
 
 def _cached_room_presentation(state: GameState, room_id: str) -> dict[str, str]:
@@ -172,19 +195,46 @@ def _rewrite_known_npc_names(state: GameState, text: str) -> str:
     return rewritten
 
 
+def _arrival_car_room_line(state: GameState, item_id: str) -> str:
+    if item_owner(state, item_id) == "player" and item_driver(state, item_id) == "player":
+        return "A dark sedan waits nearby where you left it."
+    return "A dark sedan waits nearby."
+
+
+def _special_room_item_line(state: GameState, room_id: str, actionable_items: tuple[str, ...]) -> str:
+    if room_id == "front_steps" and "ledger_page" in actionable_items:
+        return "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
+    if "arrival_sedan" in actionable_items:
+        return _arrival_car_room_line(state, "arrival_sedan")
+    return ""
+
+
 def _room_lines(state: GameState, *, long_form: bool = True) -> str:
+    return _room_lines_with_followers(state, long_form=long_form, followed_npc_ids=())
+
+
+def _room_lines_with_followers(
+    state: GameState,
+    *,
+    long_form: bool = True,
+    followed_npc_ids: tuple[str, ...] = (),
+) -> str:
     room = state.world.rooms[state.player.location]
     presentation = _cached_room_presentation(state, room.id)
     pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
     actionable_items, junk_count = room_item_groups(state, room)
     if actionable_items:
-        visible_items = tuple(_humanize_token(item) for item in actionable_items)
+        special_line = _special_room_item_line(state, room.id, actionable_items)
+        handled_items = {"arrival_sedan"} if "arrival_sedan" in actionable_items else set()
         if room.id == "front_steps" and "ledger_page" in actionable_items:
-            pieces.append(
-                "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
-            )
+            handled_items.add("ledger_page")
+        remaining = tuple(_humanize_token(item) for item in actionable_items if item not in handled_items)
+        if special_line:
+            pieces.append(special_line)
+            if remaining:
+                pieces.append(f"You can also see {_joined_with_and(remaining)} within easy reach.")
         else:
-            pieces.append(f"You can see {_joined_with_and(visible_items)} within easy reach.")
+            pieces.append(f"You can see {_joined_with_and(list(remaining))} within easy reach.")
     if junk_count > 0:
         suffix = "item" if junk_count == 1 else "items"
         verb = "is" if junk_count == 1 else "are"
@@ -194,12 +244,17 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
         if len(exits) == 1:
             if room.id == "front_steps":
                 pieces.append(
-                    f"The main exit from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
+                    f"The main entrance from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
                 )
             else:
                 pieces.append(f"The single obvious exit leads {exits[0]}.")
         else:
             pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
+    for npc_id in followed_npc_ids:
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        pieces.append(f"{_first_name(npc.name.strip() or _humanize_token(npc_id).title())} follows you.")
     if room.npc_ids:
         visible_npcs = tuple(_display_name_for_npc(state, npc_id, room.npc_ids) for npc_id in room.npc_ids)
         verb = "is" if len(visible_npcs) == 1 else "are"
@@ -211,6 +266,18 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
     director = StoryDirector("openai") if story_director is None else story_director
     return director.compose_opening(state)
+
+
+def _followed_npc_ids(previous_state: GameState, next_state: GameState) -> tuple[str, ...]:
+    if previous_state.player.location == next_state.player.location:
+        return ()
+    origin_room = previous_state.world.rooms[previous_state.player.location]
+    destination_room = next_state.world.rooms[next_state.player.location]
+    followed: list[str] = []
+    for npc_id in destination_room.npc_ids:
+        if npc_id in origin_room.npc_ids:
+            followed.append(npc_id)
+    return tuple(followed)
 
 
 def _with_paragraph_spacing(lines: list[str]) -> list[str]:
@@ -251,8 +318,13 @@ def _record_major_disruption(
     assessment: dict[str, Any],
 ) -> None:
     replan_scope = replan_scope_for_assessment(assessment)
-    state.player.flags["story_replan_required"] = True
-    state.player.flags["story_bounds_overridden"] = True
+    apply_fact_ops(
+        state,
+        [
+            {"op": "assert", "fact": ("flag", "player", "story_replan_required")},
+            {"op": "assert", "fact": ("flag", "player", "story_bounds_overridden")},
+        ],
+    )
     state.world_package["story_replan_context"] = {
         "command": raw_command,
         "impact_class": str(assessment.get("impact_class", "high")),
@@ -294,6 +366,8 @@ def _public_event_message(message_key: str) -> str:
     }
     if message in clarification_messages:
         return clarification_messages[message]
+    if message.lower() in _HIDDEN_FREEFORM_MESSAGE_KEYS:
+        return ""
     # Hide engine-like keys in normal mode (for example: move_success, take_failed).
     if "_" in message and " " not in message:
         return ""
@@ -307,6 +381,124 @@ def _event_lines(events, debug: bool = False) -> str:
         return "\n".join(f"- {event.type}: {event.message_key}" for event in events)
     public_lines = [_public_event_message(event.message_key) for event in events]
     return "\n".join(message for message in public_lines if message)
+
+
+def _proposal_mode_for_action(action: Action) -> str:
+    if action.kind in {ActionKind.MOVE, ActionKind.TAKE, ActionKind.USE}:
+        return "physical"
+    if action.kind in {ActionKind.LOOK}:
+        return "investigation"
+    return "scene"
+
+
+def _preview_state_delta(preview_events: list[Event], skip_facts: tuple[tuple[str, ...], ...] = ()) -> dict[str, Any]:
+    skip = set(skip_facts)
+    assert_ops: list[dict[str, Any]] = []
+    retract_ops: list[dict[str, Any]] = []
+    numeric_delta: list[dict[str, float]] = []
+    reasons: list[str] = []
+    for event in preview_events:
+        fact_ops = event.metadata.get("fact_ops", ())
+        if isinstance(fact_ops, (list, tuple)):
+            for fact_op in fact_ops:
+                predicate = str(fact_op.get("op", "")).strip()
+                fact = tuple(str(part) for part in fact_op.get("fact", ()))
+                if not fact or fact in skip:
+                    continue
+                if predicate == "assert":
+                    assert_ops.append({"fact": list(fact)})
+                elif predicate == "retract":
+                    retract_ops.append({"fact": list(fact)})
+        if event.delta_progress != 0.0:
+            numeric_delta.append({"key": "progress", "delta": event.delta_progress})
+        if event.delta_tension != 0.0:
+            numeric_delta.append({"key": "tension", "delta": event.delta_tension})
+        if event.type:
+            reasons.append(event.type)
+    return {
+        "assert": assert_ops,
+        "retract": retract_ops,
+        "numeric_delta": numeric_delta,
+        "reasons": reasons,
+    }
+
+
+def _semantic_actions_for_action(state: GameState, action: Action, preview_events: list[Event]) -> tuple[dict[str, Any], ...]:
+    room_id = state.player.location
+    if action.kind == ActionKind.MOVE and preview_events and preview_events[0].type == "move":
+        destination = preview_events[0].entities[1] if len(preview_events[0].entities) > 1 else ""
+        return (
+            {
+                "action_id": f"move-{state.turn_index + 1}",
+                "action_type": "move_to",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "",
+                "location_id": destination,
+            },
+        )
+    if action.kind == ActionKind.TAKE and preview_events and preview_events[0].type == "take":
+        item_id = preview_events[0].entities[0] if preview_events[0].entities else action.target
+        if item_id in state.world.rooms[room_id].item_ids:
+            return (
+                {
+                    "action_id": f"take-{state.turn_index + 1}",
+                    "action_type": "take_item",
+                    "actor_id": "player",
+                    "target_id": "",
+                    "item_id": item_id,
+                    "location_id": room_id,
+                },
+            )
+    if action.kind == ActionKind.USE and preview_events and preview_events[0].type == "use":
+        item_id = action.target.split(":", maxsplit=1)[0]
+        target_id = action.target.split(":", maxsplit=1)[1] if ":" in action.target else ""
+        return (
+            {
+                "action_id": f"use-{state.turn_index + 1}",
+                "action_type": "use_item",
+                "actor_id": "player",
+                "target_id": target_id,
+                "item_id": item_id,
+                "location_id": room_id,
+            },
+        )
+    return ()
+
+
+def _structured_turn_proposal_for_action(state: GameState, action: Action, preview_events: list[Event]) -> dict[str, Any]:
+    semantic_actions = _semantic_actions_for_action(state, action, preview_events)
+    skipped_fact_ops: tuple[tuple[str, ...], ...] = ()
+    if semantic_actions:
+        semantic_action = semantic_actions[0]
+        if semantic_action["action_type"] == "move_to":
+            skipped_fact_ops = (("at", "player", semantic_action["location_id"]),)
+        elif semantic_action["action_type"] == "take_item":
+            skipped_fact_ops = (
+                ("room_item", state.player.location, semantic_action["item_id"]),
+                ("holding", "player", semantic_action["item_id"]),
+            )
+    return {
+        "turn_id": f"cli-{state.turn_index + 1}",
+        "mode": _proposal_mode_for_action(action),
+        "player_intent": {
+            "summary": action.kind.value,
+            "addressed_npc_id": "",
+            "target_ids": (),
+            "item_ids": (),
+            "location_id": state.player.location,
+        },
+        "scene_framing": {
+            "focus": action.raw,
+            "dramatic_question": "",
+            "player_approach": "",
+        },
+        "semantic_actions": semantic_actions,
+        "state_delta": _preview_state_delta(preview_events, skipped_fact_ops),
+        "npc_dialogue": {"speaker_id": "", "text": ""},
+        "narration": "",
+        "beat_hints": {"escalation": "none", "reveal_thread_ids": (), "obstacle_mode": ""},
+    }
 
 
 def _raw_input_requests_goal(raw_input: str) -> bool:
@@ -831,7 +1023,7 @@ def run_turn(
                 return state.clone(), _freeform_unavailable_lines(detail.removeprefix("FREEFORM_PLANNER_UNAVAILABLE:").strip()), raw_input, "freeform_roleplay", True
             return state.clone(), _freeform_unavailable_lines(detail), raw_input, "freeform_roleplay", True
         next_state = freeform["state"]
-        events = [freeform["event"]]
+        events = list(freeform["events"])
         freeform_policy_debug = {
             "action_proposal": dict(freeform["action_proposal"]),
             "state_update_envelope": dict(freeform["state_update_envelope"]),
@@ -849,7 +1041,18 @@ def run_turn(
         template_key = "freeform_roleplay"
         effective_action = _action_from_proposal(raw_input, freeform["action_proposal"])
     else:
-        next_state, events, beat_type, template_key = advance_turn(preturn_state, effective_action, rng)
+        _preview_state, preview_events = apply_action(preturn_state, effective_action, rng)
+        proposal_source_state = preturn_state.clone()
+        rebuild_facts_from_legacy_views(proposal_source_state)
+        deterministic_proposal = parse_turn_proposal(
+            _structured_turn_proposal_for_action(preturn_state, effective_action, preview_events)
+        )
+        runtime_result = execute_turn_proposal(proposal_source_state, deterministic_proposal, rng)
+        next_state = runtime_result["state"]
+        proposal_action_events = [event for event in runtime_result["events"] if event.type == "semantic_action"]
+        post_commit_seed_events = proposal_action_events or preview_events
+        next_state, followup_events, beat_type, template_key = run_post_commit_story(next_state, post_commit_seed_events, rng)
+        events = list(preview_events) + list(runtime_result["events"]) + list(followup_events)
         if replan_event is not None:
             events.insert(0, replan_event)
 
@@ -918,6 +1121,27 @@ def run_turn(
         events.append(narration_event)
         if freeform_policy_debug is not None:
             freeform_policy_debug["narration_fact_ops"] = list(narration_fact_ops)
+    if requires_freeform_resolution and planner_dialog_payload is not None and planner_action_payload is not None:
+        dialogue_fact_ops = extract_dialogue_fact_ops(
+            next_state,
+            str(planner_dialog_payload.get("speaker", "")),
+            str(planner_dialog_payload.get("text", "")),
+            str(planner_action_payload.get("arguments", {}).get("topic", "")),
+        )
+        if dialogue_fact_ops:
+            apply_fact_ops(next_state, dialogue_fact_ops)
+            dialogue_fact_event = Event(
+                type="dialogue_commit",
+                turn_index=next_state.turn_index,
+                metadata={
+                    "fact_ops": dialogue_fact_ops,
+                    "source": "accepted_dialogue",
+                    "speaker": str(planner_dialog_payload.get("speaker", "")),
+                    "text": str(planner_dialog_payload.get("text", "")),
+                },
+            )
+            next_state.append_event(dialogue_fact_event)
+            events.append(dialogue_fact_event)
     narration = _ensure_action_grounded_narration(narration, effective_action)
 
     preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)
@@ -933,10 +1157,12 @@ def run_turn(
     else:
         lines = []
         if _should_render_room_block(state, next_state, effective_action):
+            followed_npc_ids = _followed_npc_ids(state, next_state) if state.player.location != next_state.player.location else ()
             lines.append(
-                _room_lines(
+                _room_lines_with_followers(
                     next_state,
                     long_form=effective_action.kind == ActionKind.LOOK,
+                    followed_npc_ids=followed_npc_ids,
                 )
             )
         if effective_action.kind == ActionKind.INVENTORY:
@@ -1017,7 +1243,18 @@ def run_turn(
     lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
     lines = _suppress_repeated_goal_copy(lines, raw_input, next_state.active_goal)
     if not lines:
-        lines = [_room_lines(next_state, long_form=True)] if effective_action.kind == ActionKind.LOOK else [""]
+        if effective_action.kind == ActionKind.LOOK:
+            lines = [_room_lines(next_state, long_form=True)]
+        elif state.player.location != next_state.player.location:
+            lines = [
+                _room_lines_with_followers(
+                    next_state,
+                    long_form=False,
+                    followed_npc_ids=_followed_npc_ids(state, next_state),
+                )
+            ]
+        else:
+            lines = [""]
         lines = [line for line in lines if line]
 
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)

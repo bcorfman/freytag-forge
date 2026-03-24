@@ -8,6 +8,10 @@ _CLAUSE_SPLIT_PATTERN = re.compile(r"[\n.!?;]+")
 _SPACE_PATTERN = re.compile(r"\s+")
 _TAKE_VERB_PATTERN = re.compile(r"\b(takes?|pick(?:s)? up|grabs?|collects?|pockets?|holds?)\b")
 _MOVE_VERB_PATTERN = re.compile(r"\b(moves?|goes?|heads?|walks?|steps?)\b")
+_FIRST_PERSON_WEARING_PATTERN = re.compile(
+    r"\b(?:i am|i'm|im)\s+wearing\s+(.+?)(?:[.!?]|$)",
+    re.IGNORECASE,
+)
 
 
 def _normalize_phrase(value: str) -> str:
@@ -84,6 +88,53 @@ def _take_fact_ops(actor_id: str, item_id: str) -> list[dict[str, object]]:
 def _movement_fact_ops(actor_id: str, room_id: str) -> list[dict[str, object]]:
     predicate = "at" if actor_id == "player" else "npc_at"
     return [{"op": "assert", "fact": (predicate, actor_id, room_id)}]
+
+
+def _normalized_appearance_phrase(text: str) -> str:
+    match = _FIRST_PERSON_WEARING_PATTERN.search(text.strip())
+    if match is None:
+        return ""
+    phrase = " ".join(match.group(1).strip().split()).strip(" \"'")
+    phrase = re.sub(r"^(?:a|an|the)\s+", "", phrase, flags=re.IGNORECASE)
+    if not phrase:
+        return ""
+    return f"a {phrase.lower()}"
+
+
+def extract_dialogue_fact_ops(state: GameState, speaker_id: str, text: str, topic: str = "") -> list[dict[str, object]]:
+    normalized_speaker = speaker_id.strip().lower()
+    if not normalized_speaker or normalized_speaker not in state.world.npcs:
+        return []
+    if topic.strip().lower() not in {"appearance", "clothing", "clothes", "wearing"}:
+        return []
+    appearance = _normalized_appearance_phrase(text)
+    if not appearance:
+        return []
+    existing = state.world_facts.query("npc_appearance", normalized_speaker, None)
+    if existing and existing[0][2].strip().lower() == appearance:
+        return []
+    return [{"op": "assert", "fact": ("npc_appearance", normalized_speaker, appearance)}]
+
+
+def dialogue_fact_conflict(state: GameState, speaker_id: str, text: str, topic: str = "") -> str:
+    normalized_speaker = speaker_id.strip().lower()
+    if not normalized_speaker or normalized_speaker not in state.world.npcs:
+        return ""
+    if topic.strip().lower() not in {"appearance", "clothing", "clothes", "wearing"}:
+        return ""
+    mentioned = _normalized_appearance_phrase(text)
+    if not mentioned:
+        return ""
+    existing = state.world_facts.query("npc_appearance", normalized_speaker, None)
+    if not existing:
+        return ""
+    committed = existing[0][2].strip().lower()
+    if committed == mentioned:
+        return ""
+    if committed in mentioned or mentioned in committed:
+        return ""
+    npc = state.world.npcs[normalized_speaker]
+    return f"{npc.name}'s reply conflicts with committed appearance facts."
 
 
 def extract_narration_fact_ops(state: GameState, narration: str) -> list[dict[str, object]]:

@@ -25,6 +25,9 @@ def test_parse_move_parsing():
     assert parse_command("w").target == "west"
     assert parse_command("u").target == "up"
     assert parse_command("D").target == "down"
+    assert parse_command("climb up").target == "up"
+    assert parse_command("climb down").target == "down"
+    assert parse_command("go down,").target == "down"
     assert parse_command("go").kind == ActionKind.UNKNOWN
 
 

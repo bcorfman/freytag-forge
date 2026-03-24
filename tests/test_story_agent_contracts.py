@@ -122,11 +122,18 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
         [{"room_id": "front_steps", "name": "Outside The Mansion", "description": "Cold stone.", "items": ["case_file"], "npcs": ["Mina Cole"], "exits": {"north": "foyer"}}],
         [{"item_id": "case_file", "name": "Case File", "description": "Folder.", "kind": "clue"}],
         ["field kit"],
+        {"assistant": {"name": "Mina Cole", "role": "assistant"}, "scene_facts": ["You have not reviewed the case file yet."]},
     )
     assert "json only" in system.lower()
     assert "opening_paragraphs" in system
     assert "story_beats" in system
     assert "villains" in system
+    assert "opening_paragraphs must stay materially consistent with opening_room description, exits, visible npcs, visible items, and inventory_seed" in system.lower()
+    assert "prioritize character setup over scenic repetition" in system.lower()
+    assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system.lower()
+    assert "use that npc's full name" in system.lower()
+    assert "opening_facts as canonical opening state" in system.lower()
+    assert "opening_facts" in user.lower()
     assert "premise" in user.lower()
 
     system, user = build_story_architect_prompt("A detective returns.", "Noah", "mystery", "dark")
@@ -137,11 +144,19 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     system, _user = build_character_designer_prompt("Noah", [{"name": "Mina"}])
     assert "contacts" in system
 
-    system, _user = build_plot_designer_prompt("Goal", "Mina")
+    system, user = build_plot_designer_prompt("Goal", "Mina", {"role": "assistant", "scene_purpose": "Brief you at the door."})
     assert "actionable_objective" in system
+    assert "assistant_facts" in user
 
-    system, _user = build_narrator_opening_prompt("draft")
+    system, user = build_narrator_opening_prompt("draft", {"scene_facts": ["You have not reviewed the case file yet."]})
     assert "paragraphs" in system
+    assert "present tense" in system.lower()
+    assert "favor character background, motivation, communication, and relationship tension" in system.lower()
+    assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system.lower()
+    assert "first mention of a visible npc" in system.lower()
+    assert "stay materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system.lower()
+    assert "opening_facts as canonical state" in system.lower()
+    assert "opening_facts" in user.lower()
 
 
 def test_story_agent_contracts_normalize_light_pattern_variants() -> None:
@@ -249,3 +264,23 @@ def test_narrator_opening_contract_accepts_wrapped_draft_shape() -> None:
     )
 
     assert len(opening["paragraphs"]) == 3
+
+
+def test_narrator_opening_contract_drops_directive_shaped_paragraphs() -> None:
+    opening = parse_narrator_opening_output(
+        {
+            "paragraphs": [
+                "The lantern throws a warm pool of light across the front steps.",
+                "Daria Stone waits beside you, case file in hand.",
+                "The evening feels still enough for the smallest sound to matter.",
+                (
+                    "Room name: Front Steps Room description: Broad stone steps rise to a carved oak door. "
+                    "Items: arrival_sedan Exits: north NPC interactions: Daria Stone stands beside you. "
+                    "Background events: None."
+                ),
+            ]
+        }
+    )
+
+    assert len(opening["paragraphs"]) == 3
+    assert not any("room name:" in paragraph.lower() for paragraph in opening["paragraphs"])

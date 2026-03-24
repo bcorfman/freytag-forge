@@ -50,12 +50,38 @@ def test_prompt_includes_if_storytelling_quality_checklist():
     assert "who the player is" in system_text
     assert "where they are" in system_text
     assert "immediate objective" in system_text
+    assert "use present tense" in system_text
+    assert "focus primarily on protagonist background, motivation, communication, and relationships" in system_text
+    assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system_text
+    assert "introduce them by full name" in system_text
+    assert "materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system_text
+    assert "do not invent extra furniture, desks, tables, papers, or document staging" in system_text
     assert "room name" in system_text
     assert "room description" in system_text
     assert "items naturally" in system_text
     assert "exits" in system_text
     assert "npc interactions or background events" in system_text
     assert "do not reveal later twists early" in system_text
+
+
+def test_prompt_user_payload_includes_room_grounding_fields():
+    state = build_default_state(seed=5)
+    rng = Random(5)
+    state, _events, beat, _template = advance_turn(state, parse_command("look"), rng)
+    context = build_narration_context(state, parse_command("look"), beat)
+
+    prompt = build_prompt(context)
+    user_text = prompt["user"]
+
+    assert "Room description: " in user_text
+    assert "Exits: " in user_text
+    assert f"Location: {context.room_name}" in user_text
+    assert f"Room description: {context.room_description}" in user_text
+    assert "Scene facts: " in user_text
+    assert "Visible item facts: " in user_text
+    assert "Visible items: " in user_text
+    assert "Visible NPCs: " in user_text
+    assert "Inventory: " in user_text
 
 
 def test_prompt_instructs_npc_reply_for_addressed_freeform_turns():

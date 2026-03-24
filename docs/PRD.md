@@ -78,6 +78,7 @@ Current runtime generation is package-driven.
   - the proposal fails deterministic validators,
   - or the requested action cannot be mapped into a bounded deterministic commit.
 - The player must be allowed to attempt any action or story move. Nothing is off limits at the gameplay layer; the system should adapt the story and fact state to the player prompt whenever a bounded commit is still possible.
+- Non-addressed world interactions should remain scene-scoped by default. The runtime must not auto-target the nearest visible NPC or force an NPC-reply contract for player actions aimed at the environment, visible items, vehicles, exits, or room features unless the player clearly addressed or questioned that NPC.
 - Goal-breaking actions are handled by explicit confirmation only when the requested prompt would break the current story goals beyond repair:
   - engine explains why the action would rupture the current story-goal structure,
   - player chooses `PROCEED` or `CANCEL`,
@@ -89,17 +90,29 @@ Current runtime generation is package-driven.
 - Product intent for runtime feel:
   - the game should feel like a responsive story simulation with deterministic enforcement,
   - not a classic command parser with LLM text layered on top.
+- For direct-address conversation with a visible NPC, accepted freeform proposals must surface that NPC as the dialogue speaker. Player-speech echoes and narrator summaries are invalid substitutes for the NPC reply and should fail closed.
+- For direct-address conversation with a visible NPC, the accepted dialogue speaker must match the addressed NPC target (assistant aliases may resolve to that target), and in-character dialogue must not leak code or implementation artifacts into story text.
 
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
 - Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`).
+- Navigation and inventory affordances remain deterministic engine commands even within the story-first runtime surface: `inventory`/`i` must list held items, and directional aliases like `n`/`north`/`go north`/`walk north` (and corresponding east/west/south/up/down variants) must resolve to canonical map movement with a deterministic failure message when no such exit exists.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
+- Canonical fact mutation goes through a validated commit boundary that normalizes uniqueness-sensitive writes, enforces runtime invariants, and refreshes compatibility projections after commit.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
+- Scene and dramatic runtime state are now also fact-backed during transition (`current_scene`, `scene_location`, `scene_objective`, `dramatic_question`, `scene_pressure`, `beat_phase`, `beat_role`, `player_approach`, `scene_participant`).
+- `storygame.llm.context.build_narration_context` should read scene/dramatic facts first and treat `progress`/`tension` as compatibility inputs when those facts are absent.
+- `storygame.plot.dramatic_policy` is the compatibility policy layer that derives approach/question/role from parser turns, structured proposals, and freeform conversational turns before beat selection runs.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
+- `storygame.engine.bootstrap` validates LLM-expanded outline bootstrap plans before runtime state is realized.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
+- `storygame.engine.world` also supports bootstrap-plan realization for sessions that start from a simple author outline expanded into structured characters, items, goals, and trigger specs.
 - Plot progression is controlled by Freytag phase/tension modules under `storygame.plot`.
 - `storygame.engine.incidents` realizes abstract beats into concrete in-world incidents with deterministic trigger logic.
+- `storygame.engine.semantic_actions` normalizes committed semantic turn actions into canonical events plus fact-backed world mutations.
+- `storygame.engine.triggers` evaluates unified action-trigger and turn-trigger specs against committed semantic events and canonical facts.
+- `storygame.engine.turn_runtime` provides an additive proposal-first turn path for structured semantic turn proposals, deterministic commits, and follow-up trigger execution.
 - A dedicated turn-orchestration layer accepts structured candidate proposals from the LLM and commits only validated deltas to canonical world state.
 - Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 
@@ -129,6 +142,7 @@ Current runtime generation is package-driven.
   - `EventProposal`
   - `StateDeltaProposal`
   - `ReplanProposal`
+- Ordinary turn orchestration now treats `TurnProposal` as the shared runtime contract for both LLM-authored freeform turns and parser-normalized deterministic aliases such as movement, take, inventory, and look. Control-plane commands (`save`, `load`, `quit`, `help`) stay outside that contract.
 - A valid runtime proposal may suggest:
   - dialogue,
   - room-facing narration,
@@ -168,7 +182,7 @@ flowchart LR
 - `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
 - Local/dev web uses the normal local narrator stack and story-agent stack:
   - narrator mode resolved from OpenAI/Ollama configuration,
-  - opening/bootstrap planning may use the normal story-agent path,
+  - opening/bootstrap planning should use the same single-bootstrap-call fast opening path as hosted demo, with deterministic validation on the critical path,
   - and local misconfiguration may surface directly during development.
 - `storygame.web_demo` is the hosted-demo API surface:
   - `GET /api/v1/health`
@@ -177,7 +191,9 @@ flowchart LR
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:
   - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
   - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
-  - hosted bootstrap/opening still uses story planning plus direct LLM-authored scene prose, but it must do so through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - hosted bootstrap/opening still uses direct LLM-authored scene prose through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - when the hosted backend cannot satisfy the story-bootstrap JSON contract, hosted demo bootstrap should fall back to a prose opening path over that same backend rather than failing the whole opening on contract shape alone,
+  - hosted demo opening should use the same single-bootstrap-call fast opening path as local web, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
 - Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
@@ -216,6 +232,7 @@ flowchart LR
 - Deterministic world packages may still seed map/entity/item topology, but seeded setup objectives, default primary objectives, public-setting paragraphs, and story-plan prose are no longer authoritative runtime content.
 - Runtime goals, reveal threads, protagonist identity, assistant identity, timed story events, and opening prose should come from the LLM bootstrap contract and be persisted back into canonical fact-backed runtime state for later deterministic validation/replay.
 - Mystery bootstrap should establish a canonical detective identity up front, including a fixed male detective name carried consistently through opening prose, turn narration, narrator context, and output editing.
+- Default mystery startup state must seed that canonical detective identity into fact-backed player profile data so reviewed output and dialogue labels resolve to `Detective Elias Wren` / `Elias` consistently.
 - Accepted bootstrap outputs should also establish canonical assistant/contact relationship facts, villain facts, clue-placement facts, and timed-event participant facts.
 - Accepted bootstrap outputs must also establish canonical role exclusivity and clue custody/location facts for the opening scene so later narration can validate who is the assistant, who is a suspect, and where each clue physically is.
 - Narration, including opening prose, must read from canonical facts and present those facts diegetically rather than inventing a parallel story state outside the fact store.
@@ -237,6 +254,7 @@ flowchart LR
 - Ordinary prompts should be treated as adaptation opportunities, not scope violations. The runtime should prefer mutating canonical facts and replanning around the player’s actual input over refusing the action outright.
 - Proposal routing must resolve explicit NPC names against the visible cast so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
 - Runtime adapters produce dialogue, action, event, and state-delta proposals.
+- Freeform turn planning may retry once when the model responds with non-JSON text, but ordinary gameplay must still fail closed if a valid typed proposal cannot be recovered.
 - Engine policy maps proposals into bounded deterministic fact deltas before commit.
 - Accepted LLM-authored narration may also imply bounded world changes, but those changes are not authoritative as prose alone: a post-narration extraction step must translate explicit state claims into fact ops before commit.
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
@@ -267,7 +285,11 @@ flowchart LR
 - Opening and early-turn text must agree on each named character's role. A character cannot simultaneously be the detective's assistant/contact and the suspect currently being questioned unless that role change is explicitly established in-story and reflected in canonical facts.
 - Opening and early-turn text must agree on clue custody and placement. If a character is holding a clue item, the same clue must not also be described as lying in the environment or discovered elsewhere in the same scene.
 - Clue placement should favor plausible mystery staging. Story/bootstrap generation, editing, and review should avoid exposing critical evidence in implausibly open locations when a more coherent custodian or concealment is already established.
+- Exterior opening-scene clue staging must be coherent at the canonical-state level, not repaired through fallback world mutation. Fragile paper clues like `ledger_page` cannot remain exposed on `front_steps`; bootstrap critics should reject that plan, default mystery seeding should place the clue coherently up front, and invalid opening generation should fail closed rather than inventing a substitute world state.
+- Accepted opening text must be a projection of committed canonical facts. If opening prose conflicts with committed role, location, custody, or clue-staging facts, bootstrap/opening validation must fail closed instead of repairing runtime truth after the fact.
+- Opening/bootstrap regression coverage should verify validator-oriented failures in varied categories rather than replaying a single named clue example. At minimum, tests should cover role continuity, NPC location continuity, item/clue custody continuity, and opening-to-fact parity across local and hosted web bootstrap paths.
 - Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
+- Opening prose should default to present tense. Mutable knowledge such as whether the protagonist has reviewed a case file should come from fact-backed state transitions, not from increasingly specific prompt guardrails.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
 - Hosted-demo bootstrap is an explicit compatibility boundary: it must remain playable without `OPENAI_API_KEY`, even when local web/bootstrap still uses OpenAI/Ollama story-agent paths.
@@ -277,10 +299,23 @@ flowchart LR
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation must remain LLM-authored. If bootstrap/opening generation fails, the surface should fail closed instead of fabricating deterministic opening prose.
 - Opening prose is still LLM-authored, but it must be authored from deterministic fact-backed context rather than from an untracked side-plan that can diverge from world state.
+- When opening/turn prose quality is weak, prefer enriching the fact-backed world context over adding bespoke deterministic cleanup rules. Deterministic validators/editors should be added only for resilient, high-signal failure classes that generalize well, not as an open-ended catalog of example-specific patches.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
 - The opening-scene story editor must make the full opening cohesive across bootstrap paragraphs and the first turn-facing text, reconciling role labels, clue ownership, physical placement, and other scene facts into one consistent version before anything is shown to the player.
+- Opening prompts should treat canonical room description, exits, visible NPCs, visible items, and inventory as primary grounding facts so implausible scene staging is prevented at generation time rather than patched with bespoke cleanup rules.
+- Opening output contracts should reject or strip prompt/directive-shaped field dumps before display (for example `Room name: ... Room description: ... Items: ... Exits: ...`) so hidden instruction scaffolding cannot leak into the player-facing opening.
+- Mystery opening facts should seed immediate clue custody plausibly before any opening prose is generated; for the mansion start, the assistant should hold the `case_file` unless accepted opening reconciliation commits a different holder.
+- Mystery opening facts should also seed obvious arrival-scene fixtures such as the detective's car when those details are part of the canonical setup, so room text and opening prompts do not have to invent them.
+- Rich fact grounding should flow through the shared turn-context pipeline, not only the opening path. Scene facts, NPC purpose/relationship facts, and visible item state/ownership facts should be reusable by opening prose, ordinary narration, and freeform NPC replies alike.
+- LLM-facing prompt payloads should expose player-facing item labels and fact summaries rather than leaking internal item ids into visible-item text. Stable internal ids may still exist for deterministic commit boundaries, but prompt-visible scene description should use display labels.
+- Story-bootstrap and opening prompts should receive canonical opening facts from the fact store, such as assistant role/purpose, visible item custody, and pending knowledge state. Prefer passing those facts directly over layering more prompt-only prohibitions about role continuity or clue custody.
+- Deterministic room and turn presentation should read item custody/state facts generically across map locations rather than relying on room-specific hard-coded prose. If canonical facts say the player owns or drove a visible vehicle, room text should reflect that fact wherever the vehicle appears.
+- Deterministic room-presentation summaries should remain complete clauses or sentences, not visibly truncated fragments with `...`, so movement into any room still reads like authored prose.
+- Deterministic ambient event text should stay geographically compatible with current and adjacent map facts. If a line names a drive, street, lane, road, courtyard, or similar exterior source, that source should be justified by current-room facts, adjacent-room geography, or adjacent-room item state; otherwise the text should fall back to a generic outside reference.
+- When turn quality is weak, prefer enriching reusable world facts and prompt grounding before adding bespoke deterministic validators. New deterministic guardrails should be reserved for resilient failure classes, not narrow patches for individual examples.
+- Accepted targeted NPC dialogue should be allowed to introduce bounded new facts and commit them immediately; if the reply contradicts already-committed canonical facts such as the NPC's appearance, the turn should fail closed rather than display conflicting dialogue.
 - Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
 - Critic/judge review must treat assistant-vs-suspect contradictions, duplicated clue presence (for example, a page both held by Daria and wedged in the stones), and similarly impossible scene facts as blocking coherence failures rather than minor style issues.
 - Turn output retains explicit LLM narration only when that narration is still the right player-facing surface; if downstream review strips a non-dialogue narration line, the original narration is reattached.
@@ -290,6 +325,7 @@ flowchart LR
 - Coherence wall-clock hard-fails (`BUDGET_WALL_CLOCK_TIMEOUT`) discard the failed narrator draft and fall back to deterministic room/event rendering for continuity.
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is LLM-first for ordinary play: gameplay inputs are interpreted through runtime proposal contracts, then validated and committed by deterministic engine policy.
+- Navigation should also support semantic movement phrasing at the proposal layer, not only bare compass directions. Inputs like `enter the mansion`, `head in the front door`, or `go back outside` should be resolved from current-room and destination-room exit facts, and they should commit only when they map to one unique legal exit.
 - Deterministic parser paths are retained only for control-plane commands (`save`, `load`, `quit`, `help`); ordinary gameplay should not degrade into parser-authored fallback turns.
 - NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but the runtime must fail closed rather than substituting deterministic NPC or narrator replies when ordinary conversational authorship is unavailable.
 - Prompt-parroting dialogue should be rejected only for near-verbatim question restatements or player-echo phrasings, not for substantive answers that naturally reuse a few topic words from the player's question.
@@ -298,6 +334,8 @@ flowchart LR
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
 - Caseboard, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
+- Opening generation should prioritize character background, motivation, communication, and relationships. Repeating room or weather description already covered by the room block is only useful when it materially changes character intent, tension, or the immediate objective.
+- Opening prompts should ask for full-name-first NPC introductions and should limit pure-surroundings exposition to what materially sharpens character pressure or the immediate objective.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation only when they would break current story goals beyond repair.
 - Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt NPC behavior, object significance, event timing, likely consequences, and future room framing.
@@ -382,8 +420,8 @@ flowchart LR
 ### Cloudflare Workers adapter (demo mode)
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
-- `CLOUDFLARE_TIMEOUT` (default `20.0`)
-- `CLOUDFLARE_RETRIES` (default `1`)
+- `CLOUDFLARE_TIMEOUT` (default `8.0`)
+- `CLOUDFLARE_RETRIES` (default `0`)
 - `CLOUDFLARE_RETRY_BACKOFF_MS` (default `250`)
 
 ### Hosted demo frontend / CORS

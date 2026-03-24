@@ -38,14 +38,20 @@ def test_openai_output_editor_passthrough_without_api_key(monkeypatch) -> None:
 
 def test_openai_output_editor_uses_llm_when_available(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
+    captured_requests: list[dict[str, object]] = []
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        _payload = json.loads(request.data.decode("utf-8"))
+        captured_requests.append(json.loads(request.data.decode("utf-8")))
         return _FakeResponse('{"choices":[{"message":{"content":"{\\"lines\\":[\\"edited\\"]}"}}]}')
 
     monkeypatch.setattr("storygame.llm.output_editor.urllib.request.urlopen", _fake_urlopen)
     editor = OpenAIOutputEditor()
     assert editor.review_turn(["original"], "goal", turn_index=2, debug=False) == ["edited"]
+    assert editor.review_opening(["opening"], "goal") == ["edited"]
+    opening_instruction = json.loads(captured_requests[-1]["messages"][1]["content"])["instruction"]
+    assert "prioritize character background, motivation, communication, and relationships" in opening_instruction.lower()
+    assert "full name" in opening_instruction.lower()
+    assert "remove scenery-first filler" in opening_instruction.lower()
 
 
 def test_ollama_output_editor_returns_input_on_invalid_payload(monkeypatch) -> None:

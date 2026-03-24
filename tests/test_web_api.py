@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from storygame.llm.story_director import StoryDirector
 from storygame.web import _resolve_narrator_mode, create_app
 from tests.narrator_stubs import StubNarrator
 
@@ -161,7 +162,69 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     payload = response.json()
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
+    assert payload["lines"][0].startswith(">START")
     assert any(payload["state"]["room_name"] in line for line in payload["lines"])
+
+
+def test_web_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkeypatch):
+    observed = {"fast": 0}
+
+    def _fast(self, state):  # noqa: ANN001
+        observed["fast"] += 1
+        lines = ["Fast opening one.", "Fast opening two.", "Fast opening three."]
+        state.world_package["llm_story_bundle"] = {
+            "opening_paragraphs": tuple(lines),
+            "assistant_name": "Daria Stone",
+            "actionable_objective": "Open the case file first.",
+        }
+        return list(lines)
+
+    def _slow(self, state):  # noqa: ANN001, ARG002
+        raise AssertionError("web should not use the slow compose_opening path by default")
+
+    monkeypatch.setattr(StoryDirector, "compose_opening_fast", _fast)
+    monkeypatch.setattr(StoryDirector, "compose_opening", _slow)
+
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator("Opening fallback."),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+
+    assert response.status_code == 200
+    assert observed["fast"] == 1
+
+
+def test_bootstrap_response_filters_duplicate_room_name_from_opening(tmp_path):
+    class _DuplicateRoomHeaderDirector:
+        def compose_opening(self, state):  # noqa: ANN001
+            state.world_package["llm_story_bundle"] = {
+                "opening_paragraphs": ["Outside The Mansion", "Rain needles the stone.", "Daria keeps the file close."]
+            }
+            return ["Outside The Mansion", "Rain needles the stone.", "Daria keeps the file close."]
+
+        def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
+            return lines
+
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(),
+            output_editor=_PassThroughEditor(),
+            story_director=_DuplicateRoomHeaderDirector(),
+        )
+    )
+
+    response = client.post("/turn", json={"command": "start", "seed": 91})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["lines"].count("Outside The Mansion") == 0
+    assert sum(1 for line in payload["lines"] if line.startswith("Outside The Mansion\n")) == 1
 
 
 def test_bootstrap_response_state_prefers_fact_backed_objective(tmp_path):
@@ -245,6 +308,30 @@ def test_bootstrap_only_response_uses_narrator_when_story_bootstrap_fails(tmp_pa
     assert response.status_code == 200
     payload = response.json()
     assert any("Rain needles the stone." in line for line in payload["lines"])
+
+
+def test_bootstrap_only_response_rejects_invalid_narrator_opening(tmp_path):
+    client = TestClient(
+        create_app(
+            save_db_path=tmp_path / "web_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(
+                "Rain needles the stone.\n\n"
+                "Daria Stone, your assistant, keeps the ledger page in hand.\n\n"
+                "The ledger page lies exposed on the front steps."
+            ),
+            output_editor=_PassThroughEditor(),
+            story_director=_RaisingDirector(),
+        ),
+        raise_server_exceptions=True,
+    )
+
+    try:
+        client.post("/turn", json={"command": "start", "seed": 91})
+    except RuntimeError as exc:
+        assert "Opening validation failed" in str(exc)
+    else:
+        raise AssertionError("Expected invalid narrator bootstrap opening to fail closed.")
 
 
 def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):

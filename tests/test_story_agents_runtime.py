@@ -80,6 +80,24 @@ def test_actionable_objective_normalizer_keeps_assistant_out_of_suspect_language
     assert "the suspect's involvement" in fallback.lower()
 
 
+def test_actionable_objective_normalizer_rewrites_direct_questions_to_assistant() -> None:
+    normalized = _normalize_actionable_objective_language(
+        "Question Daria Stone about the foyer and inspect the front steps.",
+        "Daria Stone",
+        "Victor Hale",
+    )
+    assert "question daria stone" not in normalized.lower()
+    assert "consult daria stone" in normalized.lower()
+
+    alias_normalized = _normalize_actionable_objective_language(
+        "Ask Daria what she noticed before anyone else slips away.",
+        "Daria Stone",
+        "",
+    )
+    assert "ask daria" not in alias_normalized.lower()
+    assert "consult daria" in alias_normalized.lower()
+
+
 def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
     captured_requests: list[dict[str, object]] = []
@@ -105,6 +123,21 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
     assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
+
+
+def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.delenv("CLOUDFLARE_TIMEOUT", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_RETRIES", raising=False)
+    observed: dict[str, object] = {}
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed["timeout"] = timeout
+        return _FakeResponse('{"narration":"ok-cloudflare"}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
+    assert observed["timeout"] == 8.0
 
 
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
@@ -262,6 +295,113 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
         agent.run(state)
 
 
+def test_story_bootstrap_agent_passes_canonical_opening_facts_to_prompt(monkeypatch) -> None:
+    state = build_default_state(seed=551, genre="mystery")
+    agent = DefaultStoryBootstrapAgent("openai")
+    captured: dict[str, object] = {}
+
+    def _capture(mode, system, user):  # noqa: ANN001
+        captured["system"] = system
+        captured["user"] = json.loads(user)
+        return json.dumps(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective on one final case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file and press the strongest lead.",
+                "primary_goal": "Expose the conspiracy behind the murders.",
+                "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Paid enforcers.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [],
+                "clue_placements": [],
+                "hidden_threads": ["The route key links the assistant to the mansion."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": ["p1", "p2", "p3"],
+            }
+        )
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", _capture)
+    result = agent.run(state)
+
+    assert result["assistant_name"] == "Daria Stone"
+    user = captured["user"]
+    assert isinstance(user, dict)
+    opening_facts = user["opening_facts"]
+    assert opening_facts["assistant"]["role"] == "assistant"
+    assert "case file" in opening_facts["assistant"]["scene_purpose"].lower()
+    assert any("have not reviewed the case file yet" in fact for fact in opening_facts["scene_facts"])
+    assert any(item["held_by"] == "Daria Stone" for item in opening_facts["visible_items"])
+
+
+def test_story_bootstrap_agent_normalizes_assistant_targeting_in_opening_paragraphs(monkeypatch) -> None:
+    state = build_default_state(seed=553)
+    agent = DefaultStoryBootstrapAgent("openai")
+
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective on one final case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file and inspect the front steps.",
+                "primary_goal": "Expose the conspiracy behind the murders.",
+                "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Paid enforcers.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [],
+                "clue_placements": [
+                    {
+                        "item_id": "route_key",
+                        "room_id": "watch_tower",
+                        "clue_text": "The route key marks the killer's exit path.",
+                        "hidden_reason": "It was hidden inside a cracked stone cap.",
+                    }
+                ],
+                "hidden_threads": ["The route key links the assistant to the mansion."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": [
+                    "Rain needles the stone as you reach the front steps.",
+                    "Daria Stone, your assistant, keeps the ledger page tight in her hand.",
+                    "You are here to question Daria Stone about her involvement before you go inside.",
+                ],
+            }
+        ),
+    )
+
+    result = agent.run(state)
+
+    assert any("consult Daria Stone" in paragraph for paragraph in result["opening_paragraphs"])
+    assert not any("question Daria Stone" in paragraph for paragraph in result["opening_paragraphs"])
+
+
 def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypatch) -> None:
     state = build_default_state(seed=551)
     agent = DefaultStoryBootstrapCriticAgent("openai")
@@ -318,6 +458,40 @@ def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypa
     assert result["verdict"] == "revise"
     assert any("assistant" in issue.lower() for issue in result["issues"])
     assert any("ledger page" in issue.lower() for issue in result["issues"])
+
+
+def test_story_bootstrap_critic_rejects_ledger_page_left_on_front_steps(monkeypatch) -> None:
+    state = build_default_state(seed=552)
+    agent = DefaultStoryBootstrapCriticAgent("openai")
+    bundle = {
+        "assistant_name": "Daria Stone",
+        "actionable_objective": "Review the grounds and decide which lead to press first.",
+        "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+        "clue_placements": [
+            {
+                "item_id": "ledger_page",
+                "room_id": "front_steps",
+                "clue_text": "The ledger page marks a missing payment.",
+                "hidden_reason": "Wind left it half-caught in the stonework.",
+            }
+        ],
+        "opening_paragraphs": [
+            "Rain needles the stone as you approach the mansion.",
+            "Daria Stone watches the drive while the ledger page lies in plain sight on the front steps.",
+            "The work begins before you even cross the threshold.",
+        ],
+    }
+    monkeypatch.setattr(
+        "storygame.llm.story_agents.agents._chat_complete",
+        lambda mode, system, user: json.dumps(
+            {"verdict": "accepted", "continuity_summary": "Looks fine.", "issues": []}
+        ),
+    )
+
+    result = agent.run(state, bundle)
+
+    assert result["verdict"] == "revise"
+    assert any("front steps" in issue.lower() for issue in result["issues"])
 
 
 def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> None:
