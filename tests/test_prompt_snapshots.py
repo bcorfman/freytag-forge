@@ -50,6 +50,7 @@ def test_prompt_includes_if_storytelling_quality_checklist():
     assert "who the player is" in system_text
     assert "where they are" in system_text
     assert "immediate objective" in system_text
+    assert "use present tense" in system_text
     assert "materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system_text
     assert "do not invent extra furniture, desks, tables, papers, or document staging" in system_text
     assert "room name" in system_text

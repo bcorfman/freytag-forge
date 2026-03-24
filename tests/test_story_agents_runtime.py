@@ -295,6 +295,58 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
         agent.run(state)
 
 
+def test_story_bootstrap_agent_passes_canonical_opening_facts_to_prompt(monkeypatch) -> None:
+    state = build_default_state(seed=551, genre="mystery")
+    agent = DefaultStoryBootstrapAgent("openai")
+    captured: dict[str, object] = {}
+
+    def _capture(mode, system, user):  # noqa: ANN001
+        captured["system"] = system
+        captured["user"] = json.loads(user)
+        return json.dumps(
+            {
+                "protagonist_name": "Noah Kade",
+                "protagonist_background": "A detective on one final case.",
+                "assistant_name": "Daria Stone",
+                "actionable_objective": "Review the case file and press the strongest lead.",
+                "primary_goal": "Expose the conspiracy behind the murders.",
+                "secondary_goals": ["Find the missing witness."],
+                "expanded_outline": "Investigate the murders, expose the conspiracy, and survive retaliation.",
+                "story_beats": [
+                    {"beat_id": "hook", "summary": "Survey the estate.", "min_progress": 0.0},
+                    {"beat_id": "midpoint", "summary": "Expose the conspiracy.", "min_progress": 0.5},
+                    {"beat_id": "climax", "summary": "Confront the killer.", "min_progress": 0.85},
+                ],
+                "villains": [
+                    {
+                        "name": "Magistrate Voss",
+                        "motive": "Protect the conspiracy.",
+                        "means": "Paid enforcers.",
+                        "opportunity": "Access to the estate.",
+                    }
+                ],
+                "timed_events": [],
+                "clue_placements": [],
+                "hidden_threads": ["The route key links the assistant to the mansion."],
+                "reveal_schedule": [{"thread_index": 0, "min_progress": 0.55}],
+                "contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}],
+                "opening_paragraphs": ["p1", "p2", "p3"],
+            }
+        )
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", _capture)
+    result = agent.run(state)
+
+    assert result["assistant_name"] == "Daria Stone"
+    user = captured["user"]
+    assert isinstance(user, dict)
+    opening_facts = user["opening_facts"]
+    assert opening_facts["assistant"]["role"] == "assistant"
+    assert "case file" in opening_facts["assistant"]["scene_purpose"].lower()
+    assert any("have not reviewed the case file yet" in fact for fact in opening_facts["scene_facts"])
+    assert any(item["held_by"] == "Daria Stone" for item in opening_facts["visible_items"])
+
+
 def test_story_bootstrap_agent_normalizes_assistant_targeting_in_opening_paragraphs(monkeypatch) -> None:
     state = build_default_state(seed=553)
     agent = DefaultStoryBootstrapAgent("openai")

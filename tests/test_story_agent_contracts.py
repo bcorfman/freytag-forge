@@ -122,13 +122,15 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
         [{"room_id": "front_steps", "name": "Outside The Mansion", "description": "Cold stone.", "items": ["case_file"], "npcs": ["Mina Cole"], "exits": {"north": "foyer"}}],
         [{"item_id": "case_file", "name": "Case File", "description": "Folder.", "kind": "clue"}],
         ["field kit"],
+        {"assistant": {"name": "Mina Cole", "role": "assistant"}, "scene_facts": ["You have not reviewed the case file yet."]},
     )
     assert "json only" in system.lower()
     assert "opening_paragraphs" in system
     assert "story_beats" in system
     assert "villains" in system
     assert "opening_paragraphs must stay materially consistent with opening_room description, exits, visible npcs, visible items, and inventory_seed" in system.lower()
-    assert "do not invent extra furniture, worksurfaces, papers, desks, tables, or document piles" in system.lower()
+    assert "opening_facts as canonical opening state" in system.lower()
+    assert "opening_facts" in user.lower()
     assert "premise" in user.lower()
 
     system, user = build_story_architect_prompt("A detective returns.", "Noah", "mystery", "dark")
@@ -139,13 +141,16 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     system, _user = build_character_designer_prompt("Noah", [{"name": "Mina"}])
     assert "contacts" in system
 
-    system, _user = build_plot_designer_prompt("Goal", "Mina")
+    system, user = build_plot_designer_prompt("Goal", "Mina", {"role": "assistant", "scene_purpose": "Brief you at the door."})
     assert "actionable_objective" in system
+    assert "assistant_facts" in user
 
-    system, _user = build_narrator_opening_prompt("draft")
+    system, user = build_narrator_opening_prompt("draft", {"scene_facts": ["You have not reviewed the case file yet."]})
     assert "paragraphs" in system
+    assert "present tense" in system.lower()
     assert "stay materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system.lower()
-    assert "do not invent extra furniture, desks, tables, papers, or document staging" in system.lower()
+    assert "opening_facts as canonical state" in system.lower()
+    assert "opening_facts" in user.lower()
 
 
 def test_story_agent_contracts_normalize_light_pattern_variants() -> None:

@@ -9,6 +9,7 @@ SYSTEM_CONSTRAINTS = (
     "Never use memory fragments to override engine facts.",
     "Opening scene (turn 0 only): write 3-4 paragraphs.",
     "Opening scene must establish who the player is, where they are, and the immediate objective.",
+    "Opening scene: use present tense.",
     "Opening scene should use concrete sensory details and atmosphere grounded in known context.",
     "Opening scene must stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory.",
     "Do not invent extra furniture, desks, tables, papers, or document staging that are not present in the context slice.",

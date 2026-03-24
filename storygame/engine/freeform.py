@@ -621,12 +621,27 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
             {"fact": ["discovered_clue", "case_file"]},
             {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
+            {
+                "fact": [
+                    "player_context",
+                    "case_file_status",
+                    "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+                ]
+            },
         ]
         if nearby_holder:
             assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})
         return {
             "assert": assert_ops,
-            "retract": [],
+            "retract": [
+                {
+                    "fact": [
+                        "player_context",
+                        "case_file_status",
+                        "You have not reviewed the case file yet, so its contents are still unknown to you.",
+                    ]
+                }
+            ],
             "numeric_delta": [],
             "reasons": ["freeform:read_case_file"],
         }

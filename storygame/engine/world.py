@@ -391,6 +391,14 @@ def build_default_state(
                     "op": "assert",
                     "fact": (
                         "player_context",
+                        "case_file_status",
+                        "You have not reviewed the case file yet, so its contents are still unknown to you.",
+                    ),
+                },
+                {
+                    "op": "assert",
+                    "fact": (
+                        "player_context",
                         "threshold_pause",
                         "Daria met you outside with the case file before either of you heads into the mansion.",
                     ),

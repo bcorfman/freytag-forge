@@ -12,6 +12,9 @@ from urllib.parse import urlparse, urlunparse
 from typing import Any, Protocol
 from uuid import uuid4
 
+from storygame.engine.facts import assistant_name as resolved_assistant_name
+from storygame.engine.facts import assistant_role as resolved_assistant_role
+from storygame.engine.facts import item_state, player_context_facts, room_items, room_npcs
 from storygame.engine.state import GameState
 from storygame.llm.opening_coherence import item_labels_for_opening, opening_coherence_issues
 from storygame.llm.story_agents.contracts import (
@@ -284,6 +287,67 @@ def _items_seed(state: GameState) -> list[dict[str, object]]:
     return items
 
 
+def _opening_facts_seed(state: GameState) -> dict[str, object]:
+    room = state.world.rooms[state.player.location]
+    visible_npc_ids = room_npcs(state, state.player.location)
+    assistant = resolved_assistant_name(state).strip()
+    assistant_id = ""
+    for npc_id in visible_npc_ids:
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        if npc.name.strip().lower() == assistant.lower():
+            assistant_id = npc_id
+            break
+
+    visible_item_ids: list[str] = list(room_items(state, state.player.location))
+    for npc_id in visible_npc_ids:
+        for fact in state.world_facts.query("holding", npc_id, None):
+            if len(fact) > 2 and fact[2] not in visible_item_ids:
+                visible_item_ids.append(fact[2])
+
+    visible_items: list[dict[str, object]] = []
+    for item_id in visible_item_ids:
+        item = state.world.items.get(item_id)
+        if item is None:
+            continue
+        holder_name = ""
+        for fact in state.world_facts.query("holding", None, item_id):
+            actor_id = fact[1]
+            if actor_id == "player":
+                holder_name = "you"
+                break
+            npc = state.world.npcs.get(actor_id)
+            if npc is not None and npc.name.strip():
+                holder_name = npc.name
+                break
+        visible_items.append(
+            {
+                "name": item.name,
+                "kind": item.kind,
+                "state": item_state(state, item_id),
+                "held_by": holder_name,
+            }
+        )
+
+    assistant_facts = {
+        "name": assistant,
+        "role": resolved_assistant_role(state, assistant),
+        "scene_purpose": "",
+        "present_in_opening_room": bool(assistant_id),
+    }
+    if assistant_id:
+        facts = state.world_facts.query("npc_scene_purpose", assistant_id, None)
+        if facts:
+            assistant_facts["scene_purpose"] = facts[0][2]
+
+    return {
+        "assistant": assistant_facts,
+        "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
+        "visible_items": visible_items,
+    }
+
+
 def _normalize_background_clause(background: str) -> str:
     cleaned = " ".join(background.split()).strip(" ,")
     if not cleaned:
@@ -508,6 +572,7 @@ class DefaultStoryBootstrapAgent:
 
         rooms_seed = _rooms_seed(state)
         items_seed = _items_seed(state)
+        opening_facts = _opening_facts_seed(state)
         system, user = build_story_bootstrap_prompt(
             _summary_premise(state),
             state.story_genre,
@@ -525,6 +590,7 @@ class DefaultStoryBootstrapAgent:
             rooms_seed,
             items_seed,
             [item.replace("_", " ") for item in state.player.inventory[:3]],
+            opening_facts,
         )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
@@ -575,6 +641,7 @@ class DefaultStoryBootstrapCriticAgent:
             bootstrap_bundle,
             _rooms_seed(state),
             _items_seed(state),
+            _opening_facts_seed(state),
         )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
@@ -656,7 +723,11 @@ class DefaultPlotDesignerAgent:
         contacts = cast.get("contacts", [])
         assistant = contacts[0]["name"] if contacts else ""
         suspect = _pick_suspect_name(contacts, assistant)
-        system, user = build_plot_designer_prompt(goal, assistant or "Assistant")
+        system, user = build_plot_designer_prompt(
+            goal,
+            assistant or "Assistant",
+            _opening_facts_seed(state).get("assistant", {}),
+        )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
             raise RuntimeError("PlotDesigner agent returned non-JSON content.")
@@ -721,7 +792,7 @@ class DefaultNarratorOpeningAgent:
             paragraph_4 = f"Your immediate objective is practical and immediate: {objective}"
 
         opening = [paragraph_1, paragraph_2, paragraph_3, paragraph_4]
-        system, user = build_narrator_opening_prompt("\n\n".join(opening))
+        system, user = build_narrator_opening_prompt("\n\n".join(opening), _opening_facts_seed(state))
         raw_response = _chat_complete(self._mode, system, user)
         payload = _json_from_text(raw_response)
         if payload is None:

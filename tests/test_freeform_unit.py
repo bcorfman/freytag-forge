@@ -204,6 +204,16 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     assert resolved["state"].player.flags.get("reviewed_case_file") is True
     assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
     assert resolved["event"].delta_progress > 0.0
+    assert not resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_status",
+        "You have not reviewed the case file yet, so its contents are still unknown to you.",
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_status",
+        "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+    )
 
 
 def test_resolve_freeform_roleplay_read_case_file_allows_nearby_assistant_holder() -> None:
