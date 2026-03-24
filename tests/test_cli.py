@@ -1176,6 +1176,72 @@ def test_run_turn_fails_closed_when_targeted_conversation_returns_player_speaker
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
     assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_when_wrong_npc_answers_targeted_conversation() -> None:
+    class _WrongSpeakerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "The victim died before midnight.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["olivia_thompson"],
+                    "arguments": {"topic": "victim", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88339, genre="mystery")
+    state.player.location = "foyer"
+    state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Olivia, tell me about the victim",
+        Random(88339),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_WrongSpeakerAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_fails_closed_for_dialogue_with_code_artifact() -> None:
+    class _ContaminatedDialogueAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {
+                    "speaker": "daria_stone",
+                    "text": "getStringExtra from the case file is not available yet.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "case file", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88340, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, summarize the case file for me",
+        Random(88340),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ContaminatedDialogueAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
     assert not any(line.strip().lower() == "query" for line in lines)
     assert not any(line.startswith('Elias says: "') for line in lines)
     assert not any(line.startswith('You says: "') for line in lines)

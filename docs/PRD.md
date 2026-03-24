@@ -91,6 +91,7 @@ Current runtime generation is package-driven.
   - the game should feel like a responsive story simulation with deterministic enforcement,
   - not a classic command parser with LLM text layered on top.
 - For direct-address conversation with a visible NPC, accepted freeform proposals must surface that NPC as the dialogue speaker. Player-speech echoes and narrator summaries are invalid substitutes for the NPC reply and should fail closed.
+- For direct-address conversation with a visible NPC, the accepted dialogue speaker must match the addressed NPC target (assistant aliases may resolve to that target), and in-character dialogue must not leak code or implementation artifacts into story text.
 
 ### Core Engine
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.

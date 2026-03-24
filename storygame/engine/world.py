@@ -138,8 +138,8 @@ def _room_description(room_id: str, genre: str, tone: str) -> str:
         )
     if genre == "mystery" and room_id == "foyer":
         return (
-            "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long "
-            "hall stretching deeper into the mansion."
+            "The foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead. "
+            "The upper gallery stays dark above the entry."
         )
     return (
         f"The {location} is laid out for close inspection, with worn surfaces and practical routes that can be "

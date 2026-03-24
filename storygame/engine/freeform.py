@@ -95,6 +95,7 @@ _INDOOR_ROOM_TOKENS = {
     "interior",
 }
 _LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE)
+_CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -382,10 +383,10 @@ def _room_navigation_text(room) -> str:  # noqa: ANN001
 
 
 def _room_environment(room) -> str:  # noqa: ANN001
-    text = _room_navigation_text(room)
-    if any(token in text for token in _OUTDOOR_ROOM_TOKENS):
+    tokens = set(re.findall(r"[a-z]+", _room_navigation_text(room)))
+    if tokens.intersection(_OUTDOOR_ROOM_TOKENS):
         return "outdoor"
-    if any(token in text for token in _INDOOR_ROOM_TOKENS):
+    if tokens.intersection(_INDOOR_ROOM_TOKENS):
         return "indoor"
     return "unknown"
 
@@ -625,7 +626,19 @@ def _has_invalid_targeted_dialogue_speaker(dialog_payload: dict[str, Any], actio
     if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
         return False
     speaker = re.sub(r"[^a-z0-9]+", "_", str(dialog_payload.get("speaker", "")).strip().lower()).strip("_")
-    return speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}
+    if speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}:
+        return True
+    if speaker in {"ai_assistant", "assistant"}:
+        return False
+    primary_target = str(next((target for target in targets if str(target).strip()), "")).strip().lower()
+    return bool(primary_target and speaker != primary_target)
+
+
+def _dialogue_contains_code_artifact(dialog_payload: dict[str, Any]) -> bool:
+    text = str(dialog_payload.get("text", "")).strip()
+    if not text:
+        return False
+    return _CODE_ARTIFACT_TOKEN_PATTERN.search(text) is not None
 
 
 def _scope_normalized_proposals(
@@ -732,12 +745,17 @@ class LlmFreeformProposalAdapter:
         user: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, system, user)
+        retry_reasons: list[str] = []
         if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(dialog_payload, action_payload):
-            retry_system = (
-                system
-                + " Retry because the player directly addressed a visible NPC. "
-                + "Return that NPC as dialog_proposal.speaker and provide only that NPC's in-character reply."
+            retry_reasons.append(
+                "The player directly addressed a visible NPC, so dialog_proposal.speaker must match the addressed target and the reply must come from that NPC."
             )
+        if _dialogue_contains_code_artifact(dialog_payload):
+            retry_reasons.append(
+                "Dialog text must stay fully in-world and must not contain code identifiers, API names, or implementation artifacts."
+            )
+        if retry_reasons:
+            retry_system = system + " Retry because " + " ".join(retry_reasons) + " Return JSON only."
             dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, retry_system, user)
         return dialog_payload, action_payload
 
