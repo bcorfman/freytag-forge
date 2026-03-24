@@ -22,7 +22,7 @@ from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
-from storygame.engine.facts import apply_fact_ops, rebuild_facts_from_legacy_views
+from storygame.engine.facts import apply_fact_ops, item_driver, item_owner, rebuild_facts_from_legacy_views
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
@@ -176,24 +176,37 @@ def _rewrite_known_npc_names(state: GameState, text: str) -> str:
     return rewritten
 
 
+def _arrival_car_room_line(state: GameState, item_id: str) -> str:
+    if item_owner(state, item_id) == "player" and item_driver(state, item_id) == "player":
+        return "A dark sedan waits nearby where you left it."
+    return "A dark sedan waits nearby."
+
+
+def _special_room_item_line(state: GameState, room_id: str, actionable_items: tuple[str, ...]) -> str:
+    if room_id == "front_steps" and "ledger_page" in actionable_items:
+        return "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
+    if "arrival_sedan" in actionable_items:
+        return _arrival_car_room_line(state, "arrival_sedan")
+    return ""
+
+
 def _room_lines(state: GameState, *, long_form: bool = True) -> str:
     room = state.world.rooms[state.player.location]
     presentation = _cached_room_presentation(state, room.id)
     pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
     actionable_items, junk_count = room_item_groups(state, room)
     if actionable_items:
-        visible_items = tuple(_humanize_token(item) for item in actionable_items)
+        special_line = _special_room_item_line(state, room.id, actionable_items)
+        handled_items = {"arrival_sedan"} if "arrival_sedan" in actionable_items else set()
         if room.id == "front_steps" and "ledger_page" in actionable_items:
-            pieces.append(
-                "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
-            )
-        elif room.id == "front_steps" and "arrival_sedan" in actionable_items:
-            remaining = tuple(item for item in visible_items if item != "arrival sedan")
-            pieces.append("A dark sedan waits by the drive where it dropped you off.")
+            handled_items.add("ledger_page")
+        remaining = tuple(_humanize_token(item) for item in actionable_items if item not in handled_items)
+        if special_line:
+            pieces.append(special_line)
             if remaining:
                 pieces.append(f"You can also see {_joined_with_and(remaining)} within easy reach.")
         else:
-            pieces.append(f"You can see {_joined_with_and(visible_items)} within easy reach.")
+            pieces.append(f"You can see {_joined_with_and(list(remaining))} within easy reach.")
     if junk_count > 0:
         suffix = "item" if junk_count == 1 else "items"
         verb = "is" if junk_count == 1 else "are"

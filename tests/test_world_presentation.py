@@ -131,7 +131,43 @@ def test_mystery_room_block_mentions_arrival_car() -> None:
     room_block = _room_lines(state, long_form=True)
 
     assert "sedan" in room_block.lower()
-    assert "drive" in room_block.lower()
+    assert "left it" in room_block.lower()
+
+
+def test_mystery_room_block_describes_player_owned_arrival_car_consistently() -> None:
+    state = build_default_state(seed=382, genre="mystery")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert "you left it" in room_block.lower()
+    assert "dropped you off" not in room_block.lower()
+
+
+def test_mystery_room_block_falls_back_to_generic_car_line_without_player_arrival_facts() -> None:
+    state = build_default_state(seed=383, genre="mystery")
+    state.world_facts.retract_fact("item_owner", "arrival_sedan", "player")
+    state.world_facts.retract_fact("item_driver", "arrival_sedan", "player")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert "a dark sedan waits nearby." in room_block.lower()
+    assert "you left it" not in room_block.lower()
+    assert "dropped you off" not in room_block.lower()
+
+
+def test_vehicle_room_line_uses_fact_backed_phrasing_outside_start_room() -> None:
+    state = build_default_state(seed=384, genre="mystery")
+    side_room = state.world.rooms["foyer"]
+    side_room.item_ids = tuple(dict.fromkeys((*side_room.item_ids, "arrival_sedan")))
+    state.world_facts.assert_fact("room_item", "foyer", "arrival_sedan")
+    state.player.location = "foyer"
+    state.world_facts.retract_fact("at", "player", "front_steps")
+    state.world_facts.assert_fact("at", "player", "foyer")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert "you left it" in room_block.lower()
+    assert "dropped you off" not in room_block.lower()
 
 
 def test_same_room_freeform_reply_does_not_repeat_room_block():
