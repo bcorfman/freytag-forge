@@ -40,7 +40,8 @@ class OpenAIOutputEditor:
             instruction = (
                 "Opening scene rules: exactly 3-4 paragraphs; no room-block format lines; no meta wording; "
                 "natural prose and second-person framing where needed; prioritize character background, motivation, "
-                "communication, and relationships; trim environmental repetition that just restates the room block."
+                "communication, and relationships; on first mention of a visible NPC use their full name; "
+                "remove scenery-first filler unless it is needed for flow or story cohesion."
             )
         else:
             instruction = (
@@ -93,7 +94,7 @@ class OllamaOutputEditor:
     def _review_with_llm(self, lines: list[str], active_goal: str, opening: bool) -> list[str]:
         instruction = (
             "Opening scene: return 3-4 polished paragraphs only. Prioritize character background, motivation, "
-            "communication, and relationships, and trim environmental repetition that merely restates the room block."
+            "communication, and relationships, use full names on first NPC mention, and remove scenery-first filler unless it is needed for flow or story cohesion."
             if opening
             else "Turn output: keep room block first and reduce repetitive goal reminders."
         )

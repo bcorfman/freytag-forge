@@ -145,7 +145,7 @@ def test_shorten_line_prefers_complete_clause_over_ellipsis() -> None:
 
     shortened = _shorten_line(text, 60)
 
-    assert shortened == "The foyer opens beneath a dim chandelier."
+    assert shortened == "The foyer opens beneath a dim chandelier, with rainwater."
     assert "..." not in shortened
 
 
@@ -975,6 +975,36 @@ def test_run_turn_targeted_appearance_reply_commits_new_fact_without_leaking_act
     assert not any(line.strip().lower() == "examine" for line in lines)
     assert any('says: "I\'m wearing a slate coat and rain-dark gloves."' in line for line in lines)
     assert next_state.world_facts.holds("npc_appearance", npc_id, "a slate coat and rain-dark gloves")
+
+
+def test_run_turn_preserves_apostrophes_in_targeted_npc_reply() -> None:
+    class _ContractionReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
+            return (
+                {"speaker": "daria_stone", "text": "I'm here to introduce you to the case and bring you inside.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "why are you here", "planner_source": "llm"},
+                    "proposed_effects": ["asked:purpose"],
+                },
+            )
+
+    state = build_default_state(seed=883341, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, why are you here?",
+        Random(883341),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ContractionReplyAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any('Daria Stone says: "I\'m here to introduce you to the case and bring you inside."' in line for line in lines)
 
 
 def test_run_turn_fails_closed_for_targeted_appearance_reply_that_conflicts_with_fact_backed_appearance() -> None:

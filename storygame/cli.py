@@ -98,7 +98,7 @@ def _shorten_line(value: str, max_chars: int) -> str:
     text = value.strip()
     if len(text) <= max_chars:
         return text
-    for delimiter in (". ", "; ", ": ", ", "):
+    for delimiter in (". ", "; ", ": "):
         head, separator, _tail = text.partition(delimiter)
         candidate = f"{head.strip()}{'.' if delimiter != '. ' else ''}".strip()
         if separator and candidate and len(candidate) <= max_chars:
@@ -209,6 +209,15 @@ def _special_room_item_line(state: GameState, room_id: str, actionable_items: tu
 
 
 def _room_lines(state: GameState, *, long_form: bool = True) -> str:
+    return _room_lines_with_followers(state, long_form=long_form, followed_npc_ids=())
+
+
+def _room_lines_with_followers(
+    state: GameState,
+    *,
+    long_form: bool = True,
+    followed_npc_ids: tuple[str, ...] = (),
+) -> str:
     room = state.world.rooms[state.player.location]
     presentation = _cached_room_presentation(state, room.id)
     pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
@@ -240,6 +249,11 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
                 pieces.append(f"The single obvious exit leads {exits[0]}.")
         else:
             pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
+    for npc_id in followed_npc_ids:
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        pieces.append(f"{_first_name(npc.name.strip() or _humanize_token(npc_id).title())} follows you.")
     if room.npc_ids:
         visible_npcs = tuple(_display_name_for_npc(state, npc_id, room.npc_ids) for npc_id in room.npc_ids)
         verb = "is" if len(visible_npcs) == 1 else "are"
@@ -251,6 +265,18 @@ def _room_lines(state: GameState, *, long_form: bool = True) -> str:
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
     director = StoryDirector("openai") if story_director is None else story_director
     return director.compose_opening(state)
+
+
+def _followed_npc_ids(previous_state: GameState, next_state: GameState) -> tuple[str, ...]:
+    if previous_state.player.location == next_state.player.location:
+        return ()
+    origin_room = previous_state.world.rooms[previous_state.player.location]
+    destination_room = next_state.world.rooms[next_state.player.location]
+    followed: list[str] = []
+    for npc_id in destination_room.npc_ids:
+        if npc_id in origin_room.npc_ids:
+            followed.append(npc_id)
+    return tuple(followed)
 
 
 def _with_paragraph_spacing(lines: list[str]) -> list[str]:
@@ -1134,10 +1160,12 @@ def run_turn(
     else:
         lines = []
         if _should_render_room_block(state, next_state, effective_action):
+            followed_npc_ids = _followed_npc_ids(state, next_state) if state.player.location != next_state.player.location else ()
             lines.append(
-                _room_lines(
+                _room_lines_with_followers(
                     next_state,
                     long_form=effective_action.kind == ActionKind.LOOK,
+                    followed_npc_ids=followed_npc_ids,
                 )
             )
         if effective_action.kind == ActionKind.INVENTORY:
@@ -1218,7 +1246,18 @@ def run_turn(
     lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
     lines = _suppress_repeated_goal_copy(lines, raw_input, next_state.active_goal)
     if not lines:
-        lines = [_room_lines(next_state, long_form=True)] if effective_action.kind == ActionKind.LOOK else [""]
+        if effective_action.kind == ActionKind.LOOK:
+            lines = [_room_lines(next_state, long_form=True)]
+        elif state.player.location != next_state.player.location:
+            lines = [
+                _room_lines_with_followers(
+                    next_state,
+                    long_form=False,
+                    followed_npc_ids=_followed_npc_ids(state, next_state),
+                )
+            ]
+        else:
+            lines = [""]
         lines = [line for line in lines if line]
 
     reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)

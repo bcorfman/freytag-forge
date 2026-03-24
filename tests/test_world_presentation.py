@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from random import Random
 
-from storygame.cli import _room_lines, run_turn
+from storygame.cli import _followed_npc_ids, _room_lines, _room_lines_with_followers, run_turn
 from storygame.engine.facts import protagonist_profile
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
@@ -120,9 +120,48 @@ def test_room_presentation_short_description_uses_complete_clause_not_ellipsis_o
     destination = moved_state.player.location
     cache = moved_state.world_package["room_presentation_cache"][destination]
 
-    assert cache["short"] == "The foyer opens beneath a dim chandelier."
+    assert cache["short"] == "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long hall."
     assert "..." not in cache["short"]
-    assert move_lines[0].startswith("Mansion Foyer\nThe foyer opens beneath a dim chandelier.")
+    assert move_lines[0].startswith("Mansion Foyer\nThe foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles and a long hall.")
+
+
+def test_move_room_block_announces_follower_before_npc_presence_line() -> None:
+    state = build_default_state(seed=362, genre="mystery")
+
+    moved_state, move_lines, _action_raw, _beat_type, _continued = run_turn(
+        state,
+        "north",
+        Random(362),
+        SilentNarrator(),
+        debug=False,
+    )
+
+    text = move_lines[0]
+    assert "Daria follows you." in text
+    assert "Daria Stone" in text
+    assert text.index("Daria follows you.") < text.index("Daria Stone")
+    assert moved_state.player.location == "foyer"
+
+
+def test_followed_npc_helpers_detect_assistant_transition() -> None:
+    state = build_default_state(seed=363, genre="mystery")
+    moved_state, _events = apply_action(state, parse_command("north"), Random(363))
+
+    followed = _followed_npc_ids(state, moved_state)
+    assert followed == ("daria_stone",)
+
+    room_block = _room_lines_with_followers(moved_state, long_form=False, followed_npc_ids=followed)
+    assert "Daria follows you." in room_block
+
+
+def test_followed_npc_helpers_return_empty_without_room_change() -> None:
+    state = build_default_state(seed=364, genre="mystery")
+
+    followed = _followed_npc_ids(state, state)
+
+    assert followed == ()
+    room_block = _room_lines_with_followers(state, long_form=False, followed_npc_ids=followed)
+    assert "follows you." not in room_block
 
 
 def test_same_room_followup_turn_does_not_repeat_room_block():

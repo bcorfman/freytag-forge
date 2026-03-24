@@ -768,7 +768,7 @@ class DefaultNarratorOpeningAgent:
         )
         identity_intro = _build_identity_intro_sentence(protagonist, background)
         paragraph_1 = (
-            f"{assistant_name} has you at the threshold of {room.name.lower()} before hesitation can settle in. "
+            f"{assistant_name} has you at the threshold before hesitation can settle in. "
             "The case is already asking what kind of judgment you still trust yourself to make."
         )
         paragraph_2 = (

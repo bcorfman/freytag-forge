@@ -27,7 +27,7 @@ _PROGRESSIVE_TOKENS = {"inspect", "examine", "investigate", "search", "review", 
 _ESCALATION_TOKENS = {"threaten", "attack", "assault", "harm", "violence"}
 _CASE_FILE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bcase\s+file\b")
 _LEDGER_PAGE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bledger\s+page\b")
-_QUOTED_DIALOGUE_PATTERN = re.compile(r"""["']([^"']+)["']""")
+_DOUBLE_QUOTED_DIALOGUE_PATTERN = re.compile(r'"([^"]+)"')
 _PLACE_QUESTION_PATTERN = re.compile(r"\b(this place|here|what do you make of|what do you think of)\b", re.IGNORECASE)
 _APPEARANCE_QUESTION_PATTERN = re.compile(
     r"\b(what are you wearing|what're you wearing|wearing|clothes|clothing|coat|dress|uniform|outfit)\b",
@@ -620,6 +620,14 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _has_invalid_targeted_dialogue_speaker(dialog_payload: dict[str, Any], action_payload: dict[str, Any]) -> bool:
+    targets = action_payload.get("targets", ())
+    if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
+        return False
+    speaker = re.sub(r"[^a-z0-9]+", "_", str(dialog_payload.get("speaker", "")).strip().lower()).strip("_")
+    return speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}
+
+
 def _scope_normalized_proposals(
     state: GameState,
     raw_input: str,
@@ -698,12 +706,7 @@ class LlmFreeformProposalAdapter:
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
-            payload = _story_agent_json_from_text(_story_agent_chat_complete(self._mode, system, user))
-            if payload is None:
-                raise ValueError("planner_non_json")
-            dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
-            raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
-            action_payload = parse_action_proposal(_normalized_movement_action_payload(state, raw_input, raw_action_payload))
+            dialog_payload, action_payload = self._planned_payloads(state, raw_input, system, user)
             dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
@@ -720,6 +723,38 @@ class LlmFreeformProposalAdapter:
                 action_payload["arguments"] = arguments
                 return dialog_payload, action_payload
             raise RuntimeError(f"FREEFORM_PLANNER_UNAVAILABLE: {_short_text(str(exc), 120)}") from exc
+
+    def _planned_payloads(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        dialog_payload, action_payload = self._parse_planner_response(state, raw_input, system, user)
+        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(dialog_payload, action_payload):
+            retry_system = (
+                system
+                + " Retry because the player directly addressed a visible NPC. "
+                + "Return that NPC as dialog_proposal.speaker and provide only that NPC's in-character reply."
+            )
+            dialog_payload, action_payload = self._parse_planner_response(state, raw_input, retry_system, user)
+        return dialog_payload, action_payload
+
+    def _parse_planner_response(
+        self,
+        state: GameState,
+        raw_input: str,
+        system: str,
+        user: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        payload = _story_agent_json_from_text(_story_agent_chat_complete(self._mode, system, user))
+        if payload is None:
+            raise ValueError("planner_non_json")
+        dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
+        raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
+        action_payload = parse_action_proposal(_normalized_movement_action_payload(state, raw_input, raw_action_payload))
+        return dialog_payload, action_payload
 
 
 def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:
@@ -1072,14 +1107,17 @@ def _format_character_reply_line(
 
     npc = state.world.npcs.get(normalized_speaker)
     speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
-    quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
-    if '"' in text:
-        double_quoted = re.search(r'"([^"]+)"', text)
-        spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")
+    double_quoted = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
+    if text.startswith('"') and text.endswith('"') and len(text) >= 2:
+        spoken = text[1:-1].strip()
     elif " says, '" in text and text.endswith("'"):
         spoken = text.split(" says, '", 1)[1][:-1].strip()
+    elif text.startswith("'") and text.endswith("'") and len(text) >= 2 and " " in text[1:-1]:
+        spoken = text[1:-1].strip()
+    elif double_quoted is not None:
+        spoken = double_quoted.group(1).strip()
     else:
-        spoken = quoted_match.group(1).strip() if quoted_match is not None else text.strip(" \"'")
+        spoken = text.strip()
     if not spoken:
         spoken = text
     return f'{speaker_name} says: "{spoken}"'
