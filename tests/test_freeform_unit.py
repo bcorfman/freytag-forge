@@ -404,8 +404,10 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     assert '"scene_facts"' in user
     assert "drove your own sedan" in user
     assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
-    assert '"id": "arrival_sedan"' in user
+    assert '"name": "dark sedan"' in user
     assert '"state": "parked_by_drive"' in user
+    assert '"visible_item_names": ["dark sedan"]' in user
+    assert '"visible_item_ids"' not in user
 
 
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:

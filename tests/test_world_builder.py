@@ -198,5 +198,8 @@ def test_mystery_default_state_seeds_arrival_car_as_nonportable_vehicle() -> Non
 
     assert car.kind == "vehicle"
     assert car.portable is False
-    assert "sedan" in car.name.lower()
+    assert car.name == "dark sedan"
+    assert "parked by the drive" in car.description.lower()
+    assert "arrival_sedan" not in car.description
+    assert "engine cooled" not in car.description.lower()
     assert state.world_facts.holds("room_item", "front_steps", "arrival_sedan")
