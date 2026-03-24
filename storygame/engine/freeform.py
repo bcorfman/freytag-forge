@@ -379,7 +379,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "name": room.name,
             "description": room.description,
             "visible_npc_ids": list(room.npc_ids),
-            "visible_item_ids": list(room.item_ids),
+            "visible_item_names": [str(fact["name"]).strip() for fact in item_facts if str(fact["name"]).strip()],
             "visible_items": item_facts,
             "exits": sorted(room.exits.keys()),
         },

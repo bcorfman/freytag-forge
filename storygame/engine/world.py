@@ -175,8 +175,8 @@ def _build_items(package: dict) -> dict[str, Item]:
     if genre == "mystery":
         items["arrival_sedan"] = Item(
             id="arrival_sedan",
-            name="Arrival Sedan",
-            description="A dark sedan waits by the drive, its engine cooled after the trip to the mansion.",
+            name="dark sedan",
+            description="A dark sedan is parked by the drive where you left it after arriving at the mansion.",
             tags=("vehicle", genre),
             kind="vehicle",
             portable=False,

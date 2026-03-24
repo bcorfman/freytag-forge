@@ -82,6 +82,7 @@ make test
 - Scene-scoped world actions stay proposal-first without being auto-rerouted into nearby NPC conversation; direct NPC reply requirements now apply only when the player actually addresses or questions a visible character.
 - Room presentation now reads visible-item custody/state facts generically, so player-owned vehicles and similar scene objects are described consistently across map locations instead of through room-specific hard-coded copy.
 - Hosted demo bootstrap now prefers a prose opening path on Cloudflare-backed deployments when the worker cannot satisfy the story-bootstrap JSON contract, keeping the first turn playable without local OpenAI credentials.
+- LLM-facing prompt builders now prefer player-facing item labels over raw internal ids for visible scene objects, while deterministic code still retains the internal ids for commit and validation boundaries.
 - Freeform dialogue facts: accepted targeted NPC replies can commit bounded facts back into the fact store; canonical appearance facts are seeded for mystery contacts, appearance questions are grounded to those facts, and contradictory wardrobe replies now fail closed.
 - Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.

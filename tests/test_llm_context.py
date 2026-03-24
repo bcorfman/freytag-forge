@@ -53,6 +53,16 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
     )
 
 
+def test_prompt_uses_item_labels_not_internal_ids_for_visible_items() -> None:
+    state = build_default_state(seed=108, genre="mystery")
+
+    context = build_narration_context(state, parse_command("look"), "hook")
+    prompt = build_prompt(context)
+
+    assert "Visible items: dark sedan" in prompt["user"]
+    assert "arrival_sedan" not in prompt["user"]
+
+
 def test_context_includes_memory_fragments_without_overriding_facts():
     state = build_default_state(seed=11)
     room_name = state.world.rooms[state.player.location].name

@@ -21,6 +21,7 @@ SYSTEM_CONSTRAINTS = (
 def build_prompt(context: NarrationContext) -> dict[str, str]:
     system = "\n".join(SYSTEM_CONSTRAINTS)
     payload = context.as_dict()
+    visible_item_labels = [str(fact.get("name", "")).strip() for fact in payload["item_facts"] if str(fact.get("name", "")).strip()]
     npc_facts_line = ", ".join(
         f"{fact['name']} [{fact['pronouns']}] ({fact['identity']}) @ {fact['location']}"
         + (f" appearance={fact['appearance']}" if str(fact.get("appearance", "")).strip() else "")
@@ -59,7 +60,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Conversation intent: {payload['conversation_intent']}\n"
         f"Conversation topic: {payload['conversation_topic']}\n"
         f"Prefer NPC reply: {payload['prefer_npc_reply']}\n"
-        f"Visible items: {', '.join(payload['visible_items'])}\n"
+        f"Visible items: {', '.join(visible_item_labels)}\n"
         f"Visible item facts: {item_facts_line}\n"
         f"Visible NPCs: {', '.join(payload['visible_npcs'])}\n"
         f"Soft memory hints (non-authoritative): {', '.join(payload['memory_fragments'])}\n"
