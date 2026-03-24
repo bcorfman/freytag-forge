@@ -814,3 +814,7 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     assert response.status_code == 503
     assert "Narrator failed" in caplog.text
     assert "backend unavailable" in caplog.text
+    assert session_id in caplog.text
+    assert "command=go north" in caplog.text
+    assert "beat=" in caplog.text
+    assert "location=foyer" in caplog.text

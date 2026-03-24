@@ -193,18 +193,46 @@ def create_demo_app(
             ip_daily_hits[key] = current_count + 1
         return None
 
-    def _narrator_fail_closed(lines: list[str]) -> JSONResponse | None:
+    def _narrator_fail_closed(
+        lines: list[str],
+        *,
+        session_id: str,
+        command: str,
+        state: GameState,
+        beat: str,
+    ) -> JSONResponse | None:
+        room = state.world.rooms[state.player.location]
         for line in lines:
             lowered = line.lower()
             if "ai_quota_exceeded" in lowered:
-                _LOGGER.warning("Narrator quota exhausted: %s", line)
+                _LOGGER.warning(
+                    "Narrator quota exhausted: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    line,
+                    session_id,
+                    command,
+                    beat,
+                    state.player.location,
+                    room.name,
+                    state.turn_index,
+                    lines[:4],
+                )
                 return _error_response(
                     429,
                     "quota_exhausted",
                     "Narration quota exhausted for the hosted demo. Please retry later.",
                 )
             if "[narrator failed:" in lowered:
-                _LOGGER.warning("Narrator failed: %s", line)
+                _LOGGER.warning(
+                    "Narrator failed: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    line,
+                    session_id,
+                    command,
+                    beat,
+                    state.player.location,
+                    room.name,
+                    state.turn_index,
+                    lines[:4],
+                )
                 return _error_response(
                     503,
                     "service_unavailable",
@@ -309,7 +337,13 @@ def create_demo_app(
             output_editor=active_output_editor,
             story_director=active_story_director,
         )
-        narrator_error = _narrator_fail_closed(result.lines)
+        narrator_error = _narrator_fail_closed(
+            result.lines,
+            session_id=payload.session_id,
+            command=payload.command,
+            state=result.next_state,
+            beat=result.beat,
+        )
         if narrator_error is not None:
             return narrator_error
         session.state = result.next_state
