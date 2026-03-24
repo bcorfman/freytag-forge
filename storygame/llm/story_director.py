@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import logging
-import re
 from typing import cast
 
 from storygame.engine.facts import (
@@ -31,11 +30,6 @@ from storygame.llm.story_agents.agents import (
 from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
-_LOW_SIGNAL_OPENING_SENTENCE_PATTERNS = (
-    re.compile(r"\bheel-toe\b", re.IGNORECASE),
-    re.compile(r"\bweight\s+evenly\s+distributed\b", re.IGNORECASE),
-    re.compile(r"\bbetween\s+both\s+feet\b", re.IGNORECASE),
-)
 
 
 class StoryDirector:
@@ -75,6 +69,8 @@ class StoryDirector:
         bundle: dict[str, object] = {}
         bundle = self._story_bootstrap.run(state)
         bundle["opening_paragraphs"] = self._sanitize_opening_paragraphs(bundle.get("opening_paragraphs", ()))
+        if not bundle["opening_paragraphs"]:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
         critique = self._story_bootstrap_critic.run(state, bundle)
         bundle["bootstrap_critique"] = critique
         if str(critique.get("verdict", "")).strip().lower() != "accepted":
@@ -109,6 +105,8 @@ class StoryDirector:
     def _compose_opening_bootstrap_fast(self, state: GameState) -> list[str]:
         bundle = self._story_bootstrap.run(state)
         bundle["opening_paragraphs"] = self._sanitize_opening_paragraphs(bundle.get("opening_paragraphs", ()))
+        if not bundle["opening_paragraphs"]:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
         self._apply_story_bundle(state, bundle)
         contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
         opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
@@ -121,25 +119,13 @@ class StoryDirector:
         return opening
 
     def _sanitize_opening_paragraphs(self, opening_paragraphs: object) -> list[str]:
-        cleaned: list[str] = []
-        for raw_paragraph in opening_paragraphs if isinstance(opening_paragraphs, (list, tuple)) else ():
-            paragraph = " ".join(str(raw_paragraph).split()).strip()
-            if not paragraph:
-                continue
-            paragraph = self._strip_low_signal_opening_sentences(paragraph)
-            if paragraph:
-                cleaned.append(paragraph)
-        return cleaned
-
-    def _strip_low_signal_opening_sentences(self, paragraph: str) -> str:
-        sentences = re.split(r"(?<=[.!?])\s+", paragraph)
-        kept = [
-            sentence.strip()
-            for sentence in sentences
-            if sentence.strip()
-            and not any(pattern.search(sentence) for pattern in _LOW_SIGNAL_OPENING_SENTENCE_PATTERNS)
+        if not isinstance(opening_paragraphs, (list, tuple)):
+            return []
+        return [
+            " ".join(str(raw_paragraph).split()).strip()
+            for raw_paragraph in opening_paragraphs
+            if " ".join(str(raw_paragraph).split()).strip()
         ]
-        return " ".join(kept).strip()
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
         contacts = list(cast(list[dict[str, object]], bundle.get("contacts", [])))

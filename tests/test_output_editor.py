@@ -50,6 +50,8 @@ def test_openai_output_editor_uses_llm_when_available(monkeypatch) -> None:
     assert editor.review_opening(["opening"], "goal") == ["edited"]
     opening_instruction = json.loads(captured_requests[-1]["messages"][1]["content"])["instruction"]
     assert "prioritize character background, motivation, communication, and relationships" in opening_instruction.lower()
+    assert "full name" in opening_instruction.lower()
+    assert "remove scenery-first filler" in opening_instruction.lower()
 
 
 def test_ollama_output_editor_returns_input_on_invalid_payload(monkeypatch) -> None:

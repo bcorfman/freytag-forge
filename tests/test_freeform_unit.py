@@ -5,7 +5,9 @@ from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
+    _format_character_reply_line,
     _freeform_planner_prompt,
+    _has_invalid_targeted_dialogue_speaker,
     _normalized_movement_action_payload,
     _room_environment,
     _scene_scoped_dialog_override,
@@ -110,6 +112,42 @@ def test_scene_scoped_dialog_override_handles_car_door_and_generic_player_echoes
     )
     assert generic_dialog["speaker"] == "narrator"
     assert generic_dialog["text"] == "You focus on the immediate action."
+
+
+def test_format_character_reply_line_preserves_contractions_and_wrapped_quotes() -> None:
+    state = build_default_state(seed=414, genre="mystery", tone="dark")
+
+    contraction_line = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": "I'm here to bring you inside.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    quoted_line = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": '"Keep your voice down."', "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert contraction_line == 'Daria Stone says: "I\'m here to bring you inside."'
+    assert quoted_line == 'Daria Stone says: "Keep your voice down."'
+
+
+def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_named_npc() -> None:
+    assert _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "player", "text": "I answer myself.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    assert not _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "daria_stone", "text": "Ask quickly.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+
+def test_invalid_targeted_dialogue_speaker_ignores_empty_targets() -> None:
+    assert not _has_invalid_targeted_dialogue_speaker(
+        {"speaker": "narrator", "text": "No target.", "tone": "in_world"},
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:
@@ -553,6 +591,31 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
     assert action["intent"] == "ask_about"
     assert tuple(action["targets"]) == ("daria_stone",)
     assert action["arguments"]["planner_source"] == "llm"
+
+
+def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_narrator(monkeypatch) -> None:
+    state = build_default_state(seed=40511, genre="mystery")
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"narrator","text":"You ask Olivia about the victim.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+            '{"dialog_proposal":{"speaker":"olivia_thompson","text":"He was already dead by the time I reached the hall.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["olivia_thompson"],"arguments":{"topic":"victim"},'
+            '"proposed_effects":["asked:victim"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
+
+    assert dialog["speaker"] == "olivia_thompson"
+    assert "already dead" in dialog["text"]
+    assert action["intent"] == "ask_about"
 
 
 def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatch) -> None:

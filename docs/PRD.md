@@ -333,8 +333,8 @@ flowchart LR
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
 - Caseboard, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
-- Opening cleanup should strip low-signal body-mechanics filler before display so the opening stays focused on actionable scene facts and character continuity.
 - Opening generation should prioritize character background, motivation, communication, and relationships. Repeating room or weather description already covered by the room block is only useful when it materially changes character intent, tension, or the immediate objective.
+- Opening prompts should ask for full-name-first NPC introductions and should limit pure-surroundings exposition to what materially sharpens character pressure or the immediate objective.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
 - High-impact commands are detected generically (safety/legal/social/goal disruption) and require explicit `PROCEED`/`CANCEL` confirmation before mutation only when they would break current story goals beyond repair.
 - Confirmed high-impact choices emit a `major_disruption` marker and replan context so story agents can adapt NPC behavior, object significance, event timing, likely consequences, and future room framing.
