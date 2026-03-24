@@ -354,6 +354,88 @@ def _freeform_unavailable_lines(detail: str = "") -> list[str]:
     return [line]
 
 
+_PARROTING_STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "to",
+    "for",
+    "of",
+    "in",
+    "on",
+    "at",
+    "is",
+    "are",
+    "was",
+    "were",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "would",
+    "should",
+    "about",
+    "which",
+    "who",
+    "what",
+    "when",
+    "where",
+    "why",
+    "how",
+    "tell",
+    "say",
+    "speak",
+    "talk",
+    "summarize",
+    "explain",
+    "me",
+    "you",
+    "your",
+}
+
+
+def _normalized_dialogue_text(value: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+
+
+def _is_conversational_freeform_request(raw_input: str, fallback_action: Action) -> bool:
+    lowered = raw_input.strip().lower()
+    if fallback_action.kind == ActionKind.TALK:
+        return True
+    return bool(
+        re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|which|summarize|explain)\b", lowered)
+        or "," in lowered
+    )
+
+
+def _is_parroting_dialogue(raw_input: str, dialog_payload: dict[str, Any]) -> bool:
+    speaker = str(dialog_payload.get("speaker", "")).strip().lower()
+    if speaker in {"", "narrator", "player"}:
+        return False
+    text = str(dialog_payload.get("text", "")).strip()
+    if not text:
+        return True
+    normalized_text = _normalized_dialogue_text(text)
+    normalized_input = _normalized_dialogue_text(raw_input)
+    if not normalized_text or not normalized_input:
+        return False
+    if "you asked me" in normalized_text or "you told me" in normalized_text:
+        return True
+    if normalized_text == normalized_input or normalized_text.startswith(normalized_input):
+        return True
+    input_tokens = tuple(
+        token for token in normalized_input.split() if len(token) >= 3 and token not in _PARROTING_STOPWORDS
+    )
+    if len(input_tokens) < 3:
+        return False
+    overlap = sum(1 for token in input_tokens if token in normalized_text)
+    text_token_count = len(normalized_text.split())
+    return overlap / len(input_tokens) >= 0.85 and text_token_count <= len(input_tokens) + 4
+
+
 def _has_bounded_dialogue_event(events: list[Event], debug: bool = False) -> bool:
     if debug:
         return False
@@ -697,6 +779,16 @@ def run_turn(
         planner_dialog_payload, planner_action_payload = freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(planner_action_payload)
         planner_action_payload = normalized_action_payload
+        if _is_conversational_freeform_request(raw_input, fallback_action) and _is_parroting_dialogue(
+            raw_input,
+            planner_dialog_payload,
+        ):
+            planner_dialog_payload = None
+            planner_action_payload = None
+            planner_parse_error = (
+                "FREEFORM_PLANNER_UNAVAILABLE: Conversational NPC dialogue must answer in character instead of repeating the player's prompt."
+            )
+            raise RuntimeError(planner_parse_error)
         prefer_proposal_resolution = _should_prefer_proposal_resolution(
             raw_input,
             fallback_action,
