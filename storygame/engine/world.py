@@ -345,13 +345,58 @@ def build_default_state(
                         {"op": "assert", "fact": ("assistant_name", assistant.name.strip())},
                         {"op": "assert", "fact": ("npc_role", assistant.name.strip(), "assistant")},
                         {"op": "assert", "fact": ("npc_relationship", assistant.name.strip(), "player", "assistant")},
+                        {
+                            "op": "assert",
+                            "fact": (
+                                "npc_scene_purpose",
+                                assistant_id,
+                                "Meet you at the door with the case file and bring you inside once you are ready.",
+                            ),
+                        },
                     ],
                 )
         for item_id, holder_id in seeded_holding.items():
             if item_id in state.world.items and holder_id in state.world.npcs:
                 apply_fact_ops(state, [{"op": "assert", "fact": ("holding", holder_id, item_id)}])
         if "arrival_sedan" in state.world.items:
-            apply_fact_ops(state, [{"op": "assert", "fact": ("room_item", start_room, "arrival_sedan")}])
+            apply_fact_ops(
+                state,
+                [
+                    {"op": "assert", "fact": ("room_item", start_room, "arrival_sedan")},
+                    {"op": "assert", "fact": ("item_owner", "arrival_sedan", "player")},
+                    {"op": "assert", "fact": ("item_driver", "arrival_sedan", "player")},
+                    {"op": "assert", "fact": ("item_state", "arrival_sedan", "parked_by_drive")},
+                ],
+            )
+        apply_fact_ops(
+            state,
+            [
+                {
+                    "op": "assert",
+                    "fact": (
+                        "player_context",
+                        "arrival_mode",
+                        "You drove your own sedan to the mansion and left it by the drive.",
+                    ),
+                },
+                {
+                    "op": "assert",
+                    "fact": (
+                        "player_context",
+                        "knowledge_state",
+                        "You have only just arrived and have not yet gathered evidence from the scene.",
+                    ),
+                },
+                {
+                    "op": "assert",
+                    "fact": (
+                        "player_context",
+                        "threshold_pause",
+                        "Daria met you outside with the case file before either of you heads into the mansion.",
+                    ),
+                },
+            ],
+        )
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state

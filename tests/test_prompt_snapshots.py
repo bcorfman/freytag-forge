@@ -73,6 +73,8 @@ def test_prompt_user_payload_includes_room_grounding_fields():
     assert "Exits: " in user_text
     assert f"Location: {context.room_name}" in user_text
     assert f"Room description: {context.room_description}" in user_text
+    assert "Scene facts: " in user_text
+    assert "Visible item facts: " in user_text
     assert "Visible items: " in user_text
     assert "Visible NPCs: " in user_text
     assert "Inventory: " in user_text

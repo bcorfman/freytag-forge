@@ -43,6 +43,14 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
     payload = context.as_dict()
 
     assert "arrival_sedan" in payload["visible_items"]
+    assert any("drove your own sedan" in fact.lower() for fact in payload["scene_facts"])
+    assert any(item["id"] == "arrival_sedan" and item["state"] == "parked_by_drive" for item in payload["item_facts"])
+    assert any(
+        fact["id"] == "daria_stone"
+        and fact["relationship_to_player"] == "assistant"
+        and "case file" in fact["scene_purpose"].lower()
+        for fact in payload["npc_facts"]
+    )
 
 
 def test_context_includes_memory_fragments_without_overriding_facts():

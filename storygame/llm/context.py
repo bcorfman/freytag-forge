@@ -6,9 +6,15 @@ from storygame.engine.facts import (
     active_story_goal,
     assistant_name,
     assistant_role,
+    item_driver,
+    item_owner,
+    item_state,
     npc_stance_toward_player,
+    npc_relationship_to_player,
+    npc_scene_purpose,
     npc_trust_toward_player,
     planned_story_events,
+    player_context_facts,
     protagonist_profile,
     story_goals,
 )
@@ -62,6 +68,8 @@ class NarrationContext:
     addressed_npc_id: str = ""
     addressed_npc_name: str = ""
     prefer_npc_reply: bool = False
+    item_facts: tuple[dict, ...] = ()
+    scene_facts: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
         return {
@@ -72,6 +80,7 @@ class NarrationContext:
             "visible_items": list(self.visible_items),
             "visible_npcs": list(self.visible_npcs),
             "npc_facts": list(self.npc_facts),
+            "item_facts": list(self.item_facts),
             "exits": list(self.exits),
             "inventory": list(self.inventory),
             "recent_events": list(self.recent_events),
@@ -91,6 +100,7 @@ class NarrationContext:
             "addressed_npc_id": self.addressed_npc_id,
             "addressed_npc_name": self.addressed_npc_name,
             "prefer_npc_reply": self.prefer_npc_reply,
+            "scene_facts": list(self.scene_facts),
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -116,6 +126,8 @@ def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
         "description": _short_text(npc.description, MAX_NPC_DESCRIPTION_LEN),
         "appearance": _short_text(npc.appearance, MAX_NPC_DESCRIPTION_LEN),
         "location": location,
+        "relationship_to_player": "",
+        "scene_purpose": "",
         "stance_to_player": "",
         "trust_to_player": "",
     }
@@ -149,9 +161,44 @@ def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
     facts: list[dict[str, str]] = []
     for npc_id in npc_ids[:MAX_NPC_FACTS]:
         fact = _npc_fact(state.world.npcs[npc_id], locations.get(npc_id, ""))
+        fact["relationship_to_player"] = npc_relationship_to_player(state, fact["name"])
+        fact["scene_purpose"] = _short_text(npc_scene_purpose(state, npc_id), MAX_NPC_DESCRIPTION_LEN)
         fact["stance_to_player"] = npc_stance_toward_player(state, npc_id)
         fact["trust_to_player"] = npc_trust_toward_player(state, npc_id)
         facts.append(fact)
+    return tuple(facts)
+
+
+def _display_actor_label(state: GameState, actor_id: str) -> str:
+    normalized = actor_id.strip().lower()
+    if not normalized:
+        return ""
+    if normalized == "player":
+        return "you"
+    npc = state.world.npcs.get(normalized)
+    if npc is not None and npc.name.strip():
+        return npc.name
+    return actor_id.replace("_", " ")
+
+
+def _summarize_item_facts(state: GameState, item_ids: tuple[str, ...]) -> tuple[dict[str, object], ...]:
+    facts: list[dict[str, object]] = []
+    for item_id in item_ids:
+        item = state.world.items.get(item_id)
+        if item is None:
+            continue
+        facts.append(
+            {
+                "id": item_id,
+                "name": item.name,
+                "description": item.description,
+                "kind": item.kind,
+                "portable": item.portable,
+                "owner": _display_actor_label(state, item_owner(state, item_id)),
+                "driver": _display_actor_label(state, item_driver(state, item_id)),
+                "state": item_state(state, item_id),
+            }
+        )
     return tuple(facts)
 
 
@@ -275,6 +322,11 @@ def build_narration_context(
         "player_approach": str(scene["player_approach"]),
         "participants": list(scene["participants"]),
     }
+    scene_facts = tuple(
+        str(entry["text"]).strip()
+        for entry in player_context_facts(state)
+        if str(entry["text"]).strip()
+    )
 
     return NarrationContext(
         room_name=room.name,
@@ -286,6 +338,7 @@ def build_narration_context(
         visible_items=visible_items[:MAX_VISIBLE_ITEMS],
         visible_npcs=room.npc_ids,
         npc_facts=_summarize_npc_facts(state),
+        item_facts=_summarize_item_facts(state, visible_items[:MAX_VISIBLE_ITEMS]),
         exits=tuple(sorted(room.exits.keys())),
         inventory=filtered_inventory(state)[:MAX_INVENTORY_ITEMS],
         memory_fragments=tuple(
@@ -305,4 +358,5 @@ def build_narration_context(
         addressed_npc_id=str(freeform_focus.get("addressed_npc_id", "")),
         addressed_npc_name=str(freeform_focus.get("addressed_npc_name", "")),
         prefer_npc_reply=bool(freeform_focus.get("prefer_npc_reply", False)),
+        scene_facts=scene_facts,
     )

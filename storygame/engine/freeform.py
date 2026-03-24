@@ -6,6 +6,7 @@ import re
 from typing import Any, Protocol, TypedDict
 
 from storygame.engine.facts import active_story_goal, player_location, protagonist_profile, room_items, room_npcs
+from storygame.engine.facts import item_driver, item_owner, item_state, npc_scene_purpose, player_context_facts
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.scene_state import refresh_scene_state
@@ -50,6 +51,7 @@ _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "inspect",
     "knock",
 }
+_EXPLICIT_CONVERSATION_HEADS = {"talk", "speak", "speak_to", "speakto", "ask", "tell", "say", "hello", "hi", "greet"}
 
 
 def _short_text(value: str, max_len: int) -> str:
@@ -71,6 +73,22 @@ def _is_conversational_input(raw_input: str, first_word: str, explicit_target_re
     if first_word in {"talk", "speak", "speak_to", "speakto", "hello", "hi", "greet", "ask", "tell"}:
         return True
     return _CONVERSATIONAL_WORD_PATTERN.search(raw_input) is not None
+
+
+def _explicit_npc_address_requested(raw_input: str) -> bool:
+    stripped = raw_input.strip()
+    if not stripped:
+        return False
+    if _DIRECT_ADDRESS_PATTERN.match(stripped):
+        return True
+    if _ASK_TARGET_PATTERN.search(stripped):
+        return True
+    words = stripped.lower().split()
+    if not words:
+        return False
+    if words[0] in _EXPLICIT_CONVERSATION_HEADS:
+        return True
+    return parse_command(raw_input).kind == ActionKind.TALK
 
 
 def _topic_from_raw_input(raw_input: str, text: str) -> str:
@@ -332,20 +350,37 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "identity": state.world.npcs[npc_id].identity,
             "description": state.world.npcs[npc_id].description,
             "appearance": state.world.npcs[npc_id].appearance,
+            "scene_purpose": npc_scene_purpose(state, npc_id),
         }
         for npc_id in room.npc_ids
         if npc_id in state.world.npcs
+    ]
+    item_facts = [
+        {
+            "id": item_id,
+            "name": state.world.items[item_id].name,
+            "description": state.world.items[item_id].description,
+            "kind": state.world.items[item_id].kind,
+            "portable": state.world.items[item_id].portable,
+            "owner": item_owner(state, item_id),
+            "driver": item_driver(state, item_id),
+            "state": item_state(state, item_id),
+        }
+        for item_id in room.item_ids
+        if item_id in state.world.items
     ]
     payload = {
         "player_input": raw_input,
         "goal": active_story_goal(state),
         "turn_index": state.turn_index,
+        "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
         "room": {
             "id": room.id,
             "name": room.name,
             "description": room.description,
             "visible_npc_ids": list(room.npc_ids),
             "visible_item_ids": list(room.item_ids),
+            "visible_items": item_facts,
             "exits": sorted(room.exits.keys()),
         },
         "npc_facts": npc_facts,
@@ -358,6 +393,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "action_proposal requires: intent, targets, arguments, proposed_effects. "
         "Use only entities from provided context. "
         "For uncertain targets, use an empty targets list and a generic intent. "
+        "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed or questioned that NPC. "
         "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
         "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
         "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details."
@@ -394,6 +430,46 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _scope_normalized_proposals(
+    state: GameState,
+    raw_input: str,
+    dialog_payload: dict[str, Any],
+    action_payload: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if _explicit_npc_address_requested(raw_input):
+        return dialog_payload, action_payload
+
+    visible_npcs = set(room_npcs(state, player_location(state)))
+    targets = tuple(str(target) for target in action_payload.get("targets", ()))
+    npc_targets = tuple(target for target in targets if target in visible_npcs)
+    if not npc_targets:
+        return dialog_payload, action_payload
+
+    cleaned_targets = tuple(target for target in targets if target not in visible_npcs)
+    arguments = dict(action_payload.get("arguments", {}))
+    arguments["scope_normalized"] = "scene"
+
+    intent = str(action_payload.get("intent", "")).strip().lower()
+    if not cleaned_targets and intent in _ALLOWED_INTENTS:
+        intent = "freeform"
+    normalized_action = {
+        "intent": intent or "freeform",
+        "targets": cleaned_targets,
+        "arguments": arguments,
+        "proposed_effects": tuple(str(effect) for effect in action_payload.get("proposed_effects", ())),
+    }
+
+    normalized_dialog = dialog_payload
+    speaker = _normalized_dialog_speaker_id(state, str(dialog_payload.get("speaker", "")), action_payload)
+    if speaker in visible_npcs:
+        normalized_dialog = {
+            "speaker": "narrator",
+            "text": "You act on the scene before anyone answers.",
+            "tone": "in_world",
+        }
+    return normalized_dialog, normalized_action
+
+
 class LlmFreeformProposalAdapter:
     def __init__(self, mode: str | None = None, fallback: FreeformProposalAdapter | None = None) -> None:
         self._mode = _resolve_freeform_mode() if mode is None else mode
@@ -407,6 +483,7 @@ class LlmFreeformProposalAdapter:
                 raise ValueError("planner_non_json")
             dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
             action_payload = parse_action_proposal(_normalize_action_payload(dict(payload.get("action_proposal", {}))))
+            dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
             action_payload["arguments"] = arguments
@@ -414,6 +491,7 @@ class LlmFreeformProposalAdapter:
         except Exception as exc:
             if self._fallback is not None:
                 dialog_payload, action_payload = self._fallback.propose(state, raw_input)
+                dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
                 arguments = dict(action_payload["arguments"])
                 arguments["planner_source"] = "fallback"
                 arguments["planner_error"] = _short_text(str(exc), 120)
@@ -818,6 +896,9 @@ def resolve_freeform_roleplay_with_proposals(
 ) -> FreeformResolution:
     dialog_proposal = parse_dialog_proposal(dialog_payload)
     action_proposal = parse_action_proposal(action_payload)
+    dialog_proposal, action_proposal = _scope_normalized_proposals(state, raw_input, dialog_proposal, action_proposal)
+    dialog_proposal = parse_dialog_proposal(dialog_proposal)
+    action_proposal = parse_action_proposal(action_proposal)
     action_proposal, dialog_proposal = _apply_raw_command_overrides(
         state,
         raw_input,
@@ -835,13 +916,14 @@ def resolve_freeform_roleplay_with_proposals(
         )
     envelope = parse_state_update_envelope(_envelope_with_story_deltas(action_proposal, envelope))
 
+    targeted_npc_conversation = bool(action_proposal["targets"]) and _explicit_npc_address_requested(raw_input)
     turn_proposal = parse_turn_proposal(
         {
             "turn_id": f"freeform-{state.turn_index + 1}",
-            "mode": "conversation" if action_proposal["targets"] else "scene",
+            "mode": "conversation" if targeted_npc_conversation else "scene",
             "player_intent": {
                 "summary": str(action_proposal["intent"]),
-                "addressed_npc_id": str(action_proposal["targets"][0]) if action_proposal["targets"] else "",
+                "addressed_npc_id": str(action_proposal["targets"][0]) if targeted_npc_conversation else "",
                 "target_ids": tuple(str(target) for target in action_proposal["targets"]),
                 "item_ids": (),
                 "location_id": player_location(state),

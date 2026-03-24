@@ -78,6 +78,7 @@ Current runtime generation is package-driven.
   - the proposal fails deterministic validators,
   - or the requested action cannot be mapped into a bounded deterministic commit.
 - The player must be allowed to attempt any action or story move. Nothing is off limits at the gameplay layer; the system should adapt the story and fact state to the player prompt whenever a bounded commit is still possible.
+- Non-addressed world interactions should remain scene-scoped by default. The runtime must not auto-target the nearest visible NPC or force an NPC-reply contract for player actions aimed at the environment, visible items, vehicles, exits, or room features unless the player clearly addressed or questioned that NPC.
 - Goal-breaking actions are handled by explicit confirmation only when the requested prompt would break the current story goals beyond repair:
   - engine explains why the action would rupture the current story-goal structure,
   - player chooses `PROCEED` or `CANCEL`,
@@ -294,6 +295,7 @@ flowchart LR
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation must remain LLM-authored. If bootstrap/opening generation fails, the surface should fail closed instead of fabricating deterministic opening prose.
 - Opening prose is still LLM-authored, but it must be authored from deterministic fact-backed context rather than from an untracked side-plan that can diverge from world state.
+- When opening/turn prose quality is weak, prefer enriching the fact-backed world context over adding bespoke deterministic cleanup rules. Deterministic validators/editors should be added only for resilient, high-signal failure classes that generalize well, not as an open-ended catalog of example-specific patches.
 - Story prompts enforce spoiler discipline (later twists are withheld until revealed by progression/events).
 - Revision directives reinforce turn sequencing priorities: room name, room description, items, exits, then NPC/background.
 - A deterministic opening-scene story editor runs before display to remove legacy/meta phrasing and fix obvious narrative incoherence.
@@ -302,6 +304,8 @@ flowchart LR
 - Opening output contracts should reject or strip prompt/directive-shaped field dumps before display (for example `Room name: ... Room description: ... Items: ... Exits: ...`) so hidden instruction scaffolding cannot leak into the player-facing opening.
 - Mystery opening facts should seed immediate clue custody plausibly before any opening prose is generated; for the mansion start, the assistant should hold the `case_file` unless accepted opening reconciliation commits a different holder.
 - Mystery opening facts should also seed obvious arrival-scene fixtures such as the detective's car when those details are part of the canonical setup, so room text and opening prompts do not have to invent them.
+- Rich fact grounding should flow through the shared turn-context pipeline, not only the opening path. Scene facts, NPC purpose/relationship facts, and visible item state/ownership facts should be reusable by opening prose, ordinary narration, and freeform NPC replies alike.
+- When turn quality is weak, prefer enriching reusable world facts and prompt grounding before adding bespoke deterministic validators. New deterministic guardrails should be reserved for resilient failure classes, not narrow patches for individual examples.
 - Accepted targeted NPC dialogue should be allowed to introduce bounded new facts and commit them immediately; if the reply contradicts already-committed canonical facts such as the NPC's appearance, the turn should fail closed rather than display conflicting dialogue.
 - Output editor gate runs on every user-facing response via an LLM critic rewrite pass (OpenAI/Ollama).
 - Critic/judge review must treat assistant-vs-suspect contradictions, duplicated clue presence (for example, a page both held by Daria and wedged in the stones), and similarly impossible scene facts as blocking coherence failures rather than minor style issues.
