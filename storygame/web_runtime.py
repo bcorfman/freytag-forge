@@ -19,6 +19,7 @@ from storygame.llm.opening_coherence import (
 )
 from storygame.llm.output_editor import OutputEditor
 from storygame.llm.story_agents.contracts import StoryAgentContractError, parse_narrator_opening_output
+from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent, NarratorOpeningAgent
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
@@ -165,6 +166,8 @@ def build_bootstrap_response_payload(
     narrator: Narrator,
     output_editor: OutputEditor,
     use_fast_story_director_opening: bool = False,
+    allow_story_director_bootstrap: bool = True,
+    narrator_opening_agent: NarratorOpeningAgent | None = None,
 ) -> dict[str, Any]:
     opening_lines = _llm_bootstrap_opening_lines(
         state,
@@ -172,6 +175,8 @@ def build_bootstrap_response_payload(
         narrator,
         output_editor,
         use_fast_story_director_opening=use_fast_story_director_opening,
+        allow_story_director_bootstrap=allow_story_director_bootstrap,
+        narrator_opening_agent=narrator_opening_agent,
     )
     return build_bootstrap_response_payload_from_lines(
         state,
@@ -215,20 +220,23 @@ def _llm_bootstrap_opening_lines(
     narrator: Narrator,
     output_editor: OutputEditor,
     use_fast_story_director_opening: bool = False,
+    allow_story_director_bootstrap: bool = True,
+    narrator_opening_agent: NarratorOpeningAgent | None = None,
 ) -> list[str]:
     story_director_error = ""
-    try:
-        if use_fast_story_director_opening:
-            opening_lines = story_director.compose_opening_fast(state)
-        else:
-            opening_lines = story_director.compose_opening(state)
-        bundle = dict(state.world_package.get("llm_story_bundle", {}))
-        bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
-        if bundle_lines:
-            return opening_lines
-    except RuntimeError as exc:
-        story_director_error = str(exc).strip()
-        opening_lines = []
+    if allow_story_director_bootstrap:
+        try:
+            if use_fast_story_director_opening:
+                opening_lines = story_director.compose_opening_fast(state)
+            else:
+                opening_lines = story_director.compose_opening(state)
+            bundle = dict(state.world_package.get("llm_story_bundle", {}))
+            bundle_lines = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+            if bundle_lines:
+                return opening_lines
+        except RuntimeError as exc:
+            story_director_error = str(exc).strip()
+            opening_lines = []
 
     try:
         narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
@@ -243,12 +251,68 @@ def _llm_bootstrap_opening_lines(
             ) from exc
         raise
 
+    if narrator_opening_agent is not None:
+        try:
+            story_agent_lines = _bootstrap_opening_from_narrator_opening_agent(
+                state,
+                narrator_opening_agent,
+                output_editor,
+            )
+            if story_agent_lines:
+                return story_agent_lines
+        except RuntimeError as exc:
+            opening_agent_error = str(exc).strip()
+            if story_director_error:
+                raise RuntimeError(
+                    "Bootstrap opening failed after story-director fallback: "
+                    f"story_director={story_director_error}; narrator={opening_agent_error}"
+                ) from exc
+            raise
+
     if story_director_error:
         raise RuntimeError(
             "Web bootstrap requires an LLM-authored opening. "
             f"story_director={story_director_error}; narrator=empty"
         )
     raise RuntimeError("Web bootstrap requires an LLM-authored opening. narrator=empty")
+
+
+def _bootstrap_opening_from_narrator_opening_agent(
+    state: GameState,
+    narrator_opening_agent: NarratorOpeningAgent,
+    output_editor: OutputEditor,
+) -> list[str]:
+    assistant = resolved_assistant_name(state).strip()
+    assistant_npc = next(
+        (
+            npc
+            for npc in state.world.npcs.values()
+            if npc.name.strip().lower() == assistant.lower()
+        ),
+        None,
+    )
+    contacts: list[dict[str, str]] = []
+    if assistant_npc is not None:
+        contacts.append(
+            {
+                "name": assistant_npc.name,
+                "role": assistant_npc.identity or "assistant",
+                "trait": assistant_npc.description or "observant",
+            }
+        )
+    architect = {
+        "protagonist_name": "Detective Elias Wren",
+        "protagonist_background": "",
+    }
+    cast = {"contacts": contacts}
+    plan = {
+        "assistant_name": assistant,
+        "actionable_objective": active_story_goal(state),
+    }
+    opening_lines = narrator_opening_agent.run(state, architect, cast, plan)
+    if not opening_lines:
+        raise RuntimeError("Narrator opening agent returned empty opening.")
+    return output_editor.review_opening(opening_lines, active_story_goal(state))
 
 
 def _bootstrap_opening_from_narrator(
