@@ -253,6 +253,7 @@ flowchart LR
 - Ordinary prompts should be treated as adaptation opportunities, not scope violations. The runtime should prefer mutating canonical facts and replanning around the player’s actual input over refusing the action outright.
 - Proposal routing must resolve explicit NPC names against the visible cast so `Daria, ...` or `ask Daria about ...` does not silently redirect to the wrong nearby character.
 - Runtime adapters produce dialogue, action, event, and state-delta proposals.
+- Freeform turn planning may retry once when the model responds with non-JSON text, but ordinary gameplay must still fail closed if a valid typed proposal cannot be recovered.
 - Engine policy maps proposals into bounded deterministic fact deltas before commit.
 - Accepted LLM-authored narration may also imply bounded world changes, but those changes are not authoritative as prose alone: a post-narration extraction step must translate explicit state claims into fact ops before commit.
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.

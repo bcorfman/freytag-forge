@@ -618,6 +618,30 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_na
     assert action["intent"] == "ask_about"
 
 
+def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(monkeypatch) -> None:
+    state = build_default_state(seed=40512, genre="mystery")
+    responses = iter(
+        (
+            "You head toward the mansion entrance.",
+            '{"dialog_proposal":{"speaker":"narrator","text":"You head through the front door.","tone":"in_world"},'
+            '"action_proposal":{"intent":"move","targets":["mansion"],"arguments":{},'
+            '"proposed_effects":["move:mansion"]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    adapter = LlmFreeformProposalAdapter(mode="openai")
+    dialog, action = adapter.propose(state, "HEAD INTO THE MANSION")
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("north",)
+    assert action["arguments"]["planner_source"] == "llm"
+
+
 def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatch) -> None:
     state = build_default_state(seed=4054, genre="mystery")
 
