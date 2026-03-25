@@ -12,6 +12,9 @@ from urllib.parse import urlparse, urlunparse
 from typing import Any, Protocol
 from uuid import uuid4
 
+from storygame.engine.facts import assistant_name as resolved_assistant_name
+from storygame.engine.facts import assistant_role as resolved_assistant_role
+from storygame.engine.facts import item_state, player_context_facts, room_items, room_npcs
 from storygame.engine.state import GameState
 from storygame.llm.opening_coherence import item_labels_for_opening, opening_coherence_issues
 from storygame.llm.story_agents.contracts import (
@@ -140,8 +143,8 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
     if mode == "cloudflare":
         worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
         token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
-        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "20.0").strip())
-        retries = int(os.getenv("CLOUDFLARE_RETRIES", "1").strip())
+        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
+        retries = int(os.getenv("CLOUDFLARE_RETRIES", "0").strip())
         retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
         if not worker_url:
             raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
@@ -284,6 +287,67 @@ def _items_seed(state: GameState) -> list[dict[str, object]]:
     return items
 
 
+def _opening_facts_seed(state: GameState) -> dict[str, object]:
+    room = state.world.rooms[state.player.location]
+    visible_npc_ids = room_npcs(state, state.player.location)
+    assistant = resolved_assistant_name(state).strip()
+    assistant_id = ""
+    for npc_id in visible_npc_ids:
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        if npc.name.strip().lower() == assistant.lower():
+            assistant_id = npc_id
+            break
+
+    visible_item_ids: list[str] = list(room_items(state, state.player.location))
+    for npc_id in visible_npc_ids:
+        for fact in state.world_facts.query("holding", npc_id, None):
+            if len(fact) > 2 and fact[2] not in visible_item_ids:
+                visible_item_ids.append(fact[2])
+
+    visible_items: list[dict[str, object]] = []
+    for item_id in visible_item_ids:
+        item = state.world.items.get(item_id)
+        if item is None:
+            continue
+        holder_name = ""
+        for fact in state.world_facts.query("holding", None, item_id):
+            actor_id = fact[1]
+            if actor_id == "player":
+                holder_name = "you"
+                break
+            npc = state.world.npcs.get(actor_id)
+            if npc is not None and npc.name.strip():
+                holder_name = npc.name
+                break
+        visible_items.append(
+            {
+                "name": item.name,
+                "kind": item.kind,
+                "state": item_state(state, item_id),
+                "held_by": holder_name,
+            }
+        )
+
+    assistant_facts = {
+        "name": assistant,
+        "role": resolved_assistant_role(state, assistant),
+        "scene_purpose": "",
+        "present_in_opening_room": bool(assistant_id),
+    }
+    if assistant_id:
+        facts = state.world_facts.query("npc_scene_purpose", assistant_id, None)
+        if facts:
+            assistant_facts["scene_purpose"] = facts[0][2]
+
+    return {
+        "assistant": assistant_facts,
+        "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
+        "visible_items": visible_items,
+    }
+
+
 def _normalize_background_clause(background: str) -> str:
     cleaned = " ".join(background.split()).strip(" ,")
     if not cleaned:
@@ -306,22 +370,25 @@ def _build_identity_intro_sentence(protagonist: str, background: str) -> str:
     return f"You are {protagonist}, {identity_clause}."
 
 
-def _normalize_assistant_references(paragraphs: list[str], assistant_name: str) -> list[str]:
+def _normalize_assistant_references(
+    paragraphs: list[str],
+    assistant_name: str,
+    suspect_name: str = "",
+) -> list[str]:
     if not assistant_name:
         return paragraphs
     normalized: list[str] = []
     for paragraph in paragraphs:
-        if assistant_name.lower() not in paragraph.lower():
-            normalized.append(paragraph)
-            continue
-        updated = re.sub(r"\bthey are\b", f"{assistant_name} is", paragraph, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey're\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey have\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey've\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\btheirs\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\btheir\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthem\b", assistant_name, updated, flags=re.IGNORECASE)
-        updated = re.sub(r"\bthey\b", assistant_name, updated, flags=re.IGNORECASE)
+        updated = _normalize_actionable_objective_language(paragraph, assistant_name, suspect_name)
+        if assistant_name.lower() in updated.lower():
+            updated = re.sub(r"\bthey are\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey're\b", f"{assistant_name} is", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey have\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey've\b", f"{assistant_name} has", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\btheirs\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\btheir\b", f"{assistant_name}'s", updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthem\b", assistant_name, updated, flags=re.IGNORECASE)
+            updated = re.sub(r"\bthey\b", assistant_name, updated, flags=re.IGNORECASE)
         normalized.append(updated)
     return normalized
 
@@ -381,25 +448,36 @@ def _normalize_actionable_objective_language(objective: str, assistant_name: str
         normalized = re.sub(r"\bfirst witness\b", "first contact", normalized, flags=re.IGNORECASE)
         normalized = re.sub(r"\bquestion your witness\b", "question your contact", normalized, flags=re.IGNORECASE)
         suspect_label = suspect_name or "the suspect"
-        assistant_pattern = re.escape(assistant_name)
-        normalized = re.sub(
-            rf"\b{assistant_pattern}'s involvement\b",
-            f"{suspect_label}'s involvement",
-            normalized,
-            flags=re.IGNORECASE,
-        )
-        normalized = re.sub(
-            rf"\binvolvement of {assistant_pattern}\b",
-            f"involvement of {suspect_label}",
-            normalized,
-            flags=re.IGNORECASE,
-        )
-        normalized = re.sub(
-            rf"\babout {assistant_pattern} involvement\b",
-            f"about {suspect_label}'s involvement",
-            normalized,
-            flags=re.IGNORECASE,
-        )
+        assistant_references = [assistant_name]
+        assistant_parts = assistant_name.split()
+        if assistant_parts:
+            assistant_references.append(assistant_parts[0])
+        for assistant_reference in tuple(dict.fromkeys(reference for reference in assistant_references if reference)):
+            assistant_pattern = re.escape(assistant_reference)
+            normalized = re.sub(
+                rf"\b{assistant_pattern}'s involvement\b",
+                f"{suspect_label}'s involvement",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\binvolvement of {assistant_pattern}\b",
+                f"involvement of {suspect_label}",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\babout {assistant_pattern} involvement\b",
+                f"about {suspect_label}'s involvement",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+            normalized = re.sub(
+                rf"\b(question|interrogate|interview|press|confront|accuse|ask)\s+{assistant_pattern}\b",
+                f"consult {assistant_reference}",
+                normalized,
+                flags=re.IGNORECASE,
+            )
     return normalized
 
 
@@ -494,6 +572,7 @@ class DefaultStoryBootstrapAgent:
 
         rooms_seed = _rooms_seed(state)
         items_seed = _items_seed(state)
+        opening_facts = _opening_facts_seed(state)
         system, user = build_story_bootstrap_prompt(
             _summary_premise(state),
             state.story_genre,
@@ -511,6 +590,7 @@ class DefaultStoryBootstrapAgent:
             rooms_seed,
             items_seed,
             [item.replace("_", " ") for item in state.player.inventory[:3]],
+            opening_facts,
         )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
@@ -535,6 +615,7 @@ class DefaultStoryBootstrapAgent:
         normalized["opening_paragraphs"] = _normalize_assistant_references(
             list(parsed["opening_paragraphs"]),
             assistant_name,
+            suspect_name,
         )
         normalized["timed_events"] = [
             event
@@ -560,6 +641,7 @@ class DefaultStoryBootstrapCriticAgent:
             bootstrap_bundle,
             _rooms_seed(state),
             _items_seed(state),
+            _opening_facts_seed(state),
         )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
@@ -575,6 +657,7 @@ class DefaultStoryBootstrapCriticAgent:
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bootstrap_bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
+        issues.extend(_bootstrap_clue_staging_issues(bootstrap_bundle))
         if issues:
             critique["verdict"] = "revise"
             critique["continuity_summary"] = (
@@ -582,6 +665,22 @@ class DefaultStoryBootstrapCriticAgent:
             )
             critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
         return critique
+
+
+def _bootstrap_clue_staging_issues(bootstrap_bundle: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    for entry in bootstrap_bundle.get("clue_placements", ()):
+        if not isinstance(entry, dict):
+            continue
+        item_id = str(entry.get("item_id", "")).strip().lower()
+        room_id = str(entry.get("room_id", "")).strip().lower()
+        if room_id != "front_steps":
+            continue
+        if item_id == "ledger_page":
+            issues.append("The ledger page cannot be left exposed on the front steps; move it indoors or into Daria Stone's custody.")
+        elif item_id == "route_key":
+            issues.append("The route key should not be lying exposed on the front steps; hide it in a plausible location or place it in someone's custody.")
+    return issues
 
 
 class DefaultCharacterDesignerAgent:
@@ -624,7 +723,11 @@ class DefaultPlotDesignerAgent:
         contacts = cast.get("contacts", [])
         assistant = contacts[0]["name"] if contacts else ""
         suspect = _pick_suspect_name(contacts, assistant)
-        system, user = build_plot_designer_prompt(goal, assistant or "Assistant")
+        system, user = build_plot_designer_prompt(
+            goal,
+            assistant or "Assistant",
+            _opening_facts_seed(state).get("assistant", {}),
+        )
         payload = _json_from_text(_chat_complete(self._mode, system, user))
         if payload is None:
             raise RuntimeError("PlotDesigner agent returned non-JSON content.")
@@ -665,15 +768,18 @@ class DefaultNarratorOpeningAgent:
         )
         identity_intro = _build_identity_intro_sentence(protagonist, background)
         paragraph_1 = (
-            f"The air around the {room.name.lower()} bites with evening cold as damp stone keeps the day's last heat "
-            "and distant traffic thins into rumor."
+            f"{assistant_name} has you at the threshold before hesitation can settle in. "
+            "The case is already asking what kind of judgment you still trust yourself to make."
         )
         paragraph_2 = (
             f"{identity_intro} {carry_line} "
             f"{assistant_name} stays close as your {assistant_role or 'assistant'}, "
             f"{assistant_name}'s tone {assistant_trait or 'measured'} while {assistant_name} waits for your first instruction."
         )
-        paragraph_3 = "Your history sits just behind your eyes, unresolved but sharp enough to focus your judgment."
+        paragraph_3 = (
+            "What presses on you now is not the weather or the stone, but the old failure in your background and "
+            "the question of whether this case is a last duty, a last chance, or both."
+        )
         objective = _normalize_actionable_objective_language(
             str(plan.get("actionable_objective", state.active_goal)).strip(),
             assistant_name,
@@ -689,14 +795,14 @@ class DefaultNarratorOpeningAgent:
             paragraph_4 = f"Your immediate objective is practical and immediate: {objective}"
 
         opening = [paragraph_1, paragraph_2, paragraph_3, paragraph_4]
-        system, user = build_narrator_opening_prompt("\n\n".join(opening))
+        system, user = build_narrator_opening_prompt("\n\n".join(opening), _opening_facts_seed(state))
         raw_response = _chat_complete(self._mode, system, user)
         payload = _json_from_text(raw_response)
         if payload is None:
             prose_paragraphs = _paragraphs_from_text(raw_response)
             if len(prose_paragraphs) >= 3:
                 parsed = parse_narrator_opening_output({"paragraphs": prose_paragraphs[:4]})
-                return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
+                return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name, suspect_name)
             _LOGGER.warning(
                 "NarratorOpening raw response could not be parsed as JSON or prose paragraphs: %s",
                 _short_raw_response(raw_response),
@@ -710,7 +816,7 @@ class DefaultNarratorOpeningAgent:
                 _short_raw_response(raw_response),
             )
             raise RuntimeError(f"NarratorOpening contract validation failed: {exc}") from exc
-        return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name)
+        return _normalize_assistant_references(parsed["paragraphs"][:4], assistant_name, suspect_name)
 
 
 class DefaultStoryReplanAgent:

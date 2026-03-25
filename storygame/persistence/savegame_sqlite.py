@@ -9,9 +9,20 @@ from pathlib import Path
 from random import Random
 from typing import Any
 
-from storygame.engine.facts import active_story_goal, set_active_story_goal
+from storygame.engine.facts import (
+    active_story_goal,
+    apply_fact_ops,
+    replace_player_flags,
+    replace_player_inventory,
+    rebuild_facts_from_legacy_views,
+    replace_room_items,
+    set_active_story_goal,
+    set_player_location,
+    sync_legacy_views,
+)
+from storygame.engine.fact_commit import ValidatedFactCommitter
 from storygame.engine.state import Event, EventLog, GameState
-from storygame.engine.world import build_default_state
+from storygame.engine.world import build_default_state, build_state_from_bootstrap_plan
 from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
 
 
@@ -60,64 +71,111 @@ def deserialize_event(payload: dict[str, Any]) -> Event:
 
 
 def serialize_state(state: GameState) -> dict[str, Any]:
+    snapshot = state.clone()
+    rebuild_facts_from_legacy_views(snapshot)
+    ValidatedFactCommitter().commit(snapshot, (), source="serialize_state")
+    sync_legacy_views(snapshot)
     return {
-        "seed": state.seed,
-        "story_genre": state.story_genre,
-        "story_tone": state.story_tone,
-        "session_length": state.session_length,
-        "plot_curve_id": state.plot_curve_id,
-        "story_outline_id": state.story_outline_id,
-        "world_package": dict(state.world_package),
-        "world_facts": [list(fact) for fact in state.world_facts.all()],
-        "fact_metrics": dict(state.fact_metrics),
-        "progress": state.progress,
-        "tension": state.tension,
-        "turn_index": state.turn_index,
-        "active_goal": active_story_goal(state),
-        "beat_history": list(state.beat_history),
+        "seed": snapshot.seed,
+        "story_genre": snapshot.story_genre,
+        "story_tone": snapshot.story_tone,
+        "session_length": snapshot.session_length,
+        "plot_curve_id": snapshot.plot_curve_id,
+        "story_outline_id": snapshot.story_outline_id,
+        "world_package": dict(snapshot.world_package),
+        "world_facts": [list(fact) for fact in snapshot.world_facts.all()],
+        "fact_metrics": dict(snapshot.fact_metrics),
+        "progress": snapshot.progress,
+        "tension": snapshot.tension,
+        "turn_index": snapshot.turn_index,
+        "active_goal": active_story_goal(snapshot),
+        "beat_history": list(snapshot.beat_history),
         "player": {
-            "location": state.player.location,
-            "inventory": list(state.player.inventory),
-            "flags": dict(state.player.flags),
+            "location": snapshot.player.location,
+            "inventory": list(snapshot.player.inventory),
+            "flags": dict(snapshot.player.flags),
         },
-        "room_items": {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()},
-        "event_log": [serialize_event(event) for event in state.event_log.events],
-        "last_judge_decision": dict(state.last_judge_decision) if state.last_judge_decision is not None else None,
-        "pending_high_impact_command": state.pending_high_impact_command,
-        "pending_high_impact_assessment": dict(state.pending_high_impact_assessment),
+        "room_items": {room_id: list(room.item_ids) for room_id, room in snapshot.world.rooms.items()},
+        "event_log": [serialize_event(event) for event in snapshot.event_log.events],
+        "last_judge_decision": dict(snapshot.last_judge_decision) if snapshot.last_judge_decision is not None else None,
+        "pending_high_impact_command": snapshot.pending_high_impact_command,
+        "pending_high_impact_assessment": dict(snapshot.pending_high_impact_assessment),
     }
 
 
 def deserialize_state(payload: dict[str, Any]) -> GameState:
-    state = build_default_state(
-        seed=int(payload["seed"]),
-        genre=str(payload.get("story_genre", "mystery")),
-        session_length=str(payload.get("session_length", "medium")),
-        tone=str(payload.get("story_tone", "neutral")),
-    )
+    world_package_payload = dict(payload.get("world_package", {}))
+    bootstrap_plan = world_package_payload.get("bootstrap_plan")
+    if isinstance(bootstrap_plan, dict):
+        state = build_state_from_bootstrap_plan(
+            seed=int(payload["seed"]),
+            plan=bootstrap_plan,
+            tone=str(payload.get("story_tone", "neutral")),
+            session_length=str(payload.get("session_length", "medium")),
+        )
+    else:
+        state = build_default_state(
+            seed=int(payload["seed"]),
+            genre=str(payload.get("story_genre", "mystery")),
+            session_length=str(payload.get("session_length", "medium")),
+            tone=str(payload.get("story_tone", "neutral")),
+        )
     state.story_tone = str(payload.get("story_tone", state.story_tone))
     state.plot_curve_id = str(payload.get("plot_curve_id", state.plot_curve_id))
     state.story_outline_id = str(payload.get("story_outline_id", state.story_outline_id))
-    state.world_package = dict(payload.get("world_package", state.world_package))
+    state.world_package = world_package_payload if world_package_payload else dict(state.world_package)
     raw_facts = payload.get("world_facts", [])
-    state.world_facts.replace_all(tuple(tuple(fact) for fact in raw_facts))
+    if raw_facts:
+        state.world_facts.replace_all(tuple(tuple(fact) for fact in raw_facts))
+    else:
+        compatibility_ops: list[dict[str, Any]] = []
+        compatibility_goal = str(payload.get("active_goal", "")).strip()
+        if compatibility_goal:
+            compatibility_ops.append({"op": "assert", "fact": ("active_goal", compatibility_goal)})
+        player_payload = dict(payload.get("player", {}))
+        player_location = str(player_payload.get("location", "")).strip()
+        if player_location:
+            compatibility_ops.append({"op": "assert", "fact": ("at", "player", player_location)})
+        for item_id in player_payload.get("inventory", ()):
+            normalized_item_id = str(item_id).strip()
+            if normalized_item_id:
+                compatibility_ops.append({"op": "assert", "fact": ("holding", "player", normalized_item_id)})
+        for flag_name, enabled in dict(player_payload.get("flags", {})).items():
+            normalized_flag = str(flag_name).strip()
+            if normalized_flag and bool(enabled):
+                compatibility_ops.append({"op": "assert", "fact": ("flag", "player", normalized_flag)})
+        for room_id, item_ids in dict(payload.get("room_items", {})).items():
+            normalized_room_id = str(room_id).strip()
+            if not normalized_room_id:
+                continue
+            for item_id in item_ids:
+                normalized_item_id = str(item_id).strip()
+                if normalized_item_id:
+                    compatibility_ops.append({"op": "assert", "fact": ("room_item", normalized_room_id, normalized_item_id)})
+        if compatibility_ops:
+            apply_fact_ops(state, compatibility_ops)
     state.fact_metrics = {str(key): float(value) for key, value in dict(payload.get("fact_metrics", {})).items()}
-    from storygame.engine.facts import sync_legacy_views
 
     sync_legacy_views(state)
     state.progress = float(payload["progress"])
     state.tension = float(payload["tension"])
     state.turn_index = int(payload["turn_index"])
-    state.active_goal = payload["active_goal"]
-    set_active_story_goal(state, state.active_goal)
+    saved_goal = str(payload.get("active_goal", "")).strip()
+    if saved_goal:
+        set_active_story_goal(state, saved_goal)
     state.beat_history = tuple(payload.get("beat_history", []))
-    state.player.location = payload["player"]["location"]
-    state.player.inventory = tuple(payload["player"]["inventory"])
-    state.player.flags = dict(payload["player"]["flags"])
+    player_payload = dict(payload.get("player", {}))
+    saved_location = str(player_payload.get("location", "")).strip()
+    if saved_location and not raw_facts:
+        set_player_location(state, saved_location)
+    if not raw_facts:
+        replace_player_inventory(state, tuple(player_payload.get("inventory", ())))
+        replace_player_flags(state, dict(player_payload.get("flags", {})))
 
-    for room_id, item_ids in payload.get("room_items", {}).items():
-        if room_id in state.world.rooms:
-            state.world.rooms[room_id].item_ids = tuple(item_ids)
+    if not raw_facts:
+        for room_id, item_ids in payload.get("room_items", {}).items():
+            if room_id in state.world.rooms:
+                replace_room_items(state, str(room_id), tuple(item_ids))
 
     state.event_log = EventLog(tuple(deserialize_event(raw) for raw in payload.get("event_log", [])))
     raw_judge_decision = payload.get("last_judge_decision")
@@ -224,6 +282,9 @@ class SqliteSaveStore:
         transcript: list[str] | None = None,
         judge_decision: dict[str, str] | None = None,
     ) -> None:
+        rebuild_facts_from_legacy_views(state)
+        ValidatedFactCommitter().commit(state, (), source="save_run")
+        sync_legacy_views(state)
         payload = serialize_state(state)
         event_payloads = [serialize_event(event) for event in state.event_log.events]
         accepted_judge_decision = self._accepted_judge_decision(judge_decision)

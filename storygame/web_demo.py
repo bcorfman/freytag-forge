@@ -19,9 +19,17 @@ from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
+from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web_runtime import ScopedSaveStore, build_bootstrap_response_payload, build_turn_response_payload, execute_turn, is_bootstrap_command
+from storygame.web_runtime import (
+    ScopedSaveStore,
+    bootstrap_failure_debug_payload,
+    build_bootstrap_response_payload,
+    build_turn_response_payload,
+    execute_turn,
+    is_bootstrap_command,
+)
 
 _LOGGER = logging.getLogger(__name__)
 def _utc_now() -> datetime:
@@ -133,9 +141,12 @@ def create_demo_app(
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
     active_freeform_adapter = LlmFreeformProposalAdapter(mode=story_director_mode)
+    use_fast_story_director_opening = story_director is None
+    allow_story_director_bootstrap = story_director_mode != "cloudflare"
     active_story_director = (
         StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
     )
+    active_narrator_opening_agent = DefaultNarratorOpeningAgent(story_director_mode)
     resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
     app.add_middleware(
         CORSMiddleware,
@@ -182,18 +193,46 @@ def create_demo_app(
             ip_daily_hits[key] = current_count + 1
         return None
 
-    def _narrator_fail_closed(lines: list[str]) -> JSONResponse | None:
+    def _narrator_fail_closed(
+        lines: list[str],
+        *,
+        session_id: str,
+        command: str,
+        state: GameState,
+        beat: str,
+    ) -> JSONResponse | None:
+        room = state.world.rooms[state.player.location]
         for line in lines:
             lowered = line.lower()
             if "ai_quota_exceeded" in lowered:
-                _LOGGER.warning("Narrator quota exhausted: %s", line)
+                _LOGGER.warning(
+                    "Narrator quota exhausted: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    line,
+                    session_id,
+                    command,
+                    beat,
+                    state.player.location,
+                    room.name,
+                    state.turn_index,
+                    lines[:4],
+                )
                 return _error_response(
                     429,
                     "quota_exhausted",
                     "Narration quota exhausted for the hosted demo. Please retry later.",
                 )
             if "[narrator failed:" in lowered:
-                _LOGGER.warning("Narrator failed: %s", line)
+                _LOGGER.warning(
+                    "Narrator failed: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    line,
+                    session_id,
+                    command,
+                    beat,
+                    state.player.location,
+                    room.name,
+                    state.turn_index,
+                    lines[:4],
+                )
                 return _error_response(
                     503,
                     "service_unavailable",
@@ -262,9 +301,21 @@ def create_demo_app(
                     active_story_director,
                     active_narrator,
                     active_output_editor,
+                    use_fast_story_director_opening=use_fast_story_director_opening,
+                    allow_story_director_bootstrap=allow_story_director_bootstrap,
+                    narrator_opening_agent=active_narrator_opening_agent,
                 )
             except RuntimeError as exc:
-                _LOGGER.warning("Bootstrap opening unavailable: %s", str(exc))
+                _LOGGER.warning(
+                    "Bootstrap opening unavailable: %s | debug=%s",
+                    str(exc),
+                    bootstrap_failure_debug_payload(
+                        start_state,
+                        payload.command,
+                        "session_id",
+                        payload.session_id,
+                    ),
+                )
                 return _error_response(
                     503,
                     "service_unavailable",
@@ -286,7 +337,13 @@ def create_demo_app(
             output_editor=active_output_editor,
             story_director=active_story_director,
         )
-        narrator_error = _narrator_fail_closed(result.lines)
+        narrator_error = _narrator_fail_closed(
+            result.lines,
+            session_id=payload.session_id,
+            command=payload.command,
+            state=result.next_state,
+            beat=result.beat,
+        )
         if narrator_error is not None:
             return narrator_error
         session.state = result.next_state

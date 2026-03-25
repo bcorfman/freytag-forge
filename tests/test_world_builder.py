@@ -179,3 +179,27 @@ def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
 
     next_state, _events, _beat, _template = advance_turn(state, parse_command("go north"), Random(102))
     assert next_state.player.location == "foyer"
+
+
+def test_mystery_default_state_does_not_pull_fallback_item_into_start_room() -> None:
+    state = build_default_state(seed=105, genre="mystery")
+
+    assert "arrival_sedan" in state.world.rooms["front_steps"].item_ids
+    assert "case_file" not in state.player.inventory
+    assert state.world_facts.holds("holding", "daria_stone", "case_file")
+    assert state.world_facts.holds("holding", "daria_stone", "ledger_page")
+    assert "route_key" not in state.world.rooms["front_steps"].item_ids
+    assert state.world_facts.holds("room_item", "front_steps", "arrival_sedan")
+
+
+def test_mystery_default_state_seeds_arrival_car_as_nonportable_vehicle() -> None:
+    state = build_default_state(seed=106, genre="mystery")
+    car = state.world.items["arrival_sedan"]
+
+    assert car.kind == "vehicle"
+    assert car.portable is False
+    assert car.name == "dark sedan"
+    assert "parked by the drive" in car.description.lower()
+    assert "arrival_sedan" not in car.description
+    assert "engine cooled" not in car.description.lower()
+    assert state.world_facts.holds("room_item", "front_steps", "arrival_sedan")

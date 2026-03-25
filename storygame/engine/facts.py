@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from storygame.engine.fact_commit import ProjectionUpdater, ValidatedFactCommitter
+
 Fact = tuple[str, ...]
 FactOp = dict[str, Any]
 _LEGACY_FACT_PREDICATES = {
@@ -22,6 +24,7 @@ _LEGACY_FACT_PREDICATES = {
     "npc_trait",
     "npc_identity",
     "npc_pronouns",
+    "npc_appearance",
 }
 
 
@@ -92,13 +95,19 @@ def initialize_world_facts(state) -> None:
         facts.assert_fact("npc_trait", npc_id, npc.description)
         if npc.identity:
             facts.assert_fact("npc_identity", npc_id, npc.identity)
+        if npc.appearance:
+            facts.assert_fact("npc_appearance", npc_id, npc.appearance)
         if npc.pronouns:
             facts.assert_fact("npc_pronouns", npc_id, npc.pronouns)
     state.world_facts = facts
 
 
 def rebuild_facts_from_legacy_views(state) -> None:
-    preserved = tuple(fact for fact in state.world_facts.all() if fact[0] not in _LEGACY_FACT_PREDICATES)
+    preserved = tuple(
+        fact
+        for fact in state.world_facts.all()
+        if fact[0] not in _LEGACY_FACT_PREDICATES or (fact[0] == "holding" and len(fact) >= 3 and fact[1] != "player")
+    )
     initialize_world_facts(state)
     for fact in preserved:
         state.world_facts.assert_fact(fact[0], *fact[1:])
@@ -116,13 +125,66 @@ def player_inventory(state) -> tuple[str, ...]:
     return tuple(fact[2] for fact in held)
 
 
+def set_player_location(state, room_id: str) -> None:
+    destination = room_id.strip()
+    if not destination:
+        return
+    apply_fact_ops(state, [{"op": "assert", "fact": ("at", "player", destination)}])
+
+
+def replace_player_inventory(state, item_ids: tuple[str, ...] | list[str]) -> None:
+    existing = tuple(state.world_facts.query("holding", "player", None))
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    for item_id in item_ids:
+        normalized = str(item_id).strip()
+        if normalized:
+            ops.append({"op": "assert", "fact": ("holding", "player", normalized)})
+    if ops:
+        apply_fact_ops(state, ops)
+
+
 def player_flags(state) -> dict[str, bool]:
     flags = state.world_facts.query("flag", "player", None)
     return {fact[2]: True for fact in flags}
 
 
+def set_player_flag(state, flag_name: str, enabled: bool) -> None:
+    normalized = flag_name.strip()
+    if not normalized:
+        return
+    if enabled:
+        apply_fact_ops(state, [{"op": "assert", "fact": ("flag", "player", normalized)}])
+        return
+    apply_fact_ops(state, [{"op": "retract", "fact": ("flag", "player", normalized)}])
+
+
+def replace_player_flags(state, flags: dict[str, bool]) -> None:
+    existing = tuple(state.world_facts.query("flag", "player", None))
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    for flag_name, enabled in flags.items():
+        normalized = str(flag_name).strip()
+        if normalized and bool(enabled):
+            ops.append({"op": "assert", "fact": ("flag", "player", normalized)})
+    if ops:
+        apply_fact_ops(state, ops)
+
+
 def room_items(state, room_id: str) -> tuple[str, ...]:
     return tuple(fact[2] for fact in state.world_facts.query("room_item", room_id, None))
+
+
+def replace_room_items(state, room_id: str, item_ids: tuple[str, ...] | list[str]) -> None:
+    normalized_room_id = room_id.strip()
+    if not normalized_room_id:
+        return
+    existing = tuple(state.world_facts.query("room_item", normalized_room_id, None))
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    for item_id in item_ids:
+        normalized_item_id = str(item_id).strip()
+        if normalized_item_id:
+            ops.append({"op": "assert", "fact": ("room_item", normalized_room_id, normalized_item_id)})
+    if ops:
+        apply_fact_ops(state, ops)
 
 
 def room_npcs(state, room_id: str) -> tuple[str, ...]:
@@ -138,23 +200,15 @@ def room_locked(state, room_id: str) -> dict[str, str]:
 
 
 def sync_legacy_views(state) -> None:
-    state.player.location = player_location(state)
-    state.player.inventory = player_inventory(state)
-    state.player.flags = player_flags(state)
-
-    for room_id, room in state.world.rooms.items():
-        room.exits = room_paths(state, room_id)
-        room.locked_exits = room_locked(state, room_id)
-        room.item_ids = room_items(state, room_id)
-        room.npc_ids = room_npcs(state, room_id)
+    ProjectionUpdater().refresh_from_facts(state)
 
 
 def replace_fact_group(state, predicate: str, facts: tuple[Fact, ...]) -> None:
     existing = tuple(fact for fact in state.world_facts.all() if fact and fact[0] == predicate)
-    for fact in existing:
-        state.world_facts.retract_fact(fact[0], *fact[1:])
-    for fact in facts:
-        state.world_facts.assert_fact(fact[0], *fact[1:])
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    ops.extend({"op": "assert", "fact": fact} for fact in facts)
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source=f"replace_fact_group:{predicate}")
 
 
 def active_story_goal(state) -> str:
@@ -164,12 +218,19 @@ def active_story_goal(state) -> str:
     return state.active_goal
 
 
+def current_scene(state) -> str:
+    facts = state.world_facts.query("current_scene", None)
+    if facts:
+        return facts[0][1]
+    return f"scene:{player_location(state)}"
+
+
 def set_active_story_goal(state, goal: str) -> None:
-    existing = tuple(fact for fact in state.world_facts.query("active_goal", None))
-    for fact in existing:
-        state.world_facts.retract_fact(fact[0], *fact[1:])
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in state.world_facts.query("active_goal", None)]
     if goal.strip():
-        state.world_facts.assert_fact("active_goal", goal.strip())
+        ops.append({"op": "assert", "fact": ("active_goal", goal.strip())})
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source="set_active_story_goal")
 
 
 def story_goals(state) -> dict[str, object]:
@@ -212,8 +273,123 @@ def protagonist_profile(state) -> dict[str, str]:
     }
 
 
+def player_context_facts(state) -> tuple[dict[str, str], ...]:
+    return tuple(
+        {
+            "key": fact[1],
+            "text": fact[2],
+        }
+        for fact in state.world_facts.query("player_context", None, None)
+    )
+
+
+def npc_relationship_to_player(state, npc_name: str) -> str:
+    normalized = npc_name.strip().lower()
+    if not normalized:
+        return ""
+    for fact in state.world_facts.query("npc_relationship", None, "player", None):
+        if fact[1].strip().lower() == normalized:
+            return fact[3]
+    return ""
+
+
+def npc_scene_purpose(state, npc_id: str) -> str:
+    facts = state.world_facts.query("npc_scene_purpose", npc_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_owner(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_owner", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_driver(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_driver", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def item_state(state, item_id: str) -> str:
+    facts = state.world_facts.query("item_state", item_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
 def hidden_story_threads(state) -> tuple[str, ...]:
     return tuple(fact[1] for fact in state.world_facts.query("story_hidden_thread", None))
+
+
+def scene_location(state, scene_id: str) -> str:
+    facts = state.world_facts.query("scene_location", scene_id, None)
+    if facts:
+        return facts[0][2]
+    return player_location(state)
+
+
+def scene_objective(state, scene_id: str) -> str:
+    facts = state.world_facts.query("scene_objective", scene_id, None)
+    if facts:
+        return facts[0][2]
+    return active_story_goal(state)
+
+
+def dramatic_question(state, scene_id: str) -> str:
+    facts = state.world_facts.query("dramatic_question", scene_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def scene_pressure(state, scene_id: str) -> str:
+    facts = state.world_facts.query("scene_pressure", scene_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def beat_phase(state) -> str:
+    facts = state.world_facts.query("beat_phase", None)
+    if facts:
+        return facts[0][1]
+    return ""
+
+
+def beat_role(state, scene_id: str) -> str:
+    facts = state.world_facts.query("beat_role", scene_id, None)
+    if facts:
+        return facts[0][2]
+    return ""
+
+
+def player_approach(state) -> str:
+    facts = state.world_facts.query("player_approach", None)
+    if facts:
+        return facts[0][1]
+    return ""
+
+
+def scene_participants(state, scene_id: str) -> tuple[str, ...]:
+    return tuple(fact[2] for fact in state.world_facts.query("scene_participant", scene_id, None))
+
+
+def npc_stance_toward_player(state, npc_id: str) -> str:
+    facts = state.world_facts.query("npc_stance", npc_id, "player", None)
+    if facts:
+        return facts[0][3]
+    return ""
+
+
+def npc_trust_toward_player(state, npc_id: str) -> str:
+    facts = state.world_facts.query("npc_trust", npc_id, "player", None)
+    if facts:
+        return facts[0][3]
+    return ""
 
 
 def reveal_schedule(state) -> tuple[dict[str, float], ...]:
@@ -260,38 +436,8 @@ def npc_location(state, npc_id: str) -> str:
 
 
 def apply_fact_ops(state, ops: list[FactOp] | tuple[FactOp, ...]) -> None:
-    for op in ops:
-        if op["op"] == "assert":
-            predicate, *terms = op["fact"]
-            if predicate == "npc_at" and len(terms) == 2:
-                for fact in state.world_facts.query("npc_at", terms[0], None):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "at" and len(terms) == 2 and terms[0] == "player":
-                for fact in state.world_facts.query("at", "player", None):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "holding" and len(terms) == 2:
-                for fact in state.world_facts.query("holding", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-                for fact in state.world_facts.query("room_item", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            if predicate == "room_item" and len(terms) == 2:
-                for fact in state.world_facts.query("room_item", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-                for fact in state.world_facts.query("holding", None, terms[1]):
-                    state.world_facts.retract_fact(fact[0], *fact[1:])
-            state.world_facts.assert_fact(predicate, *terms)
-            continue
-        if op["op"] == "retract":
-            predicate, *terms = op["fact"]
-            state.world_facts.retract_fact(predicate, *terms)
-            continue
-        if op["op"] == "numeric_delta":
-            key = str(op["key"])
-            delta = float(op["delta"])
-            state.fact_metrics[key] = state.fact_metrics.get(key, 0.0) + delta
-            continue
-        raise ValueError(f"Unsupported fact op '{op['op']}'.")
-    sync_legacy_views(state)
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source="apply_fact_ops")
 
 
 def event_fact_ops(event) -> tuple[FactOp, ...]:

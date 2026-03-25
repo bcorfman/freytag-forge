@@ -84,9 +84,10 @@ def test_per_turn_room_block_follows_expected_section_order():
     assert room_block[0] == room.name
     assert room.description in room_block[1]
 
-    item_index = next(i for i, line in enumerate(room_block) if "you can see" in line.lower())
-    exit_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower())
-    assert item_index < exit_index
+    direction_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower() or "entrance" in line.lower())
+    item_indices = [i for i, line in enumerate(room_block) if "you can see" in line.lower()]
+    if item_indices:
+        assert item_indices[0] < direction_index
 
     npc_line_indices = [
         i for i, line in enumerate(room_block) if " is here." in line.lower() or " are here." in line.lower()
@@ -103,7 +104,7 @@ def test_unknown_non_command_input_uses_in_world_roleplay_response():
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
-        f"ask {npc_id} about rumors",
+        f"ask {state.world.rooms[state.player.location].npc_ids[0]} about rumors",
         Random(32),
         SilentNarrator(),
         debug=False,

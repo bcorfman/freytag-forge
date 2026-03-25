@@ -3,7 +3,7 @@ from __future__ import annotations
 from storygame.engine.facts import active_story_goal, discovered_leads
 from storygame.engine.state import GameState, Item, Npc, Room
 
-ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence"}
+ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence", "vehicle"}
 
 
 def is_actionable_item(item: Item) -> bool:

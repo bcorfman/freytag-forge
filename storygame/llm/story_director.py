@@ -2,27 +2,29 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import logging
+from typing import cast
 
-from storygame.engine.facts import active_story_goal, replace_fact_group, set_active_story_goal
+from storygame.engine.facts import (
+    active_story_goal,
+    apply_fact_ops,
+    replace_fact_group,
+    set_active_story_goal,
+)
 from storygame.engine.state import Event, GameState
-from storygame.llm.opening_coherence import cohere_opening_lines, item_labels_for_opening
+from storygame.llm.opening_coherence import (
+    item_labels_for_opening,
+    opening_coherence_issues,
+    opening_fact_parity_issues,
+)
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_agents.agents import (
-    CharacterDesignerAgent,
     DefaultStoryBootstrapAgent,
     DefaultStoryBootstrapCriticAgent,
-    DefaultCharacterDesignerAgent,
-    DefaultNarratorOpeningAgent,
-    DefaultPlotDesignerAgent,
     DefaultRoomPresentationAgent,
-    DefaultStoryArchitectAgent,
     DefaultStoryReplanAgent,
-    NarratorOpeningAgent,
-    PlotDesignerAgent,
     RoomPresentationAgent,
     StoryBootstrapAgent,
     StoryBootstrapCriticAgent,
-    StoryArchitectAgent,
     StoryReplanAgent,
 )
 from storygame.story_canon import canonical_detective_name
@@ -37,10 +39,10 @@ class StoryDirector:
         output_editor: OutputEditor | None = None,
         story_bootstrap: StoryBootstrapAgent | None = None,
         story_bootstrap_critic: StoryBootstrapCriticAgent | None = None,
-        story_architect: StoryArchitectAgent | None = None,
-        character_designer: CharacterDesignerAgent | None = None,
-        plot_designer: PlotDesignerAgent | None = None,
-        narrator_opening: NarratorOpeningAgent | None = None,
+        story_architect=None,
+        character_designer=None,
+        plot_designer=None,
+        narrator_opening=None,
         room_presentation: RoomPresentationAgent | None = None,
         story_replan: StoryReplanAgent | None = None,
     ) -> None:
@@ -49,29 +51,26 @@ class StoryDirector:
         self._story_bootstrap_critic = (
             DefaultStoryBootstrapCriticAgent(mode) if story_bootstrap_critic is None else story_bootstrap_critic
         )
-        self._story_architect = DefaultStoryArchitectAgent(mode) if story_architect is None else story_architect
-        self._character_designer = (
-            DefaultCharacterDesignerAgent(mode) if character_designer is None else character_designer
-        )
-        self._plot_designer = DefaultPlotDesignerAgent(mode) if plot_designer is None else plot_designer
-        self._narrator_opening = DefaultNarratorOpeningAgent(mode) if narrator_opening is None else narrator_opening
         self._room_presentation = (
             DefaultRoomPresentationAgent(mode) if room_presentation is None else room_presentation
         )
         self._story_replan = DefaultStoryReplanAgent(mode) if story_replan is None else story_replan
-        self._uses_legacy_opening_path = any(
-            component is not None
-            for component in (story_architect, character_designer, plot_designer, narrator_opening)
+        self._ignored_legacy_components = any(
+            component is not None for component in (story_architect, character_designer, plot_designer, narrator_opening)
         )
 
     def compose_opening(self, state: GameState) -> list[str]:
-        if self._uses_legacy_opening_path:
-            return self._compose_opening_legacy(state)
         return self._compose_opening_bootstrap(state)
+
+    def compose_opening_fast(self, state: GameState) -> list[str]:
+        return self._compose_opening_bootstrap_fast(state)
 
     def _compose_opening_bootstrap(self, state: GameState) -> list[str]:
         bundle: dict[str, object] = {}
         bundle = self._story_bootstrap.run(state)
+        bundle["opening_paragraphs"] = self._sanitize_opening_paragraphs(bundle.get("opening_paragraphs", ()))
+        if not bundle["opening_paragraphs"]:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
         critique = self._story_bootstrap_critic.run(state, bundle)
         bundle["bootstrap_critique"] = critique
         if str(critique.get("verdict", "")).strip().lower() != "accepted":
@@ -80,80 +79,87 @@ class StoryDirector:
                 + str(critique.get("continuity_summary", "")).strip()
             )
         self._apply_story_bundle(state, bundle)
+        contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
 
         with ThreadPoolExecutor(max_workers=2) as executor:
             room_future = executor.submit(
                 self._ensure_room_presentation_cache,
                 state,
                 bundle,
-                {"contacts": list(bundle.get("contacts", []))},
+                {"contacts": list(contacts)},
                 {
                     "assistant_name": str(bundle.get("assistant_name", "")),
                     "actionable_objective": str(bundle.get("actionable_objective", active_story_goal(state))),
                 },
             )
-            opening = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
+            opening = [str(line).strip() for line in opening_lines if str(line).strip()]
             if not opening:
                 raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
             room_future.result()
-        coherent_opening = cohere_opening_lines(
-            opening,
-            state.story_genre,
-            str(bundle.get("protagonist_name", "")).strip(),
-            str(bundle.get("assistant_name", "")).strip(),
-            str(bundle.get("actionable_objective", active_story_goal(state))).strip(),
-            item_labels_for_opening(tuple(state.world.items.keys())),
-            tuple(str(contact.get("name", "")).strip() for contact in bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
-        )
-        return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
+        validation_issues = self._opening_validation_issues(state, opening, bundle, contacts)
+        if validation_issues:
+            raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
+        return self._output_editor.review_opening(opening, active_story_goal(state))
 
-    def _compose_opening_legacy(self, state: GameState) -> list[str]:
-        architect = self._story_architect.run(state)
-        cast = self._character_designer.run(state, architect)
-        plan = self._plot_designer.run(state, architect, cast)
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            room_future = executor.submit(self._ensure_room_presentation_cache, state, architect, cast, plan)
-            opening_future = executor.submit(self._narrator_opening.run, state, architect, cast, plan)
-            opening = opening_future.result()
-            room_future.result()
-        coherent_opening = cohere_opening_lines(
-            opening,
-            state.story_genre,
-            str(architect.get("protagonist_name", "")).strip(),
-            str(plan.get("assistant_name", "")).strip(),
-            str(plan.get("actionable_objective", active_story_goal(state))).strip(),
-            item_labels_for_opening(tuple(state.world.items.keys())),
-            tuple(str(contact.get("name", "")).strip() for contact in cast.get("contacts", ()) if str(contact.get("name", "")).strip()),
-        )
-        return self._output_editor.review_opening(coherent_opening, active_story_goal(state))
+    def _compose_opening_bootstrap_fast(self, state: GameState) -> list[str]:
+        bundle = self._story_bootstrap.run(state)
+        bundle["opening_paragraphs"] = self._sanitize_opening_paragraphs(bundle.get("opening_paragraphs", ()))
+        if not bundle["opening_paragraphs"]:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
+        self._apply_story_bundle(state, bundle)
+        contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
+        opening = [str(line).strip() for line in opening_lines if str(line).strip()]
+        if not opening:
+            raise RuntimeError("Story bootstrap returned empty opening_paragraphs.")
+        validation_issues = self._opening_validation_issues(state, opening, bundle, contacts)
+        if validation_issues:
+            raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
+        return opening
+
+    def _sanitize_opening_paragraphs(self, opening_paragraphs: object) -> list[str]:
+        if not isinstance(opening_paragraphs, (list, tuple)):
+            return []
+        return [
+            " ".join(str(raw_paragraph).split()).strip()
+            for raw_paragraph in opening_paragraphs
+            if " ".join(str(raw_paragraph).split()).strip()
+        ]
 
     def _apply_story_bundle(self, state: GameState, bundle: dict[str, object]) -> None:
-        contacts = list(bundle.get("contacts", []))
-        protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
-        opening_paragraphs = tuple(
-            str(paragraph).strip() for paragraph in bundle.get("opening_paragraphs", ()) if str(paragraph).strip()
+        contacts = list(cast(list[dict[str, object]], bundle.get("contacts", [])))
+        opening_lines = cast(list[str] | tuple[str, ...], bundle.get("opening_paragraphs", ()))
+        story_beats = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("story_beats", ()))
+        villains = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("villains", ()))
+        timed_events = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("timed_events", ()))
+        clue_placements = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...],
+            bundle.get("clue_placements", ()),
         )
+        secondary_goals = cast(list[str] | tuple[str, ...], bundle.get("secondary_goals", ()))
+        hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
+        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
+        bootstrap_critique = cast(dict[str, object], bundle.get("bootstrap_critique", {}))
+        protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
+        opening_paragraphs = tuple(str(paragraph).strip() for paragraph in opening_lines if str(paragraph).strip())
         story_plan = {
             "protagonist_name": protagonist_name,
             "protagonist_background": str(bundle.get("protagonist_background", "")).strip(),
             "setup_paragraphs": opening_paragraphs,
             "expanded_outline": str(bundle.get("expanded_outline", "")).strip(),
-            "story_beats": tuple(bundle.get("story_beats", ())),
-            "villains": tuple(bundle.get("villains", ())),
-            "timed_events": tuple(bundle.get("timed_events", ())),
-            "clue_placements": tuple(bundle.get("clue_placements", ())),
-            "hidden_threads": tuple(
-                str(thread).strip() for thread in bundle.get("hidden_threads", ()) if str(thread).strip()
-            ),
-            "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
+            "story_beats": tuple(story_beats),
+            "villains": tuple(villains),
+            "timed_events": tuple(timed_events),
+            "clue_placements": tuple(clue_placements),
+            "hidden_threads": tuple(str(thread).strip() for thread in hidden_threads if str(thread).strip()),
+            "reveal_schedule": tuple(reveal_schedule),
         }
         bundle["protagonist_name"] = protagonist_name
         goals = {
             "setup": str(bundle.get("actionable_objective", "")).strip(),
             "primary": str(bundle.get("primary_goal", "")).strip(),
-            "secondary": tuple(
-                str(goal).strip() for goal in bundle.get("secondary_goals", ()) if str(goal).strip()
-            ),
+            "secondary": tuple(str(goal).strip() for goal in secondary_goals if str(goal).strip()),
         }
         state.world_package["llm_story_bundle"] = dict(bundle)
         state.world_package["story_plan"] = story_plan
@@ -161,11 +167,10 @@ class StoryDirector:
         state.world_package["story_cast"] = {"contacts": contacts}
         self._apply_story_bundle_facts(state, bundle, contacts, goals)
         self._apply_contacts_to_world(state, contacts, str(bundle.get("assistant_name", "")).strip())
-        self._apply_clue_placements_to_world(state, list(bundle.get("clue_placements", ())))
-        state.world_package["bootstrap_critique"] = dict(bundle.get("bootstrap_critique", {}))
+        self._apply_clue_placements_to_world(state, list(clue_placements))
+        state.world_package["bootstrap_critique"] = dict(bootstrap_critique)
         if goals["setup"]:
-            state.active_goal = goals["setup"]
-            set_active_story_goal(state, state.active_goal)
+            set_active_story_goal(state, goals["setup"])
 
     def _apply_story_bundle_facts(
         self,
@@ -175,11 +180,20 @@ class StoryDirector:
         goals: dict[str, object],
     ) -> None:
         goal_facts: list[tuple[str, ...]] = []
+        secondary_goals = cast(tuple[str, ...], goals.get("secondary", ()))
+        villains = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("villains", ()))
+        clue_placements = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...],
+            bundle.get("clue_placements", ()),
+        )
+        timed_events = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("timed_events", ()))
+        hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
+        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
         if str(goals.get("setup", "")).strip():
             goal_facts.append(("story_goal", "setup", str(goals["setup"]).strip()))
         if str(goals.get("primary", "")).strip():
             goal_facts.append(("story_goal", "primary", str(goals["primary"]).strip()))
-        for goal in goals.get("secondary", ()):
+        for goal in secondary_goals:
             if str(goal).strip():
                 goal_facts.append(("story_goal", "secondary", str(goal).strip()))
         replace_fact_group(state, "story_goal", tuple(goal_facts))
@@ -225,7 +239,7 @@ class StoryDirector:
         )
 
         villain_facts: list[tuple[str, ...]] = []
-        for villain in bundle.get("villains", ()):
+        for villain in villains:
             if not isinstance(villain, dict):
                 continue
             name = str(villain.get("name", "")).strip()
@@ -249,7 +263,7 @@ class StoryDirector:
         )
 
         clue_facts: list[tuple[str, ...]] = []
-        for entry in bundle.get("clue_placements", ()):
+        for entry in clue_placements:
             if not isinstance(entry, dict):
                 continue
             item_id = str(entry.get("item_id", "")).strip()
@@ -271,16 +285,18 @@ class StoryDirector:
         )
 
         timed_event_facts: list[tuple[str, ...]] = []
-        for event in bundle.get("timed_events", ()):
+        for event in timed_events:
             if not isinstance(event, dict):
                 continue
             event_id = str(event.get("event_id", "")).strip()
             summary = str(event.get("summary", "")).strip()
-            min_turn = str(int(event.get("min_turn", 0)))
+            min_turn_value = cast(int | str, event.get("min_turn", 0))
+            min_turn = str(int(min_turn_value))
             location = str(event.get("location", "")).strip()
+            participants = cast(list[str] | tuple[str, ...], event.get("participants", ()))
             if event_id and summary and location:
                 timed_event_facts.append(("planned_event", event_id, summary, min_turn, location))
-            for participant in event.get("participants", ()):
+            for participant in participants:
                 if event_id and str(participant).strip():
                     timed_event_facts.append(("planned_event_participant", event_id, str(participant).strip()))
         replace_fact_group(state, "planned_event", tuple(fact for fact in timed_event_facts if fact[0] == "planned_event"))
@@ -292,17 +308,19 @@ class StoryDirector:
 
         hidden_thread_facts = tuple(
             ("story_hidden_thread", str(thread).strip())
-            for thread in bundle.get("hidden_threads", ())
+            for thread in hidden_threads
             if str(thread).strip()
         )
         replace_fact_group(state, "story_hidden_thread", hidden_thread_facts)
 
         reveal_schedule_facts: list[tuple[str, ...]] = []
-        for entry in bundle.get("reveal_schedule", ()):
+        for entry in reveal_schedule:
             if not isinstance(entry, dict):
                 continue
-            thread_index = str(int(entry.get("thread_index", -1)))
-            min_progress = str(float(entry.get("min_progress", 1.0)))
+            thread_index_value = cast(int | str, entry.get("thread_index", -1))
+            min_progress_value = cast(float | int | str, entry.get("min_progress", 1.0))
+            thread_index = str(int(thread_index_value))
+            min_progress = str(float(min_progress_value))
             if thread_index == "-1":
                 continue
             reveal_schedule_facts.append(("story_reveal_schedule", thread_index, min_progress))
@@ -337,27 +355,89 @@ class StoryDirector:
         valid_entries = [entry for entry in placements if isinstance(entry, dict)]
         if not valid_entries:
             return
-        room_items = {room_id: list(room.item_ids) for room_id, room in state.world.rooms.items()}
+        fact_ops: list[dict[str, object]] = []
+        assistant_name = str(state.world_package.get("llm_story_bundle", {}).get("assistant_name", "")).strip().lower()
+        assistant_npc_id = ""
+        if assistant_name:
+            for npc_id, npc in state.world.npcs.items():
+                if npc.name.strip().lower() == assistant_name:
+                    assistant_npc_id = npc_id
+                    break
         for entry in valid_entries:
             item_id = str(entry.get("item_id", "")).strip()
             room_id = str(entry.get("room_id", "")).strip()
             if item_id not in state.world.items or room_id not in state.world.rooms:
                 continue
-            for current_room_id, item_ids in room_items.items():
-                if item_id in item_ids:
-                    room_items[current_room_id] = [value for value in item_ids if value != item_id]
-            room_items[room_id].append(item_id)
             item = state.world.items[item_id]
             item.clue_text = str(entry.get("clue_text", "")).strip() or item.clue_text
             hidden_reason = str(entry.get("hidden_reason", "")).strip()
             if hidden_reason:
                 item.description = f"{item.description.rstrip('.')} Hidden because {hidden_reason.rstrip('.')}."
-        for room_id, item_ids in room_items.items():
-            deduped: list[str] = []
-            for item_id in item_ids:
-                if item_id not in deduped:
-                    deduped.append(item_id)
-            state.world.rooms[room_id].item_ids = tuple(deduped)
+            if room_id == state.player.location and assistant_npc_id and assistant_npc_id in state.world.rooms[room_id].npc_ids:
+                fact_ops.append({"op": "assert", "fact": ("holding", assistant_npc_id, item_id)})
+                for fact in state.world_facts.query("clue_room", item_id, None):
+                    fact_ops.append({"op": "retract", "fact": fact})
+                for fact in state.world_facts.query("clue_holder", item_id, None):
+                    fact_ops.append({"op": "retract", "fact": fact})
+                fact_ops.append({"op": "assert", "fact": ("clue_holder", item_id, assistant_npc_id)})
+                continue
+            fact_ops.append({"op": "assert", "fact": ("room_item", room_id, item_id)})
+        if fact_ops:
+            apply_fact_ops(state, fact_ops)
+
+    def _assistant_npc_id(self, state: GameState, assistant_name: str) -> str:
+        normalized_assistant = assistant_name.strip().lower()
+        if not normalized_assistant:
+            return ""
+        for npc_id, npc in state.world.npcs.items():
+            if npc.name.strip().lower() == normalized_assistant:
+                return npc_id
+        return ""
+
+    def _opening_validation_issues(
+        self,
+        state: GameState,
+        opening_lines: list[str],
+        bundle: dict[str, object],
+        contacts: list[dict[str, object]],
+    ) -> list[str]:
+        assistant_name = str(bundle.get("assistant_name", "")).strip()
+        assistant_npc_id = self._assistant_npc_id(state, assistant_name)
+        assistant_role = ""
+        if assistant_name:
+            assistant_role = next(
+                (
+                    fact[2]
+                    for fact in state.world_facts.query("npc_role", assistant_name, None)
+                    if len(fact) > 2
+                ),
+                "",
+            )
+        assistant_present = bool(assistant_npc_id) and state.world_facts.holds("npc_at", assistant_npc_id, state.player.location)
+        assistant_items = tuple(
+            item_labels_for_opening(
+                tuple(fact[2] for fact in state.world_facts.query("holding", assistant_npc_id, None) if len(fact) > 2)
+            )
+        )
+        item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
+        issues = opening_coherence_issues(
+            opening_lines,
+            assistant_name,
+            str(bundle.get("actionable_objective", active_story_goal(state))).strip(),
+            item_labels,
+            tuple(str(contact.get("name", "")).strip() for contact in contacts if str(contact.get("name", "")).strip()),
+        )
+        issues.extend(
+            opening_fact_parity_issues(
+                opening_lines,
+                assistant_name,
+                assistant_role,
+                assistant_present,
+                item_labels,
+                assistant_items,
+            )
+        )
+        return list(dict.fromkeys(issue for issue in issues if issue.strip()))
 
     def _ensure_room_presentation_cache(
         self,
@@ -393,15 +473,19 @@ class StoryDirector:
         replan_scope = str(plan.get("replan_scope", disruption.get("replan_scope", "goal_change"))).strip().lower()
         new_goal = str(plan.get("new_active_goal", "")).strip()
         if replan_scope == "goal_change" and new_goal:
-            state.active_goal = new_goal
             goals = dict(state.world_package.get("goals", {}))
             goals["primary"] = new_goal
             goals["setup"] = new_goal
             state.world_package["goals"] = goals
             set_active_story_goal(state, new_goal)
         state.world_package["story_replan_plan"] = dict(plan)
-        state.player.flags["story_replan_required"] = False
-        state.player.flags["story_replanned"] = True
+        apply_fact_ops(
+            state,
+            [
+                {"op": "retract", "fact": ("flag", "player", "story_replan_required")},
+                {"op": "assert", "fact": ("flag", "player", "story_replanned")},
+            ],
+        )
         note = str(plan.get("note", "")).strip() or "The story shifts in response to your prior choice."
         return Event(
             type="story_replan",

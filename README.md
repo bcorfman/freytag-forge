@@ -1,16 +1,17 @@
 # Freytag Forge
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
 
-Freytag Forge is a story-first detective RPG in your terminal/browser: you type what you do, the world reacts, and the narrative stays coherent across turns with deterministic state tracking under the hood.
+Freytag Forge is a story-first detective RPG in your terminal/browser: you type what you do, the world reacts, and the narrative stays coherent across turns with deterministic fact-backed state under the hood.
 
 ## A Quick Taste
 ```text
 Outside The Mansion
 Broad stone steps rise to a carved oak door framed by weathered columns.
-A torn ledger page lies half-caught in a crack between the stones near the bottom step.
-Daria Stone is nearby, watching your next move.
+Daria Stone waits just inside the foyer windows, watching your next move.
+Rain slicks the stone and leaves the brass door handle cold under your hand.
 
->PICK UP THE LEDGER PAGE
-Clue noted: Half-burned ledger page with initials that match the victim's diary.
+>LOOK THROUGH THE FOYER WINDOW
+The foyer beyond the glass is lit in amber bands. Daria lifts the case file a little, signaling that the first useful lead is already inside.
 
 >DARIA, WHAT DO YOU MAKE OF THIS?
 Daria says: "The initials aren't random. Start with whoever had access to the archives tonight."
@@ -48,11 +49,13 @@ make run
 Then open `http://127.0.0.1:8000`.
 
 ## Usage Commands
-Core gameplay commands:
-- `look`, `go <direction>`, `take <item>`, `talk <npc>`, `use <item> on <target>`, `inventory`
+Ordinary gameplay:
+- Natural-language inputs are the default path.
+- Deterministic aliases like `look`, `go <direction>`, `take <item>`, `talk <npc>`, `use <item> on <target>`, and `inventory` are normalized into the same proposal/commit runtime instead of using a separate parser-authored experience.
+- Directional shortcuts like `n`, `s`, `e`, `w`, `u`, `d` resolve to canonical movement.
 
 Meta commands:
-- `save <slot>`, `load <slot>`, `quit`
+- `save <slot>`, `load <slot>`, `quit`, `help`
 
 Replay + transcript:
 ```bash
@@ -65,10 +68,27 @@ make test
 ```
 
 ## Architecture (Focused Summary)
-- Planner-first turn routing: ordinary gameplay is interpreted through the LLM/freeform proposal path first, with parser handling kept to control-plane commands and resilience fallback.
-- Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, and reveal state.
+- Proposal-first turn routing: ordinary gameplay now runs through a shared `TurnProposal` contract, including parser-normalized deterministic actions like movement, look, take, use, and inventory. Parser handling is retained only for control-plane commands.
+- Semantic navigation: freeform movement phrases like `enter the mansion`, `head in the front door`, or `go back outside` are resolved proposal-first from room exit facts and then committed through the same deterministic movement boundary as canonical directions when the match is unique.
+- Deterministic commit authority: the engine owns canonical fact-backed state for locations, inventory, flags, goals, discovered leads/clues, relationships, timed events, reveal state, and scene/dramatic state.
 - LLM-authored story layer: bootstrap/opening prose, turn narration, and NPC dialogue are authored by LLMs but must stay grounded in deterministic facts.
-- Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; accepted outputs are persisted back into runtime facts.
+- Scene + dramatic facts: current scene framing, dramatic question, player approach, beat phase/role, and pressure are fact-backed so narration and NPC behavior read from committed story state.
+- Single bootstrap contract: startup prefers one LLM bootstrap bundle that defines protagonist identity, assistant/contact plan, goals, villains, clue placement, reveal schedule, timed events, and opening paragraphs; facts commit first, then opening prose is validated against those facts and fails closed on mismatch.
+- Bootstrap objective guardrail: assistant/contact objectives and opening paragraphs are normalized away from suspect-style questioning language before opening validation so hosted demo openings stay playable when the upstream model phrases the first move poorly.
+- Web opening path: both web surfaces now use a single bootstrap call plus deterministic validation on the opening critical path, skipping bootstrap critique, remote room-presentation generation, and opening editor passes until after first paint.
+- Opening grounding: bootstrap and narrator opening prompts now carry canonical room description, exits, visible NPCs, visible items, and inventory constraints so the first scene stays anchored to deterministic location facts instead of relying on ad hoc post-hoc cleanup.
+- Opening contract hygiene: narrator/bootstrap opening paragraphs now drop prompt-shaped field dumps such as `Room name: ... Items: ... Exits: ...` before any player-facing opening is accepted.
+- Mystery opening custody: the default mystery start seeds `case_file` to Daria Stone rather than the player, so opening prompts begin from the fact-backed “assistant has the file” world state while `read/review case file` still works through nearby-holder access.
+- Mystery arrival staging: the default mystery start also seeds an `arrival_sedan` at `front_steps`, so the car Elias arrived in is present in the fact store, appears in the room block/context, and can naturally anchor opening prose.
+- Shared scene grounding: narration and freeform planner prompts now carry richer fact-backed scene, NPC, and visible-item context across ordinary turns as well, including player arrival facts, NPC scene purpose, and item owner/driver/state when relevant.
+- Scene-scoped world actions stay proposal-first without being auto-rerouted into nearby NPC conversation; direct NPC reply requirements now apply only when the player actually addresses or questions a visible character.
+- Room presentation now reads visible-item custody/state facts generically, so player-owned vehicles and similar scene objects are described consistently across map locations instead of through room-specific hard-coded copy.
+- Movement room summaries now use complete fact-backed clauses rather than visible `...` truncation, and deterministic ambient event text resolves its source from current-room facts, adjacent-room geography, and adjacent-room item state before naming a drive, street, lane, or generic outside source.
+- Hosted demo bootstrap now prefers a prose opening path on Cloudflare-backed deployments when the worker cannot satisfy the story-bootstrap JSON contract, keeping the first turn playable without local OpenAI credentials.
+- LLM-facing prompt builders now prefer player-facing item labels over raw internal ids for visible scene objects, while deterministic code still retains the internal ids for commit and validation boundaries.
+- Shared opening prompts now explicitly require present tense, while mutable knowledge like case-file review state is carried by fact-backed world state rather than prompt-specific guardrails.
+- Story-bootstrap and narrator-opening prompts now receive canonical opening facts derived from the fact store, including assistant role/purpose, visible item custody, and pending knowledge state, so continuity relies less on prompt-only bans.
+- Freeform dialogue facts: accepted targeted NPC replies can commit bounded facts back into the fact store; canonical appearance facts are seeded for mystery contacts, appearance questions are grounded to those facts, and contradictory wardrobe replies now fail closed.
 - Replan boundary: light confirmed disruptions adapt NPC behavior and story pressure around the current goal, while only player-confirmed major disruptions may rewrite core goals.
 - Canonical persistence: SQLite save snapshots plus `StoryState.json` / `STORY.md` artifact history preserve the fact-backed story state and trace linkage across turns.
 
