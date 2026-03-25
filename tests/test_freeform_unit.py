@@ -5,12 +5,16 @@ from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
+    _dialog_line,
     _format_character_reply_line,
     _freeform_planner_prompt,
     _has_invalid_targeted_dialogue_speaker,
+    _normalized_dialog_speaker_id,
     _normalized_movement_action_payload,
     _room_environment,
+    _scope_normalized_proposals,
     _scene_scoped_dialog_override,
+    _semantic_actions_for_freeform,
     _semantic_exit_direction,
     _envelope_for_action,
     _envelope_to_fact_ops,
@@ -73,6 +77,51 @@ def test_rule_based_adapter_matches_direct_address_by_visible_npc_name() -> None
     assert dialog["text"]
 
 
+def test_dialog_line_covers_targetless_and_topic_specific_branches() -> None:
+    state = build_default_state(seed=4101, genre="mystery")
+    npc_id = "daria_stone"
+
+    assert _dialog_line("inspect", "", "", state) == "You focus on the details and search for a usable clue."
+    assert _dialog_line("knock", "", "", state) == "Your knock echoes through the entryway."
+    assert "greet Daria Stone" in _dialog_line("greet", npc_id, "", state)
+    assert "apologize to Daria Stone" in _dialog_line("apologize", npc_id, "", state)
+    assert "pressure on Daria Stone" in _dialog_line("threaten", npc_id, "", state)
+    assert "size up your appearance" in _dialog_line("ask_about", npc_id, "player appearance", state)
+    assert "remove part of their outfit" in _dialog_line("ask_about", npc_id, "remove coat request", state)
+    assert "service passage" in _dialog_line("ask_about", npc_id, "service passage", state)
+    assert "route key" in _dialog_line("ask_about", npc_id, "route key", state)
+    assert "objective" in _dialog_line("ask_about", npc_id, "objective", state).lower()
+    assert "appearance" in _dialog_line("ask_about", npc_id, "appearance", state)
+    assert "going around" in _dialog_line("ask_about", npc_id, "rumors", state)
+
+
+def test_dialog_line_covers_item_place_and_default_specific_question_branches() -> None:
+    state = build_default_state(seed=4102, genre="mystery")
+    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + ("ledger_page",)
+    npc_id = "daria_stone"
+
+    item_line = _dialog_line("ask_about", npc_id, "ledger page", state)
+    place_line = _dialog_line("ask_about", npc_id, "place", state)
+    default_line = _dialog_line("ask_about", npc_id, "", state)
+
+    assert "ledger page" in item_line
+    assert "front steps" in place_line.lower() or "weather has not erased" in place_line.lower()
+    assert "needs a more specific question" in default_line.lower()
+
+
+def test_dialog_line_covers_item_without_clue_and_generic_place_variants() -> None:
+    state = build_default_state(seed=4103, genre="mystery")
+    state.player.location = "foyer"
+    state.world.rooms["foyer"].item_ids = ()
+    npc_id = "daria_stone"
+
+    item_line = _dialog_line("ask_about", npc_id, "field kit", state)
+    place_line = _dialog_line("ask_about", npc_id, "place", state)
+
+    assert "field kit" in item_line
+    assert "room suggests" in place_line.lower() or "pushes east" in place_line.lower()
+
+
 def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
     state = build_default_state(seed=412, genre="mystery", tone="dark")
 
@@ -132,6 +181,18 @@ def test_format_character_reply_line_preserves_contractions_and_wrapped_quotes()
     assert quoted_line == 'Daria Stone says: "Keep your voice down."'
 
 
+def test_format_character_reply_line_maps_ai_assistant_to_target_npc() -> None:
+    state = build_default_state(seed=4141, genre="mystery", tone="dark")
+
+    line = _format_character_reply_line(
+        state,
+        {"speaker": "AI_Assistant", "text": "Stay sharp.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert line == 'Daria Stone says: "Stay sharp."'
+
+
 def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_named_npc() -> None:
     assert _has_invalid_targeted_dialogue_speaker(
         {"speaker": "player", "text": "I answer myself.", "tone": "in_world"},
@@ -148,6 +209,136 @@ def test_invalid_targeted_dialogue_speaker_ignores_empty_targets() -> None:
         {"speaker": "narrator", "text": "No target.", "tone": "in_world"},
         {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
     )
+
+
+def test_normalized_dialog_speaker_id_maps_aliases_and_visible_names() -> None:
+    state = build_default_state(seed=4144, genre="mystery")
+
+    assert _normalized_dialog_speaker_id(state, "AI_Assistant", {"targets": ["daria_stone"]}) == "daria_stone"
+    assert _normalized_dialog_speaker_id(state, "Daria Stone", {"targets": []}) == "daria_stone"
+    assert _normalized_dialog_speaker_id(state, "player", {"targets": []}) == "player"
+
+
+def test_scope_normalized_proposals_strips_unsolicited_npc_target_and_player_echo() -> None:
+    state = build_default_state(seed=4145, genre="mystery")
+
+    dialog, action = _scope_normalized_proposals(
+        state,
+        "get in car",
+        {"speaker": "player", "text": "open car door", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "arrival"},
+            "proposed_effects": [],
+        },
+    )
+
+    assert dialog["speaker"] == "narrator"
+    assert action["intent"] == "freeform"
+    assert action["targets"] == ()
+
+
+def test_scope_normalized_proposals_leaves_direct_address_and_non_npc_targets_unchanged() -> None:
+    state = build_default_state(seed=4148, genre="mystery")
+
+    direct_dialog, direct_action = _scope_normalized_proposals(
+        state,
+        "Daria, what happened?",
+        {"speaker": "daria_stone", "text": "Not here.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    item_dialog, item_action = _scope_normalized_proposals(
+        state,
+        "inspect car",
+        {"speaker": "narrator", "text": "You inspect the sedan.", "tone": "in_world"},
+        {"intent": "inspect", "targets": ["arrival_sedan"], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert direct_dialog["speaker"] == "daria_stone"
+    assert tuple(direct_action["targets"]) == ("daria_stone",)
+    assert item_dialog["speaker"] == "narrator"
+    assert tuple(item_action["targets"]) == ("arrival_sedan",)
+
+
+def test_semantic_actions_for_freeform_emits_move_and_take_actions() -> None:
+    state = build_default_state(seed=4142, genre="mystery")
+    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + ("route_key",)
+
+    move_actions = _semantic_actions_for_freeform(
+        state,
+        {"intent": "move", "targets": ["north"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+    take_actions = _semantic_actions_for_freeform(
+        state,
+        {"intent": "take", "targets": ["route_key"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+    none_actions = _semantic_actions_for_freeform(
+        state,
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+
+    assert move_actions[0]["action_type"] == "move_to"
+    assert move_actions[0]["location_id"] == "foyer"
+    assert take_actions[0]["action_type"] == "take_item"
+    assert take_actions[0]["item_id"] == "route_key"
+    assert none_actions == ()
+
+
+def test_semantic_actions_for_freeform_returns_empty_for_missing_targets_and_unmapped_move() -> None:
+    state = build_default_state(seed=4146, genre="mystery")
+
+    missing_move = _semantic_actions_for_freeform(
+        state,
+        {"intent": "move", "targets": ["up"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+    missing_take = _semantic_actions_for_freeform(
+        state,
+        {"intent": "take", "targets": ["field_kit"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+
+    assert missing_move == ()
+    assert missing_take == ()
+
+
+def test_format_character_reply_line_returns_plain_text_for_narrator_and_player() -> None:
+    state = build_default_state(seed=4143, genre="mystery", tone="dark")
+
+    narrator_line = _format_character_reply_line(
+        state,
+        {"speaker": "narrator", "text": "You focus on the immediate action.", "tone": "in_world"},
+    )
+    player_line = _format_character_reply_line(
+        state,
+        {"speaker": "player", "text": "open car door", "tone": "in_world"},
+        {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert narrator_line == "You focus on the immediate action."
+    assert player_line == "open car door"
+
+
+def test_format_character_reply_line_handles_single_quoted_and_embedded_says_forms() -> None:
+    state = build_default_state(seed=4147, genre="mystery", tone="dark")
+
+    single_quoted = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": "'Keep moving.'", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+    embedded = _format_character_reply_line(
+        state,
+        {"speaker": "daria_stone", "text": "Daria says, 'Keep your voice down.'", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+    )
+
+    assert single_quoted == 'Daria Stone says: "Keep moving."'
+    assert embedded == 'Daria Stone says: "Keep your voice down."'
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:

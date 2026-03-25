@@ -260,7 +260,7 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     room = next_state.world.rooms[next_state.player.location]
-    assert next_state.turn_index == 0
+    assert next_state.turn_index == 1
     assert not any(line.startswith(room.name + "\n") for line in lines)
     assert not any(room.description in line for line in lines)
     assert any(line.startswith('Daria Stone says: "') for line in lines)
