@@ -118,6 +118,18 @@ def test_same_room_followup_turn_does_not_repeat_room_block():
 
 
 def test_same_room_freeform_reply_does_not_repeat_room_block():
+    class _AppearanceReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "A crisp blouse and dark skirt. I dressed for business, not comfort.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "appearance", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     state = build_default_state(seed=38, genre="mystery")
 
     next_state, lines, _action_raw, beat_type, continued = run_turn(
@@ -126,7 +138,7 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
         Random(38),
         SilentNarrator(),
         debug=False,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        freeform_adapter=_AppearanceReplyAdapter(),
     )
 
     assert continued is True
@@ -134,8 +146,7 @@ def test_same_room_freeform_reply_does_not_repeat_room_block():
     room = next_state.world.rooms[next_state.player.location]
     assert not any(line.startswith(room.name + "\n") for line in lines)
     assert not any(room.description in line for line in lines)
-    assert any("ask daria stone about their appearance" in line.lower() for line in lines)
-    assert not any(line.startswith("Daria Stone says:") for line in lines)
+    assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
 def test_take_allows_unique_partial_item_reference_in_room():

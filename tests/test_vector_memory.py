@@ -62,6 +62,18 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             captured.append(context)
             return ""
 
+    class _NpcReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": npc_id, "text": "Keep the ledger in mind. It changes who had time to move.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": [npc_id],
+                    "arguments": {"topic": "ledger", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     with SqliteVectorMemory(db_path) as memory_store:
         memory_store.add_memory(
             "run",
@@ -85,7 +97,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             _CaptureNarrator(),
             memory_store=memory_store,
             memory_slot="run",
-            freeform_adapter=RuleBasedFreeformProposalAdapter(),
+            freeform_adapter=_NpcReplyAdapter(),
         )
 
     assert captured

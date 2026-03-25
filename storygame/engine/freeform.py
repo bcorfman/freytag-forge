@@ -621,13 +621,25 @@ def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     return fact_ops
 
 
-def _format_character_reply_line(state: GameState, dialog_proposal: dict[str, Any]) -> str:
+def _format_character_reply_line(
+    state: GameState,
+    dialog_proposal: dict[str, Any],
+    action_proposal: dict[str, Any] | None = None,
+) -> str:
     speaker_id = str(dialog_proposal.get("speaker", "")).strip()
     text = " ".join(str(dialog_proposal.get("text", "")).split()).strip()
     if not text:
         return ""
     if speaker_id in {"", "narrator", "player"}:
         return text
+    if _normalize_target(speaker_id) in {"ai_assistant", "assistant"} and action_proposal is not None:
+        targets = action_proposal.get("targets", ())
+        if isinstance(targets, (list, tuple)):
+            for target in targets:
+                candidate = _normalize_target(str(target))
+                if candidate in state.world.npcs:
+                    speaker_id = candidate
+                    break
 
     npc = state.world.npcs.get(speaker_id)
     speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
@@ -689,7 +701,7 @@ def resolve_freeform_roleplay_with_proposals(
     delta_progress, delta_tension = _story_deltas_for_freeform(action_proposal, envelope)
     event = Event(
         type="freeform_roleplay",
-        message_key=_format_character_reply_line(next_state, dialog_proposal),
+        message_key=_format_character_reply_line(next_state, dialog_proposal, action_proposal),
         entities=tuple(action_proposal["targets"]),
         tags=("dialog", "freeform"),
         delta_progress=delta_progress,
