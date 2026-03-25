@@ -546,6 +546,51 @@ def _freeform_unavailable_lines(detail: str = "") -> list[str]:
     return [line]
 
 
+_PARROTING_STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "to",
+    "for",
+    "of",
+    "in",
+    "on",
+    "at",
+    "is",
+    "are",
+    "was",
+    "were",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "would",
+    "should",
+    "about",
+    "which",
+    "who",
+    "what",
+    "when",
+    "where",
+    "why",
+    "how",
+    "tell",
+    "say",
+    "speak",
+    "talk",
+    "summarize",
+    "explain",
+    "me",
+    "you",
+    "your",
+}
+_CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
+_GARMENT_TOKEN_PATTERN = re.compile(r"\b(blouse|skirt|dress|gown|robe|uniform|coat|jacket|shirt|pants|trousers|jeans|boots|hat)\b")
+
+
 def _normalized_dialogue_text(value: str) -> str:
     return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
 
@@ -554,7 +599,10 @@ def _is_conversational_freeform_request(raw_input: str, fallback_action: Action)
     lowered = raw_input.strip().lower()
     if fallback_action.kind == ActionKind.TALK:
         return True
-    return bool(re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|summarize|explain)\b", lowered) or "," in lowered)
+    return bool(
+        re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|which|summarize|explain)\b", lowered)
+        or "," in lowered
+    )
 
 
 def _is_parroting_dialogue(raw_input: str, dialog_payload: dict[str, Any]) -> bool:
@@ -570,11 +618,16 @@ def _is_parroting_dialogue(raw_input: str, dialog_payload: dict[str, Any]) -> bo
         return False
     if "you asked me" in normalized_text or "you told me" in normalized_text:
         return True
-    input_tokens = tuple(token for token in normalized_input.split() if len(token) >= 3)
-    if not input_tokens:
+    if normalized_text == normalized_input or normalized_text.startswith(normalized_input):
+        return True
+    input_tokens = tuple(
+        token for token in normalized_input.split() if len(token) >= 3 and token not in _PARROTING_STOPWORDS
+    )
+    if len(input_tokens) < 3:
         return False
     overlap = sum(1 for token in input_tokens if token in normalized_text)
-    return overlap / len(input_tokens) >= 0.75
+    text_token_count = len(normalized_text.split())
+    return overlap / len(input_tokens) >= 0.85 and text_token_count <= len(input_tokens) + 4
 
 
 def _targeted_conversation_requires_npc_reply(
@@ -606,6 +659,29 @@ def _is_invalid_targeted_dialogue_speaker(
     return bool(primary_target and speaker != primary_target)
 
 
+def _dialogue_contains_code_artifact(dialog_payload: dict[str, Any]) -> bool:
+    text = str(dialog_payload.get("text", "")).strip()
+    if not text:
+        return False
+    return _CODE_ARTIFACT_TOKEN_PATTERN.search(text) is not None
+
+
+def _dialogue_fact_conflict(state: GameState, speaker: str, text: str, topic: str) -> str:
+    if topic.strip().lower() != "appearance":
+        return ""
+    normalized_speaker = normalize_tag(speaker)
+    if normalized_speaker not in state.world.npcs:
+        return ""
+    canonical_appearance = str(state.world.npcs[normalized_speaker].appearance).strip().lower()
+    if not canonical_appearance:
+        return ""
+    canonical_garments = set(_GARMENT_TOKEN_PATTERN.findall(canonical_appearance))
+    mentioned_garments = set(_GARMENT_TOKEN_PATTERN.findall(text.lower()))
+    if canonical_garments and mentioned_garments and not mentioned_garments.issubset(canonical_garments):
+        return "NPC dialogue conflicts with fact-backed appearance details."
+    return ""
+
+
 def _freeform_dialogue_policy_error(
     state: GameState,
     raw_input: str,
@@ -634,7 +710,7 @@ def _freeform_dialogue_policy_error(
         return "Conversational NPC dialogue must stay in-world and must not leak code or implementation artifacts."
     speaker = str(planner_dialog_payload.get("speaker", "")).strip()
     topic = str(arguments.get("topic", "")).strip() if isinstance(arguments, dict) else ""
-    fact_conflict = dialogue_fact_conflict(state, speaker, str(planner_dialog_payload.get("text", "")), topic)
+    fact_conflict = _dialogue_fact_conflict(state, speaker, str(planner_dialog_payload.get("text", "")), topic)
     if fact_conflict:
         return fact_conflict
     return ""

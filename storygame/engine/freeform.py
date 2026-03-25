@@ -1070,67 +1070,10 @@ def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     return fact_ops
 
 
-def _semantic_actions_for_freeform(
-    state: GameState,
-    action_proposal: dict[str, Any],
-    envelope: dict[str, Any],
-) -> tuple[dict[str, Any], ...]:
-    intent = str(action_proposal["intent"]).strip().lower()
-    targets = tuple(str(target) for target in action_proposal["targets"])
-    if "POLICY_TARGET_NOT_PRESENT" in tuple(str(reason) for reason in envelope["reasons"]):
-        return ()
-
-    if intent == "read_case_file":
-        return (
-            {
-                "action_id": "freeform-read-case-file",
-                "action_type": "inspect_item",
-                "actor_id": "player",
-                "target_id": "",
-                "item_id": "case_file",
-                "location_id": player_location(state),
-            },
-        )
-    if intent == "read_ledger_page":
-        return (
-            {
-                "action_id": "freeform-read-ledger-page",
-                "action_type": "inspect_item",
-                "actor_id": "player",
-                "target_id": "",
-                "item_id": "ledger_page",
-                "location_id": player_location(state),
-            },
-        )
-    if intent in _ALLOWED_INTENTS and targets:
-        return (
-            {
-                "action_id": f"freeform-{intent}",
-                "action_type": intent,
-                "actor_id": "player",
-                "target_id": targets[0],
-                "item_id": "",
-                "location_id": player_location(state),
-            },
-        )
-    if intent:
-        return (
-            {
-                "action_id": f"freeform-{intent}",
-                "action_type": intent,
-                "actor_id": "player",
-                "target_id": targets[0] if targets else "",
-                "item_id": "",
-                "location_id": player_location(state),
-            },
-        )
-    return ()
-
-
 def _format_character_reply_line(
     state: GameState,
     dialog_proposal: dict[str, Any],
-    action_proposal: dict[str, Any],
+    action_proposal: dict[str, Any] | None = None,
 ) -> str:
     speaker_id = str(dialog_proposal.get("speaker", "")).strip()
     text = " ".join(str(dialog_proposal.get("text", "")).split()).strip()
@@ -1139,14 +1082,21 @@ def _format_character_reply_line(
     normalized_speaker = _normalized_dialog_speaker_id(state, speaker_id, action_proposal)
     if normalized_speaker in {"", "narrator"}:
         return text
-    if normalized_speaker == "player":
-        return f'{_player_speaker_name(state)} says: "{text.strip(" \"\'")}"'
+    if _normalize_target(speaker_id) in {"ai_assistant", "assistant"} and action_proposal is not None:
+        targets = action_proposal.get("targets", ())
+        if isinstance(targets, (list, tuple)):
+            for target in targets:
+                candidate = _normalize_target(str(target))
+                if candidate in state.world.npcs:
+                    speaker_id = candidate
+                    break
 
-    npc = state.world.npcs.get(normalized_speaker)
-    speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
-    double_quoted = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
-    if text.startswith('"') and text.endswith('"') and len(text) >= 2:
-        spoken = text[1:-1].strip()
+    npc = state.world.npcs.get(speaker_id)
+    speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
+    quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
+    if '"' in text:
+        double_quoted = re.search(r'"([^"]+)"', text)
+        spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")
     elif " says, '" in text and text.endswith("'"):
         spoken = text.split(" says, '", 1)[1][:-1].strip()
     elif text.startswith("'") and text.endswith("'") and len(text) >= 2 and " " in text[1:-1]:

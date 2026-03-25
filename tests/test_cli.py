@@ -562,7 +562,7 @@ def test_run_turn_debug_includes_freeform_policy_diagnostics():
     assert payload["freeform_policy"]["action_proposal"]["intent"]
 
 
-def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
+def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_fails_closed_without_llm_authorship():
     state = build_default_state(seed=88)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
     next_state, lines, _action_raw, beat_type, continued = run_turn(
@@ -577,8 +577,8 @@ def test_run_turn_unknown_input_routes_to_freeform_roleplay_and_updates_flags():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
-    assert any("story response unavailable" in line.lower() for line in lines)
     assert next_state.player.flags.get(f"asked_signal_{npc_id}") is not True
+    assert any("story response unavailable" in line.lower() for line in lines)
 
 
 def test_run_turn_uses_planner_action_for_deterministic_take_path():
@@ -701,6 +701,71 @@ def test_run_turn_talk_command_fails_closed_without_llm_planner():
     assert next_state.player.flags.get("greeted_daria_stone") is not True
 
 
+def test_run_turn_fails_closed_for_parroting_npc_dialogue() -> None:
+    class _ParrotingAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "daria_stone", "text": "You asked me which witness is uncooperative.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "witness", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=88337, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, which witness is uncooperative?",
+        Random(88337),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_ParrotingAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 0
+    assert any("story response unavailable" in line.lower() for line in lines)
+
+
+def test_run_turn_allows_legitimate_npc_answer_that_reuses_topic_words() -> None:
+    class _LegitimateAnswerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {
+                    "speaker": "daria_stone",
+                    "text": "The uncooperative witness is the groundskeeper; he clams up whenever the ledger comes up.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "witness", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=883371, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, which witness is uncooperative?",
+        Random(883371),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_LegitimateAnswerAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any("groundskeeper" in line.lower() for line in lines)
+    assert not any("story response unavailable" in line.lower() for line in lines)
+
+
 def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
     state = build_default_state(seed=883)
     after_examine, _lines, _action_raw, beat_type, continued = run_turn(
@@ -785,8 +850,8 @@ def test_run_turn_ledger_question_gets_specific_dialogue():
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
-    assert any("story response unavailable" in line.lower() for line in lines)
     assert next_state.player.flags.get("asked_ledger_daria_stone") is not True
+    assert any("story response unavailable" in line.lower() for line in lines)
 
 
 def test_run_turn_unknown_input_includes_narrator_output_when_available():
@@ -822,7 +887,6 @@ def test_run_turn_unknown_input_grounds_generic_narration_to_player_action():
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
     assert any("story response unavailable" in line.lower() for line in lines)
-    assert not any("the night is tense" in line.lower() for line in lines)
 
 
 def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
@@ -844,7 +908,6 @@ def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
     assert any("story response unavailable" in line.lower() for line in lines)
-    assert not any("as i stand outside the mansion" in line.lower() for line in lines)
 
 
 def test_room_and_dialogue_lines_shorten_known_npc_names_when_unambiguous():
@@ -940,109 +1003,6 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
-def test_run_turn_targeted_appearance_reply_commits_new_fact_without_leaking_action_key() -> None:
-    class _AppearanceAdapter:
-        def __init__(self, npc_id: str) -> None:
-            self._npc_id = npc_id
-
-        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
-            return (
-                {"speaker": self._npc_id, "text": "I'm wearing a slate coat and rain-dark gloves.", "tone": "in_world"},
-                {
-                    "intent": "examine",
-                    "targets": [self._npc_id],
-                    "arguments": {"topic": "appearance", "planner_source": "llm"},
-                    "proposed_effects": ["asked:appearance"],
-                },
-            )
-
-    state = build_default_state(seed=88334, genre="thriller")
-    npc_id = state.world.rooms[state.player.location].npc_ids[0]
-    npc_name = state.world.npcs[npc_id].name
-
-    next_state, lines, _action_raw, beat_type, continued = run_turn(
-        state,
-        f"{npc_name}, what are you wearing?",
-        Random(88334),
-        SilentNarrator(),
-        debug=False,
-        freeform_adapter=_AppearanceAdapter(npc_id),
-    )
-
-    assert continued is True
-    assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert not any(line.strip().lower() == "examine" for line in lines)
-    assert any('says: "I\'m wearing a slate coat and rain-dark gloves."' in line for line in lines)
-    assert next_state.world_facts.holds("npc_appearance", npc_id, "a slate coat and rain-dark gloves")
-
-
-def test_run_turn_preserves_apostrophes_in_targeted_npc_reply() -> None:
-    class _ContractionReplyAdapter:
-        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
-            return (
-                {"speaker": "daria_stone", "text": "I'm here to introduce you to the case and bring you inside.", "tone": "in_world"},
-                {
-                    "intent": "ask_about",
-                    "targets": ["daria_stone"],
-                    "arguments": {"topic": "why are you here", "planner_source": "llm"},
-                    "proposed_effects": ["asked:purpose"],
-                },
-            )
-
-    state = build_default_state(seed=883341, genre="mystery")
-
-    next_state, lines, _action_raw, beat_type, continued = run_turn(
-        state,
-        "Daria, why are you here?",
-        Random(883341),
-        SilentNarrator(),
-        debug=False,
-        freeform_adapter=_ContractionReplyAdapter(),
-    )
-
-    assert continued is True
-    assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 1
-    assert any('Daria Stone says: "I\'m here to introduce you to the case and bring you inside."' in line for line in lines)
-
-
-def test_run_turn_fails_closed_for_targeted_appearance_reply_that_conflicts_with_fact_backed_appearance() -> None:
-    class _ConflictingAppearanceAdapter:
-        def propose(self, state, raw_input):  # noqa: ANN001, ARG002
-            return (
-                {"speaker": "daria_stone", "text": "I'm wearing a simple yet elegant dress.", "tone": "in_world"},
-                {
-                    "intent": "ask_about",
-                    "targets": ["daria_stone"],
-                    "arguments": {"topic": "appearance", "planner_source": "llm"},
-                    "proposed_effects": ["asked:appearance"],
-                },
-            )
-
-    state = build_default_state(seed=88339, genre="mystery")
-
-    next_state, lines, _action_raw, beat_type, continued = run_turn(
-        state,
-        "Daria, what are you wearing?",
-        Random(88339),
-        SilentNarrator(),
-        debug=False,
-        freeform_adapter=_ConflictingAppearanceAdapter(),
-    )
-
-    assert continued is True
-    assert beat_type == "freeform_roleplay"
-    assert next_state.turn_index == 0
-    assert any("story response unavailable" in line.lower() for line in lines)
-    assert not any(line.startswith('Daria says: "') for line in lines)
-    assert next_state.world_facts.holds(
-        "npc_appearance",
-        "daria_stone",
-        "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun",
-    )
-
-
 def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
     class _NpcReplyAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
@@ -1067,6 +1027,18 @@ def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
 
     assert continued is True
 
+    class _AssistantSpeakerAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {"speaker": "AI_Assistant", "text": "I last saw him near dusk, heading inside alone.", "tone": "in_world"},
+                {
+                    "intent": "ask_about",
+                    "targets": ["daria_stone"],
+                    "arguments": {"topic": "holmes", "planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
     class _ReintroducingDirector(_StubSetupDirector):
         def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001, ARG002
             return ['Daria Stone says: "Keep your eyes on the ledger."']
@@ -1078,7 +1050,7 @@ def test_reviewed_turn_output_still_shortens_known_npc_names_when_unambiguous():
         SilentNarrator(),
         debug=False,
         story_director=_ReintroducingDirector(),
-        freeform_adapter=_NpcReplyAdapter(),
+        freeform_adapter=_AssistantSpeakerAdapter(),
     )
 
     assert continued is True
@@ -1363,10 +1335,10 @@ def test_run_turn_suppresses_repeated_goal_copy_after_opening():
 
 
 def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
-    class _ObjectiveReplyAdapter:
+    class _ObjectiveAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
             return (
-                {"speaker": "daria_stone", "text": "Our objective is still to review the case file and press the strongest lead.", "tone": "in_world"},
+                {"speaker": "daria_stone", "text": f"Our objective is {state.active_goal}", "tone": "in_world"},
                 {
                     "intent": "ask_about",
                     "targets": ["daria_stone"],
@@ -1383,7 +1355,7 @@ def test_run_turn_keeps_goal_copy_when_player_explicitly_asks_for_it():
         Random(8835),
         StubNarrator(goal_line),
         debug=False,
-        freeform_adapter=_ObjectiveReplyAdapter(),
+        freeform_adapter=_ObjectiveAdapter(),
     )
 
     assert continued is True

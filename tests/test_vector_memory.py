@@ -64,11 +64,11 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
     class _NpcReplyAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
             return (
-                {"speaker": npc_id, "text": "Keep your eyes open. Something here still doesn't add up.", "tone": "in_world"},
+                {"speaker": npc_id, "text": "Keep the ledger in mind. It changes who had time to move.", "tone": "in_world"},
                 {
-                    "intent": "greet",
+                    "intent": "ask_about",
                     "targets": [npc_id],
-                    "arguments": {"planner_source": "llm"},
+                    "arguments": {"topic": "ledger", "planner_source": "llm"},
                     "proposed_effects": [],
                 },
             )
