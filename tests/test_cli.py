@@ -12,8 +12,13 @@ from storygame.cli import (
     _build_memory_tag_set,
     _build_narrator,
     _cached_room_presentation,
+    _dialogue_contains_code_artifact,
+    _dialogue_fact_conflict,
     _emit_cli_line,
     _event_lines,
+    _freeform_dialogue_policy_error,
+    _is_invalid_targeted_dialogue_speaker,
+    _is_parroting_dialogue,
     _room_lines,
     _setup_phase_lines,
     _shorten_line,
@@ -151,6 +156,76 @@ def test_shorten_line_prefers_complete_clause_over_ellipsis() -> None:
 
 def test_shorten_line_returns_short_text_unchanged() -> None:
     assert _shorten_line("A complete sentence.", 80) == "A complete sentence."
+
+
+def test_dialogue_policy_helpers_reject_wrong_speaker_and_code_artifacts() -> None:
+    state = build_default_state(seed=1201, genre="mystery")
+    state.player.location = "foyer"
+    state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
+
+    assert _is_invalid_targeted_dialogue_speaker(
+        {"speaker": "daria_stone", "text": "The victim died before midnight.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["olivia_thompson"], "arguments": {}, "proposed_effects": []},
+    )
+    assert _dialogue_contains_code_artifact(
+        {"speaker": "daria_stone", "text": "getStringExtra from the case file is not available yet.", "tone": "in_world"}
+    )
+
+
+def test_dialogue_policy_helpers_distinguish_parroting_from_legitimate_answer() -> None:
+    state = build_default_state(seed=1202, genre="mystery")
+
+    assert _is_parroting_dialogue(
+        "Daria, which witness is uncooperative?",
+        {"speaker": "daria_stone", "text": "You asked me which witness is uncooperative.", "tone": "in_world"},
+    )
+    assert not _is_parroting_dialogue(
+        "Daria, which witness is uncooperative?",
+        {
+            "speaker": "daria_stone",
+            "text": "The uncooperative witness is the groundskeeper; he clams up whenever the ledger comes up.",
+            "tone": "in_world",
+        },
+    )
+    assert _dialogue_fact_conflict(state, "daria_stone", "I'm wearing a simple dress.", "appearance")
+    assert not _dialogue_fact_conflict(state, "daria_stone", "A crisp blouse and dark skirt.", "appearance")
+
+
+def test_freeform_dialogue_policy_error_covers_fallback_and_valid_llm_dialogue() -> None:
+    state = build_default_state(seed=1203, genre="mystery")
+    fallback_action = parse_command("Daria, tell me what happened here")
+
+    fallback_error = _freeform_dialogue_policy_error(
+        state,
+        "Daria, tell me what happened here",
+        fallback_action,
+        {"speaker": "narrator", "text": "You ask Daria what happened here.", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "events", "planner_source": "fallback"},
+            "proposed_effects": [],
+        },
+    )
+    valid_error = _freeform_dialogue_policy_error(
+        state,
+        "Daria, which witness is uncooperative?",
+        parse_command("Daria, which witness is uncooperative?"),
+        {
+            "speaker": "daria_stone",
+            "text": "The uncooperative witness is the groundskeeper; he clams up whenever the ledger comes up.",
+            "tone": "in_world",
+        },
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "witness", "planner_source": "llm"},
+            "proposed_effects": [],
+        },
+    )
+
+    assert "LLM-authored" in fallback_error
+    assert valid_error == ""
 
 
 def test_shorten_line_falls_back_to_word_boundary_with_period() -> None:

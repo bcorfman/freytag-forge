@@ -1059,6 +1059,48 @@ def _envelope_with_story_deltas(action_proposal: dict[str, Any], envelope: dict[
     }
 
 
+def _semantic_actions_for_freeform(
+    state: GameState,
+    action_proposal: dict[str, Any],
+    envelope: dict[str, Any],
+) -> tuple[dict[str, Any], ...]:
+    del envelope
+    intent = str(action_proposal.get("intent", "")).strip().lower()
+    targets = tuple(str(target) for target in action_proposal.get("targets", ()) if str(target).strip())
+    room_id = state.player.location
+
+    if intent == "move" and targets:
+        direction = targets[0]
+        destination = state.world.rooms[room_id].exits.get(direction, "")
+        if destination:
+            return (
+                {
+                    "action_id": f"freeform-move-{state.turn_index + 1}",
+                    "action_type": "move_to",
+                    "actor_id": "player",
+                    "target_id": "",
+                    "item_id": "",
+                    "location_id": destination,
+                },
+            )
+
+    if intent in {"take", "get", "grab"} and targets:
+        item_id = targets[0]
+        if item_id in state.world.rooms[room_id].item_ids:
+            return (
+                {
+                    "action_id": f"freeform-take-{state.turn_index + 1}",
+                    "action_type": "take_item",
+                    "actor_id": "player",
+                    "target_id": "",
+                    "item_id": item_id,
+                    "location_id": room_id,
+                },
+            )
+
+    return ()
+
+
 def _envelope_to_fact_ops(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     fact_ops: list[dict[str, Any]] = []
     for mutation in envelope["assert"]:
@@ -1082,20 +1124,22 @@ def _format_character_reply_line(
     normalized_speaker = _normalized_dialog_speaker_id(state, speaker_id, action_proposal)
     if normalized_speaker in {"", "narrator"}:
         return text
+    if normalized_speaker == "player":
+        return text
     if _normalize_target(speaker_id) in {"ai_assistant", "assistant"} and action_proposal is not None:
         targets = action_proposal.get("targets", ())
         if isinstance(targets, (list, tuple)):
             for target in targets:
                 candidate = _normalize_target(str(target))
                 if candidate in state.world.npcs:
-                    speaker_id = candidate
+                    normalized_speaker = candidate
                     break
 
-    npc = state.world.npcs.get(speaker_id)
-    speaker_name = npc.name if npc is not None else speaker_id.replace("_", " ").title()
-    quoted_match = _QUOTED_DIALOGUE_PATTERN.search(text)
+    npc = state.world.npcs.get(normalized_speaker)
+    speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
+    quoted_match = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
+    double_quoted = re.search(r'"([^"]+)"', text)
     if '"' in text:
-        double_quoted = re.search(r'"([^"]+)"', text)
         spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")
     elif " says, '" in text and text.endswith("'"):
         spoken = text.split(" says, '", 1)[1][:-1].strip()
