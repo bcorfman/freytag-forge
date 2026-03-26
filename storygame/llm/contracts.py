@@ -447,7 +447,7 @@ def parse_turn_proposal(payload: dict[str, Any]) -> TurnProposal:
         model = _TurnProposalModel.model_validate(payload)
     except ValidationError as exc:
         raise _build_validation_error("CONTRACT_INVALID_TURN_PROPOSAL", "TurnProposal", exc) from exc
-    return cast(TurnProposal, model.model_dump(mode="python", by_alias=True))
+    return cast(TurnProposal, model.model_dump(mode="python"))
 
 
 def narration_to_agent_proposal(agent_id: str, narration: str) -> AgentProposal:

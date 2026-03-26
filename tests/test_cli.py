@@ -17,22 +17,28 @@ from storygame.cli import (
     _emit_cli_line,
     _event_lines,
     _freeform_dialogue_policy_error,
+    _high_impact_warning_lines,
     _is_invalid_targeted_dialogue_speaker,
     _is_parroting_dialogue,
+    _record_major_disruption,
     _room_lines,
     _setup_phase_lines,
     _shorten_line,
+    _should_discard_failed_narration,
     _write_transcript_line,
     main,
     run_replay,
     run_turn,
 )
+from storygame.engine.impact import assess_player_command
 from storygame.engine.events import EventTemplate, apply_event_template
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Npc, Room
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
+from storygame.llm.coherence import CoherenceTelemetry
+from storygame.llm.contracts import JudgeDecision
 from storygame.llm.context import build_narration_context
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.persistence.story_state import STORY_STATE_FILE, load_story_state_payload
@@ -1475,6 +1481,42 @@ def test_run_turn_blocks_high_impact_action_until_player_confirms() -> None:
     assert next_state.pending_high_impact_command == "punch police officer"
     assert "impact_class" in next_state.pending_high_impact_assessment
     assert any("type proceed" in line.lower() for line in lines)
+
+
+def test_high_impact_helpers_accept_typed_assessment_contract() -> None:
+    state = build_default_state(seed=961)
+    assessment = assess_player_command(state, "punch police officer", parse_command("punch police officer"))
+
+    lines = _high_impact_warning_lines(assessment)
+    _record_major_disruption(state, [], "punch police officer", assessment)
+
+    assert any("goal-breaking action detected" in line.lower() for line in lines)
+    assert state.player.flags.get("story_replan_required") is True
+    assert state.world_package["story_replan_context"]["command"] == "punch police officer"
+
+
+def test_should_discard_failed_narration_accepts_typed_gate_contracts() -> None:
+    judge_decision: JudgeDecision = {
+        "decision_id": "judge-timeout",
+        "status": "failed",
+        "round_index": 1,
+        "threshold": 80,
+        "total_score": 0,
+        "rubric_components": {"continuity": 0, "causality": 0, "dialogue_fit": 0},
+        "critical_floors": {"continuity": 70, "causality": 70},
+        "critic_ids": (),
+        "critic_reports": (),
+        "judge": "coherence_gate",
+        "rationale": "Timed out before an acceptable narration was produced.",
+    }
+    telemetry: CoherenceTelemetry = {
+        "critique_rounds": 0,
+        "token_spend": {"narrator": 0, "critics": 0},
+        "elapsed_ms": 1500,
+        "hard_fail_reason": "BUDGET_WALL_CLOCK_TIMEOUT",
+    }
+
+    assert _should_discard_failed_narration(judge_decision, telemetry) is True
 
 
 def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None:

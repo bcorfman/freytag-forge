@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from storygame.engine.facts import active_story_goal, discovered_leads
+from storygame.engine.facts import active_story_goal, case_facts, discovered_leads, hidden_story_threads, planned_story_events
 from storygame.engine.state import GameState, Item, Npc, Room
 
 ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence", "vehicle"}
@@ -56,6 +56,13 @@ def caseboard_lines(state: GameState) -> tuple[str, ...]:
         f"Current objective: {active_story_goal(state)}",
         f"Progress is {state.progress:.2f} with tension {state.tension:.2f}.",
     ]
+    case_entries = {entry["key"]: entry["value"] for entry in case_facts(state)}
+    if case_entries.get("victim_identity"):
+        known_facts.append(f"Victim: {case_entries['victim_identity']}")
+    elif case_entries.get("victim_name"):
+        known_facts.append(f"Victim: {case_entries['victim_name']}.")
+    if case_entries.get("victim_timeline"):
+        known_facts.append(case_entries["victim_timeline"])
     if state.beat_history:
         known_facts.append(f"Latest beat: {state.beat_history[-1]}.")
 
@@ -65,6 +72,16 @@ def caseboard_lines(state: GameState) -> tuple[str, ...]:
     ]
 
     leads = [entry["text"] for entry in discovered_leads(state)]
+    if case_entries.get("strongest_lead"):
+        leads.insert(0, case_entries["strongest_lead"])
+    planned_events = planned_story_events(state)
+    if planned_events:
+        leads.append(str(planned_events[0]["summary"]))
+    hidden_threads = list(hidden_story_threads(state))
+    if hidden_threads:
+        leads.append(hidden_threads[0])
+    if case_entries.get("lead_suspect"):
+        leads.append(case_entries["lead_suspect"])
     room = state.world.rooms[state.player.location]
     if not leads and room.item_ids:
         leads.append(f"Inspect available items in {room.name}.")

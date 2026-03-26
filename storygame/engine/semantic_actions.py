@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 from storygame.engine.facts import player_location, room_items
 from storygame.engine.state import Event, GameState
 
+if TYPE_CHECKING:
+    from storygame.llm.contracts import SemanticActionProposal
 
-def commit_semantic_action(state: GameState, action: dict[str, Any]) -> Event:
+
+def commit_semantic_action(state: GameState, action: SemanticActionProposal) -> Event:
     action_type = str(action["action_type"]).strip()
-    actor_id = str(action.get("actor_id", "")).strip() or "player"
-    target_id = str(action.get("target_id", "")).strip()
-    item_id = str(action.get("item_id", "")).strip()
-    location_id = str(action.get("location_id", "")).strip()
+    actor_id = str(action["actor_id"]).strip() or "player"
+    target_id = str(action["target_id"]).strip()
+    item_id = str(action["item_id"]).strip()
+    location_id = str(action["location_id"]).strip()
 
     if action_type == "take_item":
         room_id = location_id or player_location(state)
@@ -26,7 +29,7 @@ def commit_semantic_action(state: GameState, action: dict[str, Any]) -> Event:
             tags=("semantic_action", action_type),
             turn_index=state.turn_index,
             metadata={
-                "action_id": str(action.get("action_id", "")).strip(),
+                "action_id": str(action["action_id"]).strip(),
                 "action_type": action_type,
                 "actor_id": actor_id,
                 "target_id": target_id,
@@ -51,7 +54,7 @@ def commit_semantic_action(state: GameState, action: dict[str, Any]) -> Event:
             tags=("semantic_action", action_type),
             turn_index=state.turn_index,
             metadata={
-                "action_id": str(action.get("action_id", "")).strip(),
+                "action_id": str(action["action_id"]).strip(),
                 "action_type": action_type,
                 "actor_id": actor_id,
                 "target_id": target_id,
@@ -68,7 +71,7 @@ def commit_semantic_action(state: GameState, action: dict[str, Any]) -> Event:
         tags=("semantic_action", action_type),
         turn_index=state.turn_index,
         metadata={
-            "action_id": str(action.get("action_id", "")).strip(),
+            "action_id": str(action["action_id"]).strip(),
             "action_type": action_type,
             "actor_id": actor_id,
             "target_id": target_id,

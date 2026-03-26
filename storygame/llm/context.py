@@ -6,6 +6,7 @@ from storygame.engine.facts import (
     active_story_goal,
     assistant_name,
     assistant_role,
+    case_facts,
     item_driver,
     item_owner,
     item_state,
@@ -70,6 +71,7 @@ class NarrationContext:
     prefer_npc_reply: bool = False
     item_facts: tuple[dict, ...] = ()
     scene_facts: tuple[str, ...] = ()
+    case_facts: tuple[dict, ...] = ()
 
     def as_dict(self) -> dict:
         return {
@@ -101,6 +103,7 @@ class NarrationContext:
             "addressed_npc_name": self.addressed_npc_name,
             "prefer_npc_reply": self.prefer_npc_reply,
             "scene_facts": list(self.scene_facts),
+            "case_facts": list(self.case_facts),
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -359,4 +362,5 @@ def build_narration_context(
         addressed_npc_name=str(freeform_focus.get("addressed_npc_name", "")),
         prefer_npc_reply=bool(freeform_focus.get("prefer_npc_reply", False)),
         scene_facts=scene_facts,
+        case_facts=case_facts(state),
     )

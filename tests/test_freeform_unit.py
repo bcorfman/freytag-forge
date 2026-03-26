@@ -453,10 +453,14 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     adapter = RuleBasedFreeformProposalAdapter()
 
     resolved = resolve_freeform_roleplay(state, "read the case file", adapter)
+    case_facts = {fact[1]: fact[2] for fact in resolved["state"].world_facts.query("case_fact", None, None)}
 
     assert resolved["state"].player.flags.get("reviewed_case_file") is True
     assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
     assert resolved["event"].delta_progress > 0.0
+    assert case_facts["victim_name"] in resolved["dialog_proposal"]["text"]
+    assert case_facts["victim_timeline"] in resolved["dialog_proposal"]["text"]
+    assert case_facts["strongest_lead"] in resolved["dialog_proposal"]["text"]
     assert not resolved["state"].world_facts.holds(
         "player_context",
         "case_file_status",
@@ -465,7 +469,27 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     assert resolved["state"].world_facts.holds(
         "player_context",
         "case_file_status",
-        "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+        "You have reviewed the case file and can cite the victim, timeline, and strongest documented lead.",
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_victim",
+        f"The case file identifies the victim as {case_facts['victim_name']}.",
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_timeline",
+        case_facts["victim_timeline"],
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_suspect",
+        case_facts["lead_suspect"],
+    )
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_lead",
+        case_facts["strongest_lead"],
     )
 
 
@@ -909,6 +933,10 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     _system, user = _freeform_planner_prompt(state, "Daria, what are you wearing?")
 
     assert '"scene_facts"' in user
+    assert '"case_facts"' in user
+    assert '"victim_name"' in user
+    assert '"victim_timeline"' in user
+    assert '"strongest_lead"' in user
     assert "drove your own sedan" in user
     assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
     assert '"name": "dark sedan"' in user

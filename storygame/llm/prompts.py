@@ -42,6 +42,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         )
         for fact in payload["item_facts"]
     )
+    case_facts_line = "; ".join(f"{fact['key']}={fact['value']}" for fact in payload["case_facts"])
     user = (
         f"Action: {payload['action']}\n"
         f"Beat: {payload['beat']}\n"
@@ -55,6 +56,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Location: {payload['room_name']}\n"
         f"Room description: {payload['room_description']}\n"
         f"Scene facts: {' | '.join(payload['scene_facts'])}\n"
+        f"Canonical case facts: {case_facts_line}\n"
         f"Protagonist: {payload['protagonist_name']}\n"
         f"Protagonist background: {payload['protagonist_background']}\n"
         f"Assistant anchor: {payload['assistant_name']}\n"
