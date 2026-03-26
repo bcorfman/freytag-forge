@@ -5,7 +5,7 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import active_story_goal, player_location, protagonist_profile, room_items, room_npcs
+from storygame.engine.facts import active_story_goal, case_facts, player_location, protagonist_profile, room_items, room_npcs
 from storygame.engine.facts import item_driver, item_owner, item_state, npc_scene_purpose, player_context_facts
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
@@ -557,6 +557,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "goal": active_story_goal(state),
         "turn_index": state.turn_index,
         "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
+        "case_facts": [dict(entry) for entry in case_facts(state)],
         "room": {
             "id": room.id,
             "name": room.name,
@@ -587,9 +588,18 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed or questioned that NPC. "
         "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
         "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
-        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details."
+        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details. "
+        "When answering about the case file, victim, timeline, witness, or suspect, treat case_facts as authoritative and do not invent alternate victim identities, timelines, or suspect claims."
     )
     return system, json.dumps(payload, ensure_ascii=True)
+
+
+def _case_fact_map(state: GameState) -> dict[str, str]:
+    return {
+        str(entry["key"]).strip(): str(entry["value"]).strip()
+        for entry in case_facts(state)
+        if str(entry["key"]).strip() and str(entry["value"]).strip()
+    }
 
 
 def _normalize_intent(intent: str) -> str:
@@ -865,6 +875,10 @@ def _apply_raw_command_overrides(
     lowered = raw_input.strip().lower()
     nearby_case_file_holder = _nearby_holder_for_item(state, "case_file")
     if _CASE_FILE_COMMAND.search(lowered) and ("case_file" in state.player.inventory or nearby_case_file_holder):
+        facts = _case_fact_map(state)
+        victim_name = facts.get("victim_name", "the victim")
+        victim_timeline = facts.get("victim_timeline", "The file pins down the victim timeline.")
+        strongest_lead = facts.get("strongest_lead", "The file points you toward the strongest lead.")
         action = {
             "intent": "read_case_file",
             "targets": ["case_file"],
@@ -873,7 +887,7 @@ def _apply_raw_command_overrides(
         }
         dialog = {
             "speaker": "narrator",
-            "text": "You read the case file and mark a concrete lead for your next question.",
+            "text": f"You read the case file. {victim_name} is the victim. {victim_timeline} {strongest_lead}",
             "tone": "in_world",
         }
         return parse_action_proposal(action), parse_dialog_proposal(dialog)
@@ -910,18 +924,27 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
         nearby_holder = _nearby_holder_for_item(state, "case_file")
         if "case_file" not in state.player.inventory and not nearby_holder:
             return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_CASE_FILE"]}
+        facts = _case_fact_map(state)
+        victim_name = facts.get("victim_name", "the victim")
+        victim_timeline = facts.get("victim_timeline", "The file pins down the victim timeline.")
+        lead_suspect = facts.get("lead_suspect", "The file leaves the lead suspect unresolved.")
+        strongest_lead = facts.get("strongest_lead", "The file points to the strongest documented lead.")
         assert_ops = [
             {"fact": ["flag", "player", "reviewed_case_file"]},
             {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
             {"fact": ["discovered_clue", "case_file"]},
-            {"fact": ["discovered_lead", "case_file", "The case file pins down the victim timeline and highlights the first credible lead."]},
+            {"fact": ["discovered_lead", "case_file", strongest_lead]},
             {
                 "fact": [
                     "player_context",
                     "case_file_status",
-                    "You have reviewed the case file and know the victim timeline plus the first credible lead.",
+                    "You have reviewed the case file and can cite the victim, timeline, and strongest documented lead.",
                 ]
             },
+            {"fact": ["player_context", "case_file_victim", f"The case file identifies the victim as {victim_name}."]},
+            {"fact": ["player_context", "case_file_timeline", victim_timeline]},
+            {"fact": ["player_context", "case_file_suspect", lead_suspect]},
+            {"fact": ["player_context", "case_file_lead", strongest_lead]},
         ]
         if nearby_holder:
             assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})

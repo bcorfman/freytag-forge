@@ -101,6 +101,7 @@ Current runtime generation is package-driven.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Canonical fact mutation goes through a validated commit boundary that normalizes uniqueness-sensitive writes, enforces runtime invariants, and refreshes compatibility projections after commit.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
+- For mystery runtime specifically, crime facts such as victim identity/timeline, suspect status, villain motive/means/opportunity, clue placement, reveal threads, and planned case events must be seeded into and read back from fact-backed state rather than queried from transient package payloads.
 - Scene and dramatic runtime state are now also fact-backed during transition (`current_scene`, `scene_location`, `scene_objective`, `dramatic_question`, `scene_pressure`, `beat_phase`, `beat_role`, `player_approach`, `scene_participant`).
 - `storygame.llm.context.build_narration_context` should read scene/dramatic facts first and treat `progress`/`tension` as compatibility inputs when those facts are absent.
 - `storygame.plot.dramatic_policy` is the compatibility policy layer that derives approach/question/role from parser turns, structured proposals, and freeform conversational turns before beat selection runs.
@@ -143,6 +144,7 @@ Current runtime generation is package-driven.
   - `StateDeltaProposal`
   - `ReplanProposal`
 - Ordinary turn orchestration now treats `TurnProposal` as the shared runtime contract for both LLM-authored freeform turns and parser-normalized deterministic aliases such as movement, take, inventory, and look. Control-plane commands (`save`, `load`, `quit`, `help`) stay outside that contract.
+- CLI orchestration and runtime execution should preserve typed contract boundaries instead of widening accepted `TurnProposal`, `JudgeDecision`, `CoherenceTelemetry`, or `ImpactAssessment` payloads into ad-hoc dicts. When a payload crosses persistence or pending-confirmation storage, normalize it back into the explicit contract at that boundary before reuse.
 - A valid runtime proposal may suggest:
   - dialogue,
   - room-facing narration,
@@ -260,7 +262,10 @@ flowchart LR
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
 - Unknown or weakly-specified intents should still be interpreted through proposal/policy contracts; if the runtime cannot author the turn through that path, it should fail closed instead of inventing deterministic substitute prose.
 - Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
+- Mystery startup should seed canonical case facts (for example victim identity, timeline, strongest lead, and current suspect status) into the fact store so NPC dialogue and narration do not drift between incompatible murders.
+- Reviewing the case file should surface those same canonical case facts back to the player through deterministic fact-backed discoveries and player-context updates, not only a generic acknowledgment line.
 - Story-significant item inspection/acquisition should assert deterministic discovery facts (for example `discovered_clue` and `discovered_lead`) so later narration, caseboard output, and continuity checks can rely on canonical discoveries instead of prose memory alone.
+- Mystery-facing summaries such as the caseboard and suspect-role projection should prefer fact-backed case facts, discovered leads, hidden threads, planned events, and villain facts over room heuristics or stored bootstrap query payloads.
 - NPCs are stateful story actors:
   - their replies should usually be LLM-authored from deterministic context,
   - their knowledge, trust, availability, and goals remain deterministically tracked,

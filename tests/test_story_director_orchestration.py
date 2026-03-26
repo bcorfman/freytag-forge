@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from storygame.engine.state import Event
+from storygame.engine.state import Event, Npc
 from storygame.engine.world import build_default_state
 from storygame.llm.story_director import StoryDirector
 
@@ -182,6 +182,40 @@ def test_story_director_prefers_single_bootstrap_agent_and_persists_bundle_outpu
     assert state.world_facts.holds("story_hidden_thread", "A magistrate paid to bury the first murder.")
     assert state.world_facts.holds("story_reveal_schedule", "0", "0.55")
     assert state.world_facts.holds("planned_event_participant", "warning", "Daria Stone")
+
+
+def test_story_director_applies_villain_identity_from_fact_store_not_story_plan_query():
+    state = build_default_state(seed=702)
+    template = next(iter(state.world.npcs.values()))
+    state.world.npcs["magistrate_voss"] = Npc(
+        id="magistrate_voss",
+        name="Magistrate Voss",
+        description=template.description,
+        dialogue=template.dialogue,
+        identity="local official",
+        appearance=template.appearance,
+        pronouns=template.pronouns,
+        tags=template.tags,
+        delta_progress=template.delta_progress,
+        delta_tension=template.delta_tension,
+        knowledge_source=template.knowledge_source,
+    )
+
+    director = StoryDirector(
+        "mock",
+        output_editor=_StubEditor(),
+        story_bootstrap=_StubBootstrap(),
+        story_bootstrap_critic=_StubBootstrapCritic(),
+        room_presentation=_StubRoomPresentation(),
+    )
+    director.compose_opening(state)
+
+    state.world_package["story_plan"]["villains"] = ()
+    state.world.npcs["magistrate_voss"].identity = "local official"
+
+    director._apply_contacts_to_world(state, [{"name": "Daria Stone", "role": "assistant", "trait": "sharp"}], "Daria Stone")
+
+    assert state.world.npcs["magistrate_voss"].identity == "suspect with motive: Protect the network."
 
 
 def test_story_director_fast_opening_skips_critic_editor_and_remote_room_generation():

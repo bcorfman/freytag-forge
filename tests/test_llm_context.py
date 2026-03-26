@@ -52,6 +52,9 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
         for fact in payload["npc_facts"]
     )
     assert any("have not reviewed the case file yet" in fact.lower() for fact in payload["scene_facts"])
+    assert payload["case_facts"]
+    assert any(fact["key"] == "victim_name" and fact["value"] for fact in payload["case_facts"])
+    assert any(fact["key"] == "victim_timeline" and "midnight" in fact["value"].lower() for fact in payload["case_facts"])
 
 
 def test_prompt_uses_item_labels_not_internal_ids_for_visible_items() -> None:
@@ -88,6 +91,7 @@ def test_prompt_includes_canonical_npc_identity_details():
     context = build_narration_context(state, parse_command("look"), "hook")
     prompt = build_prompt(context)
     assert "Canonical NPC facts:" in prompt["user"]
+    assert "Canonical case facts:" in prompt["user"]
     first_npc = context.npc_facts[0]
     assert f"{first_npc['name']} [{first_npc['pronouns']}]" in prompt["user"]
 

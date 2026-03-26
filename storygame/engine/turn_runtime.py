@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from storygame.engine.facts import apply_fact_ops
 from storygame.engine.scene_state import refresh_scene_state
@@ -9,8 +9,11 @@ from storygame.engine.state import Event, GameState
 from storygame.engine.triggers import evaluate_triggers
 from storygame.plot.dramatic_policy import turn_focus_from_proposal
 
+if TYPE_CHECKING:
+    from storygame.llm.contracts import NpcDialogueProposal, NumericDelta, TurnProposal
 
-def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[dict[str, Any], ...] | list[dict[str, Any]]) -> None:
+
+def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[NumericDelta, ...] | list[NumericDelta]) -> None:
     for entry in numeric_delta:
         key = str(entry["key"]).strip()
         delta = float(entry["delta"])
@@ -23,9 +26,9 @@ def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[dict[str, Any],
         state.fact_metrics[key] = state.fact_metrics.get(key, 0.0) + delta
 
 
-def _format_npc_dialogue_line(state: GameState, npc_dialogue: dict[str, Any]) -> str:
-    speaker_id = str(npc_dialogue.get("speaker_id", "")).strip()
-    text = " ".join(str(npc_dialogue.get("text", "")).split()).strip()
+def _format_npc_dialogue_line(state: GameState, npc_dialogue: NpcDialogueProposal) -> str:
+    speaker_id = str(npc_dialogue["speaker_id"]).strip()
+    text = " ".join(str(npc_dialogue["text"]).split()).strip()
     if not speaker_id or not text:
         return ""
     npc = state.world.npcs.get(speaker_id)
@@ -33,21 +36,18 @@ def _format_npc_dialogue_line(state: GameState, npc_dialogue: dict[str, Any]) ->
     return f'{speaker_name} says: "{text}"'
 
 
-def _dialogue_lines_from_proposal(state: GameState, proposal: dict[str, Any]) -> tuple[str, ...]:
-    line = _format_npc_dialogue_line(state, proposal.get("npc_dialogue", {}))
+def _dialogue_lines_from_proposal(state: GameState, proposal: TurnProposal) -> tuple[str, ...]:
+    line = _format_npc_dialogue_line(state, proposal["npc_dialogue"])
     if not line:
         return ()
     return (line,)
 
 
-def _proposal_intent_summary(proposal: dict[str, Any]) -> str:
-    player_intent = proposal.get("player_intent", {})
-    if isinstance(player_intent, dict):
-        return str(player_intent.get("summary", "")).strip()
-    return ""
+def _proposal_intent_summary(proposal: TurnProposal) -> str:
+    return str(proposal["player_intent"]["summary"]).strip()
 
 
-def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> dict[str, Any]:  # noqa: ARG001
+def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict[str, Any]:  # noqa: ARG001
     next_state = state.clone()
     next_state.turn_index += 1
 
@@ -62,11 +62,11 @@ def execute_turn_proposal(state: GameState, proposal: dict[str, Any], rng) -> di
         next_state.append_event(event)
 
     state_delta = proposal["state_delta"]
-    explicit_ops = [{"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert"]]
-    explicit_ops.extend({"op": "retract", "fact": entry["fact"]} for entry in state_delta["retract"])
+    explicit_ops = [{"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert_ops"]]
+    explicit_ops.extend({"op": "retract", "fact": entry["fact"]} for entry in state_delta["retract_ops"])
     if explicit_ops:
         apply_fact_ops(next_state, explicit_ops)
-    _apply_numeric_deltas(next_state, state_delta["numeric_delta"])
+    _apply_numeric_deltas(next_state, list(state_delta["numeric_delta"]))
 
     trigger_specs = tuple(next_state.world_package.get("trigger_specs", ()))
     triggered_events = evaluate_triggers(next_state, trigger_specs, tuple(action_events))

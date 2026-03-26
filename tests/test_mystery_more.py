@@ -44,7 +44,8 @@ def test_caseboard_lines_fallback_lead_when_no_items_or_npcs() -> None:
 
     lines = caseboard_lines(state)
     joined = "\n".join(lines).lower()
-    assert "explore adjacent rooms" in joined
+    assert "emma vale" in joined
+    assert "missing ledger payment" in joined
     assert "latest beat" not in joined
 
 
@@ -59,3 +60,18 @@ def test_caseboard_lines_prefer_fact_backed_goal_and_discovered_leads() -> None:
 
     assert "Review the route key and press Daria for the next lead." in joined
     assert "The route key opens the hidden service passage." in joined
+
+
+def test_caseboard_lines_surface_fact_backed_case_threads_and_events() -> None:
+    state = build_default_state(seed=616, genre="mystery")
+    state.world_facts.assert_fact("story_hidden_thread", "The magistrate buried an earlier murder tied to Emma Vale.")
+    state.world_facts.assert_fact("planned_event", "warning", "A warning reaches the foyer.", "2", "foyer")
+    state.world_facts.assert_fact("planned_event_participant", "warning", "Daria Stone")
+
+    lines = caseboard_lines(state)
+    joined = "\n".join(lines)
+
+    assert "Emma Vale" in joined
+    assert "missing ledger payment" in joined
+    assert "magistrate buried an earlier murder" in joined
+    assert "A warning reaches the foyer." in joined

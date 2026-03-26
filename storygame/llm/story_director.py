@@ -9,6 +9,7 @@ from storygame.engine.facts import (
     apply_fact_ops,
     replace_fact_group,
     set_active_story_goal,
+    villain_profiles,
 )
 from storygame.engine.state import Event, GameState
 from storygame.llm.opening_coherence import (
@@ -329,8 +330,8 @@ class StoryDirector:
     def _apply_contacts_to_world(self, state: GameState, contacts: list[dict[str, object]], assistant_name: str) -> None:
         villains = {
             str(entry.get("name", "")).strip().lower(): dict(entry)
-            for entry in state.world_package.get("story_plan", {}).get("villains", ())
-            if isinstance(entry, dict)
+            for entry in villain_profiles(state)
+            if str(entry.get("name", "")).strip()
         }
         contact_map = {
             str(contact.get("name", "")).strip().lower(): dict(contact)

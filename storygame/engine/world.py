@@ -279,6 +279,29 @@ def _seed_default_mystery_opening(rooms: dict[str, Room]) -> dict[str, str]:
     return seeded_holding
 
 
+def _default_mystery_case_facts() -> tuple[tuple[str, str], ...]:
+    return (
+        ("victim_name", "Emma Vale"),
+        ("victim_identity", "Emma Vale, a young patron of the house with ties to the household accounts."),
+        (
+            "victim_timeline",
+            "Emma Vale was last seen entering the east wing shortly before midnight and was found dead in the east wing study shortly after midnight.",
+        ),
+        (
+            "lead_suspect",
+            "The file names no confirmed lead suspect yet; suspicion centers on whoever erased the missing ledger payment.",
+        ),
+        (
+            "strongest_lead",
+            "The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.",
+        ),
+        (
+            "last_verified_witness",
+            "The groundskeeper is the last verified witness to see Emma Vale alive.",
+        ),
+    )
+
+
 def build_default_state(
     seed: int,
     genre: str = "mystery",
@@ -404,6 +427,10 @@ def build_default_state(
                     ),
                 },
             ],
+        )
+        apply_fact_ops(
+            state,
+            [{"op": "assert", "fact": ("case_fact", key, value)} for key, value in _default_mystery_case_facts()],
         )
     sync_legacy_views(state)
     refresh_scene_state(state)

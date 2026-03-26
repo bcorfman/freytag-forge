@@ -17,7 +17,12 @@ from storygame.engine.freeform import (
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
-from storygame.engine.impact import assess_player_command, replan_scope_for_assessment, requires_high_impact_confirmation
+from storygame.engine.impact import (
+    ImpactAssessment,
+    assess_player_command,
+    replan_scope_for_assessment,
+    requires_high_impact_confirmation,
+)
 from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
@@ -28,8 +33,8 @@ from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
-from storygame.llm.coherence import build_default_coherence_gate
-from storygame.llm.contracts import parse_turn_proposal
+from storygame.llm.coherence import CoherenceTelemetry, build_default_coherence_gate
+from storygame.llm.contracts import JudgeDecision, NumericDelta, parse_turn_proposal
 from storygame.llm.context import build_narration_context
 from storygame.llm.narration_state import dialogue_fact_conflict, extract_dialogue_fact_ops, extract_narration_fact_ops
 from storygame.llm.output_editor import OutputEditor, build_output_editor
@@ -300,7 +305,18 @@ def _clear_pending_high_impact(state: GameState) -> None:
     state.pending_high_impact_assessment = {}
 
 
-def _high_impact_warning_lines(assessment: dict[str, Any]) -> list[str]:
+def _impact_assessment_from_mapping(payload: dict[str, Any]) -> ImpactAssessment:
+    dimensions_payload = payload.get("dimensions", {})
+    return {
+        "score": float(payload.get("score", 0.0)),
+        "impact_class": str(payload.get("impact_class", "low")),
+        "dimensions": {str(key): float(value) for key, value in dimensions_payload.items()},
+        "reasons": [str(reason) for reason in payload.get("reasons", ())],
+        "consequences": [str(consequence) for consequence in payload.get("consequences", ())],
+    }
+
+
+def _high_impact_warning_lines(assessment: ImpactAssessment) -> list[str]:
     impact_class = str(assessment.get("impact_class", "high")).upper()
     consequences = [str(item).strip() for item in assessment.get("consequences", []) if str(item).strip()]
     lines = [
@@ -315,7 +331,7 @@ def _record_major_disruption(
     state: GameState,
     events: list[Event],
     raw_command: str,
-    assessment: dict[str, Any],
+    assessment: ImpactAssessment,
 ) -> None:
     replan_scope = replan_scope_for_assessment(assessment)
     apply_fact_ops(
@@ -395,7 +411,7 @@ def _preview_state_delta(preview_events: list[Event], skip_facts: tuple[tuple[st
     skip = set(skip_facts)
     assert_ops: list[dict[str, Any]] = []
     retract_ops: list[dict[str, Any]] = []
-    numeric_delta: list[dict[str, float]] = []
+    numeric_delta: list[NumericDelta] = []
     reasons: list[str] = []
     for event in preview_events:
         fact_ops = event.metadata.get("fact_ops", ())
@@ -818,8 +834,8 @@ def _ensure_action_grounded_narration(narration: str, action: Action) -> str:
 
 
 def _should_discard_failed_narration(
-    judge_decision: dict[str, Any],
-    coherence_telemetry: dict[str, Any],
+    judge_decision: JudgeDecision,
+    coherence_telemetry: CoherenceTelemetry,
 ) -> bool:
     return (
         str(judge_decision["status"]) == "failed"
@@ -958,14 +974,14 @@ def run_turn(
     story_director: StoryDirector | None = None,
     narrator_mode: str = "openai",
     _confirmed_high_impact: bool = False,
-    _confirmed_assessment: dict[str, Any] | None = None,
+    _confirmed_assessment: ImpactAssessment | None = None,
 ):
     raw_input = raw.strip()
     lowered_input = raw_input.lower()
     if state.pending_high_impact_command:
         if lowered_input in _PROCEED_WORDS:
             confirmed_command = state.pending_high_impact_command
-            confirmed_assessment = dict(state.pending_high_impact_assessment)
+            confirmed_assessment = _impact_assessment_from_mapping(state.pending_high_impact_assessment)
             resumed_state = state.clone()
             _clear_pending_high_impact(resumed_state)
             return run_turn(
@@ -1083,7 +1099,7 @@ def run_turn(
     except Exception as exc:
         planner_parse_error = str(exc)
 
-    impact_assessment = (
+    impact_assessment: ImpactAssessment = (
         _confirmed_assessment
         if _confirmed_assessment is not None
         else assess_player_command(state, effective_action.raw, effective_action)
@@ -1156,16 +1172,20 @@ def run_turn(
         goal=_context_goal_for_turn(raw_input, context.goal, next_state.turn_index),
     )
     gate = build_default_coherence_gate()
-    judge_decision = {
+    judge_decision: JudgeDecision = {
         "status": "failed",
         "total_score": 0,
         "threshold": 80,
         "round_index": 1,
         "critic_ids": (),
-        "rubric_components": {},
+        "critical_floors": {"continuity": 70, "causality": 70},
+        "critic_reports": (),
+        "judge": "coherence_gate",
+        "rationale": "Narration generation failed before acceptance.",
+        "rubric_components": {"continuity": 0, "causality": 0, "dialogue_fit": 0},
         "decision_id": "judge-error",
     }
-    coherence_telemetry = {
+    coherence_telemetry: CoherenceTelemetry = {
         "critique_rounds": 0,
         "token_spend": {"narrator": 0, "critics": 0},
         "elapsed_ms": 0,

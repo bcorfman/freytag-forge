@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from storygame.plot.freytag import get_phase
+
+if TYPE_CHECKING:
+    from storygame.llm.contracts import TurnProposal
 
 _DEFAULT_ROLE_BY_PHASE = {
     "exposition": "orientation",
@@ -141,17 +144,13 @@ def turn_focus_from_action(state, action) -> dict[str, str]:  # noqa: ANN001
     )
 
 
-def turn_focus_from_proposal(state, proposal: dict[str, Any]) -> dict[str, str]:  # noqa: ANN401
-    player_intent = proposal.get("player_intent", {})
-    intent = ""
-    if isinstance(player_intent, dict):
-        intent = str(player_intent.get("summary", "")).strip()
+def turn_focus_from_proposal(state, proposal: TurnProposal) -> dict[str, str]:  # noqa: ANN401
+    intent = str(proposal["player_intent"]["summary"]).strip()
     target_name = ""
     topic = ""
-    semantic_actions = proposal.get("semantic_actions", ())
-    for action in semantic_actions:
-        target_id = str(action.get("target_id", "")).strip()
-        item_id = str(action.get("item_id", "")).strip()
+    for action in proposal["semantic_actions"]:
+        target_id = str(action["target_id"]).strip()
+        item_id = str(action["item_id"]).strip()
         if target_id and target_id in state.world.npcs:
             target_name = state.world.npcs[target_id].name
         if item_id:

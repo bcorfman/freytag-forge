@@ -283,6 +283,31 @@ def player_context_facts(state) -> tuple[dict[str, str], ...]:
     )
 
 
+def case_facts(state) -> tuple[dict[str, str], ...]:
+    return tuple(
+        {
+            "key": fact[1],
+            "value": fact[2],
+        }
+        for fact in state.world_facts.query("case_fact", None, None)
+    )
+
+
+def villain_profiles(state) -> tuple[dict[str, str], ...]:
+    motives = {fact[1]: fact[2] for fact in state.world_facts.query("villain_motive", None, None)}
+    means = {fact[1]: fact[2] for fact in state.world_facts.query("villain_means", None, None)}
+    opportunities = {fact[1]: fact[2] for fact in state.world_facts.query("villain_opportunity", None, None)}
+    return tuple(
+        {
+            "name": fact[1],
+            "motive": motives.get(fact[1], ""),
+            "means": means.get(fact[1], ""),
+            "opportunity": opportunities.get(fact[1], ""),
+        }
+        for fact in state.world_facts.query("villain", None)
+    )
+
+
 def npc_relationship_to_player(state, npc_name: str) -> str:
     normalized = npc_name.strip().lower()
     if not normalized:
