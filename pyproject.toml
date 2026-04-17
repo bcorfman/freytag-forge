@@ -8,7 +8,7 @@ authors = [{ name = "Brandon Corfman", email = "h9tbgnbbk@privaterelay.appleid.c
 license = "MIT"
 
 dependencies = [
-    "fastapi>=0.116.1",
+    "fastapi>=0.136.0",
     "rich>=14.1.0",
     "uvicorn>=0.35.0",
     "pyyaml>=6.0.2",
