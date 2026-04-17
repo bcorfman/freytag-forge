@@ -62,5 +62,5 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 extend-fixable = ["E", "F", "UP", "B", "SIM", "I"]
 
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=82.0.1", "wheel"]
 build-backend = "setuptools.build_meta"
