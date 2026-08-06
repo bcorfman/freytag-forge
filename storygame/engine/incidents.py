@@ -8,7 +8,7 @@ from typing import TypedDict
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from storygame.engine.facts import apply_fact_ops, player_inventory, player_location, rebuild_facts_from_legacy_views
+from storygame.engine.facts import apply_fact_ops, player_inventory, player_location
 from storygame.engine.state import Event, GameState
 from storygame.plot.beat_manager import Beat
 
@@ -311,7 +311,6 @@ def realize_beat_incident(
     rng: Random,
     incident_specs: tuple[IncidentSpec, ...] | None = None,
 ) -> tuple[GameState, list[Event]]:
-    rebuild_facts_from_legacy_views(state)
     specs = load_incident_specs() if incident_specs is None else incident_specs
     action_tuple = tuple(action_events)
     candidates = [spec for spec in specs if _eligible(spec, state, beat, action_tuple)]

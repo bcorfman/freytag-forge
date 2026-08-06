@@ -95,6 +95,10 @@ class InvariantValidator:
 
         if predicate == "npc_at" and len(terms) == 2:
             return tuple(existing for existing in facts if existing[:2] == ("npc_at", terms[0]))
+        if predicate == "path" and len(terms) == 3:
+            return tuple(existing for existing in facts if existing[:3] == ("path", terms[0], terms[1]))
+        if predicate == "locked" and len(terms) == 3:
+            return tuple(existing for existing in facts if existing[:3] == ("locked", terms[0], terms[1]))
         if predicate == "at" and len(terms) == 2 and terms[0] == "player":
             return tuple(existing for existing in facts if existing[:2] == ("at", "player"))
         if predicate == "holding" and len(terms) == 2:

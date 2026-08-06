@@ -141,27 +141,29 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Audit remaining mutation sites in rules, story bootstrap, CLI, web adapters,
+- [x] Audit remaining mutation sites in rules, story bootstrap, CLI, web adapters,
   simulation, and persistence.
-- Route each canonical mutation through `ValidatedFactCommitter` (or its
+- [x] Route each canonical mutation through `ValidatedFactCommitter` (or its
   explicit successor) with a source label and typed operation contract.
-- Demote `GameState` objects, `active_goal`, and `world_package` fields to
+- [x] Demote `GameState` objects, `active_goal`, and `world_package` fields to
   read-after-commit projections or bootstrap/presentation data.
-- Remove ordinary-path fallback reads from legacy views and package payloads.
-- Preserve temporary projections only behind explicit adapter Protocols, with
+- [x] Remove ordinary-path fallback reads from legacy views and package payloads.
+  Remaining package reads are authoring compatibility inputs; semantic turn
+  execution reads facts.
+- [x] Preserve temporary projections only behind explicit adapter Protocols, with
   projection refresh occurring after successful fact commits.
-- Preserve deterministic artifact write/read validation and turn-to-turn parent
+- [x] Preserve deterministic artifact write/read validation and turn-to-turn parent
   hashes while changing artifact payloads to derive from facts alone.
 
 ### Tests and exit criteria
 
-- Player/NPC location, item container/custody, active goal, role exclusivity,
+- [x] Player/NPC location, item container/custody, active goal, role exclusivity,
   clues, event flags, and scene state have cardinality/invariant tests.
-- No ordinary turn begins by rebuilding canonical facts from mutable legacy
+- [x] No ordinary turn begins by rebuilding canonical facts from mutable legacy
   views.
-- Save/load and artifact rendering read the same fact-backed state as runtime
+- [x] Save/load and artifact rendering read the same fact-backed state as runtime
   execution.
-- Each persisted turn has one valid, tamper-evident `StoryState.json` and a
+- [x] Each persisted turn has one valid, tamper-evident `StoryState.json` and a
   regenerated `STORY.md`; both round-trip across process boundaries.
 
 ## Phase 2 — Predicate Policies and Bounded Intent Effects

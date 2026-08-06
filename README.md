@@ -17,4 +17,4 @@ You can also use `save`, `load`, `help`, or `quit`.
 
 Each story can take a different shape—from a mystery to a fantasy journey, a
 technical crisis, or a relationship scene. Your choices guide the scene; the
-game remembers their consequences.
+game remembers their consequences consistently from turn to turn.

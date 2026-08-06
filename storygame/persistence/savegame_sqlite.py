@@ -12,9 +12,9 @@ from typing import Any
 from storygame.engine.facts import (
     active_story_goal,
     apply_fact_ops,
+    reconcile_legacy_projection_for_persistence,
     replace_player_flags,
     replace_player_inventory,
-    rebuild_facts_from_legacy_views,
     replace_room_items,
     set_active_story_goal,
     set_player_location,
@@ -72,7 +72,7 @@ def deserialize_event(payload: dict[str, Any]) -> Event:
 
 def serialize_state(state: GameState) -> dict[str, Any]:
     snapshot = state.clone()
-    rebuild_facts_from_legacy_views(snapshot)
+    reconcile_legacy_projection_for_persistence(snapshot)
     ValidatedFactCommitter().commit(snapshot, (), source="serialize_state")
     sync_legacy_views(snapshot)
     return {
@@ -95,7 +95,10 @@ def serialize_state(state: GameState) -> dict[str, Any]:
             "inventory": list(snapshot.player.inventory),
             "flags": dict(snapshot.player.flags),
         },
-        "room_items": {room_id: list(room.item_ids) for room_id, room in snapshot.world.rooms.items()},
+        "room_items": {
+            room_id: [fact[2] for fact in snapshot.world_facts.query("room_item", room_id, None)]
+            for room_id in snapshot.world.rooms
+        },
         "event_log": [serialize_event(event) for event in snapshot.event_log.events],
         "last_judge_decision": dict(snapshot.last_judge_decision) if snapshot.last_judge_decision is not None else None,
         "pending_high_impact_command": snapshot.pending_high_impact_command,
@@ -282,7 +285,7 @@ class SqliteSaveStore:
         transcript: list[str] | None = None,
         judge_decision: dict[str, str] | None = None,
     ) -> None:
-        rebuild_facts_from_legacy_views(state)
+        reconcile_legacy_projection_for_persistence(state)
         ValidatedFactCommitter().commit(state, (), source="save_run")
         sync_legacy_views(state)
         payload = serialize_state(state)

@@ -7,7 +7,6 @@ from storygame.engine.facts import (
     npc_location,
     player_inventory,
     player_location,
-    rebuild_facts_from_legacy_views,
     room_items,
     room_npcs,
     room_paths,
@@ -21,8 +20,17 @@ def _normalize_item_phrase(value: str) -> str:
     return value.strip().lower().replace(" ", "_")
 
 
+def _legacy_visible_room_items(state: GameState, room_id: str) -> tuple[str, ...]:
+    """Support parser-era room construction without changing canonical reads."""
+    fact_items = room_items(state, room_id)
+    room = state.world.rooms.get(room_id)
+    if room is None:
+        return fact_items
+    return tuple(dict.fromkeys((*fact_items, *room.item_ids)))
+
+
 def _resolve_room_item_target(state: GameState, room_id: str, target: str) -> str:
-    visible_items = room_items(state, room_id)
+    visible_items = _legacy_visible_room_items(state, room_id)
     if target in visible_items:
         return target
 
@@ -80,9 +88,11 @@ def _resolve_nearby_held_item_target(state: GameState, room_id: str, target: str
 
 def _find_exit(state: GameState, room_id: str, target: str) -> tuple[str, str] | None:
     exits = room_paths(state, room_id)
+    projection_exits = state.world.rooms[room_id].exits
     if target in exits:
-        return target, exits[target]
+        return target, projection_exits.get(target, exits[target])
     for direction, destination in exits.items():
+        destination = projection_exits.get(direction, destination)
         if destination == target:
             return direction, destination
     return None
@@ -168,7 +178,6 @@ def _resolve_use(state: GameState, item_id: str, target: str) -> Event:
 
 def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list[Event]]:
     next_state = state.clone()
-    rebuild_facts_from_legacy_views(next_state)
     next_state.turn_index += 1
     events: list[Event] = []
 
@@ -266,9 +275,10 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
     if action.kind == ActionKind.TAKE:
         resolved_target = _resolve_room_item_target(next_state, room_id, action.target)
         held_target = None
-        if resolved_target not in room_items(next_state, room_id):
+        visible_items = _legacy_visible_room_items(next_state, room_id)
+        if resolved_target not in visible_items:
             held_target = _resolve_nearby_held_item_target(next_state, room_id, action.target)
-        if resolved_target not in room_items(next_state, room_id) and held_target is None:
+        if resolved_target not in visible_items and held_target is None:
             events.append(
                 Event(
                     type="take_failed",

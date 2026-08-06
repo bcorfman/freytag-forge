@@ -26,15 +26,6 @@ def _goal_bundle(state: GameState) -> dict[str, object]:
     fact_goals = story_goals(state)
     if fact_goals["setup"] or fact_goals["primary"] or fact_goals["secondary"]:
         return fact_goals
-    bundle = dict(state.world_package.get("llm_story_bundle", {}))
-    if bundle:
-        return {
-            "setup": str(bundle.get("actionable_objective", "")).strip(),
-            "primary": str(bundle.get("primary_goal", "")).strip(),
-            "secondary": tuple(
-                str(goal).strip() for goal in bundle.get("secondary_goals", ()) if str(goal).strip()
-            ),
-        }
     return dict(state.world_package.get("goals", {}))
 
 
@@ -42,21 +33,13 @@ def _story_plan_bundle(state: GameState) -> dict[str, object]:
     planned_events = planned_story_events(state)
     hidden_threads = hidden_story_threads(state)
     scheduled_reveals = reveal_schedule(state)
+    result = {
+        "timed_events": planned_events,
+        "hidden_threads": hidden_threads,
+        "reveal_schedule": scheduled_reveals,
+    }
     if planned_events or hidden_threads or scheduled_reveals:
-        return {
-            "timed_events": planned_events,
-            "hidden_threads": hidden_threads,
-            "reveal_schedule": scheduled_reveals,
-        }
-    bundle = dict(state.world_package.get("llm_story_bundle", {}))
-    if bundle:
-        return {
-            "timed_events": tuple(bundle.get("timed_events", ())),
-            "hidden_threads": tuple(
-                str(thread).strip() for thread in bundle.get("hidden_threads", ()) if str(thread).strip()
-            ),
-            "reveal_schedule": tuple(bundle.get("reveal_schedule", ())),
-        }
+        return result
     return dict(state.world_package.get("story_plan", {}))
 
 

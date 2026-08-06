@@ -113,11 +113,36 @@ def rebuild_facts_from_legacy_views(state) -> None:
         state.world_facts.assert_fact(fact[0], *fact[1:])
 
 
+def reconcile_legacy_projection_for_persistence(state) -> None:
+    """Import only missing compatibility values at the persistence boundary.
+
+    Runtime code never calls this migration. Existing callers that still build a
+    state by mutating the old object views can be saved once; canonical facts
+    always win when both representations contain a value.
+    """
+    ops: list[FactOp] = []
+    if not state.world_facts.query("at", "player", None) and state.player.location.strip():
+        ops.append({"op": "assert", "fact": ("at", "player", state.player.location.strip())})
+    for item_id in state.player.inventory:
+        if not state.world_facts.holds("holding", "player", item_id):
+            ops.append({"op": "assert", "fact": ("holding", "player", item_id)})
+    for flag_name, enabled in state.player.flags.items():
+        if enabled and not state.world_facts.holds("flag", "player", flag_name):
+            ops.append({"op": "assert", "fact": ("flag", "player", flag_name)})
+    for room_id, room in state.world.rooms.items():
+        existing = {fact[2] for fact in state.world_facts.query("room_item", room_id, None)}
+        for item_id in room.item_ids:
+            if item_id not in existing:
+                ops.append({"op": "assert", "fact": ("room_item", room_id, item_id)})
+    if ops:
+        ValidatedFactCommitter().commit(state, ops, source="persistence_projection_migration")
+
+
 def player_location(state) -> str:
     locations = state.world_facts.query("at", "player", None)
     if locations:
         return locations[0][2]
-    return state.player.location
+    return ""
 
 
 def player_inventory(state) -> tuple[str, ...]:
@@ -215,7 +240,7 @@ def active_story_goal(state) -> str:
     facts = state.world_facts.query("active_goal", None)
     if facts:
         return facts[0][1]
-    return state.active_goal
+    return ""
 
 
 def current_scene(state) -> str:
@@ -361,7 +386,7 @@ def scene_objective(state, scene_id: str) -> str:
     facts = state.world_facts.query("scene_objective", scene_id, None)
     if facts:
         return facts[0][2]
-    return active_story_goal(state)
+    return active_story_goal(state) or state.active_goal
 
 
 def dramatic_question(state, scene_id: str) -> str:

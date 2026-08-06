@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from storygame.engine.facts import item_state, room_items
+from storygame.engine.facts import apply_fact_ops, item_state, room_items
 from storygame.engine.state import Event, GameState
 from storygame.plot.beat_manager import Beat
 
@@ -225,11 +225,15 @@ def apply_event_template(
     rng,
 ) -> tuple[GameState, list[Event]]:
     next_state = state.clone()
-
-    for flag in template.set_flags:
-        next_state.player.flags[flag] = True
-    for flag in template.clear_flags:
-        next_state.player.flags[flag] = False
+    fact_ops = [
+        {"op": "assert", "fact": ("flag", "player", flag)}
+        for flag in template.set_flags
+    ] + [
+        {"op": "retract", "fact": ("flag", "player", flag)}
+        for flag in template.clear_flags
+    ]
+    if fact_ops:
+        apply_fact_ops(next_state, fact_ops)
 
     event = Event(
         type="plot",
@@ -239,6 +243,7 @@ def apply_event_template(
         delta_progress=template.delta_progress,
         delta_tension=template.delta_tension,
         turn_index=next_state.turn_index,
+        metadata={"fact_ops": fact_ops, "source": "event_template"},
     )
     next_state.append_event(event)
     return next_state, [event]
