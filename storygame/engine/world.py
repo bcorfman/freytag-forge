@@ -432,6 +432,13 @@ def build_default_state(
             state,
             [{"op": "assert", "fact": ("case_fact", key, value)} for key, value in _default_mystery_case_facts()],
         )
+        apply_fact_ops(
+            state,
+            [
+                {"op": "assert", "fact": ("knows", "player", key)}
+                for key, _value in _default_mystery_case_facts()
+            ],
+        )
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state

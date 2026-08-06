@@ -163,6 +163,15 @@ Current runtime generation is package-driven.
   manipulation, transfer, concealment, assistance, opposition, and waiting;
   unique visible aliases are resolved at the boundary and ambiguous aliases
   produce clarification rather than a guess.
+- Phase 3 perception is observer-aware: `ObservationResolver` separates
+  existence, location, accessibility, perceptibility, observation,
+  recognition, and interpretation. `observer_context_slice` and
+  `speaker_context_slice` prevent hidden case truth and unrelated scene facts
+  from entering player or NPC prompts.
+- Core policy data declares concealment/exposure, lighting, weather, sensory
+  blocking, portals, traces, discovery, evidence state, and contamination.
+  Evidence movement remains subject to custody cardinality, while state
+  transformations replace the prior evidence state deterministically.
 
 ```mermaid
 flowchart LR

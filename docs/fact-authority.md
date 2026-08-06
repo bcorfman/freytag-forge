@@ -22,3 +22,18 @@ legal commit sources, normalization mode, invariants, and derived-update owner.
 Unknown or proposal-forbidden predicates are rejected without changing the
 fact store. Intent families similarly map to bounded effects; they do not grant
 the model permission to invent arbitrary predicates.
+
+## Observer and evidence boundaries
+
+`storygame.engine.perception.ObservationResolver` derives an observer's
+existence, location, accessibility, perceptibility, observation, recognition,
+and interpretation status from facts. `observer_context_slice` and
+`speaker_context_slice` are the only supported projections for model context:
+protected case truth is included only when the observer knows its key, while
+scene facts are included only when the observer can perceive their entities.
+
+Concealment, exposure, lighting, weather, sensory blocking, portals, traces,
+discovery, evidence state, and contamination are declared in the core policy
+pack. Evidence placement continues to use the existing custody/room
+cardinality rules, and evidence state is single-valued so transformations do
+not leave contradictory canonical states.

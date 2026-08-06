@@ -28,3 +28,33 @@ rules:
         - [room_item, "$room", "$item"]
       assert:
         - [holding, "$actor", "$item"]
+  - rule_id: observation_exposes_entity
+    when:
+      all:
+        - predicate: observed
+          args: ["$observer", "$entity"]
+        - predicate: exposed
+          args: ["$entity", "$room"]
+    then:
+      assert:
+        - [visible, "$observer", "$entity"]
+  - rule_id: interpreted_evidence_is_discovered
+    when:
+      all:
+        - predicate: observed
+          args: ["$observer", "$entity"]
+        - predicate: interpreted
+          args: ["$observer", "$entity", "$interpretation"]
+    then:
+      assert:
+        - [discovery, "$observer", "$entity", "$interpretation"]
+  - rule_id: sensory_propagation_carries_trace
+    when:
+      all:
+        - predicate: sensory_propagation
+          args: ["$from", "$to", "$mode"]
+        - predicate: trace
+          args: ["$entity", "$from", "$condition"]
+    then:
+      assert:
+        - [trace, "$entity", "$to", "$condition"]

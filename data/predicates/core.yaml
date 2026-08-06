@@ -53,6 +53,46 @@ predicates:
     arg_types: [observer, entity]
     family: perception
     commit_sources: [intent, rule, trigger, system]
+  - name: recognized
+    arity: 2
+    arg_types: [observer, entity]
+    family: perception
+    commit_sources: [intent, rule, trigger, system]
+  - name: accessible
+    arity: 2
+    arg_types: [observer, entity]
+    family: perception
+    commit_sources: [intent, rule, trigger, system]
+  - name: exposed
+    arity: 2
+    arg_types: [entity, room]
+    family: perception
+    commit_sources: [intent, rule, trigger, system]
+  - name: light
+    arity: 2
+    arg_types: [room, condition]
+    family: perception
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: weather
+    arity: 2
+    arg_types: [room, condition]
+    family: perception
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: sensory
+    arity: 2
+    arg_types: [observer, mode]
+    family: perception
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: sensory_blocked
+    arity: 2
+    arg_types: [room, entity]
+    family: perception
+    commit_sources: [intent, rule, trigger, system]
+  - name: sensory_propagation
+    arity: 3
+    arg_types: [room, room, mode]
+    family: perception
+    commit_sources: [bootstrap, rule, trigger, system]
   - name: knows
     arity: 2
     arg_types: [observer, fact]
@@ -78,6 +118,21 @@ predicates:
     arg_types: [entity, room, condition]
     family: traces
     commit_sources: [intent, rule, trigger, system]
+  - name: evidence_state
+    arity: 2
+    arg_types: [entity, state]
+    family: traces
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: evidence_contaminated
+    arity: 2
+    arg_types: [entity, source]
+    family: traces
+    commit_sources: [intent, rule, trigger, system]
+  - name: portal
+    arity: 3
+    arg_types: [portal, room, room]
+    family: world
+    commit_sources: [bootstrap, intent, rule, trigger, system]
   - name: concealed
     arity: 2
     arg_types: [entity, room]
@@ -93,6 +148,16 @@ predicates:
     arg_types: [lead, summary]
     family: knowledge
     commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: discovery
+    arity: 3
+    arg_types: [observer, entity, interpretation]
+    family: knowledge
+    commit_sources: [intent, rule, trigger, system]
+  - name: interpreted
+    arity: 3
+    arg_types: [observer, entity, interpretation]
+    family: knowledge
+    commit_sources: [intent, rule, trigger, system]
   - name: player_context
     arity: 2
     arg_types: [topic, summary]

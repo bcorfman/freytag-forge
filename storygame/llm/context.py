@@ -6,13 +6,12 @@ from storygame.engine.facts import (
     active_story_goal,
     assistant_name,
     assistant_role,
-    case_facts,
     item_driver,
     item_owner,
     item_state,
-    npc_stance_toward_player,
     npc_relationship_to_player,
     npc_scene_purpose,
+    npc_stance_toward_player,
     npc_trust_toward_player,
     planned_story_events,
     player_context_facts,
@@ -21,6 +20,7 @@ from storygame.engine.facts import (
 )
 from storygame.engine.mystery import filtered_inventory, room_item_groups
 from storygame.engine.parser import Action
+from storygame.engine.perception import observer_context_slice, visible_entities
 from storygame.engine.scene_state import scene_snapshot
 from storygame.engine.state import EventLog, GameState, Npc
 from storygame.story_canon import canonical_detective_name
@@ -152,15 +152,16 @@ def _summarize_recent_events(events: EventLog) -> tuple[dict, ...]:
 
 def _npc_locations(state: GameState) -> dict[str, str]:
     locations: dict[str, str] = {}
-    for room_id, room in state.world.rooms.items():
-        for npc_id in room.npc_ids:
-            locations[npc_id] = room_id
+    for npc_id, room_id in (
+        (fact[1], fact[2]) for fact in state.world_facts.query("npc_at", None, None)
+    ):
+        locations[npc_id] = room_id
     return locations
 
 
-def _summarize_npc_facts(state: GameState) -> tuple[dict, ...]:
+def _summarize_npc_facts(state: GameState, visible_npc_ids: tuple[str, ...] = ()) -> tuple[dict, ...]:
     locations = _npc_locations(state)
-    npc_ids = sorted(state.world.npcs.keys())
+    npc_ids = sorted(visible_npc_ids or state.world.npcs.keys())
     facts: list[dict[str, str]] = []
     for npc_id in npc_ids[:MAX_NPC_FACTS]:
         fact = _npc_fact(state.world.npcs[npc_id], locations.get(npc_id, ""))
@@ -311,7 +312,10 @@ def build_narration_context(
     memory_fragments: tuple[str, ...] = (),
 ) -> NarrationContext:
     room = state.world.rooms[state.player.location]
+    visible_entity_ids = set(visible_entities(state, "player", room.id))
     visible_items, _junk_count = room_item_groups(state, room)
+    visible_items = tuple(item_id for item_id in visible_items if item_id in visible_entity_ids)
+    visible_npcs = tuple(npc_id for npc_id in room.npc_ids if npc_id in visible_entity_ids)
     freeform_focus = _latest_freeform_focus(state)
     scene = scene_snapshot(state)
     scene_payload = {
@@ -331,6 +335,12 @@ def build_narration_context(
         if str(entry["text"]).strip()
     )
 
+    permitted_facts = observer_context_slice(state, "player")
+    permitted_case_facts = tuple(
+        {"key": fact[1], "value": fact[2]}
+        for fact in permitted_facts
+        if fact[0] == "case_fact" and len(fact) == 3
+    )
     return NarrationContext(
         room_name=room.name,
         room_description=room.description,
@@ -339,8 +349,8 @@ def build_narration_context(
         assistant_name=_assistant_name(state),
         assistant_role=_assistant_role(state),
         visible_items=visible_items[:MAX_VISIBLE_ITEMS],
-        visible_npcs=room.npc_ids,
-        npc_facts=_summarize_npc_facts(state),
+        visible_npcs=visible_npcs,
+        npc_facts=_summarize_npc_facts(state, visible_npcs),
         item_facts=_summarize_item_facts(state, visible_items[:MAX_VISIBLE_ITEMS]),
         exits=tuple(sorted(room.exits.keys())),
         inventory=filtered_inventory(state)[:MAX_INVENTORY_ITEMS],
@@ -362,5 +372,5 @@ def build_narration_context(
         addressed_npc_name=str(freeform_focus.get("addressed_npc_name", "")),
         prefer_npc_reply=bool(freeform_focus.get("prefer_npc_reply", False)),
         scene_facts=scene_facts,
-        case_facts=case_facts(state),
+        case_facts=permitted_case_facts,
     )
