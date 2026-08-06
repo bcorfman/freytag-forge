@@ -37,3 +37,17 @@ discovery, evidence state, and contamination are declared in the core policy
 pack. Evidence placement continues to use the existing custody/room
 cardinality rules, and evidence state is single-valued so transformations do
 not leave contradictory canonical states.
+
+## Consequences and affordances
+
+`storygame.engine.consequences.apply_consequences` runs validated declarative
+rules after a direct semantic effect and before turn triggers. Rule conditions
+bind only against canonical facts; effects are normalized through the
+predicate-policy registry and committed through `ValidatedFactCommitter`.
+Each rule binding fires at most once per pass in stable rule order. Narration-
+only turns do not run the pass, so prose cannot create downstream truth.
+
+Universal rules live in `data/rules/core_rules.yaml`; genre extensions live in
+`data/rules/genres/`. `build_affordance_context` derives legal exits, locks,
+visible items, addressable NPCs, and inventory from facts for model context.
+It is advisory context, not a mutation authority.

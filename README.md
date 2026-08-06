@@ -43,6 +43,13 @@ traces, portals, and discovery are canonical predicates; player and NPC model
 prompts receive only their permitted context slice. Evidence can move,
 transform, become contaminated, or be reinterpreted through validated commits.
 
+Post-action consequences run through a deterministic declarative rule engine
+after direct effects and before triggers. Universal rules cover access paths,
+environmental traces, information exposure, item discovery, and social stance;
+genre packs extend the same validated schema without story-specific runtime
+branches. The model also receives fact-derived affordances for legal exits,
+locks, visible portable items, addressable NPCs, and held items.
+
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).

@@ -16,6 +16,10 @@ rules:
       all:
         - predicate: holding
           args: [player, "$key_item"]
+        - predicate: path
+          args: ["$direction", "$room", "$destination"]
+        - predicate: locked
+          args: ["$direction", "$room", "$key_item"]
     then:
       retract:
         - [locked, "$direction", "$room", "$key_item"]

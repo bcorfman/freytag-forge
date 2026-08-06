@@ -114,6 +114,8 @@ Current runtime generation is package-driven.
 - `storygame.engine.semantic_actions` normalizes committed semantic turn actions into canonical events plus fact-backed world mutations.
 - `storygame.engine.triggers` evaluates unified action-trigger and turn-trigger specs against committed semantic events and canonical facts.
 - `storygame.engine.turn_runtime` provides an additive proposal-first turn path for structured semantic turn proposals, deterministic commits, and follow-up trigger execution.
+- `storygame.engine.consequences` runs the validated deterministic post-direct-effect rule pass before triggers.
+- `storygame.engine.affordances` derives legal exits, locks, visible items, addressable NPCs, and inventory from canonical facts for model context.
 - A dedicated turn-orchestration layer accepts structured candidate proposals from the LLM and commits only validated deltas to canonical world state.
 - Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 
@@ -163,6 +165,9 @@ Current runtime generation is package-driven.
   manipulation, transfer, concealment, assistance, opposition, and waiting;
   unique visible aliases are resolved at the boundary and ambiguous aliases
   produce clarification rather than a guess.
+- Post-direct-effect consequences use one validated rule-pack schema across
+  physical/environmental, access, social, investigative, and technical state;
+  universal rules are separate from optional genre extensions.
 - Phase 3 perception is observer-aware: `ObservationResolver` separates
   existence, location, accessibility, perceptibility, observation,
   recognition, and interpretation. `observer_context_slice` and

@@ -1,33 +1,18 @@
 schema_version: 1
 scope: core
 rules:
-  - rule_id: move_actor
+  - rule_id: held_key_opens_matching_path
     when:
       all:
+        - predicate: holding
+          args: ["$actor", "$key"]
         - predicate: path
-          args: ["$direction", "$from", "$to"]
-        - predicate: at
-          args: ["$actor", "$from"]
-      not:
+          args: ["$direction", "$room", "$destination"]
         - predicate: locked
-          args: ["$direction", "$from", "$key"]
+          args: ["$direction", "$room", "$key"]
     then:
       retract:
-        - [at, "$actor", "$from"]
-      assert:
-        - [at, "$actor", "$to"]
-  - rule_id: take_item
-    when:
-      all:
-        - predicate: at
-          args: ["$actor", "$room"]
-        - predicate: room_item
-          args: ["$room", "$item"]
-    then:
-      retract:
-        - [room_item, "$room", "$item"]
-      assert:
-        - [holding, "$actor", "$item"]
+        - [locked, "$direction", "$room", "$key"]
   - rule_id: observation_exposes_entity
     when:
       all:
@@ -58,3 +43,21 @@ rules:
     then:
       assert:
         - [trace, "$entity", "$to", "$condition"]
+  - rule_id: held_clue_becomes_discovered
+    when:
+      all:
+        - predicate: holding
+          args: ["$observer", "$item"]
+        - predicate: item_kind
+          args: ["$item", "clue"]
+    then:
+      assert:
+        - [discovered_clue, "$item"]
+  - rule_id: hostile_relationship_sets_guarded_stance
+    when:
+      all:
+        - predicate: npc_relationship
+          args: ["$npc", "$actor", "hostile"]
+    then:
+      assert:
+        - [social_stance, "$npc", "$actor", "guarded"]
