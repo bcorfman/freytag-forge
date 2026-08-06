@@ -1,0 +1,46 @@
+version: phase0-v1
+fixtures:
+  - id: mystery-investigation
+    genre: mystery
+    tone: mysterious
+    session_length: short
+    seed: 101
+    model: phase0-deterministic-stub-v1
+    prompt_version: phase0-fixture-contract-v1
+    generation_settings:
+      temperature: 0
+      max_tokens: 128
+    commands: [look, go north, inventory]
+  - id: fantasy-journey
+    genre: fantasy
+    tone: epic
+    session_length: short
+    seed: 202
+    model: phase0-deterministic-stub-v1
+    prompt_version: phase0-fixture-contract-v1
+    generation_settings:
+      temperature: 0
+      max_tokens: 128
+    commands: [look, go north, inventory]
+  - id: sci-fi-technical-crisis
+    genre: sci-fi
+    tone: tense
+    session_length: short
+    seed: 303
+    model: phase0-deterministic-stub-v1
+    prompt_version: phase0-fixture-contract-v1
+    generation_settings:
+      temperature: 0
+      max_tokens: 128
+    commands: [look, go north, inventory]
+  - id: relationship-social-scene
+    genre: romance
+    tone: romantic
+    session_length: short
+    seed: 404
+    model: phase0-deterministic-stub-v1
+    prompt_version: phase0-fixture-contract-v1
+    generation_settings:
+      temperature: 0
+      max_tokens: 128
+    commands: [look, go north, inventory]
