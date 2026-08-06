@@ -143,6 +143,12 @@ class InvariantValidator:
             return tuple(existing for existing in facts if existing[0] == "player_background")
         if predicate == "npc_role" and len(terms) == 2:
             return tuple(existing for existing in facts if existing[:2] == ("npc_role", terms[0]))
+        if predicate in {"light", "weather"} and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == (predicate, terms[0]))
+        if predicate == "evidence_state" and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == (predicate, terms[0]))
+        if predicate == "portal" and len(terms) == 3:
+            return tuple(existing for existing in facts if existing[:2] == (predicate, terms[0]))
 
         return ()
 

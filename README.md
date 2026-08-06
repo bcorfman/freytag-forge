@@ -36,6 +36,13 @@ bounded intent families; they are not a fixed command table. Unique visible
 aliases resolve deterministically, while ambiguous references ask for
 clarification.
 
+Perception is observer-specific and fact-backed. The engine distinguishes an
+entity's existence, location, accessibility, perceptibility, observation,
+recognition, and interpretation. Concealment, exposure, lighting, weather,
+traces, portals, and discovery are canonical predicates; player and NPC model
+prompts receive only their permitted context slice. Evidence can move,
+transform, become contaminated, or be reinterpreted through validated commits.
+
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).

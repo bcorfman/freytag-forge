@@ -201,24 +201,24 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Implement an observer-aware resolver that distinguishes existence, location,
+- [x] Implement an observer-aware resolver that distinguishes existence, location,
   accessibility, perceptibility, observation, recognition, and interpretation.
-- Add canonical predicates and rules for concealment, exposure, environmental
+- [x] Add canonical predicates and rules for concealment, exposure, environmental
   conditions, traces, portals, sensory propagation, and discovery.
-- Build model context from the current observer's permitted slice only.
-- Add a speaker-specific context slice for NPC dialogue; global case truth
+- [x] Build model context from the current observer's permitted slice only.
+- [x] Add a speaker-specific context slice for NPC dialogue; global case truth
   must not be implicitly available to the speaker.
-- Allow evidence to move, be contaminated, be lost, be transformed, and be
+- [x] Allow evidence to move, be contaminated, be lost, be transformed, and be
   reinterpreted through validated facts.
 
 ### Tests and exit criteria
 
-- Hidden information is absent from player and unrelated-NPC prompts, rather
+- [x] Hidden information is absent from player and unrelated-NPC prompts, rather
   than merely discouraged in instructions.
-- Rain/lighting/trace and similar environmental facts persist coherently across
+- [x] Rain/lighting/trace and similar environmental facts persist coherently across
   adjacent rooms and perception modes.
-- Discovery, custody, and room placement cannot form contradictory states.
-- Required clues or equivalent paths remain reachable in every fixture.
+- [x] Discovery, custody, and room placement cannot form contradictory states.
+- [x] Required clues or equivalent paths remain reachable in every fixture.
 
 ## Phase 4 — Consequence and Affordance Engine
 
