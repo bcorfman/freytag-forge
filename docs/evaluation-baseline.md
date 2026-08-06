@@ -26,7 +26,7 @@ Recorded 2026-08-06 on the repository test environment:
 
 | Measure | Result |
 | --- | --- |
-| Full test suite | 534 passed in 30.18s, no warnings |
+| Full test suite | 557 passed in 55.59s, no warnings |
 | Branch coverage | 90.14% |
 | Local web ordinary turn | 10 stub-model calls; 268.9 ms |
 | Hosted-demo ordinary turn | 10 stub-model calls; 11.7 ms |

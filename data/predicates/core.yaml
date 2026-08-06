@@ -108,6 +108,16 @@ predicates:
     arg_types: [npc, actor, relationship]
     family: relationships
     commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: social_stance
+    arity: 3
+    arg_types: [npc, actor, stance]
+    family: relationships
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: character_condition
+    arity: 2
+    arg_types: [actor, condition]
+    family: world
+    commit_sources: [bootstrap, intent, rule, trigger, system]
   - name: task
     arity: 3
     arg_types: [actor, task, status]

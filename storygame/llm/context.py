@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from storygame.engine.affordances import build_affordance_context
 from storygame.engine.facts import (
     active_story_goal,
     assistant_name,
@@ -72,6 +73,7 @@ class NarrationContext:
     item_facts: tuple[dict, ...] = ()
     scene_facts: tuple[str, ...] = ()
     case_facts: tuple[dict, ...] = ()
+    affordances: dict = None
 
     def as_dict(self) -> dict:
         return {
@@ -104,6 +106,7 @@ class NarrationContext:
             "prefer_npc_reply": self.prefer_npc_reply,
             "scene_facts": list(self.scene_facts),
             "case_facts": list(self.case_facts),
+            "affordances": dict(self.affordances or {}),
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -152,9 +155,7 @@ def _summarize_recent_events(events: EventLog) -> tuple[dict, ...]:
 
 def _npc_locations(state: GameState) -> dict[str, str]:
     locations: dict[str, str] = {}
-    for npc_id, room_id in (
-        (fact[1], fact[2]) for fact in state.world_facts.query("npc_at", None, None)
-    ):
+    for npc_id, room_id in ((fact[1], fact[2]) for fact in state.world_facts.query("npc_at", None, None)):
         locations[npc_id] = room_id
     return locations
 
@@ -330,16 +331,12 @@ def build_narration_context(
         "participants": list(scene["participants"]),
     }
     scene_facts = tuple(
-        str(entry["text"]).strip()
-        for entry in player_context_facts(state)
-        if str(entry["text"]).strip()
+        str(entry["text"]).strip() for entry in player_context_facts(state) if str(entry["text"]).strip()
     )
 
     permitted_facts = observer_context_slice(state, "player")
     permitted_case_facts = tuple(
-        {"key": fact[1], "value": fact[2]}
-        for fact in permitted_facts
-        if fact[0] == "case_fact" and len(fact) == 3
+        {"key": fact[1], "value": fact[2]} for fact in permitted_facts if fact[0] == "case_fact" and len(fact) == 3
     )
     return NarrationContext(
         room_name=room.name,
@@ -373,4 +370,5 @@ def build_narration_context(
         prefer_npc_reply=bool(freeform_focus.get("prefer_npc_reply", False)),
         scene_facts=scene_facts,
         case_facts=permitted_case_facts,
+        affordances=build_affordance_context(state),
     )

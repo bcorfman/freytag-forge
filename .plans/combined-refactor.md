@@ -224,22 +224,22 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Add a deterministic post-direct-effect consequence pass before triggers and
+- [x] Add a deterministic post-direct-effect consequence pass before triggers and
   final dramatic policy.
-- Represent reusable causal rules for material/environmental properties,
+- [x] Represent reusable causal rules for material/environmental properties,
   access paths, character condition, social stance, and information exposure.
-- Keep universal rules separate from story-package rule data. Authoring models
+- [x] Keep universal rules separate from story-package rule data. Authoring models
   may propose rule packs offline, but executable rules require schemas,
   validation, and tests.
-- Generate affordance context from currently legal state; do not rely on
+- [x] Generate affordance context from currently legal state; do not rely on
   hard-coded story regexes or model memory of prior prose.
 
 ### Tests and exit criteria
 
-- Direct actions produce persistent, logically connected downstream facts.
-- Physical, social, investigative, and technical fixtures each exercise the
+- [x] Direct actions produce persistent, logically connected downstream facts.
+- [x] Physical, social, investigative, and technical fixtures each exercise the
   same consequence machinery.
-- Consequences are deterministic, independently testable, and do not require
+- [x] Consequences are deterministic, independently testable, and do not require
   prose extraction to become canonical.
 
 ## Phase 5 — Knowledge, NPC Roles, and Delegated Work

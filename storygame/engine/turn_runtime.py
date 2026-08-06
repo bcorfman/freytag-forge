@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from storygame.engine.consequences import apply_consequences
 from storygame.engine.facts import apply_fact_ops
 from storygame.engine.policies import PredicatePolicyRegistry, validate_proposed_fact_ops
 from storygame.engine.scene_state import refresh_scene_state
@@ -51,9 +52,7 @@ def _proposal_intent_summary(proposal: TurnProposal) -> str:
 def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict[str, Any]:  # noqa: ARG001
     registry = PredicatePolicyRegistry.for_genre(state.story_genre)
     state_delta = proposal["state_delta"]
-    proposed_ops = [
-        {"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert_ops"]
-    ]
+    proposed_ops = [{"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert_ops"]]
     proposed_ops.extend({"op": "retract", "fact": entry["fact"]} for entry in state_delta["retract_ops"])
     normalized_proposed_ops = validate_proposed_fact_ops(state, proposed_ops, registry=registry)
     validate_proposed_fact_ops(
@@ -79,6 +78,12 @@ def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict
     if explicit_ops:
         apply_fact_ops(next_state, explicit_ops)
     _apply_numeric_deltas(next_state, list(state_delta["numeric_delta"]))
+
+    if action_events or explicit_ops or state_delta["numeric_delta"]:
+        consequence_report = apply_consequences(next_state)
+        for event in consequence_report["events"]:
+            events.append(event)
+            next_state.append_event(event)
 
     trigger_specs = tuple(next_state.world_package.get("trigger_specs", ()))
     triggered_events = evaluate_triggers(next_state, trigger_specs, tuple(action_events))
