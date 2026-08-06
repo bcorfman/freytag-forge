@@ -28,7 +28,7 @@ from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
-from storygame.engine.facts import apply_fact_ops, item_driver, item_owner, rebuild_facts_from_legacy_views
+from storygame.engine.facts import apply_fact_ops, item_driver, item_owner
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
@@ -1149,10 +1149,26 @@ def run_turn(
     else:
         _preview_state, preview_events = apply_action(preturn_state, effective_action, rng)
         proposal_source_state = preturn_state.clone()
-        rebuild_facts_from_legacy_views(proposal_source_state)
         deterministic_proposal = parse_turn_proposal(
             _structured_turn_proposal_for_action(preturn_state, effective_action, preview_events)
         )
+        # The parser adapter still accepts legacy room construction. Promote
+        # only those visible additions into the same validated proposal path;
+        # semantic turn execution itself reads facts exclusively.
+        compatibility_ops = [
+            {"op": "assert", "fact": ("npc_at", npc_id, preturn_state.player.location)}
+            for npc_id in preturn_state.world.rooms[preturn_state.player.location].npc_ids
+            if npc_id in preturn_state.world.npcs
+            and not preturn_state.world_facts.holds("npc_at", npc_id, preturn_state.player.location)
+        ]
+        if effective_action.kind == ActionKind.TAKE:
+            compatibility_ops.extend(
+                {"op": "assert", "fact": ("room_item", preturn_state.player.location, item_id)}
+                for item_id in preturn_state.world.rooms[preturn_state.player.location].item_ids
+                if not preturn_state.world_facts.holds("room_item", preturn_state.player.location, item_id)
+            )
+        if compatibility_ops:
+            apply_fact_ops(proposal_source_state, compatibility_ops)
         runtime_result = execute_turn_proposal(proposal_source_state, deterministic_proposal, rng)
         next_state = runtime_result["state"]
         proposal_action_events = [event for event in runtime_result["events"] if event.type == "semantic_action"]

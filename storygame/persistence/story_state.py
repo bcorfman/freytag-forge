@@ -17,8 +17,11 @@ TURN_HISTORY_DIR = "turns"
 LOGGER = logging.getLogger(__name__)
 
 
-def _sorted_room_inventory(world_state) -> dict[str, list[str]]:
-    return {room_id: list(room.item_ids) for room_id, room in sorted(world_state.rooms.items())}
+def _sorted_room_inventory(state: GameState) -> dict[str, list[str]]:
+    return {
+        room_id: [fact[2] for fact in state.world_facts.query("room_item", room_id, None)]
+        for room_id in sorted(state.world.rooms)
+    }
 
 
 def build_story_state_payload(
@@ -44,11 +47,11 @@ def build_story_state_payload(
         "constraints": [],
         "open_threads": [],
         "player": {
-            "location": state.player.location,
-            "inventory": list(state.player.inventory),
-            "flags": dict(state.player.flags),
+            "location": next(fact[2] for fact in state.world_facts.query("at", "player", None)),
+            "inventory": [fact[2] for fact in state.world_facts.query("holding", "player", None)],
+            "flags": {fact[2]: True for fact in state.world_facts.query("flag", "player", None)},
         },
-        "room_items": _sorted_room_inventory(state.world),
+        "room_items": _sorted_room_inventory(state),
         "world_facts": [list(fact) for fact in state.world_facts.all()],
         "fact_metrics": dict(state.fact_metrics),
         "event_log": [event.to_summary() for event in state.event_log],
