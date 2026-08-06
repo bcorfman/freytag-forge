@@ -170,31 +170,31 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Add predicate-family policies for world truth, perception, knowledge,
+- [x] Add predicate-family policies for world truth, perception, knowledge,
   relationships, tasks, traces, and dramatic state.
-- Specify for each protected predicate: legal commit sources, invariants,
+- [x] Specify for each protected predicate: legal commit sources, invariants,
   normalization, and derived-update owner.
-- Evolve `TurnProposalV2` so it expresses player intent, references, candidate
+- [x] Evolve `TurnProposalV2` so it expresses player intent, references, candidate
   semantic effects, dialogue, narration claims, and beat hints in one typed
   contract.
-- Add deterministic intent-effect policies for movement, examination,
+- [x] Add deterministic intent-effect policies for movement, examination,
   communication, manipulation, transfer, concealment, assistance, opposition,
   and waiting. These are extensible policy families, not parser command names.
-- Resolve unique visible shorthand (for example, `take key`) deterministically
+- [x] Resolve unique visible shorthand (for example, `take key`) deterministically
   at the boundary; reject ambiguity with a story-appropriate clarification.
-- Load declarative core and genre predicate/rule packs through typed authoring
+- [x] Load declarative core and genre predicate/rule packs through typed authoring
   schemas. Rule precedence and conflicts must resolve deterministically before
   a package can be played.
 
 ### Tests and exit criteria
 
-- Unauthorized LLM state deltas are rejected without mutating facts.
-- Valid novel phrasings map to the same bounded intent effects as equivalent
+- [x] Unauthorized LLM state deltas are rejected without mutating facts.
+- [x] Valid novel phrasings map to the same bounded intent effects as equivalent
   phrasings without relying on a parser route.
-- Invalid or impossible attempts preserve truth and yield an LLM-authored,
+- [x] Invalid or impossible attempts preserve truth and yield an LLM-authored,
   fact-consistent outcome when a valid proposal is available.
-- No central conditional chain is required to add a policy family.
-- Invalid package schemas and rule conflicts fail before session creation, with
+- [x] No central conditional chain is required to add a policy family.
+- [x] Invalid package schemas and rule conflicts fail before session creation, with
   no partial state realization.
 
 ## Phase 3 — Perception, Discovery, and Information Boundaries

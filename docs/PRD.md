@@ -154,6 +154,15 @@ Current runtime generation is package-driven.
   - bounded numeric deltas,
   - and beat advancement hints.
 - Deterministic validation decides which parts are committed, revised, or rejected before the player-facing turn is finalized.
+- Phase 2 predicate policies validate proposal deltas by family (world,
+  perception, knowledge, relationships, tasks, traces, or dramatic), source,
+  arity, normalization, and invariant contract before commit.
+- `TurnProposalV2` carries player intent and references, candidate semantic
+  effects, dialogue, narration claims, state deltas, and beat hints together.
+- Intent-effect families cover movement, examination, communication,
+  manipulation, transfer, concealment, assistance, opposition, and waiting;
+  unique visible aliases are resolved at the boundary and ambiguous aliases
+  produce clarification rather than a guess.
 
 ```mermaid
 flowchart LR

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from storygame.engine.facts import player_location, room_items
+from storygame.engine.facts import player_location, room_items, room_paths
+from storygame.engine.policies import resolve_visible_aliases
 from storygame.engine.state import Event, GameState
 
 if TYPE_CHECKING:
@@ -20,6 +21,12 @@ def commit_semantic_action(state: GameState, action: SemanticActionProposal) -> 
         room_id = location_id or player_location(state)
         if actor_id != "player":
             raise ValueError("take_item currently supports player actor only.")
+        if item_id not in room_items(state, room_id):
+            matches = resolve_visible_aliases(state, item_id, kind="item")
+            if len(matches) > 1:
+                raise ValueError(f"Ambiguous visible item '{item_id}'; please clarify.")
+            if len(matches) == 1:
+                item_id = matches[0]
         if item_id not in room_items(state, room_id):
             raise ValueError(f"Item '{item_id}' is not available in room '{room_id}'.")
         return Event(
@@ -45,6 +52,8 @@ def commit_semantic_action(state: GameState, action: SemanticActionProposal) -> 
     if action_type == "move_to":
         if not location_id:
             raise ValueError("move_to requires a location_id.")
+        if location_id in room_paths(state, player_location(state)):
+            location_id = room_paths(state, player_location(state))[location_id]
         predicate = "at" if actor_id == "player" else "npc_at"
         fact = (predicate, actor_id, location_id)
         return Event(

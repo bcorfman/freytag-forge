@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from storygame.engine.facts import apply_fact_ops
+from storygame.engine.policies import PredicatePolicyRegistry, validate_proposed_fact_ops
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.semantic_actions import commit_semantic_action
 from storygame.engine.state import Event, GameState
@@ -48,6 +49,19 @@ def _proposal_intent_summary(proposal: TurnProposal) -> str:
 
 
 def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict[str, Any]:  # noqa: ARG001
+    registry = PredicatePolicyRegistry.for_genre(state.story_genre)
+    state_delta = proposal["state_delta"]
+    proposed_ops = [
+        {"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert_ops"]
+    ]
+    proposed_ops.extend({"op": "retract", "fact": entry["fact"]} for entry in state_delta["retract_ops"])
+    normalized_proposed_ops = validate_proposed_fact_ops(state, proposed_ops, registry=registry)
+    validate_proposed_fact_ops(
+        state,
+        [{"op": "assert", "fact": entry["fact"]} for entry in proposal["narration_claims"]],
+        registry=registry,
+    )
+
     next_state = state.clone()
     next_state.turn_index += 1
 
@@ -61,9 +75,7 @@ def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict
         events.append(event)
         next_state.append_event(event)
 
-    state_delta = proposal["state_delta"]
-    explicit_ops = [{"op": "assert", "fact": entry["fact"]} for entry in state_delta["assert_ops"]]
-    explicit_ops.extend({"op": "retract", "fact": entry["fact"]} for entry in state_delta["retract_ops"])
+    explicit_ops = list(normalized_proposed_ops)
     if explicit_ops:
         apply_fact_ops(next_state, explicit_ops)
     _apply_numeric_deltas(next_state, list(state_delta["numeric_delta"]))

@@ -140,7 +140,9 @@ class TurnProposal(TypedDict):
     npc_dialogue: NpcDialogueProposal
     narration: str
     semantic_actions: tuple[SemanticActionProposal, ...]
+    candidate_effects: tuple[SemanticActionProposal, ...]
     state_delta: StateDeltaProposal
+    narration_claims: tuple[FactMutation, ...]
     beat_hints: BeatHintsProposal
 
 
@@ -304,7 +306,9 @@ class _TurnProposalModel(BaseModel):
     npc_dialogue: _NpcDialogueProposalModel = _NpcDialogueProposalModel()
     narration: str = Field(default="", max_length=MAX_NARRATION_CHARS)
     semantic_actions: tuple[_SemanticActionProposalModel, ...] = Field(default=(), max_length=12)
+    candidate_effects: tuple[_SemanticActionProposalModel, ...] = Field(default=(), max_length=12)
     state_delta: _StateDeltaProposalModel
+    narration_claims: tuple[_FactMutationModel, ...] = Field(default=(), max_length=16)
     beat_hints: _BeatHintsProposalModel = _BeatHintsProposalModel()
 
     @model_validator(mode="before")
@@ -313,7 +317,10 @@ class _TurnProposalModel(BaseModel):
         if not isinstance(payload, dict):
             return payload
         if "player_intent" in payload or "mode" in payload:
-            return payload
+            normalized = dict(payload)
+            if not normalized.get("semantic_actions") and normalized.get("candidate_effects"):
+                normalized["semantic_actions"] = normalized["candidate_effects"]
+            return normalized
         legacy_intent = str(payload.get("intent", "")).strip()
         if not legacy_intent:
             return payload
@@ -351,7 +358,9 @@ class _TurnProposalModel(BaseModel):
                 "player_approach": "",
             },
             "semantic_actions": semantic_actions,
+            "candidate_effects": payload.get("candidate_effects", ()),
             "state_delta": payload.get("state_delta", {}),
+            "narration_claims": payload.get("narration_claims", ()),
             "npc_dialogue": {
                 "speaker_id": speaker_id,
                 "text": dialogue_text,
