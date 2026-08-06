@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from storygame.engine.interfaces import load_policy_bundle
 from storygame.plot.curves import normalize_session_length, select_curve_template
 from storygame.story_canon import DEFAULT_MYSTERY_DETECTIVE_NAME
 
@@ -288,6 +289,8 @@ def select_story_outline(
     path: Path | None = None,
 ) -> dict[str, Any]:
     normalized_genre = _normalize_genre(genre)
+    # Validate executable predicate/rule data before realizing any package.
+    load_policy_bundle(normalized_genre)
     normalized_tone = _normalize_tone(tone)
     stories = load_story_outlines(path)["stories"]
     candidates = [story for story in stories if story["genre"] == normalized_genre]

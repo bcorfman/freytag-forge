@@ -14,6 +14,19 @@ class PredicateDefinitionModel(BaseModel):
     arity: int = Field(ge=1)
     arg_types: tuple[str, ...] = ()
     invariants: tuple[str, ...] = ()
+    family: Literal[
+        "world",
+        "perception",
+        "knowledge",
+        "relationships",
+        "tasks",
+        "traces",
+        "dramatic",
+    ] = "world"
+    commit_sources: tuple[str, ...] = ("bootstrap", "rule", "intent", "trigger", "system")
+    normalization: Literal["trim", "identifier", "literal"] = "trim"
+    derived_update_owner: str = "fact_policy"
+    proposal_allowed: bool = True
 
 
 class PredicateSchemaModel(BaseModel):
@@ -60,6 +73,7 @@ class RuleModel(BaseModel):
     rule_id: str = Field(min_length=1)
     when: RuleWhenModel
     then: RuleThenModel
+    precedence: int = 0
 
 
 class RulePackModel(BaseModel):
@@ -177,6 +191,58 @@ def load_rule_pack(scope_or_genre: str) -> dict[str, Any]:
         path = _data_path() / "rules" / "genres" / f"{key}_rules.yaml"
     model = RulePackModel.model_validate(_load_yaml(path))
     return model.model_dump(mode="python", by_alias=True)
+
+
+def load_policy_bundle(genre: str = "") -> dict[str, Any]:
+    """Load and deterministically merge core and optional genre policy data."""
+    normalized_genre = genre.strip().lower()
+    core = PredicateSchemaModel.model_validate(
+        _load_yaml(_data_path() / "predicates" / "core.yaml")
+    )
+    predicates = list(core.predicates)
+    rules = list(
+        RulePackModel.model_validate(_load_yaml(_data_path() / "rules" / "core_rules.yaml")).rules
+    )
+    if normalized_genre:
+        predicate_path = _data_path() / "predicates" / "genres" / f"{normalized_genre}.yaml"
+        rule_path = _data_path() / "rules" / "genres" / f"{normalized_genre}_rules.yaml"
+        if predicate_path.exists():
+            predicates.extend(PredicateSchemaModel.model_validate(_load_yaml(predicate_path)).predicates)
+        if rule_path.exists():
+            rules.extend(RulePackModel.model_validate(_load_yaml(rule_path)).rules)
+
+    predicate_names = [predicate.name for predicate in predicates]
+    if len(predicate_names) != len(set(predicate_names)):
+        raise ValueError("Policy bundle contains duplicate predicate definitions.")
+    rule_ids = [rule.rule_id for rule in rules]
+    if len(rule_ids) != len(set(rule_ids)):
+        raise ValueError("Policy bundle contains duplicate rule identifiers.")
+
+    # A rule's precedence is the only legal tie-breaker. Same-precedence rules
+    # with identical conditions and opposite effects are a package error.
+    signatures: dict[tuple[object, ...], tuple[tuple[tuple[str, ...], ...], int, str]] = {}
+    for rule in rules:
+        condition = (
+            tuple((item.predicate, item.args) for item in rule.when.all),
+            tuple((item.predicate, item.args) for item in rule.when.not_conditions),
+        )
+        effects = (rule.then.assert_facts, rule.then.retract_facts)
+        key = (condition, rule.precedence)
+        previous = signatures.get(key)
+        if previous is not None and previous[0] != effects:
+            raise ValueError(
+                f"Conflicting rules '{previous[2]}' and '{rule.rule_id}' at precedence {rule.precedence}."
+            )
+        signatures[key] = (effects, rule.precedence, rule.rule_id)
+
+    predicates.sort(key=lambda predicate: predicate.name)
+    rules.sort(key=lambda rule: (-rule.precedence, rule.rule_id))
+    return {
+        "schema_version": core.schema_version,
+        "genre": normalized_genre,
+        "predicates": tuple(predicate.model_dump(mode="python", by_alias=True) for predicate in predicates),
+        "rules": tuple(rule.model_dump(mode="python", by_alias=True) for rule in rules),
+    }
 
 
 def load_npc_voice_cards() -> dict[str, Any]:
