@@ -6,6 +6,7 @@ from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.state import Room
 from storygame.engine.world import build_default_state
+from tests.fast_fixtures import clone_runtime_state
 
 
 def _reachable_direction_and_destination(state):
@@ -22,8 +23,8 @@ def _state_with_inventory_item(seed: int):
     return state, item_id
 
 
-def _state_with_direction(seed: int, direction: str, destination: str):
-    state = build_default_state(seed=seed, genre="adventure")
+def _state_with_direction(base_state, direction: str, destination: str):
+    state = clone_runtime_state(base_state)
     room_id = state.player.location
     state.world.rooms[destination] = Room(id=destination, name=destination.title(), description=f"{destination}.")
     state.world.rooms[room_id].exits = dict(state.world.rooms[room_id].exits)
@@ -79,9 +80,10 @@ def test_direction_aliases_map_deterministically_to_movement() -> None:
         ("down", "cellar", ("d", "down", "go down", "climb down")),
     )
 
+    base_state = build_default_state(seed=620, genre="adventure")
     for direction, destination, aliases in alias_expectations:
         for alias in aliases:
-            state = _state_with_direction(seed=620, direction=direction, destination=destination)
+            state = _state_with_direction(base_state, direction=direction, destination=destination)
             next_state, events = apply_action(state, parse_command(alias), Random(620))
             assert next_state.player.location == destination
             assert any(event.type == "move" for event in events)

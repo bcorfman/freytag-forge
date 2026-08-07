@@ -12,7 +12,12 @@ from typing import Any
 
 import pytest
 
+from storygame.test_metrics import begin_test, end_test
+
 TIERS = ("unit", "component", "integration", "evaluation")
+_HEALTH: dict[str, dict[str, Any]] = {}
+_SESSION_WALL = 0.0
+_SESSION_CPU = 0.0
 _EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_if_output_contract.py"}
 _INTEGRATION_FILES = {
     "test_cli.py", "test_cli_more.py", "test_savegame_sqlite.py", "test_web_api.py",
@@ -52,6 +57,40 @@ def _duplicate_definitions(path: Path) -> list[str]:
 def pytest_configure(config: pytest.Config) -> None:
     for tier in TIERS:
         config.addinivalue_line("markers", f"{tier}: test-suite performance tier")
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    global _SESSION_WALL, _SESSION_CPU
+    _SESSION_WALL = time.perf_counter()
+    _SESSION_CPU = time.process_time()
+
+
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    begin_test()
+    _HEALTH[item.nodeid] = {"setup_seconds": time.perf_counter()}
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item: pytest.Item) -> Any:
+    record = _HEALTH[item.nodeid]
+    setup_started = float(record["setup_seconds"])
+    record["setup_seconds"] = time.perf_counter() - setup_started
+    call_started = time.perf_counter()
+    outcome = yield
+    record["call_seconds"] = time.perf_counter() - call_started
+    outcome.get_result()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> Any:
+    record = _HEALTH[item.nodeid]
+    record["teardown_started"] = time.perf_counter()
+    outcome = yield
+    teardown_started = record.pop("teardown_started", None)
+    if teardown_started is not None:
+        record["teardown_seconds"] = time.perf_counter() - float(teardown_started)
+    record["runtime"] = end_test()
+    outcome.get_result()
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
@@ -125,7 +164,14 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         "tests": len(records),
         "tiers": Counter(),
         "construction_counts": Counter(),
+        "runtime_counts": Counter(),
+        "timing": {
+            "wall_seconds": time.perf_counter() - _SESSION_WALL,
+            "cpu_seconds": time.process_time() - _SESSION_CPU,
+        },
         "slowest": [],
+        "top20_by_call_time": [],
+        "top20_by_setup_time": [],
     }
     timings: list[dict[str, Any]] = []
     for item in records:
@@ -134,10 +180,38 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         health = getattr(item, "_test_health", {})
         for name, count in health.get("constructions", {}).items():
             summary["construction_counts"][name] += count
-        timings.append({"nodeid": item.nodeid, "tier": tier, "seconds": health.get("seconds", 0.0)})
+        measured = _HEALTH.get(item.nodeid, {})
+        runtime = measured.get("runtime", {})
+        for name, count in runtime.items():
+            if "." not in name:
+                summary["runtime_counts"][name] += count
+        timings.append(
+            {
+                "nodeid": item.nodeid,
+                "tier": tier,
+                "setup_seconds": measured.get("setup_seconds", 0.0),
+                "call_seconds": measured.get("call_seconds", 0.0),
+                "teardown_seconds": measured.get("teardown_seconds", 0.0),
+                "seconds": health.get("seconds", 0.0),
+                "constructions": health.get("constructions", {}),
+                "runtime": {name: count for name, count in runtime.items() if "." not in name},
+                "commands": [
+                    name.removeprefix("complete_turn.command.")
+                    for name in runtime
+                    if name.startswith("complete_turn.command.")
+                ],
+            }
+        )
     summary["tiers"] = dict(summary["tiers"])
     summary["construction_counts"] = dict(summary["construction_counts"])
+    summary["runtime_counts"] = dict(summary["runtime_counts"])
     summary["slowest"] = sorted(timings, key=lambda row: row["seconds"], reverse=True)[:50]
+    summary["top20_by_call_time"] = sorted(
+        timings, key=lambda row: row["call_seconds"], reverse=True
+    )[:20]
+    summary["top20_by_setup_time"] = sorted(
+        timings, key=lambda row: row["setup_seconds"], reverse=True
+    )[:20]
     target = Path(report_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")

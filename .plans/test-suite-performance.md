@@ -1,318 +1,242 @@
-# Test Suite Performance and Signal Plan
+# Test-suite performance plan
 
-## Objective
+## Problem statement
 
-Reduce the GitHub Actions test runtime from the current 569-test baseline of
-approximately 140 seconds while preserving behavioral confidence, generalized
-cross-genre coverage, persistence/integrity guarantees, and the project-wide
-90% coverage requirement.
+The previous plan optimized the shape of the test suite but did not optimize
+the workload that GitHub Actions actually executes. Removing nine tests and
+removing `--durations=50` changed the linked CI result from 140.57s for 569
+tests to 135.37s for 560 tests. That is only a 3.7% improvement. The target
+is therefore not met.
 
-The central diagnosis is that many tests described as unit tests repeatedly
-execute the complete runtime stack. The suite currently contains approximately
-333 `build_default_state()` calls, 89 `run_turn()` calls, 36 FastAPI client
-constructions, and 20 SQLite store constructions. The optimization strategy
-is to move assertions down to the narrowest useful boundary and retain a
-smaller number of explicit integration tests for orchestration contracts.
+The authoritative performance metric is the elapsed time printed by the
+required `pytest` step on the existing `ubuntu-latest` runner class. Local
+timings are useful for diagnosis, but cannot be used to claim the CI target.
+Test count, source-level call counts, and coverage are guardrails; none is a
+proxy for elapsed time.
 
-## Baseline and guardrails
+## Current measured baseline
 
-Record before each phase:
+Measured from Actions run `31143065335`, job `92756810662`, on 2026-08-07:
 
-- total test count and pass/fail result;
-- wall-clock time with and without coverage;
-- slowest 20 tests from `--durations`;
-- statement and branch coverage;
-- number of `build_default_state`, `run_turn`, `TestClient`, and
-  `SqliteSaveStore` calls in tests;
-- collection count, including duplicate or overwritten test definitions.
+| Measure | Current result |
+| --- | ---: |
+| Collected/passing tests | 560 |
+| Required coverage | 90.01% |
+| Pytest step on GitHub Actions | 135.37s |
+| Whole job | 146–147s |
+| Local no-coverage run | 25.21s |
+| Local coverage run | 69.95s |
+| Source-level `build_default_state()` references | 312 |
+| Source-level `run_turn()` references | 68 |
+| Source-level `TestClient` constructions | 32 |
+| Source-level SQLite store constructions | 23 |
 
-Use the WSL-safe invocation documented in `AGENTS.md`:
+The CI command currently is:
 
 ```text
-TMPDIR=/tmp uv run pytest -q
+TMPDIR=/tmp uv run pytest -q --cov-context=test \
+  --expected-test-count=561 \
+  --tier-report=artifacts/test-suite-health.json
 ```
 
-Do not reduce coverage by removing production modules from coverage scope,
-weakening `--cov-fail-under`, or replacing behavior assertions with snapshots
-that merely exercise code. Facts remain canonical, web and hosted-demo
-adapters remain separate, and ordinary gameplay behavior remains proposal-first.
+`--durations=50` is a reporting option and must not be treated as a runtime
+optimization. The prior run with and without it was effectively identical.
 
-## Target test architecture
+## Non-negotiable guardrails
 
-Use four explicit tiers:
+- Run the full required suite with `TMPDIR=/tmp uv run pytest -q` before
+  merging performance work.
+- Preserve at least 90% project coverage and all existing coverage scope.
+- Preserve cross-genre evaluation, persistence/RNG replay, artifact
+  integrity, fact authority, NPC speaker/observer boundaries, and hosted
+  fail-closed behavior.
+- Do not make the PR check faster by omitting tests, weakening assertions,
+  disabling coverage, or moving required tests to an unrequired job.
+- Keep `storygame.web` and `storygame.web_demo` independently tested.
+- Every timing claim must include: commit SHA, runner/job URL, exact command,
+  test count, coverage mode, and pytest elapsed time.
+- Repeat a CI benchmark at least twice before accepting a change; use the
+  median and retain both raw results.
 
-1. **Unit** — pure parser, policy, contract, formatter, fact, rule, and
-   serializer tests with tiny synthetic inputs and no full application startup.
-2. **Component** — one subsystem plus injected fakes, such as the freeform
-   policy, narrator boundary, persistence adapter, or renderer.
-3. **Integration** — a small number of real `run_turn`, SQLite, web, and
-   story-director flows proving composition and adapter contracts.
-4. **Evaluation/full** — cross-genre deterministic replay, artifact integrity,
-   local/hosted parity, and longer scenario tests.
+## Measurement harness (must be completed before more deletion)
 
-The default PR command should run unit, component, and a compact integration
-smoke set. The full evaluation tier should remain available and run in CI on
-the main branch or as a dedicated required job according to repository policy.
-No behavior is removed solely because it is moved to a slower tier.
+### Phase 0 — Establish the actual cost model
 
-## TDD guards against regression
+- [x] Add a CI benchmark artifact containing, for each test:
+  node ID, tier, setup time, call time, teardown time, and whether it creates
+  a full world, `TestClient`, SQLite store, or calls `run_turn()`.
+- [x] Record separate timings for these local commands on the same commit:
 
-Every test-suite performance change follows this loop:
+  ```text
+  TMPDIR=/tmp uv run pytest -q --no-cov
+  TMPDIR=/tmp uv run pytest -q --cov
+  TMPDIR=/tmp uv run pytest -q --cov-context=test
+  TMPDIR=/tmp uv run pytest -q --cov --tier-report=/tmp/health.json
+  ```
 
-1. Write a failing test or guard that expresses the intended behavior and
-   performance boundary.
-2. Make the smallest fixture, production, or test change needed to satisfy it.
-3. Run the narrow test first, then the relevant tier, then the full suite.
-4. Review timing, coverage, collection count, and fixture-use deltas before
-   merging.
+- [ ] Run the same four variants in a disposable Actions benchmark job and
+  compare them with the current required job. This identifies whether the
+  cost is coverage, the health hook, test execution, or runner slowdown.
+- [x] Add a machine-readable timing summary to the health artifact. Do not
+  infer total runtime from the sum of per-test durations without labeling
+  setup/collection/teardown overhead.
+- [x] Capture CPU time and wall time for the pytest process. If wall time is
+  much larger, investigate runner contention or process/file-system waits
+  before changing tests.
+- [x] Produce a ranked table of the top 20 tests by call time and by setup
+  time. The table must include the number of full-world builds and turn
+  executions attributable to each test.
+- [x] Keep collection-count and duplicate-definition guards.
+- [x] Keep tier assignment and health-report generation.
 
-Add these guards during the first implementation phase and keep them in the
-repository:
+### Phase 0 exit criteria
 
-- **Tier enforcement:** configure markers and CI commands so unit tests cannot
-  silently depend on full web apps, SQLite stores, outbound transports, or
-  full-world builders without being marked component/integration/evaluation.
-- **Collection integrity:** add a collection-time check that fails on duplicate
-  test function names, unexpected collection-count changes, or tests collected
-  outside the declared tier paths.
-- **Fixture budgets:** add a test-only counter or instrumentation hook for
-  `build_default_state()`, `run_turn()`, `TestClient`, and SQLite construction.
-  Enforce budgets for the unit/component tiers and report full-suite counts as
-  CI artifacts.
-- **Per-test timing budgets:** establish warning and failure thresholds for
-  unit/component tests, with a deliberately higher budget for integration and
-  evaluation tests. A new slow test must be explicitly marked and justified.
-- **Coverage-context review:** run coverage with test contexts and fail or
-  require review when a change adds many tests but contributes no new covered
-  lines, unless the tests are documented contract, negative-path, or
-  cross-boundary coverage.
-- **Mutation guards:** periodically mutate selected validators, fact commits,
-  speaker checks, persistence checks, and hosted fail-closed branches. The
-  retained suite must detect those mutations before tests are deleted or
-  consolidated.
-- **Fixture isolation:** test that shared package fixtures are immutable and
-  runtime state is cloned/reset per test. Never solve performance by sharing
-  mutable canonical facts across tests.
-- **Integration quota:** keep a small, explicit budget for tests invoking the
-  complete `run_turn()` or web orchestration path. New coverage should prefer
-  the narrowest boundary that proves the behavior.
-- **CI trend tracking:** publish test count, tier counts, total duration,
-  slowest tests, coverage, and fixture-construction counts. Fail on a sustained
-  regression rather than allowing gradual accumulation.
-- **Fast-path developer command:** maintain a documented command for the unit
-  and component tiers, and require it in pre-commit or pull-request checks so
-  contributors receive feedback before the full suite runs.
+- [ ] There is a reproducible top-cost list from the actual CI command.
+- [ ] The cost of `--cov-context=test`, the health hook, collection, and test
+  bodies is measured separately.
+- [ ] At least two CI runs establish a baseline within an explicitly recorded
+  variance range.
+- [ ] No test is deleted or merely moved to another tier based only on local
+  timing or source-reference counts.
 
-These guards must themselves be cheap, deterministic, and independent of
-network/model credentials. They enforce test design and suite health; they do
-not weaken behavioral coverage requirements.
+## Workload reduction
 
-## Phase 0 — Instrumentation and test inventory
+### Phase 1 — Remove repeated full-world construction
 
-### Work
+The first implementation target is repeated construction, not test count.
+For each top-cost test, replace only the unnecessary portion with injected
+minimal state/package fixtures. A test may retain the full builder when world
+realization, canonical identity, cross-genre data, or runtime wiring is the
+behavior under test.
 
-- [x] Add or standardize markers for `unit`, `component`, `integration`, and
-  `evaluation` without changing test behavior.
-- [x] Add a documented timing command using `--durations=50` and a repeatable
-  collection command.
-- [x] Use coverage contexts to identify tests that add no uniquely covered
-  production lines, while treating that result as a review signal rather than
-  an automatic deletion rule.
-- [x] Detect duplicate test function names during collection or linting. Fix the
-  duplicate `test_run_turn_fails_closed_for_parroting_npc_dialogue` definition
-  in `tests/test_cli.py`, where one definition currently overwrites the other.
-- [x] Produce a table mapping each test file to its tier, runtime dependencies,
-  number of full-world builds, and intended contract.
-- [x] Write the first failing guard tests for duplicate names, tier markers,
-  fixture-construction budgets, and per-test timing reporting.
+- [ ] For every top-20 full-world test, document why the full world is needed;
+  otherwise migrate it to `tests/fast_fixtures.py` or a narrower factory.
+- [ ] Convert pure parser, fact, policy, contract, context, formatter, and
+  renderer assertions to tiny synthetic state.
+- [ ] Convert serializer payload/normalization cases to injected state
+  factories; retain real SQLite round trips as integration tests.
+- [ ] Ensure fixture cloning is immutable-per-test and cannot share facts or
+  RNG state across tests.
+- [x] Add a runtime counter, not just an AST/source counter, for calls to
+  `build_default_state()` and report it by tier.
+- [ ] Reduce full-world builds from 312 source references to fewer than 150
+  actual invocations in the complete suite, then verify the measured pytest
+  time changed on Actions.
+- [ ] Keep unit/component tests free of SQLite, web clients, and complete
+  turn orchestration unless an explicit exception is recorded.
 
-### Exit criteria
+### Phase 1 exit criteria
 
-- [x] Baseline is recorded locally and in CI-compatible form.
-- [x] Every test has an explicit tier or a documented exception.
-- [x] Collection reports the expected test count with no silently overwritten tests.
-- [x] Coverage-context output is available for later deletion/consolidation review.
-- TDD guards fail on a deliberately introduced duplicate name or an unmarked
-  full-world/unit-tier dependency.
+- [ ] Actual full-world invocations are below 150.
+- [ ] The top-20 report shows a measurable reduction in setup/call time.
+- [ ] Two CI benchmark runs show at least a 15% reduction from the 135.37s
+  baseline, or the benchmark identifies a non-test-execution bottleneck that
+  must be addressed next.
+- [ ] Coverage and all guardrails pass.
 
-## Phase 1 — Build fast fixtures and narrow pure tests
+### Phase 2 — Reduce orchestration and replay work
 
-### Work
+The previous Phase 2 counted fewer CLI tests but left expensive orchestration
+in many remaining tests. This phase must reduce complete turn work itself.
 
-- [x] Add reusable factories for tiny rooms, actors, items, facts, proposals,
-  events, and minimal `GameState` instances.
-- [x] Add a fixture for an immutable authoring/world package and clone it when a
-  mutable runtime state is required; never share mutable facts between tests.
-- Replace `build_default_state()` in parser, policy, formatter, contract,
-  context, and renderer tests where the default world is not the behavior under
-  test.
-- Keep `build_default_state()` only where package realization, canonical
-  identity, cross-genre data, or full runtime wiring is part of the assertion.
-- Inject narrators, directors, coherence gates, memory stores, and persistence
-  adapters through existing Protocols rather than constructing real services.
-- [x] Add tests proving the fast fixtures preserve fact invariants and cannot leak
-  mutations between test cases.
+- [x] Add a runtime counter for `run_turn()` and record commands/turns per
+  test, not only references in source.
+- [ ] For each test invoking `run_turn()`, classify it as one of:
+  proposal/commit contract, deterministic affordance, dialogue boundary,
+  recovery/confirmation, output contract, persistence, or evaluation.
+- [ ] Retain one integration proof per distinct orchestration contract and
+  move wording/normalization matrices to direct policy tests.
+- [ ] Parameterize equivalent inputs only when the parameter cases share one
+  fixture setup and do not multiply complete-world/replay work unnecessarily.
+- [ ] Shorten replay scripts to the minimum turns needed to prove the stated
+  invariant. Use direct replay-signature tests for determinism and one real
+  save/load continuation test for composition.
+- [ ] Keep one compact cross-genre smoke matrix and avoid repeating the same
+  long command sequence for every genre unless the genre-specific behavior is
+  the assertion.
+- [ ] Reduce actual complete `run_turn()` invocations below 40 and document
+  every remaining integration/evaluation invocation.
+- [ ] Use mutation or targeted fault-injection checks before deleting or
+  merging tests covering validators, fact commits, persistence integrity,
+  speaker checks, and fail-closed behavior.
 
-### Priority files
+### Phase 2 exit criteria
 
-- `tests/test_freeform_unit.py`
-- `tests/test_cli.py` pure helper sections
-- `tests/test_llm_context.py`
-- `tests/test_narration_state.py`
-- `tests/test_world_presentation.py`
-- `tests/test_world_builder.py`
-- `tests/test_adapters.py`
+- [ ] Actual complete-turn invocations are below 40.
+- [ ] The top-20 CI report no longer contains redundant replay/orchestration
+  cases.
+- [ ] Two CI benchmark runs show at least a 25% reduction from baseline, or
+  the remaining cost is demonstrated to be outside test execution.
+- [ ] No coverage or behavioral guardrail regresses.
 
-### Exit criteria
+### Phase 3 — Reduce web, SQLite, and adapter setup cost
 
-- Full-world construction calls decrease substantially, with a target below
-  150 calls across the suite.
-- Unit/component tests do not create SQLite files, FastAPI clients, or full
-  story-agent orchestration unless explicitly marked otherwise.
-- Coverage remains at least 90%, including branches.
-- The unit/component subset is measurably faster than the current full suite.
-- Unit/component fixture budgets and timing thresholds pass in CI.
-
-## Phase 2 — Consolidate freeform and CLI coverage
-
-### Work
-
-- [x] Move semantic normalization, dialogue-scope, speaker validation, fallback,
-  and fact-operation matrices to direct freeform policy tests.
-- [x] Parameterize equivalent input families instead of repeating full `run_turn`
-  calls for each wording variant.
-- [x] Retain a compact CLI integration set covering:
-  - one ordinary proposal-first turn;
-  - one deterministic movement/inventory affordance;
-  - one addressed-NPC failure and one valid reply;
-  - one high-impact confirmation/replan path;
-  - one output/editor path;
-  - one save/load path.
-- [x] Merge or remove overlapping CLI tests that assert the same output through
-  different narrators or equivalent command phrasings.
-- [x] Preserve explicit regression tests for wrong-speaker, prompt-parroting,
-  protected-knowledge leakage, off-scene targeting, and uncommitted narration.
-
-### Exit criteria
-
-- [x] `tests/test_cli.py` is no longer the broadest duplicate integration harness.
-- [x] `run_turn()` calls in the CLI harness are reduced from approximately 89 toward
-  a target below 40, with each remaining call tied to a distinct orchestration
-  contract.
-- [x] All retained behavior categories have at least one direct unit test and one
-  integration test only where composition matters.
-
-## Phase 3 — Reduce persistence and replay cost
-
-### Work
-
-- [x] Separate serializer/deserializer tests from SQLite integration tests.
-- [x] Keep one focused SQLite round-trip test for facts, projections, RNG, and
-  integrity metadata; cover individual normalization branches directly with
-  payloads rather than rebuilding worlds for every case.
-- [x] Refactor the long post-load replay test into:
-  - a short save/load continuation test;
-  - a pure replay-signature determinism test;
-  - one artifact-writing/integrity test.
-- Reduce repeated command sequences in the four evaluation fixtures. Validate
-  all genres with cheap package/schema assertions, then reserve complete
-  save/load/replay flows for a representative fixture plus a compact
-  cross-genre smoke matrix.
-- [x] Retain the full four-fixture replay matrix in the evaluation/full tier.
-
-### Exit criteria
-
-- [x] The SQLite/replay cluster no longer dominates the slowest-test report.
-- [x] Evaluation tests continue to cover mystery, fantasy, science-fiction, and
-  relationship-driven packages.
-- [x] Save/load, replay, artifact hashes, RNG state, and fact authority remain
-  tested through explicit integration contracts.
-
-## Phase 4 — Consolidate rendering, world presentation, and coherence tests
-
-### Work
-
-- Test room-block formatting and line-shortening directly with small synthetic
-  room/context values.
-- Retain one assembled CLI output test proving room ordering, narration
-  precedence, and debug separation.
-- Review `test_if_output_contract.py`, `test_story_coherence.py`, and
-  `test_world_presentation.py` together; merge tests that traverse the same
-  renderer and differ only in redundant prose assertions.
-- Keep distinct tests for fact-backed identity, room transitions, assistant
-  following, visible-item aliases, and protected/internal debug content.
-
-### Exit criteria
-
-- Rendering tests no longer rebuild the full default world for every formatting
-  assertion.
-- Coverage remains stable while the number of broad orchestration traversals
-  falls.
-- Output-contract tests assert externally meaningful contracts rather than
-  implementation-path repetition.
-
-## Phase 5 — Consolidate web and adapter tests
-
-### Work
-
-- Build shared test helpers for local and hosted app construction, with injected
-  fake runtime/narrator/persistence dependencies.
-- Test shared web behavior below the `storygame.web` / `storygame.web_demo`
-  adapter boundary once, then retain adapter-specific tests for credentials,
-  hosted fail-closed statuses, quotas, rate limits, CORS, and backend selection.
-- Keep one local/hosted parity integration test and one representative session
+- [ ] Count runtime `TestClient` and SQLite constructions per test.
+- [ ] Test shared request/response behavior below the adapter boundary with
+  injected fakes; retain adapter-specific credential, quota, rate-limit,
+  backend, and fail-closed tests.
+- [ ] Retain one local/hosted parity integration test and one representative
   lifecycle test per surface.
-- Parameterize adapter response/error/retry matrices. Test request building,
-  payload parsing, retry classification, and error mapping directly; retain
-  only a small number of end-to-end adapter calls with mocked transport.
-- Avoid creating a new temporary SQLite database and FastAPI `TestClient` for
-  every pure response-shaping test.
+- [ ] Reuse only immutable configuration and factories; never share mutable
+  application state between tests.
+- [ ] Reduce actual client and store constructions by at least 50% without
+  weakening isolation.
 
-### Exit criteria
+### Phase 3 exit criteria
 
-- `TestClient` constructions and SQLite setup are materially reduced from the
-  current 36 and 20 instances.
-- Local and hosted deployment boundaries remain independently tested.
-- Hosted failures still fail closed and do not require local OpenAI credentials.
+- [ ] Web/SQLite setup is no longer in the top-20 cost list except for tests
+  whose boundary explicitly requires it.
+- [ ] Two CI benchmark runs show at least a 30% reduction from baseline.
+- [ ] Local and hosted boundaries and all persistence integrity guarantees
+  remain covered.
 
-## Phase 6 — Coverage-driven deletion and validation
+## CI execution design
 
-### Work
+### Phase 4 — Make the required CI job observable and efficient
 
-- Re-run coverage contexts and classify each low-unique-coverage test as:
-  - behaviorally unique and retained;
-  - duplicate and deleted;
-  - merged into a parameterized or higher-level test; or
-  - intentionally retained as an integration/evaluation contract.
-- Use mutation testing or targeted fault injection on candidate deletions to
-  ensure assertions detect meaningful regressions.
-- Remove obsolete helpers, duplicate fixtures, and tests made redundant by
-  lower-level coverage.
-- Update test documentation and CI commands to make tier boundaries explicit.
-- Run the TDD guards against the final suite and add a small intentional
-  regression test to verify each guard reports the expected failure mode.
-- Run the full required command with `TMPDIR=/tmp`, including coverage and the
-  complete evaluation tier.
+- [ ] Keep the full required coverage suite in the required job.
+- [ ] Add a separate fast unit/component job for pull-request feedback; do
+  not present it as a replacement for the full suite.
+- [ ] Cache uv dependencies using the lockfile and record cache hit/miss.
+- [ ] Compare `--cov-context=test` with ordinary coverage in Phase 0. If test
+  contexts are materially expensive, run them in a dedicated reporting job
+  while keeping ordinary coverage in the required gate; document the tradeoff.
+- [ ] Do not add `--durations` to the normal command unless its measured
+  overhead is negligible; expose it as an opt-in diagnostic command.
+- [ ] Upload the timing/health artifact even on failure.
+- [ ] Track the required job's median duration over five runs, not one run.
 
-### Final success targets
+### Phase 4 exit criteria
 
-- PR/default test tier: under 30 seconds locally where practical.
-- Full suite: at least 40% faster than the current CI baseline, with a target
-  near or below 85 seconds on the existing GitHub Actions runner class.
-- 90% minimum project coverage preserved, with no coverage-scope exclusions
-  added to hide untested production code.
-- No loss of cross-genre, persistence, artifact-integrity, epistemic-boundary,
-  NPC-role, or hosted fail-closed regression coverage.
-- No duplicate test definitions and no unexplained collection-count changes.
-- New tests cannot increase the unit/component runtime or full-world fixture
-  budget without an explicit tier change and review.
+- [ ] Required CI remains behaviorally equivalent and coverage-gated.
+- [ ] Fast feedback and full validation jobs are clearly named and documented.
+- [ ] The required job meets the final timing target on the same runner class.
 
-## Review checklist for every deletion or merge
+## Final success criteria
 
-- What production behavior does this test uniquely assert?
-- Is that behavior already asserted at a narrower boundary?
-- Does the replacement preserve negative/error-path coverage?
-- Does it preserve fact-authority and observer/speaker-boundary guarantees?
-- Does it preserve at least one integration proof that the components compose?
-- Does coverage stay above 90% without broadening exclusions?
-- Does the change reduce runtime or fixture setup measurably?
+- [ ] 560 or fewer tests only if every removed case is covered by a documented
+  narrower contract or mutation check; test count alone is not a target.
+- [ ] At least 40% reduction from the 135.37s CI pytest baseline, targeting
+  85s or less on the existing GitHub Actions runner class.
+- [ ] 90% minimum project coverage, unchanged coverage scope.
+- [ ] Actual full-world builds below 150 and actual complete-turn calls below
+  40, with both counts reported in CI artifacts.
+- [ ] No unclassified test in the top-20 timing report exceeds the approved
+  tier budget.
+- [ ] Five-run median, not a best-case run, satisfies the target.
+- [ ] Documentation reports CI measurements separately from local measurements
+  and names the exact commit/run used.
+
+## Required review record for each performance change
+
+For every change, record:
+
+1. Which expensive operation was removed or shortened.
+2. Which behavior contract still proves it.
+3. Before/after runtime on Actions using the exact required command.
+4. Before/after runtime counts for world builds, turns, clients, and stores.
+5. Coverage and mutation/fault-injection evidence.
+6. Any variance caused by runner scheduling or dependency/cache state.
+
+If the measured CI runtime does not improve, the phase is incomplete even if
+the test count, source lines, or local timing improves.

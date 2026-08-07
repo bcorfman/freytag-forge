@@ -1,0 +1,38 @@
+name: test-suite benchmark
+
+on:
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: no-coverage
+            args: "--no-cov"
+          - name: coverage
+            args: "--cov"
+          - name: coverage-context
+            args: "--cov-context=test"
+          - name: coverage-health
+            args: "--cov --tier-report=artifacts/health.json"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync
+      - name: Run benchmark variant
+        run: >-
+          TMPDIR=/tmp uv run pytest -q ${{ matrix.args }}
+          --expected-test-count=561
+          --tier-report=artifacts/${{ matrix.name }}.json
+      - name: Upload benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-suite-benchmark-${{ matrix.name }}
+          path: artifacts/

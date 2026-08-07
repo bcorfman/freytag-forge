@@ -25,6 +25,7 @@ from storygame.engine.facts import (
 from storygame.engine.state import Event, EventLog, GameState
 from storygame.engine.world import build_default_state, build_state_from_bootstrap_plan
 from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
+from storygame.test_metrics import record
 
 
 def _encode_rng(rng: Random) -> str:
@@ -211,6 +212,7 @@ class SqliteSaveStore:
         path: str | Path = "runs/storygame_saves.sqlite",
         check_same_thread: bool = True,
     ) -> None:
+        record("sqlite_store")
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.path, check_same_thread=check_same_thread)

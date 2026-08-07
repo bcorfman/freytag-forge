@@ -15,6 +15,7 @@ from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
 from storygame.story_canon import canonical_detective_name
+from storygame.test_metrics import record
 
 
 def _humanize_identifier(value: str) -> str:
@@ -309,6 +310,7 @@ def build_default_state(
     session_length: int | str = "medium",
     tone: str = "neutral",
 ) -> GameState:
+    record("full_world_build", genre=genre)
     package = build_world_package(
         genre=genre,
         session_length=session_length,

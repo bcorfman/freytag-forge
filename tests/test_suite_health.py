@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from storygame.test_metrics import begin_test, end_test, record, reset_totals, totals
 from tests.fast_fixtures import clone_runtime_state, make_tiny_package, make_tiny_state
 
 
@@ -38,6 +39,21 @@ def test_fast_runtime_fixture_is_fact_backed_and_isolated() -> None:
     assert first.world.rooms[package.room_id].item_ids == (package.item_id,)
     assert not first.world_facts.holds("flag", "player", "changed")
     assert first.world_facts.holds("room_item", package.room_id, package.item_id)
+
+
+def test_runtime_metrics_are_scoped_and_keep_process_totals() -> None:
+    reset_totals()
+    begin_test()
+    record("complete_turn", command="look")
+    record("full_world_build", genre="fixture")
+    assert end_test() == {
+        "complete_turn": 1,
+        "complete_turn.command.look": 1,
+        "full_world_build": 1,
+        "full_world_build.genre.fixture": 1,
+    }
+    assert totals() == {"complete_turn": 1, "full_world_build": 1}
+    assert end_test() == {}
 
 
 @pytest.mark.parametrize("tier", ("unit", "component", "integration", "evaluation"))

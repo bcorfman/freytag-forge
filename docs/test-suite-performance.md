@@ -29,9 +29,18 @@ Serializer/deserializer contract tests use the injected `state_factory` seam in
 ## Phase 0 measurement
 
 The post-guard baseline was 577 tests. After the Phase 2–3 consolidation, the
-current suite is 560 tests; the pre-change run was 79.14s with coverage and
-28.01s without coverage. The current source-level health report counts 326
-full-world builder calls, 68 `run_turn` calls, 32 web clients, and 23 SQLite
-store constructions. The CLI module itself now has 39 direct `run_turn`
-calls; remaining calls belong to distinct output, presentation, memory, and
-evaluation integration contracts.
+current suite is 561 tests. Current local measurements are 25.21s without
+coverage, 69.95s with ordinary coverage, 74.55s with test contexts, and
+69.95s with the health report. The current source-level health report
+counts 312 full-world builder calls, 68 `run_turn` calls, 32 web clients, and
+23 SQLite store constructions. The first runtime-instrumented local
+no-coverage run records 456 full-world builds, 157 complete turns, and 70
+SQLite-store constructions. The CLI module itself now has 39 direct
+`run_turn` calls; remaining calls belong to distinct output, presentation,
+memory, and evaluation integration contracts.
+
+The authoritative CI measurement is the required pytest step, not the local
+run. Actions run 31143065335/job 92756810662 took 135.37s for pytest and 560
+passing tests. The immediately preceding 569-test run took 140.57s, so the
+consolidation delivered only a 3.7% CI reduction. The 40% reduction target
+remains open.
