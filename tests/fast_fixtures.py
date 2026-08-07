@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
+from random import Random
 from typing import Any
 
 from storygame.engine.facts import initialize_world_facts
@@ -19,6 +20,25 @@ class TinyPackage:
     room_id: str = "room"
     item_id: str = "key"
     npc_id: str = "guide"
+
+
+class InMemorySaveStore:
+    """Per-test save boundary for adapter tests; never shared between tests."""
+
+    def __init__(self) -> None:
+        self._slots: dict[str, tuple[GameState, object]] = {}
+
+    def save_run(self, slot: str, state: GameState, rng: Random, **_kwargs: Any) -> None:
+        self._slots[slot] = (deepcopy(state), rng.getstate())
+
+    def load_run(self, slot: str) -> tuple[GameState, Random]:
+        state, rng_state = self._slots[slot]
+        rng = Random()
+        rng.setstate(rng_state)
+        return deepcopy(state), rng
+
+    def close(self) -> None:
+        self._slots.clear()
 
 
 def make_tiny_package(**overrides: str) -> TinyPackage:

@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from storygame.web import create_app
 from storygame.web_demo import create_demo_app
+from tests.fast_fixtures import InMemorySaveStore
 from tests.narrator_stubs import StubNarrator
 
 
@@ -31,6 +32,7 @@ def _local_client(tmp_path) -> TestClient:
             narrator=StubNarrator("A cold certainty settles over the threshold."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
+            save_store=InMemorySaveStore(),
         )
     )
 
@@ -43,6 +45,7 @@ def _demo_client(tmp_path) -> TestClient:
             narrator=StubNarrator("A cold certainty settles over the threshold."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
+            save_store=InMemorySaveStore(),
         )
     )
 

@@ -81,14 +81,14 @@ TMPDIR=/tmp uv run pytest -m "unit or component" -q
 For a repeatable collection and timing report, use:
 
 ```text
-TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=561
-TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=561 --tier-report=artifacts/test-suite-health.json
+TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=548
+TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=548 --tier-report=artifacts/test-suite-health.json
 ```
 
 The report records separate setup/call/teardown timings, CPU and wall time,
 ranked top-20 setup/call tables, per-test runtime counts for full-world builds,
-complete turns, and SQLite stores, orchestration-contract classifications, plus
-source-level SQLite/web diagnostics.
+complete turns, SQLite stores, and TestClient constructions,
+orchestration-contract classifications, plus source-level SQLite/web diagnostics.
 Coverage runs with per-test contexts; the project minimum remains 90%.
 Narrow policy and state tests use the synthetic factories in
 [`tests/fast_fixtures.py`](tests/fast_fixtures.py); SQLite, web, artifact, and
