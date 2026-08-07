@@ -1,11 +1,11 @@
 from random import Random
 
 from storygame.engine.parser import parse_command
-from storygame.engine.state import Event
 from storygame.engine.simulation import advance_turn
-from storygame.engine.world import build_default_state
+from storygame.engine.state import Event
 from storygame.llm.context import build_narration_context
 from storygame.llm.prompts import build_prompt
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
 

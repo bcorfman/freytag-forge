@@ -5,7 +5,7 @@ import pytest
 from storygame.engine.fact_commit import InvariantValidator, ProjectionUpdater, ValidatedFactCommitter
 from storygame.engine.facts import FactStore
 from storygame.engine.state import GameState, Item, PlayerState, Room, WorldState
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def _simple_state() -> GameState:

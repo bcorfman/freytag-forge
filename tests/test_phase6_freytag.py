@@ -3,7 +3,7 @@ from random import Random
 from storygame.engine.facts import apply_fact_ops, dramatic_metric, set_dramatic_metric
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.plot.beat_manager import select_beat
 from storygame.plot.beat_policy import BeatPolicy, BeatPolicyInput, build_beat_policy_input
 

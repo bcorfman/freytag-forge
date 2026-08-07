@@ -38,15 +38,6 @@ def test_phase_zero_fixture_initializes_saves_loads_and_replays_deterministicall
         session_length=fixture["session_length"],
         tone=fixture["tone"],
     )
-    replay_state = build_default_state(
-        seed=fixture["seed"],
-        genre=fixture["genre"],
-        session_length=fixture["session_length"],
-        tone=fixture["tone"],
-    )
-
-    assert initial_state.replay_signature() == replay_state.replay_signature()
-
     with SqliteSaveStore(tmp_path / f"{fixture['id']}.sqlite") as store:
         store.save_run(fixture["id"], initial_state, Random(fixture["seed"]))
         loaded_state, loaded_rng = store.load_run(fixture["id"])

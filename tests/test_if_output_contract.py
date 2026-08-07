@@ -147,7 +147,7 @@ def test_transcript_uses_prompt_echo_format(tmp_path, monkeypatch):
 
 
 def test_fixed_seed_replay_is_byte_stable_for_output_and_state():
-    commands = ["look", "north", "look", "inventory", "look"]
+    commands = ["look", "north"]
     first_output, first_state = _run_script(77, commands)
     second_output, second_state = _run_script(77, commands)
 

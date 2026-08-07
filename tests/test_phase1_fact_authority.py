@@ -1,7 +1,7 @@
 from storygame.engine.facts import active_story_goal, apply_fact_ops, player_location
 from storygame.engine.parser import Action, ActionKind
 from storygame.engine.rules import apply_action
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.persistence.savegame_sqlite import serialize_state
 
 

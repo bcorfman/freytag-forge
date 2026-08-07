@@ -7,9 +7,9 @@ from storygame.engine.facts import protagonist_profile
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
-from storygame.engine.world import build_default_state
 from storygame.llm.adapters import SilentNarrator
 from storygame.llm.context import build_narration_context
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_room_lines_include_room_identity_and_navigation():

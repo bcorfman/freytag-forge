@@ -1,7 +1,7 @@
 from storygame.engine.state import Event
-from storygame.engine.world import build_default_state
 from storygame.plot.freytag import get_phase
 from storygame.plot.tension import TARGET_TENSION, apply_tension_events
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_phase_boundaries():

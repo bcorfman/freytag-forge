@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from storygame.engine.state import Event, Npc
-from storygame.engine.world import build_default_state
 from storygame.llm.story_director import StoryDirector
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 class _StubBootstrap:

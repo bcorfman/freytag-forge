@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
 from storygame.engine.facts import initialize_world_facts
 from storygame.engine.state import Event, GameState, Item, Npc, PlayerState, Room, WorldState
+from storygame.engine.world import build_default_state
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,26 @@ def clone_runtime_state(state: GameState) -> GameState:
     """Clone a runtime projection so no test can mutate the shared package."""
 
     return deepcopy(state)
+
+
+@lru_cache(maxsize=16)
+def _cached_story_baseline(genre: str, session_length: int | str, tone: str) -> GameState:
+    """Build one immutable test baseline per authoring profile."""
+
+    return build_default_state(seed=1, genre=genre, session_length=session_length, tone=tone)
+
+
+def make_cached_story_state(
+    seed: int = 1,
+    genre: str = "mystery",
+    session_length: int | str = "medium",
+    tone: str = "neutral",
+) -> GameState:
+    """Clone a cached story-shaped state without sharing mutable runtime data."""
+
+    state = clone_runtime_state(_cached_story_baseline(genre, session_length, tone))
+    state.seed = seed
+    return state
 
 
 def make_proposal(**overrides: Any) -> dict[str, Any]:

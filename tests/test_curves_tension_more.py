@@ -5,7 +5,6 @@ import textwrap
 import pytest
 
 from storygame.engine.state import Event
-from storygame.engine.world import build_default_state
 from storygame.plot.curves import (
     _normalize_genre,
     _stable_index,
@@ -15,6 +14,7 @@ from storygame.plot.curves import (
     select_curve_template,
 )
 from storygame.plot.tension import apply_tension_events
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_curves_validation_error_paths(tmp_path) -> None:

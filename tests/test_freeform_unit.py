@@ -6,24 +6,24 @@ from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
     _dialog_line,
+    _envelope_for_action,
+    _envelope_to_fact_ops,
     _format_character_reply_line,
     _freeform_planner_prompt,
     _has_invalid_targeted_dialogue_speaker,
     _normalized_dialog_speaker_id,
     _normalized_movement_action_payload,
     _room_environment,
-    _scope_normalized_proposals,
     _scene_scoped_dialog_override,
+    _scope_normalized_proposals,
     _semantic_actions_for_freeform,
     _semantic_exit_direction,
-    _envelope_for_action,
-    _envelope_to_fact_ops,
     _topic_flag_fragment,
     resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
 from storygame.engine.state import Npc, Room
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_topic_flag_fragment_normalizes_and_filters_stopwords() -> None:

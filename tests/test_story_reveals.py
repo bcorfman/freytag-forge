@@ -4,7 +4,7 @@ from random import Random
 
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_story_reveal_emits_once_when_progress_threshold_is_met():

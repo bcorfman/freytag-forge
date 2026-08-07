@@ -20,7 +20,7 @@ from storygame.cli import (
     run_replay,
     run_turn,
 )
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
 

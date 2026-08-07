@@ -6,8 +6,8 @@ from storygame.cli import run_turn
 from storygame.engine.events import list_event_templates
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import apply_action
-from storygame.engine.world import build_default_state
 from storygame.llm.adapters import SilentNarrator
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
 

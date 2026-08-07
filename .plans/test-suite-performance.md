@@ -31,6 +31,52 @@ Measured from Actions run `31143065335`, job `92756810662`, on 2026-08-07:
 | Source-level `TestClient` constructions | 32 |
 | Source-level SQLite store constructions | 23 |
 
+Latest benchmark record:
+
+| Measure | Result |
+| --- | ---: |
+| Commit | [`9d8d81ff86ee5430d34afdb87108f545f73988e8`](https://github.com/bcorfman/freytag-forge/commit/9d8d81ff86ee5430d34afdb87108f545f73988e8) |
+| Actions run/job | [`31147792358`](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358) / [`92770845095`](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358/job/92770845095) |
+| Exact command | `TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=561 --tier-report=artifacts/test-suite-health.json` |
+| Tests / coverage | 561 passed / 90.03% |
+| Pytest wall / CPU | 114.20s / 112.68s |
+| Runtime full-world builds / turns / SQLite stores | 433 / 157 / 70 |
+| Health artifact | [`test-suite-health`](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358/artifacts/8982161716), SHA-256 `4e260636eb5d05d50b08f502290800224258a3d0df3e5f75d8058a91c49a5c1b` |
+
+This is a 15.6% reduction from the 135.37s baseline. It is the first
+authoritative post-change benchmark; the two-run Phase 1 criterion remains
+open.
+
+Phase 0 disposable benchmark baseline runs were completed twice on commit
+`785418f8495f3836be9df774e99396edef0db0c7` using the matrix workflow's exact
+commands (`TMPDIR=/tmp uv run pytest -q <variant> --expected-test-count=561
+--tier-report=artifacts/<variant>.json`):
+
+| Variant | Run `31154668791` | Run `31154911286` | Median |
+| --- | ---: | ---: | ---: |
+| `--no-cov` | 40.20s | 28.23s | 34.22s |
+| `--cov` | 127.48s | 113.12s | 120.30s |
+| `--cov-context=test` | 132.64s | 132.07s | 132.36s |
+| `--cov --tier-report` | 127.29s | 126.05s | 126.67s |
+
+Run/job records: [31154668791](https://github.com/bcorfman/freytag-forge/actions/runs/31154668791)
+([no-cov](https://github.com/bcorfman/freytag-forge/actions/runs/31154668791/job/92791473838),
+[coverage](https://github.com/bcorfman/freytag-forge/actions/runs/31154668791/job/92791473819),
+[contexts](https://github.com/bcorfman/freytag-forge/actions/runs/31154668791/job/92791473882),
+[health](https://github.com/bcorfman/freytag-forge/actions/runs/31154668791/job/92791473837))
+and [31154911286](https://github.com/bcorfman/freytag-forge/actions/runs/31154911286)
+([no-cov](https://github.com/bcorfman/freytag-forge/actions/runs/31154911286/job/92792203474),
+[coverage](https://github.com/bcorfman/freytag-forge/actions/runs/31154911286/job/92792203432),
+[contexts](https://github.com/bcorfman/freytag-forge/actions/runs/31154911286/job/92792203435),
+[health](https://github.com/bcorfman/freytag-forge/actions/runs/31154911286/job/92792203487)).
+Both health artifacts report 561 tests, 90.03% coverage, 433 full-world
+builds, 157 complete turns, and 70 SQLite stores. The ordinary-coverage
+variance is 14.36s (12.7%), so runner variance is material.
+
+The subsequent local migration reduced the runtime health counts to 140
+full-world builds and 146 complete turns. The required local suite passed 561
+tests at 90.03% coverage in 46.56s; CI confirmation is still required.
+
 The CI command currently is:
 
 ```text
@@ -74,7 +120,7 @@ optimization. The prior run with and without it was effectively identical.
   TMPDIR=/tmp uv run pytest -q --cov --tier-report=/tmp/health.json
   ```
 
-- [ ] Run the same four variants in a disposable Actions benchmark job and
+- [x] Run the same four variants in a disposable Actions benchmark job and
   compare them with the current required job. This identifies whether the
   cost is coverage, the health hook, test execution, or runner slowdown.
 - [x] Add a machine-readable timing summary to the health artifact. Do not
@@ -91,12 +137,12 @@ optimization. The prior run with and without it was effectively identical.
 
 ### Phase 0 exit criteria
 
-- [ ] There is a reproducible top-cost list from the actual CI command.
+- [x] There is a reproducible top-cost list from the actual CI command.
 - [ ] The cost of `--cov-context=test`, the health hook, collection, and test
   bodies is measured separately.
-- [ ] At least two CI runs establish a baseline within an explicitly recorded
+- [x] At least two CI runs establish a baseline within an explicitly recorded
   variance range.
-- [ ] No test is deleted or merely moved to another tier based only on local
+- [x] No test is deleted or merely moved to another tier based only on local
   timing or source-reference counts.
 
 ## Workload reduction
@@ -115,7 +161,7 @@ behavior under test.
   renderer assertions to tiny synthetic state.
 - [ ] Convert serializer payload/normalization cases to injected state
   factories; retain real SQLite round trips as integration tests.
-- [ ] Ensure fixture cloning is immutable-per-test and cannot share facts or
+- [x] Ensure fixture cloning is immutable-per-test and cannot share facts or
   RNG state across tests.
 - [x] Add a runtime counter, not just an AST/source counter, for calls to
   `build_default_state()` and report it by tier.
@@ -132,7 +178,7 @@ behavior under test.
 - [ ] Two CI benchmark runs show at least a 15% reduction from the 135.37s
   baseline, or the benchmark identifies a non-test-execution bottleneck that
   must be addressed next.
-- [ ] Coverage and all guardrails pass.
+- [x] Coverage and all guardrails pass.
 
 ### Phase 2 — Reduce orchestration and replay work
 
@@ -141,17 +187,17 @@ in many remaining tests. This phase must reduce complete turn work itself.
 
 - [x] Add a runtime counter for `run_turn()` and record commands/turns per
   test, not only references in source.
-- [ ] For each test invoking `run_turn()`, classify it as one of:
+- [x] For each test invoking `run_turn()`, classify it as one of:
   proposal/commit contract, deterministic affordance, dialogue boundary,
   recovery/confirmation, output contract, persistence, or evaluation.
 - [ ] Retain one integration proof per distinct orchestration contract and
   move wording/normalization matrices to direct policy tests.
 - [ ] Parameterize equivalent inputs only when the parameter cases share one
   fixture setup and do not multiply complete-world/replay work unnecessarily.
-- [ ] Shorten replay scripts to the minimum turns needed to prove the stated
+- [x] Shorten replay scripts to the minimum turns needed to prove the stated
   invariant. Use direct replay-signature tests for determinism and one real
   save/load continuation test for composition.
-- [ ] Keep one compact cross-genre smoke matrix and avoid repeating the same
+- [x] Keep one compact cross-genre smoke matrix and avoid repeating the same
   long command sequence for every genre unless the genre-specific behavior is
   the assertion.
 - [ ] Reduce actual complete `run_turn()` invocations below 40 and document

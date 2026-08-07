@@ -3,8 +3,8 @@ from __future__ import annotations
 from random import Random
 
 from storygame.engine.events import EventTemplate, apply_event_template, select_event
-from storygame.engine.world import build_default_state
 from storygame.plot.beat_manager import Beat
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_select_event_falls_back_to_full_template_library_when_tags_do_not_match() -> None:

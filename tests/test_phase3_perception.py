@@ -9,8 +9,8 @@ from storygame.engine.perception import (
     observer_context_slice,
     speaker_context_slice,
 )
-from storygame.engine.world import build_default_state
 from storygame.llm.context import build_narration_context
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def _commit(state, *facts):

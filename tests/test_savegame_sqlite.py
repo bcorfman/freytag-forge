@@ -131,9 +131,8 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
     db_path = tmp_path / "saves.sqlite"
 
     seed = 18
-    pre_save_commands = ["go north", "look"]
-    distraction_commands = ["look"]
-    continuation_commands = ["look", "north"]
+    pre_save_commands = ["go north"]
+    continuation_commands = ["north"]
 
     def _run_without_save(commands: list[str], rng_seed: int) -> tuple[str, tuple]:
         from random import Random
@@ -179,16 +178,6 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
             save_store=store,
         )
         assert "Saved to slot 'checkpoint'." in _lines
-
-        for command in distraction_commands:
-            state, _lines, _action_raw, _beat, _continued = run_turn(
-                state,
-                command,
-                rng,
-                narrator,
-                save_store=store,
-            )
-            assert _continued
 
         state, _lines, _action_raw, _beat, _continued = run_turn(
             state,

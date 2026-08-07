@@ -87,5 +87,6 @@ TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=561 --tier
 
 The report records separate setup/call/teardown timings, CPU and wall time,
 ranked top-20 setup/call tables, per-test runtime counts for full-world builds,
-complete turns, and SQLite stores, plus source-level SQLite/web diagnostics.
+complete turns, and SQLite stores, orchestration-contract classifications, plus
+source-level SQLite/web diagnostics.
 Coverage runs with per-test contexts; the project minimum remains 90%.
