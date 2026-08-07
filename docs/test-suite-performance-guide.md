@@ -48,8 +48,9 @@ instead of repeating a warning, bootstrap, or replay turn.
 Shared web request/response projection behavior is tested below the adapter
 boundary in `test_web_runtime.py`. Local and hosted adapter tests retain one
 representative lifecycle/parity path plus credential, backend, CORS, quota,
-rate-limit, and fail-closed coverage. The current full-suite runtime report is
-555 tests with 21 `TestClient` constructions and 29 SQLite-store constructions;
+rate-limit, and fail-closed coverage. The current full-suite runtime report
+tracks `TestClient` and SQLite-store constructions; collection totals are
+informational and intentionally not pinned.
 the prior Phase 2 report recorded 70 SQLite stores and 43 clients in the
 boundary-heavy run.
 

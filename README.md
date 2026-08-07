@@ -101,8 +101,8 @@ TMPDIR=/tmp uv run pytest -m "unit or component" -q
 For a repeatable collection and timing report, use:
 
 ```text
-TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=555
-TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=555 --tier-report=artifacts/test-suite-health.json
+TMPDIR=/tmp uv run pytest --collect-only -q
+TMPDIR=/tmp uv run pytest -q --cov --tier-report=artifacts/test-suite-health.json
 ```
 
 The report records separate setup/call/teardown timings, CPU and wall time,

@@ -75,12 +75,18 @@ def test_runtime_metrics_are_scoped_and_keep_process_totals() -> None:
         "tests/test_evaluation.py::test_replay": "evaluation",
         "tests/test_cli.py::test_run_turn_novel_action": "proposal/commit contract",
     }
-    assert all(
-        _orchestration_class(nodeid, {"complete_turn": 1}) == expected
-        for nodeid, expected in examples.items()
-    )
+    assert all(_orchestration_class(nodeid, {"complete_turn": 1}) == expected for nodeid, expected in examples.items())
 
 
 @pytest.mark.parametrize("tier", ("unit", "component", "integration", "evaluation"))
 def test_tier_names_are_stable(tier: str) -> None:
     assert tier in {"unit", "component", "integration", "evaluation"}
+
+
+def test_active_test_commands_do_not_pin_a_fragile_collection_count() -> None:
+    root = Path(__file__).resolve().parents[1]
+    active_paths = [root / "README.md", *sorted((root / ".github" / "workflows").glob("*.yml"))]
+
+    stale_commands = [path for path in active_paths if "--expected-test-count" in path.read_text(encoding="utf-8")]
+
+    assert stale_commands == []
