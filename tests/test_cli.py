@@ -1079,7 +1079,7 @@ def test_should_discard_failed_narration_accepts_typed_gate_contracts() -> None:
 
 def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None:
     state = build_default_state(seed=97)
-    state, _lines, _action_raw, _beat_type, _continued = run_turn(
+    warned_state, _lines, _action_raw, _beat_type, _continued = run_turn(
         state,
         "punch police officer",
         Random(97),
@@ -1089,7 +1089,7 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
     )
 
     canceled_state, cancel_lines, _cancel_raw, cancel_beat, _cancel_continued = run_turn(
-        state,
+        warned_state.clone(),
         "cancel",
         Random(97),
         SilentNarrator(),
@@ -1099,16 +1099,8 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
     assert canceled_state.pending_high_impact_command == ""
     assert any("canceled" in line.lower() for line in cancel_lines)
 
-    warned_state, _warn_lines, _warn_raw, _warn_beat, _warn_continued = run_turn(
-        state,
-        "punch police officer",
-        Random(97),
-        SilentNarrator(),
-        debug=False,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
-    )
     proceeded_state, proceed_lines, _proceed_raw, proceed_beat, proceed_continued = run_turn(
-        warned_state,
+        warned_state.clone(),
         "proceed",
         Random(97),
         SilentNarrator(),

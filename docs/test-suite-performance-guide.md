@@ -34,6 +34,14 @@ The few component tests that call `run_turn()` do so deliberately to verify
 room-transition rendering and follower continuity; the bootstrap save/load
 case in `test_turn_runtime.py` is explicitly marked integration.
 
+Complete-turn tests are retained only for distinct orchestration contracts.
+The health artifact records the contract class, commands, and retention reason
+for each test that invokes `run_turn()`. The current classes are proposal/commit
+contract, deterministic affordance, dialogue boundary, recovery/confirmation,
+output contract, persistence, and evaluation. Wording and alias matrices belong
+in direct policy tests; branches sharing one setup should clone the setup state
+instead of repeating a warning, bootstrap, or replay turn.
+
 ## Measuring locally
 
 Use the same environment and temporary directory convention as CI:
