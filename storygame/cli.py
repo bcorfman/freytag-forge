@@ -42,6 +42,7 @@ from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
+from storygame.test_metrics import record
 
 
 def _humanize_token(token: str) -> str:
@@ -976,6 +977,7 @@ def run_turn(
     _confirmed_high_impact: bool = False,
     _confirmed_assessment: ImpactAssessment | None = None,
 ):
+    record("complete_turn", command=raw.strip().lower()[:80])
     raw_input = raw.strip()
     lowered_input = raw_input.lower()
     if state.pending_high_impact_command:

@@ -31,8 +31,27 @@ Recorded 2026-08-06 on the repository test environment:
 | Local web ordinary turn | 10 stub-model calls; 268.9 ms |
 | Hosted-demo ordinary turn | 10 stub-model calls; 11.7 ms |
 
+The current pre-performance-refactor measurement is 569 collected and passing
+tests in 77.51s with 90.04% branch coverage. The duplicate CLI definition
+identified by the performance plan was corrected during Phase 0; with the
+seven suite-health guard tests, plus the consolidated CLI cases removed in
+Phases 2–3, the expected collection count is now 561. The
+older 557-test row above is retained as the original recorded
+baseline.
+
 The surface timings use FastAPI's in-process test client and the frozen
 `phase0-deterministic-stub-v1` response. They measure orchestration rather
 than network/model service latency. The call counts are the useful baseline:
 later phases should reduce them while retaining fact validation and fail-closed
 surface behavior.
+
+After the Phase 2–3 changes, the suite has 561 passing tests with 90.01%
+branch coverage. The current local no-coverage run is 25.21s; ordinary
+coverage is 69.95s; coverage with test contexts is 74.55s; and coverage with
+the health report is 69.95s. The authoritative Actions run
+31143065335/job 92756810662 completed pytest in 135.37s. The health report
+currently records source-level counts of 312 full-world builds, 68
+`run_turn()` calls, 32 web clients, and 23 SQLite stores. The first
+runtime-instrumented local no-coverage run records 456 full-world builds, 157
+complete turns, and 70 SQLite-store constructions; these are the new workload
+baseline for Phases 1–2.

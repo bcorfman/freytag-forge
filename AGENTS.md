@@ -18,3 +18,7 @@
 - Follow this priority order: developer experience, simplicity, fit with underlying APIs, API quality, testability, best practices.
 - Write tests first, implement to the tests, then update documentation. Add varied cross-genre regression coverage for generalized behavior.
 - Maintain project-wide coverage of at least 90%; verify with `uv run pytest -q`. Use `uv run python`, never plain `python`.
+- In this WSL environment, pytest's temporary capture files can be created under
+  the Windows-mounted `TMPDIR` and cause collection/capture-cleanup failures.
+  Always use `TMPDIR=/tmp` when running pytest, for example:
+  `TMPDIR=/tmp uv run pytest tests/test_event_selection.py -q --no-cov`.

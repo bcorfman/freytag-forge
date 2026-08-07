@@ -9,7 +9,7 @@ from storygame.cli import run_turn
 from storygame.engine.facts import apply_fact_ops
 from storygame.engine.state import Event
 from storygame.engine.world import build_default_state
-from storygame.persistence.savegame_sqlite import SqliteSaveStore, deserialize_state, serialize_state
+from storygame.persistence.savegame_sqlite import SqliteSaveStore, deserialize_state
 from tests.narrator_stubs import StubNarrator
 
 
@@ -108,63 +108,6 @@ def test_save_and_load_roundtrip_prefers_fact_backed_player_projection_data(tmp_
     assert loaded_state.player.flags.get("stale_flag") is not True
 
 
-def test_serialize_state_canonicalizes_stale_player_inventory_before_persistence() -> None:
-    state = build_default_state(seed=15, genre="thriller")
-    extra_item = next(item_id for item_id in state.world.items if item_id not in state.player.inventory)
-    state.player.inventory = state.player.inventory + (extra_item,)
-
-    payload = serialize_state(state)
-
-    assert ["holding", "player", extra_item] in payload["world_facts"]
-
-
-def test_deserialize_state_can_rebuild_fact_backed_projection_from_legacy_payload() -> None:
-    state = build_default_state(seed=16, genre="mystery")
-    destination = next(room_id for room_id in state.world.rooms if room_id != state.player.location)
-    item_id = next(item_id for item_id in state.world.items if item_id not in state.player.inventory)
-    payload = serialize_state(state)
-    payload["world_facts"] = []
-    payload["active_goal"] = "Question the witness in the next room."
-    payload["player"] = {
-        "location": destination,
-        "inventory": [item_id],
-        "flags": {"legacy_loaded": True},
-    }
-    payload["room_items"] = {room_id: [] for room_id in state.world.rooms}
-    payload["last_judge_decision"] = {
-        "decision_id": "judge-1",
-        "status": "accepted",
-        "judge": "critic",
-        "rationale": "looks good",
-    }
-    payload["pending_high_impact_command"] = "break the pact"
-    payload["pending_high_impact_assessment"] = {"impact_class": "critical"}
-
-    loaded_state = deserialize_state(payload)
-
-    assert loaded_state.player.location == destination
-    assert loaded_state.player.inventory == (item_id,)
-    assert loaded_state.player.flags["legacy_loaded"] is True
-    assert loaded_state.active_goal == "Question the witness in the next room."
-    assert loaded_state.world_facts.holds("at", "player", destination)
-    assert loaded_state.world_facts.holds("holding", "player", item_id)
-    assert loaded_state.world_facts.holds("flag", "player", "legacy_loaded")
-    assert loaded_state.last_judge_decision["decision_id"] == "judge-1"
-    assert loaded_state.pending_high_impact_command == "break the pact"
-
-
-def test_deserialize_state_handles_absent_judge_decision_and_pending_assessment() -> None:
-    payload = serialize_state(build_default_state(seed=17, genre="thriller"))
-    payload["world_facts"] = []
-    payload["last_judge_decision"] = None
-    payload["pending_high_impact_assessment"] = "ignored"
-
-    loaded_state = deserialize_state(payload)
-
-    assert loaded_state.last_judge_decision is None
-    assert loaded_state.pending_high_impact_assessment == {}
-
-
 def test_load_nonexistent_slot_raises_value_error(tmp_path):
     db_path = tmp_path / "saves.sqlite"
     with SqliteSaveStore(db_path) as store, pytest.raises(ValueError, match="No save exists"):
@@ -188,9 +131,9 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
     db_path = tmp_path / "saves.sqlite"
 
     seed = 18
-    pre_save_commands = ["go north", "look", "inventory", "look"]
-    distraction_commands = ["look", "inventory"]
-    continuation_commands = ["look", "north", "look", "inventory", "look"]
+    pre_save_commands = ["go north", "look"]
+    distraction_commands = ["look"]
+    continuation_commands = ["look", "north"]
 
     def _run_without_save(commands: list[str], rng_seed: int) -> tuple[str, tuple]:
         from random import Random

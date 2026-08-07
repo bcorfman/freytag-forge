@@ -5,10 +5,12 @@ import json
 import pickle
 import re
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 from random import Random
 from typing import Any
 
+from storygame.engine.fact_commit import ValidatedFactCommitter
 from storygame.engine.facts import (
     active_story_goal,
     apply_fact_ops,
@@ -20,10 +22,10 @@ from storygame.engine.facts import (
     set_player_location,
     sync_legacy_views,
 )
-from storygame.engine.fact_commit import ValidatedFactCommitter
 from storygame.engine.state import Event, EventLog, GameState
 from storygame.engine.world import build_default_state, build_state_from_bootstrap_plan
 from storygame.persistence.story_state import ORCHESTRATOR_WRITER, write_turn_artifacts
+from storygame.test_metrics import record
 
 
 def _encode_rng(rng: Random) -> str:
@@ -106,7 +108,10 @@ def serialize_state(state: GameState) -> dict[str, Any]:
     }
 
 
-def deserialize_state(payload: dict[str, Any]) -> GameState:
+def deserialize_state(
+    payload: dict[str, Any],
+    state_factory: Callable[..., GameState] = build_default_state,
+) -> GameState:
     world_package_payload = dict(payload.get("world_package", {}))
     bootstrap_plan = world_package_payload.get("bootstrap_plan")
     if isinstance(bootstrap_plan, dict):
@@ -117,7 +122,7 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
             session_length=str(payload.get("session_length", "medium")),
         )
     else:
-        state = build_default_state(
+        state = state_factory(
             seed=int(payload["seed"]),
             genre=str(payload.get("story_genre", "mystery")),
             session_length=str(payload.get("session_length", "medium")),
@@ -154,7 +159,9 @@ def deserialize_state(payload: dict[str, Any]) -> GameState:
             for item_id in item_ids:
                 normalized_item_id = str(item_id).strip()
                 if normalized_item_id:
-                    compatibility_ops.append({"op": "assert", "fact": ("room_item", normalized_room_id, normalized_item_id)})
+                    compatibility_ops.append(
+                        {"op": "assert", "fact": ("room_item", normalized_room_id, normalized_item_id)}
+                    )
         if compatibility_ops:
             apply_fact_ops(state, compatibility_ops)
     state.fact_metrics = {str(key): float(value) for key, value in dict(payload.get("fact_metrics", {})).items()}
@@ -205,6 +212,7 @@ class SqliteSaveStore:
         path: str | Path = "runs/storygame_saves.sqlite",
         check_same_thread: bool = True,
     ) -> None:
+        record("sqlite_store")
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.path, check_same_thread=check_same_thread)
