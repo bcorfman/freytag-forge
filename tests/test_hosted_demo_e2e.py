@@ -64,6 +64,10 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     assert turn_payload["session_id"] == session_id
     assert turn_payload["state"]["turn_index"] == 0
     assert turn_payload["lines"]
+    opening_text = "\n".join(turn_payload["lines"])
+    assert "# doctest" not in opening_text.lower()
+    assert "opening_draft" not in opening_text
+    assert '"""' not in opening_text
 
     def run_turn(command: str) -> dict:
         status, headers, payload = _request(
