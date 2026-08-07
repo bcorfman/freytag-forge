@@ -149,3 +149,10 @@ def test_affordances_are_derived_from_current_facts() -> None:
     assert affordances["exits"] == ({"direction": "east", "destination": "hall", "locked": False},)
     assert affordances["items"] == ({"id": "sample", "portable": True},)
     assert affordances["npcs"] == ({"id": "rival", "can_address": True},)
+
+
+def test_npc_affordances_use_fact_backed_location_and_handle_an_unknown_npc() -> None:
+    state = _state()
+
+    assert build_affordance_context(state, observer="rival")["location_id"] == "lab"
+    assert build_affordance_context(state, observer="unknown")["location_id"] == ""

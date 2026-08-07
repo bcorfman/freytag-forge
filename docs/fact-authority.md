@@ -7,8 +7,8 @@ compatibility projections.
 
 `GameState.player`, room collections, and `active_goal` are read-after-commit
 projections. `world_package` is authoring/session input, not a second runtime
-authority. The parser adapter has a narrow compatibility bridge for legacy room
-setup; semantic turn execution reads canonical facts only.
+authority. Control-plane command handling is separate from semantic turn
+execution, which reads canonical facts only.
 
 Persistence may import values missing from old object-view saves through the
 explicit `persistence_projection_migration` source. Canonical facts win when
@@ -61,7 +61,8 @@ candidate conflicts with committed exits, inventory, visibility, or recent
 events. Critic, extractor, and editor passes are not part of the normal path.
 
 Accepted narration and NPC dialogue are projections of committed results; they
-are never parsed back into facts. Any visible item, location, relationship, or
+are never parsed back into facts. The retired narration-to-fact extraction path
+is absent from the runtime. Any visible item, location, relationship, or
 revelation must arrive through a validated structured proposal and fact commit
 before it can be rendered. Opening/bootstrap retains its separate structured
 proposal, validation, commit, and prose-validation sequence.
