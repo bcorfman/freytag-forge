@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from storygame.engine.state import Npc
 from storygame.llm.narration_state import (
     _actor_aliases,
     _item_aliases,
@@ -15,8 +16,7 @@ from storygame.llm.narration_state import (
     extract_dialogue_fact_ops,
     extract_narration_fact_ops,
 )
-from storygame.engine.state import Npc
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_extract_narration_fact_ops_tracks_player_take_and_move() -> None:

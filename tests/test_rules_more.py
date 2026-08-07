@@ -5,7 +5,7 @@ from random import Random
 from storygame.engine.parser import parse_command
 from storygame.engine.rules import _resolve_use, apply_action
 from storygame.engine.state import Item
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_resolve_use_returns_idempotent_event_when_flag_already_set() -> None:

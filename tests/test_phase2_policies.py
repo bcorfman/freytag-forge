@@ -10,7 +10,7 @@ from storygame.engine.policies import (
     resolve_visible_aliases,
     validate_proposed_fact_ops,
 )
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_policy_bundle_declares_all_phase_two_families() -> None:

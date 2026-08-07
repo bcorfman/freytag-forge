@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from storygame.engine.mystery import caseboard_lines, filtered_inventory, take_item_message
 from storygame.engine.state import Item
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_filtered_inventory_skips_missing_items_and_non_actionable_items() -> None:

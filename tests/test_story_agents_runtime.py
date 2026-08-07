@@ -7,16 +7,15 @@ import urllib.error
 
 import pytest
 
-from storygame.engine.world import build_default_state
 from storygame.llm.story_agents import agents as agent_module
 from storygame.llm.story_agents.agents import (
-    DefaultStoryBootstrapAgent,
-    DefaultStoryBootstrapCriticAgent,
     DefaultCharacterDesignerAgent,
     DefaultNarratorOpeningAgent,
     DefaultPlotDesignerAgent,
     DefaultRoomPresentationAgent,
     DefaultStoryArchitectAgent,
+    DefaultStoryBootstrapAgent,
+    DefaultStoryBootstrapCriticAgent,
     DefaultStoryReplanAgent,
     _build_identity_intro_sentence,
     _json_from_text,
@@ -25,6 +24,7 @@ from storygame.llm.story_agents.agents import (
     _summary_premise,
 )
 from storygame.llm.story_agents.contracts import StoryAgentContractError
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 class _FakeResponse:

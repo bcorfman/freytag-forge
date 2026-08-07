@@ -5,8 +5,8 @@ from random import Random
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.state import Room
-from storygame.engine.world import build_default_state
 from tests.fast_fixtures import clone_runtime_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def _reachable_direction_and_destination(state):

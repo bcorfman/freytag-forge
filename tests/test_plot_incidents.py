@@ -6,7 +6,7 @@ from storygame.engine.incidents import load_incident_specs, parse_incident_specs
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.plot.beat_manager import Beat
 
 

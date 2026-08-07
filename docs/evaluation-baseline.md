@@ -55,3 +55,9 @@ currently records source-level counts of 312 full-world builds, 68
 runtime-instrumented local no-coverage run records 456 full-world builds, 157
 complete turns, and 70 SQLite-store constructions; these are the new workload
 baseline for Phases 1–2.
+
+The authoritative post-change Actions job [31147792358](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358)
+on commit `9d8d81ff86ee5430d34afdb87108f545f73988e8` completed 561 tests with
+90.03% coverage in 114.20s wall time (112.68s CPU), 15.6% below the 135.37s
+baseline. Its health artifact recorded 433 full-world builds, 157 complete
+turns, and 70 SQLite stores.

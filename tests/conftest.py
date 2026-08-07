@@ -18,6 +18,27 @@ TIERS = ("unit", "component", "integration", "evaluation")
 _HEALTH: dict[str, dict[str, Any]] = {}
 _SESSION_WALL = 0.0
 _SESSION_CPU = 0.0
+
+
+def _orchestration_class(nodeid: str, runtime: dict[str, int]) -> str | None:
+    """Classify complete-turn tests by the boundary they prove."""
+
+    if "complete_turn" not in runtime:
+        return None
+    lowered = nodeid.lower()
+    if "evaluation" in lowered or "reproducibility" in lowered:
+        return "evaluation"
+    if "savegame" in lowered or "save_and_load" in lowered or "persistence" in lowered:
+        return "persistence"
+    if any(token in lowered for token in ("dialogue", "npc", "conversation", "speaker")):
+        return "dialogue boundary"
+    if any(token in lowered for token in ("confirmation", "impact", "replan", "recovery")):
+        return "recovery/confirmation"
+    if any(token in lowered for token in ("inventory", "direction", "navigation", "take_path", "affordance")):
+        return "deterministic affordance"
+    if any(token in lowered for token in ("output", "narration", "debug", "editor", "parity")):
+        return "output contract"
+    return "proposal/commit contract"
 _EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_if_output_contract.py"}
 _INTEGRATION_FILES = {
     "test_cli.py", "test_cli_more.py", "test_savegame_sqlite.py", "test_web_api.py",
@@ -165,6 +186,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         "tiers": Counter(),
         "construction_counts": Counter(),
         "runtime_counts": Counter(),
+        "runtime_counts_by_tier": {},
         "timing": {
             "wall_seconds": time.perf_counter() - _SESSION_WALL,
             "cpu_seconds": time.process_time() - _SESSION_CPU,
@@ -182,9 +204,11 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
             summary["construction_counts"][name] += count
         measured = _HEALTH.get(item.nodeid, {})
         runtime = measured.get("runtime", {})
+        tier_runtime = summary["runtime_counts_by_tier"].setdefault(tier, Counter())
         for name, count in runtime.items():
             if "." not in name:
                 summary["runtime_counts"][name] += count
+                tier_runtime[name] += count
         timings.append(
             {
                 "nodeid": item.nodeid,
@@ -195,6 +219,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
                 "seconds": health.get("seconds", 0.0),
                 "constructions": health.get("constructions", {}),
                 "runtime": {name: count for name, count in runtime.items() if "." not in name},
+                "orchestration_class": _orchestration_class(item.nodeid, runtime),
                 "commands": [
                     name.removeprefix("complete_turn.command.")
                     for name in runtime
@@ -205,6 +230,12 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     summary["tiers"] = dict(summary["tiers"])
     summary["construction_counts"] = dict(summary["construction_counts"])
     summary["runtime_counts"] = dict(summary["runtime_counts"])
+    summary["runtime_counts_by_tier"] = {
+        tier: dict(counts) for tier, counts in summary["runtime_counts_by_tier"].items()
+    }
+    summary["orchestration_classes"] = dict(
+        Counter(row["orchestration_class"] for row in timings if row["orchestration_class"])
+    )
     summary["slowest"] = sorted(timings, key=lambda row: row["seconds"], reverse=True)[:50]
     summary["top20_by_call_time"] = sorted(
         timings, key=lambda row: row["call_seconds"], reverse=True

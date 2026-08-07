@@ -9,10 +9,11 @@ from storygame.engine.events import list_event_templates
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event, EventLog
-from storygame.engine.world import build_default_state, build_tiny_state
+from storygame.engine.world import build_tiny_state
 from storygame.llm.adapters import OllamaAdapter, OpenAIAdapter
 from storygame.llm.context import MAX_EVENT_MESSAGE_LEN, build_narration_context
 from storygame.plot.freytag import get_phase
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
 

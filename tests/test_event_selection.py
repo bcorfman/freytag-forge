@@ -1,8 +1,8 @@
 from random import Random
 
 from storygame.engine.events import select_event
-from storygame.engine.world import build_default_state
 from storygame.plot.beat_manager import Beat, select_beat
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_select_beat_deterministic_with_seed():

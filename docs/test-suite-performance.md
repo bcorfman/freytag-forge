@@ -44,3 +44,22 @@ run. Actions run 31143065335/job 92756810662 took 135.37s for pytest and 560
 passing tests. The immediately preceding 569-test run took 140.57s, so the
 consolidation delivered only a 3.7% CI reduction. The 40% reduction target
 remains open.
+
+The authoritative post-change benchmark on commit
+[`9d8d81ff86ee5430d34afdb87108f545f73988e8`](https://github.com/bcorfman/freytag-forge/commit/9d8d81ff86ee5430d34afdb87108f545f73988e8)
+ran as [Actions run 31147792358](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358),
+[job 92770845095](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358/job/92770845095),
+using `TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=561
+--tier-report=artifacts/test-suite-health.json`. It passed 561 tests with
+90.03% coverage in 114.20s wall time and 112.68s CPU time. The uploaded health
+artifact is [test-suite-health](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358/artifacts/8982161716)
+with SHA-256 `4e260636eb5d05d50b08f502290800224258a3d0df3e5f75d8058a91c49a5c1b`.
+Runtime counts were 433 full-world builds, 157 complete turns, and 70 SQLite
+stores. The artifact reports runtime counts by tier and classifies each complete-turn test by orchestration
+contract: proposal/commit, deterministic affordance, dialogue boundary,
+recovery/confirmation, output contract, persistence, or evaluation.
+
+After the local fixture/replay migration, the same health report records 140
+full-world builds and 146 complete turns; the required local suite remains
+green at 561 tests and 90.03% coverage in 46.56s. These are local results and
+must be confirmed by the next Actions benchmark.

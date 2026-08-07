@@ -19,7 +19,7 @@ from storygame.engine.facts import (
     set_player_location,
 )
 from storygame.engine.scene_state import refresh_scene_state
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_player_fact_helpers_replace_canonical_location_inventory_and_flags() -> None:

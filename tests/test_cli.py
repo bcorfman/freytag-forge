@@ -35,7 +35,7 @@ from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.impact import assess_player_command
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Npc, Room
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
 from storygame.llm.coherence import CoherenceTelemetry
 from storygame.llm.context import build_narration_context
