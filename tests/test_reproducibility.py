@@ -1,12 +1,12 @@
 from random import Random
 
 from storygame.engine.simulation import run_command_sequence
-from storygame.engine.world import build_default_state
+from tests.fast_fixtures import make_cached_story_state
 
 
 def run_script(seed: int, commands: list[str]):
     rng = Random(seed)
-    state = build_default_state(seed=seed)
+    state = make_cached_story_state(seed=seed)
     final_state = run_command_sequence(state, commands, rng)
     return final_state.replay_signature(), final_state
 

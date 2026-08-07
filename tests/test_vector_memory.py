@@ -4,7 +4,6 @@ from random import Random
 
 from storygame.cli import run_turn
 from storygame.engine.state import Event
-from storygame.engine.world import build_default_state
 from storygame.llm.context import NarrationContext
 from storygame.memory import (
     SqliteVectorMemory,
@@ -14,6 +13,7 @@ from storygame.memory import (
     _tokenize_text,
     _vector,
 )
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def test_vector_memory_store_retrieves_relevant_notes(tmp_path):
@@ -64,7 +64,11 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
     class _NpcReplyAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
             return (
-                {"speaker": npc_id, "text": "Keep the ledger in mind. It changes who had time to move.", "tone": "in_world"},
+                {
+                    "speaker": npc_id,
+                    "text": "Keep the ledger in mind. It changes who had time to move.",
+                    "tone": "in_world",
+                },
                 {
                     "intent": "ask_about",
                     "targets": [npc_id],
