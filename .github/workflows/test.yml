@@ -39,6 +39,26 @@ jobs:
           path: artifacts/
           if-no-files-found: warn
 
+  hosted-demo-e2e:
+    name: Hosted demo E2E
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: cutover-contracts
+    runs-on: ubuntu-latest
+    env:
+      HOSTED_DEMO_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Require a deployed API target
+        run: test -n "$HOSTED_DEMO_API_BASE_URL"
+      - name: Exercise the deployed browser session flow
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+
   fast-feedback:
     name: Fast feedback (unit and component)
     runs-on: ubuntu-latest
