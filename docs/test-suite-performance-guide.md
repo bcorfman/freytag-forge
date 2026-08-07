@@ -53,10 +53,6 @@ rate-limit, and fail-closed coverage. The current full-suite runtime report is
 the prior Phase 2 report recorded 70 SQLite stores and 43 clients in the
 boundary-heavy run.
 
-The Phase 3 CI confirmation used the required coverage-health command on
-`d10afc3bd2786a2497e879d9c757f3dfae3f327c`: 71.16s and 70.64s for 548 tests
-at 90.05% coverage across two runs, versus the 135.37s baseline.
-
 ## Measuring locally
 
 Use the same environment and temporary directory convention as CI:

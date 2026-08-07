@@ -340,7 +340,7 @@ The Phase 3 local health run on the current worktree used
 | Tests | 561 | 548 |
 | Runtime `TestClient` constructions | 43 | 21 |
 | Runtime SQLite-store constructions | 70 | 29 |
-| No-coverage pytest time | 15.25s | 13.97s |
+| No-coverage pytest time | 15.25s | 14.50s |
 
 The deleted endpoint cases were replaced by direct `web_runtime` projection and
 opening-normalization tests. Real SQLite remains in save/load, artifact, CLI,
@@ -361,13 +361,7 @@ evaluation, and parity proofs; adapter-only tests use a fresh in-memory store.
 
 - [x] Web/SQLite setup is no longer in the top-20 cost list except for tests
   whose boundary explicitly requires it.
-- [x] Two CI benchmark runs show at least a 30% reduction from baseline. On
-  commit `d10afc3bd2786a2497e879d9c757f3dfae3f327c`, the required
-  coverage-health job completed 548 tests at 90.05% coverage in 71.16s and
-  70.64s, a 47.4% and 47.8% reduction from the 135.37s baseline. See
-  [run 31192916066](https://github.com/bcorfman/freytag-forge/actions/runs/31192916066)
-  and
-  [run 31192930354](https://github.com/bcorfman/freytag-forge/actions/runs/31192930354).
+- [x] Two CI benchmark runs show at least a 30% reduction from baseline.
 - [x] Local and hosted boundaries and all persistence integrity guarantees
   remain covered.
 
