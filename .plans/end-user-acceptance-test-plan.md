@@ -6,8 +6,9 @@ maintainer review are green.
 
 ## Automated gate — every main deployment
 
-The `Hosted demo E2E` CI job uses the same API base URL as the GitHub Pages
-client and performs the browser's real startup sequence:
+The `Hosted demo post-deploy E2E` workflow uses the same API base URL as the
+GitHub Pages client and performs the browser's real startup sequence only after
+Railway reports that its deployment has completed:
 
 1. `GET /api/v1/health` must return `200` and `{"status":"ok"}`.
 2. `POST /api/v1/session` must create a session and allow the Pages origin.
@@ -20,8 +21,11 @@ client and performs the browser's real startup sequence:
    inventory. This proves durable fact authority rather than a one-response
    demo.
 
-The job is required to have `VITE_API_BASE_URL` configured. A deployment that
-is healthy at Railway but cannot narrate an opening fails this gate.
+The workflow is manually dispatchable after a Railway success, and it also
+accepts a `railway_deployment_succeeded` repository-dispatch event with an
+optional `api_base_url` and `sha` payload. The job requires a deployed API URL;
+a service that is healthy at Railway but cannot narrate or preserve state fails
+this gate.
 
 ## Maintainer review — before an invitation
 

@@ -1,0 +1,43 @@
+name: Hosted demo post-deploy E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: Railway URL to verify; leave blank to use VITE_API_BASE_URL.
+        required: false
+        type: string
+      ref:
+        description: Commit SHA deployed by Railway; leave blank for the triggering revision.
+        required: false
+        type: string
+  repository_dispatch:
+    types: [railway_deployment_succeeded]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: hosted-demo-post-deploy-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Verify deployed browser flow
+    runs-on: ubuntu-latest
+    env:
+      HOSTED_DEMO_API_BASE_URL: ${{ inputs.api_base_url || github.event.client_payload.api_base_url || vars.VITE_API_BASE_URL }}
+      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.event.client_payload.sha || github.sha }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Require a deployed API target
+        run: test -n "$HOSTED_DEMO_API_BASE_URL"
+      - name: Exercise the deployed browser session flow
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
