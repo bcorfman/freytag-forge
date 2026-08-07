@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from storygame.engine.impact import assess_player_command, replan_scope_for_assessment, requires_high_impact_confirmation
 from storygame.engine.parser import parse_command
-from tests.fast_fixtures import make_cached_story_state as build_default_state
+from tests.fast_fixtures import make_tiny_state
 
 
 def test_assess_player_command_low_impact_defaults() -> None:
-    state = build_default_state(seed=301)
+    state = make_tiny_state(seed=301)
     action = parse_command("look")
     assessment = assess_player_command(state, "look around", action)
 
@@ -17,7 +17,7 @@ def test_assess_player_command_low_impact_defaults() -> None:
 
 
 def test_assess_player_command_critical_path_with_multiple_risk_dimensions() -> None:
-    state = build_default_state(seed=302)
+    state = make_tiny_state(seed=302)
     action = parse_command("use gun")
     assessment = assess_player_command(
         state,
@@ -38,7 +38,7 @@ def test_assess_player_command_critical_path_with_multiple_risk_dimensions() -> 
 
 
 def test_assess_player_command_detects_violence_against_present_npc() -> None:
-    state = build_default_state(seed=303)
+    state = make_tiny_state(seed=303)
     npc_id = state.world.rooms[state.player.location].npc_ids[0]
     action = parse_command(f"attack {npc_id}")
     assessment = assess_player_command(state, f"attack {npc_id}", action)
@@ -49,7 +49,7 @@ def test_assess_player_command_detects_violence_against_present_npc() -> None:
 
 
 def test_assess_player_command_can_limit_replan_to_light_scope() -> None:
-    state = build_default_state(seed=304)
+    state = make_tiny_state(seed=304)
     action = parse_command("spray graffiti on statue")
     assessment = assess_player_command(state, "spray graffiti on statue", action)
 

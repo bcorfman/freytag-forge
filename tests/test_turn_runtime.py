@@ -270,6 +270,7 @@ def test_turn_runtime_fires_turn_trigger_once_when_turn_threshold_is_reached() -
     assert len([event for event in second["events"] if event.type == "trigger"]) == 0
 
 
+@pytest.mark.integration
 def test_save_and_load_preserve_bootstrap_world_package_and_triggered_state(tmp_path) -> None:
     db_path = tmp_path / "saves.sqlite"
     state = _state()

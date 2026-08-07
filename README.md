@@ -90,3 +90,8 @@ ranked top-20 setup/call tables, per-test runtime counts for full-world builds,
 complete turns, and SQLite stores, orchestration-contract classifications, plus
 source-level SQLite/web diagnostics.
 Coverage runs with per-test contexts; the project minimum remains 90%.
+Narrow policy and state tests use the synthetic factories in
+[`tests/fast_fixtures.py`](tests/fast_fixtures.py); SQLite, web, artifact, and
+complete-turn checks remain in the integration tier. See the
+[test-suite performance guide](docs/test-suite-performance-guide.md) for the
+fixture and measurement conventions.
