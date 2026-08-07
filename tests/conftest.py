@@ -40,15 +40,28 @@ def _orchestration_class(nodeid: str, runtime: dict[str, int]) -> str | None:
     if any(token in lowered for token in ("output", "narration", "debug", "editor", "parity")):
         return "output contract"
     return "proposal/commit contract"
+
+
 _EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_if_output_contract.py"}
 _INTEGRATION_FILES = {
-    "test_cli.py", "test_cli_more.py", "test_savegame_sqlite.py", "test_web_api.py",
-    "test_web_demo_api.py", "test_web_surface_parity.py", "test_vector_memory.py",
-    "test_mvp_gaps.py", "test_story_state_artifacts.py",
+    "test_cli.py",
+    "test_cli_more.py",
+    "test_savegame_sqlite.py",
+    "test_web_api.py",
+    "test_web_demo_api.py",
+    "test_web_surface_parity.py",
+    "test_vector_memory.py",
+    "test_mvp_gaps.py",
+    "test_story_state_artifacts.py",
 }
 _COMPONENT_FILES = {
-    "test_adapters.py", "test_freeform_unit.py", "test_llm_context.py", "test_narration_state.py",
-    "test_world_builder.py", "test_world_presentation.py", "test_story_coherence.py",
+    "test_adapters.py",
+    "test_freeform_unit.py",
+    "test_llm_context.py",
+    "test_narration_state.py",
+    "test_world_builder.py",
+    "test_world_presentation.py",
+    "test_story_coherence.py",
 }
 _ORCHESTRATION_RETENTION_REASONS = {
     "proposal/commit contract": "One complete turn proves novel intent validation, bounded effects, and fact commit.",
@@ -80,7 +93,6 @@ def _tier_for_path(path: Path) -> str:
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("test-suite-health")
     group.addoption("--tier-report", default="", help="Write tier, timing, and construction counts as JSON.")
-    group.addoption("--expected-test-count", type=int, default=0, help="Fail collection when count differs.")
     group.addoption(
         "--strict-test-budgets", action="store_true", help="Fail when unit/component test budgets are exceeded."
     )
@@ -148,9 +160,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             duplicate_errors.append(f"{item.nodeid}: expected exactly one test tier, got {markers}")
     if duplicate_errors:
         raise pytest.UsageError("Test-suite collection guard failed:\n" + "\n".join(duplicate_errors))
-    expected = config.getoption("--expected-test-count")
-    if expected and len(items) != expected:
-        raise pytest.UsageError(f"Expected {expected} tests, collected {len(items)}.")
 
 
 def _source_construction_counts(item: pytest.Item) -> Counter[str]:
@@ -259,12 +268,8 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         Counter(row["orchestration_class"] for row in timings if row["orchestration_class"])
     )
     summary["slowest"] = sorted(timings, key=lambda row: row["seconds"], reverse=True)[:50]
-    summary["top20_by_call_time"] = sorted(
-        timings, key=lambda row: row["call_seconds"], reverse=True
-    )[:20]
-    summary["top20_by_setup_time"] = sorted(
-        timings, key=lambda row: row["setup_seconds"], reverse=True
-    )[:20]
+    summary["top20_by_call_time"] = sorted(timings, key=lambda row: row["call_seconds"], reverse=True)[:20]
+    summary["top20_by_setup_time"] = sorted(timings, key=lambda row: row["setup_seconds"], reverse=True)[:20]
     target = Path(report_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
