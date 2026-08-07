@@ -133,6 +133,21 @@ class _OpeningAgent:
         return ["An agent-authored opening."]
 
 
+class _EmptyOpeningAgent:
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        return []
+
+
+class _FailingOpeningAgent:
+    def run(self, state, architect, cast, plan):  # noqa: ANN001, ARG002
+        raise RuntimeError("opening agent unavailable")
+
+
+class _ShortNarrator:
+    def generate(self, context):  # noqa: ANN001
+        return "Cloudflare-authored opening prose."
+
+
 class _PassThroughEditor:
     def review_opening(self, lines, active_goal):  # noqa: ANN001
         return lines
@@ -175,3 +190,26 @@ def test_narrator_opening_agent_receives_fact_backed_contacts() -> None:
         _OpeningAgent(),
         _PassThroughEditor(),
     ) == ["An agent-authored opening."]
+
+
+def test_hosted_bootstrap_uses_generic_worker_prose_only_after_an_empty_opening_agent() -> None:
+    assert _llm_bootstrap_opening_lines(
+        make_cached_story_state(seed=908),
+        _OpeningDirector(),
+        _ShortNarrator(),
+        _PassThroughEditor(),
+        allow_story_director_bootstrap=False,
+        narrator_opening_agent=_EmptyOpeningAgent(),
+    ) == ["Cloudflare-authored opening prose."]
+
+
+def test_hosted_bootstrap_reports_both_worker_opening_failures() -> None:
+    with pytest.raises(RuntimeError, match="opening_agent=opening agent unavailable; narrator=empty"):
+        _llm_bootstrap_opening_lines(
+            make_cached_story_state(seed=909),
+            _OpeningDirector(),
+            _FailingNarrator(),
+            _PassThroughEditor(),
+            allow_story_director_bootstrap=False,
+            narrator_opening_agent=_FailingOpeningAgent(),
+        )

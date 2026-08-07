@@ -265,6 +265,56 @@ def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
     assert not any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
 
 
+def test_demo_bootstrap_sends_the_opening_contract_to_cloudflare_before_generic_narration(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.setattr(
+        CloudflareWorkersAIAdapter,
+        "generate",
+        lambda self, context: (_ for _ in ()).throw(AssertionError("generic narration must not run first")),
+    )
+
+    observed_requests: list[dict[str, str]] = []
+
+    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        observed_requests.append(json.loads(request.data.decode("utf-8")))
+        return _FakeResponse(
+            json.dumps(
+                {
+                    "narration": json.dumps(
+                        {
+                            "paragraphs": [
+                                "Rain needles the mansion steps.",
+                                "Daria Stone holds the case file close.",
+                                "Your first task is to decide where to begin.",
+                            ]
+                        }
+                    )
+                }
+            )
+        )
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            save_store=InMemorySaveStore(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 55}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    assert len(observed_requests) == 1
+    assert "Return JSON only with key paragraphs (3 to 4 paragraphs)." in observed_requests[0]["system"]
+
+
 def test_demo_bootstrap_uses_cloudflare_narrator_opening_when_story_bootstrap_json_is_unavailable(
     tmp_path,
     monkeypatch,
@@ -304,6 +354,33 @@ def test_demo_bootstrap_uses_cloudflare_narrator_opening_when_story_bootstrap_js
     assert any("evening air bites" in line.lower() for line in payload["lines"])
     assert not any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
     assert any("Narrator Agent" in request.get("system", "") for request in observed_requests)
+
+
+def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_unavailable(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.setattr(
+        CloudflareWorkersAIAdapter,
+        "generate",
+        lambda self, context: "Daria Stone waits at the mansion steps with the case file.",
+    )
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            save_store=InMemorySaveStore(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 54}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    assert any("Daria Stone waits" in line for line in turn.json()["lines"])
 
 
 
