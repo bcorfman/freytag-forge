@@ -68,3 +68,23 @@ knowledge, location, resources, obligations, visibility, and scene state.
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).
+
+## Test tiers and performance
+
+Tests are tagged as `unit`, `component`, `integration`, or `evaluation`. Run
+the fast feedback set with:
+
+```text
+TMPDIR=/tmp uv run pytest -m "unit or component" -q
+```
+
+For a repeatable collection and timing report, use:
+
+```text
+TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=560
+TMPDIR=/tmp uv run pytest -q --cov-context=test --durations=50 --expected-test-count=560 --tier-report=artifacts/test-suite-health.json
+```
+
+The report records tier counts, slowest tests, and test-only construction
+counts for full-world builders, turn orchestration, and SQLite/web clients.
+Coverage runs with per-test contexts; the project minimum remains 90%.

@@ -41,6 +41,12 @@ addopts = [
 ]
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: pure contract, parser, policy, formatter, or serializer tests",
+    "component: one subsystem tested with injected dependencies",
+    "integration: composed runtime, persistence, or adapter contract",
+    "evaluation: deterministic replay, artifact, parity, or cross-genre test",
+]
 
 [tool.coverage.run]
 source = ["storygame"]
