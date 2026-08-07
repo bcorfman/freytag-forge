@@ -19,7 +19,7 @@ the intended boundary visible to contributors.
 
 The collection guard also parses test modules for duplicate `test_*`
 definitions. The per-test health report records source-level construction,
-`run_turn`, SQLite, and web-client counts. Unit and component budgets are
+runtime `run_turn`, SQLite, and `TestClient` counts. Unit and component budgets are
 available with `--strict-test-budgets`; the normal CI run records counts and
 timings without making the existing behavioral suite brittle during migration.
 
@@ -30,6 +30,9 @@ so narrow tests do not need to pay for the full story package builder.
 
 Serializer/deserializer contract tests use the injected `state_factory` seam in
 `deserialize_state`; SQLite tests retain the real persistence boundary.
+Adapter tests that do not exercise SQLite persistence inject a fresh
+`InMemorySaveStore` per app. This preserves isolation while keeping the real
+SQLite boundary in the save/load, artifact, CLI, evaluation, and parity proofs.
 The few component tests that call `run_turn()` do so deliberately to verify
 room-transition rendering and follower continuity; the bootstrap save/load
 case in `test_turn_runtime.py` is explicitly marked integration.
@@ -41,6 +44,14 @@ contract, deterministic affordance, dialogue boundary, recovery/confirmation,
 output contract, persistence, and evaluation. Wording and alias matrices belong
 in direct policy tests; branches sharing one setup should clone the setup state
 instead of repeating a warning, bootstrap, or replay turn.
+
+Shared web request/response projection behavior is tested below the adapter
+boundary in `test_web_runtime.py`. Local and hosted adapter tests retain one
+representative lifecycle/parity path plus credential, backend, CORS, quota,
+rate-limit, and fail-closed coverage. The current full-suite runtime report is
+548 tests with 21 `TestClient` constructions and 29 SQLite-store constructions;
+the prior Phase 2 report recorded 70 SQLite stores and 43 clients in the
+boundary-heavy run.
 
 ## Measuring locally
 

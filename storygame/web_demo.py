@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from os import getenv
 from pathlib import Path
 from random import Random
-from typing import Callable, Literal
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
@@ -23,6 +24,7 @@ from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web_runtime import (
+    SaveStore,
     ScopedSaveStore,
     bootstrap_failure_debug_payload,
     build_bootstrap_response_payload,
@@ -123,11 +125,12 @@ def create_demo_app(
     ip_daily_turn_cap: int = 300,
     cors_allow_origins: tuple[str, ...] | None = None,
     now_fn: Callable[[], datetime] | None = None,
+    save_store: SaveStore | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge Demo API", version="0.1.0")
     now = _utc_now if now_fn is None else now_fn
     save_db = Path("runs/storygame_web_demo_saves.sqlite") if save_db_path is None else Path(save_db_path)
-    store = SqliteSaveStore(save_db, check_same_thread=False)
+    store = SqliteSaveStore(save_db, check_same_thread=False) if save_store is None else save_store
     sessions: dict[str, _DemoSession] = {}
     ip_window_hits: dict[str, list[datetime]] = {}
     ip_daily_hits: dict[tuple[str, str], int] = {}

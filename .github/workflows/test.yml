@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=561 --tier-report=artifacts/test-suite-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=548 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v4
