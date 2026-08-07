@@ -73,6 +73,18 @@ traits. Delegated work follows a durable offer, acceptance, progress, result,
 failure, or cancellation lifecycle. NPC actions are validated against role,
 knowledge, location, resources, obligations, visibility, and scene state.
 
+Story packages are authored and evaluated offline before they are realized into
+runtime facts. The injected frontier-model pipeline produces typed characters,
+motivations, rules, secrets, revelations, causal assumptions, role contracts,
+beat plans, and endings; deterministic validation checks availability,
+clue/revelation reachability, causal ending viability, and resilient alternate
+information paths. Continuity, causality, and dialogue-fit specialists run in
+parallel and a versioned deterministic rubric with critical floors decides
+acceptance. Recovery is bounded by rounds, tokens, and wall-clock time, records
+preserved/modified/discarded fact categories, and revalidates the candidate.
+The evaluation harness also runs exploratory, goal-focused, social, adversarial,
+avoidant, and chaotic scripted players against every frozen fixture.
+
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).
@@ -89,8 +101,8 @@ TMPDIR=/tmp uv run pytest -m "unit or component" -q
 For a repeatable collection and timing report, use:
 
 ```text
-TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=550
-TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=550 --tier-report=artifacts/test-suite-health.json
+TMPDIR=/tmp uv run pytest --collect-only -q --expected-test-count=555
+TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=555 --tier-report=artifacts/test-suite-health.json
 ```
 
 The report records separate setup/call/teardown timings, CPU and wall time,

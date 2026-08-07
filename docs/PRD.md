@@ -106,6 +106,10 @@ Current runtime generation is package-driven.
 - `storygame.llm.context.build_narration_context` should read scene/dramatic facts first and treat `progress`/`tension` as compatibility inputs when those facts are absent.
 - `storygame.plot.dramatic_policy` is the compatibility policy layer that derives approach/question/role from parser turns, structured proposals, and freeform conversational turns before beat selection runs.
 - `storygame.engine.world_builder` selects outline + curve + map/entities/items metadata (`world_package`) by genre/tone/session.
+- `storygame.story_packages` is the offline authoring/evaluation boundary. It
+  validates generated story-package schema, reachability, revelation paths,
+  character availability, causality, role contracts, and ending viability before
+  any package can be realized into the fact-backed runtime.
 - `storygame.engine.bootstrap` validates LLM-expanded outline bootstrap plans before runtime state is realized.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - `storygame.engine.world` also supports bootstrap-plan realization for sessions that start from a simple author outline expanded into structured characters, items, goals, and trigger specs.
@@ -128,6 +132,10 @@ Current runtime generation is package-driven.
 - `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`, `cloudflare_workers_ai`).
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` runs deterministic multi-critic scoring, judging, budgets, telemetry, and constrained reversal.
+- Offline package evaluation injects frontier generation and parallel continuity,
+  causality, and dialogue-fit specialists. Its versioned weighted judge has
+  critical floors; bounded recovery records fact categories and revalidates the
+  complete candidate. This is not an ordinary-turn dependency.
 - Multi-critic evaluation executes critic runs in parallel per round while preserving deterministic output ordering for judge inputs.
 - Critics and judge inputs must include canonical opening facts so review can reject contradictions between opening text and turn-based text, especially role conflicts, duplicated clue locations, and impossible physical staging.
 - `storygame.llm.story_director` orchestrates story-design LLM agents (architect/character/plot/narrator/editor).

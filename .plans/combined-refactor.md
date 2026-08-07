@@ -338,32 +338,32 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Use an offline frontier-model pipeline to generate structured story packages
+- [x] Use an offline frontier-model pipeline to generate structured story packages
   containing characters, motivations, world rules, secrets, revelations,
   causal assumptions, role contracts, beat plans, and ending conditions.
-- Validate packages deterministically for reachability, clue/revelation paths,
+- [x] Validate packages deterministically for reachability, clue/revelation paths,
   character availability, causality, and ending viability before play.
-- Run frontier critique only at authoring/evaluation/replan boundaries, not as
+- [x] Run frontier critique only at authoring/evaluation/replan boundaries, not as
   ordinary-turn scaffolding.
-- Run specialist continuity, causality, and dialogue-fit critiques in parallel
+- [x] Run specialist continuity, causality, and dialogue-fit critiques in parallel
   during offline evaluation; use one deterministic judge only to aggregate a
   versioned weighted rubric with critical-dimension floors.
-- Bound evaluation/replan recovery by explicit round, token, and wall-clock
+- [x] Bound evaluation/replan recovery by explicit round, token, and wall-clock
   budgets. If a recovery candidate is required, record preserved, modified, and
   discarded fact categories and revalidate it end-to-end.
-- Run scripted exploratory, goal-focused, social, adversarial, avoidant, and
+- [x] Run scripted exploratory, goal-focused, social, adversarial, avoidant, and
   chaotic players against every fixture; make failures regression artifacts.
 
 ### Tests and exit criteria
 
-- Every fixture reaches at least one valid ending under multiple play styles.
-- Required information has more than one plausible acquisition path where the
+- [x] Every fixture reaches at least one valid ending under multiple play styles.
+- [x] Required information has more than one plausible acquisition path where the
   story design calls for resilience.
-- Frontier critique finds no unresolved critical causal, motivational, or
+- [x] Frontier critique finds no unresolved critical causal, motivational, or
   fairness defect before a package is accepted.
-- Local-model evaluations report direct-validity, repair rate, contradiction,
+- [x] Local-model evaluations report direct-validity, repair rate, contradiction,
   leakage, role drift, latency, and token usage.
-- Deterministic invalid-turn fixtures have complete rejection coverage, and
+- [x] Deterministic invalid-turn fixtures have complete rejection coverage, and
   fixed-seed artifact/transcript checks remain stable outside permitted
   nondeterministic display metadata.
 

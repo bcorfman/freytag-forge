@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Any, Literal, Protocol, TypedDict, cast
 
 import yaml
 
@@ -48,6 +48,14 @@ class EvaluationFixture(TypedDict):
     commands: list[str]
 
 
+class FixturePackageFactory(Protocol):
+    def build(self, fixture: Mapping[str, object]) -> dict[str, Any]: ...
+
+
+class FixtureScriptedPlayer(Protocol):
+    def play(self, package: dict[str, Any], style: str) -> dict[str, object]: ...
+
+
 def _fixtures_path() -> Path:
     return Path(__file__).resolve().parents[1] / "data" / "evaluation_fixtures.yaml"
 
@@ -66,8 +74,8 @@ def _load_fixture(raw: object) -> EvaluationFixture:
     if not isinstance(seed, int) or isinstance(seed, bool):
         raise ValueError("Evaluation fixture requires an integer 'seed'.")
     commands = raw.get("commands")
-    valid_commands = isinstance(commands, list) and commands and all(
-        isinstance(command, str) and command for command in commands
+    valid_commands = (
+        isinstance(commands, list) and commands and all(isinstance(command, str) and command for command in commands)
     )
     if not valid_commands:
         raise ValueError("Evaluation fixture requires one or more string commands.")
@@ -130,6 +138,20 @@ def classify_structured_artifact(artifact: Mapping[str, object]) -> tuple[Failur
     if artifact.get("agency_outcome") == "blocked" and not artifact.get("clarification_requested"):
         categories.append("blocked_player_agency")
     return tuple(categories)
+
+
+def evaluate_fixture_playability(
+    package_factory: FixturePackageFactory,
+    player: FixtureScriptedPlayer,
+    fixtures: tuple[EvaluationFixture, ...] | None = None,
+) -> dict[str, object]:
+    """Run every required player style for each frozen evaluation fixture."""
+    from storygame.story_packages import evaluate_package_playability
+
+    results: dict[str, object] = {}
+    for fixture in fixtures or load_evaluation_fixtures():
+        results[fixture["id"]] = evaluate_package_playability(package_factory.build(fixture), player)
+    return results
 
 
 def _strings(artifact: Mapping[str, object], key: str) -> tuple[str, ...]:

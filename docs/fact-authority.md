@@ -66,6 +66,23 @@ revelation must arrive through a validated structured proposal and fact commit
 before it can be rendered. Opening/bootstrap retains its separate structured
 proposal, validation, commit, and prose-validation sequence.
 
+## Story-package authoring and evaluation
+
+`storygame.story_packages` is an offline-only authoring boundary. Its generated
+packages are validated inputs, never runtime mutation authorities: only their
+subsequent realization may assert canonical facts. Package validation requires
+typed characters with motivations and role contracts, world rules, secrets,
+clues and revelation paths, causal assumptions, beats, and viable endings. A
+resilient revelation must retain two distinct clue paths.
+
+The authoring pipeline injects the frontier generator, three specialist critics
+(continuity, causality, dialogue fit), and an optional recoverer. Critics run in
+parallel; the existing deterministic weighted judge applies a versioned rubric
+and critical floors. Round, token, and wall-clock budgets bound review. Any
+recovery records preserved, modified, and discarded fact categories and passes
+full package validation again. `evaluate_fixture_playability` retains the
+structured artifacts from all six scripted player styles for regression use.
+
 ## NPC roles and delegated work
 
 `storygame.engine.npc` provides the Phase 5 boundary contracts and policy

@@ -67,3 +67,9 @@ Phase 7 local verification on 2026-08-07 completed 550 tests in 39.27s with
 affordances use one story-model rendering call and that accepted prose cannot
 append narration-derived fact operations. The verification command was
 `TMPDIR=/tmp uv run pytest -q`.
+
+Phase 8 local verification completed 555 tests in 13.50s without coverage and
+retained 90% total coverage with `TMPDIR=/tmp uv run pytest -q --cov`. The new
+offline package checks cover deterministic reachability/ending validation,
+parallel specialist review, bounded recovery records, and all six play styles
+for every frozen fixture.
