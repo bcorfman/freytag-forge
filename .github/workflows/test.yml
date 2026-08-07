@@ -6,13 +6,16 @@ on:
       - main
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   fast-feedback:
     name: Fast feedback (unit and component)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
         with:
           version: latest
       - name: Locate uv cache
@@ -20,7 +23,7 @@ jobs:
         run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
       - name: Cache uv dependencies
         id: uv-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.uv-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -40,8 +43,8 @@ jobs:
     name: Required coverage gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
         with:
           version: latest
       - name: Locate uv cache
@@ -49,7 +52,7 @@ jobs:
         run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
       - name: Cache uv dependencies
         id: uv-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.uv-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -66,7 +69,7 @@ jobs:
         run: TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-health
           path: artifacts/
@@ -77,8 +80,8 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
         with:
           version: latest
       - name: Locate uv cache
@@ -86,7 +89,7 @@ jobs:
         run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
       - name: Cache uv dependencies
         id: uv-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.uv-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -103,7 +106,7 @@ jobs:
         run: TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=548 --tier-report=artifacts/test-suite-context-health.json
       - name: Upload context coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-context-health
           path: artifacts/

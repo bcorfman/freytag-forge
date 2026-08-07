@@ -168,6 +168,22 @@ TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 \
   --tier-report=artifacts/test-suite-health.json
 ```
 
+Phase 4 five-run confirmation on commit
+`b24f988d2b9ca9c2b2647fc8ad099e08d27ab17d` used the exact required command on
+`ubuntu-latest` ([run 31195147744](https://github.com/bcorfman/freytag-forge/actions/runs/31195147744)):
+
+| Run | Pytest wall time |
+| --- | ---: |
+| 1 | 74.10s |
+| 2 | 69.84s |
+| 3 | 69.56s |
+| 4 | 70.32s |
+| 5 | 70.88s |
+| Median | 70.32s |
+
+All runs passed 548 tests at 90.05% coverage. The uv dependency cache was a
+hit. The median is 48.0% below the 135.37s baseline and clears the 85s target.
+
 `--durations=50` is a reporting option and must not be treated as a runtime
 optimization. The prior run with and without it was effectively identical.
 
@@ -393,21 +409,21 @@ evaluation, and parity proofs; adapter-only tests use a fresh in-memory store.
 
 - [x] Required CI remains behaviorally equivalent and coverage-gated.
 - [x] Fast feedback and full validation jobs are clearly named and documented.
-- [ ] The required job meets the final timing target on the same runner class.
+- [x] The required job meets the final timing target on the same runner class.
 
 ## Final success criteria
 
 - [ ] 560 or fewer tests only if every removed case is covered by a documented
   narrower contract or mutation check; test count alone is not a target.
-- [ ] At least 40% reduction from the 135.37s CI pytest baseline, targeting
+- [x] At least 40% reduction from the 135.37s CI pytest baseline, targeting
   85s or less on the existing GitHub Actions runner class.
 - [ ] 90% minimum project coverage, unchanged coverage scope.
 - [x] Actual full-world builds below 150, with runtime counts reported in CI
   artifacts; complete-turn counts remain reported for cost diagnosis.
 - [ ] No unclassified test in the top-20 timing report exceeds the approved
   tier budget.
-- [ ] Five-run median, not a best-case run, satisfies the target.
-- [ ] Documentation reports CI measurements separately from local measurements
+- [x] Five-run median, not a best-case run, satisfies the target.
+- [x] Documentation reports CI measurements separately from local measurements
   and names the exact commit/run used.
 
 ## Required review record for each performance change

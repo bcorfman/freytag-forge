@@ -3,13 +3,16 @@ name: test-suite five-run benchmark
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   benchmark:
     name: Required gate median (five runs)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v9
         with:
           version: latest
       - name: Locate uv cache
@@ -17,7 +20,7 @@ jobs:
         run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
       - name: Cache uv dependencies
         id: uv-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.uv-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -42,7 +45,7 @@ jobs:
           } | tee artifacts/five-run-summary.txt >> "$GITHUB_STEP_SUMMARY"
       - name: Upload five-run benchmark
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-five-run-benchmark
           path: artifacts/
