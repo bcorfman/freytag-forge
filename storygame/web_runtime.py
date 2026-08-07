@@ -151,7 +151,11 @@ def _sanitize_assistant_targeting(text: str, assistant_name: str) -> str:
     return normalized
 
 
-def _normalized_narrator_opening_paragraphs(raw: str, assistant_name: str) -> list[str]:
+def _normalized_narrator_opening_paragraphs(
+    raw: str,
+    assistant_name: str,
+    allow_short_prose: bool = False,
+) -> list[str]:
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw.strip()]
@@ -162,6 +166,8 @@ def _normalized_narrator_opening_paragraphs(raw: str, assistant_name: str) -> li
     try:
         parsed = parse_narrator_opening_output({"paragraphs": sanitized})
     except StoryAgentContractError as exc:
+        if allow_short_prose and sanitized:
+            return sanitized
         raise RuntimeError(f"Opening contract validation failed: {exc}") from exc
     return list(parsed["paragraphs"])
 
@@ -247,8 +253,26 @@ def _llm_bootstrap_opening_lines(
             story_director_error = str(exc).strip()
             opening_lines = []
 
+    opening_agent_error = ""
+    if not allow_story_director_bootstrap and narrator_opening_agent is not None:
+        try:
+            story_agent_lines = _bootstrap_opening_from_narrator_opening_agent(
+                state,
+                narrator_opening_agent,
+                output_editor,
+            )
+            if story_agent_lines:
+                return story_agent_lines
+        except RuntimeError as exc:
+            opening_agent_error = str(exc).strip()
+
     try:
-        narrator_lines = _bootstrap_opening_from_narrator(state, narrator, output_editor)
+        narrator_lines = _bootstrap_opening_from_narrator(
+            state,
+            narrator,
+            output_editor,
+            allow_short_prose=not allow_story_director_bootstrap,
+        )
         if narrator_lines:
             return narrator_lines
     except RuntimeError as exc:
@@ -258,9 +282,14 @@ def _llm_bootstrap_opening_lines(
                 "Bootstrap opening failed after story-director fallback: "
                 f"story_director={story_director_error}; narrator={narrator_error}"
             ) from exc
+        if opening_agent_error:
+            raise RuntimeError(
+                "Bootstrap opening failed after hosted opening-agent fallback: "
+                f"opening_agent={opening_agent_error}; narrator={narrator_error}"
+            ) from exc
         raise
 
-    if narrator_opening_agent is not None:
+    if allow_story_director_bootstrap and narrator_opening_agent is not None:
         try:
             story_agent_lines = _bootstrap_opening_from_narrator_opening_agent(
                 state,
@@ -282,6 +311,11 @@ def _llm_bootstrap_opening_lines(
         raise RuntimeError(
             "Web bootstrap requires an LLM-authored opening. "
             f"story_director={story_director_error}; narrator=empty"
+        )
+    if opening_agent_error:
+        raise RuntimeError(
+            "Web bootstrap requires an LLM-authored opening. "
+            f"opening_agent={opening_agent_error}; narrator=empty"
         )
     raise RuntimeError("Web bootstrap requires an LLM-authored opening. narrator=empty")
 
@@ -328,6 +362,7 @@ def _bootstrap_opening_from_narrator(
     state: GameState,
     narrator: Narrator,
     output_editor: OutputEditor,
+    allow_short_prose: bool = False,
 ) -> list[str]:
     context = build_narration_context(state, parse_command("look"), "setup_scene")
     try:
@@ -336,7 +371,11 @@ def _bootstrap_opening_from_narrator(
         return []
     if not raw:
         return []
-    opening_lines = _normalized_narrator_opening_paragraphs(raw, context.assistant_name)
+    opening_lines = _normalized_narrator_opening_paragraphs(
+        raw,
+        context.assistant_name,
+        allow_short_prose=allow_short_prose,
+    )
     item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
     assistant_npc_id = next(
         (
