@@ -152,11 +152,19 @@ health-runtime spread confirms that runner variance remains material, so the
 new health median is recorded for diagnosis rather than claimed as a second
 performance improvement.
 
-The CI command currently is:
+The historical benchmark command was:
 
 ```text
 TMPDIR=/tmp uv run pytest -q --cov-context=test \
   --expected-test-count=561 \
+  --tier-report=artifacts/test-suite-health.json
+```
+
+The current required gate uses ordinary coverage; context coverage runs in a
+separate informational job:
+
+```text
+TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 \
   --tier-report=artifacts/test-suite-health.json
 ```
 
@@ -369,22 +377,22 @@ evaluation, and parity proofs; adapter-only tests use a fresh in-memory store.
 
 ### Phase 4 — Make the required CI job observable and efficient
 
-- [ ] Keep the full required coverage suite in the required job.
-- [ ] Add a separate fast unit/component job for pull-request feedback; do
+- [x] Keep the full required coverage suite in the required job.
+- [x] Add a separate fast unit/component job for pull-request feedback; do
   not present it as a replacement for the full suite.
-- [ ] Cache uv dependencies using the lockfile and record cache hit/miss.
-- [ ] Compare `--cov-context=test` with ordinary coverage in Phase 0. If test
+- [x] Cache uv dependencies using the lockfile and record cache hit/miss.
+- [x] Compare `--cov-context=test` with ordinary coverage in Phase 0. If test
   contexts are materially expensive, run them in a dedicated reporting job
   while keeping ordinary coverage in the required gate; document the tradeoff.
-- [ ] Do not add `--durations` to the normal command unless its measured
+- [x] Do not add `--durations` to the normal command unless its measured
   overhead is negligible; expose it as an opt-in diagnostic command.
-- [ ] Upload the timing/health artifact even on failure.
-- [ ] Track the required job's median duration over five runs, not one run.
+- [x] Upload the timing/health artifact even on failure.
+- [x] Track the required job's median duration over five runs, not one run.
 
 ### Phase 4 exit criteria
 
-- [ ] Required CI remains behaviorally equivalent and coverage-gated.
-- [ ] Fast feedback and full validation jobs are clearly named and documented.
+- [x] Required CI remains behaviorally equivalent and coverage-gated.
+- [x] Fast feedback and full validation jobs are clearly named and documented.
 - [ ] The required job meets the final timing target on the same runner class.
 
 ## Final success criteria
