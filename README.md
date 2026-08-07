@@ -50,6 +50,14 @@ genre packs extend the same validated schema without story-specific runtime
 branches. The model also receives fact-derived affordances for legal exits,
 locks, visible portable items, addressable NPCs, and held items.
 
+Rendering is post-commit. Deterministic affordances such as `look`, movement,
+inventory, and unique visible-item aliases use the shared proposal path and then
+make one story-model rendering call. The normal renderer uses deterministic
+committed-state validation and permits one bounded repair call; critic,
+extractor, and output-editor passes are excluded from ordinary turns. Narration
+and dialogue cannot create facts after display, so visible changes require
+accepted structured claims and committed deltas.
+
 Freytag progression is also fact-driven. `BeatPolicy` selects a stable legal
 beat from the current phase, role, pressure, obstacle, conflict, reveal budget,
 and NPC scene goals; it does not prescribe the player’s approach. Reveal

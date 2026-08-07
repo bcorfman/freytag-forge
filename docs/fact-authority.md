@@ -52,6 +52,20 @@ Universal rules live in `data/rules/core_rules.yaml`; genre extensions live in
 visible items, addressable NPCs, and inventory from facts for model context.
 It is advisory context, not a mutation authority.
 
+## Post-commit rendering
+
+Ordinary rendering receives observer-scoped context after direct effects,
+consequences, triggers, and dramatic updates have committed. The fast gate uses
+deterministic validators only and allows one bounded model revision when a
+candidate conflicts with committed exits, inventory, visibility, or recent
+events. Critic, extractor, and editor passes are not part of the normal path.
+
+Accepted narration and NPC dialogue are projections of committed results; they
+are never parsed back into facts. Any visible item, location, relationship, or
+revelation must arrive through a validated structured proposal and fact commit
+before it can be rendered. Opening/bootstrap retains its separate structured
+proposal, validation, commit, and prose-validation sequence.
+
 ## NPC roles and delegated work
 
 `storygame.engine.npc` provides the Phase 5 boundary contracts and policy

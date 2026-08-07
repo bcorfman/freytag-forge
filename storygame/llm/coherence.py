@@ -706,12 +706,29 @@ class CoherenceGate:
             token_spend["critics"] += critic_token_spend
 
             critique_round_index += 1
-            decision = judge_critique_round(
-                reports,
-                threshold=self._threshold,
-                critical_floors=self._critical_floors,
-                round_index=critique_round_index,
-            )
+            if reports:
+                decision = judge_critique_round(
+                    reports,
+                    threshold=self._threshold,
+                    critical_floors=self._critical_floors,
+                    round_index=critique_round_index,
+                )
+            else:
+                decision = parse_judge_decision(
+                    {
+                        "decision_id": f"post-commit-{critique_round_index}",
+                        "status": "accepted",
+                        "round_index": critique_round_index,
+                        "threshold": self._threshold,
+                        "total_score": self._threshold,
+                        "rubric_components": {dimension: 100 for dimension in CRITIQUE_DIMENSIONS},
+                        "critical_floors": dict(self._critical_floors),
+                        "critic_ids": (),
+                        "critic_reports": (),
+                        "judge": "post_commit_validators",
+                        "rationale": "Committed-state validators accepted the candidate.",
+                    }
+                )
             final_narration = narration
             final_reports = reports
             final_decision = decision
@@ -877,5 +894,32 @@ def build_default_coherence_gate(
         wall_clock_timeout_ms=wall_clock_timeout_ms,
         max_reversal_rounds=max_reversal_rounds,
         time_source=time_source,
+        max_validation_revisions=max_validation_revisions,
+    )
+
+
+def build_fast_post_commit_gate(
+    wall_clock_timeout_ms: int = DEFAULT_WALL_CLOCK_TIMEOUT_MS,
+    max_validation_revisions: int = 2,
+) -> CoherenceGate:
+    """Build the bounded validator used by ordinary post-commit rendering.
+
+    Critics and judge rounds are authoring/evaluation concerns. The normal turn
+    path validates the model's candidate against the committed context and
+    permits one deterministic repair attempt only.
+    """
+    return CoherenceGate(
+        critics=(),
+        validators=(
+            _EntityReachabilityValidator(),
+            _InventoryLocationConsistencyValidator(),
+            _CommittedStateContradictionValidator(),
+            _AssistantRoleConsistencyValidator(),
+        ),
+        threshold=DEFAULT_THRESHOLD,
+        critical_floors=DEFAULT_CRITICAL_FLOORS,
+        max_rounds=max_validation_revisions,
+        wall_clock_timeout_ms=wall_clock_timeout_ms,
+        max_reversal_rounds=1,
         max_validation_revisions=max_validation_revisions,
     )

@@ -300,36 +300,36 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Render narration and NPC dialogue only from committed facts plus permitted
+- [x] Render narration and NPC dialogue only from committed facts plus permitted
   framing; structured claims must cover any visible state change.
-- Keep opening/bootstrap as structured fact proposal -> validation -> commit ->
+- [x] Keep opening/bootstrap as structured fact proposal -> validation -> commit ->
   prose validation. Accepted prose never repairs truth after display.
-- Reduce the normal path to one LLM call and allow at most one bounded
+- [x] Reduce the normal path to one LLM call and allow at most one bounded
   revision call for contract-invalid or deterministically repairable output.
-- Remove normal-turn critic/extractor/editor passes, obsolete parser-era
+- [x] Remove normal-turn critic/extractor/editor passes, obsolete parser-era
   fallbacks, and stale compatibility branches when covered by tests.
-- Split surface plumbing into gateway, orchestration, rendering, and
+- [x] Split surface plumbing into gateway, orchestration, rendering, and
   persistence responsibilities where this makes call flow clearer.
-- Preserve hosted-demo fail-closed behavior and backend differences.
-- Preserve the local `GET /` + `POST /turn` interface and the hosted demo's
+- [x] Preserve hosted-demo fail-closed behavior and backend differences.
+- [x] Preserve the local `GET /` + `POST /turn` interface and the hosted demo's
   `GET /api/v1/health`, `POST /api/v1/session`, and `POST /api/v1/turn`
   contract. The static client remains a separate consumer of the versioned API.
-- Keep hosted guardrails: CORS allowlisting, session TTL, session turn cap,
+- [x] Keep hosted guardrails: CORS allowlisting, session TTL, session turn cap,
   per-IP short-window and daily limits, request timeouts/token ceilings, and
   distinct `rate_limited`, `quota_exhausted`, and `service_unavailable`
   responses.
 
 ### Tests and exit criteria
 
-- Ordinary turns make one LLM call on the fast path and two at most on
+- [x] Ordinary turns make one LLM call on the fast path and two at most on
   recovery; tests assert this.
-- Narration cannot introduce an item, location, relationship, or revelation
+- [x] Narration cannot introduce an item, location, relationship, or revelation
   without a matching accepted commit.
-- Local and hosted surfaces retain their valid deployment differences while
+- [x] Local and hosted surfaces retain their valid deployment differences while
   sharing parity-tested contracts below the adapter boundary.
-- Total story-agent latency is under ten seconds per normal turn at the chosen
+- [x] Total story-agent latency is under ten seconds per normal turn at the chosen
   deployment target.
-- API lifecycle, adapter retries/timeouts, quota/error envelopes, static-client
+- [x] API lifecycle, adapter retries/timeouts, quota/error envelopes, static-client
   bootstrap, and deployment health checks have automated coverage. Telemetry
   records turn latency, model-call count, retries, quota events, and failures
   without exposing internals to players.

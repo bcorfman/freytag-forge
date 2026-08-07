@@ -86,7 +86,7 @@ def test_narration_output_ignores_non_fact_backed_mutation_claims():
     assert next_a.replay_signature() == next_b.replay_signature()
 
 
-def test_narration_output_commits_explicit_item_transfer_to_fact_store():
+def test_narration_output_cannot_commit_explicit_item_transfer_to_fact_store():
     state = build_default_state(seed=171, genre="mystery")
     start_room = state.player.location
     assert "ledger_page" not in state.world.rooms[start_room].item_ids
@@ -102,8 +102,7 @@ def test_narration_output_commits_explicit_item_transfer_to_fact_store():
     assert next_state.world_facts.holds("holding", "daria_stone", "ledger_page")
     assert not next_state.world_facts.holds("room_item", start_room, "ledger_page")
     narration_events = [event for event in next_state.event_log.events if event.type == "narration_commit"]
-    assert narration_events
-    assert narration_events[-1].metadata["fact_ops"]
+    assert narration_events == []
 
 
 def test_regression_script_hits_climax_band_before_resolution():
