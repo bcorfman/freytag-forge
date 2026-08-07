@@ -32,6 +32,7 @@ def test_policy_bundle_declares_all_phase_two_families() -> None:
 def test_proposal_policy_rejects_unknown_predicates_without_mutating_state() -> None:
     state = build_default_state(seed=410, genre="mystery")
     registry = PredicatePolicyRegistry.for_genre("mystery")
+    before = state.replay_signature()
 
     with pytest.raises(ValueError, match="unauthorized predicate"):
         validate_proposed_fact_ops(
@@ -41,6 +42,7 @@ def test_proposal_policy_rejects_unknown_predicates_without_mutating_state() -> 
         )
 
     assert not state.world_facts.holds("secret_truth", "villain")
+    assert state.replay_signature() == before
 
 
 def test_proposal_policy_normalizes_fact_terms_and_allows_bounded_facts() -> None:

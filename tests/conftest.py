@@ -49,6 +49,15 @@ _COMPONENT_FILES = {
     "test_adapters.py", "test_freeform_unit.py", "test_llm_context.py", "test_narration_state.py",
     "test_world_builder.py", "test_world_presentation.py", "test_story_coherence.py",
 }
+_ORCHESTRATION_RETENTION_REASONS = {
+    "proposal/commit contract": "One complete turn proves novel intent validation, bounded effects, and fact commit.",
+    "deterministic affordance": "One complete turn proves the deterministic alias or navigation path still uses proposal/commit.",
+    "dialogue boundary": "One complete turn proves addressed-speaker, scene, and protected-context enforcement.",
+    "recovery/confirmation": "The minimum warning/confirmation sequence proves cancellation, proceed, and bounded recovery.",
+    "output contract": "One complete turn proves rendered output is derived after commit and remains surface-compatible.",
+    "persistence": "The minimum complete turn sequence proves save/load composition or post-load continuation.",
+    "evaluation": "The compact replay proves cross-genre determinism and evaluation artifact behavior.",
+}
 
 
 def _tier_for_path(path: Path) -> str:
@@ -221,6 +230,11 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
                 "constructions": health.get("constructions", {}),
                 "runtime": {name: count for name, count in runtime.items() if "." not in name},
                 "orchestration_class": _orchestration_class(item.nodeid, runtime),
+                "orchestration_retention_reason": (
+                    _ORCHESTRATION_RETENTION_REASONS.get(_orchestration_class(item.nodeid, runtime))
+                    if _orchestration_class(item.nodeid, runtime)
+                    else None
+                ),
                 "commands": [
                     name.removeprefix("complete_turn.command.")
                     for name in runtime

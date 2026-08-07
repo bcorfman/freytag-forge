@@ -43,6 +43,35 @@ Latest benchmark record:
 | Runtime full-world builds / turns / SQLite stores | 433 / 157 / 70 |
 | Health artifact | [`test-suite-health`](https://github.com/bcorfman/freytag-forge/actions/runs/31147792358/artifacts/8982161716), SHA-256 `4e260636eb5d05d50b08f502290800224258a3d0df3e5f75d8058a91c49a5c1b` |
 
+Phase 1 benchmark confirmation was run twice on commit `4a0e723` using the
+benchmark workflow's coverage-health command:
+
+| Measure | Run `31189991340` | Run `31190002032` | Median |
+| --- | ---: | ---: | ---: |
+| Tests | 561 | 561 | 561 |
+| Pytest wall time | 74.99s | 75.43s | 75.21s |
+| Pytest CPU time | 74.52s | 74.84s | 74.68s |
+| Full-world builds | 120 | 120 | 120 |
+| Complete turns | 146 | 146 | 146 |
+| SQLite stores | 66 | 66 | 66 |
+
+The exact workflow command was:
+
+```text
+TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=561 \
+  --tier-report=artifacts/coverage-health.json
+```
+
+The run/job records are [31189991340](https://github.com/bcorfman/freytag-forge/actions/runs/31189991340)
+([coverage-health job](https://github.com/bcorfman/freytag-forge/actions/runs/31189991340/job/92904091618))
+and [31190002032](https://github.com/bcorfman/freytag-forge/actions/runs/31190002032)
+([coverage-health job](https://github.com/bcorfman/freytag-forge/actions/runs/31190002032/job/92904122887)).
+Their health artifacts are `test-suite-benchmark-coverage-health`, with SHA-256
+digests `b4583dd7bcd6bb908c861ede8a5260cfd67af81b49b3f63610f9f13b5ee43374`
+and `41d0a4041c2b0910a60f829454e2a83db565bcfff9d6335ddf41bdbf496d89a5`.
+The median is a 44.5% reduction from the 135.37s baseline; runner/job
+durations were 85s and 87s respectively.
+
 This is a 15.6% reduction from the 135.37s baseline. It is the first
 authoritative post-change benchmark; the two-run Phase 1 criterion remains
 open.
@@ -247,7 +276,9 @@ reproducibility/output cases were migrated to cloned state in this pass.
 ### Phase 1 exit criteria
 
 - [x] Actual full-world invocations are below 150.
-- [ ] The top-20 report shows a measurable reduction in setup/call time.
+- [x] The top-20 report shows a measurable reduction in setup/call time. The
+  two coverage-health artifacts retain ranked setup/call tables; the full
+  suite's pytest wall-time median is 75.21s, down 44.5% from baseline.
 - [x] Two CI benchmark runs show at least a 15% reduction from the 135.37s
   baseline, or the benchmark identifies a non-test-execution bottleneck that
   must be addressed next.
@@ -272,26 +303,28 @@ arbitrary count.
 - [x] For each test invoking `run_turn()`, classify it as one of:
   proposal/commit contract, deterministic affordance, dialogue boundary,
   recovery/confirmation, output contract, persistence, or evaluation.
-- [ ] Retain one integration proof per distinct orchestration contract and
+- [x] Retain one integration proof per distinct orchestration contract and
   move wording/normalization matrices to direct policy tests.
-- [ ] Parameterize equivalent inputs only when the parameter cases share one
-  fixture setup and do not multiply complete-world/replay work unnecessarily.
+- [x] Parameterize equivalent inputs only when the parameter cases share one
+  fixture setup and do not multiply complete-world/replay work unnecessarily;
+  the remaining confirmation branches share one cloned warning fixture rather
+  than parameterizing complete turns.
 - [x] Shorten replay scripts to the minimum turns needed to prove the stated
   invariant. Use direct replay-signature tests for determinism and one real
   save/load continuation test for composition.
 - [x] Keep one compact cross-genre smoke matrix and avoid repeating the same
   long command sequence for every genre unless the genre-specific behavior is
   the assertion.
-- [ ] Remove redundant complete `run_turn()` invocations from the top-cost
+- [x] Remove redundant complete `run_turn()` invocations from the top-cost
   tests and document why each remaining integration/evaluation invocation is
   required.
-- [ ] Use mutation or targeted fault-injection checks before deleting or
+- [x] Use mutation or targeted fault-injection checks before deleting or
   merging tests covering validators, fact commits, persistence integrity,
   speaker checks, and fail-closed behavior.
 
 ### Phase 2 exit criteria
 
-- [ ] The top-20 CI report no longer contains redundant replay/orchestration
+- [x] The top-20 CI report no longer contains redundant replay/orchestration
   cases, or each retained case has a documented integration/evaluation reason.
 - [x] Two CI benchmark runs show at least a 25% reduction from baseline, or
   the remaining cost is demonstrated to be outside test execution.
