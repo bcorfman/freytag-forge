@@ -126,6 +126,7 @@ cython_debug/
 
 # Demo/replay artifacts
 runs/
+artifacts/
 
 # MCP directories
 .serena/

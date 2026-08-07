@@ -33,7 +33,7 @@ jobs:
       - name: Run benchmark variant
         run: >-
           TMPDIR=/tmp uv run pytest -q ${{ matrix.args }}
-          --expected-test-count=548
+          --expected-test-count=550
           --tier-report=artifacts/${{ matrix.name }}.json
       - name: Upload benchmark artifact
         if: always()

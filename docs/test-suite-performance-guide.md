@@ -49,14 +49,14 @@ Shared web request/response projection behavior is tested below the adapter
 boundary in `test_web_runtime.py`. Local and hosted adapter tests retain one
 representative lifecycle/parity path plus credential, backend, CORS, quota,
 rate-limit, and fail-closed coverage. The current full-suite runtime report is
-548 tests with 21 `TestClient` constructions and 29 SQLite-store constructions;
+550 tests with 21 `TestClient` constructions and 29 SQLite-store constructions;
 the prior Phase 2 report recorded 70 SQLite stores and 43 clients in the
 boundary-heavy run.
 
 ## CI jobs
 
 `Required coverage gate` is the merge-validation job. It runs the complete
-548-test suite with ordinary `--cov`, the existing 90% threshold, collection
+550-test suite with ordinary `--cov`, the existing 90% threshold, collection
 guards, and the health artifact. It is the authoritative required result. Its
 uv dependency cache is keyed by `uv.lock`; the cache hit or miss is recorded in
 the uploaded `ci-cache.json` artifact and job summary.

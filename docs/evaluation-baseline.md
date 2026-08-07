@@ -61,3 +61,9 @@ on commit `9d8d81ff86ee5430d34afdb87108f545f73988e8` completed 561 tests with
 90.03% coverage in 114.20s wall time (112.68s CPU), 15.6% below the 135.37s
 baseline. Its health artifact recorded 433 full-world builds, 157 complete
 turns, and 70 SQLite stores.
+
+Phase 7 local verification on 2026-08-07 completed 550 tests in 39.27s with
+90.19% total coverage. New rendering regressions verify that deterministic
+affordances use one story-model rendering call and that accepted prose cannot
+append narration-derived fact operations. The verification command was
+`TMPDIR=/tmp uv run pytest -q`.

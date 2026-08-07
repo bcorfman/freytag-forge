@@ -47,6 +47,7 @@ class StoryDirector:
         room_presentation: RoomPresentationAgent | None = None,
         story_replan: StoryReplanAgent | None = None,
     ) -> None:
+        self._use_turn_editor = output_editor is not None
         self._output_editor = build_output_editor(mode) if output_editor is None else output_editor
         self._story_bootstrap = DefaultStoryBootstrapAgent(mode) if story_bootstrap is None else story_bootstrap
         self._story_bootstrap_critic = (
@@ -464,6 +465,10 @@ class StoryDirector:
             state.world_package["room_presentation_cache"] = fallback
 
     def review_turn(self, state: GameState, lines: list[str], events: list[Event], debug: bool = False) -> list[str]:
+        """Render committed lines; explicit legacy adapters remain opt-in."""
+        if not self._use_turn_editor:
+            del state, events, debug
+            return list(lines)
         return self._output_editor.review_turn(list(lines), active_story_goal(state), state.turn_index, debug)
 
     def replan_if_needed(self, state: GameState) -> Event | None:

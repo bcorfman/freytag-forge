@@ -31,14 +31,14 @@ jobs:
           mkdir -p artifacts
           for run_number in 1 2 3 4 5; do
             /usr/bin/time -f '%e' -o "artifacts/run-${run_number}.seconds" \
-              env TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 \
+              env TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=550 \
                 --tier-report="artifacts/run-${run_number}-health.json"
           done
           median=$(sort -n artifacts/run-*.seconds | sed -n '3p')
           {
             echo "commit=${GITHUB_SHA}"
             echo "runner=${RUNNER_OS}/${ImageOS}"
-            echo "command=TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 --tier-report=artifacts/<run>-health.json"
+            echo "command=TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=550 --tier-report=artifacts/<run>-health.json"
             echo "coverage=ordinary (--cov)"
             echo "median_pytest_seconds=${median}"
             echo "samples=$(paste -sd, artifacts/run-*.seconds)"

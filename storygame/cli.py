@@ -12,9 +12,10 @@ from rich.console import Console
 from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
+    LlmFreeformProposalAdapter,
+    RuleBasedFreeformProposalAdapter,
     _HIDDEN_FREEFORM_MESSAGE_KEYS,
     _dialogue_contains_code_artifact,
-    resolve_freeform_roleplay,
     resolve_freeform_roleplay_with_proposals,
 )
 from storygame.engine.impact import (
@@ -33,10 +34,18 @@ from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
-from storygame.llm.coherence import CoherenceTelemetry, build_default_coherence_gate
+from storygame.llm.coherence import (
+    CoherenceTelemetry,
+    build_default_coherence_gate,
+    build_fast_post_commit_gate,
+)
+
+# Kept as a patchable compatibility seam for callers/tests. The ordinary
+# runtime below deliberately selects the validator-only fast gate.
+build_default_coherence_gate = build_fast_post_commit_gate
 from storygame.llm.contracts import JudgeDecision, NumericDelta, parse_turn_proposal
 from storygame.llm.context import build_narration_context
-from storygame.llm.narration_state import dialogue_fact_conflict, extract_dialogue_fact_ops, extract_narration_fact_ops
+from storygame.llm.narration_state import dialogue_fact_conflict
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
@@ -1068,13 +1077,26 @@ def run_turn(
 
     planner_dialog_payload: dict[str, Any] | None = None
     planner_action_payload: dict[str, Any] | None = None
+    accepted_proposal_text = ""
     planner_parse_error = ""
     fallback_action = parse_command(raw)
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
     prefer_proposal_resolution = False
     try:
-        planner_dialog_payload, planner_action_payload = freeform_adapter.propose(preturn_state, raw_input)
+        # Direction, inventory, examination, and visible-item aliases are
+        # deterministic affordances. Normalize them through the same proposal
+        # contract without spending a second story-model call on classification.
+        planner = freeform_adapter
+        if isinstance(freeform_adapter, LlmFreeformProposalAdapter) and fallback_action.kind in {
+            ActionKind.LOOK,
+            ActionKind.INVENTORY,
+            ActionKind.MOVE,
+            ActionKind.TAKE,
+            ActionKind.USE,
+        }:
+            planner = RuleBasedFreeformProposalAdapter()
+        planner_dialog_payload, planner_action_payload = planner.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(planner_action_payload)
         planner_action_payload = normalized_action_payload
         dialogue_policy_error = _freeform_dialogue_policy_error(
@@ -1132,6 +1154,11 @@ def run_turn(
             return state.clone(), _freeform_unavailable_lines(detail), raw_input, "freeform_roleplay", True
         next_state = freeform["state"]
         events = list(freeform["events"])
+        if (
+            _is_conversational_freeform_request(raw_input, fallback_action)
+            or isinstance(freeform_adapter, LlmFreeformProposalAdapter)
+        ):
+            accepted_proposal_text = str(planner_dialog_payload.get("text", "")).strip()
         freeform_policy_debug = {
             "action_proposal": dict(freeform["action_proposal"]),
             "state_update_envelope": dict(freeform["state_update_envelope"]),
@@ -1209,22 +1236,31 @@ def run_turn(
         "elapsed_ms": 0,
         "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
     }
-    try:
-        coherence_result = gate.generate_with_gate(narrator, context)
-        narration = coherence_result["narration"]
-        judge_decision = coherence_result["judge_decision"]
-        coherence_telemetry = coherence_result["telemetry"]
-    except RuntimeError as exc:
-        error_code = str(exc)
-        if error_code == "CONTRACT_INVALID_AGENT_PROPOSAL":
-            narration = ""
-        elif error_code == "CONTRACT_INVALID_REVISION_DIRECTIVE":
-            try:
-                narration = str(narrator.generate(context)).strip()
-            except Exception as fallback_exc:  # noqa: BLE001
-                narration = f"[Narrator failed: {fallback_exc}]"
-        else:
-            narration = f"[Narrator failed: {exc}]"
+    if accepted_proposal_text:
+        # Freeform dialogue is already the addressed speaker's proposal. It is
+        # rendered after the accepted fact commit; no narrator/editor pass may
+        # rewrite it or create additional truth.
+        narration = accepted_proposal_text
+        judge_decision["status"] = "accepted"
+        judge_decision["decision_id"] = "post-commit-proposal"
+        coherence_telemetry["hard_fail_reason"] = ""
+    else:
+        try:
+            coherence_result = gate.generate_with_gate(narrator, context)
+            narration = coherence_result["narration"]
+            judge_decision = coherence_result["judge_decision"]
+            coherence_telemetry = coherence_result["telemetry"]
+        except RuntimeError as exc:
+            error_code = str(exc)
+            if error_code == "CONTRACT_INVALID_AGENT_PROPOSAL":
+                narration = ""
+            elif error_code == "CONTRACT_INVALID_REVISION_DIRECTIVE":
+                try:
+                    narration = str(narrator.generate(context)).strip()
+                except Exception as fallback_exc:  # noqa: BLE001
+                    narration = f"[Narrator failed: {fallback_exc}]"
+            else:
+                narration = f"[Narrator failed: {exc}]"
 
     if _should_discard_failed_narration(judge_decision, coherence_telemetry):
         narration = ""
@@ -1233,43 +1269,6 @@ def run_turn(
         _record_major_disruption(next_state, events, effective_action.raw, impact_assessment)
 
     narration = _sanitize_narration_for_player(narration, debug=debug)
-    narration_fact_ops = extract_narration_fact_ops(next_state, narration)
-    if narration_fact_ops:
-        apply_fact_ops(next_state, narration_fact_ops)
-        narration_event = Event(
-            type="narration_commit",
-            turn_index=next_state.turn_index,
-            metadata={
-                "fact_ops": narration_fact_ops,
-                "source": "accepted_narration",
-                "narration": narration,
-            },
-        )
-        next_state.append_event(narration_event)
-        events.append(narration_event)
-        if freeform_policy_debug is not None:
-            freeform_policy_debug["narration_fact_ops"] = list(narration_fact_ops)
-    if requires_freeform_resolution and planner_dialog_payload is not None and planner_action_payload is not None:
-        dialogue_fact_ops = extract_dialogue_fact_ops(
-            next_state,
-            str(planner_dialog_payload.get("speaker", "")),
-            str(planner_dialog_payload.get("text", "")),
-            str(planner_action_payload.get("arguments", {}).get("topic", "")),
-        )
-        if dialogue_fact_ops:
-            apply_fact_ops(next_state, dialogue_fact_ops)
-            dialogue_fact_event = Event(
-                type="dialogue_commit",
-                turn_index=next_state.turn_index,
-                metadata={
-                    "fact_ops": dialogue_fact_ops,
-                    "source": "accepted_dialogue",
-                    "speaker": str(planner_dialog_payload.get("speaker", "")),
-                    "text": str(planner_dialog_payload.get("text", "")),
-                },
-            )
-            next_state.append_event(dialogue_fact_event)
-            events.append(dialogue_fact_event)
     narration = _ensure_action_grounded_narration(narration, effective_action)
 
     preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)
@@ -1385,9 +1384,17 @@ def run_turn(
             lines = [""]
         lines = [line for line in lines if line]
 
-    reviewed_lines = director.review_turn(next_state, [line for line in lines if line], events, debug)
-    reviewed_lines = [_rewrite_known_npc_names(next_state, line) for line in reviewed_lines if line]
+    reviewed_lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
     reviewed_lines = _suppress_repeated_goal_copy(reviewed_lines, raw_input, next_state.active_goal)
+    if output_editor is not None:
+        # Explicitly injected editors are retained as a compatibility adapter;
+        # production surfaces do not inject one on the ordinary path.
+        reviewed_lines = output_editor.review_turn(
+            reviewed_lines,
+            next_state.active_goal,
+            next_state.turn_index,
+            debug,
+        )
     if (
         narration
         and not _contains_repeated_goal_copy(narration, raw_input, next_state.active_goal)
