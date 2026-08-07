@@ -361,7 +361,7 @@ evaluation, and parity proofs; adapter-only tests use a fresh in-memory store.
 
 - [x] Web/SQLite setup is no longer in the top-20 cost list except for tests
   whose boundary explicitly requires it.
-- [ ] Two CI benchmark runs show at least a 30% reduction from baseline.
+- [x] Two CI benchmark runs show at least a 30% reduction from baseline.
 - [x] Local and hosted boundaries and all persistence integrity guarantees
   remain covered.
 
