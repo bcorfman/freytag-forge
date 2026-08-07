@@ -83,6 +83,26 @@ def test_opening_normalization_discards_an_incomplete_fourth_paragraph() -> None
     assert paragraphs == ["First complete.", "Second complete!", "Third complete?"]
 
 
+def test_opening_normalization_removes_doctest_wrappers_and_echoed_json() -> None:
+    paragraphs = _normalized_narrator_opening_paragraphs(
+        '# doctests """ Rain needles the mansion steps.\n\n'
+        "Daria Stone holds the case file close.\n\n"
+        'Your first task is to decide where to begin. """ '
+        '{"opening_draft":"This echoed request must not reach the player."}',
+        "Daria Stone",
+    )
+
+    assert paragraphs == [
+        "Rain needles the mansion steps.",
+        "Daria Stone holds the case file close.",
+        "Your first task is to decide where to begin.",
+    ]
+    displayed = "\n".join(paragraphs)
+    assert "doctest" not in displayed.lower()
+    assert "opening_draft" not in displayed
+    assert "{" not in displayed
+
+
 def test_bootstrap_debug_payload_is_fact_and_package_scoped() -> None:
     state = make_cached_story_state(seed=903)
     state.world_package["llm_story_bundle"] = {

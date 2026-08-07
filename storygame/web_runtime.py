@@ -23,6 +23,11 @@ from storygame.llm.story_agents.contracts import StoryAgentContractError, parse_
 from storygame.llm.story_director import StoryDirector
 from storygame.plot.freytag import get_phase
 
+_DOCTEST_OPENING_WRAPPER = re.compile(
+    r"^\s*#\s*doctests?\b\s*(?P<quote>\"\"\"|''')(?P<prose>.*?)(?P=quote)(?:\s*\{.*\})?\s*$",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 class SaveStore(Protocol):
     """Persistence boundary usable by both adapters and injected test fakes."""
@@ -156,6 +161,9 @@ def _normalized_narrator_opening_paragraphs(
     assistant_name: str,
     allow_short_prose: bool = False,
 ) -> list[str]:
+    wrapper_match = _DOCTEST_OPENING_WRAPPER.match(raw)
+    if wrapper_match is not None:
+        raw = wrapper_match.group("prose").strip()
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw.strip()]
