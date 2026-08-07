@@ -69,6 +69,23 @@ def test_turn_output_prefers_llm_narration_block_over_deterministic_room_block()
     assert room.description not in lines[0]
 
 
+def test_turn_output_discards_code_comment_artifacts_and_uses_canonical_room_presentation():
+    state = make_cached_story_state(seed=312)
+    room = state.world.rooms[state.player.location]
+
+    _next_state, lines, _action_raw, _beat, _continued = run_turn(
+        state,
+        "look",
+        Random(312),
+        StubNarrator("You study the threshold for a clue. # noqa."),
+        debug=False,
+    )
+
+    assert lines[0].startswith(f"{room.name}\n")
+    assert room.description in lines[0]
+    assert all("# noqa" not in line.lower() for line in lines)
+
+
 def test_per_turn_room_block_follows_expected_section_order():
     state = make_cached_story_state(seed=133)
     room = state.world.rooms[state.player.location]

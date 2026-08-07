@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 _SUPPORT_ROLE_TERMS = ("assistant", "ally", "partner", "contact", "confidant")
 _SUSPECT_ROLE_TERMS = ("suspect", "culprit", "killer", "mastermind")
 _QUESTION_TARGET_TERMS = ("question", "interrogate", "interview", "press", "confront", "accuse")
@@ -34,6 +36,11 @@ _ITEM_EXPOSED_TERMS = (
     "in the mud",
     "beside the gate",
     "out in the open",
+)
+
+_PLAYER_FACING_CODE_COMMENT = re.compile(
+    r"#\s*(?:noqa\b|type\s*:\s*ignore\b|pyright\s*:|fmt\s*:)",
+    re.IGNORECASE,
 )
 
 
@@ -123,6 +130,13 @@ def item_labels_for_opening(item_ids: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(labels)
 
 
+def player_facing_presentation_issues(lines: list[str]) -> list[str]:
+    """Reject implementation syntax that cannot be valid player-facing prose."""
+    if any(_PLAYER_FACING_CODE_COMMENT.search(line) for line in lines):
+        return ["Player-facing prose contains a code-comment artifact."]
+    return []
+
+
 def opening_coherence_issues(
     opening_lines: list[str],
     assistant_name: str,
@@ -130,7 +144,7 @@ def opening_coherence_issues(
     item_labels: tuple[str, ...],
     character_names: tuple[str, ...] = (),
 ) -> list[str]:
-    issues: list[str] = []
+    issues = player_facing_presentation_issues(opening_lines)
     normalized_lines = [_normalized_line(line) for line in opening_lines if _normalized_line(line)]
     known_names = _deduped_character_names(assistant_name, character_names)
     aliases = _character_aliases(known_names)
