@@ -37,7 +37,7 @@ def _request(url: str, method: str, payload: dict[str, object] | None = None) ->
 
 @pytest.mark.live_e2e
 def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None:
-    """Exercise the same session -> look sequence the GitHub Pages client runs."""
+    """Exercise the browser flow plus fact-backed continuity and persistence."""
     base_url = _api_base_url()
 
     health_status, _, health_payload = _request(f"{base_url}/api/v1/health", "GET")
@@ -64,3 +64,34 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     assert turn_payload["session_id"] == session_id
     assert turn_payload["state"]["turn_index"] == 0
     assert turn_payload["lines"]
+
+    def run_turn(command: str) -> dict:
+        status, headers, payload = _request(
+            f"{base_url}/api/v1/turn",
+            "POST",
+            {"session_id": session_id, "command": command},
+        )
+        assert status == 200, payload
+        assert headers.get("access-control-allow-origin") in {"*", os.getenv("HOSTED_DEMO_ORIGIN", "").strip()}
+        assert payload["status"] == "ok"
+        assert payload["session_id"] == session_id
+        return payload
+
+    foyer = run_turn("go north")
+    assert foyer["state"]["location"] == "foyer"
+    assert foyer["state"]["inventory"] == ["field_kit"]
+
+    market_lane = run_turn("go east")
+    assert market_lane["state"]["location"] == "market_lane"
+
+    collected = run_turn("take route key")
+    assert collected["state"]["location"] == "market_lane"
+    assert "route_key" in collected["state"]["inventory"]
+
+    run_turn("save hosted-e2e-continuity")
+    moved_on = run_turn("go north")
+    assert moved_on["state"]["location"] == "records_office"
+
+    restored = run_turn("load hosted-e2e-continuity")
+    assert restored["state"]["location"] == "market_lane"
+    assert restored["state"]["inventory"] == collected["state"]["inventory"]
