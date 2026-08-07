@@ -134,6 +134,9 @@ def pytest_runtest_call(item: pytest.Item) -> Any:
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> Any:
+    if item.nodeid not in _HEALTH:
+        yield
+        return
     record = _HEALTH[item.nodeid]
     record["teardown_started"] = time.perf_counter()
     outcome = yield
@@ -277,7 +280,10 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _block_outbound_network(monkeypatch: pytest.MonkeyPatch) -> None:
+def _block_outbound_network(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    if request.node.get_closest_marker("live_e2e"):
+        return
+
     def _blocked_urlopen(*args, **kwargs):  # noqa: ANN002, ANN003
         raise RuntimeError("Outbound network is disabled in tests. Mock urllib.request.urlopen in this test.")
 

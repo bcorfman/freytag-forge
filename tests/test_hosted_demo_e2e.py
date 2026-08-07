@@ -7,11 +7,16 @@ import urllib.request
 
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    not os.getenv("HOSTED_DEMO_API_BASE_URL", "").strip(),
+    reason="Live hosted-demo E2E runs only when HOSTED_DEMO_API_BASE_URL is configured.",
+)
+
 
 def _api_base_url() -> str:
     base_url = os.getenv("HOSTED_DEMO_API_BASE_URL", "").strip().rstrip("/")
     if not base_url:
-        pytest.skip("Live hosted-demo E2E runs only when HOSTED_DEMO_API_BASE_URL is configured.")
+        raise RuntimeError("HOSTED_DEMO_API_BASE_URL is required for the live hosted-demo E2E test.")
     return base_url
 
 
@@ -30,6 +35,7 @@ def _request(url: str, method: str, payload: dict[str, object] | None = None) ->
         return exc.code, headers, json.loads(exc.read().decode("utf-8"))
 
 
+@pytest.mark.live_e2e
 def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None:
     """Exercise the same session -> look sequence the GitHub Pages client runs."""
     base_url = _api_base_url()
