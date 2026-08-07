@@ -53,6 +53,32 @@ rate-limit, and fail-closed coverage. The current full-suite runtime report is
 the prior Phase 2 report recorded 70 SQLite stores and 43 clients in the
 boundary-heavy run.
 
+## CI jobs
+
+`Required coverage gate` is the merge-validation job. It runs the complete
+548-test suite with ordinary `--cov`, the existing 90% threshold, collection
+guards, and the health artifact. It is the authoritative required result. Its
+uv dependency cache is keyed by `uv.lock`; the cache hit or miss is recorded in
+the uploaded `ci-cache.json` artifact and job summary.
+
+`Fast feedback (unit and component)` runs without coverage for quick pull
+request feedback. It is not a replacement for the required coverage gate.
+`Coverage context report (informational)` retains `--cov-context=test` for
+per-test attribution; it is separate because context coverage is slower than
+ordinary coverage on this project.
+
+The normal CI command does not include `--durations`. Use it only as an opt-in
+diagnostic, for example:
+
+```text
+TMPDIR=/tmp uv run pytest -q --cov --durations=50
+```
+
+The manual `test-suite five-run benchmark` workflow runs the exact required
+coverage command five times on `ubuntu-latest`, reports every sample and their
+median, and uploads each health report. Record that workflow URL with timing
+claims; local timings do not establish the CI target.
+
 ## Measuring locally
 
 Use the same environment and temporary directory convention as CI:

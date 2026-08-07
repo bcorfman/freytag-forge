@@ -7,20 +7,104 @@ on:
   pull_request:
 
 jobs:
-  test:
+  fast-feedback:
+    name: Fast feedback (unit and component)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
         with:
           version: latest
+      - name: Locate uv cache
+        id: uv-cache-dir
+        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache uv dependencies
+        id: uv-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.uv-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+      - name: Record dependency cache result
+        run: |
+          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "uv dependency cache: hit" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "uv dependency cache: miss" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
+      - name: Run fast feedback tests
+        run: TMPDIR=/tmp uv run pytest -q --no-cov -m "unit or component"
+
+  test:
+    name: Required coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+      - name: Locate uv cache
+        id: uv-cache-dir
+        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache uv dependencies
+        id: uv-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.uv-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+      - name: Record dependency cache result
+        run: |
+          mkdir -p artifacts
+          cache_status=miss
+          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then cache_status=hit; fi
+          printf '{"cache":"uv","status":"%s","key":"%s"}\n' "$cache_status" "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}" > artifacts/ci-cache.json
+          echo "uv dependency cache: $cache_status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install dependencies
+        run: uv sync --locked
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=548 --tier-report=artifacts/test-suite-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov --expected-test-count=548 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-suite-health
-          path: artifacts/test-suite-health.json
+          path: artifacts/
+          if-no-files-found: warn
+
+  coverage-context-report:
+    name: Coverage context report (informational)
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+      - name: Locate uv cache
+        id: uv-cache-dir
+        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache uv dependencies
+        id: uv-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.uv-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+      - name: Record dependency cache result
+        run: |
+          mkdir -p artifacts
+          cache_status=miss
+          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then cache_status=hit; fi
+          printf '{"cache":"uv","status":"%s","key":"%s"}\n' "$cache_status" "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}" > artifacts/ci-cache.json
+          echo "uv dependency cache: $cache_status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Run context coverage report
+        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --expected-test-count=548 --tier-report=artifacts/test-suite-context-health.json
+      - name: Upload context coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-suite-context-health
+          path: artifacts/
+          if-no-files-found: warn

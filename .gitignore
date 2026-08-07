@@ -23,6 +23,7 @@ eggs/
 MANIFEST
 .pdm.toml
 *.lock
+!uv.lock
 
 # PyInstaller
 *.manifest
