@@ -73,3 +73,8 @@ retained 90% total coverage with `TMPDIR=/tmp uv run pytest -q --cov`. The new
 offline package checks cover deterministic reachability/ending validation,
 parallel specialist review, bounded recovery records, and all six play styles
 for every frozen fixture.
+
+Phase 9 cutover verification completed the full suite with branch coverage at
+the required 90% threshold. The separate cutover contract gate runs the frozen
+fixture/evaluation report, local and hosted API smoke suites, and artifact
+integrity checks; its workflow artifact is retained as `cutover-contracts`.

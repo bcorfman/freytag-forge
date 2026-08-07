@@ -371,12 +371,12 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Make the new runtime default only after the fixture/evaluation gate passes.
-- Delete superseded freeform, semantic-action, narration-extraction, and
+- [x] Make the new runtime default only after the fixture/evaluation gate passes.
+- [x] Delete superseded freeform, semantic-action, narration-extraction, and
   parser-authoring paths rather than retaining permanent wrappers.
-- Document fact policies, proposal contracts, adapter boundaries, latency
+- [x] Document fact policies, proposal contracts, adapter boundaries, latency
   budgets, story-package schema, and authoring/model-tier policy.
-- Add CI enforcement for tests, branch coverage, linting, deterministic
+- [x] Add CI enforcement for tests, branch coverage, linting, deterministic
   fixtures, selected behavioral-evaluation reports, API smoke tests, and
   artifact-integrity checks.
 
@@ -396,13 +396,22 @@ because the existing fact/commit boundaries cannot express the required rules.
 
 ### Final exit criteria
 
-- One canonical runtime supports CLI, local web, and hosted demo adapters.
-- Project-wide coverage remains at or above 90%.
-- Canonical mutations, persistence, and replay are fact-authoritative.
-- Ordinary play remains proposal-first, responsive, and not command-parser
+- [x] One canonical runtime supports CLI, local web, and hosted demo adapters.
+- [x] Project-wide coverage remains at or above 90%.
+- [x] Canonical mutations, persistence, and replay are fact-authoritative.
+- [x] Ordinary play remains proposal-first, responsive, and not command-parser
   shaped.
-- The genre-diverse fixtures demonstrate fair discovery, causal persistence,
+- [x] The genre-diverse fixtures demonstrate fair discovery, causal persistence,
   stable NPCs, meaningful player agency, and coherent endings.
+
+### Phase 9 verification
+
+- The deterministic fixture/evaluation, replay, API-smoke, and artifact-integrity
+  suites pass locally and are enforced by the `Cutover contracts` CI job.
+- The full branch-coverage suite passes at the required 90% threshold.
+- `StoryState.json` hash-chain and round-trip checks remain part of the required
+  artifact-integrity suite, while the local and hosted adapters retain their
+  separate smoke coverage.
 
 ## Delivery Order
 

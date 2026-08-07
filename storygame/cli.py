@@ -45,7 +45,7 @@ from storygame.llm.coherence import (
 build_default_coherence_gate = build_fast_post_commit_gate
 from storygame.llm.contracts import JudgeDecision, NumericDelta, parse_turn_proposal
 from storygame.llm.context import build_narration_context
-from storygame.llm.narration_state import dialogue_fact_conflict
+from storygame.engine.dialogue_policy import dialogue_fact_conflict
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag

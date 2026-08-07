@@ -10,6 +10,35 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  cutover-contracts:
+    name: Cutover contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check --select E9,F63,F7,F82 .
+      - name: Verify deterministic fixtures and behavioral evaluation
+        run: >-
+          TMPDIR=/tmp uv run pytest -q --no-cov
+          tests/test_evaluation.py tests/test_reproducibility.py tests/test_phase8_story_packages.py
+          --tier-report=artifacts/phase9-evaluation.json
+      - name: Smoke local and hosted API adapters
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_api.py tests/test_web_demo_api.py tests/test_web_surface_parity.py
+      - name: Verify artifact integrity
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_story_state_artifacts.py
+      - name: Upload cutover reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cutover-contracts
+          path: artifacts/
+          if-no-files-found: warn
+
   fast-feedback:
     name: Fast feedback (unit and component)
     runs-on: ubuntu-latest

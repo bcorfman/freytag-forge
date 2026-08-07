@@ -89,6 +89,18 @@ The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).
 
+## Cutover and release gate
+
+The proposal/commit runtime is the default for CLI, local web, and hosted-demo
+turns. The retired narration-to-fact extractor has been removed: narration and
+dialogue are render-only projections, and every visible state change must be
+present in an accepted `TurnProposalV2` before commit.
+
+CI enforces fatal lint checks, the full branch-coverage suite, deterministic
+fixture and behavioral-evaluation reports, local/hosted API smoke tests, and
+artifact-integrity checks. The selected cutover report is uploaded as the
+`cutover-contracts` artifact.
+
 ## Test tiers and performance
 
 Tests are tagged as `unit`, `component`, `integration`, or `evaluation`. Run
