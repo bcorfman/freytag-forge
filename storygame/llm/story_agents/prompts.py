@@ -28,6 +28,8 @@ def build_story_bootstrap_prompt(
         "timed_events must use exact provided room_id values when referencing locations. "
         "opening_paragraphs must contain 3 to 4 paragraphs of direct player-facing opening prose. "
         "opening_paragraphs must stay materially consistent with opening_room description, exits, visible NPCs, visible items, and inventory_seed. "
+        "Place the player in opening_room exactly; never move them into a different room or describe an uncommitted transition. "
+        "Each opening paragraph must be readable prose only: never include code comments, lint markers, markdown fences, or implementation syntax. "
         "Prioritize character setup over scenic repetition: establish protagonist background, motivation, communication, and relationships first. "
         "Remove scenery-first filler unless it is needed for flow or story cohesion, and only keep scenic detail when it directly changes character intent, conflict, or stakes. "
         "On first mention of a visible NPC in opening_paragraphs, use that NPC's full name. "
@@ -147,6 +149,8 @@ def build_story_bootstrap_critique_prompt(
         "Be harsh. Reject plans where clue placement is implausible, villains lack motive/means/opportunity, "
         "timed events do not fit the map or cast, or canonical opening_facts are contradicted. "
         "Reject physically impossible opening staging, role contradictions, and custody/location contradictions. "
+        "Read opening_paragraphs as player-facing prose: reject code or lint artifacts, prompt echoes, repetitive room restatements, "
+        "or prose that places the player somewhere other than the canonical opening room. "
         "Use verdict='accepted' only when the story plan is coherent."
     )
     user = json.dumps(

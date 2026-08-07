@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import cast
 
 from storygame.engine.facts import (
@@ -16,12 +16,13 @@ from storygame.llm.opening_coherence import (
     item_labels_for_opening,
     opening_coherence_issues,
     opening_fact_parity_issues,
+    player_facing_presentation_issues,
 )
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_agents.agents import (
+    DefaultRoomPresentationAgent,
     DefaultStoryBootstrapAgent,
     DefaultStoryBootstrapCriticAgent,
-    DefaultRoomPresentationAgent,
     DefaultStoryReplanAgent,
     RoomPresentationAgent,
     StoryBootstrapAgent,
@@ -102,7 +103,11 @@ class StoryDirector:
         validation_issues = self._opening_validation_issues(state, opening, bundle, contacts)
         if validation_issues:
             raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
-        return self._output_editor.review_opening(opening, active_story_goal(state))
+        reviewed = self._output_editor.review_opening(opening, active_story_goal(state))
+        presentation_issues = player_facing_presentation_issues(reviewed)
+        if presentation_issues:
+            raise RuntimeError("Opening presentation validation failed: " + "; ".join(presentation_issues))
+        return reviewed
 
     def _compose_opening_bootstrap_fast(self, state: GameState) -> list[str]:
         bundle = self._story_bootstrap.run(state)
@@ -118,6 +123,9 @@ class StoryDirector:
         validation_issues = self._opening_validation_issues(state, opening, bundle, contacts)
         if validation_issues:
             raise RuntimeError("Opening validation failed: " + "; ".join(validation_issues))
+        presentation_issues = player_facing_presentation_issues(opening)
+        if presentation_issues:
+            raise RuntimeError("Opening presentation validation failed: " + "; ".join(presentation_issues))
         return opening
 
     def _sanitize_opening_paragraphs(self, opening_paragraphs: object) -> list[str]:

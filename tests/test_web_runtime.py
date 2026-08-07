@@ -121,6 +121,16 @@ Daria Stone is nearby, watching your next move."""
         )
 
 
+def test_opening_normalization_rejects_code_comment_artifacts_in_player_prose() -> None:
+    with pytest.raises(RuntimeError, match="code-comment artifact"):
+        _normalized_narrator_opening_paragraphs(
+            "You're standing outside the mansion with Daria Stone. # noqa.\n\n"
+            "The case file waits in your hand. # noqa.",
+            "Daria Stone",
+            allow_short_prose=True,
+        )
+
+
 def test_bootstrap_debug_payload_is_fact_and_package_scoped() -> None:
     state = make_cached_story_state(seed=903)
     state.world_package["llm_story_bundle"] = {

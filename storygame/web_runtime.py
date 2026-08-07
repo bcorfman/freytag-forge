@@ -16,6 +16,7 @@ from storygame.llm.opening_coherence import (
     item_labels_for_opening,
     opening_coherence_issues,
     opening_fact_parity_issues,
+    player_facing_presentation_issues,
 )
 from storygame.llm.output_editor import OutputEditor
 from storygame.llm.story_agents.agents import NarratorOpeningAgent
@@ -177,6 +178,9 @@ def _normalized_narrator_opening_paragraphs(
     while len(trimmed) > 3 and trimmed[-1][-1:] not in ".!?":
         trimmed.pop()
     sanitized = [_sanitize_assistant_targeting(paragraph, assistant_name) for paragraph in trimmed]
+    presentation_issues = player_facing_presentation_issues(sanitized)
+    if presentation_issues:
+        raise RuntimeError("Opening contract validation failed: " + "; ".join(presentation_issues))
     try:
         parsed = parse_narrator_opening_output({"paragraphs": sanitized})
     except StoryAgentContractError as exc:
@@ -369,7 +373,11 @@ def _bootstrap_opening_from_narrator_opening_agent(
     opening_lines = narrator_opening_agent.run(state, architect, cast, plan)
     if not opening_lines:
         raise RuntimeError("Narrator opening agent returned empty opening.")
-    return output_editor.review_opening(opening_lines, active_story_goal(state))
+    reviewed = output_editor.review_opening(opening_lines, active_story_goal(state))
+    presentation_issues = player_facing_presentation_issues(reviewed)
+    if presentation_issues:
+        raise RuntimeError("Opening presentation validation failed: " + "; ".join(presentation_issues))
+    return reviewed
 
 
 def _bootstrap_opening_from_narrator(

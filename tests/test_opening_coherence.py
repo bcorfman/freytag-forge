@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from storygame.llm.opening_coherence import opening_coherence_issues
+from storygame.llm.opening_coherence import opening_coherence_issues, player_facing_presentation_issues
 
 
 def test_opening_coherence_detects_generic_role_conflicts_for_named_characters() -> None:
@@ -73,3 +73,14 @@ def test_opening_coherence_catches_subtle_assistant_question_target_conflict() -
         character_names=("Daria Stone",),
     )
     assert any("daria stone" in issue.lower() and "question target" in issue.lower() for issue in issues)
+
+
+def test_player_facing_presentation_rejects_leaked_code_comment_artifacts() -> None:
+    issues = player_facing_presentation_issues(
+        [
+            "Daria Stone watches the dark windows without speaking. # noqa.",
+            "The case file feels heavier than it should.",
+        ]
+    )
+
+    assert issues == ["Player-facing prose contains a code-comment artifact."]

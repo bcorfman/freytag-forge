@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
 import re
+from dataclasses import replace
 from pathlib import Path
 from random import Random
 from typing import Any, Protocol, TextIO
 
 from rich.console import Console
 
+from storygame.engine.facts import apply_fact_ops, item_driver, item_owner
 from storygame.engine.freeform import (
+    _HIDDEN_FREEFORM_MESSAGE_KEYS,
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
-    _HIDDEN_FREEFORM_MESSAGE_KEYS,
     _dialogue_contains_code_artifact,
     resolve_freeform_roleplay_with_proposals,
 )
@@ -29,7 +30,6 @@ from storygame.engine.mystery import caseboard_lines, room_item_groups
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
-from storygame.engine.facts import apply_fact_ops, item_driver, item_owner
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
 from storygame.engine.world import build_default_state
@@ -43,9 +43,10 @@ from storygame.llm.coherence import (
 # Kept as a patchable compatibility seam for callers/tests. The ordinary
 # runtime below deliberately selects the validator-only fast gate.
 build_default_coherence_gate = build_fast_post_commit_gate
-from storygame.llm.contracts import JudgeDecision, NumericDelta, parse_turn_proposal
-from storygame.llm.context import build_narration_context
 from storygame.engine.dialogue_policy import dialogue_fact_conflict
+from storygame.llm.context import build_narration_context
+from storygame.llm.contracts import JudgeDecision, NumericDelta, parse_turn_proposal
+from storygame.llm.opening_coherence import player_facing_presentation_issues
 from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, normalize_tag
@@ -817,6 +818,8 @@ def _sanitize_narration_for_player(narration: str, debug: bool) -> str:
     if debug:
         return narration
     if re.search(r"\bbeat at\b", narration.lower()):
+        return ""
+    if player_facing_presentation_issues([narration]):
         return ""
     return narration
 
