@@ -332,23 +332,43 @@ arbitrary count.
 
 ### Phase 3 — Reduce web, SQLite, and adapter setup cost
 
-- [ ] Count runtime `TestClient` and SQLite constructions per test.
-- [ ] Test shared request/response behavior below the adapter boundary with
+The Phase 3 local health run on the current worktree used
+`TMPDIR=/tmp uv run pytest -q --no-cov --tier-report=/tmp/phase3-full-health.json`:
+
+| Measure | Phase 2 health baseline | Phase 3 result |
+| --- | ---: | ---: |
+| Tests | 561 | 548 |
+| Runtime `TestClient` constructions | 43 | 21 |
+| Runtime SQLite-store constructions | 70 | 29 |
+| No-coverage pytest time | 15.25s | 13.97s |
+
+The deleted endpoint cases were replaced by direct `web_runtime` projection and
+opening-normalization tests. Real SQLite remains in save/load, artifact, CLI,
+evaluation, and parity proofs; adapter-only tests use a fresh in-memory store.
+
+- [x] Count runtime `TestClient` and SQLite constructions per test.
+- [x] Test shared request/response behavior below the adapter boundary with
   injected fakes; retain adapter-specific credential, quota, rate-limit,
   backend, and fail-closed tests.
-- [ ] Retain one local/hosted parity integration test and one representative
+- [x] Retain one local/hosted parity integration test and one representative
   lifecycle test per surface.
-- [ ] Reuse only immutable configuration and factories; never share mutable
+- [x] Reuse only immutable configuration and factories; never share mutable
   application state between tests.
-- [ ] Reduce actual client and store constructions by at least 50% without
+- [x] Reduce actual client and store constructions by at least 50% without
   weakening isolation.
 
 ### Phase 3 exit criteria
 
-- [ ] Web/SQLite setup is no longer in the top-20 cost list except for tests
+- [x] Web/SQLite setup is no longer in the top-20 cost list except for tests
   whose boundary explicitly requires it.
-- [ ] Two CI benchmark runs show at least a 30% reduction from baseline.
-- [ ] Local and hosted boundaries and all persistence integrity guarantees
+- [x] Two CI benchmark runs show at least a 30% reduction from baseline. On
+  commit `d10afc3bd2786a2497e879d9c757f3dfae3f327c`, the required
+  coverage-health job completed 548 tests at 90.05% coverage in 71.16s and
+  70.64s, a 47.4% and 47.8% reduction from the 135.37s baseline. See
+  [run 31192916066](https://github.com/bcorfman/freytag-forge/actions/runs/31192916066)
+  and
+  [run 31192930354](https://github.com/bcorfman/freytag-forge/actions/runs/31192930354).
+- [x] Local and hosted boundaries and all persistence integrity guarantees
   remain covered.
 
 ## CI execution design

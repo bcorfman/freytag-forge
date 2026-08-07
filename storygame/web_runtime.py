@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import re
 from random import Random
-from typing import Any
+from typing import Any, Protocol
 
-from storygame.cli import run_turn
-from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing
+from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing, run_turn
+from storygame.engine.facts import active_story_goal
+from storygame.engine.facts import assistant_name as resolved_assistant_name
 from storygame.engine.freeform import FreeformProposalAdapter
-from storygame.engine.facts import active_story_goal, assistant_name as resolved_assistant_name
 from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
@@ -18,11 +18,20 @@ from storygame.llm.opening_coherence import (
     opening_fact_parity_issues,
 )
 from storygame.llm.output_editor import OutputEditor
+from storygame.llm.story_agents.agents import NarratorOpeningAgent
 from storygame.llm.story_agents.contracts import StoryAgentContractError, parse_narrator_opening_output
-from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent, NarratorOpeningAgent
 from storygame.llm.story_director import StoryDirector
-from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
+
+
+class SaveStore(Protocol):
+    """Persistence boundary usable by both adapters and injected test fakes."""
+
+    def save_run(self, slot: str, state: GameState, rng: Random, **kwargs: Any) -> None: ...
+
+    def load_run(self, slot: str) -> tuple[GameState, Random]: ...
+
+    def close(self) -> None: ...
 
 
 class TurnExecution:
@@ -42,7 +51,7 @@ class TurnExecution:
 
 
 class ScopedSaveStore:
-    def __init__(self, store: SqliteSaveStore, scope: str) -> None:
+    def __init__(self, store: SaveStore, scope: str) -> None:
         self._store = store
         self._scope = scope
 

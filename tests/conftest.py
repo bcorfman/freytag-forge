@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from storygame.test_metrics import begin_test, end_test
 
@@ -51,10 +52,16 @@ _COMPONENT_FILES = {
 }
 _ORCHESTRATION_RETENTION_REASONS = {
     "proposal/commit contract": "One complete turn proves novel intent validation, bounded effects, and fact commit.",
-    "deterministic affordance": "One complete turn proves the deterministic alias or navigation path still uses proposal/commit.",
+    "deterministic affordance": (
+        "One complete turn proves the deterministic alias or navigation path still uses proposal/commit."
+    ),
     "dialogue boundary": "One complete turn proves addressed-speaker, scene, and protected-context enforcement.",
-    "recovery/confirmation": "The minimum warning/confirmation sequence proves cancellation, proceed, and bounded recovery.",
-    "output contract": "One complete turn proves rendered output is derived after commit and remains surface-compatible.",
+    "recovery/confirmation": (
+        "The minimum warning/confirmation sequence proves cancellation, proceed, and bounded recovery."
+    ),
+    "output contract": (
+        "One complete turn proves rendered output is derived after commit and remains surface-compatible."
+    ),
     "persistence": "The minimum complete turn sequence proves save/load composition or post-load continuation.",
     "evaluation": "The compact replay proves cross-genre determinism and evaluation artifact behavior.",
 }
@@ -269,3 +276,18 @@ def _block_outbound_network(monkeypatch: pytest.MonkeyPatch) -> None:
         raise RuntimeError("Outbound network is disabled in tests. Mock urllib.request.urlopen in this test.")
 
     monkeypatch.setattr(urllib.request, "urlopen", _blocked_urlopen)
+
+
+@pytest.fixture(autouse=True)
+def _record_runtime_adapter_constructions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Record actual client construction without sharing mutable app state."""
+
+    original_init = TestClient.__init__
+
+    def _recording_init(self: TestClient, *args: Any, **kwargs: Any) -> None:
+        from storygame.test_metrics import record
+
+        record("test_client")
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(TestClient, "__init__", _recording_init)

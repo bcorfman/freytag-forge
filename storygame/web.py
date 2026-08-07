@@ -20,6 +20,7 @@ from storygame.llm.output_editor import OutputEditor, build_output_editor
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web_runtime import (
+    SaveStore,
     ScopedSaveStore,
     build_bootstrap_response_payload,
     build_turn_response_payload,
@@ -88,11 +89,12 @@ def create_app(
     narrator: Narrator | None = None,
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
+    save_store: SaveStore | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge", version="0.1.0")
 
     save_db = Path("runs/storygame_web_saves.sqlite") if save_db_path is None else Path(save_db_path)
-    store = SqliteSaveStore(save_db, check_same_thread=False)
+    store = SqliteSaveStore(save_db, check_same_thread=False) if save_store is None else save_store
     sessions: dict[str, _SessionState] = {}
     resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
     active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
