@@ -104,7 +104,7 @@ def observer_context_slice(state, observer: str) -> tuple[tuple[str, ...], ...]:
     for fact in state.world_facts.all():
         if not fact:
             continue
-        if fact[0] in {"knows", "suspects"}:
+        if fact[0] in {"knows", "believes", "suspects", "conceals", "may_infer"}:
             if len(fact) > 1 and fact[1] == observer:
                 permitted.append(fact)
             continue
@@ -127,10 +127,11 @@ def observer_context_slice(state, observer: str) -> tuple[tuple[str, ...], ...]:
 def speaker_context_slice(state, speaker: str) -> tuple[tuple[str, ...], ...]:
     """Return the addressed NPC's own knowledge plus what is perceptible in scene."""
     visible = set(observer_context_slice(state, speaker))
-    for fact in state.world_facts.query("knows", speaker, None):
-        key = fact[2]
-        for candidate in state.world_facts.query("case_fact", key, None):
-            visible.add(candidate)
+    for predicate in ("knows", "believes", "suspects", "conceals", "may_infer"):
+        for fact in state.world_facts.query(predicate, speaker, None):
+            key = fact[2]
+            for candidate in state.world_facts.query("case_fact", key, None):
+                visible.add(candidate)
     return tuple(sorted(visible))
 
 

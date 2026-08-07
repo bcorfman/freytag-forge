@@ -103,6 +103,21 @@ predicates:
     arg_types: [observer, fact]
     family: knowledge
     commit_sources: [intent, rule, trigger, system]
+  - name: believes
+    arity: 2
+    arg_types: [observer, fact]
+    family: knowledge
+    commit_sources: [intent, rule, trigger, system]
+  - name: conceals
+    arity: 2
+    arg_types: [observer, fact]
+    family: knowledge
+    commit_sources: [intent, rule, trigger, system]
+  - name: may_infer
+    arity: 2
+    arg_types: [observer, fact]
+    family: knowledge
+    commit_sources: [intent, rule, trigger, system]
   - name: npc_relationship
     arity: 3
     arg_types: [npc, actor, relationship]
@@ -123,6 +138,61 @@ predicates:
     arg_types: [actor, task, status]
     family: tasks
     commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: task_offer
+    arity: 3
+    arg_types: [task, actor, actor]
+    family: tasks
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: task_result
+    arity: 2
+    arg_types: [task, result]
+    family: tasks
+    commit_sources: [intent, trigger, rule, system]
+  - name: task_consequence
+    arity: 2
+    arg_types: [task, consequence]
+    family: tasks
+    commit_sources: [intent, trigger, rule, system]
+  - name: npc_goal
+    arity: 2
+    arg_types: [npc, goal]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_capability
+    arity: 2
+    arg_types: [npc, capability]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_limitation
+    arity: 2
+    arg_types: [npc, limitation]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_initiative
+    arity: 2
+    arg_types: [npc, policy]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_advisory_style
+    arity: 2
+    arg_types: [npc, style]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_autonomy
+    arity: 2
+    arg_types: [npc, action]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
+  - name: npc_stable_trait
+    arity: 2
+    arg_types: [npc, trait]
+    family: relationships
+    commit_sources: [bootstrap, system]
+  - name: npc_adaptive_trait
+    arity: 3
+    arg_types: [npc, trait, value]
+    family: relationships
+    commit_sources: [bootstrap, intent, trigger, rule, system]
   - name: trace
     arity: 3
     arg_types: [entity, room, condition]
@@ -193,3 +263,48 @@ predicates:
     arg_types: [approach]
     family: dramatic
     commit_sources: [intent, rule, trigger, system]
+  - name: beat_phase
+    arity: 1
+    arg_types: [phase]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: beat_role
+    arity: 2
+    arg_types: [scene, role]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: dramatic_question
+    arity: 2
+    arg_types: [scene, question]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: active_conflict
+    arity: 2
+    arg_types: [scene, conflict]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: obstacle_mode
+    arity: 2
+    arg_types: [scene, mode]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: reveal_opportunity
+    arity: 2
+    arg_types: [scene, opportunity]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: reveal_budget
+    arity: 2
+    arg_types: [scene, budget]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: npc_scene_goal
+    arity: 2
+    arg_types: [character, goal]
+    family: dramatic
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: dramatic_metric
+    arity: 2
+    arg_types: [metric, value]
+    family: dramatic
+    commit_sources: [rule, trigger, system]

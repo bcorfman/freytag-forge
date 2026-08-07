@@ -308,6 +308,22 @@ def player_context_facts(state) -> tuple[dict[str, str], ...]:
     )
 
 
+def dramatic_metric(state, metric: str, fallback: float = 0.0) -> float:
+    facts = state.world_facts.query("dramatic_metric", metric, None)
+    return float(facts[0][2]) if facts else float(fallback)
+
+
+def set_dramatic_metric(state, metric: str, value: float) -> None:
+    normalized = metric.strip()
+    if not normalized:
+        return
+    clamped = max(0.0, min(1.0, float(value)))
+    existing = tuple(state.world_facts.query("dramatic_metric", normalized, None))
+    ops: list[FactOp] = [{"op": "retract", "fact": fact} for fact in existing]
+    ops.append({"op": "assert", "fact": ("dramatic_metric", normalized, f"{clamped:.6f}")})
+    ValidatedFactCommitter().commit(state, ops, source="system")
+
+
 def case_facts(state) -> tuple[dict[str, str], ...]:
     return tuple(
         {

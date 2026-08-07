@@ -51,3 +51,31 @@ Universal rules live in `data/rules/core_rules.yaml`; genre extensions live in
 `data/rules/genres/`. `build_affordance_context` derives legal exits, locks,
 visible items, addressable NPCs, and inventory from facts for model context.
 It is advisory context, not a mutation authority.
+
+## NPC roles and delegated work
+
+`storygame.engine.npc` provides the Phase 5 boundary contracts and policy
+services. `RoleContract` installs goals, capabilities, limitations, initiative,
+relationship, advisory style, autonomy, stable traits, and bounded adaptive
+traits as facts. `record_epistemic_fact` records explicit `knows`, `believes`,
+`suspects`, `conceals`, and `may_infer` facts; `speaker_context_slice` exposes
+only the addressed NPC's permitted epistemic slice.
+
+`offer_task`, `accept_task`, `progress_task`, `complete_task`, `fail_task`, and
+`cancel_task` enforce the task lifecycle through canonical `task` facts and
+durable result/consequence facts. `validate_npc_action` is side-effect free
+and checks role capability, knowledge, location, target visibility, resources,
+obligations, and autonomous-action permission before a caller commits an
+accepted proposal.
+
+## Dramatic policy
+
+`storygame.plot.beat_policy.BeatPolicy` reads canonical dramatic facts for
+phase, beat role, pressure, obstacle mode, active conflict, reveal opportunity
+and budget, and NPC scene goals. Its output is a deterministic legal beat
+decision with consequence classes and a selection reason; it does not select or
+reject player actions. Reveal and timed-event eligibility are evaluated in one
+fact-driven pass, so a turn cannot consume one progression category while
+silently suppressing another. Legacy `progress` and `tension` fields remain
+compatibility projections for persistence and clients; policy decisions are
+bounded by canonical dramatic state and validated consequences.

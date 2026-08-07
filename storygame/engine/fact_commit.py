@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-
 Fact = tuple[str, ...]
 FactOp = dict[str, Any]
+
 
 class ProjectionUpdater:
     def refresh_from_facts(self, state) -> None:
@@ -78,7 +78,7 @@ class InvariantValidator:
             if fact[0] in {"holding", "room_item"} and len(fact) == 3:
                 containers_by_item.setdefault(fact[2], []).append(fact)
 
-        for item_id, containers in containers_by_item.items():
+        for _item_id, containers in containers_by_item.items():
             if len(containers) <= 1:
                 continue
             holding_facts = [fact for fact in containers if fact[0] == "holding"]
@@ -143,6 +143,12 @@ class InvariantValidator:
             return tuple(existing for existing in facts if existing[0] == "player_background")
         if predicate == "npc_role" and len(terms) == 2:
             return tuple(existing for existing in facts if existing[:2] == ("npc_role", terms[0]))
+        if predicate == "npc_adaptive_trait" and len(terms) == 3:
+            return tuple(existing for existing in facts if existing[:3] == ("npc_adaptive_trait", terms[0], terms[1]))
+        if predicate == "task" and len(terms) == 3:
+            return tuple(existing for existing in facts if existing[:3] == ("task", terms[0], terms[1]))
+        if predicate in {"task_result", "task_consequence"} and len(terms) == 2:
+            return tuple(existing for existing in facts if existing[:2] == (predicate, terms[0]))
         if predicate in {"light", "weather"} and len(terms) == 2:
             return tuple(existing for existing in facts if existing[:2] == (predicate, terms[0]))
         if predicate == "evidence_state" and len(terms) == 2:
