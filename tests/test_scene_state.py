@@ -3,15 +3,15 @@ from random import Random
 from storygame.engine.facts import apply_fact_ops
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter, resolve_freeform_roleplay
 from storygame.engine.parser import parse_command
-from storygame.engine.simulation import advance_turn, apply_events_to_state
 from storygame.engine.scene_state import refresh_scene_state, scene_snapshot
+from storygame.engine.simulation import advance_turn, apply_events_to_state
 from storygame.engine.state import Event
-from storygame.engine.world import build_default_state
 from storygame.llm.context import build_narration_context
 from storygame.plot.beat_manager import select_beat
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
-def test_build_default_state_seeds_scene_and_dramatic_facts() -> None:
+def test_story_state_seeds_scene_and_dramatic_facts() -> None:
     state = build_default_state(seed=41, genre="mystery")
 
     snapshot = scene_snapshot(state)

@@ -5,13 +5,13 @@ from random import Random
 
 from storygame.cli import main, run_turn
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
-from storygame.engine.world import build_default_state
 from storygame.llm.adapters import SilentNarrator
+from tests.fast_fixtures import make_cached_story_state
 from tests.narrator_stubs import StubNarrator
 
 
 def _run_script(seed: int, commands: list[str]) -> tuple[list[list[str]], list[str]]:
-    state = build_default_state(seed)
+    state = make_cached_story_state(seed=seed)
     rng = Random(seed)
     per_turn_lines: list[list[str]] = []
     signatures: list[str] = []
@@ -33,7 +33,7 @@ class _StubSetupDirector:
 
 
 def test_non_debug_output_is_room_first_and_hides_internal_labels():
-    state = build_default_state(seed=31)
+    state = make_cached_story_state(seed=31)
     room = state.world.rooms[state.player.location]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
@@ -54,7 +54,7 @@ def test_non_debug_output_is_room_first_and_hides_internal_labels():
 
 
 def test_turn_output_prefers_llm_narration_block_over_deterministic_room_block():
-    state = build_default_state(seed=311)
+    state = make_cached_story_state(seed=311)
     room = state.world.rooms[state.player.location]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
@@ -70,7 +70,7 @@ def test_turn_output_prefers_llm_narration_block_over_deterministic_room_block()
 
 
 def test_per_turn_room_block_follows_expected_section_order():
-    state = build_default_state(seed=133)
+    state = make_cached_story_state(seed=133)
     room = state.world.rooms[state.player.location]
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
@@ -84,7 +84,9 @@ def test_per_turn_room_block_follows_expected_section_order():
     assert room_block[0] == room.name
     assert room.description in room_block[1]
 
-    direction_index = next(i for i, line in enumerate(room_block) if "exit" in line.lower() or "entrance" in line.lower())
+    direction_index = next(
+        i for i, line in enumerate(room_block) if "exit" in line.lower() or "entrance" in line.lower()
+    )
     item_indices = [i for i, line in enumerate(room_block) if "you can see" in line.lower()]
     if item_indices:
         assert item_indices[0] < direction_index
@@ -93,15 +95,14 @@ def test_per_turn_room_block_follows_expected_section_order():
         i for i, line in enumerate(room_block) if " is here." in line.lower() or " are here." in line.lower()
     ]
     if npc_line_indices:
-        assert npc_line_indices[0] > exit_index
+        assert npc_line_indices[0] > direction_index
 
     assert len(lines) >= 2
     assert lines[1].strip()
 
 
 def test_unknown_non_command_input_uses_in_world_roleplay_response():
-    state = build_default_state(seed=32)
-    npc_id = state.world.rooms[state.player.location].npc_ids[0]
+    state = make_cached_story_state(seed=32)
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
         f"ask {state.world.rooms[state.player.location].npc_ids[0]} about rumors",
@@ -115,7 +116,7 @@ def test_unknown_non_command_input_uses_in_world_roleplay_response():
 
 
 def test_debug_mode_emits_parseable_internal_trace():
-    state = build_default_state(seed=33)
+    state = make_cached_story_state(seed=33)
     _next_state, lines, _action_raw, _beat, _continued = run_turn(
         state,
         "look",
