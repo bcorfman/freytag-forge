@@ -20,6 +20,7 @@ from storygame.engine.facts import (
     story_goals,
 )
 from storygame.engine.mystery import filtered_inventory, room_item_groups
+from storygame.engine.npc import role_facts
 from storygame.engine.parser import Action
 from storygame.engine.perception import observer_context_slice, visible_entities
 from storygame.engine.scene_state import scene_snapshot
@@ -123,7 +124,7 @@ def _short_text(value: str, max_len: int) -> str:
     return value[: max_len - 3] + "..."
 
 
-def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
+def _npc_fact(npc: Npc, location: str) -> dict[str, object]:
     return {
         "id": npc.id,
         "name": npc.name,
@@ -136,6 +137,7 @@ def _npc_fact(npc: Npc, location: str) -> dict[str, str]:
         "scene_purpose": "",
         "stance_to_player": "",
         "trust_to_player": "",
+        "role_contract": {},
     }
 
 
@@ -170,6 +172,7 @@ def _summarize_npc_facts(state: GameState, visible_npc_ids: tuple[str, ...] = ()
         fact["scene_purpose"] = _short_text(npc_scene_purpose(state, npc_id), MAX_NPC_DESCRIPTION_LEN)
         fact["stance_to_player"] = npc_stance_toward_player(state, npc_id)
         fact["trust_to_player"] = npc_trust_toward_player(state, npc_id)
+        fact["role_contract"] = role_facts(state, npc_id)
         facts.append(fact)
     return tuple(facts)
 

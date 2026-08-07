@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from storygame.engine.consequences import apply_consequences
-from storygame.engine.facts import apply_fact_ops
+from storygame.engine.facts import apply_fact_ops, dramatic_metric, set_dramatic_metric
 from storygame.engine.policies import PredicatePolicyRegistry, validate_proposed_fact_ops
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.semantic_actions import commit_semantic_action
@@ -20,10 +20,12 @@ def _apply_numeric_deltas(state: GameState, numeric_delta: tuple[NumericDelta, .
         key = str(entry["key"]).strip()
         delta = float(entry["delta"])
         if key == "progress":
-            state.progress = max(0.0, min(1.0, state.progress + delta))
+            state.progress = max(0.0, min(1.0, dramatic_metric(state, key, state.progress) + delta))
+            set_dramatic_metric(state, key, state.progress)
             continue
         if key == "tension":
-            state.tension = max(0.0, min(1.0, state.tension + delta))
+            state.tension = max(0.0, min(1.0, dramatic_metric(state, key, state.tension) + delta))
+            set_dramatic_metric(state, key, state.tension)
             continue
         state.fact_metrics[key] = state.fact_metrics.get(key, 0.0) + delta
 

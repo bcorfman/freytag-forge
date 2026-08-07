@@ -116,6 +116,11 @@ Current runtime generation is package-driven.
 - `storygame.engine.turn_runtime` provides an additive proposal-first turn path for structured semantic turn proposals, deterministic commits, and follow-up trigger execution.
 - `storygame.engine.consequences` runs the validated deterministic post-direct-effect rule pass before triggers.
 - `storygame.engine.affordances` derives legal exits, locks, visible items, addressable NPCs, and inventory from canonical facts for model context.
+- `storygame.engine.npc` owns typed fact-backed NPC role contracts, epistemic updates, adaptive traits, delegated-task lifecycle, and side-effect-free NPC action validation.
+- `storygame.plot.beat_policy` owns deterministic Freytag beat legality and
+  fact-driven reveal/timed-event scheduling. It consumes canonical phase, role,
+  pressure, obstacle, conflict, reveal-budget, and NPC scene-goal facts; player
+  actions remain open-ended and are validated by the turn policy.
 - A dedicated turn-orchestration layer accepts structured candidate proposals from the LLM and commits only validated deltas to canonical world state.
 - Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 
@@ -177,6 +182,10 @@ Current runtime generation is package-driven.
   blocking, portals, traces, discovery, evidence state, and contamination.
   Evidence movement remains subject to custody cardinality, while state
   transformations replace the prior evidence state deterministically.
+- Phase 5 NPC state is explicit: `knows`, `believes`, `suspects`, `conceals`,
+  and `may_infer` facts are observer-scoped; role capabilities and obligations
+  gate NPC actions; stable traits are separate from bounded adaptive traits;
+  and delegated work transitions through a validated durable task lifecycle.
 
 ```mermaid
 flowchart LR

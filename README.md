@@ -50,6 +50,21 @@ genre packs extend the same validated schema without story-specific runtime
 branches. The model also receives fact-derived affordances for legal exits,
 locks, visible portable items, addressable NPCs, and held items.
 
+Freytag progression is also fact-driven. `BeatPolicy` selects a stable legal
+beat from the current phase, role, pressure, obstacle, conflict, reveal budget,
+and NPC scene goals; it does not prescribe the player’s approach. Reveal
+scheduling and timed story events are evaluated together from canonical facts,
+and progress/tension are derived presentation metrics rather than free-form
+commit authorities.
+
+NPCs use fact-backed role contracts for goals, capabilities, limitations,
+initiative, relationships, advisory style, and permitted autonomy. Explicit
+observer-scoped facts model what each NPC knows, believes, suspects, conceals,
+or may infer; stable identity traits remain separate from bounded adaptive
+traits. Delegated work follows a durable offer, acceptance, progress, result,
+failure, or cancellation lifecycle. NPC actions are validated against role,
+knowledge, location, resources, obligations, visibility, and scene state.
+
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).

@@ -246,54 +246,54 @@ must never force normal play through a fixed verb list.
 
 ### Work
 
-- Model what each important character knows, believes, suspects, conceals, and
+- [x] Model what each important character knows, believes, suspects, conceals, and
   may infer.
-- Create fact-backed NPC role contracts: goals, capabilities, limitations,
+- [x] Create fact-backed NPC role contracts: goals, capabilities, limitations,
   initiative policy, relationship, advisory style, and permitted autonomous
   behavior.
-- Express stable identity traits separately from bounded adaptive traits. The
+- [x] Express stable identity traits separately from bounded adaptive traits. The
   latter may change only through declared policy and retain a small typed
   presentation projection for narration stability.
-- Add a deterministic task/commitment lifecycle for offers, acceptance,
+- [x] Add a deterministic task/commitment lifecycle for offers, acceptance,
   progress, results, failure, cancellation, and consequences.
-- Validate NPC actions by knowledge, role, location, resources, obligations,
+- [x] Validate NPC actions by knowledge, role, location, resources, obligations,
   visibility, and current scene/dynamic state.
-- Keep dialogue LLM-authored from the addressed NPC's context and reject
+- [x] Keep dialogue LLM-authored from the addressed NPC's context and reject
   parroting, wrong-speaker, off-scene, or role-violating proposals.
 
 ### Tests and exit criteria
 
-- NPCs do not disclose facts they cannot know or perform work they cannot
+- [x] NPCs do not disclose facts they cannot know or perform work they cannot
   plausibly do.
-- Directly addressing a visible NPC returns that NPC's in-character reply.
-- Delegation is distinct from dialogue, hints, and autonomous activity and is
+- [x] Directly addressing a visible NPC returns that NPC's in-character reply.
+- [x] Delegation is distinct from dialogue, hints, and autonomous activity and is
   durable across save/load.
-- At least a companion, rival, adviser, medic, and navigator role are proven
+- [x] At least a companion, rival, adviser, medic, and navigator role are proven
   through shared machinery across fixtures.
 
 ## Phase 6 — Fact-Driven Freytag Policy
 
 ### Work
 
-- Complete the existing fact-backed dramatic-state migration with a
+- [x] Complete the existing fact-backed dramatic-state migration with a
   deterministic `BeatPolicy`.
-- Use phase, beat role, scene pressure, obstacle mode, active conflict,
+- [x] Use phase, beat role, scene pressure, obstacle mode, active conflict,
   reveal opportunity/budget, and NPC scene goals as policy inputs.
-- Move reveal scheduling and timed progression from `simulation.py` fallback
+- [x] Move reveal scheduling and timed progression from `simulation.py` fallback
   chains to fact-driven services.
-- Let validated player consequences alter pressure, available reveals, and
+- [x] Let validated player consequences alter pressure, available reveals, and
   NPC stance within phase legality; do not prescribe player choices.
-- Retire progress/tension as commit authorities after they are derived metrics.
+- [x] Retire progress/tension as commit authorities after they are derived metrics.
 
 ### Tests and exit criteria
 
-- Beat phase and role measurably alter legal escalation, reveal timing, scene
+- [x] Beat phase and role measurably alter legal escalation, reveal timing, scene
   framing, and consequence classes.
-- Deterministic policy avoids random/repetitive beat selection while retaining
+- [x] Deterministic policy avoids random/repetitive beat selection while retaining
   varied player approaches.
-- Major goal-breaking actions follow explicit confirmation, state disruption,
+- [x] Major goal-breaking actions follow explicit confirmation, state disruption,
   replan, and then official response to the original prompt.
-- Local replans preserve the curve constraints and current player agency while
+- [x] Local replans preserve the curve constraints and current player agency while
   adding or reopening valid evidence/progression paths where necessary.
 
 ## Phase 7 — Post-Commit Rendering and Hot-Path Cleanup

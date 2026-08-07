@@ -10,6 +10,7 @@ from storygame.engine.facts import (
     set_active_story_goal,
     sync_legacy_views,
 )
+from storygame.engine.npc import ensure_default_role_contracts
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
@@ -439,6 +440,7 @@ def build_default_state(
                 for key, _value in _default_mystery_case_facts()
             ],
         )
+    ensure_default_role_contracts(state)
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state
@@ -585,6 +587,7 @@ def build_state_from_bootstrap_plan(
             replace_fact_group(state, "assistant_name", (("assistant_name", assistant_name),))
             apply_fact_ops(state, [{"op": "assert", "fact": ("npc_relationship", assistant_name, "player", "assistant")}])
 
+    ensure_default_role_contracts(state)
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state
