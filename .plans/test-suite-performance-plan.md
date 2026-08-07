@@ -93,6 +93,36 @@ Both health artifacts report 561 tests, 90.03% coverage, 140 full-world
 builds, 146 complete turns, and 70 SQLite stores. The health-variant median is
 79.97s, a 40.9% reduction from the 135.37s baseline.
 
+After the targeted fixture migration and collection benchmark addition, the
+same five variants were run twice on commit
+[`bcb5cdb9d0239ec01a8d5de06f05ce75126daa20`](https://github.com/bcorfman/freytag-forge/commit/bcb5cdb9d0239ec01a8d5de06f05ce75126daa20):
+
+| Variant | Run `31188890834` | Run `31188909247` | Median |
+| --- | ---: | ---: | ---: |
+| `--no-cov --collect-only` | 1.63s | 1.68s | 1.66s |
+| `--no-cov` | 22.71s | 25.95s | 24.33s |
+| `--cov` | 75.91s | 76.59s | 76.25s |
+| `--cov-context=test` | 79.90s | 79.24s | 79.57s |
+| `--cov --tier-report` | 77.63s | 65.19s | 71.41s |
+
+Run records: [31188890834](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834)
+([collection](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834/job/92900358160),
+[no-cov](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834/job/92900358134),
+[coverage](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834/job/92900358093),
+[context](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834/job/92900358215),
+[health](https://github.com/bcorfman/freytag-forge/actions/runs/31188890834/job/92900358187))
+and [31188909247](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247)
+([collection](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247/job/92900426528),
+[no-cov](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247/job/92900426611),
+[coverage](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247/job/92900426669),
+[context](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247/job/92900426378),
+[health](https://github.com/bcorfman/freytag-forge/actions/runs/31188909247/job/92900426579)).
+All variants passed; both health artifacts report 561 tests, 90.03% coverage,
+120 full-world builds, 146 complete turns, and 70 SQLite stores. The large
+health-runtime spread confirms that runner variance remains material, so the
+new health median is recorded for diagnosis rather than claimed as a second
+performance improvement.
+
 The CI command currently is:
 
 ```text
@@ -154,7 +184,7 @@ optimization. The prior run with and without it was effectively identical.
 ### Phase 0 exit criteria
 
 - [x] There is a reproducible top-cost list from the actual CI command.
-- [ ] The cost of `--cov-context=test`, the health hook, collection, and test
+- [x] The cost of `--cov-context=test`, the health hook, collection, and test
   bodies is measured separately.
 - [x] At least two CI runs establish a baseline within an explicitly recorded
   variance range.
@@ -191,10 +221,15 @@ reproducibility/output cases were migrated to cloned state in this pass.
 
 - [x] For every top-20 full-world test, document why the full world is needed;
   otherwise migrate it to `tests/fast_fixtures.py` or a narrower factory.
-- [ ] Convert pure parser, fact, policy, contract, context, formatter, and
-  renderer assertions to tiny synthetic state.
-- [ ] Convert serializer payload/normalization cases to injected state
-  factories; retain real SQLite round trips as integration tests.
+- [x] Convert pure parser, fact, policy, contract, context, formatter, and
+  renderer assertions to tiny synthetic state where the assertion does not
+  require authored world realization. The migrated state, impact, and event
+  policy cases use `make_tiny_state`; authored presentation/context cases keep
+  their explicit story-package boundary.
+- [x] Convert serializer payload/normalization cases to injected state
+  factories; retain real SQLite round trips as integration tests. The
+  `deserialize_state(state_factory=...)` seam and the narrow persistence
+  factory now cover the non-SQLite serializer cases.
 - [x] Ensure fixture cloning is immutable-per-test and cannot share facts or
   RNG state across tests.
 - [x] Add a runtime counter, not just an AST/source counter, for calls to
@@ -202,8 +237,12 @@ reproducibility/output cases were migrated to cloned state in this pass.
 - [x] Reduce full-world builds from 312 source references to fewer than 150
   actual invocations in the complete suite, then verify the measured pytest
   time changed on Actions.
-- [ ] Keep unit/component tests free of SQLite, web clients, and complete
-  turn orchestration unless an explicit exception is recorded.
+- [x] Keep unit/component tests free of SQLite, web clients, and complete
+  turn orchestration unless an explicit exception is recorded. Artifact and
+  CLI-composition tests that cross those boundaries are classified as
+  integration tests; the remaining component exceptions are the three
+  room-transition/follower rendering tests documented in the performance
+  guide.
 
 ### Phase 1 exit criteria
 

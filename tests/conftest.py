@@ -43,6 +43,7 @@ _EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_if_o
 _INTEGRATION_FILES = {
     "test_cli.py", "test_cli_more.py", "test_savegame_sqlite.py", "test_web_api.py",
     "test_web_demo_api.py", "test_web_surface_parity.py", "test_vector_memory.py",
+    "test_mvp_gaps.py", "test_story_state_artifacts.py",
 }
 _COMPONENT_FILES = {
     "test_adapters.py", "test_freeform_unit.py", "test_llm_context.py", "test_narration_state.py",

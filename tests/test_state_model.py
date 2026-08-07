@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from storygame.engine.state import Event
 from tests.fast_fixtures import make_cached_story_state as build_default_state
+from tests.fast_fixtures import make_tiny_state
 
 
 def test_state_helpers_clamp_progress_and_tension():
-    state = build_default_state(seed=2)
+    state = make_tiny_state(seed=2)
     assert state.with_progress(-0.5).progress == 0.0
     assert state.with_progress(2.0).progress == 1.0
 
@@ -14,7 +15,7 @@ def test_state_helpers_clamp_progress_and_tension():
 
 
 def test_game_state_event_collections_and_replay_signature_stable():
-    state = build_default_state(seed=2)
+    state = make_tiny_state(seed=2)
 
     state.append_event(Event(type="a"))
     state.append_events((Event(type="b"), Event(type="c", message_key="x")))
@@ -29,7 +30,7 @@ def test_game_state_event_collections_and_replay_signature_stable():
 
 
 def test_game_state_tail_uses_sorted_room_items_in_signature():
-    state = build_default_state(seed=9)
+    state = make_tiny_state(seed=9)
     state2 = state.clone()
     assert state2.replay_signature() == state.replay_signature()
 
