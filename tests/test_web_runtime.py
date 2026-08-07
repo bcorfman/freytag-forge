@@ -103,6 +103,24 @@ def test_opening_normalization_removes_doctest_wrappers_and_echoed_json() -> Non
     assert "{" not in displayed
 
 
+def test_opening_normalization_rejects_echoed_prompt_and_room_context() -> None:
+    leaked_worker_response = """>LOOK
+Rule: do not invent facts. Rule: any state change must be explicit, limited to engine context, and fact-representable. Rule: opening scene must establish who the player is, where they are, and the immediate objective. Rule: opening scene must stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory. Rule: action: look
+
+Outside The Mansion
+Broad stone steps rise to a carved oak door framed by weathered columns.
+A dark sedan waits nearby where you left it.
+The main entrance from here leads north toward the mansion interior, while the drive behind you remains open.
+Daria Stone is nearby, watching your next move."""
+
+    with pytest.raises(RuntimeError, match="prompt/context echo"):
+        _normalized_narrator_opening_paragraphs(
+            leaked_worker_response,
+            "Daria Stone",
+            allow_short_prose=True,
+        )
+
+
 def test_bootstrap_debug_payload_is_fact_and_package_scoped() -> None:
     state = make_cached_story_state(seed=903)
     state.world_package["llm_story_bundle"] = {

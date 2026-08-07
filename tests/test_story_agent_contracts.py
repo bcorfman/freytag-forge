@@ -284,3 +284,16 @@ def test_narrator_opening_contract_drops_directive_shaped_paragraphs() -> None:
 
     assert len(opening["paragraphs"]) == 3
     assert not any("room name:" in paragraph.lower() for paragraph in opening["paragraphs"])
+
+
+def test_narrator_opening_contract_rejects_prompt_context_echoes() -> None:
+    with pytest.raises(StoryAgentContractError, match="prompt_context_echo"):
+        parse_narrator_opening_output(
+            {
+                "paragraphs": [
+                    ">LOOK\nRule: do not invent facts. Rule: opening scene must establish who the player is.",
+                    "Outside The Mansion\nBroad stone steps rise to a carved oak door.",
+                    "Daria Stone is nearby, watching your next move.",
+                ]
+            }
+        )

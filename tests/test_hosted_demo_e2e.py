@@ -68,6 +68,8 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     assert "# doctest" not in opening_text.lower()
     assert "opening_draft" not in opening_text
     assert '"""' not in opening_text
+    assert "rule:" not in opening_text.lower()
+    assert "fact-representable" not in opening_text.lower()
 
     def run_turn(command: str) -> dict:
         status, headers, payload = _request(

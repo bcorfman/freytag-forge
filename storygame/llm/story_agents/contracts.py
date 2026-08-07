@@ -267,6 +267,10 @@ _OPENING_DIRECTIVE_LABELS = (
     "background events:",
 )
 
+_OPENING_PROMPT_ECHO = re.compile(
+    r"""(?im)^\s*(?:>\s*)?look\s*$|^\s*rule:\s+|["']?(?:opening_draft|opening_facts)["']?\s*:""",
+)
+
 
 def _looks_like_opening_directive_paragraph(value: str) -> bool:
     normalized = _trim_sentence(value).lower()
@@ -274,6 +278,10 @@ def _looks_like_opening_directive_paragraph(value: str) -> bool:
         return False
     matches = sum(1 for label in _OPENING_DIRECTIVE_LABELS if label in normalized)
     return matches >= 2
+
+
+def _looks_like_opening_prompt_echo(value: str) -> bool:
+    return _OPENING_PROMPT_ECHO.search(value) is not None
 
 
 def _ensure_terminal_punctuation(text: str) -> str:
@@ -476,6 +484,8 @@ def parse_narrator_opening_output(payload: dict) -> NarratorOpeningOutput:
         model = _NarratorOpeningModel.model_validate(normalized_payload)
     except ValidationError as exc:
         raise _raise_contract_error("NARRATOR_OPENING_CONTRACT_INVALID", exc) from exc
+    if any(_looks_like_opening_prompt_echo(paragraph) for paragraph in model.paragraphs):
+        raise StoryAgentContractError("NARRATOR_OPENING_CONTRACT_INVALID", "paragraphs:prompt_context_echo")
     paragraphs = [
         _ensure_terminal_punctuation(paragraph)
         for paragraph in model.paragraphs
