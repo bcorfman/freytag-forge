@@ -28,6 +28,10 @@ _DOCTEST_OPENING_WRAPPER = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+_OPENING_PROMPT_ECHO = re.compile(
+    r"""(?im)^\s*(?:>\s*)?look\s*$|^\s*rule:\s+|["']?(?:opening_draft|opening_facts)["']?\s*:""",
+)
+
 
 class SaveStore(Protocol):
     """Persistence boundary usable by both adapters and injected test fakes."""
@@ -164,6 +168,8 @@ def _normalized_narrator_opening_paragraphs(
     wrapper_match = _DOCTEST_OPENING_WRAPPER.match(raw)
     if wrapper_match is not None:
         raw = wrapper_match.group("prose").strip()
+    if _OPENING_PROMPT_ECHO.search(raw) is not None:
+        raise RuntimeError("Opening contract validation failed: prompt/context echo")
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw.strip()]
