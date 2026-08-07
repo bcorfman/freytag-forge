@@ -76,10 +76,11 @@ TMPDIR=/tmp uv run pytest -q --cov --durations=50
 ```
 
 `test_hosted_demo_e2e.py` is intentionally skipped for local runs without a
-deployed URL. On pushes to `main`, the `Hosted demo E2E` job requires the
-`VITE_API_BASE_URL` repository variable and verifies the deployed browser flow:
-health, session creation, and the automatic opening `look` turn from the GitHub
-Pages origin. It is an operator release gate, not a player smoke test.
+deployed URL. The `Hosted demo post-deploy E2E` workflow runs only after Railway
+has reported deployment success: dispatch it manually or send the
+`railway_deployment_succeeded` repository event. It requires a deployed API URL
+and verifies the browser flow from the GitHub Pages origin. It is an operator
+release gate, not a player smoke test.
 
 The manual `test-suite five-run benchmark` workflow runs the exact required
 coverage command five times on `ubuntu-latest`, reports every sample and their
