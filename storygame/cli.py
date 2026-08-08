@@ -9,7 +9,7 @@ from typing import Any, Protocol, TextIO
 
 from rich.console import Console
 
-from storygame.engine.facts import apply_fact_ops, item_driver, item_owner
+from storygame.engine.facts import apply_fact_ops, item_state, npc_scene_purpose
 from storygame.engine.freeform import (
     _HIDDEN_FREEFORM_MESSAGE_KEYS,
     DEFAULT_FREEFORM_ADAPTER,
@@ -200,7 +200,7 @@ def _display_name_for_npc(state: GameState, npc_id: str, room_npc_ids: tuple[str
 
 def _rewrite_known_npc_names(state: GameState, text: str) -> str:
     room = state.world.rooms[state.player.location]
-    if "nearby, watching your next move." in text:
+    if text.endswith("are nearby, taking in the scene."):
         return text
     rewritten = text
     for npc_id in room.npc_ids:
@@ -211,18 +211,30 @@ def _rewrite_known_npc_names(state: GameState, text: str) -> str:
     return rewritten
 
 
-def _arrival_car_room_line(state: GameState, item_id: str) -> str:
-    if item_owner(state, item_id) == "player" and item_driver(state, item_id) == "player":
-        return "A dark sedan waits nearby where you left it."
-    return "A dark sedan waits nearby."
+def _room_item_lines(state: GameState, item_ids: tuple[str, ...]) -> list[str]:
+    positioned: list[str] = []
+    unpositioned: list[str] = []
+    for item_id in item_ids:
+        item = state.world.items[item_id]
+        state_description = item_state(state, item_id).replace("_", " ").strip()
+        if state_description:
+            positioned.append(f"The {item.name.lower()} is {state_description}.")
+        else:
+            unpositioned.append(item.name.lower())
+    if unpositioned:
+        positioned.append(f"You can see {_joined_with_and(unpositioned)} within easy reach.")
+    return positioned
 
 
-def _special_room_item_line(state: GameState, room_id: str, actionable_items: tuple[str, ...]) -> str:
-    if room_id == "front_steps" and "ledger_page" in actionable_items:
-        return "You can see a torn ledger page lying half-caught in a crack between the stones near the bottom step."
-    if "arrival_sedan" in actionable_items:
-        return _arrival_car_room_line(state, "arrival_sedan")
-    return ""
+def _npc_scene_lines(state: GameState, room_npc_ids: tuple[str, ...]) -> list[str]:
+    lines: list[str] = []
+    for npc_id in room_npc_ids:
+        purpose = npc_scene_purpose(state, npc_id).strip().rstrip(".")
+        if not purpose:
+            continue
+        npc_name = _display_name_for_npc(state, npc_id, room_npc_ids)
+        lines.append(f"{npc_name} is here to {purpose[:1].lower()}{purpose[1:]}.")
+    return lines
 
 
 def _room_lines(state: GameState, *, long_form: bool = True) -> str:
@@ -240,17 +252,7 @@ def _room_lines_with_followers(
     pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
     actionable_items, junk_count = room_item_groups(state, room)
     if actionable_items:
-        special_line = _special_room_item_line(state, room.id, actionable_items)
-        handled_items = {"arrival_sedan"} if "arrival_sedan" in actionable_items else set()
-        if room.id == "front_steps" and "ledger_page" in actionable_items:
-            handled_items.add("ledger_page")
-        remaining = tuple(_humanize_token(item) for item in actionable_items if item not in handled_items)
-        if special_line:
-            pieces.append(special_line)
-            if remaining:
-                pieces.append(f"You can also see {_joined_with_and(remaining)} within easy reach.")
-        else:
-            pieces.append(f"You can see {_joined_with_and(list(remaining))} within easy reach.")
+        pieces.extend(_room_item_lines(state, actionable_items))
     if junk_count > 0:
         suffix = "item" if junk_count == 1 else "items"
         verb = "is" if junk_count == 1 else "are"
@@ -259,9 +261,7 @@ def _room_lines_with_followers(
         exits = tuple(sorted(room.exits.keys()))
         if len(exits) == 1:
             if room.id == "front_steps":
-                pieces.append(
-                    f"The main entrance from here leads {exits[0]} toward the mansion interior, while the drive behind you remains open."
-                )
+                pieces.append(f"The carved door at the top of the steps leads {exits[0]} into the mansion.")
             else:
                 pieces.append(f"The single obvious exit leads {exits[0]}.")
         else:
@@ -272,9 +272,7 @@ def _room_lines_with_followers(
             continue
         pieces.append(f"{_first_name(npc.name.strip() or _humanize_token(npc_id).title())} follows you.")
     if room.npc_ids:
-        visible_npcs = tuple(_display_name_for_npc(state, npc_id, room.npc_ids) for npc_id in room.npc_ids)
-        verb = "is" if len(visible_npcs) == 1 else "are"
-        pieces.append(f"{_joined_with_and(list(visible_npcs))} {verb} nearby, watching your next move.")
+        pieces.extend(_npc_scene_lines(state, room.npc_ids))
         _remember_npc_introductions(state, room.npc_ids)
     return "\n".join(pieces)
 

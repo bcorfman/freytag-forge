@@ -293,6 +293,41 @@ def _ensure_terminal_punctuation(text: str) -> str:
     return f"{cleaned}."
 
 
+def _is_clearly_truncated_opening_paragraph(text: str) -> bool:
+    cleaned = _trim_sentence(text)
+    if not cleaned or cleaned[-1] in ".!?":
+        return False
+    final_word = cleaned.rsplit(maxsplit=1)[-1].lower().strip(" ,;:")
+    return final_word in {
+        "after",
+        "and",
+        "at",
+        "because",
+        "before",
+        "behind",
+        "but",
+        "by",
+        "for",
+        "from",
+        "if",
+        "in",
+        "into",
+        "of",
+        "on",
+        "or",
+        "over",
+        "than",
+        "that",
+        "the",
+        "to",
+        "toward",
+        "under",
+        "when",
+        "while",
+        "with",
+    }
+
+
 def _is_placeholder_contact_name(name: str) -> bool:
     return re.fullmatch(r"(premise|scene|outline|characters)\s*:?", name.strip().lower()) is not None
 
@@ -489,7 +524,11 @@ def parse_narrator_opening_output(payload: dict) -> NarratorOpeningOutput:
     paragraphs = [
         _ensure_terminal_punctuation(paragraph)
         for paragraph in model.paragraphs
-        if _trim_sentence(paragraph) and not _looks_like_opening_directive_paragraph(paragraph)
+        if (
+            _trim_sentence(paragraph)
+            and not _looks_like_opening_directive_paragraph(paragraph)
+            and not _is_clearly_truncated_opening_paragraph(paragraph)
+        )
     ]
     if len(paragraphs) < 3:
         raise StoryAgentContractError("NARRATOR_OPENING_CONTRACT_INVALID", "paragraphs:min_length")

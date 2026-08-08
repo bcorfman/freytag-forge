@@ -391,7 +391,7 @@ def build_default_state(
                     {"op": "assert", "fact": ("room_item", start_room, "arrival_sedan")},
                     {"op": "assert", "fact": ("item_owner", "arrival_sedan", "player")},
                     {"op": "assert", "fact": ("item_driver", "arrival_sedan", "player")},
-                    {"op": "assert", "fact": ("item_state", "arrival_sedan", "parked_by_drive")},
+                    {"op": "assert", "fact": ("item_state", "arrival_sedan", "parked_beside_the_drive")},
                 ],
             )
         apply_fact_ops(

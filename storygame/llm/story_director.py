@@ -445,6 +445,9 @@ class StoryDirector:
                 assistant_present,
                 item_labels,
                 assistant_items,
+                item_labels_for_opening(
+                    tuple(fact[2] for fact in state.world_facts.query("holding", "player", None) if len(fact) > 2)
+                ),
             )
         )
         return list(dict.fromkeys(issue for issue in issues if issue.strip()))

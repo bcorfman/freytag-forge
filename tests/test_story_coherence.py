@@ -72,7 +72,7 @@ def test_story_goal_is_specific_and_not_just_follow_bell_signal():
 def test_assistant_follows_player_between_rooms_by_default():
     state = build_default_state(seed=19)
     rng = Random(19)
-    first_npc = state.world.rooms[state.player.location].npc_ids[0].replace("_", " ")
+    first_npc = state.world.rooms[state.player.location].npc_ids[0].split("_", 1)[0]
     direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
     destination = state.world.rooms[state.player.location].exits[direction]
 
