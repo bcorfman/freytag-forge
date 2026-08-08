@@ -130,3 +130,7 @@ artifacts/
 
 # MCP directories
 .serena/
+
+# JavaScript dependencies are regenerated from the package lock and must never
+# be included in source archives uploaded to Railway.
+node_modules/

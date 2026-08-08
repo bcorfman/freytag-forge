@@ -57,22 +57,25 @@ boundary-heavy run.
 ## CI jobs
 
 `Required coverage gate` is the merge-validation job. It runs the complete
-555-test suite with ordinary `--cov`, the existing 90% threshold, collection
-guards, and the health artifact. It is the authoritative required result. Its
-uv dependency cache is keyed by `uv.lock`; the cache hit or miss is recorded in
-the uploaded `ci-cache.json` artifact and job summary.
+suite with ordinary `--cov`, two pytest workers (`-n 2`), the existing 90%
+threshold, collection guards, and the health artifact. It is the authoritative
+required result; pytest-cov merges the two worker coverage data sets before
+enforcing the project-wide threshold. Its uv dependency cache is keyed by
+`uv.lock`; the cache hit or miss is recorded in the uploaded `ci-cache.json`
+artifact and job summary.
 
 `Fast feedback (unit and component)` runs without coverage for quick pull
 request feedback. It is not a replacement for the required coverage gate.
 `Coverage context report (informational)` retains `--cov-context=test` for
-per-test attribution; it is separate because context coverage is slower than
-ordinary coverage on this project.
+per-test attribution. It runs nightly at 05:23 UTC and is manually
+dispatchable; it is intentionally outside the normal pull-request and
+production-promotion path because context coverage reruns the full suite.
 
 The normal CI command does not include `--durations`. Use it only as an opt-in
 diagnostic, for example:
 
 ```text
-TMPDIR=/tmp uv run pytest -q --cov --durations=50
+TMPDIR=/tmp uv run pytest -q --cov -n 2 --durations=50
 ```
 
 `test_hosted_demo_e2e.py` is intentionally skipped for local runs without a
@@ -101,9 +104,9 @@ For performance diagnosis, compare these variants on the same commit:
 ```text
 TMPDIR=/tmp uv run pytest -q --no-cov --collect-only
 TMPDIR=/tmp uv run pytest -q --no-cov
-TMPDIR=/tmp uv run pytest -q --cov
+TMPDIR=/tmp uv run pytest -q --cov -n 2
 TMPDIR=/tmp uv run pytest -q --cov-context=test
-TMPDIR=/tmp uv run pytest -q --cov --tier-report=/tmp/health.json
+TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=/tmp/health.json
 ```
 
 The required coverage command must remain the full behavioral suite. Benchmark

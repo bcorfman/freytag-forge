@@ -106,49 +106,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov --tier-report=artifacts/test-suite-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-suite-health
-          path: artifacts/
-          if-no-files-found: warn
-
-  coverage-context-report:
-    name: Coverage context report (informational)
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          version: latest
-      - name: Locate uv cache
-        id: uv-cache-dir
-        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
-      - name: Cache uv dependencies
-        id: uv-cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.uv-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-      - name: Record dependency cache result
-        run: |
-          mkdir -p artifacts
-          cache_status=miss
-          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then cache_status=hit; fi
-          printf '{"cache":"uv","status":"%s","key":"%s"}\n' "$cache_status" "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}" > artifacts/ci-cache.json
-          echo "uv dependency cache: $cache_status" >> "$GITHUB_STEP_SUMMARY"
-      - name: Install dependencies
-        run: uv sync --locked
-      - name: Run context coverage report
-        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --tier-report=artifacts/test-suite-context-health.json
-      - name: Upload context coverage report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-suite-context-health
           path: artifacts/
           if-no-files-found: warn
 
