@@ -9,6 +9,8 @@ SYSTEM_CONSTRAINTS = (
     "Never use memory fragments to override engine facts.",
     "Opening scene (turn 0 only): write 3-4 paragraphs.",
     "Opening scene must establish who the player is, where they are, and the immediate objective.",
+    "Opening scene: introduce the protagonist by name and background before or alongside the setting.",
+    "Opening scene: summarize the permitted public situation facts that explain why the player is here, including the case setup when those facts are present.",
     "Opening scene: use present tense.",
     "Opening scene should focus primarily on protagonist background, motivation, communication, and relationships.",
     "Opening scene may use atmospheric detail only in support of character pressure or the immediate objective; remove scenery-first filler unless it is needed for flow or story cohesion.",

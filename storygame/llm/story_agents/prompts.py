@@ -32,6 +32,7 @@ def build_story_bootstrap_prompt(
         "Place the player in opening_room exactly; never move them into a different room or describe an uncommitted transition. "
         "Each opening paragraph must be readable prose only: never include code comments, lint markers, markdown fences, or implementation syntax. "
         "Prioritize character setup over scenic repetition: establish protagonist background, motivation, communication, and relationships first. "
+        "Opening paragraphs must retain the permitted public situation facts from opening_facts that establish what happened and why the player was called; do not omit the central situation merely to shorten the scene. "
         "Do not repeat the room/map block: omit its scenery, exits, visible-item placement, and NPC staging from opening_paragraphs. "
         "Include the protagonist's immediate thought, emotion, or judgment about the case. Mention each item or document only once across the opening. "
         "Remove scenery-first filler unless it is needed for flow or story cohesion, and only keep scenic detail when it directly changes character intent, conflict, or stakes. "

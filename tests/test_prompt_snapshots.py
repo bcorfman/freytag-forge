@@ -62,6 +62,8 @@ def test_prompt_includes_if_storytelling_quality_checklist():
     assert "exits" in system_text
     assert "npc interactions or background events" in system_text
     assert "do not reveal later twists early" in system_text
+    assert "introduce the protagonist by name and background" in system_text
+    assert "summarize the permitted public situation facts" in system_text
 
 
 def test_prompt_user_payload_includes_room_grounding_fields():
@@ -82,6 +84,9 @@ def test_prompt_user_payload_includes_room_grounding_fields():
     assert "Visible items: " in user_text
     assert "Visible NPCs: " in user_text
     assert "Inventory: " in user_text
+    assert "Protagonist: " in user_text
+    assert "Protagonist background: " in user_text
+    assert "Canonical case facts: " in user_text
 
 
 def test_prompt_instructs_npc_reply_for_addressed_freeform_turns():
