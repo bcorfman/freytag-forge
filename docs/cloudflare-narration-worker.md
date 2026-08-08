@@ -64,6 +64,9 @@ The important codes are:
   `Retry-After`.
 - `AI_REQUEST_REJECTED`: preserve the upstream 4xx status.
 - `AI_UPSTREAM_ERROR`: use a gateway/server failure for upstream 5xx responses.
+- `AI_JSON_MODE_REJECTED`: Workers AI rejected or could not satisfy the requested
+  JSON response format. This is a typed 502 so the client can make its one
+  JSON-mode fallback without relying on error-message matching.
 - `AI_NETWORK_ERROR`, `AI_BAD_RESPONSE`, and `AI_EMPTY_RESPONSE`: Worker or
   upstream protocol failures.
 
@@ -74,6 +77,22 @@ runtime error response rather than the application’s JSON contract.
 The Worker must forward the adapter’s bounded `max_tokens` request value to the
 Workers AI request. Otherwise the model may use a smaller default and truncate
 opening narration before the final paragraph.
+
+## Structured-output and recovery contract
+
+Structured story-agent requests declare their required response shape through a
+typed adapter option. When that option is `json_object`, the Railway client
+sends `response_format: {"type": "json_object"}` and the Worker forwards it
+unchanged to Workers AI. The option is transport metadata; it must not be
+inferred from prompt wording.
+
+The client always performs local JSON parsing and typed-contract validation;
+JSON mode only requests syntactic JSON. If the Worker returns
+`AI_JSON_MODE_REJECTED`, the client may make exactly one fallback request
+without `response_format`, while retaining the JSON-only prompt instruction.
+This fallback consumes the ordinary turn's only recovery request. A subsequent
+timeout, malformed response, contract error, or upstream failure must fail
+closed rather than starting another retry sequence.
 
 ## Promotion checks
 

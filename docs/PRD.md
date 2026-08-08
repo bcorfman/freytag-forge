@@ -464,10 +464,12 @@ flowchart LR
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
 - `CLOUDFLARE_TIMEOUT` (default `8.0`)
-- `CLOUDFLARE_RETRIES` (default `0`)
+- `CLOUDFLARE_RETRIES` (default `1`, capped at one recovery request)
 - `CLOUDFLARE_RETRY_BACKOFF_MS` (default `250`)
-- The Worker request contract is `{system, user, trace_id, session_id}` and the
-  response contract is `{narration, model, trace_id}`. The Worker must preserve
+- The Worker request contract is `{system, user, trace_id, session_id,
+  max_tokens, response_format?}` and the response contract is `{narration,
+  model, trace_id}`. `response_format` is supplied only by an explicit typed
+  structured-output request; it is never inferred from prompt text. The Worker must preserve
   the `system` and `user` roles when it calls its model; it must not concatenate
   them into one plain prompt.
 - Hosted bootstrap makes one direct narration call through this adapter. It does

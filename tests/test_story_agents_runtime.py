@@ -17,6 +17,7 @@ from storygame.llm.story_agents.agents import (
     DefaultStoryBootstrapAgent,
     DefaultStoryBootstrapCriticAgent,
     DefaultStoryReplanAgent,
+    StructuredOutput,
     _build_identity_intro_sentence,
     _json_from_text,
     _normalize_actionable_objective_language,
@@ -124,11 +125,7 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed_payload = json.loads(request.data.decode("utf-8"))
         if observed_payload["system"] == "Return JSON only.":
-            assert observed_payload["response_format"]["type"] == "json_schema"
-            assert observed_payload["response_format"]["json_schema"]["required"] == [
-                "dialog_proposal",
-                "action_proposal",
-            ]
+            assert observed_payload["response_format"] == {"type": "json_object"}
         return _FakeResponse('{"narration":"ok-cloudflare"}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
@@ -154,6 +151,26 @@ def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monk
     assert observed["payload"]["max_tokens"] == 1800
 
 
+def test_chat_complete_cloudflare_selects_json_mode_from_the_typed_request(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    payloads: list[dict[str, object]] = []
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        payloads.append(json.loads(request.data.decode("utf-8")))
+        return _FakeResponse('{"narration":"ok-cloudflare"}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    assert agent_module._chat_complete(
+        "cloudflare", "Do not mention a response format.", "u", StructuredOutput.JSON_OBJECT
+    ) == "ok-cloudflare"
+    assert payloads[-1]["response_format"] == {"type": "json_object"}
+
+    assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u", StructuredOutput.PLAIN_TEXT) == (
+        "ok-cloudflare"
+    )
+    assert "response_format" not in payloads[-1]
+
+
 def test_chat_complete_cloudflare_falls_back_when_json_mode_is_rejected(monkeypatch) -> None:
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
     requests: list[dict[str, object]] = []
@@ -177,6 +194,28 @@ def test_chat_complete_cloudflare_falls_back_when_json_mode_is_rejected(monkeypa
     )
     assert "response_format" in requests[0]
     assert "response_format" not in requests[1]
+
+
+def test_chat_complete_cloudflare_json_mode_fallback_consumes_the_only_recovery_attempt(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.setenv("CLOUDFLARE_RETRIES", "1")
+    requests: list[dict[str, object]] = []
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        payload = json.loads(request.data.decode("utf-8"))
+        requests.append(payload)
+        detail = (
+            b'{"code":"AI_JSON_MODE_REJECTED"}'
+            if "response_format" in payload
+            else b'{"code":"AI_UPSTREAM_ERROR"}'
+        )
+        raise urllib.error.HTTPError(request.full_url, 502, "bad gateway", {}, io.BytesIO(detail))
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    with pytest.raises(RuntimeError, match="502"):
+        agent_module._chat_complete("cloudflare", "s", "u", StructuredOutput.JSON_OBJECT)
+
+    assert len(requests) == 2
 
 
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
