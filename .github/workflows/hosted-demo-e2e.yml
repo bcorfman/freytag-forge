@@ -11,8 +11,6 @@ on:
         description: Commit SHA deployed by Railway; leave blank for the triggering revision.
         required: false
         type: string
-  repository_dispatch:
-    types: [railway_deployment_succeeded]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -26,12 +24,12 @@ jobs:
     name: Verify deployed browser flow
     runs-on: ubuntu-latest
     env:
-      HOSTED_DEMO_API_BASE_URL: ${{ inputs.api_base_url || github.event.client_payload.api_base_url || vars.VITE_API_BASE_URL }}
+      HOSTED_DEMO_API_BASE_URL: ${{ inputs.api_base_url || vars.VITE_API_BASE_URL }}
       HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref || github.event.client_payload.sha || github.sha }}
+          ref: ${{ inputs.ref || github.sha }}
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           version: latest

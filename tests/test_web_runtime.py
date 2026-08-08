@@ -117,7 +117,6 @@ Daria Stone is nearby, watching your next move."""
         _normalized_narrator_opening_paragraphs(
             leaked_worker_response,
             "Daria Stone",
-            allow_short_prose=True,
         )
 
 
@@ -127,7 +126,6 @@ def test_opening_normalization_rejects_code_comment_artifacts_in_player_prose() 
             "You're standing outside the mansion with Daria Stone. # noqa.\n\n"
             "The case file waits in your hand. # noqa.",
             "Daria Stone",
-            allow_short_prose=True,
         )
 
 
@@ -196,9 +194,37 @@ class _ShortNarrator:
         return "Cloudflare-authored opening prose."
 
 
+class _InvalidOpeningNarrator:
+    def generate(self, context):  # noqa: ANN001
+        return "The mansion waits. # noqa."
+
+
+class _IncoherentOpeningNarrator:
+    def generate(self, context):  # noqa: ANN001
+        return (
+            "Your assistant, Daria Stone, stands at your side.\n\n"
+            "Daria Stone is the suspect in the murder.\n\n"
+            "The rain turns the steps slick beneath your shoes.\n\n"
+            "The house gives nothing away."
+        )
+
+
+class _NoBundleDirector:
+    def compose_opening_fast(self, state):  # noqa: ANN001
+        return []
+
+    def compose_opening(self, state):  # noqa: ANN001
+        return []
+
+
 class _PassThroughEditor:
     def review_opening(self, lines, active_goal):  # noqa: ANN001
         return lines
+
+
+class _CommentInjectingEditor:
+    def review_opening(self, lines, active_goal):  # noqa: ANN001
+        return ["Opening artifact. # noqa"]
 
 
 def test_bootstrap_runtime_seams_support_fast_openings_and_fail_closed_fallback() -> None:
@@ -260,4 +286,65 @@ def test_hosted_bootstrap_reports_both_worker_opening_failures() -> None:
             _PassThroughEditor(),
             allow_story_director_bootstrap=False,
             narrator_opening_agent=_FailingOpeningAgent(),
+        )
+
+
+def test_explicit_legacy_opening_agent_remains_outside_the_hosted_demo_path() -> None:
+    assert _llm_bootstrap_opening_lines(
+        make_cached_story_state(seed=910),
+        _OpeningDirector(),
+        _EmptyNarrator(),
+        _PassThroughEditor(),
+        allow_story_director_bootstrap=False,
+        narrator_opening_agent=_OpeningAgent(),
+    ) == ["An agent-authored opening."]
+
+
+def test_bootstrap_reports_invalid_narrator_output_after_a_director_failure() -> None:
+    with pytest.raises(RuntimeError, match="story_director=director unavailable"):
+        _llm_bootstrap_opening_lines(
+            make_cached_story_state(seed=911),
+            _FailingDirector(),
+            _InvalidOpeningNarrator(),
+            _PassThroughEditor(),
+        )
+
+
+def test_local_bootstrap_rejects_narration_that_conflicts_with_fact_backed_roles() -> None:
+    with pytest.raises(RuntimeError, match="Opening validation failed"):
+        _llm_bootstrap_opening_lines(
+            make_cached_story_state(seed=915),
+            _NoBundleDirector(),
+            _IncoherentOpeningNarrator(),
+            _PassThroughEditor(),
+        )
+
+
+def test_local_bootstrap_uses_an_explicit_opening_agent_only_after_empty_narration() -> None:
+    assert _llm_bootstrap_opening_lines(
+        make_cached_story_state(seed=912),
+        _NoBundleDirector(),
+        _EmptyNarrator(),
+        _PassThroughEditor(),
+        narrator_opening_agent=_OpeningAgent(),
+    ) == ["An agent-authored opening."]
+
+
+def test_hosted_direct_narration_does_not_run_legacy_opening_text_validation() -> None:
+    assert _llm_bootstrap_opening_lines(
+        make_cached_story_state(seed=913),
+        _OpeningDirector(),
+        _InvalidOpeningNarrator(),
+        _PassThroughEditor(),
+        allow_story_director_bootstrap=False,
+        narrator_opening_agent=_FailingOpeningAgent(),
+    ) == ["The mansion waits. # noqa."]
+
+
+def test_opening_agent_rejects_editor_introduced_code_artifacts() -> None:
+    with pytest.raises(RuntimeError, match="code-comment artifact"):
+        _bootstrap_opening_from_narrator_opening_agent(
+            make_cached_story_state(seed=914),
+            _OpeningAgent(),
+            _CommentInjectingEditor(),
         )
