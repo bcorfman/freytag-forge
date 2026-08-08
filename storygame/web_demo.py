@@ -248,6 +248,28 @@ def create_demo_app(
         room = state.world.rooms[state.player.location]
         for line in lines:
             lowered = line.lower()
+            if "story response unavailable:" in lowered:
+                _LOGGER.warning(
+                    "Story planner unavailable: request_id=%s session_id=%s command=%s "
+                    "beat=%s location=%s turn_index=%s detail=%s",
+                    request_id,
+                    session_id,
+                    command,
+                    beat,
+                    state.player.location,
+                    state.turn_index,
+                    line,
+                )
+                response_headers = {
+                    "X-Request-ID": request_id,
+                    "X-Narration-Error-Code": "AI_PLANNER_UNAVAILABLE",
+                }
+                return _error_response(
+                    503,
+                    "service_unavailable",
+                    "The story planner is temporarily unavailable. Please retry shortly.",
+                    headers=response_headers,
+                )
             if "[narrator failed:" in lowered:
                 error_code, trace_id = _narration_failure_metadata(line)
                 status_code, status, detail = _narration_failure_classification(error_code)

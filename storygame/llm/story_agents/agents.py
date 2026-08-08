@@ -72,17 +72,50 @@ _PLANNER_RESPONSE_FORMAT = {
 
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
+    """Extract one JSON object from an untrusted model response."""
+    if not isinstance(text, str):
+        return None
     try:
-        return json.loads(text)
+        payload = json.loads(text)
+        return payload if isinstance(payload, dict) else None
     except Exception:
         pass
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL | re.IGNORECASE)
+    candidate = fenced.group(1) if fenced else None
     match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-    if not match:
+    candidate = candidate or (match.group(0) if match else None)
+    if candidate is None:
         return None
     try:
-        return json.loads(match.group(0))
+        payload = json.loads(candidate)
+        return payload if isinstance(payload, dict) else None
     except Exception:
         return None
+
+
+def _provider_content(value: Any) -> str:
+    """Normalize provider envelopes without exposing Python reprs to the parser."""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, separators=(",", ":"))
+    return ""
+
+
+def _json_mode_rejected(detail: str) -> bool:
+    normalized = detail.lower()
+    return any(
+        marker in normalized
+        for marker in (
+            "json mode",
+            "json_mode",
+            "response_format",
+            "json schema",
+            "json_schema",
+            "couldn't be met",
+            "ai_json_mode_rejected",
+        )
+    )
 
 
 def _paragraphs_from_text(text: str) -> list[str]:
@@ -184,34 +217,42 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
         }
         if token:
             headers["Authorization"] = f"Bearer {token}"
-        request_payload = {
+        base_request_payload = {
             "system": system,
             "user": user,
             "trace_id": uuid4().hex,
             "session_id": "",
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
-        if "return json only" in system.lower():
-            request_payload["response_format"] = _PLANNER_RESPONSE_FORMAT
-        http_request = urllib.request.Request(
-            worker_url,
-            data=json.dumps(request_payload).encode("utf-8"),
-            method="POST",
-            headers=headers,
-        )
+        use_response_format = "return json only" in system.lower()
         attempt = 0
         while True:
+            request_payload = dict(base_request_payload)
+            if use_response_format:
+                request_payload["response_format"] = _PLANNER_RESPONSE_FORMAT
+            http_request = urllib.request.Request(
+                worker_url,
+                data=json.dumps(request_payload).encode("utf-8"),
+                method="POST",
+                headers=headers,
+            )
             try:
                 with urllib.request.urlopen(http_request, timeout=timeout) as response:
                     payload = json.loads(response.read().decode("utf-8"))
-                narration = str(payload.get("narration", "")).strip()
+                narration = _provider_content(payload.get("narration"))
                 if narration:
                     return narration
                 if "choices" in payload:
-                    return str(payload["choices"][0]["message"]["content"]).strip()
+                    return _provider_content(payload["choices"][0]["message"]["content"])
                 raise RuntimeError("Cloudflare story-agent response missing expected content.")
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace")
+                if use_response_format and _json_mode_rejected(detail):
+                    # JSON mode is an optimization.  A provider/schema rejection must
+                    # not strand the turn: local parsing and contract validation remain
+                    # the authoritative boundary.
+                    use_response_format = False
+                    continue
                 if 500 <= exc.code <= 599 and attempt < retries:
                     _sleep_before_retry(retry_backoff_ms, attempt)
                     attempt += 1
