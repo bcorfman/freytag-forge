@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from random import Random
 
-from storygame.cli import _followed_npc_ids, _room_lines, _room_lines_with_followers, run_turn
+from storygame.cli import (
+    _followed_npc_ids,
+    _room_lines,
+    _room_lines_with_followers,
+    filter_opening_room_repetition,
+    run_turn,
+)
 from storygame.engine.facts import protagonist_profile
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
@@ -20,6 +26,23 @@ def test_room_lines_include_room_identity_and_navigation():
     assert room.name in lines
     assert room.description in lines
     assert "exit" in lines.lower()
+
+
+def test_opening_filter_keeps_narrative_with_half_room_word_overlap():
+    state = build_default_state(seed=57, genre="mystery")
+
+    filtered = filter_opening_room_repetition(state, ["Rain needles the stone."])
+
+    assert filtered == ["Rain needles the stone."]
+
+
+def test_opening_filter_drops_room_copy_but_keeps_short_narrative():
+    state = build_default_state(seed=58, genre="mystery")
+    room = state.world.rooms[state.player.location]
+
+    filtered = filter_opening_room_repetition(state, ["Rain.", room.description])
+
+    assert filtered == ["Rain."]
 
 
 def test_starting_state_avoids_meta_room_text_and_starts_with_kit():
@@ -143,8 +166,8 @@ def test_move_room_block_announces_follower_before_npc_presence_line() -> None:
 
     text = move_lines[0]
     assert "Daria follows you." in text
-    assert "Daria is here to meet you at the door with the case file" in text
-    assert text.index("Daria follows you.") < text.index("Daria is here to meet you")
+    assert "Daria is here to brief you on the public outline of the death" in text
+    assert text.index("Daria follows you.") < text.index("Daria is here to brief you")
     assert moved_state.player.location == "foyer"
 
 
@@ -213,7 +236,7 @@ def test_mystery_arrival_room_keeps_sedan_and_drive_in_one_physical_detail() -> 
     assert "dark sedan is parked beside the drive" in room_block.lower()
     assert "drive behind you remains open" not in room_block.lower()
     assert "watching your next move" not in room_block.lower()
-    assert "daria stone is here to meet you at the door with the case file" in room_block.lower()
+    assert "daria stone is here to brief you on the public outline of the death" in room_block.lower()
 
 
 def test_room_item_spatial_copy_comes_from_generic_item_state_facts() -> None:

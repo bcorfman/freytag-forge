@@ -304,6 +304,45 @@ def _default_mystery_case_facts() -> tuple[tuple[str, str], ...]:
     )
 
 
+def _apply_opening_setup(state: GameState, package: dict, start_room: str) -> None:
+    setup = dict(package.get("opening_setup", {}))
+    protagonist_name = str(setup.get("protagonist_name", "")).strip()
+    contact = dict(setup.get("opening_contact", {}))
+    npc_ids = state.world.rooms[start_room].npc_ids
+    index = int(contact.get("index", -1))
+    contact_id = npc_ids[index] if 0 <= index < len(npc_ids) else ""
+    contact_npc = state.world.npcs.get(contact_id)
+    ops: list[dict[str, object]] = []
+    if protagonist_name:
+        ops.append({"op": "assert", "fact": ("player_name", protagonist_name)})
+    if contact_npc is not None:
+        role = str(contact.get("role", "")).strip()
+        relationship = str(contact.get("relationship", "")).strip()
+        purpose = str(contact.get("scene_purpose", "")).strip()
+        if role:
+            ops.extend((
+                {"op": "assert", "fact": ("assistant_name", contact_npc.name)},
+                {"op": "assert", "fact": ("npc_role", contact_npc.name, role)},
+            ))
+        if relationship:
+            ops.append({"op": "assert", "fact": ("npc_relationship", contact_npc.name, "player", relationship)})
+        if purpose:
+            ops.append({"op": "assert", "fact": ("npc_scene_purpose", contact_id, purpose)})
+    for entry in setup.get("holdings", []):
+        if str(entry.get("holder", "")) == "opening_contact" and contact_id:
+            ops.append({"op": "assert", "fact": ("holding", contact_id, str(entry["item_id"]))})
+    for entry in setup.get("room_items", []):
+        item_id = str(entry["item_id"])
+        ops.append({"op": "assert", "fact": ("room_item", start_room, item_id)})
+        for predicate in ("item_owner", "item_driver", "item_state"):
+            if str(entry.get(predicate.removeprefix("item_"), "")).strip():
+                ops.append({"op": "assert", "fact": (predicate, item_id, str(entry[predicate.removeprefix("item_")]))})
+    ops.extend({"op": "assert", "fact": ("player_context", key, value)} for key, value in dict(setup.get("player_context", {})).items())
+    ops.extend({"op": "assert", "fact": ("case_fact", key, value)} for key, value in dict(setup.get("case_facts", {})).items())
+    if ops:
+        apply_fact_ops(state, ops)
+
+
 def build_default_state(
     seed: int,
     genre: str = "mystery",
@@ -353,7 +392,8 @@ def build_default_state(
         active_goal=str(package["goals"].get("setup", package["goals"]["primary"])),
     )
     initialize_world_facts(state)
-    if package["genre"] == "mystery":
+    _apply_opening_setup(state, package, start_room)
+    if package["genre"] == "mystery" and not package.get("opening_setup"):
         protagonist_name = canonical_detective_name(
             package["genre"],
             str(package.get("story_plan", {}).get("protagonist_name", "")).strip(),
@@ -376,7 +416,7 @@ def build_default_state(
                             "fact": (
                                 "npc_scene_purpose",
                                 assistant_id,
-                                "Meet you at the door with the case file and bring you inside once you are ready.",
+                                "Brief you on the public outline of the death, then bring you inside to review the case file yourself.",
                             ),
                         },
                     ],
@@ -426,7 +466,7 @@ def build_default_state(
                     "fact": (
                         "player_context",
                         "threshold_pause",
-                        "Daria met you outside with the case file before either of you heads into the mansion.",
+                        "Daria arrived before you, confirmed that a death has put the household on edge, and saved the case-file details for your own review.",
                     ),
                 },
             ],
@@ -434,13 +474,6 @@ def build_default_state(
         apply_fact_ops(
             state,
             [{"op": "assert", "fact": ("case_fact", key, value)} for key, value in _default_mystery_case_facts()],
-        )
-        apply_fact_ops(
-            state,
-            [
-                {"op": "assert", "fact": ("knows", "player", key)}
-                for key, _value in _default_mystery_case_facts()
-            ],
         )
     ensure_default_role_contracts(state)
     sync_legacy_views(state)

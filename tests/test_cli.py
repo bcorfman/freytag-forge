@@ -824,7 +824,7 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     )
 
     assert continued is True
-    assert any("Daria Stone is here to meet you at the door with the case file" in line for line in first_lines)
+    assert any("Daria Stone is here to brief you on the public outline of the death" in line for line in first_lines)
     assert not any("Daria Quill is nearby" in line for line in first_lines)
 
     final_state, lines, _action_raw, beat_type, continued = run_turn(

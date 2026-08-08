@@ -169,6 +169,34 @@ def _remember_npc_introductions(state: GameState, npc_ids: tuple[str, ...]) -> N
         state.world_package["introduced_npcs"] = introduced
 
 
+def remember_opening_introductions(state: GameState, paragraphs: list[str]) -> None:
+    opening_text = " ".join(paragraphs).lower()
+    introduced = tuple(
+        npc_id
+        for npc_id, npc in state.world.npcs.items()
+        if npc.name.strip() and npc.name.strip().lower() in opening_text
+    )
+    _remember_npc_introductions(state, introduced)
+
+
+def filter_opening_room_repetition(state: GameState, paragraphs: list[str]) -> list[str]:
+    room = state.world.rooms[state.player.location]
+    cache = state.world_package.get("room_presentation_cache", {}).get(room.id, {})
+    room_text = " ".join((room.description, str(cache.get("long", "")), str(cache.get("short", ""))))
+    room_words = set(re.findall(r"[a-z]{3,}", room_text.lower()))
+    filtered: list[str] = []
+    for paragraph in paragraphs:
+        sentences = re.split(r"(?<=[.!?])\s+", paragraph.strip())
+        kept = []
+        for sentence in sentences:
+            words = set(re.findall(r"[a-z]{3,}", sentence.lower()))
+            if len(words) < 4 or len(words.intersection(room_words)) * 2 <= len(words):
+                kept.append(sentence)
+        if kept:
+            filtered.append(" ".join(kept))
+    return filtered
+
+
 def _first_name(value: str) -> str:
     words = tuple(part for part in value.split() if part)
     if not words:
@@ -279,7 +307,9 @@ def _room_lines_with_followers(
 
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
     director = StoryDirector("openai") if story_director is None else story_director
-    return director.compose_opening(state)
+    opening = filter_opening_room_repetition(state, director.compose_opening(state))
+    remember_opening_introductions(state, opening)
+    return opening
 
 
 def _followed_npc_ids(previous_state: GameState, next_state: GameState) -> tuple[str, ...]:

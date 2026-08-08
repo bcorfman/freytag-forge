@@ -74,6 +74,15 @@ _DEFAULT_PRIMARY_OBJECTIVES: dict[str, str] = {
 }
 
 
+@lru_cache(maxsize=1)
+def _opening_setup_profiles() -> dict[str, dict[str, Any]]:
+    path = Path(__file__).resolve().parents[2] / "data" / "opening_setup.yaml"
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        raise ValueError("opening_setup.yaml must contain genre-keyed mappings.")
+    return {str(genre): dict(profile) for genre, profile in payload.items() if isinstance(profile, dict)}
+
+
 def _clean_outline_sentence(outline_text: str) -> str:
     text = outline_text.strip()
     if text.lower().startswith("premise:"):
@@ -368,6 +377,7 @@ def build_world_package(
     beat_candidates = list(curve["obligatory_moments"])
     goals = _build_outline_goals(normalized_genre, str(outline["outline"]), beat_candidates)
     story_plan = _build_story_plan(str(outline["outline"]), goals)
+    opening_setup = _opening_setup_profiles().get(normalized_genre, {})
 
     trigger_seeds = [
         {"name": moment, "trigger": f"beat:{moment}", "effect": "advance_tension"}
@@ -396,6 +406,7 @@ def build_world_package(
         "map": map_section,
         "goals": goals,
         "story_plan": story_plan,
+        "opening_setup": opening_setup,
         "beat_candidates": beat_candidates,
         "item_graph": {
             "items": item_ids,
