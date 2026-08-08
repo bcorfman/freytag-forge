@@ -190,7 +190,7 @@ def filter_opening_room_repetition(state: GameState, paragraphs: list[str]) -> l
         kept = []
         for sentence in sentences:
             words = set(re.findall(r"[a-z]{3,}", sentence.lower()))
-            if len(words) < 4 or len(words.intersection(room_words)) * 2 < len(words):
+            if len(words) < 4 or len(words.intersection(room_words)) * 2 <= len(words):
                 kept.append(sentence)
         if kept:
             filtered.append(" ".join(kept))

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from random import Random
 
-from storygame.cli import _followed_npc_ids, _room_lines, _room_lines_with_followers, run_turn
+from storygame.cli import (
+    _followed_npc_ids,
+    _room_lines,
+    _room_lines_with_followers,
+    filter_opening_room_repetition,
+    run_turn,
+)
 from storygame.engine.facts import protagonist_profile
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.parser import parse_command
@@ -20,6 +26,23 @@ def test_room_lines_include_room_identity_and_navigation():
     assert room.name in lines
     assert room.description in lines
     assert "exit" in lines.lower()
+
+
+def test_opening_filter_keeps_narrative_with_half_room_word_overlap():
+    state = build_default_state(seed=57, genre="mystery")
+
+    filtered = filter_opening_room_repetition(state, ["Rain needles the stone."])
+
+    assert filtered == ["Rain needles the stone."]
+
+
+def test_opening_filter_drops_room_copy_but_keeps_short_narrative():
+    state = build_default_state(seed=58, genre="mystery")
+    room = state.world.rooms[state.player.location]
+
+    filtered = filter_opening_room_repetition(state, ["Rain.", room.description])
+
+    assert filtered == ["Rain."]
 
 
 def test_starting_state_avoids_meta_room_text_and_starts_with_kit():
