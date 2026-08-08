@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
 from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.web_demo import (
     _build_demo_narrator,
     _resolve_demo_cors_allow_origins,
@@ -98,6 +99,7 @@ def _client(tmp_path, clock: _Clock | None = None) -> TestClient:
             story_director=_StubDirector(),
             now_fn=now_fn,
             save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
 
@@ -445,6 +447,7 @@ def test_demo_session_expiry_is_enforced(tmp_path):
                 story_director=_StubDirector(),
                 session_ttl_seconds=60,
                 save_store=InMemorySaveStore(),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
             now_fn=clock,
         )
     )
@@ -533,6 +536,7 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
                 ip_rate_limit_per_min=10,
             ip_daily_turn_cap=2,
             save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
             now_fn=clock,
         )
     )
@@ -561,6 +565,7 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
                 output_editor=_PassThroughEditor(),
                 story_director=_BundleDirector(),
                 save_store=InMemorySaveStore(),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
             )
     )
     session_id = client.post("/api/v1/session", json={"seed": 5}).json()["session_id"]
@@ -581,6 +586,7 @@ def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
             save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
     session_id = client.post("/api/v1/session", json={"seed": 8}).json()["session_id"]
@@ -603,6 +609,7 @@ def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
             save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
     session_id = client.post("/api/v1/session", json={"seed": 9}).json()["session_id"]
@@ -624,6 +631,7 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
                 output_editor=_PassThroughEditor(),
                 story_director=_BundleDirector(),
                 save_store=InMemorySaveStore(),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
             )
     )
     session_id = client.post("/api/v1/session", json={"seed": 6}).json()["session_id"]
@@ -644,6 +652,7 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
                 output_editor=_PassThroughEditor(),
                 story_director=_BundleDirector(),
                 save_store=InMemorySaveStore(),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
             )
     )
     session_id = client.post("/api/v1/session", json={"seed": 7}).json()["session_id"]

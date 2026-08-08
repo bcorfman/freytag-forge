@@ -4,6 +4,7 @@ from pathlib import Path
 from random import Random
 
 from storygame.cli import run_turn
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.world import build_default_state
 from storygame.evaluation import load_evaluation_fixtures
 from storygame.story_data_audit import AUDIT_MANIFEST, audit_story_specific_branches
@@ -61,7 +62,13 @@ def test_phase_zero_package_projections_and_transcripts_match_frozen_baseline():
         rng = Random(fixture["seed"])
         turn_indexes: list[int] = []
         for command in fixture["commands"]:
-            state, _output, *_ = run_turn(state, command, rng, StubNarrator("phase0 baseline"))
+            state, _output, *_ = run_turn(
+                state,
+                command,
+                rng,
+                StubNarrator("phase0 baseline"),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
+            )
             turn_indexes.append(state.turn_index)
         assert {
             "commands": fixture["commands"],
