@@ -7,7 +7,17 @@ import urllib.error
 import pytest
 
 from storygame.engine.parser import parse_command
-from storygame.llm.adapters import CloudflareWorkersAIAdapter, OllamaAdapter, OpenAIAdapter, describe_prompt
+from storygame.llm.adapters import (
+    CloudflareNarrationError,
+    CloudflareWorkersAIAdapter,
+    OllamaAdapter,
+    OpenAIAdapter,
+    _cloudflare_error_payload,
+    _max_tokens_for_context,
+    _optional_int,
+    _retry_after_seconds,
+    describe_prompt,
+)
 from storygame.llm.context import build_narration_context
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 
@@ -518,9 +528,8 @@ def test_cloudflare_adapter_logs_terminal_failure_diagnostics(monkeypatch, caplo
         worker_url="https://demo.example.workers.dev/api/narrate",
         retries=0,
     )
-    with caplog.at_level("ERROR"):
-        with pytest.raises(RuntimeError, match="502"):
-            adapter.generate(_build_context())
+    with caplog.at_level("ERROR"), pytest.raises(RuntimeError, match="502"):
+        adapter.generate(_build_context())
 
     assert "status=502" in caplog.text
     assert "trace_id=" in caplog.text
@@ -541,6 +550,98 @@ def test_cloudflare_adapter_maps_quota_http_error(monkeypatch):
     adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
     with pytest.raises(RuntimeError, match="AI_QUOTA_EXCEEDED"):
         adapter.generate(_build_context())
+
+
+def test_cloudflare_adapter_preserves_rejected_request_metadata(monkeypatch):
+    def _fake_urlopen(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://demo.example.workers.dev/api/narrate",
+            403,
+            "Forbidden",
+            None,
+            io.BytesIO(b'{"errors":[{"code":5016,"message":"Model agreement required"}]}'),
+        )
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+    with pytest.raises(CloudflareNarrationError) as raised:
+        adapter.generate(_build_context())
+
+    assert raised.value.code == "AI_REQUEST_REJECTED"
+    assert raised.value.http_status == 403
+    assert raised.value.upstream_code == "5016"
+    assert raised.value.retryable is False
+
+
+def test_cloudflare_adapter_honors_retry_after_for_capacity(monkeypatch):
+    attempts = {"count": 0}
+    sleeps: list[float] = []
+
+    def _fake_urlopen(*_args, **_kwargs):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            error = urllib.error.HTTPError(
+                "https://demo.example.workers.dev/api/narrate",
+                429,
+                "Too Many Requests",
+                {"Retry-After": "2"},
+                io.BytesIO(b'{"code":"AI_CAPACITY_EXCEEDED","message":"capacity"}'),
+            )
+            raise error
+        return _FakeResponse('{"narration":"Recovered narration."}')
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.time.sleep", sleeps.append)
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        retries=1,
+        retry_backoff_ms=0,
+    )
+
+    assert adapter.generate(_build_context()) == "Recovered narration."
+    assert sleeps == [2.0]
+
+
+def test_cloudflare_adapter_handles_invalid_and_empty_success_responses(monkeypatch):
+    responses = iter([b"not-json", b"[]", b'{"code":"AI_EMPTY_RESPONSE","message":"empty"}'])
+
+    def _fake_urlopen(*_args, **_kwargs):
+        return _FakeResponse(next(responses).decode("utf-8"))
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+
+    for expected in ("AI_BAD_RESPONSE", "AI_BAD_RESPONSE", "AI_EMPTY_RESPONSE"):
+        with pytest.raises(CloudflareNarrationError, match=expected):
+            adapter.generate(_build_context())
+
+
+def test_cloudflare_adapter_handles_client_error_and_error_envelope(monkeypatch):
+    responses = iter([ValueError("bad response"), '{"status":"error","code":"AI_REQUEST_REJECTED"}'])
+
+    def _fake_urlopen(*_args, **_kwargs):
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return _FakeResponse(response)
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate", retries=0)
+
+    with pytest.raises(CloudflareNarrationError, match="AI_CLIENT_ERROR"):
+        adapter.generate(_build_context())
+    with pytest.raises(CloudflareNarrationError, match="AI_REQUEST_REJECTED"):
+        adapter.generate(_build_context())
+
+
+def test_cloudflare_error_helpers_normalize_malformed_values(monkeypatch):
+    assert _cloudflare_error_payload('{"errors":["bad"]}') == ("", "", '{"errors":["bad"]}')
+    assert _retry_after_seconds({"Retry-After": "not-a-number"}) is None
+    assert _retry_after_seconds({"Retry-After": "99"}) == 10.0
+    assert _optional_int(None) is None
+    assert _optional_int("bad") is None
+    monkeypatch.setenv("CLOUDFLARE_MAX_TOKENS", "321")
+    assert _max_tokens_for_context(_build_context(), "CLOUDFLARE_MAX_TOKENS", 10, 20) == 321
 
 
 def test_cloudflare_adapter_retries_transient_http_5xx_then_succeeds(monkeypatch):
@@ -623,5 +724,5 @@ def test_cloudflare_adapter_wraps_url_error(monkeypatch):
 
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
-    with pytest.raises(RuntimeError, match="Cannot reach Cloudflare Worker endpoint"):
+    with pytest.raises(CloudflareNarrationError, match="AI_NETWORK_ERROR"):
         adapter.generate(_build_context())

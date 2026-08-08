@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from os import getenv
@@ -111,6 +112,29 @@ class ErrorResponse(BaseModel):
     detail: str
 
 
+_NARRATION_ERROR_CODE_PATTERN = re.compile(r"\b(?:AI|WORKER)_[A-Z0-9_]+\b")
+_TRACE_ID_PATTERN = re.compile(r"\btrace_id=([A-Za-z0-9._:-]+)")
+
+
+def _narration_failure_metadata(detail: str) -> tuple[str, str]:
+    code_match = _NARRATION_ERROR_CODE_PATTERN.search(detail.upper())
+    trace_match = _TRACE_ID_PATTERN.search(detail)
+    return (
+        code_match.group(0) if code_match else "NARRATION_ERROR",
+        trace_match.group(1) if trace_match else "",
+    )
+
+
+def _narration_failure_classification(code: str) -> tuple[int, str, str]:
+    if code == "AI_QUOTA_EXCEEDED":
+        return 429, "quota_exhausted", "Narration quota exhausted for the hosted demo. Please retry later."
+    if code in {"AI_CAPACITY_EXCEEDED", "AI_RATE_LIMITED"}:
+        return 429, "rate_limited", "Narration capacity is temporarily limited. Please retry shortly."
+    if code in {"AI_REQUEST_REJECTED", "AI_CLIENT_ERROR", "WORKER_CONFIGURATION_ERROR"}:
+        return 502, "error", "The narration service rejected the request configuration."
+    return 503, "service_unavailable", "Narration service is temporarily unavailable."
+
+
 def create_demo_app(
     save_db_path: str | Path | None = None,
     default_seed: int = 123,
@@ -214,29 +238,14 @@ def create_demo_app(
         room = state.world.rooms[state.player.location]
         for line in lines:
             lowered = line.lower()
-            if "ai_quota_exceeded" in lowered:
-                _LOGGER.warning(
-                    "Narrator quota exhausted: %s | request_id=%s session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
-                    line,
-                    request_id,
-                    session_id,
-                    command,
-                    beat,
-                    state.player.location,
-                    room.name,
-                    state.turn_index,
-                    lines[:4],
-                )
-                return _error_response(
-                    429,
-                    "quota_exhausted",
-                    "Narration quota exhausted for the hosted demo. Please retry later.",
-                    headers={"X-Request-ID": request_id},
-                )
             if "[narrator failed:" in lowered:
+                error_code, trace_id = _narration_failure_metadata(line)
+                status_code, status, detail = _narration_failure_classification(error_code)
                 _LOGGER.warning(
-                    "Narrator failed: %s | request_id=%s session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    "Narrator failed: %s | code=%s request_id=%s session_id=%s "
+                    "command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
                     line,
+                    error_code,
                     request_id,
                     session_id,
                     command,
@@ -246,11 +255,17 @@ def create_demo_app(
                     state.turn_index,
                     lines[:4],
                 )
+                response_headers = {
+                    "X-Request-ID": request_id,
+                    "X-Narration-Error-Code": error_code,
+                }
+                if trace_id:
+                    response_headers["X-Trace-ID"] = trace_id
                 return _error_response(
-                    503,
-                    "service_unavailable",
-                    "Narration service is temporarily unavailable.",
-                    headers={"X-Request-ID": request_id},
+                    status_code,
+                    status,
+                    detail,
+                    headers=response_headers,
                 )
         return None
 
@@ -320,6 +335,8 @@ def create_demo_app(
                     allow_story_director_bootstrap=allow_story_director_bootstrap,
                 )
             except RuntimeError as exc:
+                error_code, trace_id = _narration_failure_metadata(str(exc))
+                status_code, status, detail = _narration_failure_classification(error_code)
                 _LOGGER.warning(
                     "Bootstrap opening unavailable: request_id=%s error=%s | debug=%s",
                     request_id,
@@ -331,12 +348,13 @@ def create_demo_app(
                         payload.session_id,
                     ),
                 )
-                return _error_response(
-                    503,
-                    "service_unavailable",
-                    "Narration service is temporarily unavailable.",
-                    headers={"X-Request-ID": request_id},
-                )
+                response_headers = {
+                    "X-Request-ID": request_id,
+                    "X-Narration-Error-Code": error_code,
+                }
+                if trace_id:
+                    response_headers["X-Trace-ID"] = trace_id
+                return _error_response(status_code, status, detail, headers=response_headers)
             payload_body["status"] = "ok"
             return TurnResponse.model_validate(payload_body)
         scoped_store = ScopedSaveStore(store, payload.session_id)
