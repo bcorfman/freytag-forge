@@ -8,8 +8,9 @@ import socket
 import time
 import urllib.error
 import urllib.request
-from urllib.parse import urlparse, urlunparse
+from enum import StrEnum
 from typing import Any, Protocol
+from urllib.parse import urlparse, urlunparse
 from uuid import uuid4
 
 from storygame.engine.facts import assistant_name as resolved_assistant_name
@@ -23,52 +24,31 @@ from storygame.llm.story_agents.contracts import (
     parse_character_designer_output,
     parse_narrator_opening_output,
     parse_plot_designer_output,
-    parse_story_bootstrap_critique_output,
     parse_room_presentation_output,
-    parse_story_bootstrap_output,
     parse_story_architect_output,
+    parse_story_bootstrap_critique_output,
+    parse_story_bootstrap_output,
 )
 from storygame.llm.story_agents.prompts import (
-    build_story_bootstrap_prompt,
-    build_story_bootstrap_critique_prompt,
     build_character_designer_prompt,
     build_narrator_opening_prompt,
     build_plot_designer_prompt,
     build_room_presentation_prompt,
     build_story_architect_prompt,
+    build_story_bootstrap_critique_prompt,
+    build_story_bootstrap_prompt,
 )
 from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
 _STORY_AGENT_MAX_TOKENS = 1800
-_PLANNER_RESPONSE_FORMAT = {
-    "type": "json_schema",
-    "json_schema": {
-        "type": "object",
-        "properties": {
-            "dialog_proposal": {
-                "type": "object",
-                "properties": {
-                    "speaker": {"type": "string"},
-                    "text": {"type": "string"},
-                    "tone": {"type": "string"},
-                },
-                "required": ["speaker", "text", "tone"],
-            },
-            "action_proposal": {
-                "type": "object",
-                "properties": {
-                    "intent": {"type": "string"},
-                    "targets": {"type": "array", "items": {"type": "string"}},
-                    "arguments": {"type": "object"},
-                    "proposed_effects": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": ["intent", "targets", "arguments", "proposed_effects"],
-            },
-        },
-        "required": ["dialog_proposal", "action_proposal"],
-    },
-}
+
+
+class StructuredOutput(StrEnum):
+    """Provider-independent response shape requested by a story agent."""
+
+    PLAIN_TEXT = "plain_text"
+    JSON_OBJECT = "json_object"
 
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
@@ -103,6 +83,16 @@ def _provider_content(value: Any) -> str:
 
 
 def _json_mode_rejected(detail: str) -> bool:
+    try:
+        payload = json.loads(detail)
+    except json.JSONDecodeError:
+        payload = None
+    if isinstance(payload, dict):
+        error = payload.get("error")
+        error_code = error.get("code") if isinstance(error, dict) else None
+        codes = (payload.get("code"), error_code)
+        if "AI_JSON_MODE_REJECTED" in codes:
+            return True
     normalized = detail.lower()
     return any(
         marker in normalized
@@ -133,7 +123,13 @@ def _short_raw_response(text: str, limit: int = 280) -> str:
     return normalized[: limit - 3] + "..."
 
 
-def _chat_complete(mode: str, system: str, user: str) -> str:
+def _chat_complete(
+    mode: str,
+    system: str,
+    user: str,
+    structured_output: StructuredOutput = StructuredOutput.JSON_OBJECT,
+) -> str:
+    """Request one story-agent response with an explicit output-shape contract."""
     if mode == "openai":
         api_key = os.getenv("OPENAI_API_KEY", "")
         if not api_key:
@@ -141,13 +137,14 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
         base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1/chat/completions")
         model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         timeout = float(os.getenv("OPENAI_TIMEOUT", "10.0"))
-        request = {
+        request: dict[str, Any] = {
             "model": model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": 0.2,
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
-            "response_format": {"type": "json_object"},
         }
+        if structured_output is StructuredOutput.JSON_OBJECT:
+            request["response_format"] = {"type": "json_object"}
         http_request = urllib.request.Request(
             base_url,
             data=json.dumps(request).encode("utf-8"),
@@ -206,7 +203,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
         worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
         token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
         timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
-        retries = int(os.getenv("CLOUDFLARE_RETRIES", "1").strip())
+        retries = min(max(int(os.getenv("CLOUDFLARE_RETRIES", "1").strip()), 0), 1)
         retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
         if not worker_url:
             raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
@@ -224,12 +221,14 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "session_id": "",
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
-        use_response_format = "return json only" in system.lower()
+        # JSON object mode is selected by the typed request, never prompt text.
+        # Local typed contract parsing remains authoritative for semantics.
+        use_response_format = structured_output is StructuredOutput.JSON_OBJECT
         attempt = 0
         while True:
             request_payload = dict(base_request_payload)
             if use_response_format:
-                request_payload["response_format"] = _PLANNER_RESPONSE_FORMAT
+                request_payload["response_format"] = {"type": "json_object"}
             http_request = urllib.request.Request(
                 worker_url,
                 data=json.dumps(request_payload).encode("utf-8"),
@@ -252,6 +251,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
                     # not strand the turn: local parsing and contract validation remain
                     # the authoritative boundary.
                     use_response_format = False
+                    attempt += 1
                     continue
                 if 500 <= exc.code <= 599 and attempt < retries:
                     _sleep_before_retry(retry_backoff_ms, attempt)

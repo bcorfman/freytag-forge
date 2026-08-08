@@ -488,7 +488,7 @@ def test_cloudflare_adapter_accepts_runtime_worker_revision(monkeypatch):
     assert adapter.worker_revision == "old-release"
 
 
-def test_cloudflare_adapter_uses_bounded_default_timeout_and_three_retries(monkeypatch):
+def test_cloudflare_adapter_uses_bounded_default_timeout_and_one_recovery_attempt(monkeypatch):
     observed: dict[str, object] = {}
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
@@ -503,7 +503,15 @@ def test_cloudflare_adapter_uses_bounded_default_timeout_and_three_retries(monke
     adapter = CloudflareWorkersAIAdapter()
     assert adapter.generate(_build_context()) == "Cloudflare narration response."
     assert observed["timeout"] == 8.0
-    assert adapter.retries == 3
+    assert adapter.retries == 1
+
+
+def test_cloudflare_adapter_caps_configured_retries_at_one_recovery_attempt(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_RETRIES", "3")
+
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+
+    assert adapter.retries == 1
 
 
 def test_cloudflare_adapter_recovers_from_transient_default_failure(monkeypatch):
