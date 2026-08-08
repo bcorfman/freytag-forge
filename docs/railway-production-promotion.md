@@ -26,10 +26,10 @@ workflow:
 
 1. Disable Railway GitHub-push auto-deploy for the production service. The
    workflow's explicit CLI upload must be its only deployment trigger.
-2. Create GitHub's protected `production` environment. Restrict it to `main`
+2. Use GitHub's protected `freytag-forge / production` environment. Restrict it to `main`
    and the intended maintainers, and add a least-privilege Railway project
    token as its `RAILWAY_TOKEN` secret.
-3. Set these `production` environment variables:
+3. Set these variables in `freytag-forge / production`:
 
    | Variable | Value |
    | --- | --- |
