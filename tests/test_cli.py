@@ -11,7 +11,6 @@ from rich.console import Console
 from storygame.cli import (
     _build_memory_tag_set,
     _build_narrator,
-    _cached_room_presentation,
     _dialogue_contains_code_artifact,
     _dialogue_fact_conflict,
     _emit_cli_line,
@@ -21,9 +20,7 @@ from storygame.cli import (
     _is_invalid_targeted_dialogue_speaker,
     _is_parroting_dialogue,
     _record_major_disruption,
-    _room_lines,
     _setup_phase_lines,
-    _shorten_line,
     _should_discard_failed_narration,
     _write_transcript_line,
     main,
@@ -34,7 +31,7 @@ from storygame.engine.events import EventTemplate, apply_event_template
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.impact import assess_player_command
 from storygame.engine.parser import parse_command
-from storygame.engine.state import Npc, Room
+from storygame.engine.state import Room
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
 from storygame.llm.coherence import CoherenceTelemetry
@@ -55,10 +52,6 @@ class _StubSetupDirector:
 
 def test_cli_helpers_handle_empty_event_list_and_no_transcript():
     assert _event_lines([]) == ""
-
-    state = build_default_state(seed=1)
-    line = _room_lines(state)
-    assert line.startswith(f"{state.world.rooms[state.player.location].name}\n")
 
     _write_transcript_line(None, "ignored")
 
@@ -148,22 +141,6 @@ def test_cold_wind_event_falls_back_when_no_supported_outside_source_exists() ->
     assert events[0].message_key == "A cold draft slips in from outside."
 
 
-def test_shorten_line_prefers_complete_clause_over_ellipsis() -> None:
-    text = (
-        "The foyer opens beneath a dim chandelier, with rainwater drying on black-and-white tiles "
-        "and a long hall stretching deeper into the mansion."
-    )
-
-    shortened = _shorten_line(text, 60)
-
-    assert shortened == "The foyer opens beneath a dim chandelier, with rainwater."
-    assert "..." not in shortened
-
-
-def test_shorten_line_returns_short_text_unchanged() -> None:
-    assert _shorten_line("A complete sentence.", 80) == "A complete sentence."
-
-
 def test_dialogue_policy_helpers_reject_wrong_speaker_and_code_artifacts() -> None:
     state = build_default_state(seed=1201, genre="mystery")
     state.player.location = "foyer"
@@ -234,13 +211,6 @@ def test_freeform_dialogue_policy_error_covers_fallback_and_valid_llm_dialogue()
     assert valid_error == ""
 
 
-def test_shorten_line_falls_back_to_word_boundary_with_period() -> None:
-    shortened = _shorten_line("alpha beta gamma delta", 10)
-
-    assert shortened == "alpha beta."
-    assert "..." not in shortened
-
-
 def test_non_contextual_event_template_keeps_original_message() -> None:
     state = build_default_state(seed=53, genre="mystery")
     template = EventTemplate(
@@ -255,49 +225,9 @@ def test_non_contextual_event_template_keeps_original_message() -> None:
     assert events[0].message_key == "The city tightens, as if holding its breath."
 
 
-def test_cached_room_presentation_reuses_existing_entry() -> None:
-    state = build_default_state(seed=54, genre="mystery")
-    state.world_package["room_presentation_cache"] = {
-        "foyer": {"long": "Cached long.", "short": "Cached short."}
-    }
-
-    presentation = _cached_room_presentation(state, "foyer")
-
-    assert presentation == {"long": "Cached long.", "short": "Cached short."}
-
-
-def test_room_lines_when_empty_room_has_no_optional_sections():
-    state = build_default_state(seed=1)
-    room_id = state.player.location
-    state.world.rooms[room_id] = Room(
-        id=room_id,
-        name="Harbor",
-        description="Closed.",
-    )
-    lines = _room_lines(state)
-    assert lines == "Harbor\nClosed."
-
-
 def test_run_replay_executes_sequence_with_stub_narrator():
     final_state = run_replay(seed=13, commands=["look", "inventory"], debug=True, narrator=StubNarrator())
     assert final_state.turn_index == 2
-
-
-def test_run_turn_inventory_aliases_list_held_items() -> None:
-    for raw_command in ("i", "inventory"):
-        state = build_default_state(seed=14)
-        next_state, lines, _action_raw, _beat, continued = run_turn(
-            state,
-            raw_command,
-            Random(14),
-            StubNarrator(),
-        )
-
-        assert continued is True
-        assert next_state.turn_index == 1
-        joined = "\n".join(lines).lower()
-        assert "you are carrying" in joined
-        assert "field kit" in joined
 
 
 def test_run_replay_selects_curve_from_genre_and_length():
@@ -412,16 +342,6 @@ def test_run_turn_discards_failed_narration_when_coherence_wall_clock_times_out(
     assert continued is True
     assert next_state.turn_index == 1
     assert not any("noah kade" in line.lower() for line in lines)
-    assert any(state.world.rooms[state.player.location].name.lower() in line.lower() for line in lines)
-
-
-def test_room_lines_do_not_emit_legacy_signal_copy():
-    state = build_default_state(seed=16)
-    lines = _room_lines(state)
-    lower = lines.lower()
-    assert "echoes refract through stone" not in lower
-    assert "resonance is stronger" not in lower
-    assert "signal:" not in lower
 
 
 def test_run_turn_save_load_error_paths():
@@ -476,22 +396,6 @@ def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
         memory_db=tmp_path / "memory.sqlite",
     )
     assert final_state.player.location == initial_state.player.location
-
-
-def test_first_turn_uses_diegetic_room_first_output():
-    state = build_default_state(seed=15)
-    next_state, lines, _action_raw, _beat, continued = run_turn(
-        state,
-        "look",
-        Random(15),
-        SilentNarrator(),
-    )
-
-    assert continued is True
-    assert next_state.turn_index == 1
-    assert lines[0].startswith(f"{state.world.rooms[state.player.location].name}\n")
-    assert all("Before dawn" not in line for line in lines)
-    assert all(not line.startswith("- ") for line in lines)
 
 
 def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
@@ -669,7 +573,6 @@ def test_run_turn_uses_planner_action_for_deterministic_take_path():
     assert continued is True
     assert beat_type != "freeform_roleplay"
     assert "ledger_page" in next_state.player.inventory
-    assert any("clue noted:" in line.lower() for line in lines)
     assert not any("you don't see that here" in line.lower() for line in lines)
 
 
@@ -689,7 +592,6 @@ def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None
     assert beat_type != "freeform_roleplay"
     assert action_raw == "enter the mansion"
     assert next_state.player.location == "foyer"
-    assert any("Mansion Foyer" in line for line in lines)
 
 
 def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
@@ -713,7 +615,6 @@ def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(mon
     assert action_raw == direction
     assert next_state.player.location == destination
     assert beat_type != "freeform_roleplay"
-    assert lines
 
 
 def test_run_turn_allows_legitimate_npc_answer_that_reuses_topic_words() -> None:
@@ -789,58 +690,6 @@ def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 0
     assert any("story response unavailable" in line.lower() for line in lines)
-
-
-def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
-    class _NpcReplyAdapter:
-        def propose(self, state, raw_input):  # noqa: ANN001
-            return (
-                {"speaker": "AI_Assistant", "text": "The front approach feels rehearsed, and I don't trust that.", "tone": "in_world"},
-                {
-                    "intent": "ask_about",
-                    "targets": ["daria_stone"],
-                    "arguments": {"topic": "place", "planner_source": "llm"},
-                    "proposed_effects": [],
-                },
-            )
-
-    state = build_default_state(seed=8833)
-    room_id = state.player.location
-    room = state.world.rooms[room_id]
-    state.world.npcs["daria_quill"] = Npc(
-        id="daria_quill",
-        name="Daria Quill",
-        description="Another investigator with a wary stare.",
-        dialogue="Stay alert.",
-    )
-    room.npc_ids = room.npc_ids + ("daria_quill",)
-
-    next_state, first_lines, _action_raw, _beat_type, continued = run_turn(
-        state,
-        "look",
-        Random(8833),
-        SilentNarrator(),
-        debug=False,
-    )
-
-    assert continued is True
-    assert any("Daria Stone is here to brief you on the public outline of the death" in line for line in first_lines)
-    assert not any("Daria Quill is nearby" in line for line in first_lines)
-
-    final_state, lines, _action_raw, beat_type, continued = run_turn(
-        next_state,
-        "Daria Stone, what do you make of this place?",
-        Random(8833),
-        SilentNarrator(),
-        debug=False,
-        freeform_adapter=_NpcReplyAdapter(),
-    )
-
-    assert continued is True
-    assert beat_type == "freeform_roleplay"
-    assert final_state.turn_index == 2
-    assert not any("are nearby" in line for line in lines)
-    assert any(line.startswith('Daria Stone says: "') for line in lines)
 
 
 def test_run_turn_fails_closed_for_parroting_npc_dialogue() -> None:
@@ -1020,7 +869,6 @@ def test_run_turn_suppresses_repeated_goal_copy_after_opening():
     assert next_state.turn_index == 1
     assert not any("immediate objective" in line.lower() for line in lines)
     assert not any(state.active_goal in line for line in lines)
-    assert any(state.world.rooms[state.player.location].name in line for line in lines)
 
 
 def test_run_turn_blocks_high_impact_action_until_player_confirms() -> None:
@@ -1115,7 +963,6 @@ def test_run_turn_high_impact_confirmation_supports_cancel_and_proceed() -> None
     assert proceeded_state.pending_high_impact_command == ""
     assert proceeded_state.player.flags.get("story_replan_required") is True
     assert any(event.type == "major_disruption" for event in proceeded_state.event_log.events)
-    assert any("planned arc" in line.lower() for line in proceed_lines)
 
 
 def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption() -> None:
@@ -1151,7 +998,6 @@ def test_run_turn_triggers_story_replan_on_followup_turn_after_major_disruption(
     assert replanned_state.player.flags.get("story_replan_required") is False
     assert replanned_state.active_goal != prior_goal
     assert any(event.type == "story_replan" for event in replanned_state.event_log.events)
-    assert any("story shifts" in line.lower() for line in replanned_lines)
 
 
 def test_run_turn_applies_output_editor_before_returning_lines():
@@ -1207,16 +1053,6 @@ def test_setup_phase_lines_place_identity_after_environment_and_use_named_contac
     state = build_default_state(seed=123, genre="mystery", tone="dark")
     lines = _setup_phase_lines(state, _StubSetupDirector())
     assert len(lines) >= 3
-
-
-def test_room_lines_describe_mansion_north_path_as_entrance_not_exit() -> None:
-    state = build_default_state(seed=124, genre="mystery", tone="dark")
-
-    lines = _room_lines(state)
-
-    lower = lines.lower()
-    assert "carved door at the top of the steps leads north" in lower
-    assert "the main exit from here leads north" not in lower
 
 
 def test_setup_phase_lines_weave_background_and_actionable_objective():

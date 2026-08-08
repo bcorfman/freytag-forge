@@ -75,6 +75,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
         f"Recent events: {[e['message_key'] for e in payload['recent_events']]}\n"
         f"Active goal: {payload['goal']}\n"
         f"Hard constraints: {', '.join(HARD_CONSTRAINTS)}\n"
+        f"Completion instruction: {payload['completion_instruction']}\n"
         "Rule: use only engine context for truth; memory hints are suggestions for continuity."
     )
     return {"system": system, "user": user}

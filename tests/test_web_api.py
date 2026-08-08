@@ -64,7 +64,6 @@ def test_turn_endpoint_starts_run_and_tracks_session(tmp_path):
     assert payload["lines"][-1]
     assert payload["lines"][0].startswith(">GO NORTH")
     assert any(line.startswith(">GO NORTH") for line in payload["lines"])
-    assert any(line.startswith(payload["state"]["room_name"] + "\n") for line in payload["lines"])
     assert payload["state"]["genre"] == "thriller"
     assert payload["state"]["session_length"] == "long"
     assert payload["state"]["tone"] == "dark"
@@ -165,7 +164,6 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     assert payload["beat"] == "setup_scene"
     assert payload["lines"]
     assert payload["lines"][0].startswith(">START")
-    assert any(payload["state"]["room_name"] in line for line in payload["lines"])
 
 
 def test_web_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkeypatch):

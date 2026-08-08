@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import urllib.error
 
 import pytest
@@ -424,12 +425,14 @@ def test_cloudflare_adapter_success_parses_narration(monkeypatch):
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed["user_agent"] = request.headers.get("User-agent")
+        observed["payload"] = json.loads(request.data)
         return _FakeResponse('{"narration":"Cloudflare narration response.","model":"demo-model"}')
 
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate", token="t")
-    assert adapter.generate(_build_context()) == "Cloudflare narration response."
+    assert adapter.generate(_build_opening_context()) == "Cloudflare narration response."
     assert observed["user_agent"] == "FreytagForgeDemo/1.0"
+    assert observed["payload"]["max_tokens"] >= 1800
 
 
 def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
