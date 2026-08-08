@@ -57,6 +57,7 @@ export default {
 
     const system = asString(body?.system);
     const user = asString(body?.user);
+    const maxTokens = boundedInteger(body?.max_tokens, 512, 64, 2048);
     const accountId = asString(env.CF_ACCOUNT_ID).trim();
     const apiToken = asString(env.CF_API_TOKEN).trim();
     const model = (
@@ -101,6 +102,7 @@ export default {
             { role: "system", content: system },
             { role: "user", content: user },
           ],
+          max_tokens: maxTokens,
         }),
       });
     } catch (error) {
@@ -300,6 +302,12 @@ function tryParseJson(value) {
 
 function asString(value) {
   return typeof value === "string" ? value : "";
+}
+
+function boundedInteger(value, fallback, minimum, maximum) {
+  const numeric = Number(value);
+  if (!Number.isInteger(numeric)) return fallback;
+  return Math.max(minimum, Math.min(maximum, numeric));
 }
 
 function makeTraceId(request) {

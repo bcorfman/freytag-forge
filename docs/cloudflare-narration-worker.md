@@ -71,6 +71,10 @@ The Worker should catch failed `fetch()` calls and return a deliberate 5xx
 response. Cloudflare documents that an uncaught Worker exception produces a
 runtime error response rather than the application’s JSON contract.
 
+The Worker must forward the adapter’s bounded `max_tokens` request value to the
+Workers AI request. Otherwise the model may use a smaller default and truncate
+opening narration before the final paragraph.
+
 ## Promotion checks
 
 After deploying the Worker and Railway service, verify:
