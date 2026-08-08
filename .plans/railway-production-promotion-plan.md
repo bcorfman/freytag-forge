@@ -24,7 +24,7 @@ Railway API it calls; it does not make Railway responsible for GitHub Pages.
 
 - [ ] Disable Railway's GitHub-push auto-deploy for the production service.
   Otherwise it can race the required checks and this gate is cosmetic.
-- [ ] Create a GitHub `production` Environment, protected to the intended
+- [ ] Use the GitHub `freytag-forge / production` Environment, protected to the intended
   deployment branch (`main`) and maintainers. Use its audit trail for every
   production promotion.
 - [ ] Store a least-privilege Railway token as the protected
@@ -46,7 +46,8 @@ Railway API it calls; it does not make Railway responsible for GitHub Pages.
   job with `needs` covering every required merge-validation job (including the
   required coverage gate). Do not use a separate concurrent `push` workflow
   for deployment.
-- [x] Scope that job to `main`, `if: success()`, and `environment: production`.
+- [x] Scope that job to `main`, `if: success()`, and
+  `environment: freytag-forge / production`.
   Set a repository-wide production concurrency group with
   `cancel-in-progress: false`, so an older in-flight deployment cannot be
   superseded halfway through its verification.
