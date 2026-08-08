@@ -20,6 +20,7 @@ from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
 from storygame.llm.context import build_narration_context
 from storygame.llm.opening_coherence import (
+    complete_opening_paragraphs,
     item_labels_for_opening,
     opening_coherence_issues,
     opening_fact_parity_issues,
@@ -180,9 +181,7 @@ def _normalized_narrator_opening_paragraphs(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw.strip()]
-    trimmed = list(paragraphs[:4])
-    while len(trimmed) > 3 and trimmed[-1][-1:] not in ".!?":
-        trimmed.pop()
+    trimmed = complete_opening_paragraphs(paragraphs[:4])
     sanitized = [_sanitize_assistant_targeting(paragraph, assistant_name) for paragraph in trimmed]
     presentation_issues = player_facing_presentation_issues(sanitized)
     if presentation_issues:
@@ -398,7 +397,7 @@ def _bootstrap_opening_from_narrator(
     if not raw:
         return []
     if allow_short_prose:
-        return [paragraph.strip() for paragraph in raw.split("\n\n") if paragraph.strip()]
+        return complete_opening_paragraphs(raw.split("\n\n"))
     opening_lines = _normalized_narrator_opening_paragraphs(
         raw,
         context.assistant_name,

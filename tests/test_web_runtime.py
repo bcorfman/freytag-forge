@@ -83,6 +83,15 @@ def test_opening_normalization_discards_an_incomplete_fourth_paragraph() -> None
     assert paragraphs == ["First complete.", "Second complete!", "Third complete?"]
 
 
+def test_opening_normalization_discards_only_a_truncated_final_sentence() -> None:
+    paragraphs = _normalized_narrator_opening_paragraphs(
+        "The opening is grounded.\n\nDaria keeps watch.\n\nThe work continues. You glance toward the drive, a reminder that you still have a lot to do before you can start making",
+        "Daria Stone",
+    )
+
+    assert paragraphs == ["The opening is grounded.", "Daria keeps watch.", "The work continues."]
+
+
 def test_opening_normalization_removes_doctest_wrappers_and_echoed_json() -> None:
     paragraphs = _normalized_narrator_opening_paragraphs(
         '# doctests """ Rain needles the mansion steps.\n\n'
