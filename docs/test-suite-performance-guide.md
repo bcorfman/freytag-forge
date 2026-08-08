@@ -65,8 +65,9 @@ the uploaded `ci-cache.json` artifact and job summary.
 `Fast feedback (unit and component)` runs without coverage for quick pull
 request feedback. It is not a replacement for the required coverage gate.
 `Coverage context report (informational)` retains `--cov-context=test` for
-per-test attribution; it is separate because context coverage is slower than
-ordinary coverage on this project.
+per-test attribution. It runs nightly at 05:23 UTC and is manually
+dispatchable; it is intentionally outside the normal pull-request and
+production-promotion path because context coverage reruns the full suite.
 
 The normal CI command does not include `--durations`. Use it only as an opt-in
 diagnostic, for example:
