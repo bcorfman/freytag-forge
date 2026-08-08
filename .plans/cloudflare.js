@@ -4,7 +4,22 @@ export default {
   async fetch(request, env) {
     const traceId = makeTraceId(request);
     const workerRevision = getWorkerRevision(env);
-    const respondError = (...args) => errorJson(...args, workerRevision);
+    const respondError = (
+      code,
+      message,
+      status,
+      traceId,
+      details = {},
+      extraHeaders = {},
+    ) => errorJson(
+      code,
+      message,
+      status,
+      traceId,
+      details,
+      extraHeaders,
+      workerRevision,
+    );
 
     if (request.method !== "POST") {
       return respondError(
