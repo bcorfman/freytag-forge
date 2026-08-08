@@ -184,7 +184,7 @@ def test_chat_complete_cloudflare_falls_back_when_json_mode_is_rejected(monkeypa
                 502,
                 "bad gateway",
                 {},
-                io.BytesIO(b'{"error":{"code":"AI_JSON_MODE_REJECTED"}}'),
+                io.BytesIO(b'{"status":"error","code":"AI_JSON_MODE_REJECTED"}'),
             )
         return _FakeResponse('{"narration":{"dialog_proposal":{"text":"ok"}}}')
 

@@ -94,6 +94,11 @@ This fallback consumes the ordinary turn's only recovery request. A subsequent
 timeout, malformed response, contract error, or upstream failure must fail
 closed rather than starting another retry sequence.
 
+Workers AI can report that JSON-mode failure in either a non-2xx response or a
+successful HTTP envelope with `success: false`. Classify both forms as
+`AI_JSON_MODE_REJECTED`; otherwise the Railway client cannot safely select the
+required fallback.
+
 ## Promotion checks
 
 After deploying the Worker and Railway service, verify:

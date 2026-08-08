@@ -167,20 +167,29 @@ export default {
 
     if (!parsedResponse || parsedResponse.success === false) {
       const upstreamErrors = extractErrors(parsedResponse);
+      const upstreamCode = firstErrorCode(upstreamErrors);
+      const upstreamMessage = firstErrorMessage(upstreamErrors);
+      const classification = classifyUpstreamFailure(
+        502,
+        upstreamCode,
+        upstreamMessage,
+      );
 
       console.error("Workers AI returned an unsuccessful envelope", {
         trace_id: traceId,
         upstream_request_id: upstreamRequestId,
-        errors: upstreamErrors,
+        upstream_code: upstreamCode,
+        upstream_message: upstreamMessage,
       });
 
       return respondError(
-        "AI_UPSTREAM_REPORTED_ERROR",
-        "Workers AI reported an unsuccessful response",
-        502,
+        classification.code,
+        classification.message,
+        classification.httpStatus,
         traceId,
         {
-          upstream_errors: upstreamErrors,
+          upstream_status: 502,
+          upstream_code: upstreamCode || undefined,
           upstream_request_id: upstreamRequestId || undefined,
         },
       );
