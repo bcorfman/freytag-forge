@@ -143,8 +143,8 @@ def test_move_room_block_announces_follower_before_npc_presence_line() -> None:
 
     text = move_lines[0]
     assert "Daria follows you." in text
-    assert "Daria is here to meet you at the door with the case file" in text
-    assert text.index("Daria follows you.") < text.index("Daria is here to meet you")
+    assert "Daria is here to brief you on the public outline of the death" in text
+    assert text.index("Daria follows you.") < text.index("Daria is here to brief you")
     assert moved_state.player.location == "foyer"
 
 
@@ -213,7 +213,7 @@ def test_mystery_arrival_room_keeps_sedan_and_drive_in_one_physical_detail() -> 
     assert "dark sedan is parked beside the drive" in room_block.lower()
     assert "drive behind you remains open" not in room_block.lower()
     assert "watching your next move" not in room_block.lower()
-    assert "daria stone is here to meet you at the door with the case file" in room_block.lower()
+    assert "daria stone is here to brief you on the public outline of the death" in room_block.lower()
 
 
 def test_room_item_spatial_copy_comes_from_generic_item_state_facts() -> None:

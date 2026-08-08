@@ -946,6 +946,7 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             {"fact": ["player_context", "case_file_suspect", lead_suspect]},
             {"fact": ["player_context", "case_file_lead", strongest_lead]},
         ]
+        assert_ops.extend({"fact": ["knows", "player", key]} for key in facts)
         if nearby_holder:
             assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})
         return {

@@ -4,7 +4,14 @@ import re
 from random import Random
 from typing import Any, Protocol
 
-from storygame.cli import _room_lines, _transcript_command_echo, _with_paragraph_spacing, run_turn
+from storygame.cli import (
+    _room_lines,
+    _transcript_command_echo,
+    _with_paragraph_spacing,
+    filter_opening_room_repetition,
+    remember_opening_introductions,
+    run_turn,
+)
 from storygame.engine.facts import active_story_goal
 from storygame.engine.facts import assistant_name as resolved_assistant_name
 from storygame.engine.freeform import FreeformProposalAdapter
@@ -451,6 +458,8 @@ def build_bootstrap_response_payload_from_lines(
     filtered_opening = [
         line for line in opening_lines if line.strip() and line.strip().lower() not in banned_lines
     ]
+    filtered_opening = filter_opening_room_repetition(state, filtered_opening)
+    remember_opening_introductions(state, filtered_opening)
     return {
         scope_field: scope_id,
         "command": command,

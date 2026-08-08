@@ -85,6 +85,13 @@ preserved/modified/discarded fact categories, and revalidates the candidate.
 The evaluation harness also runs exploratory, goal-focused, social, adversarial,
 avoidant, and chaotic scripted players against every frozen fixture.
 
+The external story-data migration is tracked in
+[`.plans/external-story-data-migration.md`](.plans/external-story-data-migration.md).
+Phase 0 freezes four package projections and deterministic turn transcripts in
+[`data/phase0_baseline.json`](data/phase0_baseline.json), and the static seam
+inventory is documented in
+[`docs/external-story-data-inventory.md`](docs/external-story-data-inventory.md).
+
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
 [docs/fact-authority.md](docs/fact-authority.md).

@@ -1,7 +1,9 @@
 # Evaluation baseline
 
 Phase 0 freezes a repeatable, deterministic starting point for later engine
-changes. The fixture input is [evaluation_fixtures.yaml](../data/evaluation_fixtures.yaml).
+changes. The fixture input is [evaluation_fixtures.yaml](../data/evaluation_fixtures.yaml),
+and the checked-in projection/transcript snapshot is
+[phase0_baseline.json](../data/phase0_baseline.json).
 It fixes the model identifier, prompt version, temperature, token limit, and
 seed for each evaluation run.
 
@@ -19,6 +21,18 @@ commands twice with the same result. Evaluation failures are derived from
 structured artifacts, with categories for contradiction, impossible action,
 hidden-information leak, role drift, causal omission, uncommitted narration,
 repetitive scene pressure, and blocked player agency.
+
+The Phase 0 external-story-data audit is maintained in
+[external-story-data-inventory.md](external-story-data-inventory.md). Its test
+reports every matching story-specific identifier or branch in the shared
+engine, LLM, and CLI surfaces and requires an owner phase, replacement schema,
+and removal phase for each current seam.
+
+The Phase 0 external-story-data audit is maintained in
+[external-story-data-inventory.md](external-story-data-inventory.md). Its test
+reports every matching story-specific identifier or branch in the shared
+engine, LLM, and CLI surfaces and requires an owner phase, replacement schema,
+and removal phase for each current seam.
 
 ## Recorded baseline
 
