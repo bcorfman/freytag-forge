@@ -5,6 +5,7 @@ import pytest
 from storygame.engine.fact_commit import ValidatedFactCommitter
 from storygame.web_runtime import (
     TurnExecution,
+    _bootstrap_opening_from_narrator,
     _bootstrap_opening_from_narrator_opening_agent,
     _llm_bootstrap_opening_lines,
     _normalized_narrator_opening_paragraphs,
@@ -74,22 +75,44 @@ def test_opening_normalization_rejects_empty_contract() -> None:
         _normalized_narrator_opening_paragraphs("", "Daria Stone")
 
 
-def test_opening_normalization_discards_an_incomplete_fourth_paragraph() -> None:
-    paragraphs = _normalized_narrator_opening_paragraphs(
-        "First complete.\n\nSecond complete!\n\nThird complete?\n\nFourth unfinished",
-        "Daria Stone",
-    )
+def test_opening_normalization_rejects_an_incomplete_fourth_paragraph() -> None:
+    with pytest.raises(RuntimeError, match="truncated final paragraph"):
+        _normalized_narrator_opening_paragraphs(
+            "First complete.\n\nSecond complete!\n\nThird complete?\n\nFourth unfinished",
+            "Daria Stone",
+        )
 
-    assert paragraphs == ["First complete.", "Second complete!", "Third complete?"]
+
+def test_opening_normalization_rejects_a_truncated_final_paragraph_without_editing_prose() -> None:
+    with pytest.raises(RuntimeError, match="truncated final paragraph"):
+        _normalized_narrator_opening_paragraphs(
+            "The opening is grounded.\n\nDaria keeps watch.\n\nThe work continues. You glance toward the drive, a reminder that you still have a lot to do before you can start making",
+            "Daria Stone",
+        )
 
 
-def test_opening_normalization_discards_only_a_truncated_final_sentence() -> None:
-    paragraphs = _normalized_narrator_opening_paragraphs(
-        "The opening is grounded.\n\nDaria keeps watch.\n\nThe work continues. You glance toward the drive, a reminder that you still have a lot to do before you can start making",
-        "Daria Stone",
-    )
+class _RetryingOpeningNarrator:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
 
-    assert paragraphs == ["The opening is grounded.", "Daria keeps watch.", "The work continues."]
+    def generate(self, context):  # noqa: ANN001
+        self.calls.append(context.completion_instruction)
+        if len(self.calls) == 1:
+            return "First paragraph.\n\nSecond paragraph.\n\nThe final paragraph is cut off"
+        return "First paragraph.\n\nSecond paragraph.\n\nThe final paragraph is complete."
+
+
+def test_opening_generation_retries_truncation_with_completion_instruction() -> None:
+    narrator = _RetryingOpeningNarrator()
+    state = make_cached_story_state(seed=904, genre="mystery")
+
+    opening = _bootstrap_opening_from_narrator(state, narrator, _PassThroughEditor())
+
+    assert opening[-1] == "The final paragraph is complete."
+    assert narrator.calls == [
+        "",
+        "Your previous opening was cut off. Return the complete opening again, with 3 to 4 complete paragraphs and a final sentence ending in punctuation. Do not summarize or omit the ending.",
+    ]
 
 
 def test_opening_normalization_removes_doctest_wrappers_and_echoed_json() -> None:

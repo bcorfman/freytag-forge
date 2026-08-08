@@ -108,12 +108,6 @@ AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
         "replacement_schema": "package-declared placement and custody constraints",
         "removal_phase": "Phase 6",
     },
-    ("storygame/cli.py", "named-story-entity"): {
-        "classification": "temporary_compatibility",
-        "owner_phase": "Phase 3",
-        "replacement_schema": "generic fact-aware room presentation",
-        "removal_phase": "Phase 6",
-    },
 }
 
 

@@ -61,7 +61,7 @@ class OpenAIAdapter:
                 {"role": "user", "content": payload["user"]},
             ],
             "temperature": float(os.getenv("OPENAI_TEMPERATURE", "0.2")),
-            "max_tokens": _max_tokens_for_context(context, "OPENAI_MAX_TOKENS", 512, 1100),
+            "max_tokens": _max_tokens_for_context(context, "OPENAI_MAX_TOKENS", 512, 1800),
         }
         http_request = urllib.request.Request(
             self.base_url,
@@ -267,6 +267,7 @@ class CloudflareWorkersAIAdapter:
             "user": payload["user"],
             "trace_id": trace_id,
             "session_id": "",
+            "max_tokens": _max_tokens_for_context(context, "CLOUDFLARE_MAX_TOKENS", 512, 1800),
         }
         headers = {
             "Content-Type": "application/json",

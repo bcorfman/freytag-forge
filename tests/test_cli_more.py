@@ -7,15 +7,27 @@ from random import Random
 import pytest
 
 from storygame import cli as cli_module
+from storygame.engine.parser import Action, ActionKind, parse_command
+from storygame.engine.state import Event
 from storygame.cli import (
+    _action_from_proposal,
     _build_narrator,
+    _context_goal_for_turn,
+    _dialogue_contains_code_artifact,
+    _dialogue_fact_conflict,
+    _freeform_unavailable_lines,
     _joined_with_and,
-    _lowercase_location_phrase,
     _opening_story_editor,
+    _preview_state_delta,
+    _proposal_mode_for_action,
     _public_event_message,
+    remember_opening_introductions,
+    _semantic_actions_for_action,
+    _structured_turn_proposal_for_action,
     _sanitize_narration_for_player,
     _setup_phase_lines,
-    _with_indefinite_article,
+    _suppress_repeated_goal_copy,
+    _targeted_conversation_requires_npc_reply,
     main,
     run_replay,
     run_turn,
@@ -32,12 +44,113 @@ class _PassThroughEditor:
         return lines
 
 
+def test_cli_policy_helpers_cover_narrative_turn_variants() -> None:
+    assert _proposal_mode_for_action(parse_command("north")) == "physical"
+    assert _proposal_mode_for_action(parse_command("look")) == "investigation"
+    assert _proposal_mode_for_action(parse_command("talk daria")) == "scene"
+
+    assert _action_from_proposal("go", {"intent": "go", "targets": ["north"]}).kind.value == "move"
+    assert _action_from_proposal("take", {"intent": "take", "targets": ["key"]}).kind.value == "take"
+    assert _action_from_proposal(
+        "use", {"intent": "use", "targets": ["key"], "arguments": {"target": "lock"}}
+    ).target == "key:lock"
+    assert _action_from_proposal("?", {"intent": "unknown"}).kind.value == "unknown"
+
+    assert _context_goal_for_turn("look", "goal", 0) == "goal"
+    assert _context_goal_for_turn("what is my objective?", "goal", 2) == "goal"
+    assert _context_goal_for_turn("look", "goal", 2) == ""
+    assert _suppress_repeated_goal_copy(["The immediate objective is clear.", "Keep moving."], "look", "goal") == ["Keep moving."]
+
+
+def test_cli_proposal_and_dialogue_guards_cover_bounded_effects() -> None:
+    state = build_default_state(seed=602, genre="mystery")
+    room_id = state.player.location
+    item_id = state.world.rooms[room_id].item_ids[0]
+    events = [
+        Event(
+            type="take",
+            entities=(item_id,),
+            delta_progress=0.1,
+            delta_tension=0.2,
+            metadata={
+                "fact_ops": (
+                    {"op": "assert", "fact": ("holding", "player", item_id)},
+                    {"op": "retract", "fact": ("room_item", room_id, item_id)},
+                )
+            },
+        )
+    ]
+    delta = _preview_state_delta(events)
+    assert delta["assert"] and delta["retract"] and len(delta["numeric_delta"]) == 2
+    assert _public_event_message("query") == ""
+    assert _dialogue_contains_code_artifact({"text": "getStringExtra is unavailable."})
+    assert not _dialogue_contains_code_artifact({"text": ""})
+    assert _dialogue_fact_conflict(state, "daria_stone", "I wear a red coat.", "appearance")
+    assert _targeted_conversation_requires_npc_reply(parse_command("talk daria"), {"targets": ["daria_stone"]})
+
+
+def test_cli_control_plane_and_pending_confirmation_messages_are_covered() -> None:
+    state = build_default_state(seed=603)
+    rng = Random(603)
+    _state, lines, *_ = run_turn(state, "save", rng, StubNarrator())
+    assert "Usage: save" in lines[0]
+    _state, lines, *_ = run_turn(state, "load", rng, StubNarrator())
+    assert "Usage: load" in lines[0]
+    pending = state.clone()
+    pending.pending_high_impact_command = "break the seal"
+    _state, lines, *_ = run_turn(pending, "maybe", rng, StubNarrator())
+    assert "PROCEED" in lines[0]
+    assert _freeform_unavailable_lines("backend offline")[0].endswith("backend offline")
+    assert _action_from_proposal("help", {"intent": "help"}).kind.value == "help"
+    assert _action_from_proposal("talk", {"intent": "talk", "targets": ["daria"]}).kind.value == "talk"
+
+
+def test_cli_semantic_action_projection_covers_take_and_use() -> None:
+    state = build_default_state(seed=604)
+    room_id = state.player.location
+    item_id = state.world.rooms[room_id].item_ids[0]
+    take = Action(ActionKind.TAKE, target=item_id, raw=f"take {item_id}")
+    take_event = Event(type="take", entities=(item_id,))
+    assert _semantic_actions_for_action(state, take, [take_event])[0]["action_type"] == "take_item"
+    assert _structured_turn_proposal_for_action(state, take, [take_event])["semantic_actions"]
+
+    held_item = state.player.inventory[0]
+    use = Action(ActionKind.USE, target=f"{held_item}:lock", raw="use item on lock")
+    use_event = Event(type="use", entities=(held_item, "lock"))
+    assert _semantic_actions_for_action(state, use, [use_event])[0]["action_type"] == "use_item"
+
+
+def test_cli_opening_introduction_tracking_is_idempotent() -> None:
+    state = build_default_state(seed=605)
+    npc = next(iter(state.world.npcs.values()))
+    paragraph = [f"{npc.name} waits nearby."]
+    remember_opening_introductions(state, paragraph)
+    remember_opening_introductions(state, paragraph)
+    assert state.world_package["introduced_npcs"].count(npc.id) == 1
+
+
 class _StubSetupDirector:
     def compose_opening(self, state):  # noqa: ANN001
         return list(state.world_package.get("story_plan", {}).get("setup_paragraphs", ()))
 
     def review_turn(self, state, lines, events, debug=False):  # noqa: ANN001
         return lines
+
+
+def test_ordinary_turn_returns_only_generated_narrative() -> None:
+    state = build_default_state(seed=601)
+    room = state.world.rooms[state.player.location]
+
+    _next_state, lines, *_ = run_turn(
+        state,
+        "look",
+        Random(601),
+        StubNarrator("The dusk gathers around the choice before you."),
+    )
+
+    assert lines == ["The dusk gathers around the choice before you."]
+    assert room.name not in lines[0]
+    assert room.description not in lines[0]
 
 
 class _DropNarrationDirector:
@@ -57,12 +170,6 @@ class _RaisingSaveStore:
 
 
 def test_cli_helper_formatters_and_message_filters() -> None:
-    assert _lowercase_location_phrase("") == "the area"
-    assert _lowercase_location_phrase("Front Steps") == "the front steps"
-    assert _with_indefinite_article("") == ""
-    assert _with_indefinite_article("archive key") == "an archive key"
-    assert _with_indefinite_article("ledger") == "a ledger"
-
     edited = _opening_story_editor(
         [
             "Where you are: Front Steps, neutral mystery scene",

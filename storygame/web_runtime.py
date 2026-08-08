@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from random import Random
 from typing import Any, Protocol
 
 from storygame.cli import (
-    _room_lines,
     _transcript_command_echo,
     _with_paragraph_spacing,
     filter_opening_room_repetition,
@@ -20,7 +20,7 @@ from storygame.engine.state import GameState
 from storygame.llm.adapters import Narrator
 from storygame.llm.context import build_narration_context
 from storygame.llm.opening_coherence import (
-    complete_opening_paragraphs,
+    opening_paragraphs_are_complete,
     item_labels_for_opening,
     opening_coherence_issues,
     opening_fact_parity_issues,
@@ -181,7 +181,9 @@ def _normalized_narrator_opening_paragraphs(
     paragraphs = [part.strip() for part in raw.split("\n\n") if part.strip()]
     if not paragraphs:
         paragraphs = [raw.strip()]
-    trimmed = complete_opening_paragraphs(paragraphs[:4])
+    trimmed = list(paragraphs[:4])
+    if not opening_paragraphs_are_complete(trimmed):
+        raise RuntimeError("Opening contract validation failed: truncated final paragraph")
     sanitized = [_sanitize_assistant_targeting(paragraph, assistant_name) for paragraph in trimmed]
     presentation_issues = player_facing_presentation_issues(sanitized)
     if presentation_issues:
@@ -383,13 +385,16 @@ def _bootstrap_opening_from_narrator_opening_agent(
     return reviewed
 
 
-def _bootstrap_opening_from_narrator(
+def _bootstrap_opening_from_narrator_once(
     state: GameState,
     narrator: Narrator,
     output_editor: OutputEditor,
-    allow_short_prose: bool = False,
+    allow_short_prose: bool,
+    completion_instruction: str,
 ) -> list[str]:
     context = build_narration_context(state, parse_command("look"), "setup_scene")
+    if completion_instruction:
+        context = replace(context, completion_instruction=completion_instruction)
     try:
         raw = str(narrator.generate(context)).strip()
     except RuntimeError:
@@ -397,11 +402,11 @@ def _bootstrap_opening_from_narrator(
     if not raw:
         return []
     if allow_short_prose:
-        return complete_opening_paragraphs(raw.split("\n\n"))
-    opening_lines = _normalized_narrator_opening_paragraphs(
-        raw,
-        context.assistant_name,
-    )
+        paragraphs = [paragraph.strip() for paragraph in raw.split("\n\n") if paragraph.strip()]
+        if len(paragraphs) >= 3 and not opening_paragraphs_are_complete(paragraphs):
+            raise RuntimeError("Opening contract validation failed: truncated final paragraph")
+        return paragraphs
+    opening_lines = _normalized_narrator_opening_paragraphs(raw, context.assistant_name)
     item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
     assistant_npc_id = next(
         (
@@ -437,6 +442,35 @@ def _bootstrap_opening_from_narrator(
         raise RuntimeError("Opening validation failed: " + "; ".join(dict.fromkeys(issues)))
     return output_editor.review_opening(opening_lines, active_story_goal(state))
 
+def _bootstrap_opening_from_narrator(
+    state: GameState,
+    narrator: Narrator,
+    output_editor: OutputEditor,
+    allow_short_prose: bool = False,
+) -> list[str]:
+    completion_instruction = ""
+    last_error: RuntimeError | None = None
+    for attempt in range(2):
+        try:
+            return _bootstrap_opening_from_narrator_once(
+                state,
+                narrator,
+                output_editor,
+                allow_short_prose,
+                completion_instruction,
+            )
+        except RuntimeError as exc:
+            last_error = exc
+            if attempt == 0 and "truncated final paragraph" in str(exc):
+                completion_instruction = (
+                    "Your previous opening was cut off. Return the complete opening again, "
+                    "with 3 to 4 complete paragraphs and a final sentence ending in punctuation. "
+                    "Do not summarize or omit the ending."
+                )
+                continue
+            raise
+    raise last_error or RuntimeError("Opening generation failed.")
+
 
 def build_bootstrap_response_payload_from_lines(
     state: GameState,
@@ -445,18 +479,7 @@ def build_bootstrap_response_payload_from_lines(
     scope_id: str,
     opening_lines: list[str],
 ) -> dict[str, Any]:
-    room = state.world.rooms[state.player.location]
-    cache = state.world_package.get("room_presentation_cache", {})
-    room_cache = cache.get(room.id, {})
-    banned_lines = {
-        room.name.strip().lower(),
-        room.description.strip().lower(),
-        str(room_cache.get("long", "")).strip().lower(),
-        str(room_cache.get("short", "")).strip().lower(),
-    }
-    filtered_opening = [
-        line for line in opening_lines if line.strip() and line.strip().lower() not in banned_lines
-    ]
+    filtered_opening = [line for line in opening_lines if line.strip()]
     filtered_opening = filter_opening_room_repetition(state, filtered_opening)
     remember_opening_introductions(state, filtered_opening)
     return {
@@ -468,8 +491,6 @@ def build_bootstrap_response_payload_from_lines(
         "lines": [
             _transcript_command_echo(command),
             *_with_paragraph_spacing(filtered_opening),
-            "",
-            _room_lines(state, long_form=False),
         ],
         "state": build_state_snapshot_payload(state, scope_field, scope_id),
     }

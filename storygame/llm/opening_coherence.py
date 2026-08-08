@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
 
 _SUPPORT_ROLE_TERMS = ("assistant", "ally", "partner", "contact", "confidant")
 _SUSPECT_ROLE_TERMS = ("suspect", "culprit", "killer", "mastermind")
@@ -49,27 +48,13 @@ def _normalized_line(value: str) -> str:
     return " ".join(value.split()).strip()
 
 
-def complete_opening_paragraphs(paragraphs: Iterable[str]) -> list[str]:
-    """Keep only complete sentences from each opening paragraph.
-
-    Model output can end at a token limit in the middle of a sentence. A
-    partial final sentence is never player-facing prose, so discard that
-    fragment while retaining earlier complete sentences from the paragraph.
-    """
-    complete: list[str] = []
-    for raw_paragraph in paragraphs:
-        paragraph = _normalized_line(str(raw_paragraph))
-        if not paragraph:
-            continue
-        sentences = re.split(r"(?<=[.!?])\s+", paragraph)
-        finished = [sentence.strip() for sentence in sentences if sentence.strip() and _ends_sentence(sentence)]
-        if finished:
-            complete.append(" ".join(finished))
-    return complete
-
-
 def _ends_sentence(value: str) -> bool:
     return value.rstrip().rstrip('"\'”’»)]}').endswith((".", "!", "?"))
+
+
+def opening_paragraphs_are_complete(paragraphs: tuple[str, ...] | list[str]) -> bool:
+    """Return whether every player-facing paragraph has a sentence ending."""
+    return bool(paragraphs) and all(_ends_sentence(paragraph) for paragraph in paragraphs)
 
 
 def _normalize_name(name: str) -> str:

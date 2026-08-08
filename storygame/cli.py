@@ -9,7 +9,7 @@ from typing import Any, Protocol, TextIO
 
 from rich.console import Console
 
-from storygame.engine.facts import apply_fact_ops, item_state, npc_scene_purpose
+from storygame.engine.facts import apply_fact_ops
 from storygame.engine.freeform import (
     _HIDDEN_FREEFORM_MESSAGE_KEYS,
     DEFAULT_FREEFORM_ADAPTER,
@@ -26,7 +26,7 @@ from storygame.engine.impact import (
     requires_high_impact_confirmation,
 )
 from storygame.engine.interfaces import parse_action_proposal
-from storygame.engine.mystery import caseboard_lines, room_item_groups
+from storygame.engine.mystery import caseboard_lines
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
@@ -53,26 +53,6 @@ from storygame.memory import MAX_MEMORY_NOTES, MemoryStore, SqliteVectorMemory, 
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.plot.freytag import get_phase
 from storygame.test_metrics import record
-
-
-def _humanize_token(token: str) -> str:
-    return token.replace("_", " ")
-
-
-def _lowercase_location_phrase(location: str) -> str:
-    words = location.split()
-    if not words:
-        return "the area"
-    return f"the {' '.join(word.lower() for word in words)}"
-
-
-def _with_indefinite_article(phrase: str) -> str:
-    cleaned = phrase.strip()
-    if not cleaned:
-        return cleaned
-    first = cleaned[0].lower()
-    article = "an" if first in {"a", "e", "i", "o", "u"} else "a"
-    return f"{article} {cleaned}"
 
 
 def _opening_story_editor(paragraphs: list[str]) -> list[str]:
@@ -106,53 +86,6 @@ def _joined_with_and(values: tuple[str, ...] | list[str]) -> str:
     return f"{', '.join(values[:-1])}, and {values[-1]}"
 
 
-def _first_sentence(value: str) -> str:
-    fragments = re.split(r"(?<=[.!?])\s+", value.strip())
-    return fragments[0] if fragments and fragments[0] else value.strip()
-
-
-def _shorten_line(value: str, max_chars: int) -> str:
-    text = value.strip()
-    if len(text) <= max_chars:
-        return text
-    for delimiter in (". ", "; ", ": "):
-        head, separator, _tail = text.partition(delimiter)
-        candidate = f"{head.strip()}{'.' if delimiter != '. ' else ''}".strip()
-        if separator and candidate and len(candidate) <= max_chars:
-            return candidate
-    words = text.split()
-    if not words:
-        return text
-    shortened: list[str] = []
-    for word in words:
-        candidate = " ".join((*shortened, word)).strip()
-        if len(candidate) > max_chars:
-            break
-        shortened.append(word)
-    if not shortened:
-        return text
-    sentence = " ".join(shortened).rstrip(" ,;:")
-    if sentence[-1] not in ".!?":
-        sentence = f"{sentence}."
-    return sentence
-
-
-def _cached_room_presentation(state: GameState, room_id: str) -> dict[str, str]:
-    cache = state.world_package.setdefault("room_presentation_cache", {})
-    room_cache = cache.get(room_id)
-    if room_cache:
-        return room_cache
-
-    room = state.world.rooms[room_id]
-    long_description = room.description.strip()
-    first_sentence = _first_sentence(long_description)
-    short_description = _shorten_line(first_sentence, 110)
-
-    generated = {"long": long_description, "short": short_description}
-    cache[room_id] = generated
-    return generated
-
-
 def _introduced_npc_ids(state: GameState) -> tuple[str, ...]:
     introduced = state.world_package.setdefault("introduced_npcs", [])
     return tuple(str(npc_id) for npc_id in introduced)
@@ -181,8 +114,7 @@ def remember_opening_introductions(state: GameState, paragraphs: list[str]) -> N
 
 def filter_opening_room_repetition(state: GameState, paragraphs: list[str]) -> list[str]:
     room = state.world.rooms[state.player.location]
-    cache = state.world_package.get("room_presentation_cache", {}).get(room.id, {})
-    room_text = " ".join((room.description, str(cache.get("long", "")), str(cache.get("short", ""))))
+    room_text = room.description
     room_words = set(re.findall(r"[a-z]{3,}", room_text.lower()))
     filtered: list[str] = []
     for paragraph in paragraphs:
@@ -197,131 +129,11 @@ def filter_opening_room_repetition(state: GameState, paragraphs: list[str]) -> l
     return filtered
 
 
-def _first_name(value: str) -> str:
-    words = tuple(part for part in value.split() if part)
-    if not words:
-        return value
-    return words[0]
-
-
-def _display_name_for_npc(state: GameState, npc_id: str, room_npc_ids: tuple[str, ...]) -> str:
-    npc = state.world.npcs[npc_id]
-    full_name = npc.name.strip() or _humanize_token(npc_id).title()
-    name_words = tuple(part for part in full_name.split() if part)
-    if len(name_words) < 2:
-        return full_name
-
-    introduced = _introduced_npc_ids(state)
-    if npc_id not in introduced:
-        return full_name
-
-    first_name = name_words[0]
-    same_first_name_count = 0
-    for other_npc_id in room_npc_ids:
-        other_name = state.world.npcs[other_npc_id].name.strip()
-        if _first_name(other_name) == first_name:
-            same_first_name_count += 1
-    if same_first_name_count > 1:
-        return full_name
-    return first_name
-
-
-def _rewrite_known_npc_names(state: GameState, text: str) -> str:
-    room = state.world.rooms[state.player.location]
-    if text.endswith("are nearby, taking in the scene."):
-        return text
-    rewritten = text
-    for npc_id in room.npc_ids:
-        full_name = state.world.npcs[npc_id].name.strip()
-        display_name = _display_name_for_npc(state, npc_id, room.npc_ids)
-        if display_name != full_name:
-            rewritten = rewritten.replace(full_name, display_name)
-    return rewritten
-
-
-def _room_item_lines(state: GameState, item_ids: tuple[str, ...]) -> list[str]:
-    positioned: list[str] = []
-    unpositioned: list[str] = []
-    for item_id in item_ids:
-        item = state.world.items[item_id]
-        state_description = item_state(state, item_id).replace("_", " ").strip()
-        if state_description:
-            positioned.append(f"The {item.name.lower()} is {state_description}.")
-        else:
-            unpositioned.append(item.name.lower())
-    if unpositioned:
-        positioned.append(f"You can see {_joined_with_and(unpositioned)} within easy reach.")
-    return positioned
-
-
-def _npc_scene_lines(state: GameState, room_npc_ids: tuple[str, ...]) -> list[str]:
-    lines: list[str] = []
-    for npc_id in room_npc_ids:
-        purpose = npc_scene_purpose(state, npc_id).strip().rstrip(".")
-        if not purpose:
-            continue
-        npc_name = _display_name_for_npc(state, npc_id, room_npc_ids)
-        lines.append(f"{npc_name} is here to {purpose[:1].lower()}{purpose[1:]}.")
-    return lines
-
-
-def _room_lines(state: GameState, *, long_form: bool = True) -> str:
-    return _room_lines_with_followers(state, long_form=long_form, followed_npc_ids=())
-
-
-def _room_lines_with_followers(
-    state: GameState,
-    *,
-    long_form: bool = True,
-    followed_npc_ids: tuple[str, ...] = (),
-) -> str:
-    room = state.world.rooms[state.player.location]
-    presentation = _cached_room_presentation(state, room.id)
-    pieces = [room.name, presentation["long"] if long_form else presentation["short"]]
-    actionable_items, junk_count = room_item_groups(state, room)
-    if actionable_items:
-        pieces.extend(_room_item_lines(state, actionable_items))
-    if junk_count > 0:
-        suffix = "item" if junk_count == 1 else "items"
-        verb = "is" if junk_count == 1 else "are"
-        pieces.append(f"There {verb} {junk_count} other unremarkable {suffix} nearby.")
-    if room.exits:
-        exits = tuple(sorted(room.exits.keys()))
-        if len(exits) == 1:
-            if room.id == "front_steps":
-                pieces.append(f"The carved door at the top of the steps leads {exits[0]} into the mansion.")
-            else:
-                pieces.append(f"The single obvious exit leads {exits[0]}.")
-        else:
-            pieces.append(f"Exits lead {_joined_with_and([f'to the {direction}' for direction in exits])}.")
-    for npc_id in followed_npc_ids:
-        npc = state.world.npcs.get(npc_id)
-        if npc is None:
-            continue
-        pieces.append(f"{_first_name(npc.name.strip() or _humanize_token(npc_id).title())} follows you.")
-    if room.npc_ids:
-        pieces.extend(_npc_scene_lines(state, room.npc_ids))
-        _remember_npc_introductions(state, room.npc_ids)
-    return "\n".join(pieces)
-
-
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
     director = StoryDirector("openai") if story_director is None else story_director
     opening = filter_opening_room_repetition(state, director.compose_opening(state))
     remember_opening_introductions(state, opening)
     return opening
-
-
-def _followed_npc_ids(previous_state: GameState, next_state: GameState) -> tuple[str, ...]:
-    if previous_state.player.location == next_state.player.location:
-        return ()
-    origin_room = previous_state.world.rooms[previous_state.player.location]
-    destination_room = next_state.world.rooms[next_state.player.location]
-    followed: list[str] = []
-    for npc_id in destination_room.npc_ids:
-        if npc_id in origin_room.npc_ids:
-            followed.append(npc_id)
-    return tuple(followed)
 
 
 def _with_paragraph_spacing(lines: list[str]) -> list[str]:
@@ -812,16 +624,6 @@ def _contains_repeated_goal_copy(text: str, raw_input: str, active_goal: str) ->
     return bool(lowered_goal and lowered_goal in lowered and ("goal" in lowered or "objective" in lowered))
 
 
-def _should_render_room_block(
-    previous_state: GameState,
-    next_state: GameState,
-    action: Action,
-) -> bool:
-    if action.kind == ActionKind.LOOK:
-        return True
-    return previous_state.player.location != next_state.player.location
-
-
 def _write_transcript_line(handle: TextIO | None, line: str) -> None:
     if handle is None:
         return
@@ -831,15 +633,6 @@ def _write_transcript_line(handle: TextIO | None, line: str) -> None:
 def _emit_cli_line(console: Console, line: str) -> None:
     for paragraph in line.split("\n"):
         console.print(paragraph, highlight=False, markup=False, overflow="fold")
-
-
-def _inventory_lines(state: GameState) -> list[str]:
-    items = tuple(_humanize_token(item) for item in state.player.inventory)
-    if not items:
-        return ["You are carrying nothing."]
-    lines = ["You are carrying:"]
-    lines.extend(items)
-    return lines
 
 
 def _sanitize_narration_for_player(narration: str, debug: bool) -> str:
@@ -882,28 +675,6 @@ def _should_discard_failed_narration(
         str(judge_decision["status"]) == "failed"
         and str(coherence_telemetry["hard_fail_reason"]) == "BUDGET_WALL_CLOCK_TIMEOUT"
     )
-
-
-def _contains_normalized_line(lines: list[str], target: str) -> bool:
-    normalized_target = " ".join(target.split()).lower()
-    if not normalized_target:
-        return False
-    return any(normalized_target in " ".join(line.split()).lower() for line in lines)
-
-
-def _has_similar_narration(lines: list[str], target: str) -> bool:
-    target_tokens = {token for token in re.findall(r"[a-z0-9]+", target.lower()) if len(token) >= 4}
-    if len(target_tokens) < 6:
-        return _contains_normalized_line(lines, target)
-    for line in lines:
-        line_tokens = {token for token in re.findall(r"[a-z0-9]+", line.lower()) if len(token) >= 4}
-        if not line_tokens:
-            continue
-        overlap = len(target_tokens.intersection(line_tokens))
-        ratio = overlap / len(target_tokens)
-        if ratio >= 0.65:
-            return True
-    return False
 
 
 def _transcript_command_echo(raw_command: str) -> str:
@@ -1086,7 +857,7 @@ def run_turn(
             rng.setstate(loaded_rng.getstate())
             return (
                 state,
-                [_room_lines(state, long_form=True), f"Loaded from slot '{control_action.target}'."],
+                [f"Loaded from slot '{control_action.target}'."],
                 control_action.raw,
                 "load",
                 True,
@@ -1304,30 +1075,16 @@ def run_turn(
 
     preserve_bounded_dialogue = beat_type == "freeform_roleplay" and _has_bounded_dialogue_event(events, debug=debug)
     if preserve_bounded_dialogue:
-        narration = ""
+        # The event line is the accepted NPC dialogue proposal, not a
+        # deterministic room/status block; retain it as the generated story
+        # response when the ordinary narrator pass is intentionally skipped.
+        narration = _event_lines(events, debug=False)
 
-    if narration:
-        room_name = next_state.world.rooms[next_state.player.location].name
-        turn_text = narration.strip()
-        if turn_text and not turn_text.lower().startswith(room_name.lower()):
-            turn_text = f"{room_name}\n{turn_text}"
-        lines: list[str] = [turn_text]
-    else:
-        lines = []
-        if _should_render_room_block(state, next_state, effective_action):
-            followed_npc_ids = _followed_npc_ids(state, next_state) if state.player.location != next_state.player.location else ()
-            lines.append(
-                _room_lines_with_followers(
-                    next_state,
-                    long_form=effective_action.kind == ActionKind.LOOK,
-                    followed_npc_ids=followed_npc_ids,
-                )
-            )
-        if effective_action.kind == ActionKind.INVENTORY:
-            lines.extend(_inventory_lines(next_state))
-        event_line = _event_lines(events, debug=debug)
-        if event_line:
-            lines.append(event_line)
+    # Room identity, exits, inventory, visible entities, and event state remain
+    # in the observer-scoped narration context. They are continuity inputs, not
+    # a second player-facing prose channel. Ordinary turns therefore expose
+    # only generated narration (or an addressed NPC's generated reply).
+    lines: list[str] = [narration.strip()] if narration.strip() else []
 
     if debug:
         lines.extend(caseboard_lines(next_state))
@@ -1385,9 +1142,6 @@ def run_turn(
         }
         lines.append("[debug-json] " + json.dumps(debug_trace, sort_keys=True))
 
-    if next_state.progress >= 0.95:
-        lines.append("Objective complete.")
-
     if memory_store is not None:
         memory_store.ingest_events(memory_slot, next_state, events)
 
@@ -1398,24 +1152,12 @@ def run_turn(
         "rationale": str(judge_decision.get("rationale", "")),
     }
 
-    lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
+    lines = [line for line in lines if line]
     lines = _suppress_repeated_goal_copy(lines, raw_input, next_state.active_goal)
     if not lines:
-        if effective_action.kind == ActionKind.LOOK:
-            lines = [_room_lines(next_state, long_form=True)]
-        elif state.player.location != next_state.player.location:
-            lines = [
-                _room_lines_with_followers(
-                    next_state,
-                    long_form=False,
-                    followed_npc_ids=_followed_npc_ids(state, next_state),
-                )
-            ]
-        else:
-            lines = [""]
-        lines = [line for line in lines if line]
+        lines = []
 
-    reviewed_lines = [_rewrite_known_npc_names(next_state, line) for line in lines if line]
+    reviewed_lines = [line for line in lines if line]
     reviewed_lines = _suppress_repeated_goal_copy(reviewed_lines, raw_input, next_state.active_goal)
     if output_editor is not None:
         # Explicitly injected editors are retained as a compatibility adapter;
@@ -1426,12 +1168,6 @@ def run_turn(
             next_state.turn_index,
             debug,
         )
-    if (
-        narration
-        and not _contains_repeated_goal_copy(narration, raw_input, next_state.active_goal)
-        and not _has_similar_narration(reviewed_lines, narration)
-    ):
-        reviewed_lines.append(_rewrite_known_npc_names(next_state, narration))
     return next_state, reviewed_lines, effective_action.raw, beat_type, True
 
 

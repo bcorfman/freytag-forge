@@ -75,6 +75,7 @@ class NarrationContext:
     scene_facts: tuple[str, ...] = ()
     case_facts: tuple[dict, ...] = ()
     affordances: dict = None
+    completion_instruction: str = ""
 
     def as_dict(self) -> dict:
         return {
@@ -108,6 +109,7 @@ class NarrationContext:
             "scene_facts": list(self.scene_facts),
             "case_facts": list(self.case_facts),
             "affordances": dict(self.affordances or {}),
+            "completion_instruction": self.completion_instruction,
             "constraints": list(HARD_CONSTRAINTS),
         }
 
