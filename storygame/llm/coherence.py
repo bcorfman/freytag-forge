@@ -39,6 +39,18 @@ _ASSISTANT_SUSPECT_PATTERN = re.compile(
     r"\b(suspect|witness|being questioned|you are questioning|you question|questioning)\b",
     re.IGNORECASE,
 )
+_PROMPT_CONTEXT_LABELS = (
+    "room name:",
+    "room description:",
+    "items:",
+    "exits:",
+    "visible items:",
+    "visible npcs:",
+    "inventory:",
+    "recent events:",
+    "active goal:",
+)
+_ECHOED_ACTION_PREFIX = re.compile(r"^\s*>+\s*", re.IGNORECASE)
 
 
 class CoherenceResult(TypedDict):
@@ -359,6 +371,24 @@ class _AssistantRoleConsistencyValidator:
             "passed": True,
             "reason_codes": (),
             "details": "",
+        }
+
+
+class _PromptContextEchoValidator:
+    validator_id = "prompt_context_echo"
+
+    def validate(self, context: NarrationContext, narration: str) -> ValidationReport:
+        lowered = narration.lower()
+        label_count = sum(lowered.count(label) for label in _PROMPT_CONTEXT_LABELS)
+        lines = narration.splitlines()
+        first_line = lines[0].strip() if lines else ""
+        echoed_action = bool(_ECHOED_ACTION_PREFIX.match(first_line)) and context.action.lower() in first_line.lower()
+        passed = label_count < 2 and not echoed_action
+        return {
+            "validator_id": self.validator_id,
+            "passed": passed,
+            "reason_codes": () if passed else ("VLD_PROMPT_CONTEXT_ECHO",),
+            "details": f"labels={label_count},echoed_action={echoed_action}",
         }
 
 
@@ -882,6 +912,7 @@ def build_default_coherence_gate(
         _InventoryLocationConsistencyValidator(),
         _CommittedStateContradictionValidator(),
         _AssistantRoleConsistencyValidator(),
+        _PromptContextEchoValidator(),
         _BeatTransitionLegalityValidator(),
     )
     return CoherenceGate(
@@ -915,6 +946,7 @@ def build_fast_post_commit_gate(
             _InventoryLocationConsistencyValidator(),
             _CommittedStateContradictionValidator(),
             _AssistantRoleConsistencyValidator(),
+            _PromptContextEchoValidator(),
         ),
         threshold=DEFAULT_THRESHOLD,
         critical_floors=DEFAULT_CRITICAL_FLOORS,
