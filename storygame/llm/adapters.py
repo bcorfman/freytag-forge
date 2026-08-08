@@ -17,6 +17,15 @@ from storygame.llm.prompts import build_prompt, build_prompt_text
 _LOGGER = logging.getLogger(__name__)
 
 
+def _provider_content(value: object) -> str:
+    """Convert provider text or structured content into parser-safe text."""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, separators=(",", ":"))
+    return ""
+
+
 class Narrator(Protocol):
     def generate(self, context: NarrationContext) -> str: ...
 
@@ -494,12 +503,15 @@ class CloudflareWorkersAIAdapter:
                 upstream_code=str(parsed.get("upstream_code", "")),
                 retryable=code in {"AI_UPSTREAM_ERROR", "AI_CAPACITY_EXCEEDED"},
             )
-        narration = str(parsed.get("narration", "")).strip()
+        narration = _provider_content(parsed.get("narration"))
         if narration:
             return narration
         if "choices" in parsed:
             try:
-                return str(parsed["choices"][0]["message"]["content"]).strip()
+                content = _provider_content(parsed["choices"][0]["message"]["content"])
+                if content:
+                    return content
+                raise ValueError("empty content")
             except Exception as exc:  # noqa: BLE001
                 raise CloudflareNarrationError(
                     "AI_BAD_RESPONSE",

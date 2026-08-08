@@ -44,6 +44,8 @@ class _FakeResponse:
 def test_json_from_text_handles_direct_and_embedded_json() -> None:
     assert _json_from_text('{"a":1}') == {"a": 1}
     assert _json_from_text("noise\n{\"a\":1}\nnoise") == {"a": 1}
+    assert _json_from_text("```json\n{\"a\":1}\n```") == {"a": 1}
+    assert _json_from_text("[]") is None
     assert _json_from_text("not json") is None
 
 
@@ -150,6 +152,31 @@ def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monk
     assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
     assert observed["timeout"] == 8.0
     assert observed["payload"]["max_tokens"] == 1800
+
+
+def test_chat_complete_cloudflare_falls_back_when_json_mode_is_rejected(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    requests: list[dict[str, object]] = []
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        payload = json.loads(request.data.decode("utf-8"))
+        requests.append(payload)
+        if "response_format" in payload:
+            raise urllib.error.HTTPError(
+                request.full_url,
+                502,
+                "bad gateway",
+                {},
+                io.BytesIO(b'{"error":{"code":"AI_JSON_MODE_REJECTED"}}'),
+            )
+        return _FakeResponse('{"narration":{"dialog_proposal":{"text":"ok"}}}')
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+    assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u") == (
+        '{"dialog_proposal":{"text":"ok"}}'
+    )
+    assert "response_format" in requests[0]
+    assert "response_format" not in requests[1]
 
 
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:

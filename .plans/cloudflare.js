@@ -248,6 +248,19 @@ function classifyUpstreamFailure(status, code, message) {
     };
   }
 
+  if (
+    normalizedMessage.includes("json mode") ||
+    normalizedMessage.includes("json schema") ||
+    normalizedMessage.includes("response_format") ||
+    normalizedMessage.includes("couldn't be met")
+  ) {
+    return {
+      code: "AI_JSON_MODE_REJECTED",
+      message: "Workers AI could not satisfy the structured JSON response format",
+      httpStatus: 502,
+    };
+  }
+
   if (status >= 400 && status < 500) {
     return {
       code: "AI_REQUEST_REJECTED",
@@ -271,9 +284,11 @@ function extractNarration(payload) {
     payload?.response,
   ];
 
-  return candidates.find(
-    (value) => typeof value === "string" && value.trim(),
-  )?.trim() || "";
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (value && typeof value === "object") return JSON.stringify(value);
+  }
+  return "";
 }
 
 function extractErrors(payload) {

@@ -475,8 +475,9 @@ def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
                 narrator=StubNarrator(_OPENING_TEXT),
                 output_editor=_PassThroughEditor(),
                 story_director=_StubDirector(),
-                session_turn_cap=1,
-                save_store=InMemorySaveStore(),
+                    session_turn_cap=1,
+                    save_store=InMemorySaveStore(),
+                    freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
     created = client.post("/api/v1/session", json={"seed": 41})
@@ -506,6 +507,7 @@ def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
                 story_director=_StubDirector(),
                 ip_rate_limit_per_min=2,
                 save_store=InMemorySaveStore(),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
             now_fn=clock,
         )
     )

@@ -824,12 +824,11 @@ class LlmFreeformProposalAdapter:
         try:
             return self._parse_planner_response(state, raw_input, system, user)
         except ValueError as exc:
-            if str(exc) != "planner_non_json":
-                raise
             retry_system = (
                 system
-                + " Your previous reply was invalid because it was not JSON. "
-                + "Retry now and return JSON only, with no prose before or after the object."
+                + " Your previous planner reply failed local JSON or contract validation "
+                + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
+                + "return JSON only, with no prose before or after the object."
             )
             return self._parse_planner_response(state, raw_input, retry_system, user)
 
