@@ -130,7 +130,12 @@ def _narration_failure_classification(code: str) -> tuple[int, str, str]:
         return 429, "quota_exhausted", "Narration quota exhausted for the hosted demo. Please retry later."
     if code in {"AI_CAPACITY_EXCEEDED", "AI_RATE_LIMITED"}:
         return 429, "rate_limited", "Narration capacity is temporarily limited. Please retry shortly."
-    if code in {"AI_REQUEST_REJECTED", "AI_CLIENT_ERROR", "WORKER_CONFIGURATION_ERROR"}:
+    if code in {
+        "AI_REQUEST_REJECTED",
+        "AI_CLIENT_ERROR",
+        "AI_WORKER_REVISION_MISMATCH",
+        "WORKER_CONFIGURATION_ERROR",
+    }:
         return 502, "error", "The narration service rejected the request configuration."
     return 503, "service_unavailable", "Narration service is temporarily unavailable."
 
