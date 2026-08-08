@@ -1,0 +1,84 @@
+schema_version: 1
+
+# Authoring templates expanded and validated by world_builder.
+default: &default
+  characters:
+    traits: [observant, independent]
+    appearance: "A distinct, scene-appropriate figure."
+    role: contact
+    relationship: arrives_with_the_player
+    scene_purpose: "Offer a relevant perspective on the opening situation."
+    initial_knowledge: [public_briefing]
+    protected_knowledge: []
+  items:
+    affordances: [examine, take, give, use]
+    initial_state: available
+  opening_setup:
+    arrival_order: [player, opening_contact]
+    public_briefing: [opening_situation]
+    pending_knowledge: [local_context]
+    protected_knowledge: [future_revelations]
+  intent_aliases:
+    examine: [inspect, study, look at]
+    communicate: [ask, tell, speak with]
+    movement: [go, walk, follow]
+  effect_templates:
+    examine: {family: discovery, bounded: true}
+    communicate: {family: relationship, bounded: true}
+    movement: {family: location, bounded: true}
+
+packages:
+  mystery:
+    <<: *default
+    map:
+      rooms: [front_steps, foyer, market_lane, records_office, safehouse, watch_tower, old_chapel]
+      paths:
+        - {direction: north, from: front_steps, to: foyer}
+        - {direction: south, from: foyer, to: front_steps}
+        - {direction: east, from: foyer, to: market_lane}
+        - {direction: west, from: market_lane, to: foyer}
+        - {direction: north, from: market_lane, to: records_office}
+        - {direction: south, from: records_office, to: market_lane}
+        - {direction: east, from: records_office, to: safehouse}
+        - {direction: west, from: safehouse, to: records_office}
+        - {direction: north, from: safehouse, to: watch_tower}
+        - {direction: south, from: watch_tower, to: safehouse}
+        - {direction: east, from: watch_tower, to: old_chapel}
+        - {direction: west, from: old_chapel, to: watch_tower}
+    items: [case_file, ledger_page, route_key]
+  fantasy:
+    <<: *default
+    map: {rooms: [village_gate, market_square, scribe_hall, enchanted_wood, citadel_steps, sanctum]}
+    items: [rune_token, moon_blade, warded_scroll]
+  sci-fi:
+    <<: *default
+    map: {rooms: [dock_hub, market_arcade, archive_node, lab_ring, tower_array, command_core]}
+    items: [data_key, signal_lens, power_cell]
+  romance:
+    <<: *default
+    map: {rooms: [courtyard, cafe_row, garden_path, gallery_hall, river_walk, lantern_square]}
+    items: [letter, locket, keepsake]
+  adventure:
+    <<: *default
+    map: {rooms: [camp, trailhead, cliff_pass, ruin_gate, inner_chamber, return_camp]}
+    items: [map_fragment, rope_kit, artifact_shard]
+  action:
+    <<: *default
+    map: {rooms: [safe_flat, alley_junction, control_room, warehouse, checkpoint, extraction_point]}
+    items: [badge, breach_charge, comm_scrambler]
+  suspense:
+    <<: *default
+    map: {rooms: [apartment, backstreet, records_room, subway_platform, abandoned_site, panic_room]}
+    items: [burner_phone, security_card, flash_drive]
+  drama:
+    <<: *default
+    map: {rooms: [family_home, main_street, clinic, school_hall, community_center, lake_house]}
+    items: [old_photo, medical_note, voice_message]
+  horror:
+    <<: *default
+    map: {rooms: [old_house, fog_road, chapel_ruins, cellar, woods_edge, ritual_room]}
+    items: [salt_pouch, candle_bundle, sigil_stone]
+  thriller:
+    <<: *default
+    map: {rooms: [transit_hub, newsroom, intel_vault, industrial_yard, embassy_corridor, final_site]}
+    items: [cipher_sheet, surveillance_tape, access_chip]

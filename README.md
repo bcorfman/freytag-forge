@@ -91,6 +91,11 @@ Phase 0 freezes four package projections and deterministic turn transcripts in
 [`data/phase0_baseline.json`](data/phase0_baseline.json), and the static seam
 inventory is documented in
 [`docs/external-story-data-inventory.md`](docs/external-story-data-inventory.md).
+Phase 1 package templates are stored in
+[`data/story_packages.yaml`](data/story_packages.yaml). They declare map,
+character, item, opening, intent-alias, and bounded-effect sections. The
+builder expands and validates those sections before a package can be realized;
+`opening_setup.yaml` remains only a compatibility input during this migration.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

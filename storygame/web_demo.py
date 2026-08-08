@@ -154,6 +154,7 @@ def create_demo_app(
         allow_origins=list(resolved_cors_allow_origins),
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID"],
     )
 
     def _expiry(now_at: datetime) -> datetime:
@@ -162,10 +163,17 @@ def create_demo_app(
     def _touch(session: _DemoSession) -> None:
         session.expires_at = _expiry(now())
 
-    def _error_response(status_code: int, status: str, detail: str) -> JSONResponse:
+    def _error_response(
+        status_code: int,
+        status: str,
+        detail: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=status_code,
             content={"status": status, "detail": detail},
+            headers=headers,
         )
 
     def _enforce_ip_limits(ip: str, current_time: datetime) -> JSONResponse | None:
@@ -201,14 +209,16 @@ def create_demo_app(
         command: str,
         state: GameState,
         beat: str,
+        request_id: str,
     ) -> JSONResponse | None:
         room = state.world.rooms[state.player.location]
         for line in lines:
             lowered = line.lower()
             if "ai_quota_exceeded" in lowered:
                 _LOGGER.warning(
-                    "Narrator quota exhausted: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    "Narrator quota exhausted: %s | request_id=%s session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
                     line,
+                    request_id,
                     session_id,
                     command,
                     beat,
@@ -221,11 +231,13 @@ def create_demo_app(
                     429,
                     "quota_exhausted",
                     "Narration quota exhausted for the hosted demo. Please retry later.",
+                    headers={"X-Request-ID": request_id},
                 )
             if "[narrator failed:" in lowered:
                 _LOGGER.warning(
-                    "Narrator failed: %s | session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
+                    "Narrator failed: %s | request_id=%s session_id=%s command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
                     line,
+                    request_id,
                     session_id,
                     command,
                     beat,
@@ -238,6 +250,7 @@ def create_demo_app(
                     503,
                     "service_unavailable",
                     "Narration service is temporarily unavailable.",
+                    headers={"X-Request-ID": request_id},
                 )
         return None
 
@@ -280,6 +293,7 @@ def create_demo_app(
     def submit_turn(payload: TurnRequest, request: Request) -> TurnResponse | JSONResponse:
         session = _resolve_session(payload.session_id)
         current_time = now()
+        request_id = uuid4().hex
         client_host = request.client.host if request.client is not None else "unknown"
         ip_limit_error = _enforce_ip_limits(client_host, current_time)
         if ip_limit_error is not None:
@@ -307,7 +321,8 @@ def create_demo_app(
                 )
             except RuntimeError as exc:
                 _LOGGER.warning(
-                    "Bootstrap opening unavailable: %s | debug=%s",
+                    "Bootstrap opening unavailable: request_id=%s error=%s | debug=%s",
+                    request_id,
                     str(exc),
                     bootstrap_failure_debug_payload(
                         start_state,
@@ -320,6 +335,7 @@ def create_demo_app(
                     503,
                     "service_unavailable",
                     "Narration service is temporarily unavailable.",
+                    headers={"X-Request-ID": request_id},
                 )
             payload_body["status"] = "ok"
             return TurnResponse.model_validate(payload_body)
@@ -343,6 +359,7 @@ def create_demo_app(
             command=payload.command,
             state=result.next_state,
             beat=result.beat,
+            request_id=request_id,
         )
         if narrator_error is not None:
             return narrator_error

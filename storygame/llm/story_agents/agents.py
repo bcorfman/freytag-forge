@@ -144,7 +144,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
         worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
         token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
         timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
-        retries = int(os.getenv("CLOUDFLARE_RETRIES", "0").strip())
+        retries = int(os.getenv("CLOUDFLARE_RETRIES", "1").strip())
         retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
         if not worker_url:
             raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")

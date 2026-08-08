@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,95 @@ _DEFAULT_PRIMARY_OBJECTIVES: dict[str, str] = {
     "thriller": "Expose the operation driving the crisis and stop it before escalation.",
     "horror": "Understand what is haunting the situation and break its hold before it spreads.",
 }
+
+
+class WorldPackageValidationError(ValueError):
+    """Raised when external story data cannot form a coherent package."""
+
+
+@lru_cache(maxsize=1)
+def load_story_package_templates(path: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Load declarative Phase 1 templates without exposing YAML to runtime code."""
+    package_path = Path(__file__).resolve().parents[2] / "data" / "story_packages.yaml" if path is None else path
+    payload = yaml.safe_load(package_path.read_text(encoding="utf-8")) or {}
+    if payload.get("schema_version") != 1 or not isinstance(payload.get("packages"), dict):
+        raise WorldPackageValidationError("story_packages.yaml has an unsupported schema.")
+    default = payload.get("default", {})
+    templates: dict[str, dict[str, Any]] = {"default": dict(default)}
+    for genre, raw in payload["packages"].items():
+        if not isinstance(raw, dict):
+            raise WorldPackageValidationError(f"package template '{genre}' must be a mapping.")
+        templates[str(genre)] = deepcopy(dict(raw))
+    return templates
+
+
+def _validate_ids(values: list[str], label: str) -> set[str]:
+    if not values or len(values) != len(set(values)) or any(not value.strip() for value in values):
+        raise WorldPackageValidationError(f"{label} require unique non-empty ids.")
+    return set(values)
+
+
+def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
+    """Validate Phase 1 package sections and cross-section references."""
+    if not isinstance(package, dict):
+        raise WorldPackageValidationError("world package must be a mapping")
+    required = ("map", "characters", "items", "opening_setup", "intent_aliases", "effect_templates")
+    missing = [section for section in required if section not in package]
+    if missing:
+        raise WorldPackageValidationError(f"missing package sections: {', '.join(missing)}")
+    map_data = package["map"]
+    if (
+        not isinstance(map_data, dict)
+        or not isinstance(package["characters"], list)
+        or not isinstance(package["items"], list)
+    ):
+        raise WorldPackageValidationError("map, characters, and items have invalid shapes")
+    room_ids = _validate_ids([str(room) for room in map_data.get("rooms", [])], "map rooms")
+    paths = map_data.get("paths", [])
+    for path in paths:
+        if path.get("from") not in room_ids or path.get("to") not in room_ids:
+            raise WorldPackageValidationError("unknown map room in path")
+        if not str(path.get("direction", "")).strip():
+            raise WorldPackageValidationError("map paths require directions")
+    _validate_ids([str(item.get("id", "")) for item in package["items"] if isinstance(item, dict)], "items")
+    character_ids = _validate_ids(
+        [str(character.get("id", "")) for character in package["characters"] if isinstance(character, dict)],
+        "characters",
+    )
+    for character in package["characters"]:
+        if not isinstance(character, dict) or character.get("location") not in room_ids:
+            raise WorldPackageValidationError("unknown character location")
+        for field in ("role", "scene_purpose"):
+            if not str(character.get(field, "")).strip():
+                raise WorldPackageValidationError(f"characters require {field}")
+    seen_custody: set[str] = set()
+    for item in package["items"]:
+        if not isinstance(item, dict):
+            raise WorldPackageValidationError("items must contain mappings")
+        custody = item.get("initial_custody")
+        if custody:
+            custody_key = str(item["id"])
+            if custody_key in seen_custody:
+                raise WorldPackageValidationError(f"duplicate custody for item '{custody_key}'")
+            seen_custody.add(custody_key)
+            if custody.get("kind") == "npc" and custody.get("id") not in character_ids:
+                raise WorldPackageValidationError("unknown custody reference")
+            if custody.get("kind") == "room" and custody.get("id") not in room_ids:
+                raise WorldPackageValidationError("unknown custody reference")
+    opening = package["opening_setup"]
+    if not isinstance(opening, dict):
+        raise WorldPackageValidationError("opening_setup must be a mapping")
+    public = set(map(str, opening.get("public_briefing", [])))
+    protected = set(map(str, opening.get("protected_knowledge", [])))
+    if public & protected:
+        raise WorldPackageValidationError("protected knowledge is exposed as public briefing")
+    if not isinstance(package["intent_aliases"], dict) or not isinstance(package["effect_templates"], dict):
+        raise WorldPackageValidationError("intent aliases and effect templates must be mappings")
+    package["map"]["room_presentation"] = {
+        str(room): dict(package["map"].get("room_presentation", {}).get(str(room), {}))
+        for room in room_ids
+    }
+    return package
 
 
 @lru_cache(maxsize=1)
@@ -319,26 +409,10 @@ def select_story_outline(
 
 
 def _build_map_for_genre(genre: str) -> dict[str, Any]:
-    if genre == "mystery":
-        return {
-            "rooms": list(_ROOM_TEMPLATES[genre]),
-            "paths": [
-                {"direction": "north", "from": "front_steps", "to": "foyer"},
-                {"direction": "south", "from": "foyer", "to": "front_steps"},
-                {"direction": "east", "from": "foyer", "to": "market_lane"},
-                {"direction": "west", "from": "market_lane", "to": "foyer"},
-                {"direction": "north", "from": "market_lane", "to": "records_office"},
-                {"direction": "south", "from": "records_office", "to": "market_lane"},
-                {"direction": "east", "from": "records_office", "to": "safehouse"},
-                {"direction": "west", "from": "safehouse", "to": "records_office"},
-                {"direction": "north", "from": "safehouse", "to": "watch_tower"},
-                {"direction": "south", "from": "watch_tower", "to": "safehouse"},
-                {"direction": "east", "from": "watch_tower", "to": "old_chapel"},
-                {"direction": "west", "from": "old_chapel", "to": "watch_tower"},
-            ],
-        }
-
-    room_ids = _ROOM_TEMPLATES[genre]
+    template = load_story_package_templates().get(genre, load_story_package_templates()["default"])
+    room_ids = tuple(template.get("map", {}).get("rooms", _ROOM_TEMPLATES[genre]))
+    if template.get("map", {}).get("paths"):
+        return {"rooms": list(room_ids), "paths": deepcopy(template["map"]["paths"]), "room_presentation": {}}
     paths: list[dict[str, str]] = []
     directions = ("north", "east", "north", "east", "north")
     for index, direction in enumerate(directions):
@@ -373,11 +447,41 @@ def build_world_package(
         _extract_character_names(outline["outline"]),
     )
     map_section = _build_map_for_genre(normalized_genre)
-    item_ids = list(_ITEM_TEMPLATES[normalized_genre])
+    template = load_story_package_templates().get(normalized_genre, load_story_package_templates()["default"])
+    item_ids = list(template.get("items", _ITEM_TEMPLATES[normalized_genre]))
     beat_candidates = list(curve["obligatory_moments"])
     goals = _build_outline_goals(normalized_genre, str(outline["outline"]), beat_candidates)
     story_plan = _build_story_plan(str(outline["outline"]), goals)
-    opening_setup = _opening_setup_profiles().get(normalized_genre, {})
+    opening_setup = deepcopy(_opening_setup_profiles().get(normalized_genre, {}))
+    opening_setup.update(deepcopy(template.get("opening_setup", {})))
+    characters = []
+    character_template = template.get("characters", {})
+    for index, name in enumerate(character_names):
+        characters.append(
+            {
+                "id": re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or "character",
+                "name": name,
+                "location": map_section["rooms"][min(index, len(map_section["rooms"]) - 1)],
+                "available": True,
+                "traits": list(character_template.get("traits", [])),
+                "appearance": str(character_template.get("appearance", "")),
+                "role": str(character_template.get("role", "contact")),
+                "relationship": str(character_template.get("relationship", "")),
+                "scene_purpose": str(character_template.get("scene_purpose", "")),
+                "initial_knowledge": list(character_template.get("initial_knowledge", [])),
+                "protected_knowledge": list(character_template.get("protected_knowledge", [])),
+            }
+        )
+    items = [
+        {
+            "id": item_id,
+            "affordances": list(template.get("items", {}).get("affordances", ["examine", "take"]))
+            if isinstance(template.get("items"), dict) else ["examine", "take"],
+                "initial_state": "available",
+                "initial_custody": None,
+        }
+        for item_id in item_ids
+    ]
 
     trigger_seeds = [
         {"name": moment, "trigger": f"beat:{moment}", "effect": "advance_tension"}
@@ -389,7 +493,8 @@ def build_world_package(
         {"from": item_ids[2], "to": beat_candidates[-1]},
     ]
 
-    return {
+    package = {
+        "schema_version": 1,
         "genre": normalized_genre,
         "tone": outline["tone"],
         "session_length": normalized_length,
@@ -404,6 +509,8 @@ def build_world_package(
             "factions": [f"{normalized_genre}_faction"],
         },
         "map": map_section,
+        "characters": characters,
+        "items": items,
         "goals": goals,
         "story_plan": story_plan,
         "opening_setup": opening_setup,
@@ -413,4 +520,14 @@ def build_world_package(
             "edges": item_graph_edges,
         },
         "trigger_seeds": trigger_seeds,
+        "intent_aliases": deepcopy(template.get("intent_aliases", {})),
+        "effect_templates": deepcopy(template.get("effect_templates", {})),
     }
+    package["map"]["room_presentation"] = {
+        room_id: {
+            "name": re.sub(r"\s+", " ", room_id.replace("_", " ").replace("-", " ")).strip().title(),
+            "description": f"The {room_id.replace('_', ' ')} awaits close inspection.",
+        }
+        for room_id in package["map"]["rooms"]
+    }
+    return validate_world_package(package)

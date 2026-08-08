@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import socket
 import time
@@ -12,6 +13,8 @@ from uuid import uuid4
 
 from storygame.llm.context import NarrationContext
 from storygame.llm.prompts import build_prompt, build_prompt_text
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class Narrator(Protocol):
@@ -246,7 +249,7 @@ class CloudflareWorkersAIAdapter:
         env_worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "")
         env_token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
         env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "8.0")
-        env_retries = os.getenv("CLOUDFLARE_RETRIES", "0")
+        env_retries = os.getenv("CLOUDFLARE_RETRIES", "1")
         env_retry_backoff_ms = os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250")
         self.worker_url = worker_url.strip() if worker_url is not None else env_worker_url.strip()
         self.token = token.strip() if token is not None else env_token.strip()
@@ -282,6 +285,7 @@ class CloudflareWorkersAIAdapter:
             headers=headers,
         )
         attempt = 0
+        started_at = time.monotonic()
         while True:
             try:
                 with urllib.request.urlopen(http_request, timeout=self.timeout) as response:
@@ -290,24 +294,64 @@ class CloudflareWorkersAIAdapter:
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace")
                 if exc.code == 429 and ("AI_QUOTA_EXCEEDED" in detail or "quota" in detail.lower()):
-                    raise RuntimeError(f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED {detail}") from exc
+                    self._log_cloudflare_failure(trace_id, attempt, exc.code, detail, started_at)
+                    raise RuntimeError(
+                        f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED "
+                        f"trace_id={trace_id} {detail}"
+                    ) from exc
                 if 500 <= exc.code <= 599 and attempt < self.retries:
+                    _LOGGER.warning(
+                        "Cloudflare Workers AI transient failure; retrying: "
+                        "status=%s attempt=%s retry_limit=%s trace_id=%s",
+                        exc.code,
+                        attempt + 1,
+                        self.retries,
+                        trace_id,
+                    )
                     self._sleep_before_retry(attempt)
                     attempt += 1
                     continue
-                raise RuntimeError(f"Cloudflare Workers AI request failed: {exc.code} {detail}") from exc
+                self._log_cloudflare_failure(
+                    trace_id,
+                    attempt,
+                    exc.code,
+                    detail,
+                    started_at,
+                )
+                raise RuntimeError(
+                    f"Cloudflare Workers AI request failed: {exc.code} trace_id={trace_id} {detail}"
+                ) from exc
             except urllib.error.URLError as exc:
                 if attempt < self.retries:
+                    _LOGGER.warning(
+                        "Cloudflare Workers AI network failure; retrying: "
+                        "attempt=%s retry_limit=%s trace_id=%s error=%s",
+                        attempt + 1,
+                        self.retries,
+                        trace_id,
+                        exc,
+                    )
                     self._sleep_before_retry(attempt)
                     attempt += 1
                     continue
-                raise RuntimeError(f"Cannot reach Cloudflare Worker endpoint. Error: {exc}.") from exc
+                self._log_cloudflare_failure(trace_id, attempt, "network", str(exc), started_at)
+                raise RuntimeError(
+                    f"Cannot reach Cloudflare Worker endpoint. trace_id={trace_id} Error: {exc}."
+                ) from exc
             except Exception as exc:  # noqa: BLE001
                 if isinstance(exc, socket.timeout) and attempt < self.retries:
+                    _LOGGER.warning(
+                        "Cloudflare Workers AI timeout; retrying: "
+                        "attempt=%s retry_limit=%s trace_id=%s",
+                        attempt + 1,
+                        self.retries,
+                        trace_id,
+                    )
                     self._sleep_before_retry(attempt)
                     attempt += 1
                     continue
-                raise RuntimeError("Cloudflare Workers AI request failed.") from exc
+                self._log_cloudflare_failure(trace_id, attempt, "client", str(exc), started_at)
+                raise RuntimeError(f"Cloudflare Workers AI request failed. trace_id={trace_id}") from exc
 
         parsed = json.loads(response_bytes.decode("utf-8"))
         narration = str(parsed.get("narration", "")).strip()
@@ -319,6 +363,24 @@ class CloudflareWorkersAIAdapter:
             except Exception as exc:  # noqa: BLE001
                 raise RuntimeError("Cloudflare Workers AI response had unexpected shape.") from exc
         raise RuntimeError("Cloudflare Workers AI response missing expected narration content.")
+
+    @staticmethod
+    def _log_cloudflare_failure(
+        trace_id: str,
+        attempt: int,
+        status: int | str,
+        detail: str,
+        started_at: float,
+    ) -> None:
+        _LOGGER.error(
+            "Cloudflare Workers AI request failed: status=%s attempt=%s elapsed_ms=%s "
+            "trace_id=%s detail=%s",
+            status,
+            attempt + 1,
+            round((time.monotonic() - started_at) * 1000),
+            trace_id,
+            detail[:1000].replace("\n", " "),
+        )
 
     def _sleep_before_retry(self, attempt: int) -> None:
         delay_ms = self.retry_backoff_ms * (attempt + 1)
