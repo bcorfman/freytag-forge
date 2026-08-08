@@ -7,8 +7,8 @@ cutover contracts, fast feedback, and required coverage jobs for the exact
 the deployment `github-sha=<SHA>`.
 
 The workflow polls Railway's deployment list for that label (or Railway's
-reported commit SHA), rejects an ambiguous match, waits for `SUCCESS`, and
-checks `<public-api-url>/api/v1/health`. `hosted-demo-e2e` then exercises the
+reported commit SHA), rejects an ambiguous match, waits for `ACTIVE` (or legacy
+`SUCCESS`), and checks `<public-api-url>/api/v1/health`. `hosted-demo-e2e` then exercises the
 deployed API from `https://bcorfman.github.io`. Only a passing E2E result
 publishes the `production-promotion` commit status as `success`; all other
 outcomes publish it as `failure`.

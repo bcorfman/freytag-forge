@@ -155,20 +155,31 @@ jobs:
             test -n "${!required}" || { echo "Missing production configuration: $required" >&2; exit 1; }
           done
           api_base_url="${RAILWAY_PUBLIC_API_URL%/}"
-          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA" --detach
           deployment_id=""
           deployment_status=""
           deployment_url=""
           rollback_deployment_id="${RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID:-}"
+          railway_up_exit=0
+          submitted_deployment_id=""
           write_evidence() {
             mkdir -p artifacts
-            jq -n --arg api_base_url "$api_base_url" --arg deployment_id "$deployment_id" --arg deployment_url "$deployment_url" --arg rollback_deployment_id "$rollback_deployment_id" --arg sha "$GITHUB_SHA" --arg status "$deployment_status" '{api_base_url: $api_base_url, deployment_id: $deployment_id, deployment_url: $deployment_url, rollback_deployment_id: $rollback_deployment_id, sha: $sha, status: $status}' > artifacts/railway-deployment.json
+            jq -n --arg api_base_url "$api_base_url" --arg deployment_id "$deployment_id" --arg deployment_url "$deployment_url" --arg rollback_deployment_id "$rollback_deployment_id" --arg sha "$GITHUB_SHA" --arg status "$deployment_status" --arg submitted_deployment_id "$submitted_deployment_id" --argjson railway_up_exit "$railway_up_exit" '{api_base_url: $api_base_url, deployment_id: $deployment_id, deployment_url: $deployment_url, rollback_deployment_id: $rollback_deployment_id, sha: $sha, status: $status, submitted_deployment_id: $submitted_deployment_id, railway_up_exit: $railway_up_exit}' > artifacts/railway-deployment.json
           }
           trap write_evidence EXIT
+          set +e
+          railway_up_output="$(railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA" --detach 2>&1)"
+          railway_up_exit=$?
+          set -e
+          printf '%s\n' "$railway_up_output"
+          submitted_deployment_id="$(sed -nE 's#.*[?&]id=([^&[:space:]]+).*#\1#p' <<<"$railway_up_output" | tail -n 1)"
+          if test "$railway_up_exit" -ne 0; then
+            echo "railway up returned $railway_up_exit after upload; verifying Railway's deployment record." >&2
+          fi
           for attempt in $(seq 1 60); do
             deployments="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 20 --json)"
-            candidate="$(jq -cer --arg sha "$GITHUB_SHA" '
+            candidate="$(jq -cer --arg deployment_id "$submitted_deployment_id" --arg sha "$GITHUB_SHA" '
               map(select(
+                (($deployment_id != "") and (.id? == $deployment_id)) or
                 (.meta.commitHash? == $sha) or
                 (.meta.commitSha? == $sha) or
                 (.meta.githubCommitSha? == $sha) or
@@ -181,13 +192,16 @@ jobs:
               deployment_status="$(jq -er '.status' <<<"$candidate")"
               deployment_url="$(jq -r '.url // .dashboardUrl // empty' <<<"$candidate")"
               case "$deployment_status" in
-                SUCCESS) break ;;
+                ACTIVE|SUCCESS) break ;;
                 FAILED|CRASHED|REMOVED) echo "Railway deployment $deployment_id ended with $deployment_status" >&2; exit 1 ;;
               esac
             fi
             sleep 10
           done
-          test "$deployment_status" = SUCCESS || { echo "Railway deployment did not reach SUCCESS before timeout" >&2; exit 1; }
+          case "$deployment_status" in
+            ACTIVE|SUCCESS) ;;
+            *) echo "Railway deployment did not reach ACTIVE before timeout (last status: ${deployment_status:-not-found})" >&2; exit 1 ;;
+          esac
           test -n "$deployment_id" || { echo "Railway did not expose an unambiguous deployment for $GITHUB_SHA" >&2; exit 1; }
           curl --fail --retry 6 --retry-all-errors --retry-delay 5 "$api_base_url/api/v1/health" | jq -e '.status == "ok"' >/dev/null
           {
@@ -203,6 +217,8 @@ jobs:
             echo "- Deployment: ${deployment_url:-$deployment_id}"
             echo "- API: $api_base_url"
             echo "- Health: ok"
+            echo "- Railway CLI handoff exit: $railway_up_exit"
+            echo "- Submitted deployment: ${submitted_deployment_id:-not-reported}"
             echo "- Recorded rollback deployment: ${rollback_deployment_id:-not-configured}"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload Railway deployment evidence
