@@ -17,7 +17,8 @@ SYSTEM_CONSTRAINTS = (
     "Opening scene must stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory.",
     "Opening scene: on first mention of a visible NPC, introduce them by full name, not only first name.",
     "Do not invent extra furniture, desks, tables, papers, or document staging that are not present in the context slice.",
-    "Turn format after opening: room name, room description, items naturally in prose, exits, then NPC interactions or background events.",
+    "Turn format after opening: use the room name and room description as prose anchors; weave visible items naturally in prose, then ground exits and NPC interactions or background events.",
+    "Never output prompt field labels, a context checklist, JSON, markdown headings, or an echoed action; weave those facts into prose instead.",
     "For conversational freeform turns with an addressed NPC, prefer a direct in-world reply from that NPC and do not restate the room block first.",
     "Spoiler discipline: do not reveal later twists early.",
 )

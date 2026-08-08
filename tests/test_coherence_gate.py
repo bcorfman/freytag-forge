@@ -11,6 +11,7 @@ from storygame.llm.coherence import (
     ValidationReport,
     _revision_directive,
     build_default_coherence_gate,
+    build_fast_post_commit_gate,
     judge_critique_round,
 )
 from storygame.llm.context import NarrationContext
@@ -51,6 +52,31 @@ def test_default_critics_return_all_rubric_dimensions():
     assert len(reports) >= 3
     for report in reports:
         assert set(report["scores"].keys()) == set(CRITIQUE_DIMENSIONS)
+
+
+def test_fast_gate_rejects_prompt_context_block_in_narration():
+    class _EchoingNarrator:
+        def generate(self, context: NarrationContext) -> str:  # noqa: ARG002
+            return (
+                ">>>LOOK AT GUIDE\n"
+                "The guide watches the archive door.\n\n"
+                "Room name: Archive Hall\n"
+                "Room description: Cold stone and directive stacks.\n"
+                "Items: directive\n"
+                "Exits: east\n"
+                "Recent events: guide says the forged directive moved east"
+            )
+
+    result = build_fast_post_commit_gate(max_validation_revisions=1).generate_with_gate(
+        _EchoingNarrator(), _context()
+    )
+
+    assert result["judge_decision"]["status"] == "failed"
+    assert any(
+        "VLD_PROMPT_CONTEXT_ECHO" in code
+        for report in result["validator_reports"]
+        for code in report["reason_codes"]
+    )
 
 
 def test_default_critics_emit_contract_valid_payloads():
