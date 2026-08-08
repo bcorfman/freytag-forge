@@ -20,7 +20,6 @@ from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.output_editor import OutputEditor, build_output_editor
-from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web_runtime import (
@@ -149,7 +148,6 @@ def create_demo_app(
     active_story_director = (
         StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
     )
-    active_narrator_opening_agent = DefaultNarratorOpeningAgent(story_director_mode)
     resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
     app.add_middleware(
         CORSMiddleware,
@@ -306,7 +304,6 @@ def create_demo_app(
                     active_output_editor,
                     use_fast_story_director_opening=use_fast_story_director_opening,
                     allow_story_director_bootstrap=allow_story_director_bootstrap,
-                    narrator_opening_agent=active_narrator_opening_agent,
                 )
             except RuntimeError as exc:
                 _LOGGER.warning(

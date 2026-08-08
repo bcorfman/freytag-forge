@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
+from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.web_demo import (
     _build_demo_narrator,
     _resolve_demo_cors_allow_origins,
@@ -235,15 +236,11 @@ def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed_requests.append(json.loads(request.data.decode("utf-8")))
-        body = observed_requests[-1]
-        system = body.get("system", "")
-        if "Narrator Agent" in system:
-            return _FakeResponse(
-                "{\"narration\":\"The evening air bites at your skin as you approach the mansion.\\n\\nDaria Stone waits nearby with the case file and watches the entrance.\\n\\nTonight's work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\"}"
-            )
-        raise AssertionError(f"Unexpected system prompt: {system}")
+        return _FakeResponse(
+            "{\"narration\":\"The evening air bites at your skin as you approach the mansion.\\n\\nDaria Stone waits nearby with the case file and watches the entrance.\\n\\nTonight's work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\"}"
+        )
 
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -261,23 +258,17 @@ def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
     assert payload["lines"]
     assert any("The evening air bites at your skin" in line for line in payload["lines"])
     assert any("Tonight" in line and "work is practical before it is grand" in line for line in payload["lines"])
-    assert any("Narrator Agent" in request.get("system", "") for request in observed_requests)
-    assert not any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
+    assert len(observed_requests) == 1
+    assert "Narrator Agent" not in observed_requests[0]["system"]
 
 
-def test_demo_bootstrap_sends_the_opening_contract_to_cloudflare_before_generic_narration(
+def test_demo_bootstrap_consumes_the_worker_narration_envelope_directly(
     tmp_path,
     monkeypatch,
 ):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
-    monkeypatch.setattr(
-        CloudflareWorkersAIAdapter,
-        "generate",
-        lambda self, context: (_ for _ in ()).throw(AssertionError("generic narration must not run first")),
-    )
-
     observed_requests: list[dict[str, str]] = []
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
@@ -285,20 +276,14 @@ def test_demo_bootstrap_sends_the_opening_contract_to_cloudflare_before_generic_
         return _FakeResponse(
             json.dumps(
                 {
-                    "narration": json.dumps(
-                        {
-                            "paragraphs": [
-                                "Rain needles the mansion steps.",
-                                "Daria Stone holds the case file close.",
-                                "Your first task is to decide where to begin.",
-                            ]
-                        }
-                    )
+                    "narration": "Rain needles the mansion steps.\n\nDaria Stone holds the case file close.\n\nYour first task is to decide where to begin.",
+                    "model": "@cf/meta/llama-3.1-8b-instruct",
+                    "trace_id": "hosted-opening",
                 }
             )
         )
 
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -312,31 +297,26 @@ def test_demo_bootstrap_sends_the_opening_contract_to_cloudflare_before_generic_
 
     assert turn.status_code == 200
     assert len(observed_requests) == 1
-    assert "Return JSON only with key paragraphs (3 to 4 paragraphs)." in observed_requests[0]["system"]
+    assert "Narrator Agent" not in observed_requests[0]["system"]
+    assert any("Rain needles the mansion steps" in line for line in turn.json()["lines"])
 
 
-def test_demo_bootstrap_uses_cloudflare_narrator_opening_when_story_bootstrap_json_is_unavailable(
-    tmp_path,
-    monkeypatch,
-):
+def test_demo_bootstrap_uses_one_direct_cloudflare_narration_call(tmp_path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    call_count = 0
 
-    observed_requests: list[dict[str, str]] = []
+    def _generate(self, context):  # noqa: ANN001
+        nonlocal call_count
+        call_count += 1
+        return _OPENING_TEXT
 
-    def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        observed_requests.append(json.loads(request.data.decode("utf-8")))
-        body = observed_requests[-1]
-        system = body.get("system", "")
-        if "Narrator Agent" in system:
-            return _FakeResponse(
-                '{"narration":"The evening air bites as you face the mansion steps.\\n\\nDaria Stone waits nearby with the case file tucked under one arm.\\n\\nYou have only just arrived, and the practical work starts here."}'
-            )
-        raise AssertionError(f"Unexpected system prompt: {system}")
+    def _unexpected_opening_agent(self, state, architect, cast, plan):  # noqa: ANN001
+        raise AssertionError("hosted bootstrap must not use the nested opening-agent contract")
 
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
-    monkeypatch.setattr(CloudflareWorkersAIAdapter, "generate", lambda self, context: "")
+    monkeypatch.setattr(CloudflareWorkersAIAdapter, "generate", _generate)
+    monkeypatch.setattr(DefaultNarratorOpeningAgent, "run", _unexpected_opening_agent)
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -344,16 +324,37 @@ def test_demo_bootstrap_uses_cloudflare_narrator_opening_when_story_bootstrap_js
             save_store=InMemorySaveStore(),
         )
     )
-    session_id = client.post("/api/v1/session", json={"seed": 53}).json()["session_id"]
+    session_id = client.post("/api/v1/session", json={"seed": 57}).json()["session_id"]
 
     turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
 
     assert turn.status_code == 200
-    payload = turn.json()
-    assert payload["status"] == "ok"
-    assert any("evening air bites" in line.lower() for line in payload["lines"])
-    assert not any("Story Bootstrap Agent" in request.get("system", "") for request in observed_requests)
-    assert any("Narrator Agent" in request.get("system", "") for request in observed_requests)
+    assert call_count == 1
+    assert any("Rain needles the stone" in line for line in turn.json()["lines"])
+
+
+def test_demo_bootstrap_does_not_apply_opening_text_heuristics_to_worker_prose(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.setattr(
+        CloudflareWorkersAIAdapter,
+        "generate",
+        lambda self, context: "The gate waits. # noqa.\n\nDaria Stone watches the drive.",
+    )
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            save_store=InMemorySaveStore(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 58}).json()["session_id"]
+
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
+
+    assert turn.status_code == 200
+    assert any("# noqa" in line for line in turn.json()["lines"])
 
 
 def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_unavailable(

@@ -164,7 +164,6 @@ def _sanitize_assistant_targeting(text: str, assistant_name: str) -> str:
 def _normalized_narrator_opening_paragraphs(
     raw: str,
     assistant_name: str,
-    allow_short_prose: bool = False,
 ) -> list[str]:
     wrapper_match = _DOCTEST_OPENING_WRAPPER.match(raw)
     if wrapper_match is not None:
@@ -184,8 +183,6 @@ def _normalized_narrator_opening_paragraphs(
     try:
         parsed = parse_narrator_opening_output({"paragraphs": sanitized})
     except StoryAgentContractError as exc:
-        if allow_short_prose and sanitized:
-            return sanitized
         raise RuntimeError(f"Opening contract validation failed: {exc}") from exc
     return list(parsed["paragraphs"])
 
@@ -393,10 +390,11 @@ def _bootstrap_opening_from_narrator(
         return []
     if not raw:
         return []
+    if allow_short_prose:
+        return [paragraph.strip() for paragraph in raw.split("\n\n") if paragraph.strip()]
     opening_lines = _normalized_narrator_opening_paragraphs(
         raw,
         context.assistant_name,
-        allow_short_prose=allow_short_prose,
     )
     item_labels = item_labels_for_opening(tuple(state.world.items.keys()))
     assistant_npc_id = next(

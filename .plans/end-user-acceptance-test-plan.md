@@ -21,9 +21,10 @@ Railway reports that its deployment has completed:
    inventory. This proves durable fact authority rather than a one-response
    demo.
 
-The workflow is manually dispatchable after a Railway success, and it also
-accepts a `railway_deployment_succeeded` repository-dispatch event with an
-optional `api_base_url` and `sha` payload. The job requires a deployed API URL;
+The diagnostic workflow is manually dispatchable after a Railway success. The
+normal promotion gate is chained directly from the `tests` workflow's verified
+Railway deployment rather than a repository-dispatch event. The diagnostic job
+requires a deployed API URL;
 a service that is healthy at Railway but cannot narrate or preserve state fails
 this gate.
 
