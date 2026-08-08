@@ -122,7 +122,11 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed_payload = json.loads(request.data.decode("utf-8"))
         if observed_payload["system"] == "Return JSON only.":
-            assert observed_payload["response_format"] == {"type": "json_object"}
+            assert observed_payload["response_format"]["type"] == "json_schema"
+            assert observed_payload["response_format"]["json_schema"]["required"] == [
+                "dialog_proposal",
+                "action_proposal",
+            ]
         return _FakeResponse('{"narration":"ok-cloudflare"}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)

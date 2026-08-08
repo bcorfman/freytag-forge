@@ -41,6 +41,34 @@ from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
 _STORY_AGENT_MAX_TOKENS = 1800
+_PLANNER_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "type": "object",
+        "properties": {
+            "dialog_proposal": {
+                "type": "object",
+                "properties": {
+                    "speaker": {"type": "string"},
+                    "text": {"type": "string"},
+                    "tone": {"type": "string"},
+                },
+                "required": ["speaker", "text", "tone"],
+            },
+            "action_proposal": {
+                "type": "object",
+                "properties": {
+                    "intent": {"type": "string"},
+                    "targets": {"type": "array", "items": {"type": "string"}},
+                    "arguments": {"type": "object"},
+                    "proposed_effects": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["intent", "targets", "arguments", "proposed_effects"],
+            },
+        },
+        "required": ["dialog_proposal", "action_proposal"],
+    },
+}
 
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
@@ -164,7 +192,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
         if "return json only" in system.lower():
-            request_payload["response_format"] = {"type": "json_object"}
+            request_payload["response_format"] = _PLANNER_RESPONSE_FORMAT
         http_request = urllib.request.Request(
             worker_url,
             data=json.dumps(request_payload).encode("utf-8"),
