@@ -106,7 +106,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov --tier-report=artifacts/test-suite-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v7
