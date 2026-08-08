@@ -134,11 +134,13 @@ def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monk
 
     def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed["timeout"] = timeout
+        observed["payload"] = json.loads(request.data.decode("utf-8"))
         return _FakeResponse('{"narration":"ok-cloudflare"}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
     assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
     assert observed["timeout"] == 8.0
+    assert observed["payload"]["max_tokens"] == 1400
 
 
 def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:

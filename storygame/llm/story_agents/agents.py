@@ -161,6 +161,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "user": user,
             "trace_id": uuid4().hex,
             "session_id": "",
+            "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
         http_request = urllib.request.Request(
             worker_url,
