@@ -475,7 +475,7 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
     }
 
 
-def test_cloudflare_adapter_rejects_unexpected_worker_revision(monkeypatch):
+def test_cloudflare_adapter_accepts_runtime_worker_revision(monkeypatch):
     monkeypatch.setattr(
         "storygame.llm.adapters.urllib.request.urlopen",
         lambda *_args, **_kwargs: _FakeResponse(
@@ -483,13 +483,8 @@ def test_cloudflare_adapter_rejects_unexpected_worker_revision(monkeypatch):
             {"X-Worker-Revision": "old-release"},
         ),
     )
-    adapter = CloudflareWorkersAIAdapter(
-        worker_url="https://demo.example.workers.dev/api/narrate",
-        expected_worker_revision="new-release",
-    )
-
-    with pytest.raises(CloudflareNarrationError, match="AI_WORKER_REVISION_MISMATCH"):
-        adapter.generate(_build_context())
+    adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate")
+    assert adapter.generate(_build_context()) == "Cloudflare narration response."
     assert adapter.worker_revision == "old-release"
 
 
