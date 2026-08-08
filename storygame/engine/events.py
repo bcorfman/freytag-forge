@@ -55,7 +55,7 @@ _INSIDE_ROOM_TOKENS = (
     "house",
 )
 _AMBIENT_SOURCE_RULES = (
-    (("parked_by_drive", "driveway", " drive "), "the drive"),
+    (("parked_beside_the_drive", "driveway", " drive "), "the drive"),
     (("courtyard",), "the courtyard"),
     (("main street", "backstreet", " street "), "the street"),
     (("market lane", " lane ", "cafe row"), "the lane"),

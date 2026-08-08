@@ -768,17 +768,15 @@ class DefaultNarratorOpeningAgent:
         )
         identity_intro = _build_identity_intro_sentence(protagonist, background)
         paragraph_1 = (
-            f"{assistant_name} has you at the threshold before hesitation can settle in. "
-            "The case is already asking what kind of judgment you still trust yourself to make."
+            f"{identity_intro} The case turns the failure in your background from memory into a live question: "
+            "can you still trust the judgment it cost you?"
         )
         paragraph_2 = (
-            f"{identity_intro} {carry_line} "
-            f"{assistant_name} stays close as your {assistant_role or 'assistant'}, "
-            f"{assistant_name}'s tone {assistant_trait or 'measured'} while {assistant_name} waits for your first instruction."
+            f"{carry_line} {assistant_name} is beside you as your {assistant_role or 'assistant'}, "
+            f"{assistant_name}'s {assistant_trait or 'measured'} manner making clear that this is a shared decision, not an order to await."
         )
         paragraph_3 = (
-            "What presses on you now is not the weather or the stone, but the old failure in your background and "
-            "the question of whether this case is a last duty, a last chance, or both."
+            f"{assistant_name} studies you for a beat, then asks what part of the case you want to understand before either of you crosses the door."
         )
         objective = _normalize_actionable_objective_language(
             str(plan.get("actionable_objective", state.active_goal)).strip(),
@@ -787,9 +785,8 @@ class DefaultNarratorOpeningAgent:
         )
         if assistant_name:
             paragraph_4 = (
-                f"{assistant_name} breaks the silence. "
-                "\"Your immediate objective is practical: start with the case file "
-                f"and field kit. {objective}\""
+                f"\"We start with what we can verify,\" {assistant_name} says. "
+                f"\"{objective}\""
             )
         else:
             paragraph_4 = f"Your immediate objective is practical and immediate: {objective}"

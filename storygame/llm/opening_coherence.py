@@ -191,18 +191,21 @@ def opening_fact_parity_issues(
     assistant_present: bool,
     item_labels: tuple[str, ...],
     assistant_held_item_labels: tuple[str, ...],
+    player_held_item_labels: tuple[str, ...] = (),
 ) -> list[str]:
     issues: list[str] = []
     normalized_lines = [_normalized_line(line) for line in opening_lines if _normalized_line(line)]
     normalized_assistant = _normalize_name(assistant_name)
     normalized_role = " ".join(assistant_role.split()).strip().lower()
     held_labels = {_normalized_line(label).lower() for label in assistant_held_item_labels if _normalized_line(label)}
+    player_held_labels = {
+        _normalized_line(label).lower()
+        for label in player_held_item_labels
+        if _normalized_line(label)
+    }
     seen_messages: set[str] = set()
 
-    if not normalized_assistant:
-        return issues
-
-    assistant_lines = [line for line in normalized_lines if normalized_assistant in line.lower()]
+    assistant_lines = [line for line in normalized_lines if normalized_assistant and normalized_assistant in line.lower()]
     for line in assistant_lines:
         lowered = line.lower()
         if _contains_any(lowered, _SUPPORT_ROLE_TERMS) and normalized_role != "assistant":
@@ -239,5 +242,15 @@ def opening_fact_parity_issues(
                 if message not in seen_messages:
                     issues.append(message)
                     seen_messages.add(message)
+
+    for line in normalized_lines:
+        lowered = line.lower()
+        if not _contains_any(lowered, _ITEM_EXPOSED_TERMS):
+            continue
+        for label in player_held_labels:
+            if label in lowered:
+                issues.append(
+                    f"The opening places the {label} on the ground, but committed facts put it in the player's custody."
+                )
 
     return issues

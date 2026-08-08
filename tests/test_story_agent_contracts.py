@@ -286,6 +286,19 @@ def test_narrator_opening_contract_drops_directive_shaped_paragraphs() -> None:
     assert not any("room name:" in paragraph.lower() for paragraph in opening["paragraphs"])
 
 
+def test_narrator_opening_contract_rejects_a_clearly_truncated_final_sentence() -> None:
+    with pytest.raises(StoryAgentContractError, match="paragraphs:min_length"):
+        parse_narrator_opening_output(
+            {
+                "paragraphs": [
+                    "The case has followed you farther than you expected.",
+                    "Daria Stone waits for the question you have been avoiding.",
+                    "You wonder whether the failure that ended your last investigation left you ready to stand behind",
+                ]
+            }
+        )
+
+
 def test_narrator_opening_contract_rejects_prompt_context_echoes() -> None:
     with pytest.raises(StoryAgentContractError, match="prompt_context_echo"):
         parse_narrator_opening_output(

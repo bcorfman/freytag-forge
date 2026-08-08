@@ -422,6 +422,9 @@ def _bootstrap_opening_from_narrator(
             item_labels_for_opening(
                 tuple(fact[2] for fact in state.world_facts.query("holding", assistant_npc_id, None) if len(fact) > 2)
             ),
+            item_labels_for_opening(
+                tuple(fact[2] for fact in state.world_facts.query("holding", "player", None) if len(fact) > 2)
+            ),
         )
     )
     if issues:

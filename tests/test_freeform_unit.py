@@ -940,7 +940,7 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     assert "drove your own sedan" in user
     assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
     assert '"name": "dark sedan"' in user
-    assert '"state": "parked_by_drive"' in user
+    assert '"state": "parked_beside_the_drive"' in user
     assert '"visible_item_names": ["dark sedan"]' in user
     assert '"exit_facts": [{"direction": "north", "destination_name": "Mansion Foyer"' in user
     assert '"visible_item_ids"' not in user

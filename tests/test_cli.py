@@ -824,7 +824,8 @@ def test_room_and_dialogue_lines_keep_full_name_when_first_name_is_ambiguous():
     )
 
     assert continued is True
-    assert any("Daria Stone and Daria Quill are nearby" in line for line in first_lines)
+    assert any("Daria Stone is here to meet you at the door with the case file" in line for line in first_lines)
+    assert not any("Daria Quill is nearby" in line for line in first_lines)
 
     final_state, lines, _action_raw, beat_type, continued = run_turn(
         next_state,
@@ -1214,7 +1215,7 @@ def test_room_lines_describe_mansion_north_path_as_entrance_not_exit() -> None:
     lines = _room_lines(state)
 
     lower = lines.lower()
-    assert "the main entrance from here leads north" in lower
+    assert "carved door at the top of the steps leads north" in lower
     assert "the main exit from here leads north" not in lower
 
 

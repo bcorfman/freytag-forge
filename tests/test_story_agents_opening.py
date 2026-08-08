@@ -35,15 +35,16 @@ def test_narrator_opening_merges_protagonist_name_and_background_in_intro() -> N
         opening = narrator.run(state, architect, cast, plan)
     finally:
         agent_module._chat_complete = original_chat_complete
-    intro = opening[1].lower()
+    intro = opening[0].lower()
+    relationship = opening[1].lower()
 
-    assert "you are noah kade" in intro
+    assert "you are noah kade" in opening[0].lower()
     assert "detective" in intro
     assert "one last case." in intro
-    assert "daria stone stays close as your assistant" in intro
-    assert "daria stone's tone observant" in intro
-    assert "while daria stone waits for your first instruction." in intro
-    assert "their tone" not in intro
+    assert "daria stone is beside you as your assistant" in relationship
+    assert "daria stone's observant manner" in relationship
+    assert "shared decision" in relationship
+    assert "waits for your first instruction" not in relationship
 
 
 def test_narrator_opening_draft_leans_on_character_pressure_over_scenery() -> None:
@@ -72,10 +73,10 @@ def test_narrator_opening_draft_leans_on_character_pressure_over_scenery() -> No
         agent_module._chat_complete = original_chat_complete
 
     opening_draft = str(observed_user["opening_draft"]).lower()
-    assert "what kind of judgment you still trust yourself to make" in opening_draft
-    assert "not the weather or the stone" in opening_draft
-    assert "last duty, a last chance, or both" in opening_draft
-    assert "daria stone stays close as your assistant" in opening_draft
+    assert "can you still trust the judgment it cost you" in opening_draft
+    assert "shared decision, not an order to await" in opening_draft
+    assert "asks what part of the case you want to understand" in opening_draft
+    assert "daria stone is beside you as your assistant" in opening_draft
 
 
 def test_narrator_opening_draft_avoids_scenery_led_opening() -> None:
@@ -105,4 +106,4 @@ def test_narrator_opening_draft_avoids_scenery_led_opening() -> None:
 
     draft_paragraphs = [part.strip().lower() for part in str(observed_user["opening_draft"]).split("\n\n") if part.strip()]
     assert draft_paragraphs
-    assert draft_paragraphs[0].startswith("daria stone has you at the threshold")
+    assert draft_paragraphs[0].startswith("you are noah kade")

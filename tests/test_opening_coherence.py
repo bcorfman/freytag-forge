@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from storygame.llm.opening_coherence import opening_coherence_issues, player_facing_presentation_issues
+from storygame.llm.opening_coherence import (
+    opening_coherence_issues,
+    opening_fact_parity_issues,
+    player_facing_presentation_issues,
+)
 
 
 def test_opening_coherence_detects_generic_role_conflicts_for_named_characters() -> None:
@@ -84,3 +88,17 @@ def test_player_facing_presentation_rejects_leaked_code_comment_artifacts() -> N
     )
 
     assert issues == ["Player-facing prose contains a code-comment artifact."]
+
+
+def test_opening_fact_parity_rejects_player_gear_staged_on_the_ground() -> None:
+    issues = opening_fact_parity_issues(
+        ["Your field kit lies at your feet while Daria considers the door."],
+        assistant_name="",
+        assistant_role="",
+        assistant_present=False,
+        item_labels=("field kit",),
+        assistant_held_item_labels=(),
+        player_held_item_labels=("field kit",),
+    )
+
+    assert any("field kit" in issue.lower() and "player's custody" in issue.lower() for issue in issues)

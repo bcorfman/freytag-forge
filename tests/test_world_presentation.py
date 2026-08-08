@@ -143,8 +143,8 @@ def test_move_room_block_announces_follower_before_npc_presence_line() -> None:
 
     text = move_lines[0]
     assert "Daria follows you." in text
-    assert "Daria Stone" in text
-    assert text.index("Daria follows you.") < text.index("Daria Stone")
+    assert "Daria is here to meet you at the door with the case file" in text
+    assert text.index("Daria follows you.") < text.index("Daria is here to meet you")
     assert moved_state.player.location == "foyer"
 
 
@@ -194,7 +194,7 @@ def test_mystery_room_block_mentions_arrival_car() -> None:
     room_block = _room_lines(state, long_form=True)
 
     assert "sedan" in room_block.lower()
-    assert "left it" in room_block.lower()
+    assert "dark sedan is parked beside the drive" in room_block.lower()
 
 
 def test_mystery_room_block_describes_player_owned_arrival_car_consistently() -> None:
@@ -202,8 +202,30 @@ def test_mystery_room_block_describes_player_owned_arrival_car_consistently() ->
 
     room_block = _room_lines(state, long_form=True)
 
-    assert "you left it" in room_block.lower()
-    assert "dropped you off" not in room_block.lower()
+    assert "dark sedan is parked beside the drive" in room_block.lower()
+
+
+def test_mystery_arrival_room_keeps_sedan_and_drive_in_one_physical_detail() -> None:
+    state = build_default_state(seed=3821, genre="mystery")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert "dark sedan is parked beside the drive" in room_block.lower()
+    assert "drive behind you remains open" not in room_block.lower()
+    assert "watching your next move" not in room_block.lower()
+    assert "daria stone is here to meet you at the door with the case file" in room_block.lower()
+
+
+def test_room_item_spatial_copy_comes_from_generic_item_state_facts() -> None:
+    state = build_default_state(seed=3822, genre="fantasy")
+    room = state.world.rooms[state.player.location]
+    item_id = room.item_ids[0]
+    item_name = state.world.items[item_id].name.lower()
+    state.world_facts.assert_fact("item_state", item_id, "hanging_above_the_archway")
+
+    room_block = _room_lines(state, long_form=True)
+
+    assert f"the {item_name} is hanging above the archway" in room_block.lower()
 
 
 def test_mystery_room_block_falls_back_to_generic_car_line_without_player_arrival_facts() -> None:
@@ -213,9 +235,7 @@ def test_mystery_room_block_falls_back_to_generic_car_line_without_player_arriva
 
     room_block = _room_lines(state, long_form=True)
 
-    assert "a dark sedan waits nearby." in room_block.lower()
-    assert "you left it" not in room_block.lower()
-    assert "dropped you off" not in room_block.lower()
+    assert "dark sedan is parked beside the drive" in room_block.lower()
 
 
 def test_vehicle_room_line_uses_fact_backed_phrasing_outside_start_room() -> None:
@@ -229,8 +249,7 @@ def test_vehicle_room_line_uses_fact_backed_phrasing_outside_start_room() -> Non
 
     room_block = _room_lines(state, long_form=True)
 
-    assert "you left it" in room_block.lower()
-    assert "dropped you off" not in room_block.lower()
+    assert "dark sedan is parked beside the drive" in room_block.lower()
 
 
 def test_same_room_freeform_reply_does_not_repeat_room_block():
