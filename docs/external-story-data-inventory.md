@@ -9,7 +9,7 @@ are classified here and assigned an owner phase.
 | Surface | Current classification | Owner | Replacement schema | Removal |
 | --- | --- | --- | --- | --- |
 | `engine/world.py` | authoring data and mystery compatibility setup | Phase 2 | package map, item, character, and opening sections | Phase 6 |
-| `engine/world_builder.py` | authoring data | Phase 1 | validated package sections and references | Phase 6 |
+| `engine/world_builder.py` | package loader/compatibility expansion | Phase 1 | `data/story_packages.yaml` validated package sections and references | Phase 6 |
 | `engine/mystery.py` | temporary compatibility document/reveal helpers | Phase 4 | package-declared document and reveal contracts | Phase 6 |
 | `engine/freeform.py` | authoring data | Phase 4 | declared item aliases and typed read/reveal contracts | Phase 6 |
 | `llm/opening_coherence.py` | authoring data | Phase 5 | fact-backed exposure and staging policy | Phase 6 |

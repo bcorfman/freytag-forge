@@ -460,7 +460,7 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
     }
 
 
-def test_cloudflare_adapter_uses_bounded_default_timeout_and_zero_retries(monkeypatch):
+def test_cloudflare_adapter_uses_bounded_default_timeout_and_one_retry(monkeypatch):
     observed: dict[str, object] = {}
 
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
@@ -475,7 +475,56 @@ def test_cloudflare_adapter_uses_bounded_default_timeout_and_zero_retries(monkey
     adapter = CloudflareWorkersAIAdapter()
     assert adapter.generate(_build_context()) == "Cloudflare narration response."
     assert observed["timeout"] == 8.0
-    assert adapter.retries == 0
+    assert adapter.retries == 1
+
+
+def test_cloudflare_adapter_recovers_from_transient_default_failure(monkeypatch):
+    attempts = {"count": 0}
+
+    def _fake_urlopen(*_args, **_kwargs):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise urllib.error.HTTPError(
+                "https://demo.example.workers.dev/api/narrate",
+                503,
+                "Service Unavailable",
+                None,
+                io.BytesIO(b'{"code":"AI_UPSTREAM_ERROR","message":"temporary"}'),
+            )
+        return _FakeResponse('{"narration":"Recovered narration."}')
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+    monkeypatch.delenv("CLOUDFLARE_RETRIES", raising=False)
+    monkeypatch.setenv("CLOUDFLARE_RETRY_BACKOFF_MS", "0")
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+
+    adapter = CloudflareWorkersAIAdapter()
+    assert adapter.generate(_build_context()) == "Recovered narration."
+    assert attempts["count"] == 2
+
+
+def test_cloudflare_adapter_logs_terminal_failure_diagnostics(monkeypatch, caplog):
+    def _fake_urlopen(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://demo.example.workers.dev/api/narrate",
+            502,
+            "Bad Gateway",
+            None,
+            io.BytesIO(b'{"code":"UPSTREAM_ERROR","message":"temporary outage"}'),
+        )
+
+    monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        retries=0,
+    )
+    with caplog.at_level("ERROR"):
+        with pytest.raises(RuntimeError, match="502"):
+            adapter.generate(_build_context())
+
+    assert "status=502" in caplog.text
+    assert "trace_id=" in caplog.text
+    assert "temporary outage" in caplog.text
 
 
 def test_cloudflare_adapter_maps_quota_http_error(monkeypatch):

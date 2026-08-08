@@ -43,7 +43,7 @@ an initial fixture, not a special runtime path.
 
 ### Work
 
-- Extend the package schema with declarative sections for:
+- [x] Extend the package schema with declarative sections for:
   - map rooms, paths, room presentation, and spatial item placement;
   - characters, traits, appearances, roles, relationships, scene purposes, and
     initial epistemic facts;
@@ -51,16 +51,16 @@ an initial fixture, not a special runtime path.
   - opening setup, arrival order, public briefing, pending knowledge, and
     protected knowledge;
   - intent aliases and typed effect/reveal templates.
-- Load these sections from external YAML/package files and validate references,
+- [x] Load these sections from external YAML/package files and validate references,
   cardinality, schema shape, and cross-section consistency before realization.
-- Keep `opening_setup.yaml` as a compatibility input only while its fields are
+- [x] Keep `opening_setup.yaml` as a compatibility input only while its fields are
   absorbed into the package schema.
 
 ### Exit criteria
 
-- Invalid ids, duplicate custody, missing referenced NPCs, invalid map paths,
+- [x] Invalid ids, duplicate custody, missing referenced NPCs, invalid map paths,
   and protected facts exposed as public briefing fail package validation.
-- At least one non-mystery package declares every new section.
+- [x] At least one non-mystery package declares every new section.
 
 ## Phase 2 — Generic world realization
 

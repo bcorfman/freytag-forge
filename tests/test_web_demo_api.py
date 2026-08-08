@@ -614,3 +614,4 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     assert "command=go north" in caplog.text
     assert "beat=" in caplog.text
     assert "location=foyer" in caplog.text
+    assert response.headers["X-Request-ID"] in caplog.text
