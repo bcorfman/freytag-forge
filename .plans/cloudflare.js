@@ -98,11 +98,12 @@ export default {
           "Authorization": `Bearer ${apiToken}`,
         },
         body: JSON.stringify({
-          messages: [
+            messages: [
             { role: "system", content: system },
             { role: "user", content: user },
           ],
           max_tokens: maxTokens,
+          ...(body?.response_format ? { response_format: body.response_format } : {}),
         }),
       });
     } catch (error) {

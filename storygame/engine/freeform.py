@@ -96,12 +96,39 @@ _INDOOR_ROOM_TOKENS = {
 }
 _LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE)
 _CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
+_PLANNER_STOPWORDS = {
+    "a", "an", "and", "are", "at", "be", "can", "did", "do", "give", "me", "of",
+    "on", "the", "to", "was", "what", "when", "where", "who", "why", "with", "you", "your",
+}
+_PLANNER_BROAD_FACT_TERMS = {
+    "brief", "case", "clue", "happened", "incident", "situation", "timeline", "victim", "witness",
+}
 
 
 def _short_text(value: str, max_len: int) -> str:
     if len(value) <= max_len:
         return value
     return value[: max_len - 3] + "..."
+
+
+def _planner_query_tokens(raw_input: str) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", raw_input.lower())
+        if token not in _PLANNER_STOPWORDS and len(token) > 2
+    }
+
+
+def _planner_fact_text(entry: object) -> str:
+    if isinstance(entry, dict):
+        return " ".join(f"{key} {value}" for key, value in entry.items())
+    return str(entry)
+
+
+def _planner_relevant_facts(entries: list[object], query_tokens: set[str], broad: bool) -> list[object]:
+    if broad:
+        return entries[-8:]
+    return [entry for entry in entries if query_tokens.intersection(_planner_query_tokens(_planner_fact_text(entry)))]
 
 
 def _clean_topic_text(value: str) -> str:
@@ -526,6 +553,8 @@ def _visible_npc_match(state: GameState, raw_target: str) -> str:
 
 def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str]:
     room = state.world.rooms[state.player.location]
+    query_tokens = _planner_query_tokens(raw_input)
+    broad_fact_request = bool(query_tokens.intersection(_PLANNER_BROAD_FACT_TERMS))
     npc_facts = [
         {
             "id": npc_id,
@@ -552,31 +581,47 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         for item_id in room.item_ids
         if item_id in state.world.items
     ]
+    scene_entries = [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()]
+    case_entries = [dict(entry) for entry in case_facts(state)]
+    relevant_npc_facts = [
+        fact for fact in npc_facts
+        if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
+        or query_tokens.intersection(_planner_query_tokens(str(fact["identity"])))
+    ]
+    relevant_item_facts = [
+        fact for fact in item_facts
+        if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
+    ]
+    movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
     payload = {
         "player_input": raw_input,
-        "goal": active_story_goal(state),
+        "goal": _short_text(active_story_goal(state), 240),
         "turn_index": state.turn_index,
-        "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
-        "case_facts": [dict(entry) for entry in case_facts(state)],
+        "scene_facts": _planner_relevant_facts(scene_entries, query_tokens, broad_fact_request),
+        "case_facts": _planner_relevant_facts(case_entries, query_tokens, broad_fact_request),
         "room": {
             "id": room.id,
             "name": room.name,
-            "description": room.description,
+            "description": _short_text(room.description, 320),
             "visible_npc_ids": list(room.npc_ids),
             "visible_item_names": [str(fact["name"]).strip() for fact in item_facts if str(fact["name"]).strip()],
-            "visible_items": item_facts,
+            "visible_items": relevant_item_facts,
             "exits": sorted(room.exits.keys()),
             "exit_facts": [
                 {
                     "direction": direction,
                     "destination_name": state.world.rooms[destination].name,
-                    "destination_description": state.world.rooms[destination].description,
                 }
                 for direction, destination in sorted(room.exits.items())
-            ],
+            ] if movement_request else [],
         },
-        "npc_facts": npc_facts,
+        "npc_facts": relevant_npc_facts,
         "inventory": list(state.player.inventory),
+        "recent_events": [
+            str(event.message_key).strip()
+            for event in state.event_log.events[-5:]
+            if str(event.message_key).strip()
+        ],
     }
     system = (
         "You are Freeform Action Planner Agent. "

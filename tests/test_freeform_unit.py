@@ -932,18 +932,25 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
 
     _system, user = _freeform_planner_prompt(state, "Daria, what are you wearing?")
 
-    assert '"scene_facts"' in user
-    assert '"case_facts"' in user
+    assert '"case_facts": []' in user
+    assert "drove your own sedan" not in user
+    assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
+    assert '"visible_item_names": ["dark sedan"]' in user
+    assert '"visible_items": []' in user
+    assert '"exit_facts": []' in user
+    assert '"visible_item_ids"' not in user
+    assert len(user) < 2400
+
+
+def test_freeform_planner_prompt_includes_relevant_case_facts_for_a_brief() -> None:
+    state = build_default_state(seed=4052, genre="mystery")
+
+    _system, user = _freeform_planner_prompt(state, "Daria, give me a quick brief of what happened")
+
     assert '"victim_name"' in user
     assert '"victim_timeline"' in user
     assert '"strongest_lead"' in user
-    assert "drove your own sedan" in user
-    assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
-    assert '"name": "dark sedan"' in user
-    assert '"state": "parked_beside_the_drive"' in user
-    assert '"visible_item_names": ["dark sedan"]' in user
-    assert '"exit_facts": [{"direction": "north", "destination_name": "Mansion Foyer"' in user
-    assert '"visible_item_ids"' not in user
+    assert len(user) < 3600
 
 
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:

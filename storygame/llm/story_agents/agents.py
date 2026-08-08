@@ -40,7 +40,7 @@ from storygame.llm.story_agents.prompts import (
 from storygame.story_canon import canonical_detective_name
 
 _LOGGER = logging.getLogger(__name__)
-_STORY_AGENT_MAX_TOKENS = 1400
+_STORY_AGENT_MAX_TOKENS = 1800
 
 
 def _json_from_text(text: str) -> dict[str, Any] | None:
@@ -163,6 +163,8 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "session_id": "",
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
         }
+        if "return json only" in system.lower():
+            request_payload["response_format"] = {"type": "json_object"}
         http_request = urllib.request.Request(
             worker_url,
             data=json.dumps(request_payload).encode("utf-8"),
