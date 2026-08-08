@@ -33,8 +33,9 @@ def _build_opening_context():
 
 
 class _FakeResponse:
-    def __init__(self, body: str) -> None:
+    def __init__(self, body: str, headers: dict[str, str] | None = None) -> None:
         self._body = body.encode("utf-8")
+        self.headers = {} if headers is None else headers
 
     def read(self) -> bytes:
         return self._body
@@ -436,13 +437,17 @@ def test_cloudflare_adapter_success_parses_narration(monkeypatch):
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed["user_agent"] = request.headers.get("User-agent")
         observed["payload"] = json.loads(request.data)
-        return _FakeResponse('{"narration":"Cloudflare narration response.","model":"demo-model"}')
+        return _FakeResponse(
+            '{"narration":"Cloudflare narration response.","model":"demo-model"}',
+            {"X-Worker-Revision": "worker-release-123"},
+        )
 
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
     adapter = CloudflareWorkersAIAdapter(worker_url="https://demo.example.workers.dev/api/narrate", token="t")
     assert adapter.generate(_build_opening_context()) == "Cloudflare narration response."
     assert observed["user_agent"] == "FreytagForgeDemo/1.0"
     assert observed["payload"]["max_tokens"] >= 1800
+    assert adapter.worker_revision == "worker-release-123"
 
 
 def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
@@ -468,6 +473,24 @@ def test_cloudflare_adapter_trims_env_worker_url_and_token(monkeypatch):
         "user_agent": "FreytagForgeDemo/1.0",
         "timeout": 7.5,
     }
+
+
+def test_cloudflare_adapter_rejects_unexpected_worker_revision(monkeypatch):
+    monkeypatch.setattr(
+        "storygame.llm.adapters.urllib.request.urlopen",
+        lambda *_args, **_kwargs: _FakeResponse(
+            '{"narration":"Cloudflare narration response."}',
+            {"X-Worker-Revision": "old-release"},
+        ),
+    )
+    adapter = CloudflareWorkersAIAdapter(
+        worker_url="https://demo.example.workers.dev/api/narrate",
+        expected_worker_revision="new-release",
+    )
+
+    with pytest.raises(CloudflareNarrationError, match="AI_WORKER_REVISION_MISMATCH"):
+        adapter.generate(_build_context())
+    assert adapter.worker_revision == "old-release"
 
 
 def test_cloudflare_adapter_uses_bounded_default_timeout_and_three_retries(monkeypatch):

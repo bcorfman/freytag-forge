@@ -74,6 +74,7 @@ class _FailingNarrator:
 class _FakeResponse:
     def __init__(self, body: str) -> None:
         self._body = body.encode("utf-8")
+        self.headers: dict[str, str] = {}
 
     def read(self) -> bytes:
         return self._body

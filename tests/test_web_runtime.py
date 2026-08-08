@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from storygame.engine.fact_commit import ValidatedFactCommitter
+from storygame.llm.adapters import CloudflareNarrationError
 from storygame.web_runtime import (
     TurnExecution,
     _bootstrap_opening_from_narrator,
@@ -287,6 +288,23 @@ def test_bootstrap_runtime_seams_support_fast_openings_and_fail_closed_fallback(
             use_fast_story_director_opening=True,
         )
 
+
+def test_bootstrap_preserves_structured_cloudflare_failures() -> None:
+    class _CloudflareFailureNarrator:
+        def generate(self, _context):
+            raise CloudflareNarrationError(
+                "AI_WORKER_REVISION_MISMATCH",
+                "revision mismatch",
+                http_status=502,
+                trace_id="trace-123",
+            )
+
+    with pytest.raises(CloudflareNarrationError, match="AI_WORKER_REVISION_MISMATCH"):
+        _bootstrap_opening_from_narrator(
+            make_cached_story_state(seed=912),
+            _CloudflareFailureNarrator(),
+            _PassThroughEditor(),
+        )
 
 def test_narrator_opening_agent_receives_fact_backed_contacts() -> None:
     state = make_cached_story_state(seed=907)

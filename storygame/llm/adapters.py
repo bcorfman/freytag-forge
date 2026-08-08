@@ -349,12 +349,14 @@ class CloudflareWorkersAIAdapter:
         timeout: float | None = None,
         retries: int | None = None,
         retry_backoff_ms: int | None = None,
+        expected_worker_revision: str | None = None,
     ) -> None:
         env_worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "")
         env_token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
         env_timeout = os.getenv("CLOUDFLARE_TIMEOUT", "8.0")
         env_retries = os.getenv("CLOUDFLARE_RETRIES", "3")
         env_retry_backoff_ms = os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250")
+        env_expected_worker_revision = os.getenv("CLOUDFLARE_WORKER_REVISION", "").strip()
         self.worker_url = worker_url.strip() if worker_url is not None else env_worker_url.strip()
         self.token = token.strip() if token is not None else env_token.strip()
         self.timeout = timeout if timeout is not None else float(env_timeout.strip())
@@ -362,6 +364,12 @@ class CloudflareWorkersAIAdapter:
         self.retry_backoff_ms = (
             retry_backoff_ms if retry_backoff_ms is not None else int(env_retry_backoff_ms.strip())
         )
+        self.expected_worker_revision = (
+            expected_worker_revision.strip()
+            if expected_worker_revision is not None
+            else env_expected_worker_revision
+        )
+        self.worker_revision = ""
 
     def generate(self, context: NarrationContext) -> str:
         if not self.worker_url:
@@ -394,9 +402,11 @@ class CloudflareWorkersAIAdapter:
             try:
                 with urllib.request.urlopen(http_request, timeout=self.timeout) as response:
                     response_bytes = response.read()
+                    self.worker_revision = response.headers.get("X-Worker-Revision", "")
                 break
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace")
+                self.worker_revision = exc.headers.get("X-Worker-Revision", "") if exc.headers else ""
                 failure = _cloudflare_error_from_response(exc.code, detail, trace_id)
                 if failure.retryable and attempt < self.retries:
                     _LOGGER.warning(
@@ -462,6 +472,14 @@ class CloudflareWorkersAIAdapter:
                     http_status=502,
                     trace_id=trace_id,
                 ) from exc
+
+        if self.expected_worker_revision and self.worker_revision != self.expected_worker_revision:
+            raise CloudflareNarrationError(
+                "AI_WORKER_REVISION_MISMATCH",
+                "Cloudflare Worker revision does not match the configured release",
+                http_status=502,
+                trace_id=trace_id,
+            )
 
         try:
             parsed = json.loads(response_bytes.decode("utf-8"))

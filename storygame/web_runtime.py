@@ -17,13 +17,13 @@ from storygame.engine.facts import assistant_name as resolved_assistant_name
 from storygame.engine.freeform import FreeformProposalAdapter
 from storygame.engine.parser import parse_command
 from storygame.engine.state import GameState
-from storygame.llm.adapters import Narrator
+from storygame.llm.adapters import CloudflareNarrationError, Narrator
 from storygame.llm.context import build_narration_context
 from storygame.llm.opening_coherence import (
-    opening_paragraphs_are_complete,
     item_labels_for_opening,
     opening_coherence_issues,
     opening_fact_parity_issues,
+    opening_paragraphs_are_complete,
     player_facing_presentation_issues,
 )
 from storygame.llm.output_editor import OutputEditor
@@ -397,6 +397,8 @@ def _bootstrap_opening_from_narrator_once(
         context = replace(context, completion_instruction=completion_instruction)
     try:
         raw = str(narrator.generate(context)).strip()
+    except CloudflareNarrationError:
+        raise
     except RuntimeError:
         return []
     if not raw:
