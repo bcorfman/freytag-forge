@@ -21,12 +21,116 @@ class Narrator(Protocol):
     def generate(self, context: NarrationContext) -> str: ...
 
 
+class CloudflareNarrationError(RuntimeError):
+    """Structured failure returned by the hosted Cloudflare narrator."""
+
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        http_status: int,
+        trace_id: str,
+        upstream_status: int | None = None,
+        upstream_code: str = "",
+        retryable: bool = False,
+    ) -> None:
+        self.code = code
+        self.message = message
+        self.http_status = http_status
+        self.trace_id = trace_id
+        self.upstream_status = upstream_status
+        self.upstream_code = upstream_code
+        self.retryable = retryable
+        details = [f"code={code}", f"status={http_status}", f"trace_id={trace_id}"]
+        if upstream_status is not None:
+            details.append(f"upstream_status={upstream_status}")
+        if upstream_code:
+            details.append(f"upstream_code={upstream_code}")
+        super().__init__(f"Cloudflare narration failed: {' '.join(details)} {message}")
+
+
+def _cloudflare_error_payload(raw: str) -> tuple[str, str, str]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return "", "", raw[:800]
+    errors = payload.get("errors", []) if isinstance(payload, dict) else []
+    first_error = errors[0] if isinstance(errors, list) and errors else {}
+    if not isinstance(first_error, dict):
+        first_error = {}
+    code = str(payload.get("code", "") or first_error.get("code", "")) if isinstance(payload, dict) else ""
+    message = str(payload.get("message", "") or first_error.get("message", "")) if isinstance(payload, dict) else ""
+    return code, message, raw[:800]
+
+
+def _cloudflare_error_from_response(
+    status: int,
+    raw: str,
+    trace_id: str,
+) -> CloudflareNarrationError:
+    upstream_code, upstream_message, raw_excerpt = _cloudflare_error_payload(raw)
+    normalized_message = f"{upstream_message} {raw_excerpt}".lower()
+    if status == 429 and (
+        upstream_code == "AI_QUOTA_EXCEEDED"
+        or upstream_code == "3036"
+        or "quota" in normalized_message
+        or "daily free allocation" in normalized_message
+    ):
+        code = "AI_QUOTA_EXCEEDED"
+        message = "Workers AI quota exceeded"
+        retryable = False
+    elif status == 429 and (upstream_code in {"AI_CAPACITY_EXCEEDED", "3040"} or "capacity" in normalized_message):
+        code = "AI_CAPACITY_EXCEEDED"
+        message = "Workers AI is temporarily out of capacity"
+        retryable = True
+    elif 400 <= status < 500:
+        code = "AI_REQUEST_REJECTED"
+        message = "Workers AI rejected the request"
+        retryable = False
+    else:
+        code = "AI_UPSTREAM_ERROR"
+        message = "Workers AI returned an upstream error"
+        retryable = status in {502, 503, 504}
+    return CloudflareNarrationError(
+        code,
+        message,
+        http_status=status,
+        trace_id=trace_id,
+        upstream_status=status,
+        upstream_code=upstream_code,
+        retryable=retryable,
+    )
+
+
+def _retry_after_seconds(headers: object) -> float | None:
+    value = headers.get("Retry-After") if hasattr(headers, "get") else None
+    if value is None:
+        return None
+    try:
+        return max(0.0, min(float(str(value)), 10.0))
+    except ValueError:
+        return None
+
+
+def _optional_int(value: object) -> int | None:
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 class SilentNarrator:
     def generate(self, context: NarrationContext) -> str:
         return ""
 
 
-def _max_tokens_for_context(context: NarrationContext, env_var: str, default_turn_limit: int, default_opening_limit: int) -> int:
+def _max_tokens_for_context(
+    context: NarrationContext,
+    env_var: str,
+    default_turn_limit: int,
+    default_opening_limit: int,
+) -> int:
     configured = os.getenv(env_var, "").strip()
     if configured:
         return int(configured)
@@ -293,22 +397,22 @@ class CloudflareWorkersAIAdapter:
                 break
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace")
-                if exc.code == 429 and ("AI_QUOTA_EXCEEDED" in detail or "quota" in detail.lower()):
-                    self._log_cloudflare_failure(trace_id, attempt, exc.code, detail, started_at)
-                    raise RuntimeError(
-                        f"Cloudflare Workers AI request failed: 429 AI_QUOTA_EXCEEDED "
-                        f"trace_id={trace_id} {detail}"
-                    ) from exc
-                if 500 <= exc.code <= 599 and attempt < self.retries:
+                failure = _cloudflare_error_from_response(exc.code, detail, trace_id)
+                if failure.retryable and attempt < self.retries:
                     _LOGGER.warning(
                         "Cloudflare Workers AI transient failure; retrying: "
-                        "status=%s attempt=%s retry_limit=%s trace_id=%s",
+                        "code=%s status=%s attempt=%s retry_limit=%s trace_id=%s",
+                        failure.code,
                         exc.code,
                         attempt + 1,
                         self.retries,
                         trace_id,
                     )
-                    self._sleep_before_retry(attempt)
+                    retry_after = _retry_after_seconds(exc.headers)
+                    if retry_after is None:
+                        self._sleep_before_retry(attempt)
+                    else:
+                        time.sleep(retry_after)
                     attempt += 1
                     continue
                 self._log_cloudflare_failure(
@@ -318,9 +422,7 @@ class CloudflareWorkersAIAdapter:
                     detail,
                     started_at,
                 )
-                raise RuntimeError(
-                    f"Cloudflare Workers AI request failed: {exc.code} trace_id={trace_id} {detail}"
-                ) from exc
+                raise failure from exc
             except urllib.error.URLError as exc:
                 if attempt < self.retries:
                     _LOGGER.warning(
@@ -335,8 +437,11 @@ class CloudflareWorkersAIAdapter:
                     attempt += 1
                     continue
                 self._log_cloudflare_failure(trace_id, attempt, "network", str(exc), started_at)
-                raise RuntimeError(
-                    f"Cannot reach Cloudflare Worker endpoint. trace_id={trace_id} Error: {exc}."
+                raise CloudflareNarrationError(
+                    "AI_NETWORK_ERROR",
+                    "Could not reach the Cloudflare Worker endpoint",
+                    http_status=502,
+                    trace_id=trace_id,
                 ) from exc
             except Exception as exc:  # noqa: BLE001
                 if isinstance(exc, socket.timeout) and attempt < self.retries:
@@ -351,9 +456,41 @@ class CloudflareWorkersAIAdapter:
                     attempt += 1
                     continue
                 self._log_cloudflare_failure(trace_id, attempt, "client", str(exc), started_at)
-                raise RuntimeError(f"Cloudflare Workers AI request failed. trace_id={trace_id}") from exc
+                raise CloudflareNarrationError(
+                    "AI_CLIENT_ERROR",
+                    "Cloudflare Worker request failed before a valid response was received",
+                    http_status=502,
+                    trace_id=trace_id,
+                ) from exc
 
-        parsed = json.loads(response_bytes.decode("utf-8"))
+        try:
+            parsed = json.loads(response_bytes.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CloudflareNarrationError(
+                "AI_BAD_RESPONSE",
+                "Cloudflare Worker returned a non-JSON response",
+                http_status=502,
+                trace_id=trace_id,
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise CloudflareNarrationError(
+                "AI_BAD_RESPONSE",
+                "Cloudflare Worker returned an unexpected response shape",
+                http_status=502,
+                trace_id=trace_id,
+            )
+        if parsed.get("status") == "error" or parsed.get("code"):
+            code = str(parsed.get("code", "AI_UPSTREAM_ERROR"))
+            message = str(parsed.get("message", "Cloudflare Worker returned an error"))
+            raise CloudflareNarrationError(
+                code,
+                message,
+                http_status=502,
+                trace_id=str(parsed.get("trace_id", trace_id)),
+                upstream_status=_optional_int(parsed.get("upstream_status")),
+                upstream_code=str(parsed.get("upstream_code", "")),
+                retryable=code in {"AI_UPSTREAM_ERROR", "AI_CAPACITY_EXCEEDED"},
+            )
         narration = str(parsed.get("narration", "")).strip()
         if narration:
             return narration
@@ -361,8 +498,18 @@ class CloudflareWorkersAIAdapter:
             try:
                 return str(parsed["choices"][0]["message"]["content"]).strip()
             except Exception as exc:  # noqa: BLE001
-                raise RuntimeError("Cloudflare Workers AI response had unexpected shape.") from exc
-        raise RuntimeError("Cloudflare Workers AI response missing expected narration content.")
+                raise CloudflareNarrationError(
+                    "AI_BAD_RESPONSE",
+                    "Cloudflare Worker returned an unexpected narration shape",
+                    http_status=502,
+                    trace_id=trace_id,
+                ) from exc
+        raise CloudflareNarrationError(
+            "AI_EMPTY_RESPONSE",
+            "Cloudflare Worker response missing expected narration content",
+            http_status=502,
+            trace_id=trace_id,
+        )
 
     @staticmethod
     def _log_cloudflare_failure(

@@ -571,6 +571,49 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
     assert payload["status"] == "quota_exhausted"
 
 
+def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("AI_CAPACITY_EXCEEDED trace_id=worker-123"),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 8}).json()["session_id"]
+    assert client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"}).status_code == 200
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
+
+    assert response.status_code == 429
+    assert response.json()["status"] == "rate_limited"
+    assert response.headers["X-Narration-Error-Code"] == "AI_CAPACITY_EXCEEDED"
+    assert response.headers["X-Trace-ID"] == "worker-123"
+
+
+def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("AI_REQUEST_REJECTED status=403 trace_id=worker-403"),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 9}).json()["session_id"]
+    assert client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"}).status_code == 200
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
+
+    assert response.status_code == 502
+    assert response.json()["status"] == "error"
+    assert response.headers["X-Narration-Error-Code"] == "AI_REQUEST_REJECTED"
+
+
 def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     client = TestClient(
             create_demo_app(
