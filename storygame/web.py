@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from storygame.cli import _build_narrator
-from storygame.engine.freeform import LlmFreeformProposalAdapter
+from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import Narrator
@@ -90,6 +90,7 @@ def create_app(
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
     save_store: SaveStore | None = None,
+    freeform_adapter: FreeformProposalAdapter | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge", version="0.1.0")
 
@@ -99,7 +100,11 @@ def create_app(
     resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
     active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
-    active_freeform_adapter = LlmFreeformProposalAdapter(mode=resolved_narrator_mode)
+    active_freeform_adapter = (
+        LlmFreeformProposalAdapter(mode=resolved_narrator_mode)
+        if freeform_adapter is None
+        else freeform_adapter
+    )
     use_fast_story_director_opening = story_director is None
     active_story_director = (
         StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director

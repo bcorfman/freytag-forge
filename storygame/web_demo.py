@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from storygame.cli import _build_narrator
-from storygame.engine.freeform import LlmFreeformProposalAdapter
+from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
@@ -154,6 +154,7 @@ def create_demo_app(
     cors_allow_origins: tuple[str, ...] | None = None,
     now_fn: Callable[[], datetime] | None = None,
     save_store: SaveStore | None = None,
+    freeform_adapter: FreeformProposalAdapter | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Freytag Forge Demo API", version="0.1.0")
     now = _utc_now if now_fn is None else now_fn
@@ -171,7 +172,11 @@ def create_demo_app(
     )
     active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
     story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
-    active_freeform_adapter = LlmFreeformProposalAdapter(mode=story_director_mode)
+    active_freeform_adapter = (
+        LlmFreeformProposalAdapter(mode=story_director_mode)
+        if freeform_adapter is None
+        else freeform_adapter
+    )
     use_fast_story_director_opening = story_director is None
     allow_story_director_bootstrap = story_director_mode != "cloudflare"
     active_story_director = (

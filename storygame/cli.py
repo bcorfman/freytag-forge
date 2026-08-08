@@ -17,6 +17,7 @@ from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     RuleBasedFreeformProposalAdapter,
     _dialogue_contains_code_artifact,
+    _normalized_movement_action_payload,
     resolve_freeform_roleplay_with_proposals,
 )
 from storygame.engine.impact import (
@@ -886,20 +887,20 @@ def run_turn(
     freeform_policy_debug: dict[str, Any] | None = None
     prefer_proposal_resolution = False
     try:
-        # Direction, inventory, examination, and visible-item aliases are
-        # deterministic affordances. Normalize them through the same proposal
-        # contract without spending a second story-model call on classification.
+        # Every navigation request is interpreted by the proposal model. The
+        # engine only normalizes the accepted proposal to a valid map exit.
         planner = freeform_adapter
         if isinstance(freeform_adapter, LlmFreeformProposalAdapter) and fallback_action.kind in {
             ActionKind.LOOK,
             ActionKind.INVENTORY,
-            ActionKind.MOVE,
             ActionKind.TAKE,
             ActionKind.USE,
         }:
             planner = RuleBasedFreeformProposalAdapter()
         planner_dialog_payload, planner_action_payload = planner.propose(preturn_state, raw_input)
-        normalized_action_payload = parse_action_proposal(planner_action_payload)
+        normalized_action_payload = parse_action_proposal(
+            _normalized_movement_action_payload(preturn_state, raw_input, planner_action_payload)
+        )
         planner_action_payload = normalized_action_payload
         dialogue_policy_error = _freeform_dialogue_policy_error(
             preturn_state,
@@ -939,6 +940,11 @@ def run_turn(
     requires_freeform_resolution = (
         effective_action.kind == ActionKind.UNKNOWN
         or prefer_proposal_resolution
+        or (
+            isinstance(freeform_adapter, LlmFreeformProposalAdapter)
+            and fallback_action.kind == ActionKind.MOVE
+            and (planner_dialog_payload is None or planner_action_payload is None)
+        )
         or (fallback_action.kind == ActionKind.TALK and planner_dialog_payload is None and planner_action_payload is None)
     )
     if requires_freeform_resolution:

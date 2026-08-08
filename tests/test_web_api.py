@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from storygame.llm.story_director import StoryDirector
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web import _resolve_narrator_mode, create_app
 from tests.fast_fixtures import InMemorySaveStore
@@ -43,6 +44,7 @@ def _client(tmp_path, save_store=None):
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
             save_store=InMemorySaveStore() if save_store is None else save_store,
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
 

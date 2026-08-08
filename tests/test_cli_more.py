@@ -194,6 +194,40 @@ def test_cli_helper_formatters_and_message_filters() -> None:
     assert _sanitize_narration_for_player("Hook beat at room.", debug=True) == "Hook beat at room."
 
 
+def test_run_turn_uses_llm_proposal_for_semantic_inside_move() -> None:
+    state = build_default_state(seed=4054, genre="mystery")
+
+    class _NavigationPlanner:
+        calls = 0
+
+        def propose(self, state, raw_input):  # noqa: ANN001
+            self.calls += 1
+            return (
+                {"speaker": "narrator", "text": "You head inside.", "tone": "in_world"},
+                {
+                    "intent": "move",
+                    "targets": ["inside"],
+                    "arguments": {},
+                    "proposed_effects": ["move:inside"],
+                },
+            )
+
+    planner = _NavigationPlanner()
+
+    next_state, lines, _raw, _beat, continued = run_turn(
+        state,
+        "GO INSIDE",
+        Random(4054),
+        StubNarrator("You go inside through the mansion entrance and enter the foyer."),
+        freeform_adapter=planner,
+    )
+
+    assert continued is True
+    assert planner.calls == 1
+    assert next_state.player.location == "foyer"
+    assert lines == ["You go inside through the mansion entrance and enter the foyer."]
+
+
 def test_build_narrator_invalid_mode_raises() -> None:
     with pytest.raises(ValueError, match="Narrator mode"):
         _build_narrator("invalid")

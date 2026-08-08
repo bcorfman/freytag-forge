@@ -458,10 +458,11 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
         destination = state.world.rooms[state.player.location].exits[direction]
         state, _, _action, _beat, _continued = run_turn(
             state,
-            direction,
-            rng,
-            StubNarrator(),
-            save_store=store,
+        direction,
+        rng,
+        StubNarrator(),
+        save_store=store,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
         assert state.player.location == destination
 
@@ -609,6 +610,7 @@ def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(mon
         Random(2201),
         SilentNarrator(),
         debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
