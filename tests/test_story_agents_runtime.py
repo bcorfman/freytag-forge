@@ -109,6 +109,7 @@ def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _openai_urlopen)
     assert agent_module._chat_complete("openai", "s", "u") == "ok-openai"
     assert int(captured_requests[-1]["max_tokens"]) >= 1400
+    assert captured_requests[-1]["response_format"] == {"type": "json_object"}
 
     def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         return _FakeResponse('{"message":{"content":"ok-ollama"}}')
@@ -573,6 +574,13 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     room_copy = room_agent.run(state, architect, cast, plan)
     assert set(room_copy.keys()) == set(state.world.rooms.keys())
     assert all("long" in entry and "short" in entry for entry in room_copy.values())
+
+    def _raise_room_contract(payload, room_ids):  # noqa: ANN001
+        raise StoryAgentContractError("ROOM", "bad")
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.parse_room_presentation_output", _raise_room_contract)
+    with pytest.raises(RuntimeError, match="contract validation failed"):
+        room_agent.run(state, architect, cast, plan)
 
     # Narrator non-JSON failure
     monkeypatch.setattr("storygame.llm.story_agents.agents._chat_complete", lambda mode, system, user: "bad")

@@ -85,6 +85,7 @@ def _chat_complete(mode: str, system: str, user: str) -> str:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": 0.2,
             "max_tokens": _STORY_AGENT_MAX_TOKENS,
+            "response_format": {"type": "json_object"},
         }
         http_request = urllib.request.Request(
             base_url,
@@ -344,6 +345,10 @@ def _opening_facts_seed(state: GameState) -> dict[str, object]:
     return {
         "assistant": assistant_facts,
         "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
+        "situation_facts": [
+            {"key": fact[1], "value": fact[2]}
+            for fact in state.world_facts.query("case_fact", None, None)
+        ],
         "visible_items": visible_items,
     }
 
