@@ -887,15 +887,17 @@ def run_turn(
     freeform_policy_debug: dict[str, Any] | None = None
     prefer_proposal_resolution = False
     try:
-        # Every navigation request is interpreted by the proposal model. The
-        # engine only normalizes the accepted proposal to a valid map exit.
+        # Deterministic affordances still use the shared proposal/commit path.
+        # They do not need a provider request merely to resolve a visible exit,
+        # regardless of which freeform adapter a deployment injects.
         planner = freeform_adapter
         if isinstance(freeform_adapter, LlmFreeformProposalAdapter) and fallback_action.kind in {
-            ActionKind.LOOK,
-            ActionKind.INVENTORY,
-            ActionKind.TAKE,
-            ActionKind.USE,
-        }:
+                ActionKind.LOOK,
+                ActionKind.INVENTORY,
+                ActionKind.TAKE,
+                ActionKind.USE,
+                ActionKind.MOVE,
+            }:
             planner = RuleBasedFreeformProposalAdapter()
         planner_dialog_payload, planner_action_payload = planner.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(
@@ -940,11 +942,6 @@ def run_turn(
     requires_freeform_resolution = (
         effective_action.kind == ActionKind.UNKNOWN
         or prefer_proposal_resolution
-        or (
-            isinstance(freeform_adapter, LlmFreeformProposalAdapter)
-            and fallback_action.kind == ActionKind.MOVE
-            and (planner_dialog_payload is None or planner_action_payload is None)
-        )
         or (fallback_action.kind == ActionKind.TALK and planner_dialog_payload is None and planner_action_payload is None)
     )
     if requires_freeform_resolution:

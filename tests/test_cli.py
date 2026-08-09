@@ -623,6 +623,26 @@ def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(mon
     assert beat_type != "freeform_roleplay"
 
 
+def test_run_turn_visible_destination_does_not_require_the_freeform_provider(monkeypatch) -> None:
+    def _unavailable_provider(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise AssertionError("visible movement must not call the freeform provider")
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _unavailable_provider)
+    state = build_default_state(seed=2203)
+
+    next_state, _lines, _action_raw, _beat_type, continued = run_turn(
+        state,
+        "go to foyer",
+        Random(2203),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=object(),
+    )
+
+    assert continued is True
+    assert next_state.player.location == "foyer"
+
+
 def test_run_turn_allows_legitimate_npc_answer_that_reuses_topic_words() -> None:
     class _LegitimateAnswerAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
