@@ -818,6 +818,7 @@ class LlmFreeformProposalAdapter:
             dialog_payload, action_payload = _scope_normalized_proposals(
                 state, raw_input, dialog_payload, action_payload
             )
+            action_payload = _normalized_movement_action_payload(state, raw_input, action_payload)
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
             action_payload["arguments"] = arguments
