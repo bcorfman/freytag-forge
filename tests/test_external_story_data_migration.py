@@ -79,3 +79,12 @@ def test_phase_zero_package_projections_and_transcripts_match_frozen_baseline():
             "turn_index": expected["transcript"]["turn_index"],
             "replay_sha256": expected["transcript"]["replay_sha256"],
         }
+
+
+def test_phase_four_readable_contracts_are_realized_as_facts_across_genres():
+    for genre in ("mystery", "fantasy", "sci-fi", "romance"):
+        state = build_default_state(seed=31, genre=genre)
+        readable = state.world_facts.query("item_affordance", None, "read")
+        assert readable, genre
+        item_id = readable[0][1]
+        assert state.world_facts.query("item_alias", item_id, None)

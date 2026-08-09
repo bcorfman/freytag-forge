@@ -72,12 +72,6 @@ AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
         "replacement_schema": "validated package sections and references",
         "removal_phase": "Phase 6",
     },
-    ("storygame/engine/freeform.py", "named-story-entity"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 4",
-        "replacement_schema": "declared item aliases and typed read/reveal contracts",
-        "removal_phase": "Phase 6",
-    },
     ("storygame/llm/opening_coherence.py", "named-story-entity"): {
         "classification": "authoring_data",
         "owner_phase": "Phase 5",

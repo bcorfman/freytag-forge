@@ -7,7 +7,6 @@ from typing import Any, Protocol, TypedDict
 
 from storygame.engine.facts import (
     active_story_goal,
-    case_facts,
     item_driver,
     item_owner,
     item_state,
@@ -37,8 +36,6 @@ _PER_TURN_DELTA_BOUND = 0.15
 _TOPIC_STOPWORDS = {"the", "a", "an", "about", "of", "to"}
 _PROGRESSIVE_TOKENS = {"inspect", "examine", "investigate", "search", "review", "analyze", "question", "ask"}
 _ESCALATION_TOKENS = {"threaten", "attack", "assault", "harm", "violence"}
-_CASE_FILE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bcase\s+file\b")
-_LEDGER_PAGE_COMMAND = re.compile(r"\b(read|review|examine|inspect)\b.*\bledger\s+page\b")
 _DOUBLE_QUOTED_DIALOGUE_PATTERN = re.compile(r'"([^"]+)"')
 _PLACE_QUESTION_PATTERN = re.compile(r"\b(this place|here|what do you make of|what do you think of)\b", re.IGNORECASE)
 _APPEARANCE_QUESTION_PATTERN = re.compile(
@@ -70,44 +67,6 @@ _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "knock",
 }
 _EXPLICIT_CONVERSATION_HEADS = {"talk", "speak", "speak_to", "speakto", "ask", "tell", "say", "hello", "hi", "greet"}
-_OUTDOOR_ROOM_TOKENS = {
-    "outside",
-    "steps",
-    "street",
-    "lane",
-    "road",
-    "square",
-    "gate",
-    "yard",
-    "camp",
-    "trail",
-    "woods",
-    "courtyard",
-    "walk",
-    "path",
-    "drive",
-}
-_INDOOR_ROOM_TOKENS = {
-    "foyer",
-    "hall",
-    "office",
-    "safehouse",
-    "tower",
-    "chapel",
-    "clinic",
-    "room",
-    "platform",
-    "vault",
-    "corridor",
-    "chamber",
-    "cellar",
-    "sanctum",
-    "newsroom",
-    "apartment",
-    "house",
-    "mansion",
-    "interior",
-}
 _LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(
     r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE
 )
@@ -382,14 +341,8 @@ class RuleBasedFreeformProposalAdapter:
 
         targets: list[str] = [target] if target else []
         if intent in {"inspect", "knock"}:
-            if "case file" in text:
-                targets = ["case_file"]
-            elif "ledger page" in text:
-                targets = ["ledger_page"]
-            elif "door" in text:
-                targets = ["door"]
-            else:
-                targets = []
+            readable_item = _readable_item_for_input(state, raw_input)
+            targets = [readable_item] if readable_item else []
 
         action_payload = {
             "intent": intent,
@@ -440,19 +393,34 @@ def _find_relevant_item(state: GameState, raw_topic: str) -> str:
     return ""
 
 
+def _readable_item_for_input(state: GameState, raw_input: str) -> str:
+    """Resolve one currently accessible readable item from fact-backed aliases."""
+    normalized = f" {_normalize_target(raw_input).replace('_', ' ')} "
+    accessible = set(state.player.inventory) | set(room_items(state, player_location(state)))
+    accessible.update(
+        item_id
+        for item_id in state.world.items
+        if _nearby_holder_for_item(state, item_id)
+    )
+    matches = [
+        item_id
+        for item_id in sorted(accessible)
+        if state.world_facts.holds("item_affordance", item_id, "read")
+        and any(f" {str(fact[2]).lower()} " in normalized for fact in state.world_facts.query("item_alias", item_id, None))
+    ]
+    return matches[0] if len(matches) == 1 else ""
+
+
 def _movement_requested(raw_input: str) -> bool:
     return _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
 
 
-def _room_navigation_text(room) -> str:  # noqa: ANN001
-    return f" {room.id.replace('_', ' ')} {room.name.lower()} {room.description.lower()} "
-
-
 def _room_environment(room) -> str:  # noqa: ANN001
-    tokens = set(re.findall(r"[a-z]+", _room_navigation_text(room)))
-    if tokens.intersection(_OUTDOOR_ROOM_TOKENS):
+    """Presentation-derived compatibility label; navigation itself uses exits."""
+    text = f" {room.id.replace('_', ' ')} {room.name.lower()} {room.description.lower()} "
+    if any(token in text for token in (" outside ", " steps ", " street ", " lane ", " road ", " trail ")):
         return "outdoor"
-    if tokens.intersection(_INDOOR_ROOM_TOKENS):
+    if any(token in text for token in (" foyer ", " hall ", " office ", " room ", " chamber ", " interior ")):
         return "indoor"
     return "unknown"
 
@@ -464,10 +432,7 @@ def _exit_match_score(
     destination_room_id: str,
 ) -> int:
     text = f" {_normalize_target(raw_input).replace('_', ' ')} "
-    current_room = state.world.rooms[state.player.location]
     destination_room = state.world.rooms[destination_room_id]
-    destination_text = _room_navigation_text(destination_room)
-    current_text = _room_navigation_text(current_room)
     score = 0
 
     if destination_room.name and destination_room.name.lower() in text:
@@ -475,49 +440,18 @@ def _exit_match_score(
     destination_id_text = destination_room_id.replace("_", " ")
     if destination_id_text in text:
         score += 7
-
-    destination_environment = _room_environment(destination_room)
-    current_environment = _room_environment(current_room)
-    inward_request = any(
-        phrase in text for phrase in (" enter ", " inside ", " indoors ", " into ", " head in ", " go in ")
-    )
-    outward_request = any(
-        phrase in text for phrase in (" outside ", " outdoors ", " back outside ", " back out ", " out ", " leave ")
-    )
-    door_request = any(phrase in text for phrase in (" door ", " front door ", " entrance "))
-
-    if destination_environment == "indoor" and inward_request:
-        score += 4
-    if destination_environment == "outdoor" and outward_request:
-        score += 4
-    if (
-        current_environment == "outdoor"
-        and destination_environment == "indoor"
-        and any(phrase in text for phrase in (" mansion ", " front door ", " entrance ", " head in ", " enter "))
+    if any(
+        f" {str(fact[3]).lower()} " in text
+        for fact in state.world_facts.query("path_alias", state.player.location, direction, None)
     ):
-        score += 5
-    if (
-        current_environment == "indoor"
-        and destination_environment == "outdoor"
-        and any(phrase in text for phrase in (" outside ", " back ", " back outside ", " drive ", " steps "))
-    ):
-        score += 5
-    if door_request and " door " in current_text and len(current_room.exits) == 1:
-        score += 3
+        score += 9
+    inward_request = any(phrase in text for phrase in (" enter ", " inside ", " into ", " head in ", " go in "))
+    outward_request = any(phrase in text for phrase in (" outside ", " back outside ", " back out ", " leave "))
+    if _room_environment(destination_room) == "indoor" and inward_request:
+        score += 4
+    if _room_environment(destination_room) == "outdoor" and outward_request:
+        score += 4
 
-    if destination_environment == "outdoor":
-        if " outside " in destination_text and " outside " in text:
-            score += 2
-        if " drive " in destination_text and " drive " in text:
-            score += 4
-        if " street " in destination_text and " street " in text:
-            score += 4
-        if " lane " in destination_text and " lane " in text:
-            score += 4
-        if " road " in destination_text and " road " in text:
-            score += 4
-        if " path " in destination_text and " path " in text:
-            score += 4
     return score
 
 
@@ -529,6 +463,8 @@ def _semantic_exit_direction(state: GameState, raw_input: str) -> str:
     room = state.world.rooms[state.player.location]
     if not room.exits:
         return ""
+    if len(room.exits) == 1 and any(token in raw_input.lower() for token in ("enter", "inside", "door", "entrance")):
+        return next(iter(room.exits.values()))
     scored: list[tuple[int, str]] = []
     for direction, destination_room_id in room.exits.items():
         score = _exit_match_score(state, raw_input, direction, destination_room_id)
@@ -711,14 +647,6 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     return system, json.dumps(payload, ensure_ascii=True)
 
 
-def _case_fact_map(state: GameState) -> dict[str, str]:
-    return {
-        str(entry["key"]).strip(): str(entry["value"]).strip()
-        for entry in case_facts(state)
-        if str(entry["key"]).strip() and str(entry["value"]).strip()
-    }
-
-
 def _normalize_intent(intent: str) -> str:
     normalized = _normalize_target(intent)
     if normalized in {"examine", "inspect", "review", "read", "analyze"}:
@@ -812,11 +740,19 @@ def _scene_scoped_dialog_override(
     action_payload: dict[str, Any],
 ) -> dict[str, Any]:
     normalized_input = _normalize_target(raw_input).replace("_", " ")
-    visible_items = set(room_items(state, player_location(state)))
-    if "arrival_sedan" in visible_items and any(token in normalized_input for token in ("car", "sedan", "door")):
+    visible_items = room_items(state, player_location(state))
+    vehicle_names = {
+        _normalize_target(state.world.items[item_id].name).replace("_", " ")
+        for item_id in visible_items
+        if item_id in state.world.items and state.world.items[item_id].kind == "vehicle"
+    }
+    if vehicle_names and (
+        any(name and name in normalized_input for name in vehicle_names)
+        or any(token in normalized_input for token in ("vehicle", "car", "door"))
+    ):
         return {
             "speaker": "narrator",
-            "text": "You reach for the sedan's door, testing what gives before you commit further.",
+            "text": f"You reach for the {next(iter(vehicle_names))}'s door, testing what gives before you commit further.",
             "tone": "in_world",
         }
 
@@ -960,14 +896,13 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
                 return f"You ask {speaker} about the {item_name} and wait for a useful read on it."
         if topic == "place" and state is not None:
             room = state.world.rooms[state.player.location]
-            if room.id == "front_steps":
-                return f"You ask {speaker} what they make of the front steps and the signs the weather has not erased."
             if room.item_ids:
                 first_item = room.item_ids[0].replace("_", " ")
-                return f"You ask {speaker} what stands out here, with the {first_item} already drawing attention."
+                room_label = room.id.replace("_", " ")
+                return f"You ask {speaker} what stands out at {room_label}, with the {first_item} already drawing attention."
             exits = sorted(room.exits.keys())
             if exits:
-                return f"You ask {speaker} what this room suggests before either of you pushes {exits[0]}."
+                return f"You ask {speaker} what {room.name} suggests before either of you pushes {exits[0]}."
             return f"You ask {speaker} for a read on the room and hold on the details that matter."
         if topic in {"objective", "goal", "goals"} and state is not None:
             return f"You check the objective with {speaker}: {active_story_goal(state)}"
@@ -996,38 +931,28 @@ def _apply_raw_command_overrides(
     dialog_proposal: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     lowered = raw_input.strip().lower()
-    nearby_case_file_holder = _nearby_holder_for_item(state, "case_file")
-    if _CASE_FILE_COMMAND.search(lowered) and ("case_file" in state.player.inventory or nearby_case_file_holder):
-        facts = _case_fact_map(state)
-        victim_name = facts.get("victim_name", "the victim")
-        victim_timeline = facts.get("victim_timeline", "The file pins down the victim timeline.")
-        strongest_lead = facts.get("strongest_lead", "The file points you toward the strongest lead.")
+    readable_item = _readable_item_for_input(state, raw_input)
+    if readable_item and re.search(r"\b(read|review|examine|inspect)\b", lowered):
+        leads = [fact[2] for fact in state.world_facts.query("document_lead", readable_item, None)]
+        contexts = [fact[3] for fact in state.world_facts.query("document_context", readable_item, None)]
+        item_name = state.world.items[readable_item].name
         action = {
-            "intent": "read_case_file",
-            "targets": ["case_file"],
-            "arguments": {"source_command": "read_case_file"},
-            "proposed_effects": ["reviewed_case_file"],
+            "intent": "read",
+            "targets": [readable_item],
+            "arguments": {"source_command": "read"},
+            "proposed_effects": [f"read:{readable_item}"],
         }
+        case_values = {
+            fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)
+        }
+        knowledge_values = [
+            case_values[key]
+            for _predicate, _item, key in state.world_facts.query("document_knowledge", readable_item, None)
+            if key in case_values
+        ]
         dialog = {
             "speaker": "narrator",
-            "text": f"You read the case file. {victim_name} is the victim. {victim_timeline} {strongest_lead}",
-            "tone": "in_world",
-        }
-        return parse_action_proposal(action), parse_dialog_proposal(dialog)
-    visible_items = room_items(state, player_location(state))
-    nearby_ledger_holder = _nearby_holder_for_item(state, "ledger_page")
-    if _LEDGER_PAGE_COMMAND.search(lowered) and (
-        "ledger_page" in visible_items or "ledger_page" in state.player.inventory or nearby_ledger_holder
-    ):
-        action = {
-            "intent": "read_ledger_page",
-            "targets": ["ledger_page"],
-            "arguments": {"source_command": "read_ledger_page"},
-            "proposed_effects": ["reviewed_ledger_page"],
-        }
-        dialog = {
-            "speaker": "narrator",
-            "text": "You study the ledger page and pull out a useful thread: a missing payment entry tied to tonight's visit.",
+            "text": " ".join([f"You read the {item_name}.", *knowledge_values, *contexts, *leads]),
             "tone": "in_world",
         }
         return parse_action_proposal(action), parse_dialog_proposal(dialog)
@@ -1043,74 +968,45 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
     if intent in _ALLOWED_INTENTS and not targets:
         return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_NO_TARGET"]}
 
-    if intent == "read_case_file":
-        nearby_holder = _nearby_holder_for_item(state, "case_file")
-        if "case_file" not in state.player.inventory and not nearby_holder:
-            return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_CASE_FILE"]}
-        facts = _case_fact_map(state)
-        victim_name = facts.get("victim_name", "the victim")
-        victim_timeline = facts.get("victim_timeline", "The file pins down the victim timeline.")
-        lead_suspect = facts.get("lead_suspect", "The file leaves the lead suspect unresolved.")
-        strongest_lead = facts.get("strongest_lead", "The file points to the strongest documented lead.")
+    if intent == "read" and targets:
+        item_id = str(targets[0])
+        nearby_holder = _nearby_holder_for_item(state, item_id)
+        visible_items = room_items(state, player_location(state))
+        if not state.world_facts.holds("item_affordance", item_id, "read"):
+            return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_UNREADABLE_ITEM"]}
+        if item_id not in state.player.inventory and item_id not in visible_items and not nearby_holder:
+            return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_UNAVAILABLE_ITEM"]}
+        discovery = next((fact[2] for fact in state.world_facts.query("document_discovery", item_id, None)), item_id)
         assert_ops = [
-            {"fact": ["flag", "player", "reviewed_case_file"]},
-            {"fact": ["flag", "player", "freeform_intent_read_case_file"]},
-            {"fact": ["discovered_clue", "case_file"]},
-            {"fact": ["discovered_lead", "case_file", strongest_lead]},
+            {"fact": ["flag", "player", f"reviewed_{item_id}"]},
+            {"fact": ["flag", "player", f"freeform_intent_read_{item_id}"]},
+            {"fact": ["discovered_clue", discovery]},
+        ]
+        assert_ops.extend({"fact": ["discovered_lead", item_id, fact[2]]} for fact in state.world_facts.query("document_lead", item_id, None))
+        assert_ops.extend({"fact": ["knows", "player", fact[2]]} for fact in state.world_facts.query("document_knowledge", item_id, None))
+        assert_ops.extend({"fact": ["player_context", fact[2], fact[3]]} for fact in state.world_facts.query("document_context", item_id, None))
+        case_values = {fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)}
+        assert_ops.extend(
             {
                 "fact": [
                     "player_context",
-                    "case_file_status",
-                    "You have reviewed the case file and can cite the victim, timeline, and strongest documented lead.",
+                    f"{item_id}_{str(fact[2]).removesuffix('_name').split('_')[-1]}",
+                    str(fact[3]).replace("{value}", case_values.get(fact[2], "")),
                 ]
-            },
-            {"fact": ["player_context", "case_file_victim", f"The case file identifies the victim as {victim_name}."]},
-            {"fact": ["player_context", "case_file_timeline", victim_timeline]},
-            {"fact": ["player_context", "case_file_suspect", lead_suspect]},
-            {"fact": ["player_context", "case_file_lead", strongest_lead]},
-        ]
-        assert_ops.extend({"fact": ["knows", "player", key]} for key in facts)
+            }
+            for fact in state.world_facts.query("document_context_template", item_id, None)
+            if case_values.get(fact[2], "")
+        )
         if nearby_holder:
-            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "case_file"]})
+            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, item_id]})
         return {
             "assert": assert_ops,
             "retract": [
-                {
-                    "fact": [
-                        "player_context",
-                        "case_file_status",
-                        "You have not reviewed the case file yet, so its contents are still unknown to you.",
-                    ]
-                }
+                {"fact": ["player_context", fact[2], fact[3]]}
+                for fact in state.world_facts.query("document_retract_context", item_id, None)
             ],
             "numeric_delta": [],
-            "reasons": ["freeform:read_case_file"],
-        }
-
-    if intent == "read_ledger_page":
-        visible_items = room_items(state, player_location(state))
-        nearby_holder = _nearby_holder_for_item(state, "ledger_page")
-        if "ledger_page" not in visible_items and "ledger_page" not in state.player.inventory and not nearby_holder:
-            return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_MISSING_LEDGER_PAGE"]}
-        assert_ops = [
-            {"fact": ["flag", "player", "reviewed_ledger_page"]},
-            {"fact": ["flag", "player", "freeform_intent_read_ledger_page"]},
-            {"fact": ["discovered_clue", "ledger_page"]},
-            {
-                "fact": [
-                    "discovered_lead",
-                    "ledger_page",
-                    "The ledger page exposes a missing payment entry tied to tonight's visit.",
-                ]
-            },
-        ]
-        if nearby_holder:
-            assert_ops.append({"fact": ["reviewed_with_holder", nearby_holder, "ledger_page"]})
-        return {
-            "assert": assert_ops,
-            "retract": [],
-            "numeric_delta": [{"key": "trust:daria_stone:player", "delta": 0.03}],
-            "reasons": ["freeform:read_ledger_page"],
+            "reasons": [f"freeform:read_{item_id}"],
         }
 
     if not targets or intent not in _ALLOWED_INTENTS:
@@ -1173,14 +1069,12 @@ def _story_deltas_for_freeform(action_proposal: dict[str, Any], envelope: dict[s
         return 0.0, 0.0
     if "POLICY_NO_TARGET" in reasons:
         return 0.0, 0.0
-    if "POLICY_MISSING_CASE_FILE" in reasons:
-        return 0.0, 0.0
-    if "POLICY_MISSING_LEDGER_PAGE" in reasons:
+    if "POLICY_UNREADABLE_ITEM" in reasons or "POLICY_UNAVAILABLE_ITEM" in reasons:
         return 0.0, 0.0
 
     progress = 0.01
     tension = 0.01
-    if "freeform:read_ledger_page" in reasons:
+    if any(reason.startswith("freeform:read_") for reason in reasons):
         return 0.03, 0.01
     if any(token in intent for token in _PROGRESSIVE_TOKENS):
         progress += 0.01

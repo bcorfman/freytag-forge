@@ -52,6 +52,12 @@ Universal rules live in `data/rules/core_rules.yaml`; genre extensions live in
 visible items, addressable NPCs, and inventory from facts for model context.
 It is advisory context, not a mutation authority.
 
+Readable-item contracts are also realized into canonical facts: `item_affordance`,
+`item_alias`, document discovery, knowledge, lead, and context facts. The one
+generic `read` intent validates current access (including an on-scene holder)
+and commits only those declared effects. Path aliases are likewise package data
+realized as facts for natural-language exit resolution.
+
 ## Post-commit rendering
 
 Ordinary rendering receives observer-scoped context after direct effects,

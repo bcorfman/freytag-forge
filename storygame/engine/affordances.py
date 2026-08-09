@@ -21,7 +21,14 @@ def build_affordance_context(state, observer: str = "player") -> dict[str, objec
     for item_id in room_items(state, location_id):
         item = state.world.items.get(item_id)
         if item is not None:
-            items.append({"id": item_id, "portable": bool(item.portable)})
+            entry: dict[str, object] = {"id": item_id, "portable": bool(item.portable)}
+            affordances = tuple(fact[2] for fact in state.world_facts.query("item_affordance", item_id, None))
+            aliases = tuple(fact[2] for fact in state.world_facts.query("item_alias", item_id, None))
+            if affordances:
+                entry["affordances"] = affordances
+            if aliases:
+                entry["aliases"] = aliases
+            items.append(entry)
     npcs = tuple({"id": npc_id, "can_address": True} for npc_id in room_npcs(state, location_id) if npc_id != observer)
     return {
         "observer": observer,
