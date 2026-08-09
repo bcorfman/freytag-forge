@@ -2,6 +2,9 @@ schema_version: 1
 
 # Authoring templates expanded and validated by world_builder.
 default: &default
+  room_presentation_template:
+    name: "{room_title}"
+    description: "{room_title} is arranged for close inspection, with practical routes and details shaped by the current situation."
   characters:
     traits: [observant, independent]
     appearance: "A distinct, scene-appropriate figure."
@@ -19,6 +22,9 @@ default: &default
     public_briefing: [opening_situation]
     pending_knowledge: [local_context]
     protected_knowledge: [future_revelations]
+  goals:
+    setup: "Survey the situation, confirm a first lead, and choose a concrete next action."
+    primary: "Define and confront the core conflict while preserving viable paths forward."
   intent_aliases:
     examine: [inspect, study, look at]
     communicate: [ask, tell, speak with]
@@ -140,6 +146,9 @@ packages:
         victim_timeline: Emma Vale was last seen shortly before midnight in the west gallery.
         lead_suspect: The groundskeeper was the last verified witness to see Emma alive.
         strongest_lead: The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.
+    goals:
+      setup: "Review the case file, question your first contact, and identify the strongest lead."
+      primary: "Uncover who is behind the case and why the truth was buried."
   fantasy:
     <<: *default
     map:
@@ -254,6 +263,9 @@ packages:
         woods_edge: {exposure: outdoor, ambient_source: the woods}
         ritual_room: {exposure: enclosed}
     items: [salt_pouch, candle_bundle, sigil_stone]
+    goals:
+      setup: "Get oriented, survey the immediate threat, and establish a safe next move."
+      primary: "Understand what is haunting the situation and break its hold before it spreads."
   thriller:
     <<: *default
     map:
@@ -266,3 +278,6 @@ packages:
         embassy_corridor: {exposure: enclosed}
         final_site: {exposure: outdoor, ambient_source: the site}
     items: [cipher_sheet, surveillance_tape, access_chip]
+    goals:
+      setup: "Get oriented, verify your intel, and secure the first trustworthy contact."
+      primary: "Expose the operation driving the crisis and stop it before escalation."

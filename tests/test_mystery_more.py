@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from storygame.engine.mystery import caseboard_lines, filtered_inventory, take_item_message
+from storygame.engine.presentation import filtered_inventory, story_status_lines, take_item_message
 from storygame.engine.state import Item
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 
@@ -35,43 +35,42 @@ def test_mystery_ledger_page_uses_specific_clue_text_not_goal_boilerplate() -> N
     assert "payment" in message.lower() or "ledger" in message.lower()
 
 
-def test_caseboard_lines_fallback_lead_when_no_items_or_npcs() -> None:
+def test_story_status_lines_fallback_lead_when_no_items_or_npcs() -> None:
     state = build_default_state(seed=613)
     room = state.world.rooms[state.player.location]
     room.item_ids = ()
     room.npc_ids = ()
     state.beat_history = ()
 
-    lines = caseboard_lines(state)
+    lines = story_status_lines(state)
     joined = "\n".join(lines).lower()
-    assert "emma vale" in joined
-    assert "missing ledger payment" in joined
+    assert "story status" in joined
+    assert "explore adjacent rooms" in joined
     assert "latest beat" not in joined
 
 
-def test_caseboard_lines_prefer_fact_backed_goal_and_discovered_leads() -> None:
+def test_story_status_lines_prefer_fact_backed_goal_and_discovered_leads() -> None:
     state = build_default_state(seed=615)
     state.active_goal = "stale in-memory goal"
     state.world_facts.assert_fact("active_goal", "Review the route key and press Daria for the next lead.")
     state.world_facts.assert_fact("discovered_lead", "route_key", "The route key opens the hidden service passage.")
 
-    lines = caseboard_lines(state)
+    lines = story_status_lines(state)
     joined = "\n".join(lines)
 
     assert "Review the route key and press Daria for the next lead." in joined
     assert "The route key opens the hidden service passage." in joined
 
 
-def test_caseboard_lines_surface_fact_backed_case_threads_and_events() -> None:
+def test_story_status_lines_surface_fact_backed_story_threads_and_events() -> None:
     state = build_default_state(seed=616, genre="mystery")
     state.world_facts.assert_fact("story_hidden_thread", "The magistrate buried an earlier murder tied to Emma Vale.")
     state.world_facts.assert_fact("planned_event", "warning", "A warning reaches the foyer.", "2", "foyer")
     state.world_facts.assert_fact("planned_event_participant", "warning", "Daria Stone")
 
-    lines = caseboard_lines(state)
+    lines = story_status_lines(state)
     joined = "\n".join(lines)
 
     assert "Emma Vale" in joined
-    assert "missing ledger payment" in joined
     assert "magistrate buried an earlier murder" in joined
     assert "A warning reaches the foyer." in joined

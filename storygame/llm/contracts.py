@@ -391,7 +391,7 @@ def _mode_from_legacy_intent(intent: str) -> str:
         return "conversation"
     if normalized in {"take", "take_item", "move", "move_to", "use"}:
         return "physical"
-    if normalized in {"inspect", "inspect_item", "read_case_file", "read_ledger_page", "search"}:
+    if normalized in {"inspect", "inspect_item", "search"}:
         return "investigation"
     return "scene"
 

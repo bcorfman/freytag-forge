@@ -11,7 +11,7 @@ from storygame.engine.facts import (
     room_npcs,
     room_paths,
 )
-from storygame.engine.mystery import npc_talk_message, take_item_message
+from storygame.engine.presentation import npc_talk_message, take_item_message
 from storygame.engine.parser import Action, ActionKind
 from storygame.engine.state import Event, GameState
 

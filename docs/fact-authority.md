@@ -80,8 +80,8 @@ Phase 1 runtime package inputs are loaded from the declarative templates in
 expands the selected template with outline and curve inputs, then
 `validate_world_package` checks map paths, character locations, item custody,
 opening knowledge boundaries, aliases, and effect-template shapes before world
-realization. `opening_setup.yaml` is a compatibility input and is not the
-schema authority for new package sections.
+realization. Opening setup is declared in the validated story package and is
+not a runtime authority.
 
 `storygame.story_packages` is an offline-only authoring boundary. Its generated
 packages are validated inputs, never runtime mutation authorities: only their

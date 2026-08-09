@@ -119,6 +119,11 @@ as canonical facts. Ambient event prose reads those facts rather than room-name
 keywords, while package validation rejects weather-sensitive items staged in
 exposed rooms. Custody, location, role, and observer-knowledge conflicts remain
 generic fact-policy failures across every genre.
+Phase 6 removes the legacy mystery helper and world-builder fallback data.
+The CLI's generic story-status projection now reads canonical facts, while
+maps, item aliases, objectives, opening setup, and presentation remain in
+validated package data. The static audit has no allowlist: embedded story
+entities or genre-authored runtime presentation fail CI.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

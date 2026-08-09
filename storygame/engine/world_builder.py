@@ -35,44 +35,6 @@ _TONE_KEYWORDS: dict[str, tuple[str, ...]] = {
     "neutral": (),
 }
 
-_ROOM_TEMPLATES: dict[str, tuple[str, ...]] = {
-    "sci-fi": ("dock_hub", "market_arcade", "archive_node", "lab_ring", "tower_array", "command_core"),
-    "mystery": ("front_steps", "foyer", "market_lane", "records_office", "safehouse", "watch_tower", "old_chapel"),
-    "romance": ("courtyard", "cafe_row", "garden_path", "gallery_hall", "river_walk", "lantern_square"),
-    "adventure": ("camp", "trailhead", "cliff_pass", "ruin_gate", "inner_chamber", "return_camp"),
-    "action": ("safe_flat", "alley_junction", "control_room", "warehouse", "checkpoint", "extraction_point"),
-    "suspense": ("apartment", "backstreet", "records_room", "subway_platform", "abandoned_site", "panic_room"),
-    "drama": ("family_home", "main_street", "clinic", "school_hall", "community_center", "lake_house"),
-    "fantasy": ("village_gate", "market_square", "scribe_hall", "enchanted_wood", "citadel_steps", "sanctum"),
-    "horror": ("old_house", "fog_road", "chapel_ruins", "cellar", "woods_edge", "ritual_room"),
-    "thriller": ("transit_hub", "newsroom", "intel_vault", "industrial_yard", "embassy_corridor", "final_site"),
-}
-
-_ITEM_TEMPLATES: dict[str, tuple[str, ...]] = {
-    "sci-fi": ("data_key", "signal_lens", "power_cell"),
-    "mystery": ("case_file", "ledger_page", "route_key"),
-    "romance": ("letter", "locket", "keepsake"),
-    "adventure": ("map_fragment", "rope_kit", "artifact_shard"),
-    "action": ("badge", "breach_charge", "comm_scrambler"),
-    "suspense": ("burner_phone", "security_card", "flash_drive"),
-    "drama": ("old_photo", "medical_note", "voice_message"),
-    "fantasy": ("rune_token", "moon_blade", "warded_scroll"),
-    "horror": ("salt_pouch", "candle_bundle", "sigil_stone"),
-    "thriller": ("cipher_sheet", "surveillance_tape", "access_chip"),
-}
-
-_DEFAULT_SETUP_OBJECTIVES: dict[str, str] = {
-    "mystery": "Review the case file, question your first contact, and identify the strongest lead.",
-    "thriller": "Get oriented, verify your intel, and secure the first trustworthy contact.",
-    "horror": "Get oriented, survey the immediate threat, and establish a safe next move.",
-}
-
-_DEFAULT_PRIMARY_OBJECTIVES: dict[str, str] = {
-    "mystery": "Uncover who is behind the case and why the truth was buried.",
-    "thriller": "Expose the operation driving the crisis and stop it before escalation.",
-    "horror": "Understand what is haunting the situation and break its hold before it spreads.",
-}
-
 
 class WorldPackageValidationError(ValueError):
     """Raised when external story data cannot form a coherent package."""
@@ -218,15 +180,6 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     return package
 
 
-@lru_cache(maxsize=1)
-def _opening_setup_profiles() -> dict[str, dict[str, Any]]:
-    path = Path(__file__).resolve().parents[2] / "data" / "opening_setup.yaml"
-    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    if not isinstance(payload, dict):
-        raise ValueError("opening_setup.yaml must contain genre-keyed mappings.")
-    return {str(genre): dict(profile) for genre, profile in payload.items() if isinstance(profile, dict)}
-
-
 def _clean_outline_sentence(outline_text: str) -> str:
     text = outline_text.strip()
     if text.lower().startswith("premise:"):
@@ -268,16 +221,12 @@ def _outline_fragments(outline_text: str) -> list[str]:
     return fragments
 
 
-def _build_outline_goals(genre: str, outline_text: str, beat_candidates: list[str]) -> dict[str, Any]:
+def _build_outline_goals(goal_template: dict[str, Any], outline_text: str, beat_candidates: list[str]) -> dict[str, Any]:
     fragments = _outline_fragments(outline_text)
-    setup = _DEFAULT_SETUP_OBJECTIVES.get(
-        genre,
-        "Survey the situation, confirm your first lead, and choose a concrete next action.",
-    )
-    primary = _DEFAULT_PRIMARY_OBJECTIVES.get(
-        genre,
-        f"Define and confront the core conflict in this {genre} scenario.",
-    )
+    setup = str(goal_template.get("setup", "")).strip()
+    primary = str(goal_template.get("primary", "")).strip()
+    if not setup or not primary:
+        raise WorldPackageValidationError("package goals require setup and primary objectives")
 
     secondary: list[str] = []
     for fragment in fragments[:2]:
@@ -451,14 +400,16 @@ def select_story_outline(
     return selected
 
 
-def _build_map_for_genre(genre: str) -> dict[str, Any]:
-    template = load_story_package_templates().get(genre, load_story_package_templates()["default"])
-    room_ids = tuple(template.get("map", {}).get("rooms", _ROOM_TEMPLATES[genre]))
-    if template.get("map", {}).get("paths"):
+def _build_map_from_template(template: dict[str, Any]) -> dict[str, Any]:
+    map_template = template.get("map", {})
+    room_ids = tuple(map_template.get("rooms", ()))
+    if not room_ids:
+        raise WorldPackageValidationError("package map requires rooms")
+    if map_template.get("paths"):
         return {
             "rooms": list(room_ids),
-            "paths": deepcopy(template["map"]["paths"]),
-            "environment": deepcopy(template["map"]["environment"]),
+            "paths": deepcopy(map_template["paths"]),
+            "environment": deepcopy(map_template["environment"]),
             "room_presentation": {},
         }
     paths: list[dict[str, str]] = []
@@ -467,7 +418,7 @@ def _build_map_for_genre(genre: str) -> dict[str, Any]:
         paths.append({"direction": direction, "from": room_ids[index], "to": room_ids[index + 1]})
         reverse = {"north": "south", "south": "north", "east": "west", "west": "east"}[direction]
         paths.append({"direction": reverse, "from": room_ids[index + 1], "to": room_ids[index]})
-    return {"rooms": list(room_ids), "paths": paths, "environment": deepcopy(template["map"]["environment"])}
+    return {"rooms": list(room_ids), "paths": paths, "environment": deepcopy(map_template["environment"])}
 
 
 def _build_item_spec(
@@ -499,6 +450,23 @@ def _build_item_spec(
     }
 
 
+def _room_presentation_from_template(template: dict[str, Any], room_ids: list[str]) -> dict[str, dict[str, str]]:
+    presentation_template = template.get("room_presentation_template", {})
+    name_template = str(presentation_template.get("name", "")).strip()
+    description_template = str(presentation_template.get("description", "")).strip()
+    if not name_template or not description_template:
+        raise WorldPackageValidationError("package room_presentation_template requires name and description")
+    presentation: dict[str, dict[str, str]] = {}
+    for room_id in room_ids:
+        room_title = _humanize_item_id(room_id)
+        values = {"room_id": room_id, "room_title": room_title}
+        presentation[room_id] = {
+            "name": name_template.format(**values),
+            "description": description_template.format(**values),
+        }
+    return presentation
+
+
 def build_world_package(
     genre: str,
     session_length: int | str,
@@ -520,11 +488,13 @@ def build_world_package(
         seed=seed,
     )
     character_names = _extract_character_names(outline["outline"])
-    map_section = _build_map_for_genre(normalized_genre)
     template = load_story_package_templates().get(normalized_genre, load_story_package_templates()["default"])
-    item_ids = list(template.get("items", _ITEM_TEMPLATES[normalized_genre]))
+    map_section = _build_map_from_template(template)
+    item_ids = list(template.get("items", ()))
+    if not item_ids:
+        raise WorldPackageValidationError("package items require declared ids")
     beat_candidates = list(curve["obligatory_moments"])
-    goals = _build_outline_goals(normalized_genre, str(outline["outline"]), beat_candidates)
+    goals = _build_outline_goals(dict(template.get("goals", {})), str(outline["outline"]), beat_candidates)
     opening_setup = deepcopy(template.get("opening_setup", {}))
     protagonist_name = str(opening_setup.get("protagonist_name", "The protagonist")).strip() or "The protagonist"
     story_plan = _build_story_plan(str(outline["outline"]), goals, protagonist_name)
@@ -612,17 +582,6 @@ def build_world_package(
         directions = sorted(path["direction"] for path in map_section["paths"] if path["from"] == gate_room)
         if directions:
             package["map"]["locks"] = [{"room": gate_room, "direction": directions[0], "key_id": item_ids[0]}]
-    generated_presentation = {
-        room_id: {
-            "name": re.sub(r"\s+", " ", room_id.replace("_", " ").replace("-", " ")).strip().title(),
-            "description": (
-                f"The {room_id.replace('_', ' ')} is laid out for close inspection, with worn surfaces and "
-                f"practical routes that can be searched room by room in this {outline['tone']} "
-                f"{normalized_genre} case."
-            ),
-        }
-        for room_id in package["map"]["rooms"]
-    }
-    package["map"]["room_presentation"] = generated_presentation
+    package["map"]["room_presentation"] = _room_presentation_from_template(template, package["map"]["rooms"])
     package["map"]["room_presentation"].update(deepcopy(template.get("map", {}).get("room_presentation", {})))
     return validate_world_package(package)

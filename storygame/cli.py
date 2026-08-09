@@ -27,7 +27,7 @@ from storygame.engine.impact import (
     requires_high_impact_confirmation,
 )
 from storygame.engine.interfaces import parse_action_proposal
-from storygame.engine.mystery import caseboard_lines
+from storygame.engine.presentation import story_status_lines
 from storygame.engine.parser import Action, ActionKind, parse_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
@@ -389,7 +389,7 @@ def _should_prefer_proposal_resolution(
     intent = str(planner_action_payload.get("intent", "")).strip().lower()
     speaker = str(planner_dialog_payload.get("speaker", "")).strip().lower()
 
-    conversational_intents = {"ask_about", "greet", "apologize", "threaten", "read_case_file", "inspect", "knock"}
+    conversational_intents = {"ask_about", "greet", "apologize", "threaten", "inspect", "knock"}
     if intent in conversational_intents:
         return True
     if fallback_action.kind == ActionKind.TALK:
@@ -1090,7 +1090,7 @@ def run_turn(
     lines: list[str] = [narration.strip()] if narration.strip() else []
 
     if debug:
-        lines.extend(caseboard_lines(next_state))
+        lines.extend(story_status_lines(next_state))
 
     if debug:
         lines.append(

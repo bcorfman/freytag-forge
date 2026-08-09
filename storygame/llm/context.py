@@ -19,7 +19,7 @@ from storygame.engine.facts import (
     protagonist_profile,
     story_goals,
 )
-from storygame.engine.mystery import filtered_inventory, room_item_groups
+from storygame.engine.presentation import filtered_inventory, room_item_groups
 from storygame.engine.npc import role_facts
 from storygame.engine.parser import Action
 from storygame.engine.perception import observer_context_slice, visible_entities

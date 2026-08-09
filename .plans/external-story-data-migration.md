@@ -160,20 +160,20 @@ an initial fixture, not a special runtime path.
 
 ### Work
 
-- Delete legacy mystery setup, item aliases, prose, and fallback branches after
+- [x] Delete legacy mystery setup, item aliases, prose, and fallback branches after
   package parity is proven.
-- Update contributor documentation and the static audit so new embedded
+- [x] Update contributor documentation and the static audit so new embedded
   story-specific runtime data fails CI.
-- Run full evaluation fixtures, replay/save-load checks, local/hosted surface
+- [x] Run full evaluation fixtures, replay/save-load checks, local/hosted surface
   parity, and package validation across all genres.
 
 ### Exit criteria
 
-- `rg`/static audit finds no named story entities or genre-authored presentation
+- [x] `rg`/static audit finds no named story entities or genre-authored presentation
   branches in shared runtime modules.
-- All packages initialize, play, save/load, and render through the same generic
+- [x] All packages initialize, play, save/load, and render through the same generic
   contracts.
-- `TMPDIR=/tmp uv run pytest -q` passes with coverage at or above 90%.
+- [x] `TMPDIR=/tmp uv run pytest -q` passes with coverage at or above 90%.
 
 ## Delivery order
 
