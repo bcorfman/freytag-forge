@@ -58,7 +58,6 @@ from storygame.test_metrics import record
 
 def _opening_story_editor(paragraphs: list[str]) -> list[str]:
     forbidden = (
-        "neutral mystery scene",
         "move the story toward resolution",
         "where you are:",
         "cast:",
@@ -66,6 +65,7 @@ def _opening_story_editor(paragraphs: list[str]) -> list[str]:
     cleaned: list[str] = []
     for paragraph in paragraphs:
         normalized = " ".join(paragraph.split())
+        normalized = re.sub(r"\bneutral\s+\w+\s+scene\b", "", normalized, flags=re.IGNORECASE)
         for fragment in forbidden:
             normalized = normalized.replace(fragment, "")
             normalized = normalized.replace(fragment.title(), "")

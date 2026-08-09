@@ -161,6 +161,8 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
                 raise WorldPackageValidationError("unknown custody reference")
             if custody.get("kind") == "room" and custody.get("id") not in room_ids:
                 raise WorldPackageValidationError("unknown custody reference")
+        if str(item.get("document_visibility", "discoverable")) not in {"public", "discoverable", "protected"}:
+            raise WorldPackageValidationError("invalid document visibility")
     opening = package["opening_setup"]
     if not isinstance(opening, dict):
         raise WorldPackageValidationError("opening_setup must be a mapping")
@@ -449,6 +451,7 @@ def _build_item_spec(
         "initial_custody": deepcopy(detail.get("initial_custody", default_custody)),
         "owner": str(detail.get("owner", "")),
         "driver": str(detail.get("driver", "")),
+        "document_visibility": str(detail.get("document_visibility", "discoverable")),
     }
 
 

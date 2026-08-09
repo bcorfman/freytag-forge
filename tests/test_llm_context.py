@@ -55,7 +55,12 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
         for fact in payload["npc_facts"]
     )
     assert any("have not reviewed the case file yet" in fact.lower() for fact in payload["scene_facts"])
-    assert payload["case_facts"] == []
+    assert {fact["key"] for fact in payload["case_facts"]} == {
+        "victim_name",
+        "victim_timeline",
+        "lead_suspect",
+        "strongest_lead",
+    }
 
 
 def test_prompt_uses_item_labels_not_internal_ids_for_visible_items() -> None:

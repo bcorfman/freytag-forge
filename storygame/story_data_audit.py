@@ -66,12 +66,6 @@ AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
         "replacement_schema": "package-declared document and reveal contracts",
         "removal_phase": "Phase 6",
     },
-    ("storygame/llm/story_agents/prompts.py", "story-specific-prompt"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 3",
-        "replacement_schema": "package-provided opening and role constraints",
-        "removal_phase": "Phase 6",
-    },
     ("storygame/engine/world_builder.py", "named-story-entity"): {
         "classification": "authoring_data",
         "owner_phase": "Phase 1",
@@ -88,12 +82,6 @@ AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
         "classification": "authoring_data",
         "owner_phase": "Phase 5",
         "replacement_schema": "fact-backed exposure and staging policy",
-        "removal_phase": "Phase 6",
-    },
-    ("storygame/llm/story_agents/agents.py", "named-story-entity"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 5",
-        "replacement_schema": "package-declared placement and custody constraints",
         "removal_phase": "Phase 6",
     },
 }
