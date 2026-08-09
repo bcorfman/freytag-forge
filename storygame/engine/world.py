@@ -29,7 +29,6 @@ def _slugify_name(value: str) -> str:
 
 
 _LIKELY_FEMALE_FIRST_NAMES = {
-    "daria",
     "maria",
     "anna",
     "elena",

@@ -1,9 +1,4 @@
-"""Static inventory of story-specific runtime seams.
-
-This module intentionally has no runtime dependency on story state.  It gives
-Phase 0 a small, deterministic audit surface while the seams are migrated into
-validated package data.
-"""
+"""Static CI guard against embedded story-specific shared-runtime data."""
 
 from __future__ import annotations
 
@@ -30,8 +25,7 @@ _TARGETS = (
     "storygame/cli.py",
 )
 
-# These are inventory patterns, not an execution allowlist.  Every match must
-# have an entry in the migration inventory and an owner phase.
+# These are rejection patterns. Any match fails the migration audit.
 _RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "genre-branch",
@@ -51,34 +45,7 @@ _RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
-# The key is (relative path, rule).  Keep this manifest synchronized with
-# docs/external-story-data-inventory.md; the test fails when a new seam appears.
-AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
-    ("storygame/engine/world.py", "named-story-entity"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 2",
-        "replacement_schema": "package map, item, character, and opening sections",
-        "removal_phase": "Phase 6",
-    },
-    ("storygame/engine/mystery.py", "named-story-entity"): {
-        "classification": "temporary_compatibility",
-        "owner_phase": "Phase 4",
-        "replacement_schema": "package-declared document and reveal contracts",
-        "removal_phase": "Phase 6",
-    },
-    ("storygame/engine/world_builder.py", "named-story-entity"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 1",
-        "replacement_schema": "validated package sections and references",
-        "removal_phase": "Phase 6",
-    },
-    ("storygame/llm/opening_coherence.py", "named-story-entity"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 5",
-        "replacement_schema": "fact-backed exposure and staging policy",
-        "removal_phase": "Phase 6",
-    },
-}
+AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {}
 
 
 def audit_story_specific_branches(repo_root: Path) -> tuple[StoryDataAuditFinding, ...]:

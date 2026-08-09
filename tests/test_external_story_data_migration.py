@@ -11,29 +11,17 @@ from storygame.story_data_audit import AUDIT_MANIFEST, audit_story_specific_bran
 from tests.narrator_stubs import StubNarrator
 
 
-def test_phase_zero_story_specific_audit_is_fully_classified():
+def test_phase_six_story_specific_audit_has_no_runtime_exceptions():
     root = Path(__file__).resolve().parents[1]
     findings = audit_story_specific_branches(root)
 
-    assert findings, "The Phase 0 audit must report the current migration inventory."
-    undocumented = [
-        finding
-        for finding in findings
-        if (finding.path, finding.rule) not in AUDIT_MANIFEST
-        or finding.classification == "undocumented"
-    ]
-    assert not undocumented, "Undocumented story-specific seams:\n" + "\n".join(
-        f"{finding.path}:{finding.line} [{finding.rule}] {finding.text}" for finding in undocumented
+    assert not findings, "Embedded story data remains in shared runtime:\n" + "\n".join(
+        f"{finding.path}:{finding.line} [{finding.rule}] {finding.text}" for finding in findings
     )
-    assert all(finding.owner_phase.startswith("Phase ") for finding in findings)
-    assert all(finding.replacement_schema for finding in findings)
-    assert all(finding.removal_phase.startswith("Phase ") for finding in findings)
 
 
-def test_phase_zero_audit_manifest_has_no_stale_entries():
-    root = Path(__file__).resolve().parents[1]
-    observed = {(finding.path, finding.rule) for finding in audit_story_specific_branches(root)}
-    assert set(AUDIT_MANIFEST) <= observed
+def test_phase_six_audit_manifest_has_no_compatibility_allowlist():
+    assert AUDIT_MANIFEST == {}
 
 
 def test_phase_zero_package_projections_and_transcripts_match_frozen_baseline():

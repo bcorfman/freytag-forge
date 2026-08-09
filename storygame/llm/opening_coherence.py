@@ -31,8 +31,6 @@ _ITEM_EXPOSED_TERMS = (
     "on the stones",
     "on the ground",
     "at your feet",
-    "in front of the mansion",
-    "before the mansion",
     "in the mud",
     "beside the gate",
     "out in the open",

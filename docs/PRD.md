@@ -101,7 +101,7 @@ Current runtime generation is package-driven.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Canonical fact mutation goes through a validated commit boundary that normalizes uniqueness-sensitive writes, enforces runtime invariants, and refreshes compatibility projections after commit.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
-- For mystery runtime specifically, crime facts such as victim identity/timeline, suspect status, villain motive/means/opportunity, clue placement, reveal threads, and planned case events must be seeded into and read back from fact-backed state rather than queried from transient package payloads.
+- Story-specific facts such as identities, timelines, motives, clues, revelation threads, and planned events must be seeded into and read back from fact-backed state rather than queried from transient package payloads.
 - Scene and dramatic runtime state are now also fact-backed during transition (`current_scene`, `scene_location`, `scene_objective`, `dramatic_question`, `scene_pressure`, `beat_phase`, `beat_role`, `player_approach`, `scene_participant`).
 - `storygame.llm.context.build_narration_context` should read scene/dramatic facts first and treat `progress`/`tension` as compatibility inputs when those facts are absent.
 - `storygame.plot.dramatic_policy` is the compatibility policy layer that derives approach/question/role from parser turns, structured proposals, and freeform conversational turns before beat selection runs.
@@ -303,8 +303,8 @@ flowchart LR
 - Critical setup commands like `read/review case file` are deterministically recognized at policy boundary and commit explicit world facts (for example `reviewed_case_file`) to guarantee command follow-through.
 - Mystery startup should seed canonical case facts (for example victim identity, timeline, strongest lead, and current suspect status) into the fact store so NPC dialogue and narration do not drift between incompatible murders.
 - Reviewing the case file should surface those same canonical case facts back to the player through deterministic fact-backed discoveries and player-context updates, not only a generic acknowledgment line.
-- Story-significant item inspection/acquisition should assert deterministic discovery facts (for example `discovered_clue` and `discovered_lead`) so later narration, caseboard output, and continuity checks can rely on canonical discoveries instead of prose memory alone.
-- Mystery-facing summaries such as the caseboard and suspect-role projection should prefer fact-backed case facts, discovered leads, hidden threads, planned events, and villain facts over room heuristics or stored bootstrap query payloads.
+- Story-significant item inspection/acquisition should assert deterministic discovery facts (for example `discovered_clue` and `discovered_lead`) so later narration, story-status output, and continuity checks can rely on canonical discoveries instead of prose memory alone.
+- Story-status and role projections should prefer fact-backed declared facts, discovered leads, hidden threads, and planned events over room heuristics or stored bootstrap query payloads.
 - NPCs are stateful story actors:
   - their replies should usually be LLM-authored from deterministic context,
   - their knowledge, trust, availability, and goals remain deterministically tracked,
@@ -376,7 +376,7 @@ flowchart LR
 - Once an NPC has been introduced by full name, later room and dialogue rendering shortens to first-name-only when the first name is unambiguous in the current room.
 - Active-goal copy is treated as opening/setup material by default; later turns suppress repeated objective phrasing unless the player explicitly asks about the goal/objective.
 - Asking an assistant about the current goal/objective is handled as a first-class freeform topic and returns the current deterministic `active_goal`.
-- Caseboard, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
+- Story-status, web/bootstrap state snapshots, persistence artifacts, and other player-facing objective displays should read the canonical fact-backed `active_goal`.
 - Opening generation should prioritize character background, motivation, communication, and relationships. Repeating room or weather description already covered by the room block is only useful when it materially changes character intent, tension, or the immediate objective.
 - Opening prompts should ask for full-name-first NPC introductions and should limit pure-surroundings exposition to what materially sharpens character pressure or the immediate objective.
 - Policy-impossible freeform actions return constrained boundary responses with no state mutation.
