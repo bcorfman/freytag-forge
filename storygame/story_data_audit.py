@@ -7,9 +7,9 @@ validated package data.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 
 @dataclass(frozen=True)
@@ -54,12 +54,6 @@ _RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 # The key is (relative path, rule).  Keep this manifest synchronized with
 # docs/external-story-data-inventory.md; the test fails when a new seam appears.
 AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
-    ("storygame/engine/world.py", "genre-branch"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 2",
-        "replacement_schema": "package world/map/opening sections",
-        "removal_phase": "Phase 6",
-    },
     ("storygame/engine/world.py", "named-story-entity"): {
         "classification": "authoring_data",
         "owner_phase": "Phase 2",
@@ -76,12 +70,6 @@ AUDIT_MANIFEST: dict[tuple[str, str], dict[str, str]] = {
         "classification": "authoring_data",
         "owner_phase": "Phase 3",
         "replacement_schema": "package-provided opening and role constraints",
-        "removal_phase": "Phase 6",
-    },
-    ("storygame/engine/world_builder.py", "genre-branch"): {
-        "classification": "authoring_data",
-        "owner_phase": "Phase 1",
-        "replacement_schema": "validated package sections and references",
         "removal_phase": "Phase 6",
     },
     ("storygame/engine/world_builder.py", "named-story-entity"): {

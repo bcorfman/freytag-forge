@@ -11,7 +11,6 @@ import yaml
 
 from storygame.engine.interfaces import load_policy_bundle
 from storygame.plot.curves import normalize_session_length, select_curve_template
-from storygame.story_canon import DEFAULT_MYSTERY_DETECTIVE_NAME
 
 _ALLOWED_GENRES = (
     "sci-fi",
@@ -79,6 +78,14 @@ class WorldPackageValidationError(ValueError):
     """Raised when external story data cannot form a coherent package."""
 
 
+def _humanize_item_id(item_id: str) -> str:
+    return re.sub(r"\s+", " ", item_id.replace("_", " ").replace("-", " ")).strip().title()
+
+
+def _default_item_kind(index: int) -> str:
+    return ("tool", "clue", "evidence")[min(index, 2)]
+
+
 @lru_cache(maxsize=1)
 def load_story_package_templates(path: Path | None = None) -> dict[str, dict[str, Any]]:
     """Load declarative Phase 1 templates without exposing YAML to runtime code."""
@@ -123,7 +130,13 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
             raise WorldPackageValidationError("unknown map room in path")
         if not str(path.get("direction", "")).strip():
             raise WorldPackageValidationError("map paths require directions")
-    _validate_ids([str(item.get("id", "")) for item in package["items"] if isinstance(item, dict)], "items")
+    for lock in map_data.get("locks", []):
+        if lock.get("room") not in room_ids or not str(lock.get("direction", "")).strip():
+            raise WorldPackageValidationError("unknown map room in lock")
+    item_ids = _validate_ids([str(item.get("id", "")) for item in package["items"] if isinstance(item, dict)], "items")
+    for lock in map_data.get("locks", []):
+        if lock.get("key_id") not in item_ids:
+            raise WorldPackageValidationError("unknown item in lock")
     character_ids = _validate_ids(
         [str(character.get("id", "")) for character in package["characters"] if isinstance(character, dict)],
         "characters",
@@ -157,10 +170,12 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
         raise WorldPackageValidationError("protected knowledge is exposed as public briefing")
     if not isinstance(package["intent_aliases"], dict) or not isinstance(package["effect_templates"], dict):
         raise WorldPackageValidationError("intent aliases and effect templates must be mappings")
-    package["map"]["room_presentation"] = {
-        str(room): dict(package["map"].get("room_presentation", {}).get(str(room), {}))
-        for room in room_ids
-    }
+    presentation = package["map"].get("room_presentation", {})
+    for room in room_ids:
+        copy = presentation.get(str(room), {})
+        if not str(copy.get("name", "")).strip() or not str(copy.get("description", "")).strip():
+            raise WorldPackageValidationError("room presentation requires name and description")
+    package["map"]["room_presentation"] = {str(room): dict(presentation[str(room)]) for room in room_ids}
     return package
 
 
@@ -263,11 +278,12 @@ def _split_setup_and_future_threads(outline_text: str) -> tuple[str, tuple[str, 
     hidden_text = _trim_goal_fragment(normalized[split_index:].strip(" ,;"), max_len=420)
     return public_setup, (hidden_text,) if hidden_text else ()
 
-def _build_story_plan(outline_text: str, goals: dict[str, Any]) -> dict[str, Any]:
+
+def _build_story_plan(outline_text: str, goals: dict[str, Any], protagonist_name: str) -> dict[str, Any]:
     _public_setup, hidden_threads = _split_setup_and_future_threads(outline_text)
     setup_paragraphs = (
         "The situation is still taking shape, and the facts in front of you are incomplete.",
-        f"You are {DEFAULT_MYSTERY_DETECTIVE_NAME}.",
+        f"You are {protagonist_name}.",
         f"Your first objective is clear: {goals['setup']}",
     )
     reveal_schedule = tuple(
@@ -279,7 +295,7 @@ def _build_story_plan(outline_text: str, goals: dict[str, Any]) -> dict[str, Any
     )
 
     return {
-        "protagonist_name": DEFAULT_MYSTERY_DETECTIVE_NAME,
+        "protagonist_name": protagonist_name,
         "setup_paragraphs": setup_paragraphs,
         "hidden_threads": hidden_threads,
         "reveal_schedule": reveal_schedule,
@@ -369,18 +385,6 @@ def _extract_character_names(outline_text: str) -> list[str]:
     return names
 
 
-def _normalize_character_names_for_genre(genre: str, names: list[str]) -> list[str]:
-    if genre != "mystery":
-        return names
-
-    normalized: list[str] = ["Daria Stone"]
-    for name in names:
-        if name.strip().lower() == "daria stone":
-            continue
-        normalized.append(name)
-    return normalized
-
-
 def select_story_outline(
     genre: str,
     seed: int,
@@ -422,6 +426,32 @@ def _build_map_for_genre(genre: str) -> dict[str, Any]:
     return {"rooms": list(room_ids), "paths": paths}
 
 
+def _build_item_spec(
+    item_id: str,
+    index: int,
+    details: dict[str, Any],
+    room_ids: list[str],
+    genre: str,
+) -> dict[str, Any]:
+    detail = dict(details.get(item_id, {}))
+    kind = str(detail.get("kind", _default_item_kind(index)))
+    default_custody = {"kind": "room", "id": room_ids[min(index, len(room_ids) - 1)]}
+    return {
+        "id": item_id,
+        "name": str(detail.get("name", _humanize_item_id(item_id))),
+        "description": str(detail.get("description", f"An important {kind} tied to your current objective.")),
+        "kind": kind,
+        "portable": bool(detail.get("portable", True)),
+        "tags": list(detail.get("tags", ["quest", genre, kind])),
+        "clue_text": str(detail.get("clue_text", "")),
+        "affordances": ["examine", "take"],
+        "initial_state": str(detail.get("initial_state", "available")),
+        "initial_custody": deepcopy(detail.get("initial_custody", default_custody)),
+        "owner": str(detail.get("owner", "")),
+        "driver": str(detail.get("driver", "")),
+    }
+
+
 def build_world_package(
     genre: str,
     session_length: int | str,
@@ -442,45 +472,52 @@ def build_world_package(
         session_length=normalized_length,
         seed=seed,
     )
-    character_names = _normalize_character_names_for_genre(
-        normalized_genre,
-        _extract_character_names(outline["outline"]),
-    )
+    character_names = _extract_character_names(outline["outline"])
     map_section = _build_map_for_genre(normalized_genre)
     template = load_story_package_templates().get(normalized_genre, load_story_package_templates()["default"])
     item_ids = list(template.get("items", _ITEM_TEMPLATES[normalized_genre]))
     beat_candidates = list(curve["obligatory_moments"])
     goals = _build_outline_goals(normalized_genre, str(outline["outline"]), beat_candidates)
-    story_plan = _build_story_plan(str(outline["outline"]), goals)
-    opening_setup = deepcopy(_opening_setup_profiles().get(normalized_genre, {}))
-    opening_setup.update(deepcopy(template.get("opening_setup", {})))
+    opening_setup = deepcopy(template.get("opening_setup", {}))
+    protagonist_name = str(opening_setup.get("protagonist_name", "The protagonist")).strip() or "The protagonist"
+    story_plan = _build_story_plan(str(outline["outline"]), goals, protagonist_name)
     characters = []
     character_template = template.get("characters", {})
+    opening_contact = dict(character_template.get("opening_contact", {}))
+    if opening_contact:
+        contact_name = str(opening_contact["name"])
+        character_names = [name for name in character_names if name.strip().lower() != contact_name.lower()]
+        character_names.insert(0, contact_name)
     for index, name in enumerate(character_names):
+        is_contact = bool(opening_contact) and name == opening_contact.get("name") and index == 0
+        spec = opening_contact if is_contact else character_template
         characters.append(
             {
-                "id": re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or "character",
+                "id": str(spec.get("id", re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or "character")),
                 "name": name,
-                "location": map_section["rooms"][min(index, len(map_section["rooms"]) - 1)],
+                "location": str(spec.get("location", map_section["rooms"][min(index, len(map_section["rooms"]) - 1)])),
                 "available": True,
-                "traits": list(character_template.get("traits", [])),
-                "appearance": str(character_template.get("appearance", "")),
-                "role": str(character_template.get("role", "contact")),
-                "relationship": str(character_template.get("relationship", "")),
-                "scene_purpose": str(character_template.get("scene_purpose", "")),
-                "initial_knowledge": list(character_template.get("initial_knowledge", [])),
-                "protected_knowledge": list(character_template.get("protected_knowledge", [])),
+                "traits": list(spec.get("traits", [])),
+                "appearance": str(spec.get("appearance", "")),
+                "description": str(spec.get("description", f"{name} watches the situation carefully.")),
+                "dialogue": str(spec.get("dialogue", f"Stay focused on the objective: {goals['primary']}")),
+                "pronouns": str(spec.get("pronouns", "")),
+                "role": str(spec.get("role", "contact")),
+                "relationship": str(spec.get("relationship", "")),
+                "scene_purpose": str(spec.get("scene_purpose", "")),
+                "initial_knowledge": list(spec.get("initial_knowledge", [])),
+                "protected_knowledge": list(spec.get("protected_knowledge", [])),
             }
         )
-    items = [
-        {
-            "id": item_id,
-            "affordances": list(template.get("items", {}).get("affordances", ["examine", "take"]))
-            if isinstance(template.get("items"), dict) else ["examine", "take"],
-                "initial_state": "available",
-                "initial_custody": None,
+    if opening_contact:
+        opening_setup["opening_contact"] = {
+            "id": str(opening_contact["id"]),
+            **dict(opening_setup.get("opening_contact", {})),
         }
-        for item_id in item_ids
+    item_details = dict(template.get("item_details", {}))
+    items = [
+        _build_item_spec(item_id, index, item_details, map_section["rooms"], normalized_genre)
+        for index, item_id in enumerate(item_ids)
     ]
 
     trigger_seeds = [
@@ -523,11 +560,22 @@ def build_world_package(
         "intent_aliases": deepcopy(template.get("intent_aliases", {})),
         "effect_templates": deepcopy(template.get("effect_templates", {})),
     }
-    package["map"]["room_presentation"] = {
+    if len(map_section["rooms"]) >= 3 and item_ids:
+        gate_room = map_section["rooms"][1]
+        directions = sorted(path["direction"] for path in map_section["paths"] if path["from"] == gate_room)
+        if directions:
+            package["map"]["locks"] = [{"room": gate_room, "direction": directions[0], "key_id": item_ids[0]}]
+    generated_presentation = {
         room_id: {
             "name": re.sub(r"\s+", " ", room_id.replace("_", " ").replace("-", " ")).strip().title(),
-            "description": f"The {room_id.replace('_', ' ')} awaits close inspection.",
+            "description": (
+                f"The {room_id.replace('_', ' ')} is laid out for close inspection, with worn surfaces and "
+                f"practical routes that can be searched room by room in this {outline['tone']} "
+                f"{normalized_genre} case."
+            ),
         }
         for room_id in package["map"]["rooms"]
     }
+    package["map"]["room_presentation"] = generated_presentation
+    package["map"]["room_presentation"].update(deepcopy(template.get("map", {}).get("room_presentation", {})))
     return validate_world_package(package)
