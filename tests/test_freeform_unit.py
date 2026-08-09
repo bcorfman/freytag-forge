@@ -705,6 +705,24 @@ def test_llm_freeform_adapter_normalizes_semantic_move_target_to_destination(mon
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_adapter_preserves_explicit_named_destination(monkeypatch) -> None:
+    state = build_default_state(seed=40530, genre="mystery")
+    state.player.location = "market_lane"
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"narrator","text":"You pause at the records office.","tone":"in_world"},'
+            '"action_proposal":{"intent":"examine","targets":["route_key"],"arguments":{},'
+            '"proposed_effects":["examine:route_key"]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+    _dialog, action = LlmFreeformProposalAdapter(mode="openai").propose(state, "go to records office")
+
+    assert action["intent"] == "move"
+    assert tuple(action["targets"]) == ("records_office",)
+
+
 def test_semantic_exit_direction_resolves_outdoor_return_route() -> None:
     state = build_default_state(seed=40531, genre="mystery")
     state.player.location = "foyer"
