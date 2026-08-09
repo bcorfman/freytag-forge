@@ -16,6 +16,10 @@ def test_packages_with_distinct_openings_realize_through_the_same_service() -> N
         {"direction": "up", "from": "harbor", "to": "observatory"},
         {"direction": "down", "from": "observatory", "to": "harbor"},
     ]
+    second["map"]["environment"] = {
+        "harbor": {"exposure": "outdoor", "ambient_source": "the quay"},
+        "observatory": {"exposure": "enclosed"},
+    }
     second["map"]["locks"] = []
     second["map"]["room_presentation"] = {
         "harbor": {"name": "Storm Harbor", "description": "Salt spray lashes the empty quay."},

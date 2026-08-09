@@ -113,6 +113,12 @@ leads are realized as facts; a single `read` intent commits those configured
 effects for mystery files, fantasy scrolls, sci-fi logs, and romance letters.
 Visible vehicle interaction and natural-language exit references likewise use
 fact-derived item and path affordances rather than story-specific routing.
+Phase 5 moves environmental coherence into the same boundary: every package
+declares each room's exposure and optional ambient source, which are realized
+as canonical facts. Ambient event prose reads those facts rather than room-name
+keywords, while package validation rejects weather-sensitive items staged in
+exposed rooms. Custody, location, role, and observer-knowledge conflicts remain
+generic fact-policy failures across every genre.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

@@ -12,7 +12,7 @@ are classified here and assigned an owner phase.
 | `engine/world_builder.py` | package loader/compatibility expansion | Phase 1 | `data/story_packages.yaml` validated package sections and references | Phase 6 |
 | `engine/mystery.py` | temporary compatibility document/reveal helpers | Phase 4 | package-declared document and reveal contracts | Phase 6 |
 | `engine/freeform.py` | generic fact-backed intent routing | complete (Phase 4) | readable-item contracts and exit affordance facts | n/a |
-| `llm/opening_coherence.py` | authoring data | Phase 5 | fact-backed exposure and staging policy | Phase 6 |
+| `llm/opening_coherence.py` | generic fact-aware opening validator | complete (Phase 5) | fact-backed exposure, custody, role, and knowledge policy | n/a |
 | `llm/story_agents/prompts.py` | generic fact-aware presentation policy | complete (Phase 3) | observer-scoped opening and roleplay constraints | n/a |
 | `cli.py` | generic fact-aware presentation policy | complete (Phase 3) | package room copy and canonical presentation facts | n/a |
 

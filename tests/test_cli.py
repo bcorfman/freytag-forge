@@ -32,13 +32,13 @@ from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.engine.impact import assess_player_command
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
-from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
 from storygame.llm.coherence import CoherenceTelemetry
 from storygame.llm.context import build_narration_context
 from storygame.llm.contracts import JudgeDecision
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.persistence.story_state import STORY_STATE_FILE, load_story_state_payload
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
 
@@ -118,6 +118,24 @@ def test_cold_wind_event_uses_current_room_street_fact_when_outdoors() -> None:
     _next_state, events = apply_event_template(state, template, Random(521))
 
     assert events[0].message_key == "A cold wind runs along the street."
+
+
+def test_cold_wind_event_uses_package_environment_for_multiple_genres() -> None:
+    template = EventTemplate(
+        key="cold_wind",
+        message_key="A cold wind enters from the streets.",
+        tags=("hook",),
+    )
+    mystery = build_default_state(seed=523, genre="mystery")
+    fantasy = build_default_state(seed=524, genre="fantasy")
+    mystery.player.location = "foyer"
+    fantasy.player.location = "village_gate"
+
+    _next_mystery, mystery_events = apply_event_template(mystery, template, Random(523))
+    _next_fantasy, fantasy_events = apply_event_template(fantasy, template, Random(524))
+
+    assert mystery_events[0].message_key == "A cold draft slips in from the drive."
+    assert fantasy_events[0].message_key == "A cold wind runs along the gate road."
 
 
 def test_cold_wind_event_falls_back_when_no_supported_outside_source_exists() -> None:

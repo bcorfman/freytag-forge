@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from storygame.engine.facts import apply_fact_ops, item_state, room_items
+from storygame.engine.facts import apply_fact_ops
 from storygame.engine.state import Event, GameState
 from storygame.plot.beat_manager import Beat
 
@@ -17,56 +17,6 @@ class EventTemplate:
     set_flags: tuple[str, ...] = ()
     clear_flags: tuple[str, ...] = ()
 
-
-_OUTDOOR_ROOM_TOKENS = (
-    "outside",
-    "steps",
-    "street",
-    "lane",
-    "road",
-    "square",
-    "gate",
-    "yard",
-    "camp",
-    "trail",
-    "woods",
-    "courtyard",
-    "river",
-    "walk",
-    "site",
-)
-_INSIDE_ROOM_TOKENS = (
-    "foyer",
-    "hall",
-    "office",
-    "safehouse",
-    "tower",
-    "chapel",
-    "clinic",
-    "room",
-    "platform",
-    "vault",
-    "corridor",
-    "chamber",
-    "cellar",
-    "sanctum",
-    "newsroom",
-    "apartment",
-    "house",
-)
-_AMBIENT_SOURCE_RULES = (
-    (("parked_beside_the_drive", "driveway", " drive "), "the drive"),
-    (("courtyard",), "the courtyard"),
-    (("main street", "backstreet", " street "), "the street"),
-    (("market lane", " lane ", "cafe row"), "the lane"),
-    (("fog road", " road "), "the road"),
-    (("garden path", " path ", "trailhead", " trail "), "the path"),
-    (("industrial yard", " yard "), "the yard"),
-    (("market square", " lantern square", " square "), "the square"),
-    (("village gate", "ruin gate", " gate "), "the gate"),
-    (("river walk", " walk "), "the walk"),
-    (("woods edge", " woods "), "the woods"),
-)
 
 
 def list_event_templates() -> tuple[EventTemplate, ...]:
@@ -168,42 +118,20 @@ def select_event(beat: Beat, state: GameState, rng) -> EventTemplate:
     return templates[index]
 
 
-def _room_text_for_matching(state: GameState, room_id: str) -> str:
-    room = state.world.rooms[room_id]
-    return f" {room.id.replace('_', ' ')} {room.name.lower()} {room.description.lower()} "
-
-
-def _ambient_matching_texts(state: GameState) -> tuple[str, ...]:
-    current_room = state.world.rooms[state.player.location]
-    texts = [_room_text_for_matching(state, current_room.id)]
-    for adjacent_room_id in current_room.exits.values():
-        texts.append(_room_text_for_matching(state, adjacent_room_id))
-        for item_id in room_items(state, adjacent_room_id):
-            item = state.world.items.get(item_id)
-            if item is None:
-                continue
-            texts.append(
-                f" {item.id.replace('_', ' ')} {item.name.lower()} {item.description.lower()} {item_state(state, item_id).lower()} "
-            )
-    return tuple(texts)
-
-
 def _ambient_source_phrase(state: GameState) -> str:
-    texts = _ambient_matching_texts(state)
-    for terms, phrase in _AMBIENT_SOURCE_RULES:
-        for text in texts:
-            if any(term in text for term in terms):
-                return phrase
+    room_id = state.player.location
+    sources = state.world_facts.query("ambient_source", room_id, None)
+    if sources:
+        return sources[0][2]
+    for adjacent_room_id in state.world.rooms[room_id].exits.values():
+        sources = state.world_facts.query("ambient_source", adjacent_room_id, None)
+        if sources:
+            return sources[0][2]
     return "outside"
 
 
 def _current_room_is_outdoors(state: GameState) -> bool:
-    current_text = _room_text_for_matching(state, state.player.location)
-    if any(token in current_text for token in _OUTDOOR_ROOM_TOKENS):
-        return True
-    if any(token in current_text for token in _INSIDE_ROOM_TOKENS):
-        return False
-    return False
+    return state.world_facts.holds("room_exposure", state.player.location, "outdoor")
 
 
 def _event_message_for_state(template: EventTemplate, state: GameState) -> str:

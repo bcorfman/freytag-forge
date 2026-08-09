@@ -42,6 +42,18 @@ def test_world_package_expands_and_validates_phase1_sections() -> None:
     assert package["opening_setup"]["protected_knowledge"]
     assert package["intent_aliases"]
     assert package["effect_templates"]
+    assert package["map"]["environment"]
+
+
+def test_world_package_rejects_fragile_items_staged_in_exposed_rooms() -> None:
+    package = build_world_package("fantasy", "short", 33, "epic")
+    item = package["items"][0]
+    item["fragility"] = "weather_sensitive"
+    item["initial_custody"] = {"kind": "room", "id": "village_gate"}
+    package["map"]["environment"]["village_gate"]["exposure"] = "outdoor"
+
+    with pytest.raises(WorldPackageValidationError, match="fragile item.*exposed room"):
+        validate_world_package(package)
 
 
 @pytest.mark.parametrize(
