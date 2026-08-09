@@ -14,7 +14,6 @@ from storygame.engine.npc import ensure_default_role_contracts
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import GameState, Item, Npc, PlayerState, Room, WorldState
 from storygame.engine.world_builder import build_world_package
-from storygame.story_canon import canonical_detective_name
 from storygame.test_metrics import record
 
 
@@ -100,73 +99,21 @@ def _infer_binary_pronouns(name: str) -> str:
     return "he/him"
 
 
-def _item_kind_for_index(index: int) -> str:
-    if index == 0:
-        return "tool"
-    if index == 1:
-        return "clue"
-    return "evidence"
-
-
-def _item_clue_text(item_id: str, genre: str, primary_goal: str) -> str:
-    if genre == "mystery":
-        if item_id == "case_file":
-            return "The case file pins down the victim timeline and highlights the first credible lead."
-        if item_id == "ledger_page":
-            return "The ledger page records a missing payment tied to the mansion and tonight's visit."
-        if item_id == "route_key":
-            return "The route key marks a service passage someone expected to use after dark."
-
-    cleaned_goal = primary_goal.strip().rstrip(".")
-    if not cleaned_goal:
-        return "A concrete lead tied to your current objective."
-    return f"A concrete lead tied to your current objective: {cleaned_goal}."
-
-
-def _room_name_for_display(room_id: str, genre: str) -> str:
-    if genre == "mystery" and room_id == "front_steps":
-        return "Outside The Mansion"
-    if genre == "mystery" and room_id == "foyer":
-        return "Mansion Foyer"
-    return _humanize_identifier(room_id)
-
-
-def _room_description(room_id: str, genre: str, tone: str) -> str:
-    location = room_id.replace("_", " ")
-    if genre == "mystery" and room_id == "front_steps":
-        return (
-            "Broad stone steps rise to a carved oak door framed by weathered columns. "
-            "A brass lantern burns beside the entrance and fresh mud marks the path from the street."
-        )
-    if genre == "mystery" and room_id == "foyer":
-        return (
-            "The foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead. "
-            "The upper gallery stays dark above the entry."
-        )
-    return (
-        f"The {location} is laid out for close inspection, with worn surfaces and practical routes that can be "
-        f"searched room by room in this {tone} {genre} case."
-    )
-
-
 def _build_items(package: dict) -> dict[str, Item]:
-    item_ids = tuple(package["item_graph"]["items"])
-    primary_goal = str(package["goals"]["primary"])
-    genre = str(package["genre"])
-    items: dict[str, Item] = {}
-    for index, item_id in enumerate(item_ids):
-        kind = _item_kind_for_index(index)
-        items[item_id] = Item(
-            id=item_id,
-            name=_humanize_identifier(item_id),
-            description=f"An important {kind} tied to your current objective.",
-            tags=("quest", genre, kind),
-            kind=kind,
-            delta_progress=0.07 + (0.02 * min(index, 3)),
-            clue_text=_item_clue_text(item_id, genre, primary_goal),
+    specs = tuple(package["items"])
+    items = {
+        str(spec["id"]): Item(
+            id=str(spec["id"]),
+            name=str(spec["name"]),
+            description=str(spec["description"]),
+            portable=bool(spec.get("portable", True)),
+            tags=tuple(map(str, spec.get("tags", []))),
+            kind=str(spec.get("kind", "object")),
+            clue_text=str(spec.get("clue_text", "")),
         )
-
-    # Always include a baseline utility item for stable command flow.
+        for spec in specs
+        if str(spec.get("kind", "object")) != "vehicle"
+    }
     items["field_kit"] = Item(
         id="field_kit",
         name="Field Kit",
@@ -174,40 +121,38 @@ def _build_items(package: dict) -> dict[str, Item]:
         tags=("tool",),
         kind="tool",
     )
-    if genre == "mystery":
-        items["arrival_sedan"] = Item(
-            id="arrival_sedan",
-            name="dark sedan",
-            description="A dark sedan is parked by the drive where you left it after arriving at the mansion.",
-            tags=("vehicle", genre),
-            kind="vehicle",
-            portable=False,
-        )
+    items.update(
+        {
+            str(spec["id"]): Item(
+                id=str(spec["id"]),
+                name=str(spec["name"]),
+                description=str(spec["description"]),
+                portable=bool(spec.get("portable", True)),
+                tags=tuple(map(str, spec.get("tags", []))),
+                kind=str(spec.get("kind", "object")),
+                clue_text=str(spec.get("clue_text", "")),
+            )
+            for spec in specs
+            if str(spec.get("kind", "object")) == "vehicle"
+        }
+    )
     return items
 
 
 def _build_npcs(package: dict) -> dict[str, Npc]:
-    npcs: dict[str, Npc] = {}
-    for index, npc_name in enumerate(package["entities"]["npcs"]):
-        npc_id = _slugify_name(npc_name)
-        description = f"{npc_name} watches the situation carefully."
-        appearance = ""
-        if package["genre"] == "mystery" and npc_id == "daria_stone":
-            appearance = "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"
-            description = f"{npc_name} watches the situation carefully in {appearance}."
-        npcs[npc_id] = Npc(
-            id=npc_id,
-            name=npc_name,
-            description=description,
-            dialogue=f"Stay focused on the objective: {package['goals']['primary']}",
-            identity=f"{package['genre']} world participant",
-            appearance=appearance,
-            pronouns=_infer_binary_pronouns(npc_name),
-            tags=(package["genre"],),
-            delta_progress=0.05 if index < 3 else 0.0,
-            knowledge_source="witness account",
+    return {
+        str(spec["id"]): Npc(
+            id=str(spec["id"]),
+            name=str(spec["name"]),
+            description=str(spec.get("description", spec["name"])),
+            dialogue=str(spec.get("dialogue", "")),
+            identity=str(spec.get("role", "participant")),
+            appearance=str(spec.get("appearance", "")),
+            pronouns=str(spec.get("pronouns", "")).strip() or _infer_binary_pronouns(str(spec["name"])),
+            tags=tuple(map(str, spec.get("traits", []))),
         )
-    return npcs
+        for spec in package["characters"]
+    }
 
 
 def _build_room_exits(paths: tuple[dict, ...] | list[dict]) -> dict[str, dict[str, str]]:
@@ -217,100 +162,35 @@ def _build_room_exits(paths: tuple[dict, ...] | list[dict]) -> dict[str, dict[st
     return exits
 
 
-def _build_rooms(package: dict, items: dict[str, Item], npcs: dict[str, Npc]) -> dict[str, Room]:
+def _build_rooms(package: dict) -> dict[str, Room]:
     room_ids = tuple(package["map"]["rooms"])
     exits = _build_room_exits(tuple(package["map"]["paths"]))
-    item_ids = tuple(item_id for item_id in items if item_id != "field_kit")
-    npc_ids = tuple(npcs.keys())
-
     rooms: dict[str, Room] = {}
-    for index, room_id in enumerate(room_ids):
-        assigned_items: list[str] = []
-        if index < len(item_ids):
-            assigned_items.append(item_ids[index])
-
-        assigned_npcs: list[str] = []
-        if index < len(npc_ids):
-            assigned_npcs.append(npc_ids[index])
-
+    presentation = package["map"]["room_presentation"]
+    for room_id in room_ids:
+        copy = presentation[room_id]
         rooms[room_id] = Room(
             id=room_id,
-            name=_room_name_for_display(room_id, package["genre"]),
-            description=_room_description(room_id, package["genre"], package["tone"]),
+            name=str(copy["name"]),
+            description=str(copy["description"]),
             exits=dict(exits.get(room_id, {})),
-            item_ids=tuple(assigned_items),
-            npc_ids=tuple(assigned_npcs),
         )
-
-    # Ensure the first room is playable even when package data is sparse.
-    if room_ids:
-        first_room = rooms[room_ids[0]]
-        if not first_room.item_ids:
-            first_room.item_ids = ("field_kit",)
-        elif "field_kit" not in first_room.item_ids:
-            first_room.item_ids = ("field_kit", *first_room.item_ids)
-
-    # Add one deterministic lock gate when possible.
-    if len(room_ids) >= 3 and item_ids:
-        gate_room_id = room_ids[1]
-        gate_room = rooms[gate_room_id]
-        key_id = item_ids[0]
-        if gate_room.exits:
-            first_direction = sorted(gate_room.exits.keys())[0]
-            gate_room.locked_exits = {first_direction: key_id}
-
+    for lock in package["map"].get("locks", []):
+        room = rooms[str(lock["room"])]
+        room.locked_exits[str(lock["direction"])] = str(lock["key_id"])
     return rooms
 
 
-def _remove_room_item(rooms: dict[str, Room], item_id: str) -> None:
-    for room in rooms.values():
-        if item_id in room.item_ids:
-            room.item_ids = tuple(value for value in room.item_ids if value != item_id)
-
-
-def _seed_default_mystery_opening(rooms: dict[str, Room]) -> dict[str, str]:
-    seeded_holding: dict[str, str] = {}
-    _remove_room_item(rooms, "case_file")
-    _remove_room_item(rooms, "ledger_page")
-    front_steps = rooms.get("front_steps")
-    if front_steps is not None and "arrival_sedan" not in front_steps.item_ids:
-        front_steps.item_ids = tuple(dict.fromkeys((*front_steps.item_ids, "arrival_sedan")))
-    if "daria_stone" in {npc_id for room in rooms.values() for npc_id in room.npc_ids}:
-        seeded_holding["case_file"] = "daria_stone"
-        seeded_holding["ledger_page"] = "daria_stone"
-    return seeded_holding
-
-
-def _default_mystery_case_facts() -> tuple[tuple[str, str], ...]:
-    return (
-        ("victim_name", "Emma Vale"),
-        ("victim_identity", "Emma Vale, a young patron of the house with ties to the household accounts."),
-        (
-            "victim_timeline",
-            "Emma Vale was last seen entering the east wing shortly before midnight and was found dead in the east wing study shortly after midnight.",
-        ),
-        (
-            "lead_suspect",
-            "The file names no confirmed lead suspect yet; suspicion centers on whoever erased the missing ledger payment.",
-        ),
-        (
-            "strongest_lead",
-            "The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.",
-        ),
-        (
-            "last_verified_witness",
-            "The groundskeeper is the last verified witness to see Emma Vale alive.",
-        ),
-    )
-
-
-def _apply_opening_setup(state: GameState, package: dict, start_room: str) -> None:
+def _apply_opening_setup(state: GameState, package: dict) -> None:
     setup = dict(package.get("opening_setup", {}))
     protagonist_name = str(setup.get("protagonist_name", "")).strip()
     contact = dict(setup.get("opening_contact", {}))
-    npc_ids = state.world.rooms[start_room].npc_ids
-    index = int(contact.get("index", -1))
-    contact_id = npc_ids[index] if 0 <= index < len(npc_ids) else ""
+    contact_id = str(contact.get("id", "")).strip()
+    if not contact_id and "index" in contact:
+        opening_order = tuple(map(str, setup.get("arrival_order", ())))
+        index = int(contact.get("index", -1))
+        if 0 <= index < len(opening_order):
+            contact_id = opening_order[index]
     contact_npc = state.world.npcs.get(contact_id)
     ops: list[dict[str, object]] = []
     if protagonist_name:
@@ -320,62 +200,81 @@ def _apply_opening_setup(state: GameState, package: dict, start_room: str) -> No
         relationship = str(contact.get("relationship", "")).strip()
         purpose = str(contact.get("scene_purpose", "")).strip()
         if role:
-            ops.extend((
-                {"op": "assert", "fact": ("assistant_name", contact_npc.name)},
-                {"op": "assert", "fact": ("npc_role", contact_npc.name, role)},
-            ))
+            ops.extend(
+                (
+                    {"op": "assert", "fact": ("assistant_name", contact_npc.name)},
+                    {"op": "assert", "fact": ("npc_role", contact_npc.name, role)},
+                )
+            )
         if relationship:
             ops.append({"op": "assert", "fact": ("npc_relationship", contact_npc.name, "player", relationship)})
         if purpose:
             ops.append({"op": "assert", "fact": ("npc_scene_purpose", contact_id, purpose)})
-    for entry in setup.get("holdings", []):
-        if str(entry.get("holder", "")) == "opening_contact" and contact_id:
-            ops.append({"op": "assert", "fact": ("holding", contact_id, str(entry["item_id"]))})
-    for entry in setup.get("room_items", []):
-        item_id = str(entry["item_id"])
-        ops.append({"op": "assert", "fact": ("room_item", start_room, item_id)})
-        for predicate in ("item_owner", "item_driver", "item_state"):
-            if str(entry.get(predicate.removeprefix("item_"), "")).strip():
-                ops.append({"op": "assert", "fact": (predicate, item_id, str(entry[predicate.removeprefix("item_")]))})
-    ops.extend({"op": "assert", "fact": ("player_context", key, value)} for key, value in dict(setup.get("player_context", {})).items())
-    ops.extend({"op": "assert", "fact": ("case_fact", key, value)} for key, value in dict(setup.get("case_facts", {})).items())
+    ops.extend(
+        {"op": "assert", "fact": ("player_context", key, value)}
+        for key, value in dict(setup.get("player_context", {})).items()
+    )
+    ops.extend(
+        {"op": "assert", "fact": ("case_fact", key, value)} for key, value in dict(setup.get("case_facts", {})).items()
+    )
     if ops:
         apply_fact_ops(state, ops)
 
 
-def build_default_state(
-    seed: int,
-    genre: str = "mystery",
-    session_length: int | str = "medium",
-    tone: str = "neutral",
-) -> GameState:
-    record("full_world_build", genre=genre)
-    package = build_world_package(
-        genre=genre,
-        session_length=session_length,
-        seed=seed,
-        tone=tone,
-    )
+def _place_package_entities(package: dict, rooms: dict[str, Room]) -> tuple[str, ...]:
+    player_inventory = ["field_kit"]
+    for character in package["characters"]:
+        room = rooms[str(character["location"])]
+        room.npc_ids = (*room.npc_ids, str(character["id"]))
+    for item in package["items"]:
+        custody = item.get("initial_custody") or {}
+        item_id = str(item["id"])
+        if custody.get("kind") == "room":
+            room = rooms[str(custody["id"])]
+            room.item_ids = (*room.item_ids, item_id)
+        elif custody.get("kind") == "player":
+            player_inventory.append(item_id)
+    return tuple(dict.fromkeys(player_inventory))
 
+
+def _package_fact_ops(package: dict) -> list[dict[str, object]]:
+    ops: list[dict[str, object]] = []
+    for item in package["items"]:
+        item_id = str(item["id"])
+        custody = item.get("initial_custody") or {}
+        if custody.get("kind") == "npc":
+            ops.append({"op": "assert", "fact": ("holding", str(custody["id"]), item_id)})
+        state = str(item.get("initial_state", "")).strip()
+        if state:
+            ops.append({"op": "assert", "fact": ("item_state", item_id, state)})
+        for predicate in ("item_owner", "item_driver"):
+            value = str(item.get(predicate.removeprefix("item_"), "")).strip()
+            if value:
+                ops.append({"op": "assert", "fact": (predicate, item_id, value)})
+    for character in package["characters"]:
+        npc_id = str(character["id"])
+        for knowledge in character.get("initial_knowledge", []):
+            ops.append({"op": "assert", "fact": ("knows", npc_id, str(knowledge))})
+        for knowledge in character.get("protected_knowledge", []):
+            ops.append({"op": "assert", "fact": ("conceals", npc_id, str(knowledge))})
+        relationship = str(character.get("relationship", "")).strip()
+        if relationship:
+            ops.append({"op": "assert", "fact": ("npc_relationship", str(character["name"]), "player", relationship)})
+        purpose = str(character.get("scene_purpose", "")).strip()
+        if purpose:
+            ops.append({"op": "assert", "fact": ("npc_scene_purpose", npc_id, purpose)})
+    return ops
+
+
+def realize_world_package(package: dict, seed: int) -> GameState:
+    """Realize validated package data into a fact-backed playable world."""
     items = _build_items(package)
     npcs = _build_npcs(package)
-    rooms = _build_rooms(package, items, npcs)
+    rooms = _build_rooms(package)
 
     start_room = package["map"]["rooms"][0]
-    opening_inventory: list[str] = ["field_kit"]
-    if package["genre"] != "mystery" and "case_file" in items:
-        opening_inventory.append("case_file")
-
-    start_room_state = rooms[start_room]
-    start_room_state.item_ids = tuple(
-        item_id for item_id in start_room_state.item_ids if item_id not in opening_inventory
-    )
-    seeded_holding: dict[str, str] = {}
-    if package["genre"] == "mystery":
-        seeded_holding = _seed_default_mystery_opening(rooms)
-
     player = PlayerState(
-        location=start_room, inventory=tuple(dict.fromkeys(opening_inventory)), flags={"started": True}
+        location=start_room, inventory=_place_package_entities(package, rooms), flags={"started": True}
     )
     world = WorldState(rooms=rooms, items=items, npcs=npcs)
 
@@ -392,93 +291,21 @@ def build_default_state(
         active_goal=str(package["goals"].get("setup", package["goals"]["primary"])),
     )
     initialize_world_facts(state)
-    _apply_opening_setup(state, package, start_room)
-    if package["genre"] == "mystery" and not package.get("opening_setup"):
-        protagonist_name = canonical_detective_name(
-            package["genre"],
-            str(package.get("story_plan", {}).get("protagonist_name", "")).strip(),
-        )
-        if protagonist_name:
-            replace_fact_group(state, "player_name", (("player_name", protagonist_name),))
-        start_room_npcs = state.world.rooms[start_room].npc_ids
-        if start_room_npcs:
-            assistant_id = start_room_npcs[0]
-            assistant = state.world.npcs.get(assistant_id)
-            if assistant is not None and assistant.name.strip():
-                apply_fact_ops(
-                    state,
-                    [
-                        {"op": "assert", "fact": ("assistant_name", assistant.name.strip())},
-                        {"op": "assert", "fact": ("npc_role", assistant.name.strip(), "assistant")},
-                        {"op": "assert", "fact": ("npc_relationship", assistant.name.strip(), "player", "assistant")},
-                        {
-                            "op": "assert",
-                            "fact": (
-                                "npc_scene_purpose",
-                                assistant_id,
-                                "Brief you on the public outline of the death, then bring you inside to review the case file yourself.",
-                            ),
-                        },
-                    ],
-                )
-        for item_id, holder_id in seeded_holding.items():
-            if item_id in state.world.items and holder_id in state.world.npcs:
-                apply_fact_ops(state, [{"op": "assert", "fact": ("holding", holder_id, item_id)}])
-        if "arrival_sedan" in state.world.items:
-            apply_fact_ops(
-                state,
-                [
-                    {"op": "assert", "fact": ("room_item", start_room, "arrival_sedan")},
-                    {"op": "assert", "fact": ("item_owner", "arrival_sedan", "player")},
-                    {"op": "assert", "fact": ("item_driver", "arrival_sedan", "player")},
-                    {"op": "assert", "fact": ("item_state", "arrival_sedan", "parked_beside_the_drive")},
-                ],
-            )
-        apply_fact_ops(
-            state,
-            [
-                {
-                    "op": "assert",
-                    "fact": (
-                        "player_context",
-                        "arrival_mode",
-                        "You drove your own sedan to the mansion and left it by the drive.",
-                    ),
-                },
-                {
-                    "op": "assert",
-                    "fact": (
-                        "player_context",
-                        "knowledge_state",
-                        "You have only just arrived and have not yet gathered evidence from the scene.",
-                    ),
-                },
-                {
-                    "op": "assert",
-                    "fact": (
-                        "player_context",
-                        "case_file_status",
-                        "You have not reviewed the case file yet, so its contents are still unknown to you.",
-                    ),
-                },
-                {
-                    "op": "assert",
-                    "fact": (
-                        "player_context",
-                        "threshold_pause",
-                        "Daria arrived before you, confirmed that a death has put the household on edge, and saved the case-file details for your own review.",
-                    ),
-                },
-            ],
-        )
-        apply_fact_ops(
-            state,
-            [{"op": "assert", "fact": ("case_fact", key, value)} for key, value in _default_mystery_case_facts()],
-        )
+    ops = _package_fact_ops(package)
+    if ops:
+        apply_fact_ops(state, ops)
+    _apply_opening_setup(state, package)
     ensure_default_role_contracts(state)
     sync_legacy_views(state)
     refresh_scene_state(state)
     return state
+
+
+def build_default_state(
+    seed: int, genre: str = "mystery", session_length: int | str = "medium", tone: str = "neutral"
+) -> GameState:
+    record("full_world_build", genre=genre)
+    return realize_world_package(build_world_package(genre, session_length, seed, tone), seed)
 
 
 def build_tiny_state(seed: int) -> GameState:
@@ -620,7 +447,9 @@ def build_state_from_bootstrap_plan(
         assistant_name = str(assistant["name"]).strip()
         if assistant_name:
             replace_fact_group(state, "assistant_name", (("assistant_name", assistant_name),))
-            apply_fact_ops(state, [{"op": "assert", "fact": ("npc_relationship", assistant_name, "player", "assistant")}])
+            apply_fact_ops(
+                state, [{"op": "assert", "fact": ("npc_relationship", assistant_name, "player", "assistant")}]
+            )
 
     ensure_default_role_contracts(state)
     sync_legacy_views(state)

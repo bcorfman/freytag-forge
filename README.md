@@ -94,8 +94,12 @@ inventory is documented in
 Phase 1 package templates are stored in
 [`data/story_packages.yaml`](data/story_packages.yaml). They declare map,
 character, item, opening, intent-alias, and bounded-effect sections. The
-builder expands and validates those sections before a package can be realized;
-`opening_setup.yaml` remains only a compatibility input during this migration.
+builder expands and validates those sections before a package can be realized.
+Phase 2 realizes every package through the same package-to-facts service:
+room presentation, character placement and roles, item custody/state, opening
+context, and document/case facts are committed from the package rather than
+from genre-specific world setup. The former `opening_setup.yaml` is retained as
+a migration reference only; runtime package construction no longer reads it.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

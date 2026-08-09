@@ -45,7 +45,73 @@ packages:
         - {direction: south, from: watch_tower, to: safehouse}
         - {direction: east, from: watch_tower, to: old_chapel}
         - {direction: west, from: old_chapel, to: watch_tower}
-    items: [case_file, ledger_page, route_key]
+      room_presentation:
+        front_steps:
+          name: Outside The Mansion
+          description: Broad stone steps rise to a carved oak door framed by weathered columns. A brass lantern burns beside the entrance and fresh mud marks the path from the street.
+        foyer:
+          name: Mansion Foyer
+          description: The foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead. The upper gallery stays dark above the entry.
+    characters:
+      traits: [observant, independent]
+      appearance: "A distinct, scene-appropriate figure."
+      role: contact
+      relationship: arrives_with_the_player
+      scene_purpose: "Offer a relevant perspective on the opening situation."
+      initial_knowledge: [public_briefing]
+      protected_knowledge: []
+      opening_contact:
+        id: daria_stone
+        name: Daria Stone
+        location: front_steps
+        pronouns: she/her
+        appearance: a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun
+        description: Daria Stone watches the situation carefully in a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun.
+        role: assistant
+        relationship: assistant
+        scene_purpose: Brief you on the public outline of the death, then bring you inside to review the case file yourself.
+        initial_knowledge: [opening_situation]
+        protected_knowledge: [case_file_contents]
+    items: [case_file, ledger_page, route_key, arrival_sedan]
+    item_details:
+      case_file:
+        kind: tool
+        clue_text: The case file pins down the victim timeline and highlights the first credible lead.
+        initial_custody: {kind: npc, id: daria_stone}
+      ledger_page:
+        kind: clue
+        clue_text: The ledger page records a missing payment tied to the mansion and tonight's visit.
+        initial_custody: {kind: npc, id: daria_stone}
+      route_key:
+        kind: evidence
+        clue_text: The route key marks a service passage someone expected to use after dark.
+        initial_custody: {kind: room, id: market_lane}
+      arrival_sedan:
+        name: dark sedan
+        description: A dark sedan is parked by the drive where you left it after arriving at the mansion.
+        kind: vehicle
+        portable: false
+        initial_state: parked_beside_the_drive
+        initial_custody: {kind: room, id: front_steps}
+        owner: player
+        driver: player
+    opening_setup:
+      protagonist_name: Detective Elias Wren
+      opening_contact: {role: assistant, relationship: assistant}
+      arrival_order: [player, daria_stone]
+      public_briefing: [opening_situation]
+      pending_knowledge: [local_context]
+      protected_knowledge: [future_revelations]
+      player_context:
+        arrival_mode: You drove your own sedan to the mansion and left it by the drive.
+        knowledge_state: You have only just arrived and have not yet gathered evidence from the scene.
+        case_file_status: You have not reviewed the case file yet, so its contents are still unknown to you.
+        threshold_pause: Daria arrived before you, confirmed that a death has put the household on edge, and saved the case-file details for your own review.
+      case_facts:
+        victim_name: Emma Vale
+        victim_timeline: Emma Vale was last seen shortly before midnight in the west gallery.
+        lead_suspect: The groundskeeper was the last verified witness to see Emma alive.
+        strongest_lead: The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.
   fantasy:
     <<: *default
     map: {rooms: [village_gate, market_square, scribe_hall, enchanted_wood, citadel_steps, sanctum]}
