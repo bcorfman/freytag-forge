@@ -84,43 +84,43 @@ an initial fixture, not a special runtime path.
 
 ### Work
 
-- Move room-copy, item-location, NPC focus, name-introduction, and opening
+- [x] Move room-copy, item-location, NPC focus, name-introduction, and opening
   briefing constraints into generic fact-aware presentation policies.
-- Package data supplies room copy, short/long presentation, document visibility,
+- [x] Package data supplies room copy, short/long presentation, document visibility,
   active NPC scene purpose, and public briefing content.
-- Define a shared roleplay-forward narration and dialogue prompt policy. It must
+- [x] Define a shared roleplay-forward narration and dialogue prompt policy. It must
   frame ordinary play as a grounded, realistic interactive roleplay rather than
   a game report: characters act from their declared motives, relationships,
   knowledge, emotional pressure, and limits, with believable initiative,
   subtext, disagreement, hesitation, and imperfect information.
-- Keep performance distinct from truth. The shared prompt policy may authorize
+- [x] Keep performance distinct from truth. The shared prompt policy may authorize
   fact-consistent choices of voice, attention, body language, pacing, and
   expression, but may not authorize invented canonical facts, hidden knowledge,
   events, or state changes. Any visible world change still requires an accepted,
   committed fact operation.
-- Make narration scene- and consequence-forward: begin from the meaningful
+- [x] Make narration scene- and consequence-forward: begin from the meaningful
   human or situational response to the player's move, and include room, map,
   inventory, exits, or visible-item detail only when it changes what a character
   does, perceives, risks, or can reasonably attempt. Do not require a
   room-description or affordance tour on ordinary turns.
-- Make addressed-NPC dialogue character-forward. Supply only the NPC's permitted
+- [x] Make addressed-NPC dialogue character-forward. Supply only the NPC's permitted
   fact slice plus its declarative role, motivations, relationships, knowledge,
   capabilities, limitations, and adaptive presentation traits; require an
   in-character reply rather than a player-command echo, narrator summary, or
   mechanics acknowledgement.
-- Retire front-steps/mansion-specific CLI copy and named opening-coherence rules.
+- [x] Retire front-steps/mansion-specific CLI copy and named opening-coherence rules.
 
 ### Exit criteria
 
-- Openings cannot repeat room/map content, disclose protected document facts, or
+- [x] Openings cannot repeat room/map content, disclose protected document facts, or
   contradict custody/knowledge in any fixture.
-- A full-name introduction establishes a stable unambiguous display name across
+- [x] A full-name introduction establishes a stable unambiguous display name across
   opening, room, narration, and dialogue without story-specific exceptions.
-- Cross-genre prompt and transcript tests demonstrate that ordinary turns read as
+- [x] Cross-genre prompt and transcript tests demonstrate that ordinary turns read as
   grounded roleplay rather than a status report: characters retain distinct
   fact-backed motivations and voices, and setting/object detail appears only
   when dramatically or causally relevant.
-- The same tests prove that roleplay performance cannot introduce a fact,
+- [x] The same tests prove that roleplay performance cannot introduce a fact,
   protected knowledge, or visible state change without an accepted commit.
 
 ## Phase 4 — Documents, affordances, and semantic intents

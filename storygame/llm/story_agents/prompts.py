@@ -21,7 +21,6 @@ def build_story_bootstrap_prompt(
         "protagonist_name, protagonist_background, assistant_name, actionable_objective, primary_goal, "
         "secondary_goals, expanded_outline, story_beats, villains, timed_events, clue_placements, "
         "hidden_threads, reveal_schedule, contacts, opening_paragraphs. "
-        "For mystery stories, use a named male detective protagonist and keep that identity stable in opening_paragraphs. "
         "story_beats must map the whole story arc for the requested session length. "
         "villains must explain motive, means, and opportunity. "
         "clue_placements must use exact provided item_id and room_id values and should keep meaningful clues hidden in plausible places. "
@@ -34,7 +33,7 @@ def build_story_bootstrap_prompt(
         "Prioritize character setup over scenic repetition: establish protagonist background, motivation, communication, and relationships first. "
         "Opening paragraphs must retain the permitted public situation facts from opening_facts that establish what happened and why the player was called; do not omit the central situation merely to shorten the scene. "
         "Do not repeat the room/map block: omit its scenery, exits, visible-item placement, and NPC staging from opening_paragraphs. "
-        "Include the protagonist's immediate thought, emotion, or judgment about the case. Mention each item or document only once across the opening. "
+        "Include the protagonist's immediate thought, emotion, or judgment about the situation. Mention each item or document only once across the opening. "
         "Remove scenery-first filler unless it is needed for flow or story cohesion, and only keep scenic detail when it directly changes character intent, conflict, or stakes. "
         "Give the opening a complete ending: every paragraph must end with a finished sentence, never a cut-off clause. "
         "On first mention of a visible NPC in opening_paragraphs, use that NPC's full name. "
@@ -65,7 +64,7 @@ def build_story_architect_prompt(premise: str, protagonist_hint: str, genre: str
         "You are Story Architect Agent. Return JSON only with keys: "
         "protagonist_name, protagonist_background, secrets_to_hide, tone. "
         "Keep spoilers out of protagonist_background. "
-        "For mystery stories, make the protagonist a named male detective."
+        "Give the protagonist a stable, specific identity that fits the supplied package facts."
     )
     user = json.dumps(
         {
@@ -119,9 +118,9 @@ def build_narrator_opening_prompt(opening_draft: str, opening_facts: dict[str, o
         "Stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory from the draft. "
         "Treat the player's inventory as carried gear, never as an item left at their feet or on the ground. "
         "Favor character background, motivation, communication, and relationship tension over repeated atmospheric room description. "
-        "Do not repeat any room/map description, exit, visible-item placement, or NPC staging from opening_facts. Include the protagonist's immediate thought, emotion, or judgment about the case, and mention each item or document only once. "
+        "Do not repeat any room/map description, exit, visible-item placement, or NPC staging from opening_facts. Include the protagonist's immediate thought, emotion, or judgment about the situation, and mention each item or document only once. "
         "Remove scenery-first filler unless it is needed for flow or story cohesion, and only keep environmental detail when it changes how the characters read the moment or what they do next. "
-        "Make the companion an active colleague: give them a specific response, question, or observation instead of staging them as silently waiting. Finish every paragraph with a complete sentence. "
+        "Make every visible NPC an active person with a specific response, question, or observation instead of staging them as silently waiting. Finish every paragraph with a complete sentence. "
         "On first mention of a visible NPC, use their full name. "
         "Treat opening_facts as canonical state for role, custody, scene-purpose, and pending-knowledge continuity; do not contradict opening_facts. "
         "Do not invent extra furniture, desks, tables, papers, or document staging that the draft does not support."

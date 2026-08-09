@@ -65,6 +65,10 @@ def test_world_package_expands_and_validates_phase1_sections() -> None:
             ),
             "protected knowledge",
         ),
+        (
+            lambda package: package["items"][0].update({"document_visibility": "unknown"}),
+            "document visibility",
+        ),
     ],
 )
 def test_world_package_validation_rejects_cross_section_errors(change, message) -> None:

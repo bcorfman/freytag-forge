@@ -538,7 +538,7 @@ def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypa
     assert any("ledger page" in issue.lower() for issue in result["issues"])
 
 
-def test_story_bootstrap_critic_rejects_ledger_page_left_on_front_steps(monkeypatch) -> None:
+def test_story_bootstrap_critic_does_not_apply_named_location_or_item_rules(monkeypatch) -> None:
     state = build_default_state(seed=552)
     agent = DefaultStoryBootstrapCriticAgent("openai")
     bundle = {
@@ -568,8 +568,8 @@ def test_story_bootstrap_critic_rejects_ledger_page_left_on_front_steps(monkeypa
 
     result = agent.run(state, bundle)
 
-    assert result["verdict"] == "revise"
-    assert any("front steps" in issue.lower() for issue in result["issues"])
+    assert result["verdict"] == "accepted"
+    assert result["issues"] == []
 
 
 def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> None:

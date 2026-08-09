@@ -217,6 +217,13 @@ def _apply_opening_setup(state: GameState, package: dict) -> None:
     ops.extend(
         {"op": "assert", "fact": ("case_fact", key, value)} for key, value in dict(setup.get("case_facts", {})).items()
     )
+    # A briefing is an explicit epistemic grant, not an invitation for a
+    # presentation layer to read every case fact.  The same keys are later
+    # filtered by observer_context_slice before they reach a model.
+    ops.extend(
+        {"op": "assert", "fact": ("knows", "player", key)}
+        for key in setup.get("public_briefing", ())
+    )
     if ops:
         apply_fact_ops(state, ops)
 
@@ -251,6 +258,9 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
             value = str(item.get(predicate.removeprefix("item_"), "")).strip()
             if value:
                 ops.append({"op": "assert", "fact": (predicate, item_id, value)})
+        visibility = str(item.get("document_visibility", "discoverable")).strip()
+        if visibility:
+            ops.append({"op": "assert", "fact": ("document_visibility", item_id, visibility)})
     for character in package["characters"]:
         npc_id = str(character["id"])
         for knowledge in character.get("initial_knowledge", []):

@@ -100,6 +100,13 @@ room presentation, character placement and roles, item custody/state, opening
 context, and document/case facts are committed from the package rather than
 from genre-specific world setup. The former `opening_setup.yaml` is retained as
 a migration reference only; runtime package construction no longer reads it.
+Phase 3 makes presentation observer-aware and roleplay-forward. Public
+briefings are explicit `knows(player, fact_key)` grants; opening and ordinary
+turn prompts receive only the relevant observer or addressed-NPC fact slice.
+Packages declare room short/long copy, NPC scene purpose, briefing facts, and
+document visibility. Shared prompt policy permits expressive performance but
+never treats it as a state mutation: visible changes and knowledge revelations
+still require accepted fact commits.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

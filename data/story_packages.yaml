@@ -13,6 +13,7 @@ default: &default
   items:
     affordances: [examine, take, give, use]
     initial_state: available
+    document_visibility: discoverable
   opening_setup:
     arrival_order: [player, opening_contact]
     public_briefing: [opening_situation]
@@ -99,7 +100,7 @@ packages:
       protagonist_name: Detective Elias Wren
       opening_contact: {role: assistant, relationship: assistant}
       arrival_order: [player, daria_stone]
-      public_briefing: [opening_situation]
+      public_briefing: [opening_situation, victim_name, victim_timeline, lead_suspect, strongest_lead]
       pending_knowledge: [local_context]
       protected_knowledge: [future_revelations]
       player_context:

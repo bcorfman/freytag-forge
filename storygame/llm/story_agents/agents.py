@@ -16,6 +16,7 @@ from uuid import uuid4
 from storygame.engine.facts import assistant_name as resolved_assistant_name
 from storygame.engine.facts import assistant_role as resolved_assistant_role
 from storygame.engine.facts import item_state, player_context_facts, room_items, room_npcs
+from storygame.engine.perception import observer_context_slice
 from storygame.engine.state import GameState
 from storygame.llm.opening_coherence import item_labels_for_opening, opening_coherence_issues
 from storygame.llm.story_agents.contracts import (
@@ -419,7 +420,8 @@ def _opening_facts_seed(state: GameState) -> dict[str, object]:
         "scene_facts": [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()],
         "situation_facts": [
             {"key": fact[1], "value": fact[2]}
-            for fact in state.world_facts.query("case_fact", None, None)
+            for fact in observer_context_slice(state, "player")
+            if fact[0] == "case_fact" and len(fact) == 3
         ],
         "visible_items": visible_items,
     }
@@ -734,7 +736,6 @@ class DefaultStoryBootstrapCriticAgent:
             item_labels_for_opening(tuple(state.world.items.keys())),
             tuple(str(contact.get("name", "")).strip() for contact in bootstrap_bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
         )
-        issues.extend(_bootstrap_clue_staging_issues(bootstrap_bundle))
         if issues:
             critique["verdict"] = "revise"
             critique["continuity_summary"] = (
@@ -742,24 +743,6 @@ class DefaultStoryBootstrapCriticAgent:
             )
             critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
         return critique
-
-
-def _bootstrap_clue_staging_issues(bootstrap_bundle: dict[str, Any]) -> list[str]:
-    issues: list[str] = []
-    for entry in bootstrap_bundle.get("clue_placements", ()):
-        if not isinstance(entry, dict):
-            continue
-        item_id = str(entry.get("item_id", "")).strip().lower()
-        room_id = str(entry.get("room_id", "")).strip().lower()
-        if room_id != "front_steps":
-            continue
-        if item_id == "ledger_page":
-            issues.append("The ledger page cannot be left exposed on the front steps; move it indoors or into Daria Stone's custody.")
-        elif item_id == "route_key":
-            issues.append("The route key should not be lying exposed on the front steps; hide it in a plausible location or place it in someone's custody.")
-    return issues
-
-
 class DefaultCharacterDesignerAgent:
     def __init__(self, mode: str) -> None:
         self._mode = mode

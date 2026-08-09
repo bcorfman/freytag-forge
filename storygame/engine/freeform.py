@@ -20,6 +20,7 @@ from storygame.engine.facts import (
 )
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
+from storygame.engine.perception import observer_context_slice, speaker_context_slice
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
@@ -627,7 +628,12 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         if item_id in state.world.items
     ]
     scene_entries = [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()]
-    case_entries = [dict(entry) for entry in case_facts(state)]
+    permitted_player_facts = observer_context_slice(state, "player")
+    case_entries = [
+        {"key": fact[1], "value": fact[2]}
+        for fact in permitted_player_facts
+        if fact[0] == "case_fact" and len(fact) == 3
+    ]
     relevant_npc_facts = [
         fact
         for fact in npc_facts
@@ -638,6 +644,16 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         fact for fact in item_facts if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
     ]
     movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
+    addressed_npc_id = next(
+        (
+            npc_id
+            for npc_id in room.npc_ids
+            if npc_id in state.world.npcs
+            and state.world.npcs[npc_id].name.strip().lower() in raw_input.lower()
+        ),
+        "",
+    )
+    speaker_facts = speaker_context_slice(state, addressed_npc_id) if addressed_npc_id else ()
     payload = {
         "player_input": raw_input,
         "goal": _short_text(active_story_goal(state), 240),
@@ -663,6 +679,10 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             else [],
         },
         "npc_facts": relevant_npc_facts,
+        "addressed_npc_context": {
+            "id": addressed_npc_id,
+            "facts": [list(fact) for fact in speaker_facts],
+        },
         "inventory": list(state.player.inventory),
         "recent_events": [
             str(event.message_key).strip() for event in state.event_log.events[-5:] if str(event.message_key).strip()
@@ -675,11 +695,18 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "action_proposal requires: intent, targets, arguments, proposed_effects. "
         "Use only entities from provided context. "
         "For uncertain targets, use an empty targets list and a generic intent. "
-        "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed or questioned that NPC. "
+        "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed "
+        "or questioned that NPC. "
         "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
         "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
-        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative and do not invent conflicting wardrobe details. "
-        "When answering about the case file, victim, timeline, witness, or suspect, treat case_facts as authoritative and do not invent alternate victim identities, timelines, or suspect claims."
+        "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative "
+        "and do not invent conflicting wardrobe details. "
+        "For an addressed NPC, use addressed_npc_context only for that NPC's private knowledge; "
+        "do not infer global truth. "
+        "Write grounded roleplay: characters act from supplied motivations, relationships, knowledge, "
+        "pressure, and limits, with room for initiative, subtext, disagreement, and hesitation. "
+        "Performance may shape voice, attention, body language, pacing, and expression, but cannot invent "
+        "facts, hidden knowledge, events, or visible state changes."
     )
     return system, json.dumps(payload, ensure_ascii=True)
 
