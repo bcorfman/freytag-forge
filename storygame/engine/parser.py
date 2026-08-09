@@ -30,19 +30,6 @@ def _normalize_token(value: str) -> str:
     return value.strip().lower().replace(" ", "_")
 
 
-def _normalize_direction(value: str) -> str:
-    normalized = _normalize_token(value).strip(" ,.;:!?")
-    direction_aliases = {
-        "n": "north",
-        "s": "south",
-        "e": "east",
-        "w": "west",
-        "u": "up",
-        "d": "down",
-    }
-    return direction_aliases.get(normalized, normalized)
-
-
 def _normalize_target_phrase(value: str) -> str:
     lowered = value.strip().lower()
     if not lowered:
@@ -50,7 +37,7 @@ def _normalize_target_phrase(value: str) -> str:
     truncated = re.split(r"\b(?:and|then)\b", lowered, maxsplit=1)[0]
     cleaned = truncated.strip(" ,.;:!?")
     parts = cleaned.split()
-    while parts and parts[0] in {"the", "a", "an"}:
+    while parts and parts[0] in {"to", "the", "a", "an"}:
         parts = parts[1:]
     return _normalize_token(" ".join(parts))
 
@@ -78,7 +65,7 @@ def parse_command(raw: str) -> Action:
     if words[0] in {"go", "move", "travel", "walk", "climb"}:
         if len(words) < 2:
             return Action(ActionKind.UNKNOWN, target="", raw=raw)
-        target = _normalize_direction(" ".join(words[1:]))
+        target = _normalize_target_phrase(" ".join(words[1:]))
         return Action(ActionKind.MOVE, target=target, raw=raw)
 
     if words[0] == "save":
@@ -86,9 +73,6 @@ def parse_command(raw: str) -> Action:
 
     if words[0] == "load":
         return Action(ActionKind.LOAD, target=_normalize_token(" ".join(words[1:])), raw=raw)
-
-    if words[0] in {"north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"}:
-        return Action(ActionKind.MOVE, target=_normalize_direction(words[0]), raw=raw)
 
     if words[0] in {"take", "get", "grab", "pick", "acquire"}:
         if words[0] == "pick" and len(words) > 1 and words[1] == "up":

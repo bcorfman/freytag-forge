@@ -45,7 +45,8 @@ class _PassThroughEditor:
 
 
 def test_cli_policy_helpers_cover_narrative_turn_variants() -> None:
-    assert _proposal_mode_for_action(parse_command("north")) == "physical"
+    assert _proposal_mode_for_action(parse_command("go to foyer")) == "physical"
+    assert _proposal_mode_for_action(parse_command("north")) == "scene"
     assert _proposal_mode_for_action(parse_command("look")) == "investigation"
     assert _proposal_mode_for_action(parse_command("talk daria")) == "scene"
 

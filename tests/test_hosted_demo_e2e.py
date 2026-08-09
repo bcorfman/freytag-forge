@@ -83,11 +83,11 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
         assert payload["session_id"] == session_id
         return payload
 
-    foyer = run_turn("go north")
+    foyer = run_turn("go to foyer")
     assert foyer["state"]["location"] == "foyer"
     assert foyer["state"]["inventory"] == ["field_kit"]
 
-    market_lane = run_turn("go east")
+    market_lane = run_turn("go to market lane")
     assert market_lane["state"]["location"] == "market_lane"
 
     collected = run_turn("take route key")
@@ -95,7 +95,7 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     assert "route_key" in collected["state"]["inventory"]
 
     run_turn("save hosted-e2e-continuity")
-    moved_on = run_turn("go north")
+    moved_on = run_turn("go to records office")
     assert moved_on["state"]["location"] == "records_office"
 
     restored = run_turn("load hosted-e2e-continuity")

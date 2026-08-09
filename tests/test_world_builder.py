@@ -177,7 +177,7 @@ def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
     assert state.player.location == "front_steps"
     assert state.world.rooms["front_steps"].exits["north"] == "foyer"
 
-    next_state, _events, _beat, _template = advance_turn(state, parse_command("go north"), Random(102))
+    next_state, _events, _beat, _template = advance_turn(state, parse_command("go to foyer"), Random(102))
     assert next_state.player.location == "foyer"
 
 

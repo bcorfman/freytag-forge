@@ -151,7 +151,11 @@ def test_dialogue_policy_helpers_reject_wrong_speaker_and_code_artifacts() -> No
         {"intent": "ask_about", "targets": ["olivia_thompson"], "arguments": {}, "proposed_effects": []},
     )
     assert _dialogue_contains_code_artifact(
-        {"speaker": "daria_stone", "text": "getStringExtra from the case file is not available yet.", "tone": "in_world"}
+        {
+            "speaker": "daria_stone",
+            "text": "getStringExtra from the case file is not available yet.",
+            "tone": "in_world",
+        }
     )
 
 
@@ -458,11 +462,11 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
         destination = state.world.rooms[state.player.location].exits[direction]
         state, _, _action, _beat, _continued = run_turn(
             state,
-        direction,
-        rng,
-        StubNarrator(),
-        save_store=store,
-        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+            f"go to {destination}",
+            rng,
+            StubNarrator(),
+            save_store=store,
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
         assert state.player.location == destination
 
@@ -595,9 +599,9 @@ def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None
     assert next_state.player.location == "foyer"
 
 
-def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
+def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
     def _unexpected_advance_turn(*args, **kwargs):  # noqa: ANN002, ANN003
-        raise AssertionError("advance_turn should not be used for ordinary directional turns")
+        raise AssertionError("advance_turn should not be used for ordinary movement turns")
 
     monkeypatch.setattr("storygame.cli.advance_turn", _unexpected_advance_turn)
     state = build_default_state(seed=2201)
@@ -606,7 +610,7 @@ def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(mon
 
     next_state, lines, action_raw, beat_type, continued = run_turn(
         state,
-        direction,
+        f"go to {destination}",
         Random(2201),
         SilentNarrator(),
         debug=False,
@@ -614,7 +618,7 @@ def test_run_turn_directional_alias_uses_turn_proposal_path_not_advance_turn(mon
     )
 
     assert continued is True
-    assert action_raw == direction
+    assert action_raw == f"go to {destination}"
     assert next_state.player.location == destination
     assert beat_type != "freeform_roleplay"
 

@@ -89,11 +89,10 @@ def _resolve_nearby_held_item_target(state: GameState, room_id: str, target: str
 def _find_exit(state: GameState, room_id: str, target: str) -> tuple[str, str] | None:
     exits = room_paths(state, room_id)
     projection_exits = state.world.rooms[room_id].exits
-    if target in exits:
-        return target, projection_exits.get(target, exits[target])
     for direction, destination in exits.items():
         destination = projection_exits.get(direction, destination)
-        if destination == target:
+        destination_name = state.world.rooms[destination].name.lower().replace(" ", "_")
+        if target in {destination, destination_name}:
             return direction, destination
     return None
 
@@ -321,12 +320,12 @@ def apply_action(state: GameState, action: Action, rng) -> tuple[GameState, list
                     "item_name": item.name,
                     "fact_ops": (
                         [
-                        *(
-                            [{"op": "retract", "fact": ("holding", holder_id, resolved_target)}]
-                            if holder_id
-                            else [{"op": "retract", "fact": ("room_item", room_id, resolved_target)}]
-                        ),
-                        {"op": "assert", "fact": ("holding", "player", resolved_target)},
+                            *(
+                                [{"op": "retract", "fact": ("holding", holder_id, resolved_target)}]
+                                if holder_id
+                                else [{"op": "retract", "fact": ("room_item", room_id, resolved_target)}]
+                            ),
+                            {"op": "assert", "fact": ("holding", "player", resolved_target)},
                         ]
                         + (
                             [

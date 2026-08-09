@@ -45,7 +45,7 @@ fast-path turn dependencies.
 ## Non-Negotiable Product Rules
 
 1. Ordinary turns remain LLM-proposal-first. Parser handling is limited to
-   `save`, `load`, `quit`, and `help`; deterministic direction, inventory, and
+   `save`, `load`, `quit`, and `help`; deterministic inventory and
    item aliases normalize into the shared proposal/commit contract.
 2. The player may attempt any story move. The engine validates a bounded
    consequence, asks for clarification when needed, or uses the existing

@@ -5,8 +5,19 @@ import os
 import re
 from typing import Any, Protocol, TypedDict
 
-from storygame.engine.facts import active_story_goal, case_facts, player_location, protagonist_profile, room_items, room_npcs
-from storygame.engine.facts import item_driver, item_owner, item_state, npc_scene_purpose, player_context_facts
+from storygame.engine.facts import (
+    active_story_goal,
+    case_facts,
+    item_driver,
+    item_owner,
+    item_state,
+    npc_scene_purpose,
+    player_context_facts,
+    player_location,
+    protagonist_profile,
+    room_items,
+    room_npcs,
+)
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.scene_state import refresh_scene_state
@@ -41,7 +52,9 @@ _SERVICE_PASSAGE_LOCATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _ROUTE_KEY_PATTERN = re.compile(r"\broute\s+key\b|\bkey\b", re.IGNORECASE)
-_CONVERSATIONAL_WORD_PATTERN = re.compile(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE)
+_CONVERSATIONAL_WORD_PATTERN = re.compile(
+    r"\b(ask|tell|say|speak|talk|hello|hi|who|what|where|why|how)\b", re.IGNORECASE
+)
 _MOVEMENT_PHRASE_PATTERN = re.compile(
     r"\b(enter|head|go|walk|step|move|return|back|inside|outside|indoors|outdoors|door|entrance|exit)\b",
     re.IGNORECASE,
@@ -94,14 +107,46 @@ _INDOOR_ROOM_TOKENS = {
     "mansion",
     "interior",
 }
-_LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE)
+_LOW_SIGNAL_PLAYER_ECHO_PATTERN = re.compile(
+    r"^[\"']?\s*(?:open|close|get|take|use|inspect|examine|look|go|enter)\b", re.IGNORECASE
+)
 _CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
 _PLANNER_STOPWORDS = {
-    "a", "an", "and", "are", "at", "be", "can", "did", "do", "give", "me", "of",
-    "on", "the", "to", "was", "what", "when", "where", "who", "why", "with", "you", "your",
+    "a",
+    "an",
+    "and",
+    "are",
+    "at",
+    "be",
+    "can",
+    "did",
+    "do",
+    "give",
+    "me",
+    "of",
+    "on",
+    "the",
+    "to",
+    "was",
+    "what",
+    "when",
+    "where",
+    "who",
+    "why",
+    "with",
+    "you",
+    "your",
 }
 _PLANNER_BROAD_FACT_TERMS = {
-    "brief", "case", "clue", "happened", "incident", "situation", "timeline", "victim", "witness",
+    "brief",
+    "case",
+    "clue",
+    "happened",
+    "incident",
+    "situation",
+    "timeline",
+    "victim",
+    "witness",
 }
 
 
@@ -211,12 +256,6 @@ class RuleBasedFreeformProposalAdapter:
             "move",
             "travel",
             "walk",
-            "north",
-            "south",
-            "east",
-            "west",
-            "up",
-            "down",
             "take",
             "get",
             "grab",
@@ -227,14 +266,8 @@ class RuleBasedFreeformProposalAdapter:
             "h",
             "?",
             "i",
-            "n",
-            "s",
-            "e",
-            "w",
-            "u",
-            "d",
         }
-        single_token_only = {"l", "h", "?", "i", "n", "s", "e", "w", "u", "d"}
+        single_token_only = {"l", "h", "?", "i"}
         if first in command_like_heads and (first not in single_token_only or len(words) == 1):
             parsed = parse_command(raw_input)
             if parsed.kind in {
@@ -256,7 +289,9 @@ class RuleBasedFreeformProposalAdapter:
                     "intent": parsed.kind.value,
                     "targets": canonical_targets,
                     "arguments": {},
-                    "proposed_effects": [f"{parsed.kind.value}:{canonical_targets[0] if canonical_targets else 'none'}"],
+                    "proposed_effects": [
+                        f"{parsed.kind.value}:{canonical_targets[0] if canonical_targets else 'none'}"
+                    ],
                 }
                 dialog_payload = {
                     "speaker": "narrator",
@@ -304,7 +339,10 @@ class RuleBasedFreeformProposalAdapter:
                 if normalized_name and normalized_name in text:
                     target = npc_id
                     break
-                if any(name_part and name_part in text for name_part in (_normalize_target(part) for part in npc.name.split())):
+                if any(
+                    name_part and name_part in text
+                    for name_part in (_normalize_target(part) for part in npc.name.split())
+                ):
                     target = npc_id
                     break
         if (
@@ -431,8 +469,6 @@ def _exit_match_score(
     current_text = _room_navigation_text(current_room)
     score = 0
 
-    if f" {direction} " in text:
-        score += 10
     if destination_room.name and destination_room.name.lower() in text:
         score += 8
     destination_id_text = destination_room_id.replace("_", " ")
@@ -441,7 +477,9 @@ def _exit_match_score(
 
     destination_environment = _room_environment(destination_room)
     current_environment = _room_environment(current_room)
-    inward_request = any(phrase in text for phrase in (" enter ", " inside ", " indoors ", " into ", " head in ", " go in "))
+    inward_request = any(
+        phrase in text for phrase in (" enter ", " inside ", " indoors ", " into ", " head in ", " go in ")
+    )
     outward_request = any(
         phrase in text for phrase in (" outside ", " outdoors ", " back outside ", " back out ", " out ", " leave ")
     )
@@ -451,12 +489,16 @@ def _exit_match_score(
         score += 4
     if destination_environment == "outdoor" and outward_request:
         score += 4
-    if current_environment == "outdoor" and destination_environment == "indoor" and any(
-        phrase in text for phrase in (" mansion ", " front door ", " entrance ", " head in ", " enter ")
+    if (
+        current_environment == "outdoor"
+        and destination_environment == "indoor"
+        and any(phrase in text for phrase in (" mansion ", " front door ", " entrance ", " head in ", " enter "))
     ):
         score += 5
-    if current_environment == "indoor" and destination_environment == "outdoor" and any(
-        phrase in text for phrase in (" outside ", " back ", " back outside ", " drive ", " steps ")
+    if (
+        current_environment == "indoor"
+        and destination_environment == "outdoor"
+        and any(phrase in text for phrase in (" outside ", " back ", " back outside ", " drive ", " steps "))
     ):
         score += 5
     if door_request and " door " in current_text and len(current_room.exits) == 1:
@@ -497,10 +539,12 @@ def _semantic_exit_direction(state: GameState, raw_input: str) -> str:
     best_score, best_direction = scored[0]
     if len(scored) > 1 and scored[1][0] == best_score:
         return ""
-    return best_direction if best_score > 0 else ""
+    return room.exits[best_direction] if best_score > 0 else ""
 
 
-def _normalized_movement_action_payload(state: GameState, raw_input: str, action_payload: dict[str, Any]) -> dict[str, Any]:
+def _normalized_movement_action_payload(
+    state: GameState, raw_input: str, action_payload: dict[str, Any]
+) -> dict[str, Any]:
     intent = str(action_payload.get("intent", "")).strip().lower()
     targets = [str(target) for target in action_payload.get("targets", ())]
     move_direction = _semantic_exit_direction(state, raw_input)
@@ -584,13 +628,13 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     scene_entries = [entry["text"] for entry in player_context_facts(state) if str(entry["text"]).strip()]
     case_entries = [dict(entry) for entry in case_facts(state)]
     relevant_npc_facts = [
-        fact for fact in npc_facts
+        fact
+        for fact in npc_facts
         if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
         or query_tokens.intersection(_planner_query_tokens(str(fact["identity"])))
     ]
     relevant_item_facts = [
-        fact for fact in item_facts
-        if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
+        fact for fact in item_facts if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
     ]
     movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
     payload = {
@@ -613,14 +657,14 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
                     "destination_name": state.world.rooms[destination].name,
                 }
                 for direction, destination in sorted(room.exits.items())
-            ] if movement_request else [],
+            ]
+            if movement_request
+            else [],
         },
         "npc_facts": relevant_npc_facts,
         "inventory": list(state.player.inventory),
         "recent_events": [
-            str(event.message_key).strip()
-            for event in state.event_log.events[-5:]
-            if str(event.message_key).strip()
+            str(event.message_key).strip() for event in state.event_log.events[-5:] if str(event.message_key).strip()
         ],
     }
     system = (
@@ -660,11 +704,7 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     intent = _normalize_intent(str(action_payload.get("intent", "")))
     targets = [_normalize_target(str(target)) for target in action_payload.get("targets", [])]
     raw_arguments = action_payload.get("arguments", {})
-    arguments = (
-        {str(k): str(v) for k, v in raw_arguments.items()}
-        if isinstance(raw_arguments, dict)
-        else {}
-    )
+    arguments = {str(k): str(v) for k, v in raw_arguments.items()} if isinstance(raw_arguments, dict) else {}
     proposed_effects = [str(effect) for effect in action_payload.get("proposed_effects", [])]
     if intent:
         arguments.setdefault("planner_intent_raw", intent)
@@ -775,7 +815,9 @@ class LlmFreeformProposalAdapter:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
             dialog_payload, action_payload = self._planned_payloads(state, raw_input, system, user)
-            dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
+            dialog_payload, action_payload = _scope_normalized_proposals(
+                state, raw_input, dialog_payload, action_payload
+            )
             arguments = dict(action_payload["arguments"])
             arguments["planner_source"] = "llm"
             action_payload["arguments"] = arguments
@@ -784,7 +826,9 @@ class LlmFreeformProposalAdapter:
             if self._fallback is not None:
                 dialog_payload, action_payload = self._fallback.propose(state, raw_input)
                 action_payload = _normalized_movement_action_payload(state, raw_input, action_payload)
-                dialog_payload, action_payload = _scope_normalized_proposals(state, raw_input, dialog_payload, action_payload)
+                dialog_payload, action_payload = _scope_normalized_proposals(
+                    state, raw_input, dialog_payload, action_payload
+                )
                 arguments = dict(action_payload["arguments"])
                 arguments["planner_source"] = "fallback"
                 arguments["planner_error"] = _short_text(str(exc), 120)
@@ -801,7 +845,9 @@ class LlmFreeformProposalAdapter:
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, system, user)
         retry_reasons: list[str] = []
-        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(dialog_payload, action_payload):
+        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(
+            dialog_payload, action_payload
+        ):
             retry_reasons.append(
                 "The player directly addressed a visible NPC, so dialog_proposal.speaker must match the addressed target and the reply must come from that NPC."
             )
@@ -811,7 +857,9 @@ class LlmFreeformProposalAdapter:
             )
         if retry_reasons:
             retry_system = system + " Retry because " + " ".join(retry_reasons) + " Return JSON only."
-            dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, retry_system, user)
+            dialog_payload, action_payload = self._parse_planner_response_with_retries(
+                state, raw_input, retry_system, user
+            )
         return dialog_payload, action_payload
 
     def _parse_planner_response_with_retries(
@@ -844,7 +892,9 @@ class LlmFreeformProposalAdapter:
             raise ValueError("planner_non_json")
         dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
         raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
-        action_payload = parse_action_proposal(_normalized_movement_action_payload(state, raw_input, raw_action_payload))
+        action_payload = parse_action_proposal(
+            _normalized_movement_action_payload(state, raw_input, raw_action_payload)
+        )
         return dialog_payload, action_payload
 
 
@@ -1308,7 +1358,9 @@ def resolve_freeform_roleplay_with_proposals(
                 "player_approach": "",
             },
             "npc_dialogue": {
-                "speaker_id": _normalized_dialog_speaker_id(state, str(dialog_proposal.get("speaker", "")), action_proposal),
+                "speaker_id": _normalized_dialog_speaker_id(
+                    state, str(dialog_proposal.get("speaker", "")), action_proposal
+                ),
                 "text": str(dialog_proposal["text"]),
             },
             "narration": str(dialog_proposal["text"]),
@@ -1331,7 +1383,9 @@ def resolve_freeform_roleplay_with_proposals(
             committed_fact_ops.extend(dict(op) for op in fact_ops)
         numeric_delta = committed_event.metadata.get("numeric_delta", ())
         if isinstance(numeric_delta, (list, tuple)):
-            committed_fact_ops.extend({"op": "numeric_delta", "key": entry["key"], "delta": entry["delta"]} for entry in numeric_delta)
+            committed_fact_ops.extend(
+                {"op": "numeric_delta", "key": entry["key"], "delta": entry["delta"]} for entry in numeric_delta
+            )
 
     delta_progress = max(0.0, next_state.progress - state.progress)
     delta_tension = max(0.0, next_state.tension - state.tension)
@@ -1362,5 +1416,6 @@ def resolve_freeform_roleplay_with_proposals(
         "dialog_proposal": dialog_proposal,
         "state_update_envelope": envelope,
     }
+
 
 DEFAULT_FREEFORM_ADAPTER = LlmFreeformProposalAdapter()

@@ -595,7 +595,7 @@ def test_rule_based_adapter_resolves_semantic_navigation_to_unique_exit() -> Non
     dialog, action = RuleBasedFreeformProposalAdapter().propose(state, "enter the mansion")
 
     assert action["intent"] == "move"
-    assert action["targets"] == ["north"]
+    assert action["targets"] == ["foyer"]
     assert dialog["speaker"] == "narrator"
     assert dialog["text"]
 
@@ -685,7 +685,7 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
-def test_llm_freeform_adapter_normalizes_semantic_move_target_to_exit_direction(monkeypatch) -> None:
+def test_llm_freeform_adapter_normalizes_semantic_move_target_to_destination(monkeypatch) -> None:
     state = build_default_state(seed=4053, genre="mystery")
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
@@ -701,7 +701,7 @@ def test_llm_freeform_adapter_normalizes_semantic_move_target_to_exit_direction(
 
     assert dialog["speaker"] == "narrator"
     assert action["intent"] == "move"
-    assert tuple(action["targets"]) == ("north",)
+    assert tuple(action["targets"]) == ("foyer",)
     assert action["arguments"]["planner_source"] == "llm"
 
 
@@ -709,7 +709,7 @@ def test_semantic_exit_direction_resolves_outdoor_return_route() -> None:
     state = build_default_state(seed=40531, genre="mystery")
     state.player.location = "foyer"
 
-    assert _semantic_exit_direction(state, "go back outside") == "south"
+    assert _semantic_exit_direction(state, "go back outside") == "front_steps"
 
 
 def test_room_environment_classifies_mystery_start_rooms() -> None:
@@ -764,7 +764,7 @@ def test_normalized_movement_action_payload_converts_generic_freeform_to_move() 
     normalized = _normalized_movement_action_payload(state, "head in the front door", payload)
 
     assert normalized["intent"] == "move"
-    assert normalized["targets"] == ["north"]
+    assert normalized["targets"] == ["foyer"]
     assert normalized["arguments"]["semantic_navigation"] == "true"
 
 
@@ -779,14 +779,14 @@ def test_normalized_movement_action_payload_rewrites_invalid_move_target() -> No
 
     normalized = _normalized_movement_action_payload(state, "enter the mansion", payload)
 
-    assert normalized["targets"] == ["north"]
-    assert normalized["proposed_effects"] == ["move:north"]
+    assert normalized["targets"] == ["foyer"]
+    assert normalized["proposed_effects"] == ["move:foyer"]
 
 
 def test_semantic_exit_direction_prefers_destination_name_match() -> None:
     state = build_default_state(seed=40536, genre="mystery")
 
-    assert _semantic_exit_direction(state, "head to the foyer") == "north"
+    assert _semantic_exit_direction(state, "head to the foyer") == "foyer"
 
 
 def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> None:
@@ -906,7 +906,7 @@ def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(
 
     assert dialog["speaker"] == "narrator"
     assert action["intent"] == "move"
-    assert tuple(action["targets"]) == ("north",)
+    assert tuple(action["targets"]) == ("foyer",)
     assert action["arguments"]["planner_source"] == "llm"
 
 
@@ -922,7 +922,7 @@ def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatc
 
     assert dialog["speaker"] == "narrator"
     assert action["intent"] == "move"
-    assert tuple(action["targets"]) == ("north",)
+    assert tuple(action["targets"]) == ("foyer",)
     assert action["arguments"]["planner_source"] == "fallback"
     assert "planner unavailable" in action["arguments"]["planner_error"]
 

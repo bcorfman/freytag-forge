@@ -33,13 +33,13 @@ def _state_with_direction(base_state, direction: str, destination: str):
     return state
 
 
-def test_move_by_direction_and_room_name_both_work():
+def test_move_by_named_room_works_without_exposing_route_direction():
     state = build_default_state(seed=1, genre="adventure")
     direction, destination = _reachable_direction_and_destination(state)
 
-    moved_by_dir, events_dir = apply_action(state, parse_command(direction), Random(1))
-    assert moved_by_dir.player.location == destination
-    assert any(event.type == "move" for event in events_dir)
+    rejected, rejected_events = apply_action(state, parse_command(direction), Random(1))
+    assert rejected.player.location == state.player.location
+    assert not any(event.type == "move" for event in rejected_events)
 
     reset_state = build_default_state(seed=1, genre="adventure")
     moved_by_room, events_room = apply_action(reset_state, Action(ActionKind.MOVE, target=destination), Random(1))
@@ -59,40 +59,38 @@ def test_locked_exit_requires_key_then_allows_move():
     state.world_facts.retract_fact("at", "player", previous_room)
     state.world_facts.assert_fact("at", "player", room_id)
 
-    locked_state, locked_events = apply_action(state, parse_command(direction), Random(2))
+    destination = state.world.rooms[room_id].exits[direction]
+    locked_state, locked_events = apply_action(state, parse_command(f"go to {destination}"), Random(2))
     assert locked_state.player.location == room_id
     assert any(event.type == "move_failed" for event in locked_events)
 
     state.player.inventory = (key_id,)
     state.world_facts.assert_fact("holding", "player", key_id)
-    unlocked_state, unlocked_events = apply_action(state, parse_command(direction), Random(2))
+    unlocked_state, unlocked_events = apply_action(state, parse_command(f"go to {destination}"), Random(2))
     assert any(event.type == "move" for event in unlocked_events)
     assert unlocked_state.player.location != room_id
 
 
-def test_direction_aliases_map_deterministically_to_movement() -> None:
-    alias_expectations = (
-        ("east", "east_room", ("e", "east", "go east", "walk east")),
-        ("west", "west_room", ("w", "west", "go west", "walk west")),
-        ("north", "north_room", ("n", "north", "go north", "walk north")),
-        ("south", "south_room", ("s", "south", "go south", "walk south")),
-        ("up", "tower_top", ("u", "up", "go up", "climb up")),
-        ("down", "cellar", ("d", "down", "go down", "climb down")),
-    )
-
+def test_compass_aliases_do_not_move_the_player() -> None:
     base_state = build_default_state(seed=620, genre="adventure")
-    for direction, destination, aliases in alias_expectations:
-        for alias in aliases:
-            state = _state_with_direction(base_state, direction=direction, destination=destination)
-            next_state, events = apply_action(state, parse_command(alias), Random(620))
-            assert next_state.player.location == destination
-            assert any(event.type == "move" for event in events)
+    for command in ("n", "north", "go north", "walk east", "climb up"):
+        next_state, events = apply_action(base_state, parse_command(command), Random(620))
+        assert next_state.player.location == base_state.player.location
+        assert not any(event.type == "move" for event in events)
 
 
-def test_unknown_direction_emits_cant_go_that_way_event() -> None:
+def test_named_destination_moves_the_player() -> None:
+    base_state = build_default_state(seed=620, genre="adventure")
+    state = _state_with_direction(base_state, direction="east", destination="east_room")
+    next_state, events = apply_action(state, parse_command("go to east room"), Random(620))
+    assert next_state.player.location == "east_room"
+    assert any(event.type == "move" for event in events)
+
+
+def test_unknown_destination_emits_cant_go_that_way_event() -> None:
     state = build_default_state(seed=621, genre="mystery")
 
-    next_state, events = apply_action(state, parse_command("go west"), Random(621))
+    next_state, events = apply_action(state, parse_command("go to missing destination"), Random(621))
 
     assert next_state.player.location == state.player.location
     assert any(event.type == "move_failed" for event in events)

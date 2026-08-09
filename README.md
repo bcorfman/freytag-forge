@@ -50,7 +50,7 @@ genre packs extend the same validated schema without story-specific runtime
 branches. The model also receives fact-derived affordances for legal exits,
 locks, visible portable items, addressable NPCs, and held items.
 
-Rendering is post-commit. Deterministic affordances such as `look`, movement,
+Rendering is post-commit. Deterministic affordances such as `look`, named-place movement,
 inventory, and unique visible-item aliases use the shared proposal path and then
 make one story-model rendering call. The normal renderer uses deterministic
 committed-state validation and permits one bounded repair call; critic,

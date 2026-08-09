@@ -12,22 +12,15 @@ def test_parse_empty_and_help_shortcuts():
     assert parse_command("?").kind == ActionKind.HELP
 
 
-def test_parse_move_parsing():
-    command = parse_command("go north")
+def test_parse_named_destination_movement():
+    command = parse_command("go to market lane")
     assert command.kind == ActionKind.MOVE
-    assert command.target == "north"
+    assert command.target == "market_lane"
 
-    assert parse_command("east").kind == ActionKind.MOVE
-    assert parse_command("walk east").target == "east"
-    assert parse_command("n").target == "north"
-    assert parse_command("S").target == "south"
-    assert parse_command("E").target == "east"
-    assert parse_command("w").target == "west"
-    assert parse_command("u").target == "up"
-    assert parse_command("D").target == "down"
-    assert parse_command("climb up").target == "up"
-    assert parse_command("climb down").target == "down"
-    assert parse_command("go down,").target == "down"
+    assert parse_command("east").kind == ActionKind.UNKNOWN
+    assert parse_command("n").kind == ActionKind.UNKNOWN
+    assert parse_command("go north").target == "north"
+    assert parse_command("climb tower").target == "tower"
     assert parse_command("go").kind == ActionKind.UNKNOWN
 
 

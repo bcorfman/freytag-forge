@@ -146,7 +146,7 @@ def test_affordances_are_derived_from_current_facts() -> None:
     affordances = build_affordance_context(state)
 
     assert affordances["location_id"] == "lab"
-    assert affordances["exits"] == ({"direction": "east", "destination": "hall", "locked": False},)
+    assert affordances["exits"] == ({"destination": "hall", "locked": False},)
     assert affordances["items"] == ({"id": "sample", "portable": True},)
     assert affordances["npcs"] == ({"id": "rival", "can_address": True},)
 

@@ -104,9 +104,6 @@ def _client(tmp_path, clock: _Clock | None = None) -> TestClient:
     )
 
 
-
-
-
 def test_demo_bootstrap_requires_llm_authored_opening_and_fails_closed(tmp_path):
     client = TestClient(
         create_demo_app(
@@ -169,7 +166,9 @@ def test_demo_app_allows_configured_cors_origin(tmp_path):
 
 def test_demo_session_create_then_turn_flow(tmp_path):
     client = _client(tmp_path)
-    created = client.post("/api/v1/session", json={"seed": 42, "genre": "mystery", "session_length": "short", "tone": "dark"})
+    created = client.post(
+        "/api/v1/session", json={"seed": 42, "genre": "mystery", "session_length": "short", "tone": "dark"}
+    )
     assert created.status_code == 200
     payload = created.json()
     session_id = payload["session_id"]
@@ -194,39 +193,6 @@ def test_demo_session_create_then_turn_flow(tmp_path):
     assert next_payload["state"]["turn_index"] == 1
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
     tmp_path,
     monkeypatch,
@@ -240,7 +206,7 @@ def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
     def _fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         observed_requests.append(json.loads(request.data.decode("utf-8")))
         return _FakeResponse(
-            "{\"narration\":\"The evening air bites at your skin as you approach the mansion.\\n\\nDaria Stone waits nearby with the case file and watches the entrance.\\n\\nTonight's work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first.\"}"
+            '{"narration":"The evening air bites at your skin as you approach the mansion.\\n\\nDaria Stone waits nearby with the case file and watches the entrance.\\n\\nTonight\'s work is practical before it is grand: review the case file, scan the grounds, and decide which lead to press first."}'
         )
 
     monkeypatch.setattr("storygame.llm.adapters.urllib.request.urlopen", _fake_urlopen)
@@ -387,12 +353,6 @@ def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_
     assert any("Daria Stone waits" in line for line in turn.json()["lines"])
 
 
-
-
-
-
-
-
 def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentials(tmp_path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
@@ -408,7 +368,9 @@ def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentia
             return _FakeResponse(
                 '{"narration":"{\\"dialog_proposal\\":{\\"speaker\\":\\"daria_stone\\",\\"text\\":\\"I keep to practical clothes. The weather here punishes vanity.\\",\\"tone\\":\\"in_world\\"},\\"action_proposal\\":{\\"intent\\":\\"ask_about\\",\\"targets\\":[\\"daria_stone\\"],\\"arguments\\":{\\"topic\\":\\"appearance\\"},\\"proposed_effects\\":[\\"asked:appearance\\"]}}"}'
             )
-        return _FakeResponse('{"narration":"Daria says: \\"I keep to practical clothes. The weather here punishes vanity.\\""}')
+        return _FakeResponse(
+            '{"narration":"Daria says: \\"I keep to practical clothes. The weather here punishes vanity.\\""}'
+        )
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _fake_urlopen)
     client = TestClient(
@@ -420,7 +382,9 @@ def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentia
     )
     session_id = client.post("/api/v1/session", json={"seed": 52}).json()["session_id"]
 
-    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "Daria, tell me about your outfit"})
+    response = client.post(
+        "/api/v1/turn", json={"session_id": session_id, "command": "Daria, tell me about your outfit"}
+    )
 
     assert response.status_code == 200
     payload = response.json()
@@ -429,25 +393,19 @@ def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentia
     assert any("Freeform Action Planner Agent" in request.get("system", "") for request in observed_requests)
 
 
-
-
-
-
-
-
 def test_demo_session_expiry_is_enforced(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     db_path = tmp_path / "web_demo_saves.sqlite"
     client = TestClient(
-            create_demo_app(
-                save_db_path=db_path,
-                narrator_mode="openai",
-                narrator=StubNarrator(_OPENING_TEXT),
-                output_editor=_PassThroughEditor(),
-                story_director=_StubDirector(),
-                session_ttl_seconds=60,
-                save_store=InMemorySaveStore(),
-                freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        create_demo_app(
+            save_db_path=db_path,
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            session_ttl_seconds=60,
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
             now_fn=clock,
         )
     )
@@ -469,15 +427,15 @@ def test_demo_narrator_defaults_to_cloudflare_when_worker_url_set(monkeypatch):
 
 def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=StubNarrator(_OPENING_TEXT),
-                output_editor=_PassThroughEditor(),
-                story_director=_StubDirector(),
-                    session_turn_cap=1,
-                    save_store=InMemorySaveStore(),
-                    freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            session_turn_cap=1,
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
         )
     )
     created = client.post("/api/v1/session", json={"seed": 41})
@@ -499,15 +457,15 @@ def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
 def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=StubNarrator(_OPENING_TEXT),
-                output_editor=_PassThroughEditor(),
-                story_director=_StubDirector(),
-                ip_rate_limit_per_min=2,
-                save_store=InMemorySaveStore(),
-                freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            ip_rate_limit_per_min=2,
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
             now_fn=clock,
         )
     )
@@ -529,13 +487,13 @@ def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
 def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
     clock = _Clock(datetime(2026, 3, 16, 12, 0, tzinfo=UTC))
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=StubNarrator(_OPENING_TEXT),
-                output_editor=_PassThroughEditor(),
-                story_director=_StubDirector(),
-                ip_rate_limit_per_min=10,
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            ip_rate_limit_per_min=10,
             ip_daily_turn_cap=2,
             save_store=InMemorySaveStore(),
             freeform_adapter=RuleBasedFreeformProposalAdapter(),
@@ -560,15 +518,15 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
 
 def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=_FailingNarrator("AI_QUOTA_EXCEEDED"),
-                output_editor=_PassThroughEditor(),
-                story_director=_BundleDirector(),
-                save_store=InMemorySaveStore(),
-                freeform_adapter=RuleBasedFreeformProposalAdapter(),
-            )
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("AI_QUOTA_EXCEEDED"),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        )
     )
     session_id = client.post("/api/v1/session", json={"seed": 5}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
@@ -626,15 +584,15 @@ def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
 
 def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=_FailingNarrator("backend unavailable"),
-                output_editor=_PassThroughEditor(),
-                story_director=_BundleDirector(),
-                save_store=InMemorySaveStore(),
-                freeform_adapter=RuleBasedFreeformProposalAdapter(),
-            )
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("backend unavailable"),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        )
     )
     session_id = client.post("/api/v1/session", json={"seed": 6}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
@@ -647,26 +605,26 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
 
 def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     client = TestClient(
-            create_demo_app(
-                save_db_path=tmp_path / "web_demo_saves.sqlite",
-                narrator_mode="openai",
-                narrator=_FailingNarrator("backend unavailable"),
-                output_editor=_PassThroughEditor(),
-                story_director=_BundleDirector(),
-                save_store=InMemorySaveStore(),
-                freeform_adapter=RuleBasedFreeformProposalAdapter(),
-            )
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="openai",
+            narrator=_FailingNarrator("backend unavailable"),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+            freeform_adapter=RuleBasedFreeformProposalAdapter(),
+        )
     )
     session_id = client.post("/api/v1/session", json={"seed": 7}).json()["session_id"]
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert bootstrap.status_code == 200
     with caplog.at_level(logging.WARNING):
-        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
     assert response.status_code == 503
     assert "Narrator failed" in caplog.text
     assert "backend unavailable" in caplog.text
     assert session_id in caplog.text
-    assert "command=go north" in caplog.text
+    assert "command=go to foyer" in caplog.text
     assert "beat=" in caplog.text
     assert "location=foyer" in caplog.text
     assert response.headers["X-Request-ID"] in caplog.text

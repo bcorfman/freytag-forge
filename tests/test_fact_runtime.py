@@ -33,7 +33,7 @@ def test_move_and_take_update_facts_and_legacy_views() -> None:
     destination_items = tuple(state.world.rooms[destination].item_ids)
     assert destination_items
 
-    after_move, move_events = apply_action(state, parse_command(direction), Random(6))
+    after_move, move_events = apply_action(state, parse_command(f"go to {destination}"), Random(6))
     assert any(event.type == "move" for event in move_events)
     assert after_move.world_facts.holds("at", "player", destination)
     assert after_move.player.location == destination
@@ -68,7 +68,7 @@ def test_assistant_follows_player_move_via_fact_store_updates() -> None:
     assistant_id = state.world.rooms[start_room].npc_ids[0]
     direction, destination = next(iter(state.world.rooms[start_room].exits.items()))
 
-    next_state, events = apply_action(state, parse_command(direction), Random(21))
+    next_state, events = apply_action(state, parse_command(f"go to {destination}"), Random(21))
 
     assert any(event.type == "move" for event in events)
     assert next_state.world_facts.holds("npc_at", assistant_id, destination)
@@ -83,7 +83,7 @@ def test_assistant_can_be_marked_absent_and_stop_following() -> None:
     direction, destination = next(iter(state.world.rooms[start_room].exits.items()))
     apply_fact_ops(state, [{"op": "assert", "fact": ("npc_absent", assistant_id)}])
 
-    next_state, _events = apply_action(state, parse_command(direction), Random(22))
+    next_state, _events = apply_action(state, parse_command(f"go to {destination}"), Random(22))
 
     assert next_state.world_facts.holds("npc_at", assistant_id, start_room)
     assert not next_state.world_facts.holds("npc_at", assistant_id, destination)

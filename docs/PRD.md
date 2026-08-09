@@ -97,7 +97,7 @@ Current runtime generation is package-driven.
 - `storygame.engine` handles command parsing, world rules, state transitions, and event emission.
 - Turn routing is proposal-first for gameplay inputs: LLM runtime proposals are the default control path for all ordinary turns.
 - Deterministic parser handling is retained only for control-plane commands (`save`, `load`, `quit`, `help`).
-- Navigation and inventory affordances remain deterministic engine commands even within the story-first runtime surface: `inventory`/`i` must list held items, and directional aliases like `n`/`north`/`go north`/`walk north` (and corresponding east/west/south/up/down variants) must resolve to canonical map movement with a deterministic failure message when no such exit exists.
+- Inventory remains a deterministic affordance within the story-first runtime surface. Map movement resolves a named destination or unambiguous in-world route description through the shared proposal/commit contract; compass aliases are not player commands.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Canonical fact mutation goes through a validated commit boundary that normalizes uniqueness-sensitive writes, enforces runtime invariants, and refreshes compatibility projections after commit.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
@@ -368,7 +368,7 @@ flowchart LR
 - Contract-invalid ordinary narration is rejected or repaired within the bounded rendering budget without exposing internal error strings to players.
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is LLM-first for ordinary play: gameplay inputs are interpreted through runtime proposal contracts, then validated and committed by deterministic engine policy.
-- Navigation should also support semantic movement phrasing at the proposal layer, not only bare compass directions. Inputs like `enter the mansion`, `head in the front door`, or `go back outside` should be resolved from current-room and destination-room exit facts, and they should commit only when they map to one unique legal exit.
+- Navigation supports named destinations and semantic movement phrasing at the proposal layer. Inputs like `go to the foyer`, `enter the mansion`, `head in the front door`, or `go back outside` resolve from current-room and destination-room exit facts, and commit only when they map to one unique legal exit.
 - Deterministic parser paths are retained only for control-plane commands (`save`, `load`, `quit`, `help`); ordinary gameplay should not degrade into parser-authored fallback turns.
 - NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but the runtime must fail closed rather than substituting deterministic NPC or narrator replies when ordinary conversational authorship is unavailable.
 - Prompt-parroting dialogue should be rejected only for near-verbatim question restatements or player-echo phrasings, not for substantive answers that naturally reuse a few topic words from the player's question.

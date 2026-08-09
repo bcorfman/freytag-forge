@@ -132,7 +132,7 @@ def test_advance_turn_movement_refreshes_scene_identity_and_approach() -> None:
     direction = sorted(state.world.rooms[current_room].exits.keys())[0]
     destination = state.world.rooms[current_room].exits[direction]
 
-    next_state, _events, _beat, _template = advance_turn(state, parse_command(f"go {direction}"), Random(46))
+    next_state, _events, _beat, _template = advance_turn(state, parse_command(f"go to {destination}"), Random(46))
     snapshot = scene_snapshot(next_state)
 
     assert next_state.player.location == destination
