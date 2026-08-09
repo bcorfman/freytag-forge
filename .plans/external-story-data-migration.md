@@ -144,17 +144,17 @@ an initial fixture, not a special runtime path.
 
 ### Work
 
-- Replace named front-steps/ledger/Daria checks with generic predicates for
+- [x] Replace named front-steps/ledger/Daria checks with generic predicates for
   exposure, weather, fragility, custody, access, and observer knowledge.
-- Move ambient-source mappings and geography-specific text to map/package data.
-- Keep only generic validators for physically impossible staging, role drift,
+- [x] Move ambient-source mappings and geography-specific text to map/package data.
+- [x] Keep only generic validators for physically impossible staging, role drift,
   duplicate location/custody, and knowledge leakage.
 
 ### Exit criteria
 
-- Equivalent invalid staging is rejected for multiple genres without named-item
+- [x] Equivalent invalid staging is rejected for multiple genres without named-item
   logic.
-- Ambient and room presentation derive only from map and item facts.
+- [x] Ambient and room presentation derive only from map and item facts.
 
 ## Phase 6 — Remove compatibility paths and certify migration
 

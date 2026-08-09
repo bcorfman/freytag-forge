@@ -246,6 +246,11 @@ def _place_package_entities(package: dict, rooms: dict[str, Room]) -> tuple[str,
 
 def _package_fact_ops(package: dict) -> list[dict[str, object]]:
     ops: list[dict[str, object]] = []
+    for room_id, environment in package["map"]["environment"].items():
+        ops.append({"op": "assert", "fact": ("room_exposure", str(room_id), str(environment["exposure"]))})
+        source = str(environment.get("ambient_source", "")).strip()
+        if source:
+            ops.append({"op": "assert", "fact": ("ambient_source", str(room_id), source)})
     for path in package["map"].get("paths", []):
         ops.extend(
             {"op": "assert", "fact": ("path_alias", str(path["from"]), str(path["direction"]), str(alias).strip())}
@@ -260,6 +265,9 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
         state = str(item.get("initial_state", "")).strip()
         if state:
             ops.append({"op": "assert", "fact": ("item_state", item_id, state)})
+        fragility = str(item.get("fragility", "durable")).strip()
+        if fragility:
+            ops.append({"op": "assert", "fact": ("item_fragility", item_id, fragility)})
         for predicate in ("item_owner", "item_driver"):
             value = str(item.get(predicate.removeprefix("item_"), "")).strip()
             if value:

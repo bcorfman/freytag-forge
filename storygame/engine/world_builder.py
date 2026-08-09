@@ -124,6 +124,15 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     ):
         raise WorldPackageValidationError("map, characters, and items have invalid shapes")
     room_ids = _validate_ids([str(room) for room in map_data.get("rooms", [])], "map rooms")
+    environment = map_data.get("environment", {})
+    if not isinstance(environment, dict) or set(environment) != room_ids:
+        raise WorldPackageValidationError("map environment requires every room")
+    for _room_id, settings in environment.items():
+        if not isinstance(settings, dict) or settings.get("exposure") not in {"outdoor", "sheltered", "enclosed"}:
+            raise WorldPackageValidationError("map environment requires a valid exposure")
+        source = settings.get("ambient_source", "")
+        if source and not isinstance(source, str):
+            raise WorldPackageValidationError("ambient source must be a string")
     paths = map_data.get("paths", [])
     for path in paths:
         if path.get("from") not in room_ids or path.get("to") not in room_ids:
@@ -163,6 +172,14 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
                 raise WorldPackageValidationError("unknown custody reference")
             if custody.get("kind") == "room" and custody.get("id") not in room_ids:
                 raise WorldPackageValidationError("unknown custody reference")
+            if (
+                custody.get("kind") == "room"
+                and item.get("fragility") == "weather_sensitive"
+                and environment[str(custody["id"])]["exposure"] == "outdoor"
+            ):
+                raise WorldPackageValidationError("fragile item cannot be staged in an exposed room")
+        if str(item.get("fragility", "durable")) not in {"durable", "weather_sensitive"}:
+            raise WorldPackageValidationError("invalid item fragility")
         if str(item.get("document_visibility", "discoverable")) not in {"public", "discoverable", "protected"}:
             raise WorldPackageValidationError("invalid document visibility")
         readable = item.get("readable", {})
@@ -438,14 +455,19 @@ def _build_map_for_genre(genre: str) -> dict[str, Any]:
     template = load_story_package_templates().get(genre, load_story_package_templates()["default"])
     room_ids = tuple(template.get("map", {}).get("rooms", _ROOM_TEMPLATES[genre]))
     if template.get("map", {}).get("paths"):
-        return {"rooms": list(room_ids), "paths": deepcopy(template["map"]["paths"]), "room_presentation": {}}
+        return {
+            "rooms": list(room_ids),
+            "paths": deepcopy(template["map"]["paths"]),
+            "environment": deepcopy(template["map"]["environment"]),
+            "room_presentation": {},
+        }
     paths: list[dict[str, str]] = []
     directions = ("north", "east", "north", "east", "north")
     for index, direction in enumerate(directions):
         paths.append({"direction": direction, "from": room_ids[index], "to": room_ids[index + 1]})
         reverse = {"north": "south", "south": "north", "east": "west", "west": "east"}[direction]
         paths.append({"direction": reverse, "from": room_ids[index + 1], "to": room_ids[index]})
-    return {"rooms": list(room_ids), "paths": paths}
+    return {"rooms": list(room_ids), "paths": paths, "environment": deepcopy(template["map"]["environment"])}
 
 
 def _build_item_spec(
@@ -468,6 +490,7 @@ def _build_item_spec(
         "clue_text": str(detail.get("clue_text", "")),
         "affordances": ["examine", "take"],
         "initial_state": str(detail.get("initial_state", "available")),
+        "fragility": str(detail.get("fragility", "durable")),
         "initial_custody": deepcopy(detail.get("initial_custody", default_custody)),
         "owner": str(detail.get("owner", "")),
         "driver": str(detail.get("driver", "")),

@@ -53,6 +53,14 @@ packages:
         foyer:
           name: Mansion Foyer
           description: The foyer opens beneath a dim chandelier, with wet tiles, shuttered portraits, and a long hall ahead. The upper gallery stays dark above the entry.
+      environment:
+        front_steps: {exposure: outdoor, ambient_source: the drive}
+        foyer: {exposure: sheltered, ambient_source: the drive}
+        market_lane: {exposure: outdoor, ambient_source: the lane}
+        records_office: {exposure: enclosed}
+        safehouse: {exposure: enclosed}
+        watch_tower: {exposure: sheltered}
+        old_chapel: {exposure: enclosed}
     characters:
       traits: [observant, independent]
       appearance: "A distinct, scene-appropriate figure."
@@ -95,6 +103,7 @@ packages:
             case_file_status: You have not reviewed the case file yet, so its contents are still unknown to you.
       ledger_page:
         kind: clue
+        fragility: weather_sensitive
         clue_text: The ledger page records a missing payment tied to the mansion and tonight's visit.
         initial_custody: {kind: npc, id: daria_stone}
         readable:
@@ -133,7 +142,15 @@ packages:
         strongest_lead: The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.
   fantasy:
     <<: *default
-    map: {rooms: [village_gate, market_square, scribe_hall, enchanted_wood, citadel_steps, sanctum]}
+    map:
+      rooms: [village_gate, market_square, scribe_hall, enchanted_wood, citadel_steps, sanctum]
+      environment:
+        village_gate: {exposure: outdoor, ambient_source: the gate road}
+        market_square: {exposure: outdoor, ambient_source: the square}
+        scribe_hall: {exposure: enclosed}
+        enchanted_wood: {exposure: outdoor, ambient_source: the woods}
+        citadel_steps: {exposure: outdoor, ambient_source: the citadel steps}
+        sanctum: {exposure: enclosed}
     items: [rune_token, moon_blade, warded_scroll]
     item_details:
       warded_scroll:
@@ -143,7 +160,15 @@ packages:
           leads: [The warded scroll names a safe route through the enchanted wood.]
   sci-fi:
     <<: *default
-    map: {rooms: [dock_hub, market_arcade, archive_node, lab_ring, tower_array, command_core]}
+    map:
+      rooms: [dock_hub, market_arcade, archive_node, lab_ring, tower_array, command_core]
+      environment:
+        dock_hub: {exposure: sheltered, ambient_source: the docking bay}
+        market_arcade: {exposure: enclosed}
+        archive_node: {exposure: enclosed}
+        lab_ring: {exposure: enclosed}
+        tower_array: {exposure: sheltered, ambient_source: the array}
+        command_core: {exposure: enclosed}
     items: [data_key, signal_lens, power_cell]
     item_details:
       data_key:
@@ -153,7 +178,15 @@ packages:
           leads: [The data key records a diagnostic route into the command core.]
   romance:
     <<: *default
-    map: {rooms: [courtyard, cafe_row, garden_path, gallery_hall, river_walk, lantern_square]}
+    map:
+      rooms: [courtyard, cafe_row, garden_path, gallery_hall, river_walk, lantern_square]
+      environment:
+        courtyard: {exposure: outdoor, ambient_source: the courtyard}
+        cafe_row: {exposure: sheltered, ambient_source: the cafe row}
+        garden_path: {exposure: outdoor, ambient_source: the garden path}
+        gallery_hall: {exposure: enclosed}
+        river_walk: {exposure: outdoor, ambient_source: the river walk}
+        lantern_square: {exposure: outdoor, ambient_source: the square}
     items: [letter, locket, keepsake]
     item_details:
       letter:
@@ -163,25 +196,73 @@ packages:
           leads: [The letter makes clear that the meeting at lantern square was meant to be private.]
   adventure:
     <<: *default
-    map: {rooms: [camp, trailhead, cliff_pass, ruin_gate, inner_chamber, return_camp]}
+    map:
+      rooms: [camp, trailhead, cliff_pass, ruin_gate, inner_chamber, return_camp]
+      environment:
+        camp: {exposure: outdoor, ambient_source: the camp}
+        trailhead: {exposure: outdoor, ambient_source: the trail}
+        cliff_pass: {exposure: outdoor, ambient_source: the pass}
+        ruin_gate: {exposure: outdoor, ambient_source: the ruin gate}
+        inner_chamber: {exposure: enclosed}
+        return_camp: {exposure: outdoor, ambient_source: the camp}
     items: [map_fragment, rope_kit, artifact_shard]
   action:
     <<: *default
-    map: {rooms: [safe_flat, alley_junction, control_room, warehouse, checkpoint, extraction_point]}
+    map:
+      rooms: [safe_flat, alley_junction, control_room, warehouse, checkpoint, extraction_point]
+      environment:
+        safe_flat: {exposure: enclosed}
+        alley_junction: {exposure: outdoor, ambient_source: the alley}
+        control_room: {exposure: enclosed}
+        warehouse: {exposure: enclosed}
+        checkpoint: {exposure: sheltered, ambient_source: the checkpoint}
+        extraction_point: {exposure: outdoor, ambient_source: the extraction route}
     items: [badge, breach_charge, comm_scrambler]
   suspense:
     <<: *default
-    map: {rooms: [apartment, backstreet, records_room, subway_platform, abandoned_site, panic_room]}
+    map:
+      rooms: [apartment, backstreet, records_room, subway_platform, abandoned_site, panic_room]
+      environment:
+        apartment: {exposure: enclosed}
+        backstreet: {exposure: outdoor, ambient_source: the backstreet}
+        records_room: {exposure: enclosed}
+        subway_platform: {exposure: sheltered, ambient_source: the platform}
+        abandoned_site: {exposure: outdoor, ambient_source: the site}
+        panic_room: {exposure: enclosed}
     items: [burner_phone, security_card, flash_drive]
   drama:
     <<: *default
-    map: {rooms: [family_home, main_street, clinic, school_hall, community_center, lake_house]}
+    map:
+      rooms: [family_home, main_street, clinic, school_hall, community_center, lake_house]
+      environment:
+        family_home: {exposure: enclosed}
+        main_street: {exposure: outdoor, ambient_source: the street}
+        clinic: {exposure: enclosed}
+        school_hall: {exposure: enclosed}
+        community_center: {exposure: enclosed}
+        lake_house: {exposure: sheltered, ambient_source: the lake}
     items: [old_photo, medical_note, voice_message]
   horror:
     <<: *default
-    map: {rooms: [old_house, fog_road, chapel_ruins, cellar, woods_edge, ritual_room]}
+    map:
+      rooms: [old_house, fog_road, chapel_ruins, cellar, woods_edge, ritual_room]
+      environment:
+        old_house: {exposure: enclosed}
+        fog_road: {exposure: outdoor, ambient_source: the road}
+        chapel_ruins: {exposure: sheltered, ambient_source: the ruins}
+        cellar: {exposure: enclosed}
+        woods_edge: {exposure: outdoor, ambient_source: the woods}
+        ritual_room: {exposure: enclosed}
     items: [salt_pouch, candle_bundle, sigil_stone]
   thriller:
     <<: *default
-    map: {rooms: [transit_hub, newsroom, intel_vault, industrial_yard, embassy_corridor, final_site]}
+    map:
+      rooms: [transit_hub, newsroom, intel_vault, industrial_yard, embassy_corridor, final_site]
+      environment:
+        transit_hub: {exposure: sheltered, ambient_source: the transit hub}
+        newsroom: {exposure: enclosed}
+        intel_vault: {exposure: enclosed}
+        industrial_yard: {exposure: outdoor, ambient_source: the yard}
+        embassy_corridor: {exposure: enclosed}
+        final_site: {exposure: outdoor, ambient_source: the site}
     items: [cipher_sheet, surveillance_tape, access_chip]
