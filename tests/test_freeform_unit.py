@@ -288,6 +288,20 @@ def test_semantic_actions_for_freeform_emits_move_and_take_actions() -> None:
     assert none_actions == ()
 
 
+def test_semantic_actions_for_freeform_accepts_an_adjacent_destination_id() -> None:
+    state = build_default_state(seed=40533, genre="mystery")
+    state.player.location = "market_lane"
+
+    actions = _semantic_actions_for_freeform(
+        state,
+        {"intent": "move", "targets": ["records_office"], "arguments": {}, "proposed_effects": []},
+        {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
+    )
+
+    assert actions[0]["action_type"] == "move_to"
+    assert actions[0]["location_id"] == "records_office"
+
+
 def test_semantic_actions_for_freeform_returns_empty_for_missing_targets_and_unmapped_move() -> None:
     state = build_default_state(seed=4146, genre="mystery")
 

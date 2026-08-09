@@ -1111,8 +1111,9 @@ def _semantic_actions_for_freeform(
     room_id = state.player.location
 
     if intent == "move" and targets:
-        direction = targets[0]
-        destination = state.world.rooms[room_id].exits.get(direction, "")
+        target = targets[0]
+        exits = state.world.rooms[room_id].exits
+        destination = exits.get(target, target if target in exits.values() else "")
         if destination:
             return (
                 {
