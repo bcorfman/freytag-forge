@@ -550,7 +550,8 @@ def _normalized_movement_action_payload(
     move_direction = _semantic_exit_direction(state, raw_input)
     if not move_direction:
         return action_payload
-    if intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
+    explicit_destination = parse_command(raw_input).kind == ActionKind.MOVE
+    if explicit_destination or intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
         normalized = dict(action_payload)
         normalized["intent"] = "move"
         normalized["targets"] = [move_direction]
