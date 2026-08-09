@@ -246,6 +246,12 @@ def _place_package_entities(package: dict, rooms: dict[str, Room]) -> tuple[str,
 
 def _package_fact_ops(package: dict) -> list[dict[str, object]]:
     ops: list[dict[str, object]] = []
+    for path in package["map"].get("paths", []):
+        ops.extend(
+            {"op": "assert", "fact": ("path_alias", str(path["from"]), str(path["direction"]), str(alias).strip())}
+            for alias in path.get("aliases", ())
+            if str(alias).strip()
+        )
     for item in package["items"]:
         item_id = str(item["id"])
         custody = item.get("initial_custody") or {}
@@ -261,6 +267,24 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
         visibility = str(item.get("document_visibility", "discoverable")).strip()
         if visibility:
             ops.append({"op": "assert", "fact": ("document_visibility", item_id, visibility)})
+        readable = item.get("readable", {})
+        if readable:
+            ops.append({"op": "assert", "fact": ("item_affordance", item_id, "read")})
+            ops.extend({"op": "assert", "fact": ("item_alias", item_id, str(alias).strip())}
+                       for alias in readable.get("aliases", ()) if str(alias).strip())
+            discovery = str(readable.get("discovery", item_id)).strip()
+            if discovery:
+                ops.append({"op": "assert", "fact": ("document_discovery", item_id, discovery)})
+            ops.extend({"op": "assert", "fact": ("document_knowledge", item_id, str(key).strip())}
+                       for key in readable.get("knowledge", ()) if str(key).strip())
+            ops.extend({"op": "assert", "fact": ("document_lead", item_id, str(lead).strip())}
+                       for lead in readable.get("leads", ()) if str(lead).strip())
+            ops.extend({"op": "assert", "fact": ("document_context", item_id, str(key).strip(), str(value).strip())}
+                       for key, value in readable.get("context", {}).items() if str(key).strip() and str(value).strip())
+            ops.extend({"op": "assert", "fact": ("document_retract_context", item_id, str(key).strip(), str(value).strip())}
+                       for key, value in readable.get("retract_context", {}).items() if str(key).strip() and str(value).strip())
+            ops.extend({"op": "assert", "fact": ("document_context_template", item_id, str(key).strip(), str(value).strip())}
+                       for key, value in readable.get("context_from_knowledge", {}).items() if str(key).strip() and str(value).strip())
     for character in package["characters"]:
         npc_id = str(character["id"])
         for knowledge in character.get("initial_knowledge", []):

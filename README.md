@@ -107,6 +107,12 @@ Packages declare room short/long copy, NPC scene purpose, briefing facts, and
 document visibility. Shared prompt policy permits expressive performance but
 never treats it as a state mutation: visible changes and knowledge revelations
 still require accepted fact commits.
+Phase 4 replaces named document commands with package-declared readable-item
+contracts. Their aliases, discovery, knowledge grants, context updates, and
+leads are realized as facts; a single `read` intent commits those configured
+effects for mystery files, fantasy scrolls, sci-fi logs, and romance letters.
+Visible vehicle interaction and natural-language exit references likewise use
+fact-derived item and path affordances rather than story-specific routing.
 
 The local web surface and hosted demo remain separate adapters. For the
 development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and

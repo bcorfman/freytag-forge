@@ -130,6 +130,8 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
             raise WorldPackageValidationError("unknown map room in path")
         if not str(path.get("direction", "")).strip():
             raise WorldPackageValidationError("map paths require directions")
+        if not isinstance(path.get("aliases", []), list):
+            raise WorldPackageValidationError("map path aliases must be a list")
     for lock in map_data.get("locks", []):
         if lock.get("room") not in room_ids or not str(lock.get("direction", "")).strip():
             raise WorldPackageValidationError("unknown map room in lock")
@@ -163,6 +165,24 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
                 raise WorldPackageValidationError("unknown custody reference")
         if str(item.get("document_visibility", "discoverable")) not in {"public", "discoverable", "protected"}:
             raise WorldPackageValidationError("invalid document visibility")
+        readable = item.get("readable", {})
+        if readable and not isinstance(readable, dict):
+            raise WorldPackageValidationError("readable item contract must be a mapping")
+        if readable:
+            aliases = readable.get("aliases", [])
+            if not isinstance(aliases, list) or not aliases or any(not str(alias).strip() for alias in aliases):
+                raise WorldPackageValidationError("readable item aliases require non-empty strings")
+            if not str(readable.get("discovery", item["id"])).strip():
+                raise WorldPackageValidationError("readable item discovery requires an id")
+            for field in ("knowledge", "leads"):
+                if not isinstance(readable.get(field, []), list):
+                    raise WorldPackageValidationError(f"readable item {field} must be a list")
+            if (
+                not isinstance(readable.get("context", {}), dict)
+                or not isinstance(readable.get("retract_context", {}), dict)
+                or not isinstance(readable.get("context_from_knowledge", {}), dict)
+            ):
+                raise WorldPackageValidationError("readable item context must be a mapping")
     opening = package["opening_setup"]
     if not isinstance(opening, dict):
         raise WorldPackageValidationError("opening_setup must be a mapping")
@@ -452,6 +472,7 @@ def _build_item_spec(
         "owner": str(detail.get("owner", "")),
         "driver": str(detail.get("driver", "")),
         "document_visibility": str(detail.get("document_visibility", "discoverable")),
+        "readable": deepcopy(detail.get("readable", {})),
     }
 
 

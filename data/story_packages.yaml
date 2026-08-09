@@ -35,7 +35,7 @@ packages:
       rooms: [front_steps, foyer, market_lane, records_office, safehouse, watch_tower, old_chapel]
       paths:
         - {direction: north, from: front_steps, to: foyer}
-        - {direction: south, from: foyer, to: front_steps}
+        - {direction: south, from: foyer, to: front_steps, aliases: [outside, back outside]}
         - {direction: east, from: foyer, to: market_lane}
         - {direction: west, from: market_lane, to: foyer}
         - {direction: north, from: market_lane, to: records_office}
@@ -79,10 +79,28 @@ packages:
         kind: tool
         clue_text: The case file pins down the victim timeline and highlights the first credible lead.
         initial_custody: {kind: npc, id: daria_stone}
+        readable:
+          aliases: [case file, file]
+          discovery: case_file
+          knowledge: [victim_name, victim_timeline, lead_suspect, strongest_lead]
+          leads: [The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.]
+          context:
+            case_file_status: You have reviewed the case file and can cite the victim, timeline, and strongest documented lead.
+          context_from_knowledge:
+            victim_name: "The case file identifies the victim as {value}."
+            victim_timeline: "{value}"
+            lead_suspect: "{value}"
+            strongest_lead: "{value}"
+          retract_context:
+            case_file_status: You have not reviewed the case file yet, so its contents are still unknown to you.
       ledger_page:
         kind: clue
         clue_text: The ledger page records a missing payment tied to the mansion and tonight's visit.
         initial_custody: {kind: npc, id: daria_stone}
+        readable:
+          aliases: [ledger page, ledger]
+          discovery: ledger_page
+          leads: [The ledger page exposes a missing payment entry tied to tonight's visit.]
       route_key:
         kind: evidence
         clue_text: The route key marks a service passage someone expected to use after dark.
@@ -117,14 +135,32 @@ packages:
     <<: *default
     map: {rooms: [village_gate, market_square, scribe_hall, enchanted_wood, citadel_steps, sanctum]}
     items: [rune_token, moon_blade, warded_scroll]
+    item_details:
+      warded_scroll:
+        readable:
+          aliases: [warded scroll, scroll]
+          discovery: warded_scroll
+          leads: [The warded scroll names a safe route through the enchanted wood.]
   sci-fi:
     <<: *default
     map: {rooms: [dock_hub, market_arcade, archive_node, lab_ring, tower_array, command_core]}
     items: [data_key, signal_lens, power_cell]
+    item_details:
+      data_key:
+        readable:
+          aliases: [data key, log]
+          discovery: data_key
+          leads: [The data key records a diagnostic route into the command core.]
   romance:
     <<: *default
     map: {rooms: [courtyard, cafe_row, garden_path, gallery_hall, river_walk, lantern_square]}
     items: [letter, locket, keepsake]
+    item_details:
+      letter:
+        readable:
+          aliases: [letter, note]
+          discovery: letter
+          leads: [The letter makes clear that the meeting at lantern square was meant to be private.]
   adventure:
     <<: *default
     map: {rooms: [camp, trailhead, cliff_pass, ruin_gate, inner_chamber, return_camp]}

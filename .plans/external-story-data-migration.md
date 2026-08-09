@@ -127,18 +127,18 @@ an initial fixture, not a special runtime path.
 
 ### Work
 
-- Replace `case_file`/`ledger_page` intents and regexes in `freeform.py` with
+- [x] Replace `case_file`/`ledger_page` intents and regexes in `freeform.py` with
   package-declared readable-item/reveal contracts.
-- Generalize vehicle, door, and location phrase handling through visible-item and
+- [x] Generalize vehicle, door, and location phrase handling through visible-item and
   exit affordance data.
-- Ensure reading any declared document commits its configured discovery,
+- [x] Ensure reading any declared document commits its configured discovery,
   knowledge, and context facts through typed policy.
 
 ### Exit criteria
 
-- Mystery documents, fantasy scrolls, sci-fi logs, and romance letters use the
+- [x] Mystery documents, fantasy scrolls, sci-fi logs, and romance letters use the
   same intent/effect machinery.
-- No item id or setting noun appears in shared freeform routing or effect code.
+- [x] No item id or setting noun appears in shared freeform routing or effect code.
 
 ## Phase 5 — Generic coherence and environmental policy
 
