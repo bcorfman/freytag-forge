@@ -15,7 +15,7 @@ the intended boundary visible to contributors.
 | unit | Parser, contracts, facts, policies, rules, plot, scene, impact, event, and phase modules | Pure helpers and typed policy contracts; no web client or SQLite. |
 | component | `test_adapters.py`, `test_dialogue_policy.py`, `test_freeform_unit.py`, `test_llm_context.py`, `test_story_coherence.py`, `test_world_builder.py`, `test_world_presentation.py` | One subsystem with injected narrators/directors or a focused world projection. |
 | integration | `test_cli.py`, `test_cli_more.py`, `test_hosted_demo_e2e.py`, `test_mvp_gaps.py`, `test_savegame_sqlite.py`, `test_story_state_artifacts.py`, `test_vector_memory.py`, `test_web_api.py`, `test_web_demo_api.py`, `test_web_surface_parity.py` | Composed turn, persistence, artifact, memory, adapter, and deployed hosted-demo contracts. |
-| evaluation | `test_evaluation.py`, `test_reproducibility.py` | Cross-genre replay and deterministic artifacts. |
+| evaluation | `test_evaluation.py`, `test_reproducibility.py`, `test_runtime_quality_evaluation.py` | Cross-genre replay, deterministic artifacts, and frozen ordinary-runtime quality. |
 
 The collection guard also parses test modules for duplicate `test_*`
 definitions. The per-test health report records source-level construction,

@@ -1,0 +1,8 @@
+version: stage4-v1
+regressions:
+  - id: wrong-speaker-repair-exhausted
+    accepted: false
+    failure_categories: [role_drift, exhausted_provider_recovery]
+  - id: uncommitted-narration-rejected
+    accepted: false
+    failure_categories: [uncommitted_narration]
