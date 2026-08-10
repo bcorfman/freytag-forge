@@ -54,28 +54,38 @@ and a successful deterministic commit.
 
 ### Work
 
-- [ ] Maintain typed, extensible policy families for location, perception,
+- [x] Maintain typed, extensible policy families for location, perception,
   knowledge, relationships, tasks, traces, dramatic state, and bounded intent
   effects.
-- [ ] Route ordinary input through the shared proposal, validation, commit, and
+- [x] Route ordinary input through the shared proposal, validation, commit, and
   post-commit rendering contract.
-- [ ] Normalize only unambiguous deterministic affordances—visible-item,
+- [x] Normalize only unambiguous deterministic affordances—visible-item,
   inventory, direction, and exit aliases—into that contract.
-- [ ] Retire parser-era routing, plot-specific regexes, demo-specific behavior,
+- [x] Retire parser-era routing, plot-specific regexes, demo-specific behavior,
   and compatibility fallbacks as equivalent generic coverage is proven.
-- [ ] Fail closed with a typed error when the bounded ordinary-turn recovery
+- [x] Fail closed with a typed error when the bounded ordinary-turn recovery
   budget is exhausted; send failures to offline evaluation, not frontier
   inference during play.
 
 ### Exit criteria
 
-- [ ] Every accepted state delta passes typed validation and a deterministic
+- [x] Every accepted state delta passes typed validation and a deterministic
   fact commit.
-- [ ] Players may attempt arbitrary story moves; unsupported or ambiguous moves
+- [x] Players may attempt arbitrary story moves; unsupported or ambiguous moves
   preserve truth and receive a bounded outcome or clarification.
-- [ ] Deterministic affordances and ordinary freeform input use the same
+- [x] Deterministic affordances and ordinary freeform input use the same
   proposal/commit contract.
-- [ ] No genre or story requires a hard-coded command route.
+- [x] No genre or story requires a hard-coded command route.
+
+### Completion evidence
+
+The shared `TurnProposal` execution path validates proposal predicates through
+the typed policy registry before the fact committer accepts them. Deterministic
+affordances normalize into that same contract; control-plane commands remain
+outside it. Ordinary planning has one recovery request at most. A second
+invalid or unavailable planner response raises the typed
+`ORDINARY_TURN_RECOVERY_EXHAUSTED` error, preserving state for offline
+evaluation rather than substituting a runtime fallback.
 
 ## Stage 3 — Offline Package Authoring and Playability
 

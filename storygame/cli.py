@@ -914,7 +914,7 @@ def run_turn(
         if dialogue_policy_error:
             planner_dialog_payload = None
             planner_action_payload = None
-            planner_parse_error = f"FREEFORM_PLANNER_UNAVAILABLE: {dialogue_policy_error}"
+            planner_parse_error = f"ORDINARY_TURN_POLICY_REJECTED: {dialogue_policy_error}"
             raise RuntimeError(planner_parse_error)
         prefer_proposal_resolution = _should_prefer_proposal_resolution(
             raw_input,
@@ -954,8 +954,6 @@ def run_turn(
             )
         else:
             detail = planner_parse_error.strip()
-            if detail.startswith("FREEFORM_PLANNER_UNAVAILABLE:"):
-                return state.clone(), _freeform_unavailable_lines(detail.removeprefix("FREEFORM_PLANNER_UNAVAILABLE:").strip()), raw_input, "freeform_roleplay", True
             return state.clone(), _freeform_unavailable_lines(detail), raw_input, "freeform_roleplay", True
         next_state = freeform["state"]
         events = list(freeform["events"])

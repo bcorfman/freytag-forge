@@ -31,7 +31,7 @@ clear boundary between authored possibility, canonical state, and prose.
 | Build worlds | Run scenes | Trust the result |
 | --- | --- | --- |
 | Validated external story packages declare maps, characters, roles, knowledge boundaries, custody, discoveries, rules, and endings. | Proposal-first turns keep ordinary play expressive while bounded policy commits only legal, coherent consequences. | Fact-backed persistence, deterministic replay, artifact integrity checks, and cross-genre regression fixtures make behavior inspectable. |
-| One story-agnostic engine supports mystery, fantasy, sci-fi, relationship scenes, and new genres without shared-runtime genre branches. | Observer-scoped perception and knowledge prevent the player or an NPC from receiving information they have not earned. | Provider responses are untrusted at the JSON boundary; malformed output and bounded recovery fail closed rather than fabricating a successful turn. |
+| One story-agnostic engine supports mystery, fantasy, sci-fi, relationship scenes, and new genres without shared-runtime genre branches. | Observer-scoped perception and knowledge prevent the player or an NPC from receiving information they have not earned. | Provider responses are untrusted at the JSON boundary; malformed output gets at most one repair request, then fails closed with a typed error rather than fabricating a successful turn. |
 | Offline authoring and evaluation can use frontier models; runtime packages remain locally validated. | NPCs operate under explicit role contracts for goals, knowledge, location, capabilities, limitations, and delegated work. | Local web and hosted-demo adapters stay separate while sharing the same engine contracts below the deployment boundary. |
 
 ## The core loop
@@ -105,6 +105,12 @@ fixtures with prompts, adapter revisions, sampling settings, and seeds.
 Evaluation measures proposal validity, direct acceptance, bounded-repair
 success, protected-information leakage, role drift, latency, and token use.
 Those measurements are informational baselines, not disguised release gates.
+
+The ordinary runtime uses a single shared proposal/validation/commit contract
+for freeform moves and deterministic affordances. It permits one recovery
+request; if both planner responses are unusable, it preserves facts and raises
+`ORDINARY_TURN_RECOVERY_EXHAUSTED` for offline evaluation instead of inventing
+a fallback story response.
 
 The project protects the contracts that matter: facts, turn execution, prompt
 scoping, NPC dialogue, persistence, replay, and local/hosted surface parity.

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import pytest
+
 from storygame.engine import freeform as freeform_module
 from storygame.engine.facts import initialize_world_facts
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
+    OrdinaryTurnRecoveryExhausted,
     RuleBasedFreeformProposalAdapter,
     _dialog_line,
     _envelope_for_action,
@@ -942,21 +945,23 @@ def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(
     assert action["arguments"]["planner_source"] == "llm"
 
 
-def test_llm_freeform_adapter_fallback_normalizes_semantic_navigation(monkeypatch) -> None:
+def test_llm_freeform_adapter_exhausts_recovery_instead_of_using_a_fallback(monkeypatch) -> None:
     state = build_default_state(seed=4054, genre="mystery")
+    calls = 0
 
     def _boom(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
         raise RuntimeError("planner unavailable")
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
-    adapter = LlmFreeformProposalAdapter(mode="openai", fallback=RuleBasedFreeformProposalAdapter())
-    dialog, action = adapter.propose(state, "head in the front door")
+    with pytest.raises(OrdinaryTurnRecoveryExhausted) as error:
+        LlmFreeformProposalAdapter(mode="openai").propose(state, "head in the front door")
 
-    assert dialog["speaker"] == "narrator"
-    assert action["intent"] == "move"
-    assert tuple(action["targets"]) == ("foyer",)
-    assert action["arguments"]["planner_source"] == "fallback"
-    assert "planner unavailable" in action["arguments"]["planner_error"]
+    assert error.value.code == "ORDINARY_TURN_RECOVERY_EXHAUSTED"
+    assert error.value.attempts == error.value.budget == 2
+    assert calls == 2
+    assert "planner unavailable" in str(error.value)
 
 
 def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
@@ -993,10 +998,23 @@ def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> N
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
     adapter = LlmFreeformProposalAdapter(mode="openai")
-    try:
+    with pytest.raises(OrdinaryTurnRecoveryExhausted, match="ORDINARY_TURN_RECOVERY_EXHAUSTED"):
         adapter.propose(state, "hello")
-    except RuntimeError as exc:
-        assert "FREEFORM_PLANNER_UNAVAILABLE" in str(exc)
-        assert "planner unavailable" in str(exc)
-    else:
-        raise AssertionError("Expected planner failure to fail closed.")
+
+
+def test_llm_freeform_adapter_uses_at_most_two_provider_requests_when_recovery_fails(monkeypatch) -> None:
+    state = build_default_state(seed=4061)
+    calls = 0
+
+    def _non_json(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        return "not JSON"
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _non_json)
+
+    with pytest.raises(OrdinaryTurnRecoveryExhausted) as error:
+        LlmFreeformProposalAdapter(mode="openai").propose(state, "try something unexpected")
+
+    assert calls == 2
+    assert error.value.attempts == 2

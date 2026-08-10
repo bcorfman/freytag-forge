@@ -23,6 +23,13 @@ Unknown or proposal-forbidden predicates are rejected without changing the
 fact store. Intent families similarly map to bounded effects; they do not grant
 the model permission to invent arbitrary predicates.
 
+An ordinary freeform planner turn has a shared recovery budget of two provider
+requests: the initial proposal and, at most, one locally directed retry. JSON,
+contract, wrong-speaker, and in-world dialogue validation all consume that same
+budget. If it is exhausted, the runtime raises the typed
+`ORDINARY_TURN_RECOVERY_EXHAUSTED` error and retains the pre-turn facts; any
+follow-up belongs to offline evaluation, never a runtime fallback.
+
 ## Observer and evidence boundaries
 
 `storygame.engine.perception.ObservationResolver` derives an observer's

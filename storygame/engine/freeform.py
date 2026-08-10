@@ -193,6 +193,18 @@ class FreeformProposalAdapter(Protocol):
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]: ...
 
 
+class OrdinaryTurnRecoveryExhausted(RuntimeError):
+    """Fail-closed result when the ordinary planner has used its one retry."""
+
+    code = "ORDINARY_TURN_RECOVERY_EXHAUSTED"
+    attempts = 2
+    budget = 2
+
+    def __init__(self, cause: Exception) -> None:
+        self.cause = _short_text(str(cause), 120)
+        super().__init__(f"{self.code}: {self.cause}")
+
+
 class FreeformResolution(TypedDict):
     state: GameState
     events: list[Event]
@@ -771,9 +783,8 @@ def _scene_scoped_dialog_override(
 
 
 class LlmFreeformProposalAdapter:
-    def __init__(self, mode: str | None = None, fallback: FreeformProposalAdapter | None = None) -> None:
+    def __init__(self, mode: str | None = None) -> None:
         self._mode = _resolve_freeform_mode() if mode is None else mode
-        self._fallback = fallback
 
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
@@ -788,18 +799,7 @@ class LlmFreeformProposalAdapter:
             action_payload["arguments"] = arguments
             return dialog_payload, action_payload
         except Exception as exc:
-            if self._fallback is not None:
-                dialog_payload, action_payload = self._fallback.propose(state, raw_input)
-                action_payload = _normalized_movement_action_payload(state, raw_input, action_payload)
-                dialog_payload, action_payload = _scope_normalized_proposals(
-                    state, raw_input, dialog_payload, action_payload
-                )
-                arguments = dict(action_payload["arguments"])
-                arguments["planner_source"] = "fallback"
-                arguments["planner_error"] = _short_text(str(exc), 120)
-                action_payload["arguments"] = arguments
-                return dialog_payload, action_payload
-            raise RuntimeError(f"FREEFORM_PLANNER_UNAVAILABLE: {_short_text(str(exc), 120)}") from exc
+            raise OrdinaryTurnRecoveryExhausted(exc) from exc
 
     def _planned_payloads(
         self,
@@ -808,42 +808,32 @@ class LlmFreeformProposalAdapter:
         system: str,
         user: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        dialog_payload, action_payload = self._parse_planner_response_with_retries(state, raw_input, system, user)
-        retry_reasons: list[str] = []
-        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(
-            dialog_payload, action_payload
-        ):
-            retry_reasons.append(
-                "The player directly addressed a visible NPC, so dialog_proposal.speaker must match the addressed target and the reply must come from that NPC."
+        try:
+            return self._validated_planner_payloads(state, raw_input, system, user)
+        except Exception as exc:
+            retry_system = (
+                system
+                + " Your previous planner reply failed local validation "
+                + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
+                + "return JSON only, with no prose before or after the object."
             )
-        if _dialogue_contains_code_artifact(dialog_payload):
-            retry_reasons.append(
-                "Dialog text must stay fully in-world and must not contain code identifiers, API names, or implementation artifacts."
-            )
-        if retry_reasons:
-            retry_system = system + " Retry because " + " ".join(retry_reasons) + " Return JSON only."
-            dialog_payload, action_payload = self._parse_planner_response_with_retries(
-                state, raw_input, retry_system, user
-            )
-        return dialog_payload, action_payload
+            return self._validated_planner_payloads(state, raw_input, retry_system, user)
 
-    def _parse_planner_response_with_retries(
+    def _validated_planner_payloads(
         self,
         state: GameState,
         raw_input: str,
         system: str,
         user: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        try:
-            return self._parse_planner_response(state, raw_input, system, user)
-        except ValueError as exc:
-            retry_system = (
-                system
-                + " Your previous planner reply failed local JSON or contract validation "
-                + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
-                + "return JSON only, with no prose before or after the object."
-            )
-            return self._parse_planner_response(state, raw_input, retry_system, user)
+        dialog_payload, action_payload = self._parse_planner_response(state, raw_input, system, user)
+        if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(
+            dialog_payload, action_payload
+        ):
+            raise ValueError("planner_invalid_targeted_dialogue_speaker")
+        if _dialogue_contains_code_artifact(dialog_payload):
+            raise ValueError("planner_dialogue_code_artifact")
+        return dialog_payload, action_payload
 
     def _parse_planner_response(
         self,
