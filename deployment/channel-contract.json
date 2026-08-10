@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "channels": {
+    "production": {
+      "pages_path": "/",
+      "api_origin": "https://freytag-forge-production.up.railway.app",
+      "railway_environment": "production",
+      "session_namespace": "freytag-forge-production",
+      "database_namespace": "freytag-forge-production"
+    },
+    "staging": {
+      "pages_path": "/dev/",
+      "api_origin": "https://freytag-forge-staging.up.railway.app",
+      "railway_environment": "staging",
+      "session_namespace": "freytag-forge-staging",
+      "database_namespace": "freytag-forge-staging"
+    }
+  }
+}
