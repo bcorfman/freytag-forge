@@ -158,7 +158,7 @@ any runtime changes.
 5. [x] Update the test tier map so deleted-surface tests are not silently retained
    as coverage padding.
 
-**Exit criteria:** an immutable V1 production rollback target and an explicit
+**Exit criteria:** [x] An immutable V1 production rollback target and an explicit
 V2 acceptance scorecard exist; all baseline checks pass.
 
 ### Phase 1 — Install staged and production delivery channels
