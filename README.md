@@ -106,6 +106,11 @@ fixtures with prompts, adapter revisions, sampling settings, and seeds.
 Evaluation measures proposal validity, direct acceptance, bounded-repair
 success, protected-information leakage, role drift, latency, and token use.
 Those measurements are informational baselines, not disguised release gates.
+The frozen adapter matrix compares the supported OpenAI, Ollama, and
+Cloudflare Workers AI revisions on every fixture turn. Its 95% direct-or-one-
+repair validation target is an informational SLO; scheduled runs are
+credential-free, while any paid provider experiment must be explicitly enabled
+with a bounded request budget.
 
 The ordinary runtime uses a single shared proposal/validation/commit contract
 for freeform moves and deterministic affordances. It permits one recovery

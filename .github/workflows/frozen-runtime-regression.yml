@@ -1,0 +1,57 @@
+name: frozen runtime regression
+
+on:
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      run_remote:
+        description: "Reserved for an explicitly configured provider experiment; the frozen suite never calls paid providers."
+        required: false
+        default: false
+        type: boolean
+      max_provider_requests:
+        description: "Maximum requests permitted for an explicitly configured provider experiment (maximum 24)."
+        required: false
+        default: "24"
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  frozen-runtime-regression:
+    name: Frozen ordinary-runtime quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Enforce explicit remote-evaluation budget
+        if: ${{ inputs.run_remote == true }}
+        env:
+          MAX_PROVIDER_REQUESTS: ${{ inputs.max_provider_requests }}
+        run: |
+          case "$MAX_PROVIDER_REQUESTS" in
+            ''|*[!0-9]*) echo "max_provider_requests must be a positive integer" >&2; exit 1 ;;
+          esac
+          test "$MAX_PROVIDER_REQUESTS" -gt 0
+          test "$MAX_PROVIDER_REQUESTS" -le 24
+      - name: Run deterministic frozen adapter comparison
+        run: >-
+          TMPDIR=/tmp uv run pytest -q --no-cov
+          tests/test_runtime_quality_evaluation.py tests/test_evaluation.py
+          --tier-report=artifacts/frozen-runtime-quality.json
+      - name: Upload frozen runtime-quality evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frozen-runtime-quality
+          path: artifacts/frozen-runtime-quality.json
+          if-no-files-found: error

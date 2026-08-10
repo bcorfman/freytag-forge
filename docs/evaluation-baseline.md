@@ -44,6 +44,30 @@ Every observation is tied to a fixture, frozen prompt/configuration, adapter
 revision, and seed. Classification reads committed facts and policy evidence;
 it does not infer failures from player-facing transcript wording.
 
+## Stage 4 ordinary-runtime quality
+
+`evaluate_frozen_adapter_matrix` compares OpenAI, Ollama, and Cloudflare
+Workers AI adapter revisions across every command in every frozen fixture. The
+credential-free matrix records the same deterministic acceptance criteria for
+each adapter: direct acceptance or success after the one permitted repair,
+protected-information leakage, uncommitted state, latency, and token use.
+
+The 95% direct-or-one-repair validation target is an informational SLO, not a
+release gate. The deterministic baseline has zero provider latency and token
+use by design; it proves the evaluation contract rather than claiming network
+or model-service performance. Credentialed or paid measurements must be a
+separately configured experiment with an explicit, bounded request budget.
+
+Known failure modes are retained in
+[`runtime_quality_regressions.yaml`](../data/runtime_quality_regressions.yaml)
+as structured fixtures. A wrong speaker that exhausts recovery and
+uncommitted narration must remain rejected; neither is inferred from prose.
+
+The weekly `frozen runtime regression` workflow runs this fixture suite and
+uploads its tier report. Its manual remote-evaluation switch enforces a
+positive maximum of 24 requests before any separately configured provider
+experiment; the scheduled default never uses provider credentials.
+
 ## Recorded baseline
 
 Recorded 2026-08-06 on the repository test environment:

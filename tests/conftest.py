@@ -42,7 +42,7 @@ def _orchestration_class(nodeid: str, runtime: dict[str, int]) -> str | None:
     return "proposal/commit contract"
 
 
-_EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py"}
+_EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_runtime_quality_evaluation.py"}
 _INTEGRATION_FILES = {
     "test_cli.py",
     "test_cli_more.py",

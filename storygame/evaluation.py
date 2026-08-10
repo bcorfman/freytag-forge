@@ -32,6 +32,8 @@ FAILURE_CATEGORIES: tuple[FailureCategory, ...] = (
     "blocked_player_agency",
 )
 
+INFORMATIONAL_DIRECT_OR_REPAIRED_SLO = 0.95
+
 
 class GenerationSettings(TypedDict):
     temperature: int | float
@@ -84,6 +86,31 @@ class AdapterBaseline(TypedDict):
     output_tokens: int
 
 
+class RuntimeQualityAdapterBaseline(AdapterBaseline):
+    direct_or_one_repair_validation_rate: float
+    protected_information_leaks: int
+    uncommitted_state: int
+
+
+class RuntimeQualitySlo(TypedDict):
+    name: Literal["direct_or_one_repair_validation_rate"]
+    target: float
+    enforced: Literal[False]
+
+
+class RuntimeQualityReport(TypedDict):
+    kind: Literal["informational_runtime_quality"]
+    adapters: dict[str, RuntimeQualityAdapterBaseline]
+    missing_adapters: tuple[str, ...]
+    slo: RuntimeQualitySlo
+
+
+class RuntimeQualityRegression(TypedDict):
+    id: str
+    accepted: bool
+    failure_categories: tuple[FailureCategory, ...]
+
+
 class AdapterMeasurementReport(TypedDict):
     kind: Literal["informational_baseline"]
     adapters: dict[str, AdapterBaseline]
@@ -100,6 +127,10 @@ class FixtureScriptedPlayer(Protocol):
 
 def _fixtures_path() -> Path:
     return Path(__file__).resolve().parents[1] / "data" / "evaluation_fixtures.yaml"
+
+
+def _runtime_quality_regressions_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "data" / "runtime_quality_regressions.yaml"
 
 
 def _require_string(payload: Mapping[str, object], key: str) -> str:
@@ -216,6 +247,55 @@ def summarize_adapter_measurements(
     }
 
 
+def evaluate_frozen_adapter_matrix() -> RuntimeQualityReport:
+    """Report deterministic ordinary-turn quality for every supported adapter.
+
+    This is deliberately an offline, credential-free fixture run. It validates
+    the evaluation contract and keeps a stable comparison baseline; live or
+    paid provider experiments belong in explicitly configured follow-up jobs.
+    """
+    fixtures = load_evaluation_fixtures()
+    revisions = load_evaluation_adapter_revisions()
+    measurements = tuple(
+        _frozen_measurement(adapter, revision, fixture)
+        for adapter, revision in revisions.items()
+        for fixture in fixtures
+        for _command in fixture["commands"]
+    )
+    grouped: dict[str, list[AdapterMeasurement]] = {}
+    for measurement in measurements:
+        grouped.setdefault(measurement["adapter"], []).append(measurement)
+    report = summarize_adapter_measurements(measurements, required_adapters=tuple(revisions))
+    return {
+        "kind": "informational_runtime_quality",
+        "adapters": {
+            adapter: _runtime_quality_baseline(baseline, grouped[adapter])
+            for adapter, baseline in report["adapters"].items()
+        },
+        "missing_adapters": report["missing_adapters"],
+        "slo": {
+            "name": "direct_or_one_repair_validation_rate",
+            "target": INFORMATIONAL_DIRECT_OR_REPAIRED_SLO,
+            "enforced": False,
+        },
+    }
+
+
+def load_runtime_quality_regressions(path: Path | None = None) -> tuple[RuntimeQualityRegression, ...]:
+    """Load fail-closed runtime regressions as structured, prose-free fixtures."""
+    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+    payload = yaml.load((path or _runtime_quality_regressions_path()).read_text(encoding="utf-8"), Loader=loader)
+    if not isinstance(payload, Mapping) or payload.get("version") != "stage4-v1":
+        raise ValueError("Unsupported runtime quality regression version.")
+    raw_regressions = payload.get("regressions")
+    if not isinstance(raw_regressions, list):
+        raise ValueError("Runtime quality regressions require a 'regressions' list.")
+    regressions = tuple(_load_runtime_quality_regression(raw) for raw in raw_regressions)
+    if len({regression["id"] for regression in regressions}) != len(regressions):
+        raise ValueError("Runtime quality regression ids must be unique.")
+    return regressions
+
+
 def _adapter_baseline(measurements: list[AdapterMeasurement]) -> AdapterBaseline:
     turns = len(measurements)
     if turns == 0:
@@ -235,6 +315,55 @@ def _adapter_baseline(measurements: list[AdapterMeasurement]) -> AdapterBaseline
         "latency_ms": sum(float(measurement["latency_ms"]) for measurement in measurements) / turns,
         "input_tokens": sum(measurement["input_tokens"] for measurement in measurements),
         "output_tokens": sum(measurement["output_tokens"] for measurement in measurements),
+    }
+
+
+def _runtime_quality_baseline(
+    baseline: AdapterBaseline, measurements: list[AdapterMeasurement]
+) -> RuntimeQualityAdapterBaseline:
+    return {
+        **baseline,
+        "direct_or_one_repair_validation_rate": sum(
+            measurement["directly_accepted"] or measurement["repair_succeeded"] for measurement in measurements
+        )
+        / len(measurements),
+        "protected_information_leaks": baseline["hidden_information_leaks"],
+        "uncommitted_state": _failure_count(measurements, "uncommitted_narration"),
+    }
+
+
+def _frozen_measurement(adapter: str, revision: str, fixture: EvaluationFixture) -> AdapterMeasurement:
+    """Create the known-good deterministic observation for one frozen turn."""
+    return {
+        "adapter": adapter,
+        "revision": revision,
+        "proposal_valid": True,
+        "directly_accepted": True,
+        "repaired": False,
+        "repair_succeeded": False,
+        "failure_categories": (),
+        "latency_ms": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+    }
+
+
+def _load_runtime_quality_regression(raw: object) -> RuntimeQualityRegression:
+    if not isinstance(raw, Mapping):
+        raise ValueError("Runtime quality regression must be a mapping.")
+    accepted = raw.get("accepted")
+    if not isinstance(accepted, bool):
+        raise ValueError("Runtime quality regression requires boolean 'accepted'.")
+    categories = raw.get("failure_categories")
+    if not isinstance(categories, list) or not categories:
+        raise ValueError("Runtime quality regression requires failure_categories.")
+    invalid_categories = [category for category in categories if category not in FAILURE_CATEGORIES]
+    if invalid_categories:
+        raise ValueError("Runtime quality regression contains an unsupported failure category.")
+    return {
+        "id": _require_string(raw, "id"),
+        "accepted": accepted,
+        "failure_categories": tuple(cast(FailureCategory, category) for category in categories),
     }
 
 
