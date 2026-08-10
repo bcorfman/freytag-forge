@@ -56,6 +56,7 @@ engine preserves truth and returns a bounded outcome or clarification.
 - [Product and architecture reference](docs/PRD.md)
 - [Fact-authority contract](docs/fact-authority.md)
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
+- [Offline package authoring and playability](docs/offline-package-authoring.md)
 - [Tiered refactor plan](.plans/tiered-refactor-plan.md)
 - [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
 
@@ -116,6 +117,13 @@ The project protects the contracts that matter: facts, turn execution, prompt
 scoping, NPC dialogue, persistence, replay, and local/hosted surface parity.
 New story packages should add validated data—not one more special-case branch
 to the engine.
+
+Offline package validation projects every frozen fixture's declared map,
+presentation, character role and knowledge boundaries, item custody,
+discoveries, causal rules, and endings into one authoring contract. Frontier
+models may propose packages or category-scoped repairs only offline; local
+validation remains the acceptance authority. Playability checks exercise six
+scripted player styles for every frozen fixture.
 
 ## Project map
 

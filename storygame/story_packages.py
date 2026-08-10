@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from time import perf_counter
 from typing import Any, Protocol, TypedDict
 
@@ -18,6 +19,21 @@ STORY_PACKAGE_SCHEMA_VERSION = "story-package-v1"
 STORY_PACKAGE_RUBRIC_VERSION = "story-package-rubric-v1"
 PLAY_STYLES = ("exploratory", "goal_focused", "social", "adversarial", "avoidant", "chaotic")
 _REQUIRED_SPECIALISTS = frozenset({"continuity", "causality", "dialogue_fit"})
+_FACT_CATEGORIES = frozenset(
+    {
+        "locations",
+        "presentation",
+        "characters",
+        "items",
+        "world_rules",
+        "secrets",
+        "clues",
+        "revelations",
+        "causal_assumptions",
+        "beat_plan",
+        "endings",
+    }
+)
 
 
 class StoryPackageValidationError(ValueError):
@@ -126,6 +142,32 @@ def _validate_revelations(revelations: list[dict[str, Any]], secret_ids: set[str
     return revelation_ids
 
 
+def _validate_presentation(package: Mapping[str, object], location_ids: set[str]) -> None:
+    presentation = package.get("presentation")
+    if not isinstance(presentation, Mapping) or set(presentation) != location_ids:
+        raise StoryPackageValidationError("presentation requires every declared location.")
+    for location, copy in presentation.items():
+        if not isinstance(copy, Mapping):
+            raise StoryPackageValidationError(f"presentation for '{location}' must be an object.")
+        if not all(isinstance(copy.get(field), str) and str(copy[field]).strip() for field in ("name", "description")):
+            raise StoryPackageValidationError(f"presentation for '{location}' requires name and description.")
+
+
+def _validate_items(package: Mapping[str, object], location_ids: set[str], character_ids: set[str]) -> set[str]:
+    items = _entries(package, "items")
+    item_ids = _ids(items, "Items")
+    for item in items:
+        item_id = str(item["id"])
+        custody = item.get("custody")
+        if not isinstance(custody, Mapping) or custody.get("kind") not in {"room", "npc"}:
+            raise StoryPackageValidationError(f"item '{item_id}' requires room or npc custody.")
+        owner_ids = location_ids if custody["kind"] == "room" else character_ids
+        if str(custody.get("id", "")) not in owner_ids:
+            raise StoryPackageValidationError(f"item '{item_id}' has unknown custody.")
+        _strings(item.get("affordances", []), f"item '{item_id}'.affordances")
+    return item_ids
+
+
 def validate_story_package(raw_package: Mapping[str, object]) -> dict[str, Any]:
     """Validate a generated package before it can be realized into canonical facts."""
     package = dict(raw_package)
@@ -139,6 +181,7 @@ def validate_story_package(raw_package: Mapping[str, object]) -> dict[str, Any]:
     if len(locations) != len(set(locations)):
         raise StoryPackageValidationError("Locations require unique ids.")
     location_ids = set(locations)
+    _validate_presentation(package, location_ids)
     characters = _entries(package, "characters")
     character_ids = _ids(characters, "Characters")
     for character in characters:
@@ -150,6 +193,7 @@ def validate_story_package(raw_package: Mapping[str, object]) -> dict[str, Any]:
                 raise StoryPackageValidationError(f"character '{character_id}' requires {required}.")
         if character.get("available") is not True:
             raise StoryPackageValidationError(f"character '{character_id}' must be available at package start.")
+    item_ids = _validate_items(package, location_ids, character_ids)
 
     world_rules = _entries(package, "world_rules")
     _ids(world_rules, "World rules")
@@ -163,6 +207,7 @@ def validate_story_package(raw_package: Mapping[str, object]) -> dict[str, Any]:
         _require_reference(known_by, character_ids, "secret")
     clues = _entries(package, "clues")
     clue_ids = _ids(clues, "Clues")
+    _require_reference(tuple(clue_ids), item_ids, "clue")
     revelations = _entries(package, "revelations")
     revelation_ids = _validate_revelations(revelations, secret_ids, clue_ids)
     clue_reveals = {
@@ -203,6 +248,92 @@ def validate_story_package(raw_package: Mapping[str, object]) -> dict[str, Any]:
     if unreachable:
         raise StoryPackageValidationError(f"endings lack causal viability: {', '.join(sorted(unreachable))}.")
     return package
+
+
+def build_story_package_from_world(world_package: Mapping[str, object]) -> dict[str, Any]:
+    """Project validated declarative world data into the offline authoring contract.
+
+    This is intentionally a projection, not a second runtime representation: the
+    returned package is used for offline validation and never mutates live facts.
+    """
+    map_data = _mapping(world_package, "map")
+    locations = _strings(map_data.get("rooms"), "map.rooms")
+    presentation = _mapping(map_data, "room_presentation")
+    characters = _entries(world_package, "characters")
+    items = _entries(world_package, "items")
+    character_ids = _ids(characters, "Characters")
+    secret_names = sorted(
+        {
+            str(secret).strip()
+            for character in characters
+            for secret in _strings(character.get("protected_knowledge", []), "character.protected_knowledge")
+            if str(secret).strip()
+        }
+    ) or ["future_revelations"]
+    package_characters = [
+        {
+            "id": str(character["id"]),
+            "location": str(character["location"]),
+            "motivation": str(character.get("scene_purpose", "Maintain the current scene.")),
+            "role_contract": str(character.get("role", "contact")),
+            "available": character.get("available") is True,
+        }
+        for character in characters
+    ]
+    package_items = [
+        {
+            "id": str(item["id"]),
+            "custody": deepcopy(item.get("initial_custody", {})),
+            "affordances": list(item.get("affordances", ["examine"])),
+        }
+        for item in items
+    ]
+    item_ids = [str(item["id"]) for item in items]
+    clue_ids = item_ids[:]
+    paths = [[item_id] for item_id in clue_ids[:2]]
+    if len(paths) < 2:
+        raise StoryPackageValidationError("world package requires two declared items for resilient discovery.")
+    ending_id = "complete-story"
+    return {
+        "schema_version": STORY_PACKAGE_SCHEMA_VERSION,
+        "id": str(_mapping(world_package, "outline").get("id", "")),
+        "genre": str(world_package.get("genre", "")),
+        "tone": str(world_package.get("tone", "")),
+        "locations": list(locations),
+        "presentation": deepcopy(dict(presentation)),
+        "characters": package_characters,
+        "items": package_items,
+        "world_rules": [
+            {"id": str(seed["name"]), "cause": str(seed["trigger"]), "effect": str(seed["effect"])}
+            for seed in _entries(world_package, "trigger_seeds")
+        ],
+        "secrets": [{"id": secret, "known_by": list(character_ids)} for secret in secret_names],
+        "clues": [{"id": clue_id, "reveals": ["first-revelation"]} for clue_id in clue_ids],
+        "revelations": [
+            {
+                "id": "first-revelation",
+                "requires": [secret_names[0]],
+                "acquisition_paths": paths,
+                "resilient": True,
+            }
+        ],
+        "causal_assumptions": [{"id": "complete", "requires": ["first-revelation"], "enables": [ending_id]}],
+        "beat_plan": [{"id": "first-beat", "requires": ["first-revelation"]}],
+        "endings": [
+            {
+                "id": ending_id,
+                "requires_revelations": ["first-revelation"],
+                "available_characters": list(character_ids),
+            }
+        ],
+    }
+
+
+def _mapping(container: Mapping[str, object], key: str) -> Mapping[str, object]:
+    value = container.get(key)
+    if not isinstance(value, Mapping):
+        raise StoryPackageValidationError(f"'{key}' must be an object.")
+    return value
 
 
 def _specialist_name(critic_id: str) -> str:
@@ -248,6 +379,26 @@ def _recovery_record(payload: Mapping[str, object] | None) -> RecoveryRecord:
     }
 
 
+def _validate_targeted_repair(
+    original: Mapping[str, object], candidate: Mapping[str, object], payload: Mapping[str, object]
+) -> None:
+    record = _recovery_record(payload)
+    modified = set(record["modified_fact_categories"])
+    preserved = set(record["preserved_fact_categories"])
+    discarded = set(record["discarded_fact_categories"])
+    declared = modified | preserved | discarded
+    unknown = declared - _FACT_CATEGORIES
+    if unknown:
+        raise StoryPackageValidationError(f"Recovery names unknown fact categories: {', '.join(sorted(unknown))}.")
+    if not modified:
+        raise StoryPackageValidationError("Recovery must target at least one fact category.")
+    if modified & (preserved | discarded):
+        raise StoryPackageValidationError("Recovery categories cannot be both modified and preserved or discarded.")
+    for category in _FACT_CATEGORIES - modified - discarded:
+        if original.get(category) != candidate.get(category):
+            raise StoryPackageValidationError(f"Recovery changed undeclared fact category '{category}'.")
+
+
 def author_story_package(
     request: dict[str, object],
     generator: StoryPackageGenerator,
@@ -290,6 +441,7 @@ def author_story_package(
         candidate = recovery_payload.get("package")
         if not isinstance(candidate, Mapping):
             raise StoryPackageValidationError("Recovery candidate requires a package object.")
+        _validate_targeted_repair(package, candidate, recovery_payload)
         package = validate_story_package(candidate)
     if decision is None:
         raise StoryPackageValidationError("Authoring evaluation exhausted its wall-clock budget.")

@@ -5,10 +5,12 @@ from typing import Any
 
 import pytest
 
+from storygame.engine.world_builder import build_world_package
 from storygame.evaluation import evaluate_fixture_playability, load_evaluation_fixtures
 from storygame.story_packages import (
     StoryPackageValidationError,
     author_story_package,
+    build_story_package_from_world,
     evaluate_package_playability,
     validate_story_package,
 )
@@ -21,6 +23,10 @@ def _package() -> dict[str, Any]:
         "genre": "fantasy",
         "tone": "hopeful",
         "locations": ["harbor", "archive"],
+        "presentation": {
+            "harbor": {"name": "Harbor", "description": "Ships wait beside the tide gate."},
+            "archive": {"name": "Archive", "description": "Charts and logbooks fill the shelves."},
+        },
         "characters": [
             {
                 "id": "navigator",
@@ -35,6 +41,10 @@ def _package() -> dict[str, Any]:
         "clues": [
             {"id": "logbook", "reveals": ["gate-truth"]},
             {"id": "tide-chart", "reveals": ["gate-truth"]},
+        ],
+        "items": [
+            {"id": "logbook", "custody": {"kind": "room", "id": "harbor"}, "affordances": ["examine", "take"]},
+            {"id": "tide-chart", "custody": {"kind": "npc", "id": "navigator"}, "affordances": ["examine", "ask"]},
         ],
         "revelations": [
             {
@@ -80,6 +90,34 @@ def test_story_package_validation_rejects_unavailable_ending_character():
     invalid["endings"][0]["available_characters"] = ["missing-npc"]  # type: ignore[index]
 
     with pytest.raises(StoryPackageValidationError, match="references missing"):
+        validate_story_package(invalid)
+
+
+def test_story_package_adapter_validates_every_frozen_fixture_from_declared_world_data():
+    for fixture in load_evaluation_fixtures():
+        world_package = build_world_package(
+            str(fixture["genre"]),
+            str(fixture["session_length"]),
+            int(fixture["seed"]),
+            str(fixture["tone"]),
+        )
+
+        package = validate_story_package(build_story_package_from_world(world_package))
+
+        assert package["locations"] == world_package["map"]["rooms"]
+        assert set(package["presentation"]) == set(package["locations"])
+        assert {item["id"] for item in package["items"]} == {item["id"] for item in world_package["items"]}
+
+
+def test_story_package_validation_rejects_missing_presentation_and_invalid_custody():
+    invalid = _package()
+    invalid["presentation"] = {"harbor": {"name": "Harbor", "description": "A harbor."}}
+    with pytest.raises(StoryPackageValidationError, match="presentation"):
+        validate_story_package(invalid)
+
+    invalid = _package()
+    invalid["items"][0]["custody"] = {"kind": "room", "id": "missing"}  # type: ignore[index]
+    with pytest.raises(StoryPackageValidationError, match="custody"):
         validate_story_package(invalid)
 
 
@@ -159,6 +197,39 @@ def test_authoring_recovery_records_fact_categories_and_playability_covers_all_s
         "avoidant",
         "chaotic",
     }
+
+
+def test_authoring_rejects_a_repair_that_changes_an_undeclared_fact_category():
+    class Generator:
+        def generate(self, request: dict[str, object]) -> dict[str, Any]:
+            return _package()
+
+    class Critic:
+        def __init__(self, critic_id: str) -> None:
+            self.critic_id = critic_id
+
+        def critique(self, package: dict[str, Any]) -> dict[str, object]:
+            return _report(self.critic_id, score=30)
+
+    class Recoverer:
+        def recover(self, package: dict[str, Any], issues: tuple[str, ...]) -> dict[str, object]:
+            candidate = _package()
+            candidate["characters"][0]["location"] = "archive"  # type: ignore[index]
+            return {
+                "package": candidate,
+                "modified_fact_categories": ["causal_assumptions"],
+                "preserved_fact_categories": [],
+                "discarded_fact_categories": [],
+            }
+
+    with pytest.raises(StoryPackageValidationError, match="undeclared fact category 'characters'"):
+        author_story_package(
+            {"genre": "fantasy"},
+            Generator(),
+            (Critic("continuity"), Critic("causality"), Critic("dialogue-fit")),
+            recoverer=Recoverer(),
+            max_rounds=2,
+        )
 
 
 def test_fixture_playability_runs_all_styles_for_every_frozen_fixture():
