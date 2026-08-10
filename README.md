@@ -1,5 +1,7 @@
 # Freytag Forge
 
+Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
+
 ## Write anything. Keep the story true.
 
 Freytag Forge is a fact-backed interactive-fiction engine for stories that
