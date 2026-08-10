@@ -91,25 +91,25 @@ evaluation rather than substituting a runtime fallback.
 
 ### Work
 
-- [ ] Author and validate packages that declare maps, presentation,
+- [x] Author and validate packages that declare maps, presentation,
   characters, roles, knowledge boundaries, items, custody, discoveries,
   affordances, causal rules, and endings.
-- [ ] Use frontier models only offline to propose or repair structured package
+- [x] Use frontier models only offline to propose or repair structured package
   data; deterministic package validation is the acceptance authority.
-- [ ] Validate reachability, revelation paths, causal consistency, character
+- [x] Validate reachability, revelation paths, causal consistency, character
   availability, role contracts, and ending viability across genres.
-- [ ] Run exploratory, goal-focused, social, adversarial, avoidant, and chaotic
+- [x] Run exploratory, goal-focused, social, adversarial, avoidant, and chaotic
   scripted players against frozen fixtures.
-- [ ] Apply targeted package repairs and revalidate instead of regenerating a
+- [x] Apply targeted package repairs and revalidate instead of regenerating a
   whole story package.
 
 ### Exit criteria
 
-- [ ] Each fixture initializes and plays through the same engine contracts.
-- [ ] Required information has resilient, reachable acquisition paths.
-- [ ] NPC knowledge, beliefs, limits, delegated work, and autonomous actions
+- [x] Each fixture initializes and plays through the same engine contracts.
+- [x] Required information has resilient, reachable acquisition paths.
+- [x] NPC knowledge, beliefs, limits, delegated work, and autonomous actions
   remain within explicit fact-backed role contracts.
-- [ ] Story-specific setup and prose exist only in validated package data.
+- [x] Story-specific setup and prose exist only in validated package data.
 
 ## Stage 4 — Ordinary-Runtime Quality Evaluation
 
