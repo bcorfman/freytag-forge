@@ -1,11 +1,93 @@
 # Freytag Forge
 
-Freytag Forge is an interactive-fiction game. Write what your character tries;
-the story responds while keeping the world consistent from turn to turn.
+## Write anything. Keep the story true.
 
-## Playing
+Freytag Forge is a fact-backed interactive-fiction engine for stories that
+need to feel open-ended without becoming incoherent. Players can negotiate,
+investigate, improvise, travel, deceive, help, refuse, and take the scene in
+unexpected directions. The engine answers with model-authored narration—but
+only after deterministic policy has decided what can become true.
 
-Open the game in your browser, then describe an action in plain language:
+The bet is simple: compelling AI storytelling does not need to choose between
+freedom and continuity. Put the world in explicit, validated facts; let models
+propose the move and write the moment; commit only what the world can support.
+
+This is not an LLM text generator wrapped around a command parser. It is a
+story simulation with an open language interface, durable consequences, and a
+clear boundary between authored possibility, canonical state, and prose.
+
+## Why it’s different
+
+| Player freedom | Narrative intelligence | World integrity |
+| --- | --- | --- |
+| Players write natural-language intentions, not a small list of verbs. They can attempt any story move. | Models propose intent, dialogue, framing, and bounded effects in one structured turn contract. | Typed deterministic policy validates every accepted change before it is committed to canonical facts. |
+| Clear directions, inventory, and unique visible references are convenient affordances—not a separate parser era. | NPC dialogue is generated from the addressed character’s permitted context and role. | Narration is post-commit projection: prose cannot invent state, reveal protected knowledge, or quietly rewrite history. |
+| Ambiguity gets a clarification; irreparable goal breaks get an explicit confirmation. | Freytag-aware dramatic policy responds to pressure, obstacles, reveals, and scene goals without prescribing player intent. | Saves, replay signatures, transcripts, and `STORY.md` are integrity-checked projections, never mutation authorities. |
+
+**Less prompt luck. More playable story.**
+
+## Highlights
+
+| Build worlds | Run scenes | Trust the result |
+| --- | --- | --- |
+| Validated external story packages declare maps, characters, roles, knowledge boundaries, custody, discoveries, rules, and endings. | Proposal-first turns keep ordinary play expressive while bounded policy commits only legal, coherent consequences. | Fact-backed persistence, deterministic replay, artifact integrity checks, and cross-genre regression fixtures make behavior inspectable. |
+| One story-agnostic engine supports mystery, fantasy, sci-fi, relationship scenes, and new genres without shared-runtime genre branches. | Observer-scoped perception and knowledge prevent the player or an NPC from receiving information they have not earned. | Provider responses are untrusted at the JSON boundary; malformed output and bounded recovery fail closed rather than fabricating a successful turn. |
+| Offline authoring and evaluation can use frontier models; runtime packages remain locally validated. | NPCs operate under explicit role contracts for goals, knowledge, location, capabilities, limitations, and delegated work. | Local web and hosted-demo adapters stay separate while sharing the same engine contracts below the deployment boundary. |
+
+## The core loop
+
+```text
+Player intent
+    ↓
+Structured model proposal
+    ↓
+Typed validation + deterministic policy
+    ↓
+Canonical fact commit
+    ↓
+Post-commit narration and dialogue
+```
+
+No response establishes world truth by itself. If a proposal is rejected, the
+engine preserves truth and returns a bounded outcome or clarification.
+
+## Start here
+
+- [Product and architecture reference](docs/PRD.md)
+- [Fact-authority contract](docs/fact-authority.md)
+- [Frozen evaluation baseline](docs/evaluation-baseline.md)
+- [Tiered refactor plan](.plans/tiered-refactor-plan.md)
+- [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
+
+## Requirements
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)
+
+To play with OpenAI, set `OPENAI_API_KEY`. To play locally, install and run an
+Ollama model, then pass `--narrator ollama`. The engine keeps provider
+integrations behind injected adapters, so deterministic tests and offline
+package validation do not require paid inference.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `uv sync` | Install runtime and development dependencies. |
+| `uv run storygame --genre fantasy --tone epic` | Start a CLI story session with OpenAI. |
+| `uv run storygame --narrator ollama --genre fantasy --tone epic` | Start a CLI story session with local Ollama. |
+| `make run` | Start the local web app at `http://127.0.0.1:8000`. |
+| `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
+| `uv run ruff check .` | Check lint rules. |
+| `uv run ruff format .` | Format the codebase. |
+
+For reproducible CLI play, supply a seed:
+
+```text
+uv run storygame --seed 123 --genre sci-fi --tone tense --session-length short
+```
+
+Inside a story, write what your character tries:
 
 ```text
 Ask the guide what they noticed.
@@ -13,158 +95,39 @@ Follow the lantern-lit path.
 Examine the strange device.
 ```
 
-You can also use `save`, `load`, `help`, or `quit`.
+`save`, `load`, `help`, and `quit` are the only control-plane commands. The
+story itself is open language.
 
-Each story can take a different shape—from a mystery to a fantasy journey, a
-technical crisis, or a relationship scene. Your choices guide the scene; the
-game remembers their consequences consistently from turn to turn.
+## Quality that travels across genres
 
-## Runtime guarantees
+Freytag Forge freezes representative mystery, fantasy, sci-fi, and relationship
+fixtures with prompts, adapter revisions, sampling settings, and seeds.
+Evaluation measures proposal validity, direct acceptance, bounded-repair
+success, protected-information leakage, role drift, latency, and token use.
+Those measurements are informational baselines, not disguised release gates.
 
-Ordinary turns are structured proposals: the story model supplies intent,
-references, candidate effects, dialogue, narration claims, and beat hints in
-one typed `TurnProposalV2` contract. Deterministic policy validates the
-proposal before anything is committed. Canonical facts—not narration,
-`STORY.md`, or package metadata—remain the runtime authority.
+The project protects the contracts that matter: facts, turn execution, prompt
+scoping, NPC dialogue, persistence, replay, and local/hosted surface parity.
+New story packages should add validated data—not one more special-case branch
+to the engine.
 
-Predicate and rule packs are validated before a session is realized. Policies
-cover world truth, perception, knowledge, relationships, tasks, traces, and
-dramatic state, with explicit source permissions, normalization, invariants,
-and derived-update ownership. Movement, examination, communication,
-manipulation, transfer, concealment, assistance, opposition, and waiting are
-bounded intent families; they are not a fixed command table. Unique visible
-aliases resolve deterministically, while ambiguous references ask for
-clarification.
-
-Perception is observer-specific and fact-backed. The engine distinguishes an
-entity's existence, location, accessibility, perceptibility, observation,
-recognition, and interpretation. Concealment, exposure, lighting, weather,
-traces, portals, and discovery are canonical predicates; player and NPC model
-prompts receive only their permitted context slice. Evidence can move,
-transform, become contaminated, or be reinterpreted through validated commits.
-
-Post-action consequences run through a deterministic declarative rule engine
-after direct effects and before triggers. Universal rules cover access paths,
-environmental traces, information exposure, item discovery, and social stance;
-genre packs extend the same validated schema without story-specific runtime
-branches. The model also receives fact-derived affordances for legal exits,
-locks, visible portable items, addressable NPCs, and held items.
-
-Rendering is post-commit. Deterministic affordances such as `look`, named-place movement,
-inventory, and unique visible-item aliases use the shared proposal path and then
-make one story-model rendering call. The normal renderer uses deterministic
-committed-state validation and permits one bounded repair call; critic,
-extractor, and output-editor passes are excluded from ordinary turns. Narration
-and dialogue cannot create facts after display, so visible changes require
-accepted structured claims and committed deltas.
-
-Freytag progression is also fact-driven. `BeatPolicy` selects a stable legal
-beat from the current phase, role, pressure, obstacle, conflict, reveal budget,
-and NPC scene goals; it does not prescribe the player’s approach. Reveal
-scheduling and timed story events are evaluated together from canonical facts,
-and progress/tension are derived presentation metrics rather than free-form
-commit authorities.
-
-NPCs use fact-backed role contracts for goals, capabilities, limitations,
-initiative, relationships, advisory style, and permitted autonomy. Explicit
-observer-scoped facts model what each NPC knows, believes, suspects, conceals,
-or may infer; stable identity traits remain separate from bounded adaptive
-traits. Delegated work follows a durable offer, acceptance, progress, result,
-failure, or cancellation lifecycle. NPC actions are validated against role,
-knowledge, location, resources, obligations, visibility, and scene state.
-
-Story packages are authored and evaluated offline before they are realized into
-runtime facts. The injected frontier-model pipeline produces typed characters,
-motivations, rules, secrets, revelations, causal assumptions, role contracts,
-beat plans, and endings; deterministic validation checks availability,
-clue/revelation reachability, causal ending viability, and resilient alternate
-information paths. Continuity, causality, and dialogue-fit specialists run in
-parallel and a versioned deterministic rubric with critical floors decides
-acceptance. Recovery is bounded by rounds, tokens, and wall-clock time, records
-preserved/modified/discarded fact categories, and revalidates the candidate.
-The evaluation harness also runs exploratory, goal-focused, social, adversarial,
-avoidant, and chaotic scripted players against every frozen fixture.
-
-The external story-data migration is tracked in
-[`.plans/external-story-data-migration.md`](.plans/external-story-data-migration.md).
-Phase 0 freezes four package projections and deterministic turn transcripts in
-[`data/phase0_baseline.json`](data/phase0_baseline.json), and the static seam
-inventory is documented in
-[`docs/external-story-data-inventory.md`](docs/external-story-data-inventory.md).
-Phase 1 package templates are stored in
-[`data/story_packages.yaml`](data/story_packages.yaml). They declare map,
-character, item, opening, intent-alias, and bounded-effect sections. The
-builder expands and validates those sections before a package can be realized.
-Phase 2 realizes every package through the same package-to-facts service:
-room presentation, character placement and roles, item custody/state, opening
-context, and document/case facts are committed from the package rather than
-from genre-specific world setup. The former `opening_setup.yaml` is retained as
-a migration reference only; runtime package construction no longer reads it.
-Phase 3 makes presentation observer-aware and roleplay-forward. Public
-briefings are explicit `knows(player, fact_key)` grants; opening and ordinary
-turn prompts receive only the relevant observer or addressed-NPC fact slice.
-Packages declare room short/long copy, NPC scene purpose, briefing facts, and
-document visibility. Shared prompt policy permits expressive performance but
-never treats it as a state mutation: visible changes and knowledge revelations
-still require accepted fact commits.
-Phase 4 replaces named document commands with package-declared readable-item
-contracts. Their aliases, discovery, knowledge grants, context updates, and
-leads are realized as facts; a single `read` intent commits those configured
-effects for mystery files, fantasy scrolls, sci-fi logs, and romance letters.
-Visible vehicle interaction and natural-language exit references likewise use
-fact-derived item and path affordances rather than story-specific routing.
-Phase 5 moves environmental coherence into the same boundary: every package
-declares each room's exposure and optional ambient source, which are realized
-as canonical facts. Ambient event prose reads those facts rather than room-name
-keywords, while package validation rejects weather-sensitive items staged in
-exposed rooms. Custody, location, role, and observer-knowledge conflicts remain
-generic fact-policy failures across every genre.
-Phase 6 removes the legacy mystery helper and world-builder fallback data.
-The CLI's generic story-status projection now reads canonical facts, while
-maps, item aliases, objectives, opening setup, and presentation remain in
-validated package data. The static audit has no allowlist: embedded story
-entities or genre-authored runtime presentation fail CI.
-
-The local web surface and hosted demo remain separate adapters. For the
-development commands and API contracts, see [docs/PRD.md](docs/PRD.md) and
-[docs/fact-authority.md](docs/fact-authority.md).
-
-## Cutover and release gate
-
-The proposal/commit runtime is the default for CLI, local web, and hosted-demo
-turns. The retired narration-to-fact extractor has been removed: narration and
-dialogue are render-only projections, and every visible state change must be
-present in an accepted `TurnProposalV2` before commit.
-
-CI enforces fatal lint checks, the full branch-coverage suite, deterministic
-fixture and behavioral-evaluation reports, local/hosted API smoke tests, and
-artifact-integrity checks. The selected cutover report is uploaded as the
-`cutover-contracts` artifact.
-
-## Test tiers and performance
-
-Tests are tagged as `unit`, `component`, `integration`, or `evaluation`. Run
-the fast feedback set with:
+## Project map
 
 ```text
-TMPDIR=/tmp uv run pytest -m "unit or component" -q
+storygame/
+├── engine/        # facts, policy, proposal/commit, perception, NPCs, rules
+├── llm/           # typed adapters, constrained context, prompts, coherence
+├── persistence/   # save state and artifact projections
+├── plot/          # Freytag phases, beats, tension, dramatic policy
+├── web.py         # local web adapter
+└── web_demo.py    # hosted-demo adapter
+
+data/              # validated story, rule, predicate, and evaluation inputs
+tests/             # unit, component, integration, and evaluation contracts
+docs/              # product, operational, and engineering reference
 ```
 
-For a repeatable collection and timing report, use:
+## The principle
 
-```text
-TMPDIR=/tmp uv run pytest --collect-only -q
-TMPDIR=/tmp uv run pytest -q --cov --tier-report=artifacts/test-suite-health.json
-```
-
-The report records separate setup/call/teardown timings, CPU and wall time,
-ranked top-20 setup/call tables, per-test runtime counts for full-world builds,
-complete turns, SQLite stores, and TestClient constructions,
-orchestration-contract classifications, plus source-level SQLite/web diagnostics.
-The required CI gate uses ordinary coverage and remains coverage-gated at 90%.
-An informational CI job retains the more expensive per-test coverage contexts.
-Narrow policy and state tests use the synthetic factories in
-[`tests/fast_fixtures.py`](tests/fast_fixtures.py); SQLite, web, artifact, and
-complete-turn checks remain in the integration tier. See the
-[test-suite performance guide](docs/test-suite-performance-guide.md) for the
-fixture, CI jobs, and measurement conventions.
+Stories are allowed to surprise the engine. The engine is not allowed to lose
+track of what happened.
