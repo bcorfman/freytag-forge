@@ -2,6 +2,12 @@
 
 Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
 
+> Migration status: Phase 0 of the LLM-first refactor is complete. The current
+> fact-backed runtime remains the shipped V1 product while V2 is prepared for
+> an isolated `/dev/` staging channel. See the [release baseline](docs/release-baseline.md),
+> [V2 acceptance matrix](docs/v2-acceptance-matrix.md), and
+> [migration scorecard](docs/v2-acceptance-scorecard.md).
+
 ## Write anything. Keep the story true.
 
 Freytag Forge is a fact-backed interactive-fiction engine for stories that
@@ -56,6 +62,10 @@ engine preserves truth and returns a bounded outcome or clarification.
 ## Start here
 
 - [Product and architecture reference](docs/PRD.md)
+- [LLM-first migration plan](.plans/gpt-refactor.md)
+- [V1 production rollback baseline](docs/release-baseline.md)
+- [V2 acceptance matrix](docs/v2-acceptance-matrix.md)
+- [V2 migration scorecard](docs/v2-acceptance-scorecard.md)
 - [Fact-authority contract](docs/fact-authority.md)
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)

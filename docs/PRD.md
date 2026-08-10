@@ -1,5 +1,13 @@
 # Freytag Forge PRD
 
+> Migration note (Phase 0): this document describes the current V1 product.
+> The LLM-first runtime migration has a pinned V1 rollback target, a testable
+> root/`/dev/` channel contract, and a V2 acceptance scorecard; it does not yet
+> change the public runtime or deployment flow. See the
+> [refactor plan](../.plans/gpt-refactor.md),
+> [release baseline](release-baseline.md), and
+> [acceptance matrix](v2-acceptance-matrix.md).
+
 ## Product Intent
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.

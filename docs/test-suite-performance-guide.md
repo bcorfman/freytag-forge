@@ -12,7 +12,7 @@ the intended boundary visible to contributors.
 
 | Tier | Test files | Runtime dependencies and contract |
 | --- | --- | --- |
-| unit | Parser, contracts, facts, policies, rules, plot, scene, impact, event, and phase modules | Pure helpers and typed policy contracts; no web client or SQLite. |
+| unit | Parser, contracts, facts, policies, rules, plot, scene, impact, event, phase modules, and `test_deployment_channel_contract.py` | Pure helpers and typed policy contracts; no web client or SQLite. |
 | component | `test_adapters.py`, `test_dialogue_policy.py`, `test_freeform_unit.py`, `test_llm_context.py`, `test_story_coherence.py`, `test_world_builder.py`, `test_world_presentation.py` | One subsystem with injected narrators/directors or a focused world projection. |
 | integration | `test_cli.py`, `test_cli_more.py`, `test_hosted_demo_e2e.py`, `test_mvp_gaps.py`, `test_savegame_sqlite.py`, `test_story_state_artifacts.py`, `test_vector_memory.py`, `test_web_api.py`, `test_web_demo_api.py`, `test_web_surface_parity.py` | Composed turn, persistence, artifact, memory, adapter, and deployed hosted-demo contracts. |
 | evaluation | `test_evaluation.py`, `test_reproducibility.py`, `test_runtime_quality_evaluation.py` | Cross-genre replay, deterministic artifacts, and frozen ordinary-runtime quality. |
@@ -22,6 +22,16 @@ definitions. The per-test health report records source-level construction,
 runtime `run_turn`, SQLite, and `TestClient` counts. Unit and component budgets are
 available with `--strict-test-budgets`; the normal CI run records counts and
 timings without making the existing behavioral suite brittle during migration.
+
+## Migration retirement rule
+
+During the LLM-first migration, tests for a surface scheduled for deletion are
+not retained merely to preserve coverage. Each such test must either prove a
+retained hosted-demo/channel contract, move to a V1 rollback-evidence fixture,
+or be removed with the retired surface in Phase 4 or Phase 6. The pure
+`test_deployment_channel_contract.py` guard is intentionally retained: it
+prevents the root production and `/dev/` staging channels from sharing API,
+session, database, or Railway-environment configuration.
 
 Fast synthetic state/package/proposal/event factories live in
 [`tests/fast_fixtures.py`](../tests/fast_fixtures.py). They clone mutable
