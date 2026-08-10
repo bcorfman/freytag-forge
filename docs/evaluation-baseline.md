@@ -5,7 +5,8 @@ changes. The fixture input is [evaluation_fixtures.yaml](../data/evaluation_fixt
 and the checked-in projection/transcript snapshot is
 [phase0_baseline.json](../data/phase0_baseline.json).
 It fixes the model identifier, prompt version, temperature, token limit, and
-seed for each evaluation run.
+seed for each evaluation run. The fixture header also freezes the ordinary
+adapter protocol revisions for OpenAI, Ollama, and Cloudflare Workers AI.
 
 ## Fixture slices
 
@@ -20,19 +21,28 @@ Each slice initializes a package, saves and loads it, and replays its scripted
 commands twice with the same result. Evaluation failures are derived from
 structured artifacts, with categories for contradiction, impossible action,
 hidden-information leak, role drift, causal omission, uncommitted narration,
-repetitive scene pressure, and blocked player agency.
+and exhausted provider recovery. The broader package-quality categories for
+repetitive scene pressure and blocked player agency remain separately tracked.
 
-The Phase 0 external-story-data audit is maintained in
+The external-story-data audit is maintained in
 [external-story-data-inventory.md](external-story-data-inventory.md). Its test
 reports every matching story-specific identifier or branch in the shared
-engine, LLM, and CLI surfaces and requires an owner phase, replacement schema,
-and removal phase for each current seam.
+engine, LLM, and CLI surfaces.
 
-The Phase 0 external-story-data audit is maintained in
-[external-story-data-inventory.md](external-story-data-inventory.md). Its test
-reports every matching story-specific identifier or branch in the shared
-engine, LLM, and CLI surfaces and requires an owner phase, replacement schema,
-and removal phase for each current seam.
+## Stage 1 adapter measurements
+
+`storygame.evaluation.summarize_adapter_measurements` aggregates frozen
+ordinary-turn observations by adapter revision. It reports proposal validity,
+direct acceptance, successful bounded repairs, hidden-information leaks, role
+drift, mean latency, and input/output token totals. Its result is explicitly
+`informational_baseline`: absent adapters are reported, never silently treated
+as passing, and the summary is not a release gate. This makes a credentialed
+or paid run an explicit, reproducible follow-up rather than an implicit CI
+dependency.
+
+Every observation is tied to a fixture, frozen prompt/configuration, adapter
+revision, and seed. Classification reads committed facts and policy evidence;
+it does not infer failures from player-facing transcript wording.
 
 ## Recorded baseline
 

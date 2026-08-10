@@ -15,6 +15,7 @@ FailureCategory = Literal[
     "role_drift",
     "causal_omission",
     "uncommitted_narration",
+    "exhausted_provider_recovery",
     "repetitive_scene_pressure",
     "blocked_player_agency",
 ]
@@ -26,6 +27,7 @@ FAILURE_CATEGORIES: tuple[FailureCategory, ...] = (
     "role_drift",
     "causal_omission",
     "uncommitted_narration",
+    "exhausted_provider_recovery",
     "repetitive_scene_pressure",
     "blocked_player_agency",
 )
@@ -46,6 +48,46 @@ class EvaluationFixture(TypedDict):
     prompt_version: str
     generation_settings: GenerationSettings
     commands: list[str]
+
+
+class AdapterRevisions(TypedDict):
+    openai: str
+    ollama: str
+    cloudflare_workers_ai: str
+
+
+class AdapterMeasurement(TypedDict):
+    """One ordinary-turn observation from a frozen evaluation fixture."""
+
+    adapter: str
+    revision: str
+    proposal_valid: bool
+    directly_accepted: bool
+    repaired: bool
+    repair_succeeded: bool
+    failure_categories: tuple[FailureCategory, ...]
+    latency_ms: int | float
+    input_tokens: int
+    output_tokens: int
+
+
+class AdapterBaseline(TypedDict):
+    revision: str
+    turns: int
+    proposal_validity: float
+    direct_acceptance: float
+    bounded_repair_success: float
+    hidden_information_leaks: int
+    role_drift: int
+    latency_ms: float
+    input_tokens: int
+    output_tokens: int
+
+
+class AdapterMeasurementReport(TypedDict):
+    kind: Literal["informational_baseline"]
+    adapters: dict[str, AdapterBaseline]
+    missing_adapters: tuple[str, ...]
 
 
 class FixturePackageFactory(Protocol):
@@ -117,6 +159,20 @@ def load_evaluation_fixtures(path: Path | None = None) -> tuple[EvaluationFixtur
     return fixtures
 
 
+def load_evaluation_adapter_revisions(path: Path | None = None) -> AdapterRevisions:
+    """Load the fixed ordinary-runtime adapter protocol revisions."""
+    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+    payload = yaml.load((path or _fixtures_path()).read_text(encoding="utf-8"), Loader=loader)
+    if not isinstance(payload, Mapping):
+        raise ValueError("Evaluation fixture payload must be a mapping.")
+    raw_revisions = payload.get("adapter_revisions")
+    required = ("openai", "ollama", "cloudflare_workers_ai")
+    if not isinstance(raw_revisions, Mapping):
+        raise ValueError("Evaluation fixture payload requires adapter_revisions.")
+    revisions = {adapter: _require_string(raw_revisions, adapter) for adapter in required}
+    return cast(AdapterRevisions, revisions)
+
+
 def classify_structured_artifact(artifact: Mapping[str, object]) -> tuple[FailureCategory, ...]:
     """Classify deterministic artifact signals without interpreting player-facing prose."""
     categories: list[FailureCategory] = []
@@ -132,12 +188,65 @@ def classify_structured_artifact(artifact: Mapping[str, object]) -> tuple[Failur
         categories.append("causal_omission")
     if set(_strings(artifact, "rendered_claims")) - set(_strings(artifact, "committed_claims")):
         categories.append("uncommitted_narration")
+    provider_recovery = artifact.get("provider_recovery")
+    if isinstance(provider_recovery, Mapping) and provider_recovery.get("exhausted") is True:
+        categories.append("exhausted_provider_recovery")
     pressure = _strings(artifact, "scene_pressure")
     if len(pressure) >= 3 and len(set(pressure)) == 1:
         categories.append("repetitive_scene_pressure")
     if artifact.get("agency_outcome") == "blocked" and not artifact.get("clarification_requested"):
         categories.append("blocked_player_agency")
     return tuple(categories)
+
+
+def summarize_adapter_measurements(
+    measurements: tuple[AdapterMeasurement, ...],
+    *,
+    required_adapters: tuple[str, ...],
+) -> AdapterMeasurementReport:
+    """Aggregate frozen turn observations without turning a baseline into a gate."""
+    grouped: dict[str, list[AdapterMeasurement]] = {}
+    for measurement in measurements:
+        grouped.setdefault(measurement["adapter"], []).append(measurement)
+    baselines = {adapter: _adapter_baseline(adapter_measurements) for adapter, adapter_measurements in grouped.items()}
+    return {
+        "kind": "informational_baseline",
+        "adapters": baselines,
+        "missing_adapters": tuple(adapter for adapter in required_adapters if adapter not in baselines),
+    }
+
+
+def _adapter_baseline(measurements: list[AdapterMeasurement]) -> AdapterBaseline:
+    turns = len(measurements)
+    if turns == 0:
+        raise ValueError("Adapter baselines require at least one measurement.")
+    revisions = {measurement["revision"] for measurement in measurements}
+    if len(revisions) != 1:
+        raise ValueError("Each adapter baseline must use one frozen revision.")
+    repaired = [measurement for measurement in measurements if measurement["repaired"]]
+    return {
+        "revision": revisions.pop(),
+        "turns": turns,
+        "proposal_validity": _rate(measurements, "proposal_valid"),
+        "direct_acceptance": _rate(measurements, "directly_accepted"),
+        "bounded_repair_success": _rate(repaired, "repair_succeeded") if repaired else 0.0,
+        "hidden_information_leaks": _failure_count(measurements, "hidden_information_leak"),
+        "role_drift": _failure_count(measurements, "role_drift"),
+        "latency_ms": sum(float(measurement["latency_ms"]) for measurement in measurements) / turns,
+        "input_tokens": sum(measurement["input_tokens"] for measurement in measurements),
+        "output_tokens": sum(measurement["output_tokens"] for measurement in measurements),
+    }
+
+
+def _rate(
+    measurements: list[AdapterMeasurement],
+    key: Literal["proposal_valid", "directly_accepted", "repair_succeeded"],
+) -> float:
+    return sum(measurement[key] for measurement in measurements) / len(measurements)
+
+
+def _failure_count(measurements: list[AdapterMeasurement], category: FailureCategory) -> int:
+    return sum(category in measurement["failure_categories"] for measurement in measurements)
 
 
 def evaluate_fixture_playability(

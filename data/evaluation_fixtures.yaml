@@ -1,4 +1,8 @@
 version: phase0-v1
+adapter_revisions:
+  openai: openai-chat-completions-v1
+  ollama: ollama-generate-v1
+  cloudflare_workers_ai: cloudflare-workers-ai-v1
 fixtures:
   - id: mystery-investigation
     genre: mystery
