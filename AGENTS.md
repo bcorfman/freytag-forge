@@ -1,6 +1,6 @@
 # Freytag Forge contributor rules
 
-- Read `/docs` and `.plans/combined-refactor.md` before implementation. The combined refactor plan is the authoritative migration and architecture plan.
+- Read `/docs` before implementation. The contributor rules in this file are the authoritative migration and architecture guardrails.
 - Build one story-agnostic interactive-fiction engine. Every engine behavior, rule, contract, validator, and test added for one outline or genre must generalize to every outline in `data/story_outlines.yaml`; do not add mystery- or story-specific runtime branches unless they are declarative, validated story-package data.
 - Preserve the distinct authoring, runtime, and artifact boundaries: facts are the sole canonical mutable runtime truth; packages and prose are inputs or projections, never competing authorities.
 - Keep ordinary gameplay LLM-proposal-first. Restrict parser handling to control-plane commands (`save`, `load`, `quit`, `help`); normalize deterministic affordances such as direction, inventory, and unambiguous visible-item aliases through the shared proposal/commit contract.
