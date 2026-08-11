@@ -1,35 +1,58 @@
-# Railway production promotion
+# Railway staging and production promotion
 
-Railway production is promoted by the `tests` workflow; it is never deployed
-merely because a commit was pushed. The `deploy-production` job waits for the
-cutover contracts, fast feedback, and required coverage jobs for the exact
-`main` SHA. It checks out that SHA, uploads it with the Railway CLI, and labels
-the deployment `github-sha=<SHA>`.
+Phase 1 uses two isolated Railway channels. A successful trusted `main` CI run
+uploads its exact SHA to staging and publishes the browser bundle under `/dev/`.
+It cannot deploy production. Production is promoted only through the manual
+`Promote staged SHA to production` workflow, which accepts a full SHA only when
+that SHA has a successful `staging-deployment` status. Both deployments launch
+`storygame.web_demo:app` from [`railway.toml`](../railway.toml).
 
-The workflow polls Railway's deployment list for that label (or Railway's
-reported commit SHA), rejects an ambiguous match, waits for `ACTIVE` (or legacy
-`SUCCESS`), and checks `<public-api-url>/api/v1/health`. `hosted-demo-e2e` then exercises the
-deployed API from `https://bcorfman.github.io`. Only a passing E2E result
-publishes the `production-promotion` commit status as `success`; all other
-outcomes publish it as `failure`.
+The health endpoint returns `status`, `channel`, and `sha`. The workflows reject
+a deployment whose reported channel or immutable revision differs from the
+requested target.
 
-The workflow serializes the complete deployment and E2E journey for `main` in
-the `production-promotion-refs/heads/main` concurrency group. It never cancels an in-progress
-promotion. Job summaries and the `railway-deployment-<SHA>` and
-`hosted-demo-e2e-<SHA>` artifacts retain the deployment id/URL, API URL, SHA,
-health result, and E2E result.
+The channel workflows serialize deployments and never cancel a running
+promotion. The staging workflow records the `staging-deployment` commit status
+only after its Railway health identity passes and the `/dev/` Pages artifact
+has been published. The production workflow waits for its root Pages publish
+before it runs the browser E2E.
 
-## One-time production setup
+## One-time Railway and GitHub setup
 
 These are operator-owned settings and cannot be established by a repository
 workflow:
 
-1. Disable Railway GitHub-push auto-deploy for the production service. The
-   workflow's explicit CLI upload must be its only deployment trigger.
-2. Use GitHub's protected `freytag-forge / production` environment. Restrict it to `main`
-   and the intended maintainers, and add a least-privilege Railway project
-   token as its `RAILWAY_TOKEN` secret.
-3. Set these variables in `freytag-forge / production`:
+1. In Railway, create a separate **staging environment** (or an entirely
+   separate staging service if your Railway plan requires it). Do not duplicate
+   the production volume. Give staging a new, disposable volume only if this V1
+   build needs persistence, and generate a separate session-signing secret.
+   Use a distinct public domain, such as
+   `https://freytag-forge-staging.up.railway.app`.
+2. Set the staging service environment variables: `FREYTAG_DEPLOYMENT_CHANNEL=staging`,
+   `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io`, its own model/API
+   credentials, and staging-only persistence/session credentials. Railway sets
+   `RAILWAY_GIT_COMMIT_SHA` for CLI deployments; do not override it. Never copy
+   production saves or secrets into staging.
+3. Keep production in a separate Railway environment/service, with its existing
+   production volume and `FREYTAG_DEPLOYMENT_CHANNEL=production`. Set
+   `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io` and retain only
+   production credentials there. Disable Railway GitHub-push auto-deploy for
+   both channels: the workflows' explicit CLI uploads must be their only
+   deployment trigger.
+4. In GitHub, create protected environments `freytag-forge / staging` and
+   `freytag-forge / production`. Restrict production to intended maintainers.
+   Put a least-privilege `RAILWAY_TOKEN` secret in each environment. The token
+   must be able to deploy only the intended Railway project/service.
+5. Set these variables in `freytag-forge / staging`:
+
+   | Variable | Value |
+   | --- | --- |
+   | `RAILWAY_PROJECT_ID` | Railway project identifier |
+   | `RAILWAY_SERVICE_ID` | Staging web-demo service identifier |
+   | `RAILWAY_STAGING_ENVIRONMENT_ID` | Railway staging environment identifier |
+   | `RAILWAY_PUBLIC_API_URL` | Staging public API base URL |
+
+6. Set these variables in `freytag-forge / production`:
 
    | Variable | Value |
    | --- | --- |
@@ -39,16 +62,31 @@ workflow:
    | `RAILWAY_PUBLIC_API_URL` | Public API base URL, without a required trailing slash |
    | `RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID` | Most recently verified deployment id, used as the rollback target in release evidence |
 
-4. Update `RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID` after every green promotion. If an
+7. Set GitHub repository variables `VITE_STAGING_API_BASE_URL` and
+   `VITE_PRODUCTION_API_BASE_URL` to the matching distinct public origins.
+   The Pages workflow embeds these values at build time and fails if either
+   channel bundle contains the other channel's origin.
+8. Update `RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID` after every green promotion. If an
    E2E failure requires immediate recovery, roll back to that recorded
    deployment in Railway, then investigate the retained failed deployment
    rather than treating it as promoted.
 
 The Railway service must preserve the health endpoint configured in
-[`railway.toml`](../railway.toml): `GET /api/v1/health` returns
-`{"status":"ok"}`. The deployment identity contract is its id, public API
-URL, final Railway status, and either its Railway-reported commit SHA or the
-CLI deployment message `github-sha=<GitHub SHA>`.
+[`railway.toml`](../railway.toml): `GET /api/v1/health` returns `status`,
+`channel`, and `sha`. The deployment identity contract is its public API URL,
+channel, and Railway-reported commit SHA.
+
+## First staging deployment
+
+1. Complete the settings above, then merge this change to `main`.
+2. Confirm the `tests` run succeeds; `Deploy staging` should run automatically.
+3. Verify `https://<staging-origin>/api/v1/health` returns `channel: "staging"`
+   and the exact triggering SHA. Verify `/freytag-forge/dev/` shows the persistent
+   **Staging — non-production** badge and reaches only the staging API.
+4. Keep the recorded V1 production deployment untouched. To promote, dispatch
+   `Promote staged SHA to production`, paste the full successful staging SHA,
+   and approve the protected production environment. The workflow validates
+   health and the root browser E2E before treating the promotion as successful.
 
 ## Diagnostic E2E
 

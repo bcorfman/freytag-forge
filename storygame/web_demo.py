@@ -105,6 +105,8 @@ class TurnResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
+    channel: str
+    sha: str
 
 
 class ErrorResponse(BaseModel):
@@ -312,7 +314,14 @@ def create_demo_app(
 
     @app.get("/api/v1/health", response_model=HealthResponse)
     def health() -> HealthResponse:
-        return HealthResponse()
+        return HealthResponse(
+            channel=getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown",
+            sha=(
+                getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
+                or getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
+                or "unknown"
+            ),
+        )
 
     @app.post("/api/v1/session", response_model=SessionCreateResponse)
     def create_session(payload: SessionCreateRequest) -> SessionCreateResponse:

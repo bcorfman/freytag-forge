@@ -89,12 +89,13 @@ TMPDIR=/tmp uv run pytest -q --cov -n 2 --durations=50
 ```
 
 `test_hosted_demo_e2e.py` is intentionally skipped for local runs without a
-deployed URL. On `main`, the `tests` workflow runs it only after its serialized
-Railway deployment has reported success and passed `/api/v1/health`; its
-`hosted-demo-e2e` job receives the verified deployed API URL and uses the
-GitHub Pages origin. That chained job is the production promotion gate. The
-separate `Hosted demo post-deploy E2E` workflow remains manually dispatchable
-for diagnosis only and cannot trigger a deployment.
+deployed URL. A successful trusted `main` `tests` workflow triggers the isolated
+staging deployment and `/dev/` Pages bundle. The manual production-promotion
+workflow accepts only a full SHA carrying the successful `staging-deployment`
+status, checks its production health identity, publishes the root bundle while
+preserving `/dev/`, and then runs the hosted-demo E2E at the production root.
+The separate `Hosted demo post-deploy E2E` workflow remains manually
+dispatchable for diagnosis only and cannot trigger a deployment.
 
 The manual `test-suite five-run benchmark` workflow runs the exact required
 coverage command five times on `ubuntu-latest`, reports every sample and their

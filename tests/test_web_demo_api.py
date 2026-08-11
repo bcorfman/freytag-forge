@@ -7,9 +7,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
 from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.web_demo import (
     _build_demo_narrator,
     _resolve_demo_cors_allow_origins,
@@ -137,6 +137,17 @@ def test_demo_configuration_normalization_is_adapter_independent(monkeypatch):
         _resolve_narrator_mode("invalid")
     monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
     assert _resolve_narrator_mode(None) == "ollama"
+
+
+def test_health_identifies_the_deployed_channel_and_revision(tmp_path, monkeypatch):
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "staging")
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_SHA", "a" * 40)
+    client = _client(tmp_path)
+
+    response = client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "channel": "staging", "sha": "a" * 40}
 
 
 def test_demo_app_allows_configured_cors_origin(tmp_path):

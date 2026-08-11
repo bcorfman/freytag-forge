@@ -165,32 +165,32 @@ V2 acceptance scorecard exist; all baseline checks pass.
 
 **Goal:** expose a safe `/dev/` environment before moving user traffic.
 
-1. Replace the current main-to-production deployment sequence with two channel
+1. [x] Replace the current main-to-production deployment sequence with two channel
    workflows:
    - after CI succeeds for a trusted `main` push, deploy that exact SHA to the
      `freytag-forge / staging` GitHub environment and `/dev/`;
    - provide a `workflow_dispatch` promotion requiring a full immutable SHA;
      reject branch names, a SHA not previously staged successfully, and a
      source revision that differs from the checked-out revision.
-2. Configure separate Railway staging and production environments/services,
+2. [ ] Configure separate Railway staging and production environments/services,
    public URLs, volumes, API credentials, session signing secrets, allowed
    CORS origins, model credentials, and known-good deployment IDs. Do not copy
    production saves or secrets into staging.
-3. Update `railway.toml` and deployment workflows so both channels launch only
+3. [x] Update `railway.toml` and deployment workflows so both channels launch only
    `storygame.web_demo:app`. Ensure health/version responses identify the
    deployed SHA and `staging` or `production` channel.
-4. Rework the Pages workflow to build `frontend/dist/dev` for staging and the
+4. [x] Rework the Pages workflow to build `frontend/dist/dev` for staging and the
    root bundle for production. Validate the artifact shape, preserve the
    untouched channel by retrieving the published Pages artifact, and fail
    closed if it cannot preserve a valid opposite-channel index.
-5. Build separate frontend API base URLs into each channel and show a persistent
+5. [x] Build separate frontend API base URLs into each channel and show a persistent
    non-production badge at `/dev/`. Add an E2E check that the root bundle has no
    staging API URL and `/dev/` has no production API URL.
-6. Make the manual production workflow perform health and browser E2E checks
+6. [x] Make the manual production workflow perform health and browser E2E checks
    against the root production URL before recording promotion success. Keep the
    existing legacy production deployment as rollback until V2 promotion passes.
 
-**Exit criteria:** a passing `main` SHA reaches only `/dev/` and staging;
+**Exit criteria:** [ ] A passing `main` SHA reaches only `/dev/` and staging;
 production root remains unchanged. A manually selected test SHA can be promoted
 and rolled back without changing `/dev/`.
 

@@ -27,3 +27,22 @@ def test_root_and_dev_channels_never_share_state_configuration() -> None:
     assert production["session_namespace"] != staging["session_namespace"]
     assert production["database_namespace"] != staging["database_namespace"]
     assert production["railway_environment"] != staging["railway_environment"]
+
+
+def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> None:
+    root = Path(__file__).resolve().parents[1]
+    staging = (root / ".github/workflows/deploy-staging.yml").read_text(encoding="utf-8")
+    promotion = (root / ".github/workflows/promote-production.yml").read_text(encoding="utf-8")
+    pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
+
+    assert "freytag-forge / staging" in staging
+    assert "RAILWAY_STAGING_ENVIRONMENT_ID" in staging
+    assert "github.event.workflow_run.head_sha" in staging
+    assert "workflow_dispatch" in promotion
+    assert "^[0-9a-f]{40}$" in promotion
+    assert "staging-deployment" in promotion
+    assert "freytag-forge / production" in promotion
+    assert "RAILWAY_PRODUCTION_ENVIRONMENT_ID" in promotion
+    assert "VITE_STAGING_API_BASE_URL" in pages
+    assert "VITE_PRODUCTION_API_BASE_URL" in pages
+    assert "opposite-channel index" in pages

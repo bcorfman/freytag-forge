@@ -1,0 +1,79 @@
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+
+permissions:
+  contents: read
+  statuses: write
+  actions: write
+
+concurrency:
+  group: staging-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: freytag-forge / staging
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+      - name: Verify triggering immutable revision
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.workflow_run.head_sha }}"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+      - name: Deploy the exact successful SHA to Railway staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_STAGING_ENVIRONMENT_ID }}
+          RAILWAY_PUBLIC_API_URL: ${{ vars.RAILWAY_PUBLIC_API_URL }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing staging configuration: $required" >&2; exit 1; }; done
+          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA" --detach
+          health=''
+          health_channel=''
+          health_sha=''
+          for attempt in $(seq 1 60); do
+            health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
+            health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
+            health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$DEPLOYED_SHA" && break
+            sleep 10
+          done
+          test "$health_channel" = staging && test "$health_sha" = "$DEPLOYED_SHA"
+      - name: Publish staged-SHA proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: >-
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOYED_SHA}"
+          -f state=success -f context=staging-deployment
+          -f description='Staged successfully on Railway'
+          -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+      - name: Publish staging Pages bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run deploy-frontend-pages.yml --ref main -f channel=staging -f sha="${{ github.event.workflow_run.head_sha }}"
+          sleep 5
+          run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "${{ github.event.workflow_run.head_sha }}" --json databaseId --jq '.[0].databaseId')"
+          test -n "$run_id"
+          gh run watch "$run_id" --exit-status

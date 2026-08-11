@@ -1,6 +1,7 @@
 import "./styles.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
+const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
 const DEFAULT_SESSION_PAYLOAD = {
   seed: 123,
   genre: "mystery",
@@ -14,9 +15,14 @@ const commandFormElement = document.querySelector("#command-form");
 const commandInputElement = document.querySelector("#command-input");
 const sendButtonElement = document.querySelector("#send-button");
 const newGameButtonElement = document.querySelector("#new-game-button");
+const nonProductionBadgeElement = document.querySelector("#non-production-badge");
 
 let sessionId = "";
 let busy = false;
+
+if (DEPLOYMENT_CHANNEL !== "production") {
+  nonProductionBadgeElement.hidden = false;
+}
 
 function setBusy(nextBusy) {
   busy = nextBusy;
