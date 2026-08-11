@@ -34,5 +34,7 @@ For an offline authoring experiment, inject a transport into
 runtime execution. `compile` remains available for injected deterministic
 transports used by authoring tests.
 
-Phase 3 will consume these immutable inputs to create V2 runtime state. The
-currently deployed V1 package/fact runtime is unchanged by this phase.
+Phase 3 consumes these immutable inputs through
+`storygame.runtime.bootstrap_runtime_state`. `RuntimeState` is the sole mutable
+session authority; compiled stories remain immutable inputs. The currently
+deployed V1 package/fact hosted runtime remains unchanged until Phase 4.

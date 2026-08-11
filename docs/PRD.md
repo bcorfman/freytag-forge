@@ -1,12 +1,13 @@
 # Freytag Forge PRD
 
-> Migration note (Phase 2): this document describes the current V1 product.
+> Migration note (Phase 3): this document describes the current V1 product and
+> the completed standalone V2 runtime boundary.
 > The LLM-first runtime migration has a pinned V1 rollback target, a testable
 > root/`/dev/` channel contract, and isolated delivery channels. Successful
 > trusted `main` CI deploys only to `/dev/` and Railway staging; production is a
-> manual promotion of a previously staged immutable SHA. Phase 2 adds isolated,
-> versioned V2 `CompiledStory` authoring inputs; it does not yet change the
-> public runtime. See the
+> manual promotion of a previously staged immutable SHA. Phases 2–3 add
+> isolated, versioned V2 `CompiledStory` inputs and a tested in-process runtime;
+> they do not yet change the public hosted product. See the
 > [refactor plan](../.plans/gpt-refactor.md),
 > [release baseline](release-baseline.md), and
 > [acceptance matrix](v2-acceptance-matrix.md).
@@ -54,6 +55,29 @@ Current runtime generation is package-driven.
 - Persistence: SQLite (save snapshots + vector memory)
 
 ## Architecture Overview
+
+### V2 standalone runtime (Phase 3)
+
+`storygame.runtime` is independent of V1 facts, predicate policies, parser
+execution, plot selection, and packages. A compiled story bootstraps one
+`RuntimeState` containing world state, per-beat runtime data, turn index,
+recent events, and rolling summary. It is the sole mutable authority.
+
+Each `RuntimeEngine.turn` builds a bounded context from that state, calls an
+injected turn model in explicit JSON-object mode, locally parses a `TurnResult`,
+validates a cloned state, then atomically replaces the state only on success.
+JSON-mode rejection, malformed output, schema failure, and model errors share
+one recovery budget: at most two inference requests. Failed recovery returns a
+typed error and retains the prior state unchanged. Narration is never an input
+to mutation.
+
+The minimal validator permits only schema-defined set/add/remove operations,
+enforces unique item custody, protected-revelation boundaries, monotonic beat
+completion and prerequisite order. `PacingController` supplies advisory
+`open`, `nudge`, `advance`, `escalate`, and `force_consequence` directives;
+even the hard limit does not prescribe the player action. Runtime events carry
+the prompt version and token estimate for traces.
+
 ### Design Delta: LLM-Driven Runtime Within Deterministic Guardrails
 - Ordinary gameplay turns are story-first, not parser-first.
 - Deterministic systems remain the sole authority for:

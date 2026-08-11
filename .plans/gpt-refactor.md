@@ -225,32 +225,32 @@ compiler validation failures are local, descriptive, and non-story-specific.
 **Goal:** create the replacement engine with no dependency on V1 world facts,
 policies, rules, plot selection, or parser execution.
 
-1. Add `storygame.runtime.state` with typed `RuntimeState`, `WorldState`,
+1. [x] Add `storygame.runtime.state` with typed `RuntimeState`, `WorldState`,
    `BeatRuntime`, events, and summary structures. Bootstrap it from one
    `CompiledStory` into an explicit initial state.
-2. Add `storygame.runtime.contracts` for `TurnResult`, typed state operations,
+2. [x] Add `storygame.runtime.contracts` for `TurnResult`, typed state operations,
    events, beat progress, and optional summary delta. Require JSON-object mode
    through an explicit adapter option and normalize all supported provider
    response envelopes before local parsing.
-3. Add `storygame.runtime.pacing.PacingController`; write direct unit tests for
+3. [x] Add `storygame.runtime.pacing.PacingController`; write direct unit tests for
    all directive transitions, productive turns resetting stagnation, and
    hard-limit behavior that preserves player agency.
-4. Add `storygame.runtime.context.RuntimeContextBuilder`, passing only current
+4. [x] Add `storygame.runtime.context.RuntimeContextBuilder`, passing only current
    structured state, rolling event window, summary, active beats, protections,
    and pace directives. Keep input sizes bounded and record prompt version and
    token estimates in traces.
-5. Add `storygame.runtime.validation` and atomic commit logic. Validate a cloned
+5. [x] Add `storygame.runtime.validation` and atomic commit logic. Validate a cloned
    state before replacing the stored state. Never update state from narration.
-6. Add `storygame.runtime.engine.RuntimeEngine.turn`. It performs context build,
+6. [x] Add `storygame.runtime.engine.RuntimeEngine.turn`. It performs context build,
    one model call, at most one shared-budget recovery, parse/validate/commit,
    event append, summary update, and response construction. A failed recovery
    returns a typed fail-closed error and leaves the prior state intact.
-7. Test schema rejection, unknown IDs/paths, unique-custody conflicts,
+7. [x] Test schema rejection, unknown IDs/paths, unique-custody conflicts,
    protected leaks, invalid beat ordering, malformed JSON, structured/fenced
    envelopes, JSON-mode rejection, recovery exhaustion, atomic rollback, and
    one-call happy-path behavior.
 
-**Exit criteria:** V2 can run all four compiled fixtures in-process with a stub
+**Exit criteria:** [x] V2 can run all four compiled fixtures in-process with a stub
 model; all valid turns commit only through `RuntimeState`, and invalid turns
 leave it byte-for-byte unchanged.
 

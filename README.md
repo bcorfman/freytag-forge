@@ -4,32 +4,35 @@ Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki
 
 ## Write anything. Keep the story true.
 
-Freytag Forge is a fact-backed interactive-fiction engine for stories that
-need to feel open-ended without becoming incoherent. Players can negotiate,
-investigate, improvise, travel, deceive, help, refuse, and take the scene in
-unexpected directions. The engine answers with model-authored narration—but
-only after deterministic policy has decided what can become true.
+Freytag Forge is an interactive-fiction engine for stories that need to feel
+open-ended without becoming incoherent. Players can negotiate, investigate,
+improvise, travel, deceive, help, refuse, and take the scene in unexpected
+directions. The next runtime answers with model-authored narration—but only
+after local validation has accepted the state changes.
 
 The bet is simple: compelling AI storytelling does not need to choose between
-freedom and continuity. Put the world in explicit, validated facts; let models
-propose the move and write the moment; commit only what the world can support.
+freedom and continuity. Put mutable session truth in a typed runtime state; let
+models propose the move and write the moment; commit only what the story schema
+can support.
 
 This is not an LLM text generator wrapped around a command parser. It is a
 story simulation with an open language interface, durable consequences, and a
-clear boundary between authored possibility, canonical state, and prose.
+clear boundary between immutable authored possibility, canonical runtime state,
+and prose.
 
-Phase 2 of the V2 migration adds a separate offline authoring boundary:
-versioned `CompiledStory` fixtures are immutable session inputs for the future
-runtime. The existing package/fact runtime remains the active product until
-the Phase 4 hosted-demo cutover.
+Phase 3 of the V2 migration provides the standalone in-process runtime.
+Versioned `CompiledStory` fixtures bootstrap its sole mutable authority,
+`RuntimeState`; model turns use one structured request plus at most one shared
+recovery request and fail closed without partial commits. The existing
+package/fact web product remains active until the Phase 4 hosted-demo cutover.
 
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
 | --- | --- | --- |
-| Players write natural-language intentions, not a small list of verbs. They can attempt any story move. | Models propose intent, dialogue, framing, and bounded effects in one structured turn contract. | Typed deterministic policy validates every accepted change before it is committed to canonical facts. |
-| Clear directions, inventory, and unique visible references are convenient affordances—not a separate parser era. | NPC dialogue is generated from the addressed character’s permitted context and role. | Narration is post-commit projection: prose cannot invent state, reveal protected knowledge, or quietly rewrite history. |
-| Ambiguity gets a clarification; irreparable goal breaks get an explicit confirmation. | Freytag-aware dramatic policy responds to pressure, obstacles, reveals, and scene goals without prescribing player intent. | Saves, replay signatures, transcripts, and `STORY.md` are integrity-checked projections, never mutation authorities. |
+| Players write natural-language intentions, not a small list of verbs. They can attempt any story move. | Models return narration and bounded typed effects in one structured turn contract. | Local validation commits only approved paths, custody changes, and ordered beat updates to `RuntimeState`. |
+| Pacing directives nudge, advance, escalate, or force a consequence without dictating the player action. | Active beats, rolling events, summaries, and revelation protections are the only story context sent to the turn model. | Narration never mutates state; protected revelations, invalid paths, and out-of-order beats fail closed. |
+| One normal model call keeps the loop responsive. | JSON-object mode is explicit transport metadata, with one plain-JSON fallback when rejected. | Runtime events retain prompt version/token estimates; later saves are projections rather than authorities. |
 
 **Less prompt luck. More playable story.**
 
@@ -46,17 +49,18 @@ the Phase 4 hosted-demo cutover.
 ```text
 Player intent
     ↓
-Structured model proposal
+Bounded RuntimeContext + structured model result
     ↓
-Typed validation + deterministic policy
+Typed validation + clone-first commit
     ↓
-Canonical fact commit
+`RuntimeState` commit
     ↓
-Post-commit narration and dialogue
+Committed event, summary, and response
 ```
 
-No response establishes world truth by itself. If a proposal is rejected, the
-engine preserves truth and returns a bounded outcome or clarification.
+No response establishes world truth by itself. If a result is rejected, the
+engine preserves the byte-identical prior runtime state and returns a typed
+fail-closed error.
 
 ## Start here
 
@@ -147,6 +151,7 @@ scripted player styles for every frozen fixture.
 ```text
 storygame/
 ├── authoring/     # V2 immutable compiled-story contracts and compiler
+├── runtime/       # V2 RuntimeState, context, pacing, validation, and engine
 ├── engine/        # facts, policy, proposal/commit, perception, NPCs, rules
 ├── llm/           # typed adapters, constrained context, prompts, coherence
 ├── persistence/   # save state and artifact projections
