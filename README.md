@@ -2,9 +2,11 @@
 
 Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
 
-> Migration status: Phase 0 of the LLM-first refactor is complete. The current
-> fact-backed runtime remains the shipped V1 product while V2 is prepared for
-> an isolated `/dev/` staging channel. See the [release baseline](docs/release-baseline.md),
+> Migration status: Phase 1 of the LLM-first refactor is implemented. The current
+> fact-backed runtime remains the shipped V1 product; successful `main` CI is
+> delivered to the isolated `/dev/` staging channel, and production requires a
+> manually selected, previously staged immutable SHA. Operator setup is documented
+> in [the Railway staging guide](docs/railway-production-promotion.md). See the [release baseline](docs/release-baseline.md),
 > [V2 acceptance matrix](docs/v2-acceptance-matrix.md), and
 > [migration scorecard](docs/v2-acceptance-scorecard.md).
 

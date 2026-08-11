@@ -1,15 +1,17 @@
 name: Deploy Frontend to GitHub Pages
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/deploy-frontend-pages.yml"
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    inputs:
+      channel:
+        description: Channel to replace; the opposite channel is preserved from the published artifact.
+        required: true
+        type: choice
+        options: [staging, production]
+      sha:
+        description: Full immutable SHA to build.
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -17,42 +19,86 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  group: pages-channel-promotion
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout immutable revision
         uses: actions/checkout@v6
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
+        with:
+          ref: ${{ inputs.sha }}
+          fetch-depth: 1
+      - name: Verify immutable revision
+        run: |
+          [[ "${{ inputs.sha }}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${{ inputs.sha }}"
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-
-      - name: Build
+      - name: Retrieve the published Pages artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          deployment="$(gh api "repos/${GITHUB_REPOSITORY}/pages/deployments?per_page=1" | jq -cer '.[0]')"
+          artifact_url="$(jq -er '.artifact_url')"
+          mkdir -p published-pages
+          gh api --header 'Accept: application/octet-stream' "$artifact_url" > published-pages/artifact.tar.gz
+          tar -xzf published-pages/artifact.tar.gz -C published-pages
+          if test "${{ inputs.channel }}" = staging; then
+            test -f published-pages/index.html || { echo "Cannot preserve opposite-channel index: published root index is missing." >&2; exit 1; }
+          else
+            test -f published-pages/dev/index.html || { echo "Cannot preserve opposite-channel index: published dev index is missing." >&2; exit 1; }
+          fi
+      - name: Build the selected channel bundle
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_DEPLOYMENT_CHANNEL: ${{ inputs.channel }}
+          VITE_API_BASE_URL: ${{ inputs.channel == 'staging' && vars.VITE_STAGING_API_BASE_URL || vars.VITE_PRODUCTION_API_BASE_URL }}
         run: npm run build
-
+      - name: Assemble root and dev artifact without replacing the opposite channel
+        run: |
+          set -euo pipefail
+          rm -rf pages-artifact
+          cp -R published-pages pages-artifact
+          rm -f pages-artifact/artifact.tar.gz
+          if test "${{ inputs.channel }}" = staging; then
+            rm -rf pages-artifact/dev
+            mkdir -p pages-artifact/dev
+            cp -R frontend/dist/. pages-artifact/dev/
+          else
+            rm -f pages-artifact/index.html
+            rm -rf pages-artifact/assets
+            cp -R frontend/dist/. pages-artifact/
+          fi
+          test -f pages-artifact/index.html
+          test -f pages-artifact/dev/index.html
+      - name: Prove root and dev bundles contain only their channel API origins
+        env:
+          STAGING_API: ${{ vars.VITE_STAGING_API_BASE_URL }}
+          PRODUCTION_API: ${{ vars.VITE_PRODUCTION_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_API" && test -n "$PRODUCTION_API"
+          grep -R --fixed-strings "$PRODUCTION_API" pages-artifact >/dev/null
+          grep -R --fixed-strings "$STAGING_API" pages-artifact/dev >/dev/null
+          ! grep -R --fixed-strings "$STAGING_API" pages-artifact --exclude-dir=dev
+          ! grep -R --fixed-strings "$PRODUCTION_API" pages-artifact/dev
       - name: Setup Pages
         uses: actions/configure-pages@v6
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: frontend/dist
+          path: pages-artifact
 
   deploy:
     needs: build

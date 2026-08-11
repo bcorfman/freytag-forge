@@ -37,6 +37,19 @@ body {
   margin-bottom: 24px;
 }
 
+.non-production-badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 5px 9px;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-family: system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
