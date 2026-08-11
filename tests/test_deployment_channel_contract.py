@@ -34,7 +34,6 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     staging = (root / ".github/workflows/deploy-staging.yml").read_text(encoding="utf-8")
     promotion = (root / ".github/workflows/promote-production.yml").read_text(encoding="utf-8")
     pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
-    legacy_ci = (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
 
     assert "freytag-forge / staging" in staging
     assert "RAILWAY_STAGING_ENVIRONMENT_ID" in staging
@@ -46,8 +45,7 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "RAILWAY_PRODUCTION_ENVIRONMENT_ID" in promotion
     assert "railway deployment list" in promotion
     assert "RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID" not in promotion
-    assert "RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID" not in legacy_ci
-    assert "if: ${{ false }}" in legacy_ci
+    assert "deploy-production:" not in (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
     assert "VITE_STAGING_API_BASE_URL" in pages
     assert "VITE_PRODUCTION_API_BASE_URL" in pages
     assert "opposite-channel index" in pages
