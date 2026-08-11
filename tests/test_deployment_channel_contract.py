@@ -48,4 +48,6 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "deploy-production:" not in (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
     assert "VITE_STAGING_API_BASE_URL" in pages
     assert "VITE_PRODUCTION_API_BASE_URL" in pages
+    assert "Retrieve the published opposite Pages channel" in pages
+    assert "wget --quiet --mirror" in pages
     assert "opposite-channel index" in pages
