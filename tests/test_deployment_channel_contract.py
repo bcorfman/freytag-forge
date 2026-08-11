@@ -59,3 +59,11 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "Retrieve the published opposite Pages channel" in pages
     assert "wget --quiet --mirror" in pages
     assert "opposite-channel index" in pages
+
+
+def test_production_pages_publish_preserves_the_downloaded_dev_directory() -> None:
+    root = Path(__file__).resolve().parents[1]
+    pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
+
+    assert 'mkdir -p published-pages/dev' in pages
+    assert 'cp -R "$source_dir/." published-pages/dev/' in pages

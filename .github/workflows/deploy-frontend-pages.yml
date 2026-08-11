@@ -56,10 +56,12 @@ jobs:
           source_dir="$mirror_dir/${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/${channel_path%/}"
           test -d "$source_dir" || { echo "Cannot retrieve published opposite channel from $page_url" >&2; exit 1; }
           mkdir -p published-pages
-          cp -R "$source_dir/." published-pages/
           if test "${{ inputs.channel }}" = staging; then
+            cp -R "$source_dir/." published-pages/
             test -f published-pages/index.html || { echo "Cannot preserve opposite-channel index: published root index is missing." >&2; exit 1; }
           else
+            mkdir -p published-pages/dev
+            cp -R "$source_dir/." published-pages/dev/
             test -f published-pages/dev/index.html || { echo "Cannot preserve opposite-channel index: published dev index is missing." >&2; exit 1; }
           fi
       - name: Build the selected channel bundle
