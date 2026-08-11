@@ -42,7 +42,11 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
 
     health_status, _, health_payload = _request(f"{base_url}/api/v1/health", "GET")
     assert health_status == 200
-    assert health_payload == {"status": "ok"}
+    assert health_payload["status"] == "ok"
+    expected_channel = os.getenv("HOSTED_DEMO_CHANNEL", "").strip()
+    if expected_channel:
+        assert health_payload["channel"] == expected_channel
+        assert health_payload["sha"] == os.getenv("DEPLOYED_SHA", "").strip()
 
     session_status, session_headers, session_payload = _request(
         f"{base_url}/api/v1/session",

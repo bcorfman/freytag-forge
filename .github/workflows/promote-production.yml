@@ -13,18 +13,21 @@ permissions:
   statuses: write
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: production-promotion
   cancel-in-progress: false
 
 jobs:
-  promote:
+  validate-staged-sha:
+    name: Validate staged SHA
     runs-on: ubuntu-latest
-    environment:
-      name: freytag-forge / production
+    outputs:
+      sha: ${{ steps.validate.outputs.sha }}
     steps:
-      - name: Require an immutable staged SHA
+      - name: Require an immutable successful staging SHA
+        id: validate
         env:
           INPUT_SHA: ${{ inputs.sha }}
           GH_TOKEN: ${{ github.token }}
@@ -33,35 +36,44 @@ jobs:
           [[ "$INPUT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "A full lowercase immutable SHA is required." >&2; exit 1; }
           gh api "repos/${GITHUB_REPOSITORY}/commits/${INPUT_SHA}" >/dev/null
           gh api "repos/${GITHUB_REPOSITORY}/commits/${INPUT_SHA}/status" --jq '.statuses[] | select(.context == "staging-deployment" and .state == "success")' | grep -q . || { echo "SHA was not staged successfully." >&2; exit 1; }
+          echo "sha=$INPUT_SHA" >> "$GITHUB_OUTPUT"
+
+  deploy-production:
+    name: Deploy production
+    needs: validate-staged-sha
+    runs-on: ubuntu-latest
+    environment:
+      name: freytag-forge / production
+    outputs:
+      api_base_url: ${{ steps.deployment.outputs.api_base_url }}
+      sha: ${{ steps.deployment.outputs.sha }}
+    steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.sha }}
+          ref: ${{ needs.validate-staged-sha.outputs.sha }}
           fetch-depth: 1
       - name: Verify checked-out revision
-        run: test "$(git rev-parse HEAD)" = "${{ inputs.sha }}"
+        run: test "$(git rev-parse HEAD)" = "${{ needs.validate-staged-sha.outputs.sha }}"
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          version: latest
       - name: Install Railway CLI
         run: npm install --global @railway/cli
       - name: Deploy and health-check production API
+        id: deployment
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT_ID }}
           RAILWAY_PUBLIC_API_URL: ${{ vars.RAILWAY_PUBLIC_API_URL }}
-          DEPLOYED_SHA: ${{ inputs.sha }}
+          DEPLOYED_SHA: ${{ needs.validate-staged-sha.outputs.sha }}
         run: |
           set -euo pipefail
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing production configuration: $required" >&2; exit 1; }; done
           rollback_deployment_id="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json | jq -er 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id')"
           echo "- Railway rollback candidate before promotion: \`$rollback_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
           railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA" --detach
-          health=''
           health_channel=''
           health_sha=''
           for attempt in $(seq 1 60); do
@@ -72,20 +84,61 @@ jobs:
             sleep 10
           done
           test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA"
+          {
+            echo "api_base_url=${RAILWAY_PUBLIC_API_URL%/}"
+            echo "sha=$DEPLOYED_SHA"
+          } >> "$GITHUB_OUTPUT"
       - name: Publish production Pages bundle
         env:
           GH_TOKEN: ${{ github.token }}
+          DEPLOYED_SHA: ${{ needs.validate-staged-sha.outputs.sha }}
         run: |
           set -euo pipefail
-          gh workflow run deploy-frontend-pages.yml --ref main -f channel=production -f sha="${{ inputs.sha }}"
+          gh workflow run deploy-frontend-pages.yml --ref main -f channel=production -f sha="$DEPLOYED_SHA"
           sleep 5
-          run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "${{ inputs.sha }}" --json databaseId --jq '.[0].databaseId')"
+          run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "$DEPLOYED_SHA" --json databaseId --jq '.[0].databaseId')"
           test -n "$run_id"
           gh run watch "$run_id" --exit-status
+
+  hosted-demo-production-e2e:
+    name: Hosted demo production E2E
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    env:
+      HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-production.outputs.api_base_url }}
+      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+      HOSTED_DEMO_CHANNEL: production
+      DEPLOYED_SHA: ${{ needs.deploy-production.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.deploy-production.outputs.sha }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
       - name: Verify browser flow at the production root
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+
+  record-production-promotion:
+    name: Record production promotion
+    if: always()
+    needs: [deploy-production, hosted-demo-production-e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish promotion status
         env:
-          HOSTED_DEMO_API_BASE_URL: ${{ vars.RAILWAY_PUBLIC_API_URL }}
-          HOSTED_DEMO_ORIGIN: https://bcorfman.github.io/freytag-forge
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_RESULT: ${{ needs.deploy-production.result }}
+          E2E_RESULT: ${{ needs.hosted-demo-production-e2e.result }}
+          DEPLOYED_SHA: ${{ inputs.sha }}
         run: |
-          uv sync --locked
-          TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+          set -euo pipefail
+          state=failure
+          description="Production deployment or hosted-demo E2E failed"
+          if test "$DEPLOYMENT_RESULT" = success && test "$E2E_RESULT" = success; then
+            state=success
+            description="Production API, Pages bundle, and hosted-demo E2E passed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOYED_SHA}" -f state="$state" -f context=production-promotion -f description="$description" -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
