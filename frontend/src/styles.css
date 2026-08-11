@@ -50,6 +50,10 @@ body {
   text-transform: uppercase;
 }
 
+.non-production-badge[hidden] {
+  display: none;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent);

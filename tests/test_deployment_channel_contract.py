@@ -71,3 +71,11 @@ def test_production_pages_publish_preserves_the_downloaded_dev_directory() -> No
 
     assert 'mkdir -p published-pages/dev' in pages
     assert 'cp -R "$source_dir/." published-pages/dev/' in pages
+
+
+def test_non_production_badge_stays_hidden_until_the_staging_bundle_enables_it() -> None:
+    root = Path(__file__).resolve().parents[1]
+    styles = (root / "frontend" / "src" / "styles.css").read_text(encoding="utf-8")
+
+    assert ".non-production-badge[hidden]" in styles
+    assert "display: none" in styles
