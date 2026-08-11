@@ -58,15 +58,6 @@ jobs:
             sleep 10
           done
           test "$health_channel" = staging && test "$health_sha" = "$DEPLOYED_SHA"
-      - name: Publish staged-SHA proof
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: >-
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOYED_SHA}"
-          -f state=success -f context=staging-deployment
-          -f description='Staged successfully on Railway'
-          -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
       - name: Publish staging Pages bundle
         env:
           GH_TOKEN: ${{ github.token }}
@@ -77,3 +68,12 @@ jobs:
           run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "${{ github.event.workflow_run.head_sha }}" --json databaseId --jq '.[0].databaseId')"
           test -n "$run_id"
           gh run watch "$run_id" --exit-status
+      - name: Publish staged-SHA proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: >-
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${DEPLOYED_SHA}"
+          -f state=success -f context=staging-deployment
+          -f description='Staged API and Pages bundle successfully'
+          -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

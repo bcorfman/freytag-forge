@@ -44,16 +44,19 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Retrieve the published Pages artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Retrieve the published opposite Pages channel
         run: |
           set -euo pipefail
-          deployment="$(gh api "repos/${GITHUB_REPOSITORY}/pages/deployments?per_page=1" | jq -cer '.[0]')"
-          artifact_url="$(jq -er '.artifact_url')"
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          channel_path=""
+          if test "${{ inputs.channel }}" = production; then channel_path="dev/"; fi
+          page_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/${channel_path}"
+          mirror_dir="$(mktemp -d)"
+          wget --quiet --mirror --page-requisites --no-parent --directory-prefix="$mirror_dir" "$page_url"
+          source_dir="$mirror_dir/${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/${channel_path%/}"
+          test -d "$source_dir" || { echo "Cannot retrieve published opposite channel from $page_url" >&2; exit 1; }
           mkdir -p published-pages
-          gh api --header 'Accept: application/octet-stream' "$artifact_url" > published-pages/artifact.tar.gz
-          tar -xzf published-pages/artifact.tar.gz -C published-pages
+          cp -R "$source_dir/." published-pages/
           if test "${{ inputs.channel }}" = staging; then
             test -f published-pages/index.html || { echo "Cannot preserve opposite-channel index: published root index is missing." >&2; exit 1; }
           else
@@ -70,7 +73,6 @@ jobs:
           set -euo pipefail
           rm -rf pages-artifact
           cp -R published-pages pages-artifact
-          rm -f pages-artifact/artifact.tar.gz
           if test "${{ inputs.channel }}" = staging; then
             rm -rf pages-artifact/dev
             mkdir -p pages-artifact/dev
