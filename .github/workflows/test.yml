@@ -11,6 +11,8 @@ env:
 
 permissions:
   contents: read
+  statuses: write
+  actions: write
 
 concurrency:
   group: tests-${{ github.ref }}
@@ -110,3 +112,104 @@ jobs:
           name: test-suite-health
           path: artifacts/
           if-no-files-found: warn
+
+  deploy-staging:
+    name: Deploy staging
+    if: github.ref == 'refs/heads/main' && success()
+    needs: [cutover-contracts, fast-feedback, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: freytag-forge / staging
+    outputs:
+      api_base_url: ${{ steps.deployment.outputs.api_base_url }}
+      sha: ${{ steps.deployment.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - name: Verify immutable deployment revision
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+      - name: Deploy the tested SHA to Railway staging
+        id: deployment
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_STAGING_ENVIRONMENT_ID }}
+          RAILWAY_PUBLIC_API_URL: ${{ vars.RAILWAY_PUBLIC_API_URL }}
+        run: |
+          set -euo pipefail
+          for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing staging configuration: $required" >&2; exit 1; }; done
+          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA" --detach
+          health=''
+          health_channel=''
+          health_sha=''
+          for attempt in $(seq 1 60); do
+            health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
+            health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
+            health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA" && break
+            sleep 10
+          done
+          test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA"
+          {
+            echo "api_base_url=${RAILWAY_PUBLIC_API_URL%/}"
+            echo "sha=$GITHUB_SHA"
+          } >> "$GITHUB_OUTPUT"
+      - name: Publish staging Pages bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run deploy-frontend-pages.yml --ref main -f channel=staging -f sha="$GITHUB_SHA"
+          sleep 5
+          run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "$GITHUB_SHA" --json databaseId --jq '.[0].databaseId')"
+          test -n "$run_id"
+          gh run watch "$run_id" --exit-status
+  hosted-demo-staging-e2e:
+    name: Hosted demo staging E2E
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    env:
+      HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
+      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+      HOSTED_DEMO_CHANNEL: staging
+      DEPLOYED_SHA: ${{ needs.deploy-staging.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.deploy-staging.outputs.sha }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Exercise the deployed staging browser flow
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+
+  record-staging-deployment:
+    name: Record staging deployment
+    if: always() && github.ref == 'refs/heads/main'
+    needs: [deploy-staging, hosted-demo-staging-e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish staged-SHA proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_RESULT: ${{ needs.deploy-staging.result }}
+          E2E_RESULT: ${{ needs.hosted-demo-staging-e2e.result }}
+        run: |
+          set -euo pipefail
+          state=failure
+          description="Staging deployment or hosted-demo E2E failed"
+          if test "$DEPLOYMENT_RESULT" = success && test "$E2E_RESULT" = success; then
+            state=success
+            description="Staged API, Pages bundle, and hosted-demo E2E passed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state="$state" -f context=staging-deployment -f description="$description" -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

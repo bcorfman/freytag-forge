@@ -31,18 +31,24 @@ def test_root_and_dev_channels_never_share_state_configuration() -> None:
 
 def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> None:
     root = Path(__file__).resolve().parents[1]
-    staging = (root / ".github/workflows/deploy-staging.yml").read_text(encoding="utf-8")
+    staging = (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
     promotion = (root / ".github/workflows/promote-production.yml").read_text(encoding="utf-8")
     pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
 
     assert "freytag-forge / staging" in staging
     assert "RAILWAY_STAGING_ENVIRONMENT_ID" in staging
-    assert "github.event.workflow_run.head_sha" in staging
+    assert "needs: [cutover-contracts, fast-feedback, test]" in staging
+    assert "Deploy staging" in staging
+    assert "Hosted demo staging E2E" in staging
+    assert "Record staging deployment" in staging
     assert "workflow_dispatch" in promotion
     assert "^[0-9a-f]{40}$" in promotion
     assert "staging-deployment" in promotion
     assert "freytag-forge / production" in promotion
     assert "RAILWAY_PRODUCTION_ENVIRONMENT_ID" in promotion
+    assert "Validate staged SHA" in promotion
+    assert "Hosted demo production E2E" in promotion
+    assert "Record production promotion" in promotion
     assert "railway deployment list" in promotion
     assert "RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID" not in promotion
     assert "deploy-production:" not in (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
