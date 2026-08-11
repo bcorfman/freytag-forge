@@ -59,6 +59,10 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "Retrieve the published opposite Pages channel" in pages
     assert "wget --quiet --mirror" in pages
     assert "opposite-channel index" in pages
+    assert '--commit "$GITHUB_SHA"' not in staging
+    assert '--commit "$DEPLOYED_SHA"' not in promotion
+    assert "before_pages_run_ids" in staging
+    assert "before_pages_run_ids" in promotion
 
 
 def test_production_pages_publish_preserves_the_downloaded_dev_directory() -> None:

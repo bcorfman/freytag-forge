@@ -171,9 +171,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          before_pages_run_ids="$(gh run list --workflow deploy-frontend-pages.yml --event workflow_dispatch --limit 100 --json databaseId --jq '.[].databaseId')"
           gh workflow run deploy-frontend-pages.yml --ref main -f channel=staging -f sha="$GITHUB_SHA"
-          sleep 5
-          run_id="$(gh run list --workflow deploy-frontend-pages.yml --commit "$GITHUB_SHA" --json databaseId --jq '.[0].databaseId')"
+          run_id=''
+          for attempt in $(seq 1 15); do
+            candidate_run_ids="$(gh run list --workflow deploy-frontend-pages.yml --event workflow_dispatch --limit 100 --json databaseId --jq '.[].databaseId')"
+            while read -r candidate_run_id; do
+              test -n "$candidate_run_id" || continue
+              if ! grep -Fxq "$candidate_run_id" <<<"$before_pages_run_ids"; then
+                run_id="$candidate_run_id"
+                break
+              fi
+            done <<<"$candidate_run_ids"
+            test -n "$run_id" && break
+            sleep 2
+          done
           test -n "$run_id"
           gh run watch "$run_id" --exit-status
   hosted-demo-staging-e2e:
