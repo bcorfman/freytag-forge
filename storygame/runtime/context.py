@@ -1,0 +1,55 @@
+"""Bounded prompt context assembled exclusively from RuntimeState."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from typing import Any
+
+from storygame.runtime.pacing import PaceDirective, PacingController
+from storygame.runtime.state import RuntimeState
+
+PROMPT_VERSION = "runtime-v2-turn-v1"
+
+
+@dataclass(frozen=True)
+class RuntimeContext:
+    prompt_version: str
+    token_estimate: int
+    payload: dict[str, Any]
+
+
+class RuntimeContextBuilder:
+    def __init__(self, pacing: PacingController | None = None, event_limit: int = 12) -> None:
+        self.pacing = pacing or PacingController()
+        self.event_limit = event_limit
+
+    def build(self, state: RuntimeState, player_input: str) -> RuntimeContext:
+        active = state.active_beats
+        directives: list[PaceDirective] = [
+            self.pacing.directive(
+                beat,
+                turns_active=state.beat_runtime[beat.id].turns_active,
+                stagnant_turns=state.beat_runtime[beat.id].stagnant_turns,
+            )
+            for beat in active
+        ]
+        payload = {
+            "player_input": player_input,
+            "world": {
+                "location": state.world.location,
+                "flags": sorted(state.world.flags),
+                "attributes": state.world.attributes,
+                "items": state.world.items,
+            },
+            "summary": state.story_summary,
+            "recent_events": [event.__dict__ for event in state.recent_events[-self.event_limit :]],
+            "active_beats": [{"id": beat.id, "summary": beat.summary, "phase": beat.phase} for beat in active],
+            "protections": [
+                {"id": item.id, "reveal_after": item.reveal_after}
+                for item in state.compiled_story.protected_revelations
+            ],
+            "pace_directives": [directive.__dict__ for directive in directives],
+        }
+        encoded = json.dumps(payload, default=list, separators=(",", ":"))
+        return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)
