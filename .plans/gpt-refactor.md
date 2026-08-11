@@ -172,7 +172,7 @@ V2 acceptance scorecard exist; all baseline checks pass.
    - provide a `workflow_dispatch` promotion requiring a full immutable SHA;
      reject branch names, a SHA not previously staged successfully, and a
      source revision that differs from the checked-out revision.
-2. [ ] Configure separate Railway staging and production environments/services,
+2. [x] Configure separate Railway staging and production environments/services,
    public URLs, volumes, API credentials, session signing secrets, allowed
    CORS origins, model credentials, and known-good deployment IDs. Do not copy
    production saves or secrets into staging.
@@ -190,7 +190,7 @@ V2 acceptance scorecard exist; all baseline checks pass.
    against the root production URL before recording promotion success. Keep the
    existing legacy production deployment as rollback until V2 promotion passes.
 
-**Exit criteria:** [ ] A passing `main` SHA reaches only `/dev/` and staging;
+**Exit criteria:** [x] A passing `main` SHA reaches only `/dev/` and staging;
 production root remains unchanged. A manually selected test SHA can be promoted
 and rolled back without changing `/dev/`.
 
@@ -199,25 +199,25 @@ and rolled back without changing `/dev/`.
 **Goal:** replace the runtime package/fact contract without touching the live
 production deployment.
 
-1. Add `storygame.authoring.contracts` for `CompiledStory`, `Character`,
+1. [x] Add `storygame.authoring.contracts` for `CompiledStory`, `Character`,
    `Beat`, `BeatPacing`, `CompletionTag`, and protected revelations.
-2. Add `storygame.authoring.compiler` and prompts that transform an outline and
+2. [x] Add `storygame.authoring.compiler` and prompts that transform an outline and
    genre profile into `CompiledStory`. Reuse provider adapters only at the
    transport boundary; do not reuse runtime fact/proposal contracts.
-3. Define local compiler validation: stable IDs, referenced prerequisites and
+3. [x] Define local compiler validation: stable IDs, referenced prerequisites and
    unlocks, acyclic prerequisite graph, at least one crisis/climax/resolution,
    a climax that depends on preceding required work, a resolution that answers
    the central question, valid completion tags, valid protections, and valid
    pacing thresholds.
-4. Add cross-genre fixtures for mystery, fantasy, sci-fi, and relationship
+4. [x] Add cross-genre fixtures for mystery, fantasy, sci-fi, and relationship
    stories. Test valid compilation plus each invalid condition independently.
-5. Create versioned, checked-in compiled-story fixtures for deterministic tests;
+5. [x] Create versioned, checked-in compiled-story fixtures for deterministic tests;
    live compiler-model evaluation remains opt-in and budgeted.
-6. Update authoring docs to identify compiled stories as immutable session input
+6. [x] Update authoring docs to identify compiled stories as immutable session input
    and remove obsolete package claims only after Phase 4 has adopted the new
    bootstrap path.
 
-**Exit criteria:** every supported genre has a valid compiled fixture and all
+**Exit criteria:** [x] Every supported genre has a valid compiled fixture and all
 compiler validation failures are local, descriptive, and non-story-specific.
 
 ### Phase 3 — Build the standalone minimal runtime

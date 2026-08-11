@@ -18,6 +18,11 @@ This is not an LLM text generator wrapped around a command parser. It is a
 story simulation with an open language interface, durable consequences, and a
 clear boundary between authored possibility, canonical state, and prose.
 
+Phase 2 of the V2 migration adds a separate offline authoring boundary:
+versioned `CompiledStory` fixtures are immutable session inputs for the future
+runtime. The existing package/fact runtime remains the active product until
+the Phase 4 hosted-demo cutover.
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
@@ -63,6 +68,7 @@ engine preserves truth and returns a bounded outcome or clarification.
 - [Fact-authority contract](docs/fact-authority.md)
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)
+- [V2 compiled-story authoring](docs/compiled-story-authoring.md)
 - [Tiered refactor plan](.plans/tiered-refactor-plan.md)
 - [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
 
@@ -140,6 +146,7 @@ scripted player styles for every frozen fixture.
 
 ```text
 storygame/
+├── authoring/     # V2 immutable compiled-story contracts and compiler
 ├── engine/        # facts, policy, proposal/commit, perception, NPCs, rules
 ├── llm/           # typed adapters, constrained context, prompts, coherence
 ├── persistence/   # save state and artifact projections
@@ -148,6 +155,7 @@ storygame/
 └── web_demo.py    # hosted-demo adapter
 
 data/              # validated story, rule, predicate, and evaluation inputs
+├── compiled_stories/ # immutable V2 fixtures, grouped by schema version
 tests/             # unit, component, integration, and evaluation contracts
 docs/              # product, operational, and engineering reference
 ```

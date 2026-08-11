@@ -1,0 +1,11 @@
+{
+  "schema_version": "compiled-story-v1", "id": "mystery_v1", "version": 1, "genre": "mystery", "title": "The Quiet Ledger", "premise": "A missing ledger puts a neighborhood's trust at risk.", "central_question": "Who hid the ledger, and can the truth restore trust?", "initial_world_state": {"location": "square"},
+  "characters": [{"id": "investigator", "name": "Morgan", "role": "investigator", "description": "A careful listener."}],
+  "protected_revelations": [{"id": "culprit", "summary": "The disappearance was staged.", "reveal_after": ["evidence_found"]}],
+  "beats": [
+    {"id": "find_evidence", "phase": "rising_action", "summary": "Follow the ledger's trail.", "completion_tags": [{"id": "evidence_found", "description": "A reliable trail is found."}], "pacing": {"nudge_after": 2, "advance_after": 4, "escalate_after": 6, "force_consequence_after": 8}},
+    {"id": "public_crisis", "phase": "crisis", "summary": "Prevent a false accusation.", "prerequisites": ["find_evidence"], "completion_tags": [{"id": "accusation_stopped", "description": "The accusation is stopped."}], "pacing": {"nudge_after": 1, "advance_after": 3, "escalate_after": 5, "force_consequence_after": 7}},
+    {"id": "reveal_truth", "phase": "climax", "summary": "Confront the person responsible.", "prerequisites": ["public_crisis"], "completion_tags": [{"id": "truth_revealed", "description": "The truth is revealed."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 4, "force_consequence_after": 6}},
+    {"id": "restore_trust", "phase": "resolution", "summary": "Show the community's response.", "prerequisites": ["reveal_truth"], "answers_central_question": true, "completion_tags": [{"id": "trust_restored", "description": "The outcome is known."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 3, "force_consequence_after": 5}}
+  ]
+}

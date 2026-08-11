@@ -1,11 +1,12 @@
 # Freytag Forge PRD
 
-> Migration note (Phase 1): this document describes the current V1 product.
+> Migration note (Phase 2): this document describes the current V1 product.
 > The LLM-first runtime migration has a pinned V1 rollback target, a testable
 > root/`/dev/` channel contract, and isolated delivery channels. Successful
 > trusted `main` CI deploys only to `/dev/` and Railway staging; production is a
-> manual promotion of a previously staged immutable SHA. It does not yet change
-> the public runtime. See the
+> manual promotion of a previously staged immutable SHA. Phase 2 adds isolated,
+> versioned V2 `CompiledStory` authoring inputs; it does not yet change the
+> public runtime. See the
 > [refactor plan](../.plans/gpt-refactor.md),
 > [release baseline](release-baseline.md), and
 > [acceptance matrix](v2-acceptance-matrix.md).
@@ -120,6 +121,12 @@ Current runtime generation is package-driven.
   validates generated story-package schema, reachability, revelation paths,
   character availability, causality, role contracts, and ending viability before
   any package can be realized into the fact-backed runtime.
+- `storygame.authoring` is the separate V2 authoring boundary. Its immutable
+  `CompiledStory` contract declares characters, protected revelations,
+  completion tags, Freytag beats, dependencies, and pacing. It is locally
+  validated before use and must not import or reuse V1 fact/proposal contracts.
+  Checked-in fixtures live under `data/compiled_stories/v1/`; model compilation
+  is explicitly opt-in through `FREYTAG_ENABLE_LIVE_COMPILER=1`.
 - `storygame.engine.bootstrap` validates LLM-expanded outline bootstrap plans before runtime state is realized.
 - `storygame.engine.world` realizes that package into playable runtime `WorldState` at startup.
 - `storygame.engine.world` also supports bootstrap-plan realization for sessions that start from a simple author outline expanded into structured characters, items, goals, and trigger specs.
