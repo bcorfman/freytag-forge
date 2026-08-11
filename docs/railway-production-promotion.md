@@ -60,16 +60,10 @@ workflow:
    | `RAILWAY_SERVICE_ID` | Production web-demo service identifier |
    | `RAILWAY_PRODUCTION_ENVIRONMENT_ID` | Railway production environment identifier |
    | `RAILWAY_PUBLIC_API_URL` | Public API base URL, without a required trailing slash |
-   | `RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID` | Most recently verified deployment id, used as the rollback target in release evidence |
-
 7. Set GitHub repository variables `VITE_STAGING_API_BASE_URL` and
    `VITE_PRODUCTION_API_BASE_URL` to the matching distinct public origins.
    The Pages workflow embeds these values at build time and fails if either
    channel bundle contains the other channel's origin.
-8. Update `RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID` after every green promotion. If an
-   E2E failure requires immediate recovery, roll back to that recorded
-   deployment in Railway, then investigate the retained failed deployment
-   rather than treating it as promoted.
 
 The Railway service must preserve the health endpoint configured in
 [`railway.toml`](../railway.toml): `GET /api/v1/health` returns `status`,

@@ -58,6 +58,8 @@ jobs:
         run: |
           set -euo pipefail
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing production configuration: $required" >&2; exit 1; }; done
+          rollback_deployment_id="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json | jq -er 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id')"
+          echo "- Railway rollback candidate before promotion: \`$rollback_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
           railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA" --detach
           health=''
           health_channel=''
