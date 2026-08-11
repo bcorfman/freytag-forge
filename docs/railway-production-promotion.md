@@ -64,7 +64,7 @@ workflow:
    `VITE_PRODUCTION_API_BASE_URL` to the matching distinct public origins.
    The Pages workflow embeds these values at build time and fails if either
    channel bundle contains the other channel's origin.
-
+ 
 The Railway service must preserve the health endpoint configured in
 [`railway.toml`](../railway.toml): `GET /api/v1/health` returns `status`,
 `channel`, and `sha`. The deployment identity contract is its public API URL,
