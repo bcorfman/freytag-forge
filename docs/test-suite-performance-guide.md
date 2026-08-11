@@ -94,6 +94,8 @@ staging deployment and `/dev/` Pages bundle. The manual production-promotion
 workflow accepts only a full SHA carrying the successful `staging-deployment`
 status, checks its production health identity, publishes the root bundle while
 preserving `/dev/`, and then runs the hosted-demo E2E at the production root.
+The promotion workflow queries Railway for its rollback candidate immediately
+before deployment, so no mutable known-good deployment variable is maintained.
 The separate `Hosted demo post-deploy E2E` workflow remains manually
 dispatchable for diagnosis only and cannot trigger a deployment.
 

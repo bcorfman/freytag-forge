@@ -117,7 +117,9 @@ jobs:
 
   deploy-production:
     name: Deploy production to Railway
-    if: github.ref == 'refs/heads/main' && success()
+    # Phase 1 supersedes this legacy main-to-production path. Production is
+    # promoted only by promote-production.yml after staging has succeeded.
+    if: ${{ false }}
     needs: [cutover-contracts, fast-feedback, test]
     runs-on: ubuntu-latest
     environment:
@@ -148,7 +150,6 @@ jobs:
           RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT_ID }}
           RAILWAY_PUBLIC_API_URL: ${{ vars.RAILWAY_PUBLIC_API_URL }}
-          RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID: ${{ vars.RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID }}
         run: |
           set -euo pipefail
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do
@@ -158,7 +159,7 @@ jobs:
           deployment_id=""
           deployment_status=""
           deployment_url=""
-          rollback_deployment_id="${RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID:-}"
+          rollback_deployment_id="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json | jq -er 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id')"
           railway_up_exit=0
           submitted_deployment_id=""
           write_evidence() {
@@ -272,7 +273,7 @@ jobs:
 
   record-production-promotion:
     name: Record production promotion
-    if: always() && github.ref == 'refs/heads/main'
+    if: ${{ false }}
     needs: [deploy-production, hosted-demo-e2e]
     runs-on: ubuntu-latest
     steps:
