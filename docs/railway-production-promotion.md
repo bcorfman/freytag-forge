@@ -32,7 +32,10 @@ workflow:
    `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io`, its own model/API
    credentials, and staging-only persistence/session credentials. Railway sets
    `RAILWAY_GIT_COMMIT_SHA` for CLI deployments; do not override it. Never copy
-   production saves or secrets into staging.
+   production saves or secrets into staging. The GitHub workflow writes
+   `FREYTAG_DEPLOYMENT_SHA` with `--skip-deploys` immediately before its bounded
+   CLI upload; do not configure that value manually. Deployments use Railway's
+   CI mode rather than detached mode, then independently verify API health.
 3. Keep production in a separate Railway environment/service, with its existing
    production volume and `FREYTAG_DEPLOYMENT_CHANNEL=production`. Set
    `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io` and retain only

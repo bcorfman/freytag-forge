@@ -146,11 +146,15 @@ jobs:
         run: |
           set -euo pipefail
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing staging configuration: $required" >&2; exit 1; }; done
-          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA" --detach
+          railway variable set "FREYTAG_DEPLOYMENT_SHA=$GITHUB_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
+          timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA"
           health=''
           health_channel=''
           health_sha=''
           for attempt in $(seq 1 60); do
+            deployments="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 20 --json)"
+            deployment_status="$(jq -r --arg sha "$GITHUB_SHA" 'map(select(.message? == ("github-sha=" + $sha) or .meta.message? == ("github-sha=" + $sha))) | sort_by(.createdAt) | last | .status // "not-found"' <<<"$deployments")"
+            echo "Railway deployment status: $deployment_status (attempt $attempt/60)"
             health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"

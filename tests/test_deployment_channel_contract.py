@@ -46,6 +46,8 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "staging-deployment" in promotion
     assert "freytag-forge / production" in promotion
     assert "RAILWAY_PRODUCTION_ENVIRONMENT_ID" in promotion
+    assert "FREYTAG_DEPLOYMENT_SHA" in staging
+    assert "timeout 300s railway up --ci" in staging
     assert "Validate staged SHA" in promotion
     assert "Hosted demo production E2E" in promotion
     assert "Record production promotion" in promotion

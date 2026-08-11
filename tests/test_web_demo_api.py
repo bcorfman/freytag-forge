@@ -150,6 +150,15 @@ def test_health_identifies_the_deployed_channel_and_revision(tmp_path, monkeypat
     assert response.json() == {"status": "ok", "channel": "staging", "sha": "a" * 40}
 
 
+def test_health_prefers_the_workflow_deployment_sha(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "railway-source-sha")
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_SHA", "workflow-sha")
+
+    response = _client(tmp_path).get("/api/v1/health")
+
+    assert response.json()["sha"] == "workflow-sha"
+
+
 def test_demo_app_allows_configured_cors_origin(tmp_path):
     client = TestClient(
         create_demo_app(

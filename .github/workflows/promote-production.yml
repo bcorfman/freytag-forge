@@ -73,10 +73,14 @@ jobs:
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing production configuration: $required" >&2; exit 1; }; done
           rollback_deployment_id="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json | jq -er 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id')"
           echo "- Railway rollback candidate before promotion: \`$rollback_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
-          railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA" --detach
+          railway variable set "FREYTAG_DEPLOYMENT_SHA=$DEPLOYED_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
+          timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA"
           health_channel=''
           health_sha=''
           for attempt in $(seq 1 60); do
+            deployments="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 20 --json)"
+            deployment_status="$(jq -r --arg sha "$DEPLOYED_SHA" 'map(select(.message? == ("github-sha=" + $sha) or .meta.message? == ("github-sha=" + $sha))) | sort_by(.createdAt) | last | .status // "not-found"' <<<"$deployments")"
+            echo "Railway deployment status: $deployment_status (attempt $attempt/60)"
             health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"

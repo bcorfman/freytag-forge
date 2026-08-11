@@ -317,8 +317,8 @@ def create_demo_app(
         return HealthResponse(
             channel=getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown",
             sha=(
-                getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
-                or getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
+                getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
+                or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
                 or "unknown"
             ),
         )
