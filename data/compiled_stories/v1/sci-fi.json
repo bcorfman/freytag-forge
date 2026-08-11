@@ -1,0 +1,11 @@
+{
+  "schema_version": "compiled-story-v1", "id": "sci_fi_v1", "version": 1, "genre": "sci-fi", "title": "Harbor Signal", "premise": "A failing beacon strands a station above an unstable sea.", "central_question": "Will the crew restore the beacon before the evacuation window closes?", "initial_world_state": {"location": "dock"},
+  "characters": [{"id": "pilot", "name": "Ira", "role": "pilot", "description": "A practical shuttle pilot."}],
+  "protected_revelations": [{"id": "sabotage", "summary": "The outage was deliberate.", "reveal_after": ["source_traced"]}],
+  "beats": [
+    {"id": "trace_signal", "phase": "rising_action", "summary": "Trace the anomalous signal.", "completion_tags": [{"id": "source_traced", "description": "The source is traced."}], "pacing": {"nudge_after": 2, "advance_after": 4, "escalate_after": 6, "force_consequence_after": 8}},
+    {"id": "contain_failure", "phase": "crisis", "summary": "Contain the spreading failure.", "prerequisites": ["trace_signal"], "completion_tags": [{"id": "failure_contained", "description": "The failure is contained."}], "pacing": {"nudge_after": 1, "advance_after": 3, "escalate_after": 5, "force_consequence_after": 7}},
+    {"id": "restore_beacon", "phase": "climax", "summary": "Choose how to restore the beacon.", "prerequisites": ["contain_failure"], "completion_tags": [{"id": "beacon_restored", "description": "The beacon is restored."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 4, "force_consequence_after": 6}},
+    {"id": "evacuation_answer", "phase": "resolution", "summary": "Show whether the crew escaped.", "prerequisites": ["restore_beacon"], "answers_central_question": true, "completion_tags": [{"id": "crew_safe", "description": "The outcome is known."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 3, "force_consequence_after": 5}}
+  ]
+}
