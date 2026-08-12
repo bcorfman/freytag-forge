@@ -215,7 +215,11 @@ def create_demo_app(
         if not result.ok:
             detail = result.error.message if result.error else "The story service is unavailable."
             _LOGGER.warning(
-                "V2 turn failed: request_id=%s session_id=%s detail=%s", request_id, payload.session_id, detail
+                "V2 turn failed: request_id=%s session_id=%s detail=%s cause=%s",
+                request_id,
+                payload.session_id,
+                detail,
+                result.error.__cause__ if result.error else None,
             )
             return error(
                 503,
@@ -254,12 +258,9 @@ def _resolve_cors_origins() -> tuple[str, ...]:
 
 
 def _configured_turn_model() -> TurnModel:
-    provider = getenv("FREYTAG_TURN_MODEL_PROVIDER", "").strip().lower()
-    if not provider:
+    if not getenv("CLOUDFLARE_WORKER_URL", "").strip():
         return _UnavailableTurnModel()
-    if provider == "cloudflare":
-        return CloudflareTurnModel()
-    raise ValueError("FREYTAG_TURN_MODEL_PROVIDER must be 'cloudflare'")
+    return CloudflareTurnModel()
 
 
 app = create_demo_app()

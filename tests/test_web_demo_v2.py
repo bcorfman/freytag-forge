@@ -9,7 +9,7 @@ from storygame.authoring.compiler import load_compiled_story_fixture
 from storygame.persistence.runtime_state_sqlite import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.context import RuntimeContext
 from storygame.runtime.state import bootstrap_runtime_state
-from storygame.web_demo import create_demo_app
+from storygame.web_demo import _configured_turn_model, create_demo_app
 
 
 class _Model:
@@ -128,6 +128,33 @@ def test_v2_demo_enforces_session_turn_quota(tmp_path) -> None:
         limited = client.post("/api/v1/turn", json={"session_id": session_id, "command": "act again"})
         assert limited.status_code == 429
         assert limited.json()["status"] == "quota_exhausted"
+
+
+def test_v2_demo_logs_the_internal_model_failure_without_exposing_it(tmp_path, caplog) -> None:
+    class FailingModel:
+        def play_turn(self, context: RuntimeContext, *, json_object: bool) -> object:
+            raise RuntimeError("provider credentials rejected")
+
+    app = create_demo_app(
+        save_db_path=tmp_path / "failure.sqlite",
+        turn_model=FailingModel(),
+        channel="staging",
+        session_namespace="failure-test",
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={}).json()["session_id"]
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "act"})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "The story service is temporarily unavailable. Please retry shortly."
+    assert "provider credentials rejected" in caplog.text
+
+
+def test_hosted_demo_defaults_to_cloudflare_worker_configuration(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://existing-worker.test")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "existing-token")
+    model = _configured_turn_model()
+    assert model.url == "https://existing-worker.test"
 
 
 def test_staging_evaluation_token_bypasses_only_staging_limits(tmp_path) -> None:

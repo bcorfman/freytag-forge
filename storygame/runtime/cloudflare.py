@@ -14,11 +14,11 @@ from storygame.runtime.engine import JsonModeRejected
 
 class CloudflareTurnModel:
     def __init__(self, *, url: str | None = None, token: str | None = None, timeout: float | None = None) -> None:
-        self.url = url or os.getenv("FREYTAG_CLOUDFLARE_AGENT_URL", "")
-        self.token = token if token is not None else os.getenv("FREYTAG_CLOUDFLARE_AGENT_TOKEN", "")
-        self.timeout = timeout if timeout is not None else float(os.getenv("FREYTAG_CLOUDFLARE_AGENT_TIMEOUT", "10"))
+        self.url = url or os.getenv("CLOUDFLARE_WORKER_URL", "")
+        self.token = token if token is not None else os.getenv("CLOUDFLARE_WORKER_TOKEN", "")
+        self.timeout = timeout if timeout is not None else float(os.getenv("CLOUDFLARE_TIMEOUT", "10"))
         if not self.url:
-            raise ValueError("FREYTAG_CLOUDFLARE_AGENT_URL is required for the Cloudflare V2 turn model")
+            raise ValueError("CLOUDFLARE_WORKER_URL is required for the Cloudflare V2 turn model")
 
     def play_turn(self, context: RuntimeContext, *, json_object: bool) -> object:
         payload: dict[str, Any] = {
@@ -32,7 +32,7 @@ class CloudflareTurnModel:
         request = urllib.request.Request(self.url, data=json.dumps(payload).encode(), method="POST", headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                return json.loads(response.read().decode())
+                return _normalize_turn_envelope(json.loads(response.read().decode()))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace") if exc.fp else str(exc)
             if json_object and exc.code == 400:
@@ -40,6 +40,13 @@ class CloudflareTurnModel:
             raise RuntimeError(f"Cloudflare AI agent request failed: {exc.code}") from exc
         except (urllib.error.URLError, json.JSONDecodeError) as exc:
             raise RuntimeError("Cloudflare AI agent request failed") from exc
+
+
+def _normalize_turn_envelope(response: object) -> object:
+    """Remove only known Cloudflare transport metadata before local validation."""
+    if not isinstance(response, dict) or "narration" not in response:
+        return response
+    return {key: value for key, value in response.items() if key not in {"model", "trace_id", "worker_revision"}}
 
 
 _SYSTEM_PROMPT = (

@@ -29,8 +29,11 @@ workflow:
    Use a distinct public domain, such as
    `https://freytag-forge-staging.up.railway.app`.
 2. Set the staging service environment variables: `FREYTAG_DEPLOYMENT_CHANNEL=staging`,
-   `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io`, its own model/API
-   credentials, and staging-only persistence/session credentials. Railway sets
+   `DEMO_CORS_ALLOW_ORIGINS=https://bcorfman.github.io`,
+   `CLOUDFLARE_WORKER_URL`, and (when required)
+   `CLOUDFLARE_WORKER_TOKEN`, plus staging-only persistence/session
+   credentials. Use the V2 Worker response contract in
+   [the Cloudflare turn-model guide](cloudflare-narration-worker.md). Railway sets
    `RAILWAY_GIT_COMMIT_SHA` for CLI deployments; do not override it. Never copy
    production saves or secrets into staging. The GitHub workflow writes
    `FREYTAG_DEPLOYMENT_SHA` with `--skip-deploys` immediately before its bounded

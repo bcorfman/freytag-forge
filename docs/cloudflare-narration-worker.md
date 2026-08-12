@@ -1,7 +1,8 @@
-# Cloudflare narration-worker contract
+# Cloudflare V2 turn-model contract
 
-The hosted demo expects its Cloudflare Worker to proxy Workers AI failures as
-structured JSON. The Worker must not turn every upstream failure into `503`.
+The hosted demo uses a Cloudflare endpoint as its V2 turn-model transport. The
+endpoint must proxy Workers AI failures as structured JSON and must not turn
+every upstream failure into `503`.
 
 ## Required environment values
 
@@ -12,10 +13,17 @@ structured JSON. The Worker must not turn every upstream failure into `503`.
 | `CF_AI_MODEL` | Optional model override; otherwise use the deployed default |
 | `DEMO_SHARED_TOKEN` | Optional bearer token shared with Railway |
 
-Railway must use the matching Worker URL and `CLOUDFLARE_WORKER_TOKEN`.
-The Python adapter records the runtime-reported version as
-`CloudflareWorkersAIAdapter.worker_revision`; no matching Railway environment
-variable is required.
+Configure each Railway channel with the matching values below. The token is
+optional only when the Worker does not require bearer authentication.
+
+| Railway variable | Value |
+| --- | --- |
+| `CLOUDFLARE_WORKER_URL` | Public URL of the V2 turn-model Worker |
+| `CLOUDFLARE_WORKER_TOKEN` | `DEMO_SHARED_TOKEN`, when configured |
+| `CLOUDFLARE_TIMEOUT` | Optional bounded request timeout, in seconds |
+
+If `CLOUDFLARE_WORKER_URL` is absent, the hosted API intentionally serves
+openings but rejects freeform model turns with `service_unavailable`.
 
 Configure Cloudflare's native version metadata binding in `wrangler.jsonc`:
 
@@ -36,9 +44,10 @@ const workerRevision = env.CF_VERSION_METADATA.id;
 return json(
   {
     narration,
-    model,
-    worker_revision: workerRevision,
-    trace_id,
+    operations,
+    beat_updates,
+    summary_delta,
+    material_progress,
   },
   200,
   { "X-Worker-Revision": workerRevision },
@@ -50,8 +59,13 @@ actually handled the request, including during gradual deployments.
 
 ## Response contract
 
-Success responses are JSON with a non-empty `narration` string, `model`, and
-`trace_id`.
+Success responses are a V2 `TurnResult` JSON object: non-empty `narration`,
+optional `operations`, `beat_updates`, `summary_delta`, and
+`material_progress`. Do not put Worker metadata inside that object. Send model,
+trace, and Worker revision metadata in response headers instead. The adapter
+also strips the known legacy `model`, `trace_id`, and `worker_revision` envelope
+keys before local V2 validation, but that compatibility normalization is not a
+substitute for updating the Worker contract.
 
 Failure responses are JSON with `status: "error"`, a stable `code`, a safe
 `message`, and `trace_id`. When available, they also include
@@ -104,7 +118,8 @@ required fallback.
 After deploying the Worker and Railway service, verify:
 
 1. `GET /api/v1/health` returns 200.
-2. A normal hosted `look` turn returns 200 and a non-empty narration.
+2. A normal hosted freeform turn returns 200, a non-empty narration, and a V2
+   state update response (the opening `look` does not contact the turn model).
 3. A Worker quota response reaches the API as 429 / `quota_exhausted`.
 4. A Worker capacity response reaches the API as 429 / `rate_limited`.
 5. The response includes `X-Request-ID`, `X-Narration-Error-Code`, and, when
