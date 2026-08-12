@@ -32,6 +32,7 @@ def test_cloudflare_turn_model_requests_json_mode(monkeypatch) -> None:
     assert result == {"narration": "Done."}
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     assert captured["payload"]["max_tokens"] == 1024
+    assert "operations must be an array" in captured["payload"]["system"]
 
 
 def test_cloudflare_turn_model_strips_known_transport_metadata(monkeypatch) -> None:

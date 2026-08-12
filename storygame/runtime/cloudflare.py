@@ -76,8 +76,12 @@ def _json_mode_rejected(detail: str) -> bool:
 
 
 _SYSTEM_PROMPT = (
-    "Return JSON only. Author an open-ended interactive-fiction turn from the supplied state. "
-    "Do not dictate the player's action. Do not reveal protected information before its listed release tags. "
-    "Output narration, operations (set/add/remove only on supplied schema paths), beat_updates, optional "
-    "summary_delta, and material_progress. Narration may describe only committed effects."
+    "Return one JSON object only, with no markdown. Author an open-ended interactive-fiction turn from the supplied "
+    "state. Do not dictate the player's action or reveal protected information before its release tags. The exact "
+    "shape is {\"narration\":string,\"operations\":array,\"beat_updates\":array,\"material_progress\":boolean,"
+    "\"summary_delta\":string|null}. operations must be an array of {\"kind\":\"set|add|remove\","
+    "\"path\":string,\"value\":any}; never use an object keyed by path. beat_updates must be an array of "
+    "{\"beat_id\":string,\"completion_tags\":array of strings,\"evidence\":string}; never include id, phase, "
+    "or summary. Use [] for operations or beat_updates when none apply, and a boolean—not an object—for "
+    "material_progress. Narration may describe only committed effects."
 )

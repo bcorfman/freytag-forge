@@ -81,7 +81,7 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
             "POST",
             {"session_id": session_id, "command": command},
         )
-        assert status == 200, payload
+        assert status == 200, {"payload": payload, "request_id": headers.get("x-request-id", "missing")}
         assert headers.get("access-control-allow-origin") in {"*", os.getenv("HOSTED_DEMO_ORIGIN", "").strip()}
         assert payload["status"] == "ok"
         assert payload["session_id"] == session_id
