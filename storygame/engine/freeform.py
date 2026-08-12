@@ -57,6 +57,9 @@ _MOVEMENT_PHRASE_PATTERN = re.compile(
     r"\b(enter|head|go|walk|step|move|return|back|inside|outside|indoors|outdoors|door|entrance|exit)\b",
     re.IGNORECASE,
 )
+_TAKE_REQUEST_PATTERN = re.compile(
+    r"\b(?:take|get|grab|acquire|pick\s+up)\b", re.IGNORECASE
+)
 _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "query",
     "ask_about",
@@ -370,6 +373,23 @@ def _readable_item_for_input(state: GameState, raw_input: str) -> str:
     return matches[0] if len(matches) == 1 else ""
 
 
+def _takeable_item_for_input(state: GameState, raw_input: str) -> str:
+    """Resolve one explicit pickup request against visible, portable item aliases."""
+    if _explicit_npc_address_requested(raw_input) or not _TAKE_REQUEST_PATTERN.search(raw_input):
+        return ""
+    normalized = f" {_normalize_target(raw_input).replace('_', ' ')} "
+    matches: list[str] = []
+    for item_id in room_items(state, player_location(state)):
+        item = state.world.items.get(item_id)
+        if item is None or not item.portable:
+            continue
+        aliases = [item_id.replace("_", " "), item.name]
+        aliases.extend(str(fact[2]) for fact in state.world_facts.query("item_alias", item_id, None))
+        if any(f" {alias.lower().strip()} " in normalized for alias in aliases if alias.strip()):
+            matches.append(item_id)
+    return matches[0] if len(matches) == 1 else ""
+
+
 def _movement_requested(raw_input: str) -> bool:
     return _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
 
@@ -441,6 +461,17 @@ def _semantic_exit_direction(state: GameState, raw_input: str) -> str:
 def _normalized_movement_action_payload(
     state: GameState, raw_input: str, action_payload: dict[str, Any]
 ) -> dict[str, Any]:
+    take_item = _takeable_item_for_input(state, raw_input)
+    if take_item:
+        normalized = dict(action_payload)
+        normalized["intent"] = "take"
+        normalized["targets"] = [take_item]
+        arguments = dict(normalized.get("arguments", {}))
+        arguments.setdefault("deterministic_affordance", "take")
+        normalized["arguments"] = arguments
+        normalized["proposed_effects"] = [f"take:{take_item}"]
+        return normalized
+
     intent = str(action_payload.get("intent", "")).strip().lower()
     targets = [str(target) for target in action_payload.get("targets", ())]
     move_direction = _semantic_exit_direction(state, raw_input)
