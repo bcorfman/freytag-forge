@@ -99,7 +99,7 @@ async function runCommand(command) {
     });
     const lines = Array.isArray(payload.lines) ? payload.lines : [];
     appendEntry(lines.join("\n"), "output");
-    setStatus(`${payload.state.room_name} • turn ${payload.state.turn_index}`);
+    setStatus(`${payload.state.location} • turn ${payload.state.turn_index}`);
   } catch (error) {
     appendEntry(error instanceof Error ? error.message : "Command failed.", "system");
     setStatus(error instanceof Error ? error.message : "Command failed.", "error");

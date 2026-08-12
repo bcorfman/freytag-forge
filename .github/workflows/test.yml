@@ -31,15 +31,12 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
-      - name: Verify deterministic fixtures and behavioral evaluation
+      - name: Verify V2 compiler, runtime, and hosted contracts
         run: >-
           TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_evaluation.py tests/test_reproducibility.py tests/test_phase8_story_packages.py
-          --tier-report=artifacts/phase9-evaluation.json
-      - name: Smoke local and hosted API adapters
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_api.py tests/test_web_demo_api.py tests/test_web_surface_parity.py
-      - name: Verify artifact integrity
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_story_state_artifacts.py
+          tests/test_authoring_compiler.py tests/test_runtime_v2.py tests/test_web_demo_v2.py
+          tests/test_deployment_channel_contract.py tests/test_v2_cutover.py
+          --tier-report=artifacts/v2-contracts.json
       - name: Upload cutover reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -209,10 +206,48 @@ jobs:
       - name: Exercise the deployed staging browser flow
         run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
 
+  v2-staging-evaluation:
+    name: V2 staging evaluation and promotion gate
+    needs: [deploy-staging, hosted-demo-staging-e2e]
+    runs-on: ubuntu-latest
+    env:
+      HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
+      DEPLOYED_SHA: ${{ needs.deploy-staging.outputs.sha }}
+      FREYTAG_STAGING_EVALUATION_TOKEN: ${{ secrets.FREYTAG_STAGING_EVALUATION_TOKEN }}
+      FREYTAG_EVALUATION_REPORT: artifacts/staging-evaluation.json
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.deploy-staging.outputs.sha }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Require the staging-only evaluation credential
+        run: test -n "$FREYTAG_STAGING_EVALUATION_TOKEN"
+      - name: Verify Pages build metadata matches the staged API candidate
+        env:
+          PAGES_METADATA_URL: https://bcorfman.github.io/freytag-forge/dev/deployment.json
+        run: |
+          set -euo pipefail
+          metadata="$(curl --fail --silent --show-error "$PAGES_METADATA_URL")"
+          test "$(jq -r '.channel // empty' <<<"$metadata")" = staging
+          test "$(jq -r '.sha // empty' <<<"$metadata")" = "$DEPLOYED_SHA"
+      - name: Run the SHA-bound cross-genre staging evaluation
+        run: TMPDIR=/tmp uv run python -m storygame.staging_evaluation
+      - name: Upload staging evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-evaluation-${{ needs.deploy-staging.outputs.sha }}
+          path: artifacts/staging-evaluation.json
+          if-no-files-found: error
+
   record-staging-deployment:
     name: Record staging deployment
     if: always() && github.ref == 'refs/heads/main'
-    needs: [deploy-staging, hosted-demo-staging-e2e]
+    needs: [deploy-staging, hosted-demo-staging-e2e, v2-staging-evaluation]
     runs-on: ubuntu-latest
     steps:
       - name: Publish staged-SHA proof
@@ -220,12 +255,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEPLOYMENT_RESULT: ${{ needs.deploy-staging.result }}
           E2E_RESULT: ${{ needs.hosted-demo-staging-e2e.result }}
+          EVALUATION_RESULT: ${{ needs.v2-staging-evaluation.result }}
         run: |
           set -euo pipefail
           state=failure
           description="Staging deployment or hosted-demo E2E failed"
-          if test "$DEPLOYMENT_RESULT" = success && test "$E2E_RESULT" = success; then
+          if test "$DEPLOYMENT_RESULT" = success && test "$E2E_RESULT" = success && test "$EVALUATION_RESULT" = success; then
             state=success
-            description="Staged API, Pages bundle, and hosted-demo E2E passed"
+            description="Staged API, Pages bundle, E2E, and V2 evaluation passed"
           fi
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state="$state" -f context=staging-deployment -f description="$description" -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -24,8 +24,8 @@ workflow:
 
 1. In Railway, create a separate **staging environment** (or an entirely
    separate staging service if your Railway plan requires it). Do not duplicate
-   the production volume. Give staging a new, disposable volume only if this V1
-   build needs persistence, and generate a separate session-signing secret.
+   the production volume. Give staging a new, disposable V2 persistence volume
+   and generate a separate session-signing secret.
    Use a distinct public domain, such as
    `https://freytag-forge-staging.up.railway.app`.
 2. Set the staging service environment variables: `FREYTAG_DEPLOYMENT_CHANNEL=staging`,
@@ -80,7 +80,7 @@ channel, and Railway-reported commit SHA.
 3. Verify `https://<staging-origin>/api/v1/health` returns `channel: "staging"`
    and the exact triggering SHA. Verify `/freytag-forge/dev/` shows the persistent
    **Staging — non-production** badge and reaches only the staging API.
-4. Keep the recorded V1 production deployment untouched. To promote, dispatch
+4. Keep the currently recorded production deployment untouched. To promote, dispatch
    `Promote staged SHA to production`, paste the full successful staging SHA,
    and approve the protected production environment. The workflow validates
    health and the root browser E2E before treating the promotion as successful.

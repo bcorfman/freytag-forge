@@ -1,6 +1,6 @@
 PACKAGE := storygame
 
-.PHONY: install test lint format precommit run run-cli package
+.PHONY: install test lint format precommit run package
 
 install:
 	uv sync
@@ -19,7 +19,7 @@ precommit:
 	uv run pre-commit install
 
 run:
-	uv run uvicorn storygame.web:app --reload --host 127.0.0.1 --port 8000
+	uv run uvicorn storygame.web_demo:app --reload --host 127.0.0.1 --port 8000
 
 package:
 	uv run python -m pip install --upgrade build

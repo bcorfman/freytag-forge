@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from storygame.runtime.cloudflare import CloudflareTurnModel
+from storygame.runtime.context import RuntimeContext
+from storygame.runtime.engine import JsonModeRejected
+
+
+def test_cloudflare_turn_model_requests_json_mode(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class Response:
+        def read(self) -> bytes:
+            return b'{"response":"{\\"narration\\":\\"Done.\\"}"}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+    def urlopen(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        return Response()
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    result = CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=True)
+    assert result["response"] == '{"narration":"Done."}'
+    assert captured["payload"]["response_format"] == {"type": "json_object"}
+
+
+def test_cloudflare_turn_model_maps_json_mode_rejection(monkeypatch) -> None:
+    from urllib.error import HTTPError
+
+    def urlopen(request, timeout):
+        raise HTTPError("https://agent.test", 400, "bad", {}, None)
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    with pytest.raises(JsonModeRejected):
+        CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=True)
+
+
+def test_cloudflare_turn_model_sends_bearer_token_and_fails_safely(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class Response:
+        def read(self) -> bytes:
+            return b'{"narration":"Done."}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+    def urlopen(request, timeout):
+        captured["headers"] = dict(request.headers)
+        return Response()
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    model = CloudflareTurnModel(url="https://agent.test", token="secret")
+    assert model.play_turn(RuntimeContext("v1", 1, {}), json_object=False) == {"narration": "Done."}
+    assert captured["headers"]["Authorization"] == "Bearer secret"
+
+    with pytest.raises(ValueError, match="FREYTAG_CLOUDFLARE_AGENT_URL"):
+        CloudflareTurnModel(url="")
+
+
+@pytest.mark.parametrize("json_object", (False, True))
+def test_cloudflare_turn_model_converts_transport_failures_to_runtime_error(monkeypatch, json_object: bool) -> None:
+    from urllib.error import URLError
+
+    def urlopen(request, timeout):
+        raise URLError("offline")
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    with pytest.raises(RuntimeError, match="Cloudflare AI agent request failed"):
+        CloudflareTurnModel(url="https://agent.test").play_turn(
+            RuntimeContext("v1", 1, {}), json_object=json_object
+        )

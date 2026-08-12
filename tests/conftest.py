@@ -42,42 +42,15 @@ def _orchestration_class(nodeid: str, runtime: dict[str, int]) -> str | None:
     return "proposal/commit contract"
 
 
-_EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_runtime_quality_evaluation.py"}
+_EVALUATION_FILES = {"test_staging_evaluation.py"}
 _INTEGRATION_FILES = {
-    "test_cli.py",
-    "test_cli_more.py",
-    "test_savegame_sqlite.py",
-    "test_web_api.py",
-    "test_web_demo_api.py",
-    "test_web_surface_parity.py",
     "test_hosted_demo_e2e.py",
-    "test_vector_memory.py",
-    "test_mvp_gaps.py",
-    "test_story_state_artifacts.py",
+    "test_web_demo_v2.py",
 }
 _COMPONENT_FILES = {
-    "test_adapters.py",
-    "test_freeform_unit.py",
-    "test_llm_context.py",
-    "test_dialogue_policy.py",
-    "test_world_builder.py",
-    "test_story_coherence.py",
+    "test_cloudflare_turn_model.py",
 }
-_ORCHESTRATION_RETENTION_REASONS = {
-    "proposal/commit contract": "One complete turn proves novel intent validation, bounded effects, and fact commit.",
-    "deterministic affordance": (
-        "One complete turn proves the deterministic alias or navigation path still uses proposal/commit."
-    ),
-    "dialogue boundary": "One complete turn proves addressed-speaker, scene, and protected-context enforcement.",
-    "recovery/confirmation": (
-        "The minimum warning/confirmation sequence proves cancellation, proceed, and bounded recovery."
-    ),
-    "output contract": (
-        "One complete turn proves rendered output is derived after commit and remains surface-compatible."
-    ),
-    "persistence": "The minimum complete turn sequence proves save/load composition or post-load continuation.",
-    "evaluation": "The compact replay proves cross-genre determinism and evaluation artifact behavior.",
-}
+_ORCHESTRATION_RETENTION_REASONS: dict[str, str] = {}
 
 
 def _tier_for_path(path: Path) -> str:
