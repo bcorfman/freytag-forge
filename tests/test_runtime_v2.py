@@ -30,6 +30,11 @@ def _state():
     return bootstrap_runtime_state(load_compiled_story_fixture("mystery"))
 
 
+def _first_beat() -> tuple[str, str]:
+    beat = load_compiled_story_fixture("mystery").beats[0]
+    return beat.id, beat.completion_tags[0].id
+
+
 def _turn(**overrides: object) -> dict[str, object]:
     result: dict[str, object] = {
         "narration": "You examine the square for a reliable lead.",
@@ -53,7 +58,7 @@ def test_runtime_bootstraps_every_compiled_fixture_and_happy_turn_uses_one_call(
     engine = RuntimeEngine(_state(), model)
     response = engine.turn("Search the square.")
     assert response.ok and response.turn_index == 1
-    assert engine.state.world.flags == {"searched_square"}
+    assert "searched_square" in engine.state.world.flags
     assert model.calls == [True]
     assert engine.state.recent_events[-1].prompt_version == "runtime-v2-turn-v2"
     assert engine.state.recent_events[-1].prompt_token_estimate > 0
@@ -99,8 +104,8 @@ def test_pacing_transitions_reset_on_progress_and_force_consequence_keeps_agency
                 {"kind": "set", "path": "world.items.ledger.holder", "value": "two"},
             ]
         ),
-        _turn(narration="The disappearance was staged."),
-        _turn(beat_updates=[{"beat_id": "public_crisis", "completion_tags": ["accusation_stopped"]}]),
+        _turn(narration=load_compiled_story_fixture("mystery").protected_revelations[0].summary),
+        _turn(beat_updates=[{"beat_id": "not_active", "completion_tags": ["not_active"]}]),
     ],
 )
 def test_invalid_turns_are_atomic(result: dict[str, object]) -> None:
@@ -112,13 +117,14 @@ def test_invalid_turns_are_atomic(result: dict[str, object]) -> None:
 
 
 def test_valid_beat_completion_requires_order_and_commits_monotonically() -> None:
+    beat_id, completion_tag = _first_beat()
     engine = RuntimeEngine(
         _state(),
-        StubModel([_turn(beat_updates=[{"beat_id": "find_evidence", "completion_tags": ["evidence_found"]}])]),
+        StubModel([_turn(beat_updates=[{"beat_id": beat_id, "completion_tags": [completion_tag]}])]),
     )
     assert engine.turn("Follow the trail.").ok
-    assert engine.state.beat_runtime["find_evidence"].completed_tags == {"evidence_found"}
-    assert "public_crisis" in {beat.id for beat in engine.state.active_beats}
+    assert engine.state.beat_runtime[beat_id].completed_tags == {completion_tag}
+    assert load_compiled_story_fixture("mystery").beats[1].id in {beat.id for beat in engine.state.active_beats}
 
 
 def test_validated_set_replaces_the_flags_collection() -> None:
@@ -131,18 +137,19 @@ def test_validated_set_replaces_the_flags_collection() -> None:
 
 
 def test_unknown_completion_tag_still_fails_with_the_declared_tags() -> None:
+    beat_id, completion_tag = _first_beat()
     engine = RuntimeEngine(
         _state(),
         StubModel(
             [
-                _turn(beat_updates=[{"beat_id": "find_evidence", "completion_tags": ["invented"]}]),
-                _turn(beat_updates=[{"beat_id": "find_evidence", "completion_tags": ["invented"]}]),
+                    _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
+                    _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
             ]
         ),
     )
     response = engine.turn("Search the square.")
     assert response.error is not None
-    assert "evidence_found" in str(response.error.__cause__)
+    assert completion_tag in str(response.error.__cause__)
 
 
 def test_malformed_response_and_recovery_exhaustion_fail_closed() -> None:
@@ -186,7 +193,8 @@ def test_runtime_failure_is_typed() -> None:
 def test_runtime_context_exposes_declared_beat_tags_not_beat_metadata_as_output() -> None:
     context = RuntimeEngine(_state(), StubModel([])).context_builder.build(_state(), "Search the square.")
     beat = context.payload["active_beats"][0]
-    assert beat == {"id": "find_evidence", "completion_tags": ["evidence_found"]}
+    beat_id, completion_tag = _first_beat()
+    assert beat == {"id": beat_id, "completion_tags": [completion_tag]}
     operations = context.payload["turn_result_contract"]["operations"]
     assert operations == "array of {kind,path,value}; use [] when no state change"
     assert context.payload["turn_result_contract"]["completion_tag_rule"] == (

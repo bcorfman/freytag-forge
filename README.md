@@ -23,8 +23,11 @@ and prose.
 Phase 3 of the V2 migration provides the standalone in-process runtime.
 Versioned `CompiledStory` fixtures bootstrap its sole mutable authority,
 `RuntimeState`; model turns use one structured request plus at most one shared
-recovery request and fail closed without partial commits. The existing
-package/fact web product remains active until the Phase 4 hosted-demo cutover.
+recovery request and fail closed without partial commits. The V2 mystery
+fixture now carries the authored Vale Mansion investigation (Elias Wren, Daria
+Stone, Emma Vale, and the ledger-payment case) rather than a replacement
+placeholder. The existing package/fact web product remains the fallback until
+the V2 hosted path passes staging promotion and its observation window.
 
 ## Why it’s different
 

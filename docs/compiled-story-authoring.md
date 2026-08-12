@@ -36,5 +36,11 @@ transports used by authoring tests.
 
 Phase 3 consumes these immutable inputs through
 `storygame.runtime.bootstrap_runtime_state`. `RuntimeState` is the sole mutable
-session authority; compiled stories remain immutable inputs. The currently
-deployed V1 package/fact hosted runtime remains unchanged until Phase 4.
+session authority; compiled stories remain immutable inputs.
+
+The V2 `mystery` fixture is a declarative projection of the retained authored
+Vale Mansion case: Detective Elias Wren, Daria Stone, Emma Vale's death, the
+case file and ledger-payment clues, the groundskeeper accusation, and the
+evidence-gated resolution. It is data, not a mystery-specific runtime branch.
+The V1 package/fact runtime remains the production fallback until the V2 hosted
+path has passed staging promotion and its observation window.
