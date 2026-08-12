@@ -63,9 +63,10 @@ Success responses are a V2 `TurnResult` JSON object: non-empty `narration`,
 optional `operations`, `beat_updates`, `summary_delta`, and
 `material_progress`. Do not put Worker metadata inside that object. Send model,
 trace, and Worker revision metadata in response headers instead. The adapter
-also strips the known legacy `model`, `trace_id`, and `worker_revision` envelope
-keys before local V2 validation, but that compatibility normalization is not a
-substitute for updating the Worker contract.
+also strips the known legacy `model`, `trace_id`, `upstream_request_id`, and
+`worker_revision` envelope keys before local V2 validation, but that
+compatibility normalization is not a substitute for updating the Worker
+contract.
 
 Failure responses are JSON with `status: "error"`, a stable `code`, a safe
 `message`, and `trace_id`. When available, they also include

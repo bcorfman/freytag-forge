@@ -24,8 +24,10 @@ class CloudflareTurnModel:
         payload: dict[str, Any] = {
             "system": _SYSTEM_PROMPT,
             "user": json.dumps(context.payload, separators=(",", ":"), default=list),
-            "response_format": {"type": "json_object"} if json_object else None,
+            "max_tokens": 1024,
         }
+        if json_object:
+            payload["response_format"] = {"type": "json_object"}
         headers = {"Content-Type": "application/json", "User-Agent": "FreytagForge/2"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
@@ -35,9 +37,9 @@ class CloudflareTurnModel:
                 return _normalize_turn_envelope(json.loads(response.read().decode()))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace") if exc.fp else str(exc)
-            if json_object and exc.code == 400:
+            if json_object and _json_mode_rejected(detail):
                 raise JsonModeRejected(detail) from exc
-            raise RuntimeError(f"Cloudflare AI agent request failed: {exc.code}") from exc
+            raise RuntimeError(f"Cloudflare AI agent request failed: {exc.code} {detail[:800]}") from exc
         except (urllib.error.URLError, json.JSONDecodeError) as exc:
             raise RuntimeError("Cloudflare AI agent request failed") from exc
 
@@ -46,7 +48,31 @@ def _normalize_turn_envelope(response: object) -> object:
     """Remove only known Cloudflare transport metadata before local validation."""
     if not isinstance(response, dict) or "narration" not in response:
         return response
-    return {key: value for key, value in response.items() if key not in {"model", "trace_id", "worker_revision"}}
+    turn = {
+        key: value
+        for key, value in response.items()
+        if key not in {"model", "trace_id", "upstream_request_id", "worker_revision"}
+    }
+    narration = turn.get("narration")
+    if isinstance(narration, str):
+        try:
+            nested = json.loads(narration)
+        except json.JSONDecodeError:
+            return turn
+        if isinstance(nested, dict):
+            return nested
+    return turn
+
+
+def _json_mode_rejected(detail: str) -> bool:
+    try:
+        payload = json.loads(detail)
+    except json.JSONDecodeError:
+        payload = {}
+    if isinstance(payload, dict) and payload.get("code") == "AI_JSON_MODE_REJECTED":
+        return True
+    normalized = detail.casefold()
+    return any(marker in normalized for marker in ("json mode", "json schema", "response_format", "couldn't be met"))
 
 
 _SYSTEM_PROMPT = (
