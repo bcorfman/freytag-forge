@@ -63,6 +63,9 @@ class RuntimeContextBuilder:
                     "world.items.<item_id>.holder (set string)",
                 ],
                 "beat_updates": "array of {beat_id,completion_tags,evidence}; use [] when no beat completes",
+                "completion_tag_rule": (
+                    "copy only the exact completion_tags listed for the matching active beat; otherwise use []"
+                ),
                 "material_progress": "boolean",
             },
         }

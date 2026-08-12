@@ -23,9 +23,13 @@ def _apply_operation(state: RuntimeState, kind: str, path: str, value: Any) -> N
     if path == "world.location" and kind == "set" and isinstance(value, str) and value:
         state.world.location = value
         return
-    if path == "world.flags" and isinstance(value, str) and kind in {"add", "remove"}:
-        (state.world.flags.add if kind == "add" else state.world.flags.discard)(value)
-        return
+    if path == "world.flags":
+        if kind in {"add", "remove"} and isinstance(value, str):
+            (state.world.flags.add if kind == "add" else state.world.flags.discard)(value)
+            return
+        if kind == "set" and isinstance(value, list) and all(isinstance(flag, str) and flag for flag in value):
+            state.world.flags = set(value)
+            return
     if path.startswith("world.attributes.") and kind == "set":
         state.world.attributes[path.removeprefix("world.attributes.")] = value
         return
@@ -50,7 +54,10 @@ def _apply_beat_updates(state: RuntimeState, result: TurnResult) -> None:
             raise RuntimeFailure("INVALID_BEAT_ORDER", f"beat '{beat.id}' prerequisites are incomplete")
         allowed = {tag.id for tag in beat.completion_tags}
         if not set(update.completion_tags) <= allowed:
-            raise RuntimeFailure("UNKNOWN_COMPLETION_TAG", f"beat '{beat.id}' received an undeclared completion tag")
+            raise RuntimeFailure(
+                "UNKNOWN_COMPLETION_TAG",
+                f"beat '{beat.id}' received an undeclared completion tag; allowed tags: {sorted(allowed)}",
+            )
         state.beat_runtime[beat.id].completed_tags.update(update.completion_tags)
         if update.completion_tags:
             completed.add(beat.id)

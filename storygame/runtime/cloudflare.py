@@ -82,7 +82,10 @@ _SYSTEM_PROMPT = (
     "\"summary_delta\":string|null}. operations must be an array of {\"kind\":\"set|add|remove\","
     "\"path\":string,\"value\":any}; never use an object keyed by path. beat_updates must be an array of "
     "{\"beat_id\":string,\"completion_tags\":array of strings,\"evidence\":string}; never include id, phase, "
-    "or summary. Use [] for operations or beat_updates when none apply, and a boolean—not an object—for "
-    "material_progress. Narration may describe only committed effects."
+    "or summary. Copy a completion tag only if it exactly matches a tag listed on its active beat; otherwise use []. "
+    "For example, a listed evidence_found tag produces {\"beat_id\":\"find_evidence\","
+    "\"completion_tags\":[\"evidence_found\"],\"evidence\":\"brief support\"}. Use [] for operations or "
+    "beat_updates when none apply, and a boolean—not an object—for material_progress. Narration may describe only "
+    "committed effects."
     " If the input includes recovery_instruction, correct that failure and return the complete object again."
 )

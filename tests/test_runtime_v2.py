@@ -121,6 +121,30 @@ def test_valid_beat_completion_requires_order_and_commits_monotonically() -> Non
     assert "public_crisis" in {beat.id for beat in engine.state.active_beats}
 
 
+def test_validated_set_replaces_the_flags_collection() -> None:
+    engine = RuntimeEngine(
+        _state(),
+        StubModel([_turn(operations=[{"kind": "set", "path": "world.flags", "value": ["searched_square"]}])]),
+    )
+    assert engine.turn("Search the square.").ok
+    assert engine.state.world.flags == {"searched_square"}
+
+
+def test_unknown_completion_tag_still_fails_with_the_declared_tags() -> None:
+    engine = RuntimeEngine(
+        _state(),
+        StubModel(
+            [
+                _turn(beat_updates=[{"beat_id": "find_evidence", "completion_tags": ["invented"]}]),
+                _turn(beat_updates=[{"beat_id": "find_evidence", "completion_tags": ["invented"]}]),
+            ]
+        ),
+    )
+    response = engine.turn("Search the square.")
+    assert response.error is not None
+    assert "evidence_found" in str(response.error.__cause__)
+
+
 def test_malformed_response_and_recovery_exhaustion_fail_closed() -> None:
     engine = RuntimeEngine(_state(), StubModel(["not JSON", "still not JSON"]))
     before = runtime_state_bytes(engine.state)
@@ -165,3 +189,6 @@ def test_runtime_context_exposes_declared_beat_tags_not_beat_metadata_as_output(
     assert beat == {"id": "find_evidence", "completion_tags": ["evidence_found"]}
     operations = context.payload["turn_result_contract"]["operations"]
     assert operations == "array of {kind,path,value}; use [] when no state change"
+    assert context.payload["turn_result_contract"]["completion_tag_rule"] == (
+        "copy only the exact completion_tags listed for the matching active beat; otherwise use []"
+    )
