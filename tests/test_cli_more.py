@@ -93,9 +93,9 @@ def test_cli_proposal_and_dialogue_guards_cover_bounded_effects() -> None:
 def test_cli_control_plane_and_pending_confirmation_messages_are_covered() -> None:
     state = build_default_state(seed=603)
     rng = Random(603)
-    _state, lines, *_ = run_turn(state, "save", rng, StubNarrator())
+    _state, lines, *_ = run_turn(state, "/save", rng, StubNarrator())
     assert "Usage: save" in lines[0]
-    _state, lines, *_ = run_turn(state, "load", rng, StubNarrator())
+    _state, lines, *_ = run_turn(state, "/load", rng, StubNarrator())
     assert "Usage: load" in lines[0]
     pending = state.clone()
     pending.pending_high_impact_command = "break the seal"
@@ -240,7 +240,7 @@ def test_run_turn_save_and_load_generic_exception_paths() -> None:
 
     _next, lines, _raw, _beat, _continued = run_turn(
         state,
-        "save slot1",
+            "/save slot1",
         Random(701),
         StubNarrator(),
         save_store=save_store,
@@ -251,7 +251,7 @@ def test_run_turn_save_and_load_generic_exception_paths() -> None:
 
     _next, lines, _raw, _beat, _continued = run_turn(
         state,
-        "load slot1",
+            "/load slot1",
         Random(701),
         StubNarrator(),
         save_store=save_store,
@@ -275,7 +275,7 @@ def test_run_turn_preserves_llm_narration_when_director_drops_it() -> None:
 
 
 def test_run_replay_breaks_on_quit_branch() -> None:
-    end_state = run_replay(seed=702, commands=["quit", "look"], narrator=StubNarrator())
+    end_state = run_replay(seed=702, commands=["/quit", "look"], narrator=StubNarrator())
     assert end_state.turn_index == 0
 
 

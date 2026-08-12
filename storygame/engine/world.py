@@ -157,7 +157,10 @@ def _build_npcs(package: dict) -> dict[str, Npc]:
 def _build_room_exits(paths: tuple[dict, ...] | list[dict]) -> dict[str, dict[str, str]]:
     exits: dict[str, dict[str, str]] = {}
     for path in paths:
-        exits.setdefault(path["from"], {})[path["direction"]] = path["to"]
+        route_id = str(path.get("id", path.get("direction", ""))).strip()
+        if not route_id:
+            raise ValueError("Each map path requires an id.")
+        exits.setdefault(path["from"], {})[route_id] = path["to"]
     return exits
 
 
@@ -176,7 +179,10 @@ def _build_rooms(package: dict) -> dict[str, Room]:
         )
     for lock in package["map"].get("locks", []):
         room = rooms[str(lock["room"])]
-        room.locked_exits[str(lock["direction"])] = str(lock["key_id"])
+        route_id = str(lock.get("route", lock.get("direction", ""))).strip()
+        if not route_id:
+            raise ValueError("Each map lock requires a route.")
+        room.locked_exits[route_id] = str(lock["key_id"])
     return rooms
 
 
@@ -251,11 +257,15 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
         if source:
             ops.append({"op": "assert", "fact": ("ambient_source", str(room_id), source)})
     for path in package["map"].get("paths", []):
+        route_id = str(path.get("id", path.get("direction", ""))).strip()
+        label = str(path.get("label", route_id.replace("_", " "))).strip()
         ops.extend(
-            {"op": "assert", "fact": ("path_alias", str(path["from"]), str(path["direction"]), str(alias).strip())}
+            {"op": "assert", "fact": ("path_alias", str(path["from"]), route_id, str(alias).strip())}
             for alias in path.get("aliases", ())
             if str(alias).strip()
         )
+        if label:
+            ops.append({"op": "assert", "fact": ("path_label", str(path["from"]), route_id, label)})
     for item in package["items"]:
         item_id = str(item["id"])
         custody = item.get("initial_custody") or {}

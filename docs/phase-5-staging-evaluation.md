@@ -53,7 +53,8 @@ this review without changing prompts, pacing thresholds, or fixtures in place:
 2. Start and freely play one unscripted session in each of the four genres.
    Record the URL, SHA, reviewer, and short notes on narrative flow, agency,
    clarity, and genre fit.
-3. In one session, use a freeform move, `save`, another move, and `load`.
+3. In one session, use a freeform move, `/save <slot>`, another move, and
+   `/load <slot>`.
    Confirm the displayed location and turn index restore; trigger one harmless
    error (for example an invalid/expired session in a separate browser tab) and
    confirm the client presents a safe error rather than raw provider text.

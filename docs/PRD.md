@@ -133,8 +133,8 @@ the prompt version and token estimate for traces.
 ### Core Engine
 - `storygame.engine` handles control-plane parsing, deterministic-affordance normalization, world rules, state transitions, and event emission.
 - Turn routing is proposal-first at the commit boundary. Freeform or ambiguous gameplay uses an LLM proposal; unambiguous visible affordances (`look`, inventory, take, use, and movement) may be normalized deterministically into that same proposal/commit contract without a provider request.
-- Deterministic parser commands directly handle only the control plane (`save`, `load`, `quit`, `help`). Parser recognition of an affordance is routing/normalization input, not an alternate mutation path.
-- Inventory remains a deterministic affordance within the story-first runtime surface. Map movement resolves a named destination or unambiguous in-world route description through the shared proposal/commit contract; compass aliases are not player commands.
+- Deterministic parser commands directly handle only explicit slash-prefixed control input (`/save`, `/load`, `/quit`, `/help`). Ordinary words are always story input, not parser commands.
+- Inventory remains a deterministic affordance within the story-first runtime surface. Map movement resolves a named destination or unambiguous in-world route description through the shared proposal/commit contract. The world graph uses semantic route labels; compass directions are neither commands nor narration context.
 - Runtime world truth is fact-based (`at`, `holding`, `path`, `locked`, `flag`, `story_goal`, `active_goal`, `assistant_name`, `npc_role`, `npc_relationship`, `discovered_clue`, `discovered_lead`, etc.) with legacy object views synchronized for compatibility.
 - Canonical fact mutation goes through a validated commit boundary that normalizes uniqueness-sensitive writes, enforces runtime invariants, and refreshes compatibility projections after commit.
 - Fact-store authority must cover goals, clues, puzzle state, NPC locations, NPC relationships, discovered leads, event flags, reveal state, and item possession/location as assertable/retractable facts.
@@ -196,7 +196,7 @@ the prompt version and token estimate for traces.
   - `JudgeDecision`
   - `RevisionDirective`
 - `TurnProposal` is the structured execution contract for semantic actions, bounded state deltas, narration claims, dialogue, and beat hints.
-- Current LLM freeform planning first validates paired `DialogProposal` and `ActionProposal` payloads, then resolves them through the same policy and commit boundary. Deterministic affordances likewise construct a `TurnProposal` after normalization. Control-plane commands (`save`, `load`, `quit`, `help`) stay outside semantic turn execution.
+- Current LLM freeform planning first validates paired `DialogProposal` and `ActionProposal` payloads, then resolves them through the same policy and commit boundary. Deterministic affordances likewise construct a `TurnProposal` after normalization. Slash-prefixed control-plane commands stay outside semantic turn execution.
 - CLI orchestration and runtime execution should preserve typed contract boundaries instead of widening accepted `TurnProposal`, `JudgeDecision`, `CoherenceTelemetry`, or `ImpactAssessment` payloads into ad-hoc dicts. When a payload crosses persistence or pending-confirmation storage, normalize it back into the explicit contract at that boundary before reuse.
 - A valid runtime proposal may suggest:
   - dialogue,
@@ -402,7 +402,7 @@ flowchart LR
 - Legacy signal/resonance hint copy has been removed from normal room output.
 - Turn intent routing is proposal-first for ordinary play: freeform inputs are LLM-authored, while deterministic affordances are normalized into the same runtime proposal contracts before deterministic validation and commit.
 - Navigation supports named destinations and semantic movement phrasing at the proposal layer, resolving only when current-room and destination-room facts identify one unique legal exit.
-- Deterministic parser paths are retained only for control-plane commands (`save`, `load`, `quit`, `help`); ordinary gameplay should not degrade into parser-authored fallback turns.
+- Deterministic parser paths are retained only for slash-prefixed control-plane commands; ordinary gameplay should not degrade into parser-authored fallback turns.
 - NPC replies should be LLM-authored and context-rich. Normalization to explicit dialogue format remains allowed for clarity, but the runtime must fail closed rather than substituting deterministic NPC or narrator replies when ordinary conversational authorship is unavailable.
 - Prompt-parroting dialogue should be rejected only for near-verbatim question restatements or player-echo phrasings, not for substantive answers that naturally reuse a few topic words from the player's question.
 - A proposed NPC movement, transfer, or comparable visible change commits its typed fact operation before narration is rendered, so later turns read the same truth the player saw.

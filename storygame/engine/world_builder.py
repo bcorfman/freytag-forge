@@ -99,12 +99,12 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     for path in paths:
         if path.get("from") not in room_ids or path.get("to") not in room_ids:
             raise WorldPackageValidationError("unknown map room in path")
-        if not str(path.get("direction", "")).strip():
-            raise WorldPackageValidationError("map paths require directions")
+        if not str(path.get("id", path.get("direction", ""))).strip():
+            raise WorldPackageValidationError("map paths require an id")
         if not isinstance(path.get("aliases", []), list):
             raise WorldPackageValidationError("map path aliases must be a list")
     for lock in map_data.get("locks", []):
-        if lock.get("room") not in room_ids or not str(lock.get("direction", "")).strip():
+        if lock.get("room") not in room_ids or not str(lock.get("route", lock.get("direction", ""))).strip():
             raise WorldPackageValidationError("unknown map room in lock")
     item_ids = _validate_ids([str(item.get("id", "")) for item in package["items"] if isinstance(item, dict)], "items")
     for lock in map_data.get("locks", []):
@@ -579,9 +579,13 @@ def build_world_package(
     }
     if len(map_section["rooms"]) >= 3 and item_ids:
         gate_room = map_section["rooms"][1]
-        directions = sorted(path["direction"] for path in map_section["paths"] if path["from"] == gate_room)
-        if directions:
-            package["map"]["locks"] = [{"room": gate_room, "direction": directions[0], "key_id": item_ids[0]}]
+        route_ids = sorted(
+            str(path.get("id", path.get("direction", "")))
+            for path in map_section["paths"]
+            if path["from"] == gate_room
+        )
+        if route_ids:
+            package["map"]["locks"] = [{"room": gate_room, "route": route_ids[0], "key_id": item_ids[0]}]
     package["map"]["room_presentation"] = _room_presentation_from_template(template, package["map"]["rooms"])
     package["map"]["room_presentation"].update(deepcopy(template.get("map", {}).get("room_presentation", {})))
     return validate_world_package(package)

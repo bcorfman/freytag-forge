@@ -115,8 +115,9 @@ Follow the lantern-lit path.
 Examine the strange device.
 ```
 
-`save`, `load`, `help`, and `quit` are the only control-plane commands. The
-story itself is open language.
+`/save`, `/load`, `/help`, and `/quit` are the only control-plane commands.
+The slash keeps them outside the story, so dialogue such as “leave me alone,”
+“save your breath,” or “take a seat” remains open-language play.
 
 ## Quality that travels across genres
 

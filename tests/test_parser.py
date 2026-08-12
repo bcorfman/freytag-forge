@@ -1,4 +1,14 @@
-from storygame.engine.parser import ActionKind, parse_command
+from storygame.engine.parser import ActionKind, parse_command, parse_control_command
+
+
+def test_only_slash_prefixed_controls_are_intercepted_from_player_input():
+    for line in ("leave me alone", "save your breath", "take a seat", "walk me through it", "look, I tried"):
+        assert parse_control_command(line).kind == ActionKind.UNKNOWN
+
+    assert parse_control_command("/quit").kind == ActionKind.QUIT
+    assert parse_control_command("/save case one").target == "case_one"
+    assert parse_control_command("/load case one").target == "case_one"
+    assert parse_control_command("/help").kind == ActionKind.HELP
 
 
 def test_parse_look_variants():

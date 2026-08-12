@@ -13,10 +13,14 @@ def build_affordance_context(state, observer: str = "player") -> dict[str, objec
         else {fact[2] for fact in state.world_facts.query("holding", observer, None)}
     )
     exits = []
-    for direction, destination in sorted(room_paths(state, location_id).items()):
-        locks = state.world_facts.query("locked", direction, location_id, None)
+    for route_id, destination in sorted(room_paths(state, location_id).items()):
+        locks = state.world_facts.query("locked", route_id, location_id, None)
         required = locks[0][3] if locks else ""
-        exits.append({"destination": destination, "locked": bool(required and required not in held)})
+        entry = {"destination": destination, "locked": bool(required and required not in held)}
+        label = next((str(fact[3]) for fact in state.world_facts.query("path_label", location_id, route_id, None)), "")
+        if label:
+            entry["label"] = label
+        exits.append(entry)
     items = []
     for item_id in room_items(state, location_id):
         item = state.world.items.get(item_id)

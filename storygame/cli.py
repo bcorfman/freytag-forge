@@ -28,7 +28,7 @@ from storygame.engine.impact import (
 )
 from storygame.engine.interfaces import parse_action_proposal
 from storygame.engine.presentation import story_status_lines
-from storygame.engine.parser import Action, ActionKind, parse_command
+from storygame.engine.parser import Action, ActionKind, parse_command, parse_control_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
 from storygame.engine.state import Event, GameState
@@ -826,7 +826,15 @@ def run_turn(
             True,
         )
 
-    control_action = parse_command(raw)
+    control_action = parse_control_command(raw)
+    if control_action.kind == ActionKind.HELP:
+        return (
+            state,
+            ["Controls: /help, /save <slot>, /load <slot>, /quit. Write anything else as an in-world action or dialogue."],
+            control_action.raw,
+            "help",
+            True,
+        )
     if control_action.kind == ActionKind.QUIT:
         return state, ["Goodbye."], "", "", False
 
@@ -882,23 +890,12 @@ def run_turn(
     planner_action_payload: dict[str, Any] | None = None
     accepted_proposal_text = ""
     planner_parse_error = ""
-    fallback_action = parse_command(raw)
+    fallback_action = Action(ActionKind.UNKNOWN, raw=raw_input)
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
     prefer_proposal_resolution = False
     try:
-        # Deterministic affordances still use the shared proposal/commit path.
-        # They do not need a provider request merely to resolve a visible exit,
-        # regardless of which freeform adapter a deployment injects.
         planner = freeform_adapter
-        if isinstance(freeform_adapter, LlmFreeformProposalAdapter) and fallback_action.kind in {
-                ActionKind.LOOK,
-                ActionKind.INVENTORY,
-                ActionKind.TAKE,
-                ActionKind.USE,
-                ActionKind.MOVE,
-            }:
-            planner = RuleBasedFreeformProposalAdapter()
         planner_dialog_payload, planner_action_payload = planner.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(
             _normalized_movement_action_payload(preturn_state, raw_input, planner_action_payload)

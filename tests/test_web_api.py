@@ -98,7 +98,7 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
     pre_move = client.post("/turn", json={"run_id": run_id, "command": "go north"})
     assert pre_move.status_code == 200
 
-    saved = client.post("/turn", json={"run_id": run_id, "command": "save checkpoint"})
+    saved = client.post("/turn", json={"run_id": run_id, "command": "/save checkpoint"})
     assert saved.status_code == 200
     assert any("Saved to slot 'checkpoint'." in line for line in saved.json()["lines"])
 
@@ -113,7 +113,7 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
     assert moved.status_code == 200
     assert moved.json()["state"]["location"] == room_after_move
 
-    loaded = client.post("/turn", json={"run_id": run_id, "command": "load checkpoint"})
+    loaded = client.post("/turn", json={"run_id": run_id, "command": "/load checkpoint"})
     assert loaded.status_code == 200
     loaded_payload = loaded.json()
     assert any("Loaded from slot 'checkpoint'." in line for line in loaded_payload["lines"])
