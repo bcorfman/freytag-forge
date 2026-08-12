@@ -91,6 +91,15 @@ def test_runtime_store_rejects_v1_schema_and_tampered_snapshot(tmp_path) -> None
     store.close()
 
 
+def test_runtime_store_creates_a_missing_database_parent(tmp_path) -> None:
+    path = tmp_path / "missing" / "runtime.sqlite"
+    store = RuntimeStateSqliteStore(path, namespace="staging")
+    try:
+        assert path.is_file()
+    finally:
+        store.close()
+
+
 def test_v2_demo_preserves_cors_quota_and_request_id(tmp_path) -> None:
     with _client(tmp_path) as client:
         assert (

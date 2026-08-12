@@ -24,7 +24,9 @@ class RuntimeStateSqliteStore:
         if not namespace.strip():
             raise ValueError("session namespace is required")
         self.namespace = namespace
-        self.conn = sqlite3.connect(Path(path), check_same_thread=check_same_thread)
+        database_path = Path(path)
+        database_path.parent.mkdir(parents=True, exist_ok=True)
+        self.conn = sqlite3.connect(database_path, check_same_thread=check_same_thread)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute(
             """CREATE TABLE IF NOT EXISTS runtime_sessions (
