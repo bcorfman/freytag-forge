@@ -55,7 +55,7 @@ def test_runtime_bootstraps_every_compiled_fixture_and_happy_turn_uses_one_call(
     assert response.ok and response.turn_index == 1
     assert engine.state.world.flags == {"searched_square"}
     assert model.calls == [True]
-    assert engine.state.recent_events[-1].prompt_version == "runtime-v2-turn-v1"
+    assert engine.state.recent_events[-1].prompt_version == "runtime-v2-turn-v2"
     assert engine.state.recent_events[-1].prompt_token_estimate > 0
 
 
@@ -139,3 +139,11 @@ def test_json_mode_rejection_uses_one_plain_json_recovery() -> None:
 def test_runtime_failure_is_typed() -> None:
     failure = RuntimeFailure("INVALID_TURN", "nope")
     assert failure.code == "INVALID_TURN"
+
+
+def test_runtime_context_exposes_declared_beat_tags_not_beat_metadata_as_output() -> None:
+    context = RuntimeEngine(_state(), StubModel([])).context_builder.build(_state(), "Search the square.")
+    beat = context.payload["active_beats"][0]
+    assert beat == {"id": "find_evidence", "completion_tags": ["evidence_found"]}
+    operations = context.payload["turn_result_contract"]["operations"]
+    assert operations == "array of {kind,path,value}; use [] when no state change"
