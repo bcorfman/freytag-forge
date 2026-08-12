@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+from storygame.engine.presentation import filtered_inventory, story_status_lines, take_item_message
+from storygame.engine.state import Item
+from tests.fast_fixtures import make_cached_story_state as build_default_state
+
+
+def test_filtered_inventory_skips_missing_items_and_non_actionable_items() -> None:
+    state = build_default_state(seed=611)
+    state.player.inventory = ("missing_item", "field_kit")
+    filtered = filtered_inventory(state)
+    assert "missing_item" not in filtered
+
+
+def test_take_item_message_branches_for_item_kinds() -> None:
+    state = build_default_state(seed=612)
+    evidence = next(item for item in state.world.items.values() if item.kind == "evidence")
+    clue = next(item for item in state.world.items.values() if item.kind == "clue")
+    tool = next(item for item in state.world.items.values() if item.kind == "tool")
+    junk = Item(id="junk_x", name="Scrap", description="unused", kind="junk")
+
+    assert take_item_message(evidence).startswith("Evidence secured:")
+    assert take_item_message(clue).startswith("Clue noted:")
+    assert take_item_message(tool).startswith("Tool acquired:")
+    assert take_item_message(junk) == "take_success"
+
+
+def test_mystery_ledger_page_uses_specific_clue_text_not_goal_boilerplate() -> None:
+    state = build_default_state(seed=614, genre="mystery", tone="dark")
+    ledger_page = state.world.items["ledger_page"]
+    message = take_item_message(ledger_page)
+
+    assert message.startswith("Clue noted:")
+    assert "define and confront the core conflict" not in message.lower()
+    assert "payment" in message.lower() or "ledger" in message.lower()
+
+
+def test_story_status_lines_fallback_lead_when_no_items_or_npcs() -> None:
+    state = build_default_state(seed=613)
+    room = state.world.rooms[state.player.location]
+    room.item_ids = ()
+    room.npc_ids = ()
+    state.beat_history = ()
+
+    lines = story_status_lines(state)
+    joined = "\n".join(lines).lower()
+    assert "story status" in joined
+    assert "explore adjacent rooms" in joined
+    assert "latest beat" not in joined
+
+
+def test_story_status_lines_prefer_fact_backed_goal_and_discovered_leads() -> None:
+    state = build_default_state(seed=615)
+    state.active_goal = "stale in-memory goal"
+    state.world_facts.assert_fact("active_goal", "Review the route key and press Daria for the next lead.")
+    state.world_facts.assert_fact("discovered_lead", "route_key", "The route key opens the hidden service passage.")
+
+    lines = story_status_lines(state)
+    joined = "\n".join(lines)
+
+    assert "Review the route key and press Daria for the next lead." in joined
+    assert "The route key opens the hidden service passage." in joined
+
+
+def test_story_status_lines_surface_fact_backed_story_threads_and_events() -> None:
+    state = build_default_state(seed=616, genre="mystery")
+    state.world_facts.assert_fact("story_hidden_thread", "The magistrate buried an earlier murder tied to Emma Vale.")
+    state.world_facts.assert_fact("planned_event", "warning", "A warning reaches the foyer.", "2", "foyer")
+    state.world_facts.assert_fact("planned_event_participant", "warning", "Daria Stone")
+
+    lines = story_status_lines(state)
+    joined = "\n".join(lines)
+
+    assert "Emma Vale" in joined
+    assert "magistrate buried an earlier murder" in joined
+    assert "A warning reaches the foyer." in joined

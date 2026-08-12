@@ -1,0 +1,16 @@
+schema_version: 1
+scope: genre
+genre: mystery
+predicates:
+  - name: suspect
+    arity: 2
+    arg_types: [case, npc]
+    invariants: ["npc_must_exist"]
+  - name: clue_points_to
+    arity: 2
+    arg_types: [item, room]
+    invariants: ["item_must_exist"]
+  - name: alibi
+    arity: 3
+    arg_types: [npc, time_window, room]
+    invariants: ["time_window_required"]

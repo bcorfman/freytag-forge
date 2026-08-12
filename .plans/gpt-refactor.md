@@ -341,14 +341,14 @@ the production Railway service, builds the root Pages bundle from it, preserves
 revision, and known-good rollback target. If any verification fails, retain the
 old production artifact/API and report the failed promotion without altering
 the staged channel.
-3. [x] **[Automated]** Delete V1 engine
+3. [ ] **[Deferred — requires successful production promotion and observation window]** Delete V1 engine
 modules and data: fact store/committers/predicate policies, semantic actions,
 consequences, triggers/incidents, perception/epistemic inference, deterministic
 beat policy/dramatic compatibility layers, V1 proposal contracts, V1 package
 runtime realization, CLI/local web adapters, and obsolete tests/fixtures.
 4. [ ] **[User testing / operator]** Remove V1 deployment code and temporary legacy rollback documentation after
 the replacement production revision is itself recorded as the known-good target.
-5. [x] **[Automated]** Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
+5. [ ] **[Deferred — V1 material remains current until the cutover is complete]** Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
 and test-suite documentation to describe the V2 state contract, hosted-only
 surface, `/dev/` staging, and SHA-pinned production promotion. Delete documents
 whose only purpose was the retired architecture.
@@ -357,12 +357,10 @@ setting, browser E2E for both channels, and the full compiler/runtime
 cross-genre evaluation. Maintain at least 90% project coverage after deleted
 tests and code are removed.
 
-**Implementation note (2026-08-11):** [x] The V1 source/data/test execution
-path is removed from `main`, with a regression guard in
-`tests/test_v2_cutover.py`; V2-only CI and documentation are updated. Production
-promotion, the observation window, deployment identifiers, root and `/dev/`
-browser E2E, and the final known-good rollback record require the operator and
-remain unchecked.
+**Implementation note (2026-08-11):** The prior V1 source, story data, tests,
+and documentation were restored because production promotion and the observation
+window have not happened. Do not delete them or claim a V2-only surface until
+the preceding operator-owned promotion and observation steps are complete.
 
 **Exit criteria:** [ ] root production and `/dev/` both run the one V2 runtime;
 there is no V1 execution path in `main`, and documentation, tests, and CI all

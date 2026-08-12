@@ -1,0 +1,63 @@
+schema_version: 1
+scope: core
+rules:
+  - rule_id: held_key_opens_matching_path
+    when:
+      all:
+        - predicate: holding
+          args: ["$actor", "$key"]
+        - predicate: path
+          args: ["$direction", "$room", "$destination"]
+        - predicate: locked
+          args: ["$direction", "$room", "$key"]
+    then:
+      retract:
+        - [locked, "$direction", "$room", "$key"]
+  - rule_id: observation_exposes_entity
+    when:
+      all:
+        - predicate: observed
+          args: ["$observer", "$entity"]
+        - predicate: exposed
+          args: ["$entity", "$room"]
+    then:
+      assert:
+        - [visible, "$observer", "$entity"]
+  - rule_id: interpreted_evidence_is_discovered
+    when:
+      all:
+        - predicate: observed
+          args: ["$observer", "$entity"]
+        - predicate: interpreted
+          args: ["$observer", "$entity", "$interpretation"]
+    then:
+      assert:
+        - [discovery, "$observer", "$entity", "$interpretation"]
+  - rule_id: sensory_propagation_carries_trace
+    when:
+      all:
+        - predicate: sensory_propagation
+          args: ["$from", "$to", "$mode"]
+        - predicate: trace
+          args: ["$entity", "$from", "$condition"]
+    then:
+      assert:
+        - [trace, "$entity", "$to", "$condition"]
+  - rule_id: held_clue_becomes_discovered
+    when:
+      all:
+        - predicate: holding
+          args: ["$observer", "$item"]
+        - predicate: item_kind
+          args: ["$item", "clue"]
+    then:
+      assert:
+        - [discovered_clue, "$item"]
+  - rule_id: hostile_relationship_sets_guarded_stance
+    when:
+      all:
+        - predicate: npc_relationship
+          args: ["$npc", "$actor", "hostile"]
+    then:
+      assert:
+        - [social_stance, "$npc", "$actor", "guarded"]

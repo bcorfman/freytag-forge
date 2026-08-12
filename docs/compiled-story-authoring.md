@@ -1,7 +1,8 @@
 # V2 compiled-story authoring
 
-`storygame.authoring` is the offline boundary for V2 story input. Its only
-model integration is an injected `CompilerTransport` with
+`storygame.authoring` is the Phase 2 offline boundary for V2 story input. It
+does not read V1 world facts, proposals, policies, or runtime package contracts.
+Its only model integration is an injected `CompilerTransport` with
 `generate(prompt)`. Provider adapters remain transport concerns.
 
 ## Contract
@@ -33,6 +34,7 @@ For an offline authoring experiment, inject a transport into
 runtime execution. `compile` remains available for injected deterministic
 transports used by authoring tests.
 
-The hosted runtime consumes these immutable inputs through
+Phase 3 consumes these immutable inputs through
 `storygame.runtime.bootstrap_runtime_state`. `RuntimeState` is the sole mutable
-session authority; compiled stories remain immutable inputs.
+session authority; compiled stories remain immutable inputs. The currently
+deployed V1 package/fact hosted runtime remains unchanged until Phase 4.

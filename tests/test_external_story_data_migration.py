@@ -1,0 +1,78 @@
+import hashlib
+import json
+from pathlib import Path
+from random import Random
+
+from storygame.cli import run_turn
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
+from storygame.engine.world import build_default_state
+from storygame.evaluation import load_evaluation_fixtures
+from storygame.story_data_audit import AUDIT_MANIFEST, audit_story_specific_branches
+from tests.narrator_stubs import StubNarrator
+
+
+def test_phase_six_story_specific_audit_has_no_runtime_exceptions():
+    root = Path(__file__).resolve().parents[1]
+    findings = audit_story_specific_branches(root)
+
+    assert not findings, "Embedded story data remains in shared runtime:\n" + "\n".join(
+        f"{finding.path}:{finding.line} [{finding.rule}] {finding.text}" for finding in findings
+    )
+
+
+def test_phase_six_audit_manifest_has_no_compatibility_allowlist():
+    assert AUDIT_MANIFEST == {}
+
+
+def test_phase_zero_package_projections_and_transcripts_match_frozen_baseline():
+    root = Path(__file__).resolve().parents[1]
+    baseline = json.loads((root / "data" / "phase0_baseline.json").read_text(encoding="utf-8"))
+    assert baseline["version"] == "phase0-v1"
+
+    for fixture in load_evaluation_fixtures():
+        state = build_default_state(
+            seed=fixture["seed"],
+            genre=fixture["genre"],
+            session_length=fixture["session_length"],
+            tone=fixture["tone"],
+        )
+        expected = baseline["fixtures"][fixture["id"]]
+        projection = {
+            "outline_id": state.story_outline_id,
+            "rooms": list(state.world.rooms),
+            "items": list(state.world.items),
+            "npcs": [npc.name for npc in state.world.npcs.values()],
+            "start_room": state.player.location,
+            "inventory": list(state.player.inventory),
+        }
+        assert projection == expected["projection"]
+
+        rng = Random(fixture["seed"])
+        turn_indexes: list[int] = []
+        for command in fixture["commands"]:
+            state, _output, *_ = run_turn(
+                state,
+                command,
+                rng,
+                StubNarrator("phase0 baseline"),
+                freeform_adapter=RuleBasedFreeformProposalAdapter(),
+            )
+            turn_indexes.append(state.turn_index)
+        assert {
+            "commands": fixture["commands"],
+            "turn_index": turn_indexes,
+            "replay_sha256": hashlib.sha256(repr(state.replay_signature()).encode()).hexdigest(),
+        } == {
+            "commands": expected["transcript"]["commands"],
+            "turn_index": expected["transcript"]["turn_index"],
+            "replay_sha256": expected["transcript"]["replay_sha256"],
+        }
+
+
+def test_phase_four_readable_contracts_are_realized_as_facts_across_genres():
+    for genre in ("mystery", "fantasy", "sci-fi", "romance"):
+        state = build_default_state(seed=31, genre=genre)
+        readable = state.world_facts.query("item_affordance", None, "read")
+        assert readable, genre
+        item_id = readable[0][1]
+        assert state.world_facts.query("item_alias", item_id, None)
