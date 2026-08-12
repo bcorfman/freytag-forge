@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from storygame.engine import freeform as freeform_module
-from storygame.engine.facts import initialize_world_facts
+from storygame.engine.facts import initialize_world_facts, set_player_location
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     OrdinaryTurnRecoveryExhausted,
@@ -794,6 +794,37 @@ def test_normalized_movement_action_payload_leaves_non_movement_intent_unchanged
     }
 
     normalized = _normalized_movement_action_payload(state, "ask daria about the arrival", payload)
+
+    assert normalized == payload
+
+
+def test_normalized_movement_action_payload_resolves_one_visible_pickup_alias() -> None:
+    state = build_default_state(seed=405331, genre="mystery")
+    set_player_location(state, "market_lane")
+    payload = {
+        "intent": "inspect",
+        "targets": [],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "take the route key", payload)
+
+    assert normalized["intent"] == "take"
+    assert normalized["targets"] == ["route_key"]
+    assert normalized["arguments"]["deterministic_affordance"] == "take"
+
+
+def test_normalized_movement_action_payload_does_not_take_an_item_for_an_addressed_npc() -> None:
+    state = build_default_state(seed=405332, genre="mystery")
+    payload = {
+        "intent": "ask_about",
+        "targets": ["daria_stone"],
+        "arguments": {},
+        "proposed_effects": [],
+    }
+
+    normalized = _normalized_movement_action_payload(state, "Daria, take the route key.", payload)
 
     assert normalized == payload
 
