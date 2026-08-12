@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 
 import pytest
 
@@ -14,7 +15,7 @@ def test_cloudflare_turn_model_requests_json_mode(monkeypatch) -> None:
 
     class Response:
         def read(self) -> bytes:
-            return b'{"response":"{\\"narration\\":\\"Done.\\"}"}'
+            return b'{"narration":"{\\"narration\\":\\"Done.\\"}","model":"model-id","trace_id":"trace-id"}'
 
         def __enter__(self):
             return self
@@ -28,14 +29,15 @@ def test_cloudflare_turn_model_requests_json_mode(monkeypatch) -> None:
 
     monkeypatch.setattr("urllib.request.urlopen", urlopen)
     result = CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=True)
-    assert result["response"] == '{"narration":"Done."}'
+    assert result == {"narration": "Done."}
     assert captured["payload"]["response_format"] == {"type": "json_object"}
+    assert captured["payload"]["max_tokens"] == 1024
 
 
 def test_cloudflare_turn_model_strips_known_transport_metadata(monkeypatch) -> None:
     class Response:
         def read(self) -> bytes:
-            return b'{"narration":"Done.","model":"model-id","trace_id":"trace-id"}'
+            return b'{"narration":"Done.","model":"model-id","trace_id":"trace-id","upstream_request_id":"request-id"}'
 
         def __enter__(self):
             return self
@@ -52,11 +54,28 @@ def test_cloudflare_turn_model_maps_json_mode_rejection(monkeypatch) -> None:
     from urllib.error import HTTPError
 
     def urlopen(request, timeout):
-        raise HTTPError("https://agent.test", 400, "bad", {}, None)
+        raise HTTPError(
+            "https://agent.test",
+            502,
+            "bad",
+            {},
+            BytesIO(b'{"status":"error","code":"AI_JSON_MODE_REJECTED","message":"unsupported response_format"}'),
+        )
 
     monkeypatch.setattr("urllib.request.urlopen", urlopen)
     with pytest.raises(JsonModeRejected):
         CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=True)
+
+
+def test_cloudflare_turn_model_returns_a_diagnostic_for_non_json_mode_http_error(monkeypatch) -> None:
+    from urllib.error import HTTPError
+
+    def urlopen(request, timeout):
+        raise HTTPError("https://agent.test", 502, "bad", {}, BytesIO(b'{"code":"AI_UPSTREAM_ERROR"}'))
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    with pytest.raises(RuntimeError, match="502.*AI_UPSTREAM_ERROR"):
+        CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=False)
 
 
 def test_cloudflare_turn_model_sends_bearer_token_and_fails_safely(monkeypatch) -> None:
