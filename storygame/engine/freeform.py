@@ -17,8 +17,8 @@ from storygame.engine.facts import (
     room_items,
     room_npcs,
 )
+from storygame.engine.presentation import npc_reference_name
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
-from storygame.engine.parser import ActionKind, parse_command
 from storygame.engine.perception import observer_context_slice, speaker_context_slice
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
@@ -164,7 +164,7 @@ def _explicit_npc_address_requested(raw_input: str) -> bool:
         return False
     if words[0] in _EXPLICIT_CONVERSATION_HEADS:
         return True
-    return parse_command(raw_input).kind == ActionKind.TALK
+    return False
 
 
 def _topic_from_raw_input(raw_input: str, text: str) -> str:
@@ -219,59 +219,6 @@ class RuleBasedFreeformProposalAdapter:
         text = raw_input.strip().lower()
         words = text.split()
         first = words[0] if words else ""
-        command_like_heads = {
-            "look",
-            "help",
-            "inventory",
-            "inv",
-            "go",
-            "move",
-            "travel",
-            "walk",
-            "take",
-            "get",
-            "grab",
-            "pick",
-            "acquire",
-            "use",
-            "l",
-            "h",
-            "?",
-            "i",
-        }
-        single_token_only = {"l", "h", "?", "i"}
-        if first in command_like_heads and (first not in single_token_only or len(words) == 1):
-            parsed = parse_command(raw_input)
-            if parsed.kind in {
-                ActionKind.LOOK,
-                ActionKind.HELP,
-                ActionKind.INVENTORY,
-                ActionKind.MOVE,
-                ActionKind.TAKE,
-                ActionKind.TALK,
-                ActionKind.USE,
-            }:
-                canonical_targets: list[str] = []
-                if parsed.target:
-                    if parsed.kind == ActionKind.USE and ":" in parsed.target:
-                        canonical_targets = [segment for segment in parsed.target.split(":", maxsplit=1) if segment]
-                    else:
-                        canonical_targets = [parsed.target]
-                action_payload = {
-                    "intent": parsed.kind.value,
-                    "targets": canonical_targets,
-                    "arguments": {},
-                    "proposed_effects": [
-                        f"{parsed.kind.value}:{canonical_targets[0] if canonical_targets else 'none'}"
-                    ],
-                }
-                dialog_payload = {
-                    "speaker": "narrator",
-                    "text": "You focus on the immediate action.",
-                    "tone": "in_world",
-                }
-                return dialog_payload, action_payload
-
         semantic_move_direction = _semantic_exit_direction(state, raw_input)
         if semantic_move_direction:
             return (
@@ -333,7 +280,7 @@ class RuleBasedFreeformProposalAdapter:
             if "about" in text:
                 intent = "ask_about"
                 topic = _clean_topic_text(text.split("about", 1)[1]) or "rumors"
-        if re.search(r"\b(examine|inspect|read|review)\b", text):
+        if re.search(r"\b(look|examine|inspect|read|review)\b", text):
             intent = "inspect"
             topic = ""
         elif re.search(r"\bknock\b", text):
@@ -499,8 +446,7 @@ def _normalized_movement_action_payload(
     move_direction = _semantic_exit_direction(state, raw_input)
     if not move_direction:
         return action_payload
-    explicit_destination = parse_command(raw_input).kind == ActionKind.MOVE
-    if explicit_destination or intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
+    if _movement_requested(raw_input) or intent in {"", "freeform", "move", "go", "walk", "travel", "head", "enter"}:
         normalized = dict(action_payload)
         normalized["intent"] = "move"
         normalized["targets"] = [move_direction]
@@ -615,13 +561,25 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "visible_npc_ids": list(room.npc_ids),
             "visible_item_names": [str(fact["name"]).strip() for fact in item_facts if str(fact["name"]).strip()],
             "visible_items": relevant_item_facts,
-            "exits": sorted(room.exits.keys()),
+            "exits": [
+                next(
+                    (str(fact[3]) for fact in state.world_facts.query("path_label", state.player.location, route_id, None)),
+                    route_id.replace("_", " "),
+                )
+                for route_id in sorted(room.exits)
+            ],
             "exit_facts": [
-                {
-                    "direction": direction,
+            {
+                    "label": next(
+                        (
+                            str(fact[3])
+                            for fact in state.world_facts.query("path_label", state.player.location, route_id, None)
+                        ),
+                        route_id.replace("_", " "),
+                    ),
                     "destination_name": state.world.rooms[destination].name,
                 }
-                for direction, destination in sorted(room.exits.items())
+                for route_id, destination in sorted(room.exits.items())
             ]
             if movement_request
             else [],
@@ -890,7 +848,13 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
                 first_item = room.item_ids[0].replace("_", " ")
                 room_label = room.id.replace("_", " ")
                 return f"You ask {speaker} what stands out at {room_label}, with the {first_item} already drawing attention."
-            exits = sorted(room.exits.keys())
+            exits = [
+                next(
+                    (str(fact[3]) for fact in state.world_facts.query("path_label", state.player.location, route_id, None)),
+                    route_id.replace("_", " "),
+                )
+                for route_id in sorted(room.exits)
+            ]
             if exits:
                 return f"You ask {speaker} what {room.name} suggests before either of you pushes {exits[0]}."
             return f"You ask {speaker} for a read on the room and hold on the details that matter."
@@ -1168,7 +1132,7 @@ def _format_character_reply_line(
                     break
 
     npc = state.world.npcs.get(normalized_speaker)
-    speaker_name = npc.name if npc is not None else normalized_speaker.replace("_", " ").title()
+    speaker_name = npc_reference_name(state, npc) if npc is not None else normalized_speaker.replace("_", " ").title()
     quoted_match = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
     double_quoted = re.search(r'"([^"]+)"', text)
     if '"' in text:
@@ -1332,4 +1296,4 @@ def resolve_freeform_roleplay_with_proposals(
     }
 
 
-DEFAULT_FREEFORM_ADAPTER = LlmFreeformProposalAdapter()
+DEFAULT_FREEFORM_ADAPTER = RuleBasedFreeformProposalAdapter()

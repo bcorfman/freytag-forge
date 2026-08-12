@@ -6,6 +6,27 @@ from storygame.engine.facts import active_story_goal, case_facts, discovered_lea
 from storygame.engine.state import GameState, Item, Npc, Room
 
 ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence", "vehicle"}
+_NAME_PREFIXES = {"detective", "doctor", "dr", "mr", "mrs", "ms", "professor", "prof", "captain", "officer"}
+
+
+def _given_name(name: str) -> str:
+    parts = name.split()
+    if parts and parts[0].rstrip(".").casefold() in _NAME_PREFIXES:
+        parts = parts[1:]
+    return parts[0] if parts else name
+
+
+def npc_reference_name(state: GameState, npc: Npc) -> str:
+    """Use a full name once, then a unique given name in player-facing prose."""
+    introduced = state.world_package.setdefault("introduced_npcs", [])
+    if npc.id not in introduced:
+        introduced.append(npc.id)
+        return npc.name
+    given_name = _given_name(npc.name)
+    matching_given_names = sum(
+        _given_name(candidate.name).casefold() == given_name.casefold() for candidate in state.world.npcs.values()
+    )
+    return given_name if matching_given_names == 1 else npc.name
 
 
 def is_actionable_item(item: Item) -> bool:
@@ -38,7 +59,7 @@ def take_item_message(item: Item) -> str:
 def npc_talk_message(_state: GameState, npc: Npc, first_talk: bool) -> str:
     if first_talk:
         return npc.dialogue
-    return f"{npc.name} has nothing new to add right now."
+    return f"{npc_reference_name(_state, npc)} has nothing new to add right now."
 
 
 def story_status_lines(state: GameState) -> tuple[str, ...]:

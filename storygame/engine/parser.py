@@ -98,3 +98,20 @@ def parse_command(raw: str) -> Action:
         return Action(ActionKind.USE, target=item, raw=raw)
 
     return Action(ActionKind.UNKNOWN, target=_normalize_token(lowered), raw=raw)
+
+
+def parse_control_command(raw: str) -> Action:
+    """Recognize only explicit, out-of-world control commands from player input."""
+    stripped = raw.strip()
+    if not stripped.startswith("/"):
+        return Action(ActionKind.UNKNOWN, raw=stripped)
+    command, _, target = stripped[1:].partition(" ")
+    lowered = command.lower()
+    normalized_target = _normalize_token(target)
+    kinds = {
+        "help": ActionKind.HELP,
+        "quit": ActionKind.QUIT,
+        "save": ActionKind.SAVE,
+        "load": ActionKind.LOAD,
+    }
+    return Action(kinds.get(lowered, ActionKind.UNKNOWN), target=normalized_target, raw=stripped)

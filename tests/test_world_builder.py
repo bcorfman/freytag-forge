@@ -171,11 +171,11 @@ def test_mystery_start_room_places_daria_stone_beside_player() -> None:
     assert state.world.npcs[start_npc_id].name == "Daria Stone"
 
 
-def test_mystery_start_room_north_exit_leads_into_foyer() -> None:
+def test_mystery_start_room_mansion_entrance_leads_into_foyer() -> None:
     state = build_default_state(seed=102, genre="mystery")
 
     assert state.player.location == "front_steps"
-    assert state.world.rooms["front_steps"].exits["north"] == "foyer"
+    assert state.world.rooms["front_steps"].exits["mansion_entrance"] == "foyer"
 
     next_state, _events, _beat, _template = advance_turn(state, parse_command("go to foyer"), Random(102))
     assert next_state.player.location == "foyer"

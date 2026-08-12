@@ -212,6 +212,17 @@ def _summarize_item_facts(state: GameState, item_ids: tuple[str, ...]) -> tuple[
     return tuple(facts)
 
 
+def _route_labels(state: GameState, room_id: str) -> tuple[str, ...]:
+    labels: list[str] = []
+    for route_id in state.world.rooms[room_id].exits:
+        label = next(
+            (str(fact[3]) for fact in state.world_facts.query("path_label", room_id, route_id, None)),
+            route_id.replace("_", " "),
+        )
+        labels.append(label)
+    return tuple(sorted(labels))
+
+
 def _latest_freeform_focus(state: GameState) -> dict[str, object]:
     events = tuple(reversed(state.event_log.events))
     for event in events:
@@ -354,7 +365,7 @@ def build_narration_context(
         visible_npcs=visible_npcs,
         npc_facts=_summarize_npc_facts(state, visible_npcs),
         item_facts=_summarize_item_facts(state, visible_items[:MAX_VISIBLE_ITEMS]),
-        exits=tuple(sorted(room.exits.keys())),
+        exits=_route_labels(state, state.player.location),
         inventory=filtered_inventory(state)[:MAX_INVENTORY_ITEMS],
         memory_fragments=tuple(
             _short_text(frag, MAX_MEMORY_FRAGMENT_LEN) for frag in memory_fragments[:MAX_MEMORY_FRAGMENTS]

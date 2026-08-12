@@ -297,7 +297,7 @@ def test_run_turn_handles_quit_and_narration_failures():
 
     _, lines, action_raw, _beat, continued = run_turn(
         next_state,
-        "quit",
+        "/quit",
         Random(8),
         StubNarrator(),
     )
@@ -370,7 +370,7 @@ def test_run_turn_save_load_error_paths():
     state = build_default_state(seed=17)
     _, no_store_save_lines, *_ = run_turn(
         state,
-        "save quicksave",
+            "/save quicksave",
         Random(17),
         SilentNarrator(),
         save_store=None,
@@ -379,7 +379,7 @@ def test_run_turn_save_load_error_paths():
 
     _, no_store_load_lines, *_ = run_turn(
         state,
-        "load missing",
+            "/load missing",
         Random(17),
         SilentNarrator(),
         save_store=None,
@@ -391,7 +391,7 @@ def test_run_turn_load_missing_slot_with_store_is_handled(tmp_path):
     with SqliteSaveStore(tmp_path / "game.sqlite") as store:
         _, load_lines, *_ = run_turn(
             build_default_state(seed=18),
-            "load missing",
+            "/load missing",
             Random(18),
             SilentNarrator(),
             save_store=store,
@@ -421,7 +421,7 @@ def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
 
 
 def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
-    replay = ["look", "quit"]
+    replay = ["look", "/quit"]
     inputs = iter(replay)
     transcript = tmp_path / "game.txt"
 
@@ -433,7 +433,7 @@ def test_main_plays_input_loop_and_stops_on_quit(tmp_path, monkeypatch):
     text = transcript.read_text()
     assert "Before dawn" not in text
     assert ">LOOK" in text
-    assert ">QUIT" in text
+    assert ">/QUIT" in text
     assert "Goodbye." in text
 
 
@@ -468,12 +468,12 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
         saved_signature = state.replay_signature()
         state, lines, action_raw, _beat, _continued = run_turn(
             state,
-            "save checkpoint",
+            "/save checkpoint",
             rng,
             StubNarrator(),
             save_store=store,
         )
-        assert action_raw == "save checkpoint"
+        assert action_raw == "/save checkpoint"
         assert "Saved to slot 'checkpoint'." in lines
 
         direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
@@ -490,7 +490,7 @@ def test_run_turn_save_and_load_restore_state(tmp_path):
 
         state, lines, _action, _beat, _continued = run_turn(
             state,
-            "load checkpoint",
+            "/load checkpoint",
             rng,
             StubNarrator(),
             save_store=store,
@@ -505,7 +505,7 @@ def test_main_save_and_load_via_cli(tmp_path, monkeypatch):
     db_path = tmp_path / "saves.sqlite"
     transcript = tmp_path / "game.txt"
     replay = tmp_path / "commands.txt"
-    replay.write_text("save demo\nnorth\nload demo\nquit\n")
+    replay.write_text("/save demo\nnorth\n/load demo\n/quit\n")
 
     monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
     main(
@@ -641,11 +641,7 @@ def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(mon
     assert beat_type != "freeform_roleplay"
 
 
-def test_run_turn_visible_destination_does_not_require_the_freeform_provider(monkeypatch) -> None:
-    def _unavailable_provider(*args, **kwargs):  # noqa: ANN002, ANN003
-        raise AssertionError("visible movement must not call the freeform provider")
-
-    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _unavailable_provider)
+def test_run_turn_visible_destination_uses_the_shared_proposal_commit_path() -> None:
     state = build_default_state(seed=2203)
 
     next_state, _lines, _action_raw, _beat_type, continued = run_turn(
@@ -654,7 +650,7 @@ def test_run_turn_visible_destination_does_not_require_the_freeform_provider(mon
         Random(2203),
         SilentNarrator(),
         debug=False,
-        freeform_adapter=object(),
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
     )
 
     assert continued is True
@@ -1161,7 +1157,7 @@ def test_save_persists_last_accepted_judge_decision(tmp_path):
     with SqliteSaveStore(db_path) as store:
         _state, save_lines, _action_raw, _beat, _continued = run_turn(
             state,
-            "save checkpoint",
+                "/save checkpoint",
             rng,
             StubNarrator(),
             save_store=store,

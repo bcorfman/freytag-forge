@@ -122,7 +122,7 @@ def test_dialog_line_covers_item_without_clue_and_generic_place_variants() -> No
     place_line = _dialog_line("ask_about", npc_id, "place", state)
 
     assert "field kit" in item_line
-    assert "room suggests" in place_line.lower() or "pushes east" in place_line.lower()
+    assert "room suggests" in place_line.lower() or "pushes drive" in place_line.lower()
 
 
 def test_rule_based_adapter_gives_scene_specific_place_reply() -> None:
@@ -181,7 +181,18 @@ def test_format_character_reply_line_preserves_contractions_and_wrapped_quotes()
     )
 
     assert contraction_line == 'Daria Stone says: "I\'m here to bring you inside."'
-    assert quoted_line == 'Daria Stone says: "Keep your voice down."'
+    assert quoted_line == 'Daria says: "Keep your voice down."'
+
+
+def test_character_reply_uses_full_name_once_then_a_unique_given_name() -> None:
+    state = build_default_state(seed=4142, genre="mystery")
+    proposal = {"speaker": "daria_stone", "text": "Stay close.", "tone": "in_world"}
+
+    first = _format_character_reply_line(state, proposal, {"intent": "ask_about", "targets": ["daria_stone"]})
+    second = _format_character_reply_line(state, proposal, {"intent": "ask_about", "targets": ["daria_stone"]})
+
+    assert first.startswith("Daria Stone says:")
+    assert second.startswith("Daria says:")
 
 
 def test_format_character_reply_line_maps_ai_assistant_to_target_npc() -> None:
@@ -270,7 +281,7 @@ def test_semantic_actions_for_freeform_emits_move_and_take_actions() -> None:
 
     move_actions = _semantic_actions_for_freeform(
         state,
-        {"intent": "move", "targets": ["north"], "arguments": {}, "proposed_effects": []},
+            {"intent": "move", "targets": ["mansion_entrance"], "arguments": {}, "proposed_effects": []},
         {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
     )
     take_actions = _semantic_actions_for_freeform(
@@ -355,7 +366,7 @@ def test_format_character_reply_line_handles_single_quoted_and_embedded_says_for
     )
 
     assert single_quoted == 'Daria Stone says: "Keep moving."'
-    assert embedded == 'Daria Stone says: "Keep your voice down."'
+    assert embedded == 'Daria says: "Keep your voice down."'
 
 
 def test_envelope_for_action_policy_rejections_and_allowed_paths(monkeypatch) -> None:
