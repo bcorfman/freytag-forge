@@ -156,26 +156,3 @@ def test_hosted_demo_defaults_to_cloudflare_worker_configuration(monkeypatch) ->
     model = _configured_turn_model()
     assert model.url == "https://existing-worker.test"
 
-
-def test_staging_evaluation_token_bypasses_only_staging_limits(tmp_path) -> None:
-    app = create_demo_app(
-        save_db_path=tmp_path / "evaluation.sqlite",
-        turn_model=_Model(),
-        channel="staging",
-        session_namespace="evaluation-test",
-        ip_rate_limit_per_min=1,
-        evaluation_token="test-token",
-    )
-    with TestClient(app) as client:
-        session_id = client.post("/api/v1/session", json={}).json()["session_id"]
-        headers = {"X-Freytag-Evaluation-Token": "test-token"}
-        assert (
-            client.post("/api/v1/turn", json={"session_id": session_id, "command": "act"}, headers=headers).status_code
-            == 200
-        )
-        assert (
-            client.post(
-                "/api/v1/turn", json={"session_id": session_id, "command": "again"}, headers=headers
-            ).status_code
-            == 200
-        )

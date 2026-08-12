@@ -18,12 +18,11 @@ and immutable SHA. The gate compares that metadata with `/api/v1/version`
 before it evaluates a turn, so a deployed API and browser bundle cannot be
 mistakenly treated as one candidate.
 
-The staging Railway service and the GitHub `freytag-forge / staging`
-environment must share a non-empty `FREYTAG_STAGING_EVALUATION_TOKEN`. The
-runner sends it only as `X-Freytag-Evaluation-Token`. The hosted adapter honors
-it only when its configured channel is `staging`, where it bypasses the normal
-per-IP limiter so the 28-turn evaluation is not distorted by demo throttling.
-It does not bypass session quotas or enable any production behavior.
+The evaluator uses the same public staging API contract as a browser. It needs
+no evaluation credential or special Railway variable. If the ordinary per-IP
+rate limit is reached, it waits once for the existing one-minute rate window
+and retries the blocked request. This keeps staging evaluation behavior aligned
+with the public hosted surface while remaining bounded.
 
 The candidate must also have a configured V2 `TurnModel` provider. The default
 hosted construction deliberately fails closed with `service_unavailable` when

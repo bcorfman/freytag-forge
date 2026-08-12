@@ -89,7 +89,6 @@ def create_demo_app(
     now_fn: Callable[[], datetime] | None = None,
     channel: str | None = None,
     session_namespace: str | None = None,
-    evaluation_token: str | None = None,
 ) -> FastAPI:
     """Build the only supported application surface from explicit V2 dependencies."""
     resolved_channel = channel or getenv("FREYTAG_DEPLOYMENT_CHANNEL", "development").strip() or "development"
@@ -105,7 +104,6 @@ def create_demo_app(
     ip_window_hits: dict[str, list[datetime]] = {}
     ip_daily_hits: dict[tuple[str, str], int] = {}
     model = turn_model or _configured_turn_model()
-    configured_evaluation_token = evaluation_token or getenv("FREYTAG_STAGING_EVALUATION_TOKEN", "").strip()
     origins = cors_allow_origins or _resolve_cors_origins()
     app.add_middleware(
         CORSMiddleware,
@@ -151,13 +149,6 @@ def create_demo_app(
         ip_daily_hits[daily_key] = ip_daily_hits.get(daily_key, 0) + 1
         return None
 
-    def is_staging_evaluation(request: Request) -> bool:
-        return (
-            resolved_channel == "staging"
-            and bool(configured_evaluation_token)
-            and request.headers.get("X-Freytag-Evaluation-Token") == configured_evaluation_token
-        )
-
     @app.get("/api/v1/health", response_model=HealthResponse)
     @app.get("/api/v1/version", response_model=HealthResponse)
     def health() -> HealthResponse:
@@ -183,11 +174,7 @@ def create_demo_app(
     def turn(payload: TurnRequest, request: Request) -> TurnResponse | JSONResponse:
         request_id = uuid4().hex
         session = session_for(payload.session_id)
-        limited = (
-            None
-            if is_staging_evaluation(request)
-            else within_limits(request.client.host if request.client else "unknown", now())
-        )
+        limited = within_limits(request.client.host if request.client else "unknown", now())
         if limited:
             return error(429, "rate_limited", limited, request_id)
         command = payload.command.strip()

@@ -5,7 +5,12 @@ from __future__ import annotations
 import json
 from io import BytesIO
 
-from storygame.staging_evaluation import SCRIPTED_PLAYER_STYLES, _http_request, run_staging_evaluation
+from storygame.staging_evaluation import (
+    SCRIPTED_PLAYER_STYLES,
+    _http_request,
+    _rate_limit_aware,
+    run_staging_evaluation,
+)
 
 
 def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> None:
@@ -102,7 +107,6 @@ def test_http_request_serializes_payload_and_decodes_error_response(monkeypatch)
         captured["payload"] = json.loads(request.data)
         return Response()
 
-    monkeypatch.setenv("FREYTAG_STAGING_EVALUATION_TOKEN", "staging-token")
     monkeypatch.setattr("urllib.request.urlopen", success)
     request = _http_request("https://staging.example")
     assert request("POST", "/api/v1/session", {"genre": "mystery"}) == (201, {"session_id": "one"})
@@ -115,3 +119,19 @@ def test_http_request_serializes_payload_and_decodes_error_response(monkeypatch)
 
     monkeypatch.setattr("urllib.request.urlopen", failure)
     assert request("GET", "/api/v1/version", None) == (503, {"status": "service_unavailable"})
+
+
+def test_staging_evaluation_retries_one_public_rate_limit_window() -> None:
+    calls = 0
+    waits: list[float] = []
+
+    def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return 429, {"status": "rate_limited"}
+        return 200, {"status": "ok"}
+
+    limited = _rate_limit_aware(request, waits.append)
+    assert limited("POST", "/api/v1/turn", {}) == (200, {"status": "ok"})
+    assert waits == [61]

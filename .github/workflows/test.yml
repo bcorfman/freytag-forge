@@ -213,7 +213,6 @@ jobs:
     env:
       HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
       DEPLOYED_SHA: ${{ needs.deploy-staging.outputs.sha }}
-      FREYTAG_STAGING_EVALUATION_TOKEN: ${{ secrets.FREYTAG_STAGING_EVALUATION_TOKEN }}
       FREYTAG_EVALUATION_REPORT: artifacts/staging-evaluation.json
     steps:
       - uses: actions/checkout@v6
@@ -224,8 +223,6 @@ jobs:
           version: latest
       - name: Install dependencies
         run: uv sync --locked
-      - name: Require the staging-only evaluation credential
-        run: test -n "$FREYTAG_STAGING_EVALUATION_TOKEN"
       - name: Verify Pages build metadata matches the staged API candidate
         env:
           PAGES_METADATA_URL: https://bcorfman.github.io/freytag-forge/dev/deployment.json
