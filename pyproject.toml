@@ -1,6 +1,6 @@
 [project]
 name = "storygame"
-description = "A deterministic, LLM-narrated text adventure with Freytag-driven plot control."
+description = "A hosted LLM-first interactive-fiction runtime."
 version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,13 +9,8 @@ license = "MIT"
 
 dependencies = [
     "fastapi>=0.141.1",
-    "rich>=15.0.0",
     "uvicorn>=0.52.1",
-    "pyyaml>=6.0.3",
 ]
-
-[project.scripts]
-storygame = "storygame.cli:main"
 
 [tool.uv]
 

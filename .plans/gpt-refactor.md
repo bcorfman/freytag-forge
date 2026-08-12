@@ -258,28 +258,28 @@ leave it byte-for-byte unchanged.
 
 **Goal:** make the hosted-demo adapter the only runnable product surface.
 
-1. Refactor `storygame.web_demo` to construct `RuntimeEngine` via explicit
+1. [x] Refactor `storygame.web_demo` to construct `RuntimeEngine` via explicit
 dependencies and expose only the session/opening/turn/health/version endpoints
 needed by the frontend. Keep current quota, CORS, typed upstream-failure, and
 request-ID behavior where it is independent of V1.
-2. Replace V1 SQLite serialization with a versioned `RuntimeState` snapshot,
+2. [x] Replace V1 SQLite serialization with a versioned `RuntimeState` snapshot,
 event log, compiled-story identifier/content hash, and rolling summary. Verify
 integrity on load. Reject V1 save schemas with a clear `unsupported_save_version`
 error rather than attempting a lossy migration.
-3. Make every hosted session start from a compiled-story fixture/package and
+3. [x] Make every hosted session start from a compiled-story fixture/package and
 persist only V2 runtime state. Enforce staging/production database and session
 namespace separation at construction and in deployment configuration.
-4. Adapt the frontend to the retained response contract, display the returned
+4. [x] Adapt the frontend to the retained response contract, display the returned
 turn index and location from V2 state, and make its base-path handling work at
 both `/` and `/dev/`. Add a visible `/dev/` banner.
-5. Retire `storygame.web`, CLI entry points, local-web commands, web-surface
+5. [x] Retire `storygame.web`, CLI entry points, local-web commands, web-surface
 parity code, and their tests. Remove their packaging/README references rather
 than leaving dead adapters.
-6. Add hosted-demo API and browser tests for session creation, freeform turns,
+6. [x] Add hosted-demo API and browser tests for session creation, freeform turns,
 save/load, errors, quota behavior, CORS, `/dev/` base paths, production root
 base paths, and isolated channel state.
 
-**Exit criteria:** staging serves a complete V2 browser session at `/dev/` with
+**Exit criteria:** [ ] staging serves a complete V2 browser session at `/dev/` with
 no import or runtime dependency on the retired local/CLI surfaces.
 
 ### Phase 5 — Evaluate V2 on staging and tune authoring/pacing
@@ -287,56 +287,84 @@ no import or runtime dependency on the retired local/CLI surfaces.
 **Goal:** establish that the simplified engine is safe and materially useful
 before it replaces the existing production runtime.
 
-1. Run the four genre fixtures and scripted player styles against staging with
+**Testing labels:** **[Automated]** is reproducible in CI or a staging runner;
+**[User testing]** needs human play, qualitative review, or an approval decision.
+
+1. **[Automated]** Run the four genre fixtures and scripted player styles against staging with
 fixed model/version/prompt settings. Include investigate, travel, social,
 avoidant, adversarial, repeated-failure, and unexpected-action scripts.
-2. Evaluate protected revelations, state continuity, entity/custody validity,
+   **[User testing]** Play at least one unscripted session in each genre to
+   confirm the scripted coverage has not made the experience feel constrained.
+2. **[Automated]** Evaluate protected revelations, state continuity, entity/custody validity,
 beat order, completion, player agency, one-call/repair rates, latency, and
-typed fail-closed errors. Sample model-authored output for narrative flow and
-record the evidence alongside the exact deployed SHA.
-3. Tune compiler pacing defaults, `PacingController` thresholds, and runtime
+typed fail-closed errors; record the evidence alongside the exact deployed SHA.
+   **[User testing]** Sample model-authored output for narrative flow, agency,
+   clarity, and cross-genre fit; record the reviewer and findings with that SHA.
+3. **[Automated]** Validate every proposed compiler pacing, `PacingController`,
+or prompt change with a new compiled-fixture version and the full regression suite.
+   **[User testing]** Tune compiler pacing defaults, `PacingController` thresholds, and runtime
 prompt guidance using a new compiled-fixture version for each accepted change.
 Do not add deterministic incidents or story/genre-specific runtime branches to
 repair an evaluation failure.
-4. Require a staging soak window with fresh sessions, persistence reloads, and
+4. **[Automated]** Require a staging soak window with fresh sessions, persistence reloads, and
 browser E2E runs. Verify the staged API's channel/version endpoint matches the
 candidate SHA displayed in Pages build metadata.
-5. Define the first-promotion gate in documentation: no critical validator or
+   **[User testing]** During the soak, manually exercise `/dev/` in a browser,
+   including a new session, freeform turn, save/load, and error presentation.
+5. **[Automated]** Define and verify the first-promotion gate: no critical validator or
 revelation failures, no unresolved channel-isolation failures, all required
 hosted checks green, and scorecard metrics acceptable relative to Phase 0.
+   **[User testing]** Review the scorecard and staging evidence, then explicitly
+   approve or reject the candidate SHA for production promotion.
 
-**Exit criteria:** a documented candidate SHA has passed the promotion gate on
-the isolated staging channel.
+**Implementation note (2026-08-11):** [x] The SHA-bound V2 staging evaluator,
+workflow artifact, automated promotion gate, seven style scripts, and human
+review procedure are implemented in
+[`docs/phase-5-staging-evaluation.md`](../docs/phase-5-staging-evaluation.md).
+The five Phase 5 run/approval items and the exit criterion remain unchecked
+until a deployed staging candidate produces evidence and receives a human
+approval; implementation tests are not staging evidence.
+
+**Exit criteria:** **[Automated]** a documented candidate SHA has passed the
+promotion gate on the isolated staging channel; **[User testing]** that SHA has
+an explicit human approval for production promotion.
 
 ### Phase 6 — Promote V2 and remove V1
 
 **Goal:** switch user traffic to V2 exactly once, then delete obsolete code.
 
-1. Invoke the manual promotion workflow using the successful staging SHA. The
+1. [ ] **[User testing / operator]** Invoke the manual promotion workflow using the successful staging SHA. The
 workflow verifies that SHA's staging evidence, checks it out exactly, deploys
 the production Railway service, builds the root Pages bundle from it, preserves
 `/dev/`, and runs health plus browser E2E at the root URL.
-2. Record the production deployment ID, Pages deployment ID, SHA, model/prompt
+2. [ ] **[User testing / operator]** Record the production deployment ID, Pages deployment ID, SHA, model/prompt
 revision, and known-good rollback target. If any verification fails, retain the
 old production artifact/API and report the failed promotion without altering
 the staged channel.
-3. After a successful promotion and agreed observation window, delete V1 engine
+3. [x] **[Automated]** Delete V1 engine
 modules and data: fact store/committers/predicate policies, semantic actions,
 consequences, triggers/incidents, perception/epistemic inference, deterministic
 beat policy/dramatic compatibility layers, V1 proposal contracts, V1 package
 runtime realization, CLI/local web adapters, and obsolete tests/fixtures.
-4. Remove V1 deployment code and temporary legacy rollback documentation after
+4. [ ] **[User testing / operator]** Remove V1 deployment code and temporary legacy rollback documentation after
 the replacement production revision is itself recorded as the known-good target.
-5. Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
+5. [x] **[Automated]** Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
 and test-suite documentation to describe the V2 state contract, hosted-only
 surface, `/dev/` staging, and SHA-pinned production promotion. Delete documents
 whose only purpose was the retired architecture.
-6. Run lint, the complete test suite with the required temporary-directory
+6. [ ] **[Automated locally; User testing / CI for deployed channels]** Run lint, the complete test suite with the required temporary-directory
 setting, browser E2E for both channels, and the full compiler/runtime
 cross-genre evaluation. Maintain at least 90% project coverage after deleted
 tests and code are removed.
 
-**Exit criteria:** root production and `/dev/` both run the one V2 runtime;
+**Implementation note (2026-08-11):** [x] The V1 source/data/test execution
+path is removed from `main`, with a regression guard in
+`tests/test_v2_cutover.py`; V2-only CI and documentation are updated. Production
+promotion, the observation window, deployment identifiers, root and `/dev/`
+browser E2E, and the final known-good rollback record require the operator and
+remain unchecked.
+
+**Exit criteria:** [ ] root production and `/dev/` both run the one V2 runtime;
 there is no V1 execution path in `main`, and documentation, tests, and CI all
 describe one hosted product with two isolated delivery channels.
 

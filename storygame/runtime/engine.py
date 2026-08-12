@@ -26,6 +26,7 @@ class TurnResponse:
     narration: str = ""
     turn_index: int = 0
     error: RuntimeFailure | None = None
+    model_calls: int = 0
 
 
 class RuntimeEngine:
@@ -43,14 +44,14 @@ class RuntimeEngine:
     def turn(self, player_input: str) -> TurnResponse:
         context = self.context_builder.build(self.state, player_input)
         last_error: RuntimeFailure | None = None
-        for json_object in (True, False):
+        for model_calls, json_object in enumerate((True, False), start=1):
             try:
                 raw = self.model.play_turn(context, json_object=json_object)
                 result = TurnResult.from_provider(raw)
                 candidate = validate_and_commit(self.state, result)
                 self._finalize(candidate, player_input, result, context)
                 self.state = candidate
-                return TurnResponse(True, result.narration, candidate.turn_index)
+                return TurnResponse(True, result.narration, candidate.turn_index, model_calls=model_calls)
             except JsonModeRejected as exc:
                 last_error = RuntimeFailure("JSON_MODE_REJECTED", str(exc) or "provider rejected JSON-object mode")
             except RuntimeFailure as exc:
@@ -63,7 +64,7 @@ class RuntimeEngine:
         )
         if last_error is not None:
             failure.__cause__ = last_error
-        return TurnResponse(False, error=failure)
+        return TurnResponse(False, error=failure, model_calls=2)
 
     def _finalize(
         self,

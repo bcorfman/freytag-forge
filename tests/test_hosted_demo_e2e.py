@@ -37,7 +37,7 @@ def _request(url: str, method: str, payload: dict[str, object] | None = None) ->
 
 @pytest.mark.live_e2e
 def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None:
-    """Exercise the browser flow plus fact-backed continuity and persistence."""
+    """Exercise the retained V2 browser flow and runtime-state persistence."""
     base_url = _api_base_url()
 
     health_status, _, health_payload = _request(f"{base_url}/api/v1/health", "GET")
@@ -51,7 +51,7 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     session_status, session_headers, session_payload = _request(
         f"{base_url}/api/v1/session",
         "POST",
-        {"seed": 123, "genre": "mystery", "session_length": "short", "tone": "dark"},
+        {"genre": "mystery"},
     )
     assert session_status == 200
     assert session_headers.get("access-control-allow-origin") in {"*", os.getenv("HOSTED_DEMO_ORIGIN", "").strip()}
@@ -87,21 +87,10 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
         assert payload["session_id"] == session_id
         return payload
 
-    foyer = run_turn("go to foyer")
-    assert foyer["state"]["location"] == "foyer"
-    assert foyer["state"]["inventory"] == ["field_kit"]
+    first_turn = run_turn("Search the square for a lead.")
+    assert first_turn["state"]["turn_index"] == 1
 
-    market_lane = run_turn("go to market lane")
-    assert market_lane["state"]["location"] == "market_lane"
-
-    collected = run_turn("take route key")
-    assert collected["state"]["location"] == "market_lane"
-    assert "route_key" in collected["state"]["inventory"]
-
-    run_turn("save hosted-e2e-continuity")
-    moved_on = run_turn("go to records office")
-    assert moved_on["state"]["location"] == "records_office"
-
-    restored = run_turn("load hosted-e2e-continuity")
-    assert restored["state"]["location"] == "market_lane"
-    assert restored["state"]["inventory"] == collected["state"]["inventory"]
+    saved = run_turn("save")
+    assert saved["state"]["turn_index"] == 1
+    restored = run_turn("load")
+    assert restored["state"]["turn_index"] == 1
