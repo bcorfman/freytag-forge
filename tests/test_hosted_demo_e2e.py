@@ -98,10 +98,10 @@ def test_deployed_hosted_demo_creates_a_session_and_renders_an_opening() -> None
     assert collected["state"]["location"] == "market_lane"
     assert "route_key" in collected["state"]["inventory"]
 
-    run_turn("save hosted-e2e-continuity")
+    run_turn("/save hosted-e2e-continuity")
     moved_on = run_turn("go to records office")
     assert moved_on["state"]["location"] == "records_office"
 
-    restored = run_turn("load hosted-e2e-continuity")
+    restored = run_turn("/load hosted-e2e-continuity")
     assert restored["state"]["location"] == "market_lane"
     assert restored["state"]["inventory"] == collected["state"]["inventory"]

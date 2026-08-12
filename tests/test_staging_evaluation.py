@@ -29,7 +29,7 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
         if command == "look":
             return 200, {"status": "ok", "lines": ["An opening."], "state": {"location": "opening", "turn_index": 0}}
         session_id = str(payload["session_id"])
-        if command in {"save", "load"}:
+        if command in {"/save staging-evaluation", "/load staging-evaluation"}:
             return 200, {
                 "status": "ok",
                 "lines": [command],
