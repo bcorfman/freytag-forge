@@ -84,4 +84,5 @@ _SYSTEM_PROMPT = (
     "{\"beat_id\":string,\"completion_tags\":array of strings,\"evidence\":string}; never include id, phase, "
     "or summary. Use [] for operations or beat_updates when none apply, and a boolean—not an object—for "
     "material_progress. Narration may describe only committed effects."
+    " If the input includes recovery_instruction, correct that failure and return the complete object again."
 )

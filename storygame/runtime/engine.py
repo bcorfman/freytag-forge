@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 from storygame.runtime.context import RuntimeContext, RuntimeContextBuilder
@@ -58,6 +58,8 @@ class RuntimeEngine:
                 last_error = exc
             except Exception as exc:
                 last_error = RuntimeFailure("MODEL_FAILURE", f"model request failed: {exc}")
+            if model_calls == 1 and last_error is not None:
+                context = _repair_context(context, last_error)
         failure = RuntimeFailure(
             "RUNTIME_RECOVERY_EXHAUSTED",
             "turn could not be decoded or validated after one recovery",
@@ -96,3 +98,13 @@ class RuntimeEngine:
         state.recent_events[:] = state.recent_events[-24:]
         if result.summary_delta:
             state.story_summary = (state.story_summary + " " + result.summary_delta).strip()[-4000:]
+
+
+def _repair_context(context: RuntimeContext, failure: RuntimeFailure) -> RuntimeContext:
+    """Give the sole recovery call bounded local feedback without changing state."""
+    payload = dict(context.payload)
+    payload["recovery_instruction"] = (
+        "Your previous response failed local validation: "
+        f"{failure.message[:800]}. Return a corrected complete TurnResult object only."
+    )
+    return replace(context, payload=payload)
