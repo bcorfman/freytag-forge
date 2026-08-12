@@ -1,0 +1,25 @@
+schema_version: 1
+scope: genre
+genre: mystery
+rules:
+  - rule_id: accuse_suspect_reduces_trust
+    when:
+      all:
+        - predicate: suspect
+          args: ["$case", "$npc"]
+    then:
+      numeric_delta:
+        - key: "trust:$npc:player"
+          delta: -0.1
+  - rule_id: evidence_unlocks_route
+    when:
+      all:
+        - predicate: holding
+          args: [player, "$key_item"]
+        - predicate: path
+          args: ["$direction", "$room", "$destination"]
+        - predicate: locked
+          args: ["$direction", "$room", "$key_item"]
+    then:
+      retract:
+        - [locked, "$direction", "$room", "$key_item"]

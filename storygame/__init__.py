@@ -1,1 +1,5 @@
-"""Freytag Forge hosted interactive-fiction runtime."""
+"""storygame package."""
+
+from .cli import main
+
+__all__ = ["main"]

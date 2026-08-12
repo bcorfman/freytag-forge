@@ -1,8 +1,6 @@
 # V2 staged and production acceptance matrix
 
-This acceptance matrix defines the same six checks for each frozen genre fixture
-in both isolated channels. A production result is valid only for a SHA that
-first passed the complete staging matrix and human review.
+This is the Phase 0 acceptance matrix for the V2 migration. It defines the same six checks for each frozen genre fixture in both isolated channels. Phase 1 provisions staging; until then, production evidence is V1 comparison-only evidence and no V2 result may be inferred from it.
 
 | Fixture | Opening | Freeform turn | Malformed-model failure | Persistence round-trip | Protected revelation | Session isolation |
 | --- | --- | --- | --- | --- | --- | --- |

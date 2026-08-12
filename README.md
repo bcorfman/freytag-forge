@@ -1,63 +1,171 @@
 # Freytag Forge
 
+Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
+
 ## Write anything. Keep the story true.
 
-Freytag Forge is a hosted interactive-fiction engine. Each browser session
-starts from an immutable, validated `CompiledStory`; a model authors open-ended
-turns and proposes typed effects; local V2 validation atomically commits only
-legal changes to `RuntimeState`.
+Freytag Forge is an interactive-fiction engine for stories that need to feel
+open-ended without becoming incoherent. Players can negotiate, investigate,
+improvise, travel, deceive, help, refuse, and take the scene in unexpected
+directions. The next runtime answers with model-authored narration—but only
+after local validation has accepted the state changes.
 
-The hosted demo is the only runnable product surface. It is deployed at `/` in
-production and `/dev/` in staging; `/dev/` displays a persistent non-production
-badge. The frontend uses a relative build base so both locations work.
+The bet is simple: compelling AI storytelling does not need to choose between
+freedom and continuity. Put mutable session truth in a typed runtime state; let
+models propose the move and write the moment; commit only what the story schema
+can support.
+
+This is not an LLM text generator wrapped around a command parser. It is a
+story simulation with an open language interface, durable consequences, and a
+clear boundary between immutable authored possibility, canonical runtime state,
+and prose.
+
+Phase 3 of the V2 migration provides the standalone in-process runtime.
+Versioned `CompiledStory` fixtures bootstrap its sole mutable authority,
+`RuntimeState`; model turns use one structured request plus at most one shared
+recovery request and fail closed without partial commits. The existing
+package/fact web product remains active until the Phase 4 hosted-demo cutover.
+
+## Why it’s different
+
+| Player freedom | Narrative intelligence | World integrity |
+| --- | --- | --- |
+| Players write natural-language intentions, not a small list of verbs. They can attempt any story move. | Models return narration and bounded typed effects in one structured turn contract. | Local validation commits only approved paths, custody changes, and ordered beat updates to `RuntimeState`. |
+| Pacing directives nudge, advance, escalate, or force a consequence without dictating the player action. | Active beats, rolling events, summaries, and revelation protections are the only story context sent to the turn model. | Narration never mutates state; protected revelations, invalid paths, and out-of-order beats fail closed. |
+| One normal model call keeps the loop responsive. | JSON-object mode is explicit transport metadata, with one plain-JSON fallback when rejected. | Runtime events retain prompt version/token estimates; later saves are projections rather than authorities. |
+
+**Less prompt luck. More playable story.**
+
+## Highlights
+
+| Build worlds | Run scenes | Trust the result |
+| --- | --- | --- |
+| Validated external story packages declare maps, characters, roles, knowledge boundaries, custody, discoveries, rules, and endings. | Proposal-first turns keep ordinary play expressive while bounded policy commits only legal, coherent consequences. | Fact-backed persistence, deterministic replay, artifact integrity checks, and cross-genre regression fixtures make behavior inspectable. |
+| One story-agnostic engine supports mystery, fantasy, sci-fi, relationship scenes, and new genres without shared-runtime genre branches. | Observer-scoped perception and knowledge prevent the player or an NPC from receiving information they have not earned. | Provider responses are untrusted at the JSON boundary; malformed output gets at most one repair request, then fails closed with a typed error rather than fabricating a successful turn. |
+| Offline authoring and evaluation can use frontier models; runtime packages remain locally validated. | NPCs operate under explicit role contracts for goals, knowledge, location, capabilities, limitations, and delegated work. | Local web and hosted-demo adapters stay separate while sharing the same engine contracts below the deployment boundary. |
+
+## The core loop
 
 ```text
-player input -> bounded V2 context -> structured TurnResult
-             -> validation + clone-first commit -> response and snapshot
+Player intent
+    ↓
+Bounded RuntimeContext + structured model result
+    ↓
+Typed validation + clone-first commit
+    ↓
+`RuntimeState` commit
+    ↓
+Committed event, summary, and response
 ```
 
-One model request is normal. At most one shared recovery request handles a
-JSON-mode rejection, malformed response, or validation failure. If recovery is
-exhausted, no state changes and the API returns a typed failure.
+No response establishes world truth by itself. If a result is rejected, the
+engine preserves the byte-identical prior runtime state and returns a typed
+fail-closed error.
 
-## Runtime and saves
+## Start here
 
-`RuntimeState` is the only mutable session truth: world, beat runtime, turn
-index, recent events, and rolling summary. Saves contain a versioned V2
-snapshot, event log, compiled-story content hash, and integrity hash.
-Unsupported legacy snapshots are deliberately rejected as
-`unsupported_save_version` rather than migrated lossily.
-
-Staging and production are isolated by Railway service/volume/secrets/origin
-and session namespace. A successful `main` deploy reaches only staging and
-Pages `/dev/`; promoting production requires a tested immutable SHA.
-
-Before a SHA is eligible for promotion, staging automatically runs all four
-compiled-story fixtures through seven freeform player styles and stores a
-SHA-bound scorecard. A maintainer then performs the four-genre browser review
-and explicitly approves or rejects that SHA. See
-[Phase 5 staging evaluation](docs/phase-5-staging-evaluation.md).
-
-The source tree contains only this V2 runtime. Production promotion is an
-operator action because it changes live traffic; use the exact checklist in
-[production promotion](docs/railway-production-promotion.md) and record the
-result in [the promotion record](docs/production-promotion-record.md).
-
-## Development
-
-- `uv sync` installs dependencies.
-- `make run` runs the hosted adapter locally at `http://127.0.0.1:8000`.
-- `TMPDIR=/tmp uv run pytest -q` runs the required full suite.
-- `uv run ruff check .` checks lint rules.
-
-The API provides `POST /api/v1/session` and `POST /api/v1/turn`, plus health
-and version endpoints. In a turn, `save` and `load` are the retained
-control-plane commands; all other input is freeform story play.
-
-## References
-
-- [Product requirements](docs/PRD.md)
-- [V2 compiled-story authoring](docs/compiled-story-authoring.md)
+- [Product and architecture reference](docs/PRD.md)
 - [LLM-first migration plan](.plans/gpt-refactor.md)
+- [V1 production rollback baseline](docs/release-baseline.md)
 - [V2 acceptance matrix](docs/v2-acceptance-matrix.md)
-- [Release baseline](docs/release-baseline.md)
+- [V2 migration scorecard](docs/v2-acceptance-scorecard.md)
+- [Fact-authority contract](docs/fact-authority.md)
+- [Frozen evaluation baseline](docs/evaluation-baseline.md)
+- [Offline package authoring and playability](docs/offline-package-authoring.md)
+- [V2 compiled-story authoring](docs/compiled-story-authoring.md)
+- [Tiered refactor plan](.plans/tiered-refactor-plan.md)
+- [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
+
+## Requirements
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)
+
+To play with OpenAI, set `OPENAI_API_KEY`. To play locally, install and run an
+Ollama model, then pass `--narrator ollama`. The engine keeps provider
+integrations behind injected adapters, so deterministic tests and offline
+package validation do not require paid inference.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `uv sync` | Install runtime and development dependencies. |
+| `uv run storygame --genre fantasy --tone epic` | Start a CLI story session with OpenAI. |
+| `uv run storygame --narrator ollama --genre fantasy --tone epic` | Start a CLI story session with local Ollama. |
+| `make run` | Start the local web app at `http://127.0.0.1:8000`. |
+| `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
+| `uv run ruff check .` | Check lint rules. |
+| `uv run ruff format .` | Format the codebase. |
+
+For reproducible CLI play, supply a seed:
+
+```text
+uv run storygame --seed 123 --genre sci-fi --tone tense --session-length short
+```
+
+Inside a story, write what your character tries:
+
+```text
+Ask the guide what they noticed.
+Follow the lantern-lit path.
+Examine the strange device.
+```
+
+`save`, `load`, `help`, and `quit` are the only control-plane commands. The
+story itself is open language.
+
+## Quality that travels across genres
+
+Freytag Forge freezes representative mystery, fantasy, sci-fi, and relationship
+fixtures with prompts, adapter revisions, sampling settings, and seeds.
+Evaluation measures proposal validity, direct acceptance, bounded-repair
+success, protected-information leakage, role drift, latency, and token use.
+Those measurements are informational baselines, not disguised release gates.
+The frozen adapter matrix compares the supported OpenAI, Ollama, and
+Cloudflare Workers AI revisions on every fixture turn. Its 95% direct-or-one-
+repair validation target is an informational SLO; scheduled runs are
+credential-free, while any paid provider experiment must be explicitly enabled
+with a bounded request budget.
+
+The ordinary runtime uses a single shared proposal/validation/commit contract
+for freeform moves and deterministic affordances. It permits one recovery
+request; if both planner responses are unusable, it preserves facts and raises
+`ORDINARY_TURN_RECOVERY_EXHAUSTED` for offline evaluation instead of inventing
+a fallback story response.
+
+The project protects the contracts that matter: facts, turn execution, prompt
+scoping, NPC dialogue, persistence, replay, and local/hosted surface parity.
+New story packages should add validated data—not one more special-case branch
+to the engine.
+
+Offline package validation projects every frozen fixture's declared map,
+presentation, character role and knowledge boundaries, item custody,
+discoveries, causal rules, and endings into one authoring contract. Frontier
+models may propose packages or category-scoped repairs only offline; local
+validation remains the acceptance authority. Playability checks exercise six
+scripted player styles for every frozen fixture.
+
+## Project map
+
+```text
+storygame/
+├── authoring/     # V2 immutable compiled-story contracts and compiler
+├── runtime/       # V2 RuntimeState, context, pacing, validation, and engine
+├── engine/        # facts, policy, proposal/commit, perception, NPCs, rules
+├── llm/           # typed adapters, constrained context, prompts, coherence
+├── persistence/   # save state and artifact projections
+├── plot/          # Freytag phases, beats, tension, dramatic policy
+├── web.py         # local web adapter
+└── web_demo.py    # hosted-demo adapter
+
+data/              # validated story, rule, predicate, and evaluation inputs
+├── compiled_stories/ # immutable V2 fixtures, grouped by schema version
+tests/             # unit, component, integration, and evaluation contracts
+docs/              # product, operational, and engineering reference
+```
+
+## The principle
+
+Stories are allowed to surprise the engine. The engine is not allowed to lose
+track of what happened.
