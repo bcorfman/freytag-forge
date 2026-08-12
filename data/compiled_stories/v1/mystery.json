@@ -1,11 +1,38 @@
 {
-  "schema_version": "compiled-story-v1", "id": "mystery_v1", "version": 1, "genre": "mystery", "title": "The Quiet Ledger", "premise": "A missing ledger puts a neighborhood's trust at risk.", "central_question": "Who hid the ledger, and can the truth restore trust?", "initial_world_state": {"location": "square"},
-  "characters": [{"id": "investigator", "name": "Morgan", "role": "investigator", "description": "A careful listener."}],
-  "protected_revelations": [{"id": "culprit", "summary": "The disappearance was staged.", "reveal_after": ["evidence_found"]}],
+  "schema_version": "compiled-story-v1",
+  "id": "vale_mansion_case",
+  "version": 2,
+  "genre": "mystery",
+  "title": "The Vale Mansion Case",
+  "premise": "Detective Elias Wren arrives at Vale Mansion after Emma Vale's death, where a missing ledger payment may expose why the truth was buried.",
+  "central_question": "Can Elias trace the missing payment, prevent a false accusation, and uncover who concealed the truth about Emma Vale's death?",
+  "initial_world_state": {
+    "location": "front_steps",
+    "flags": ["arrived_at_mansion"],
+    "opening_situation": "Rain and fresh mud mark the steps outside Vale Mansion. Emma Vale was last seen shortly before midnight in the west gallery.",
+    "protagonist": {"id": "detective_elias_wren", "name": "Detective Elias Wren", "role": "investigator", "background": "A detective haunted by an old failure who has only just arrived at the mansion."},
+    "public_briefing": {"victim": "Emma Vale", "timeline": "Emma Vale was last seen shortly before midnight in the west gallery.", "lead_suspect": "The groundskeeper was the last verified witness to see Emma alive.", "strongest_lead": "A missing ledger payment tied to the mansion and tonight's visit."},
+    "opening_contact": {"id": "daria_stone", "relationship": "assistant", "scene_purpose": "Brief Elias on the public outline of the death, then bring him inside to review the case file."},
+    "locations": {"front_steps": "Outside the mansion, beside the drive and its mud-marked path.", "foyer": "The dim mansion entry beneath shuttered portraits.", "market_lane": "The lane where a route key marks a service passage.", "records_office": "A place to trace the ledger payment.", "safehouse": "A concealed refuge beyond the records office.", "watch_tower": "A sheltered overlook above the service route.", "old_chapel": "An enclosed final meeting place."},
+    "items": {
+      "case_file": {"holder": "npc:daria_stone", "kind": "tool", "description": "The case file identifies Emma Vale, her last known timeline, the groundskeeper as lead suspect, and the missing ledger payment."},
+      "ledger_page": {"holder": "npc:daria_stone", "kind": "clue", "description": "A weather-sensitive ledger page records a missing payment tied to Vale Mansion and tonight's visit."},
+      "route_key": {"holder": "location:market_lane", "kind": "evidence", "description": "The route key marks a service passage someone expected to use after dark."},
+      "arrival_sedan": {"holder": "location:front_steps", "kind": "vehicle", "description": "Elias's dark sedan remains by the drive where he left it after arriving at the mansion."}
+    }
+  },
+  "characters": [
+    {"id": "detective_elias_wren", "name": "Detective Elias Wren", "role": "investigator", "description": "An observant detective haunted by an old failure, newly arrived to investigate Emma Vale's death."},
+    {"id": "daria_stone", "name": "Daria Stone", "role": "assistant", "description": "Elias's observant assistant, waiting on the mansion steps with the case file and ledger page."},
+    {"id": "emma_vale", "name": "Emma Vale", "role": "victim", "description": "The mansion resident whose death and missing-payment trail start the case."},
+    {"id": "groundskeeper", "name": "The Groundskeeper", "role": "lead_suspect", "description": "The last verified witness to see Emma alive, whose apparent guilt must be tested rather than presumed."}
+  ],
+  "protected_revelations": [{"id": "buried_truth", "summary": "The missing ledger payment identifies who concealed the truth about Emma Vale's death.", "reveal_after": ["buried_truth_exposed"]}],
   "beats": [
-    {"id": "find_evidence", "phase": "rising_action", "summary": "Follow the ledger's trail.", "completion_tags": [{"id": "evidence_found", "description": "A reliable trail is found."}], "pacing": {"nudge_after": 2, "advance_after": 4, "escalate_after": 6, "force_consequence_after": 8}},
-    {"id": "public_crisis", "phase": "crisis", "summary": "Prevent a false accusation.", "prerequisites": ["find_evidence"], "completion_tags": [{"id": "accusation_stopped", "description": "The accusation is stopped."}], "pacing": {"nudge_after": 1, "advance_after": 3, "escalate_after": 5, "force_consequence_after": 7}},
-    {"id": "reveal_truth", "phase": "climax", "summary": "Confront the person responsible.", "prerequisites": ["public_crisis"], "completion_tags": [{"id": "truth_revealed", "description": "The truth is revealed."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 4, "force_consequence_after": 6}},
-    {"id": "restore_trust", "phase": "resolution", "summary": "Show the community's response.", "prerequisites": ["reveal_truth"], "answers_central_question": true, "completion_tags": [{"id": "trust_restored", "description": "The outcome is known."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 3, "force_consequence_after": 5}}
+    {"id": "review_case_file", "phase": "setup", "summary": "Review Daria's case file and establish the public facts of Emma Vale's death.", "completion_tags": [{"id": "case_file_reviewed", "description": "Elias has reviewed the victim timeline, lead suspect, and missing-payment lead."}], "pacing": {"nudge_after": 2, "advance_after": 4, "escalate_after": 6, "force_consequence_after": 8}},
+    {"id": "trace_ledger_payment", "phase": "rising_action", "summary": "Follow the ledger page and route key through the mansion's service passage to establish a reliable payment trail.", "prerequisites": ["review_case_file"], "completion_tags": [{"id": "payment_trail_traced", "description": "A reliable trail connects the missing payment to the night of Emma Vale's death."}], "pacing": {"nudge_after": 2, "advance_after": 4, "escalate_after": 6, "force_consequence_after": 8}},
+    {"id": "test_the_accusation", "phase": "crisis", "summary": "Test the case against the groundskeeper before the household turns suspicion into a false accusation.", "prerequisites": ["trace_ledger_payment"], "completion_tags": [{"id": "false_accusation_stopped", "description": "The evidence prevents the groundskeeper from being condemned without proof."}], "pacing": {"nudge_after": 1, "advance_after": 3, "escalate_after": 5, "force_consequence_after": 7}},
+    {"id": "expose_buried_truth", "phase": "climax", "summary": "Confront the person responsible for concealing the payment trail and the truth about Emma Vale's death.", "prerequisites": ["test_the_accusation"], "completion_tags": [{"id": "buried_truth_exposed", "description": "The concealed truth behind Emma Vale's death is established by evidence."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 4, "force_consequence_after": 6}},
+    {"id": "close_vale_case", "phase": "resolution", "summary": "Show what accountability and the restored record mean for Vale Mansion after the truth is exposed.", "prerequisites": ["expose_buried_truth"], "answers_central_question": true, "completion_tags": [{"id": "case_resolved", "description": "The case's outcome and its consequences for the mansion are clear."}], "pacing": {"nudge_after": 1, "advance_after": 2, "escalate_after": 3, "force_consequence_after": 5}}
   ]
 }

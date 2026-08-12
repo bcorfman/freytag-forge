@@ -1,13 +1,15 @@
 # Freytag Forge PRD
 
-> Migration note (Phase 3): this document describes the current V1 product and
+> Migration note: this document describes the current V1 product and
 > the completed standalone V2 runtime boundary.
 > The LLM-first runtime migration has a pinned V1 rollback target, a testable
 > root/`/dev/` channel contract, and isolated delivery channels. Successful
 > trusted `main` CI deploys only to `/dev/` and Railway staging; production is a
 > manual promotion of a previously staged immutable SHA. Phases 2–3 add
-> isolated, versioned V2 `CompiledStory` inputs and a tested in-process runtime;
-> they do not yet change the public hosted product. See the
+> isolated, versioned V2 `CompiledStory` inputs and a tested in-process runtime.
+> The V2 mystery fixture is a data-only port of the authored Vale Mansion case,
+> while V1 remains the deployed fallback pending V2 staging promotion and
+> observation. See the
 > [refactor plan](../.plans/gpt-refactor.md),
 > [release baseline](release-baseline.md), and
 > [acceptance matrix](v2-acceptance-matrix.md).
