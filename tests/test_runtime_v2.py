@@ -130,6 +130,24 @@ def test_malformed_response_and_recovery_exhaustion_fail_closed() -> None:
     assert len(engine.model.calls) == 2
 
 
+def test_recovery_call_receives_bounded_local_validation_feedback() -> None:
+    class RepairAwareModel:
+        def __init__(self) -> None:
+            self.contexts: list[object] = []
+
+        def play_turn(self, context: object, *, json_object: bool) -> object:
+            self.contexts.append(context)
+            if json_object:
+                return {"narration": "Broken.", "operations": {"add": "invalid"}}
+            return _turn()
+
+    model = RepairAwareModel()
+    assert RuntimeEngine(_state(), model).turn("Search the square.").ok
+    recovery = model.contexts[1]
+    assert recovery.payload["recovery_instruction"].startswith("Your previous response failed local validation:")
+    assert len(recovery.payload["recovery_instruction"]) <= 900
+
+
 def test_json_mode_rejection_uses_one_plain_json_recovery() -> None:
     engine = RuntimeEngine(_state(), StubModel([JsonModeRejected(), json.dumps(_turn())]))
     assert engine.turn("Look around.").ok
