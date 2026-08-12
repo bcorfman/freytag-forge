@@ -129,7 +129,7 @@ def _run_fixture(
             continuity += 1
             return {"passed": False, "failure": "turn_metrics"}, calls, latencies, typed_errors, leaks, continuity, 0
         calls.append(model_calls)
-    for command in ("save", "load"):
+    for command in ("/save staging-evaluation", "/load staging-evaluation"):
         status, result = request("POST", "/api/v1/turn", {"session_id": session_id, "command": command})
         if status != 200 or not _valid_state(result.get("state"), previous_turn):
             continuity += 1

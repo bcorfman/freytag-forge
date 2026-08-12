@@ -413,7 +413,7 @@ def test_run_replay_with_all_stores_runs_to_completion(tmp_path):
     initial_state = build_default_state(seed=21)
     final_state = run_replay(
         seed=21,
-        commands=["look", "save quicksave", "north", "load quicksave"],
+        commands=["look", "/save quicksave", "north", "/load quicksave"],
         save_db=tmp_path / "saves.sqlite",
         memory_db=tmp_path / "memory.sqlite",
     )
