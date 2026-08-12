@@ -23,6 +23,7 @@ SCRIPTED_PLAYER_STYLES: dict[str, str] = {
     "unexpected_action": "I attempt an unusual but plausible action nobody has suggested.",
 }
 Request = Callable[[str, str, dict[str, object] | None], tuple[int, dict[str, object]]]
+Sleep = Callable[[float], None]
 
 
 def run_staging_evaluation(
@@ -30,10 +31,11 @@ def run_staging_evaluation(
     candidate_sha: str,
     *,
     request: Request | None = None,
+    sleep_fn: Sleep = time.sleep,
 ) -> dict[str, Any]:
     """Exercise every V2 fixture and return promotion-gate evidence, never a verdict by prose."""
     api_base_url = api_base_url.rstrip("/")
-    request = request or _http_request(api_base_url)
+    request = _rate_limit_aware(request or _http_request(api_base_url), sleep_fn)
     health_status, health = request("GET", "/api/v1/version", None)
     identity_ok = (
         health_status == 200
@@ -156,14 +158,23 @@ def _p95(samples: list[float]) -> float:
     return sorted(samples)[min(len(samples) - 1, int(len(samples) * 0.95))]
 
 
-def _http_request(api_base_url: str) -> Request:
-    token = os.getenv("FREYTAG_STAGING_EVALUATION_TOKEN", "").strip()
+def _rate_limit_aware(request: Request, sleep_fn: Sleep) -> Request:
+    """Use the public staging limit; retry one bounded time after its window."""
 
+    def call(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
+        status, result = request(method, path, payload)
+        if status == 429 and result.get("status") == "rate_limited":
+            sleep_fn(61)
+            return request(method, path, payload)
+        return status, result
+
+    return call
+
+
+def _http_request(api_base_url: str) -> Request:
     def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
         body = None if payload is None else json.dumps(payload).encode()
         headers = {"Content-Type": "application/json"} if body else {}
-        if token:
-            headers["X-Freytag-Evaluation-Token"] = token
         target = urllib.request.Request(f"{api_base_url}{path}", data=body, method=method, headers=headers)
         try:
             with urllib.request.urlopen(target, timeout=30) as response:
