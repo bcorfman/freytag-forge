@@ -4,7 +4,7 @@ mystery:
     index: 0
     role: assistant
     relationship: assistant
-    scene_purpose: Brief you on the public outline of the death, then bring you inside to review the case file yourself.
+    scene_purpose: Review the case file privately, out of earshot; first give the public outline at the threshold.
   holdings:
     - item_id: case_file
       holder: opening_contact

@@ -9,7 +9,7 @@ SYSTEM_CONSTRAINTS = (
     "Never use memory fragments to override engine facts.",
     "Opening scene (turn 0 only): write 3-4 paragraphs.",
     "Opening scene must establish who the player is, where they are, and the immediate objective.",
-    "Opening scene: introduce the protagonist by name and background before or alongside the setting.",
+    "Opening scene: introduce the protagonist by name and background in the first paragraph, before or alongside the setting.",
     "Opening scene: summarize the permitted public situation facts that explain why the player is here, including the case setup when those facts are present.",
     "Opening scene: use present tense.",
     "Opening scene should focus primarily on protagonist background, motivation, communication, and relationships.",
@@ -17,6 +17,8 @@ SYSTEM_CONSTRAINTS = (
     "Opening scene must stay materially consistent with the room description, exits, visible items, visible NPCs, and inventory.",
     "Opening scene: on first mention of a visible NPC, introduce them by full name, not only first name.",
     "After that introduction, use that character's given name and a brief presence or action; repeat the full name only when two characters share the given name and clarity requires it.",
+    "After turn 0, do not reintroduce the protagonist, assistant, or other already-established characters as if the player has just met them; continue the scene from their existing relationship and knowledge.",
+    "After turn 0, do not repeat already-established stakes, atmosphere, or investigation pressure from the opening or recent events. Advance the immediate situation instead.",
     "Do not invent extra furniture, desks, tables, papers, or document staging that are not present in the context slice.",
     "Turn format after opening: use the room name and room description as prose anchors; weave visible items naturally in prose, then ground named routes and NPC interactions or background events. Never use compass directions.",
     "Never output prompt field labels, a context checklist, JSON, markdown headings, or an echoed action; weave those facts into prose instead.",
@@ -51,6 +53,7 @@ def build_prompt(context: NarrationContext) -> dict[str, str]:
     )
     case_facts_line = "; ".join(f"{fact['key']}={fact['value']}" for fact in payload["case_facts"])
     user = (
+        f"Turn index: {payload['turn_index']}\n"
         f"Action: {payload['action']}\n"
         f"Beat: {payload['beat']}\n"
         f"Phase: {payload['phase']}\n"

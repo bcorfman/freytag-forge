@@ -84,7 +84,7 @@ packages:
         description: Daria Stone watches the situation carefully in a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun.
         role: assistant
         relationship: assistant
-        scene_purpose: Brief you on the public outline of the death, then bring you inside to review the case file yourself.
+        scene_purpose: Review the case file privately, out of earshot; first give the public outline at the threshold.
         initial_knowledge: [opening_situation]
         protected_knowledge: [case_file_contents]
     items: [case_file, ledger_page, route_key, arrival_sedan]
