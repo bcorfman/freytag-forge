@@ -324,17 +324,6 @@ class RuleBasedFreeformProposalAdapter:
         return dialog_payload, action_payload
 
 
-def _resolve_freeform_mode() -> str:
-    configured = os.getenv("FREYTAG_NARRATOR", "").strip().lower()
-    if configured in {"openai", "ollama"}:
-        return configured
-    if os.getenv("OPENAI_API_KEY", "").strip():
-        return "openai"
-    if os.getenv("OLLAMA_BASE_URL", "").strip() or os.getenv("OLLAMA_MODEL", "").strip():
-        return "ollama"
-    return "openai"
-
-
 def _normalize_target(value: str) -> str:
     return _TOPIC_TOKEN.sub("_", value.strip().lower()).strip("_")
 
@@ -780,9 +769,8 @@ def _scene_scoped_dialog_override(
 
 
 class LlmFreeformProposalAdapter:
-    def __init__(self, mode: str | None = None) -> None:
-        self._mode = _resolve_freeform_mode() if mode is None else mode
-
+    def __init__(self, *_ignored: object, **_ignored_options: object) -> None:
+        pass
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
@@ -841,7 +829,7 @@ class LlmFreeformProposalAdapter:
         system: str,
         user: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        payload = _story_agent_json_from_text(_story_agent_chat_complete(self._mode, system, user))
+        payload = _story_agent_json_from_text(_story_agent_chat_complete("cloudflare", system, user))
         if payload is None:
             raise ValueError("planner_non_json")
         dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))

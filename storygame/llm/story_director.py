@@ -37,7 +37,7 @@ _LOGGER = logging.getLogger(__name__)
 class StoryDirector:
     def __init__(
         self,
-        mode: str,
+        provider: str | OutputEditor | None = None,
         output_editor: OutputEditor | None = None,
         story_bootstrap: StoryBootstrapAgent | None = None,
         story_bootstrap_critic: StoryBootstrapCriticAgent | None = None,
@@ -48,16 +48,20 @@ class StoryDirector:
         room_presentation: RoomPresentationAgent | None = None,
         story_replan: StoryReplanAgent | None = None,
     ) -> None:
+        if provider is not None and not isinstance(provider, str):
+            output_editor = provider
+        if isinstance(provider, str) and provider != "cloudflare":
+            raise ValueError("StoryDirector requires the Cloudflare Workers AI provider.")
         self._use_turn_editor = output_editor is not None
-        self._output_editor = build_output_editor(mode) if output_editor is None else output_editor
-        self._story_bootstrap = DefaultStoryBootstrapAgent(mode) if story_bootstrap is None else story_bootstrap
+        self._output_editor = build_output_editor() if output_editor is None else output_editor
+        self._story_bootstrap = DefaultStoryBootstrapAgent() if story_bootstrap is None else story_bootstrap
         self._story_bootstrap_critic = (
-            DefaultStoryBootstrapCriticAgent(mode) if story_bootstrap_critic is None else story_bootstrap_critic
+            DefaultStoryBootstrapCriticAgent() if story_bootstrap_critic is None else story_bootstrap_critic
         )
         self._room_presentation = (
-            DefaultRoomPresentationAgent(mode) if room_presentation is None else room_presentation
+            DefaultRoomPresentationAgent() if room_presentation is None else room_presentation
         )
-        self._story_replan = DefaultStoryReplanAgent(mode) if story_replan is None else story_replan
+        self._story_replan = DefaultStoryReplanAgent() if story_replan is None else story_replan
         self._ignored_legacy_components = any(
             component is not None for component in (story_architect, character_designer, plot_designer, narrator_opening)
         )

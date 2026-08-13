@@ -32,7 +32,7 @@ from storygame.engine.freeform import RuleBasedFreeformProposalAdapter, is_playe
 from storygame.engine.impact import assess_player_command
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
-from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
+from storygame.llm.adapters import CloudflareWorkersAIAdapter, SilentNarrator
 from storygame.llm.coherence import CoherenceTelemetry
 from storygame.llm.context import build_narration_context
 from storygame.llm.contracts import JudgeDecision
@@ -271,9 +271,9 @@ def test_run_replay_selects_curve_from_genre_and_length():
     assert final_state.story_outline_id
 
 
-def test_build_narrator_modes():
-    narrator = _build_narrator("openai")
-    assert isinstance(narrator, OpenAIAdapter)
+def test_build_narrator_uses_cloudflare_worker():
+    narrator = _build_narrator()
+    assert isinstance(narrator, CloudflareWorkersAIAdapter)
     state = build_default_state(seed=1)
     context = build_narration_context(state, parse_command("look"), "hook")
     with suppress(RuntimeError):

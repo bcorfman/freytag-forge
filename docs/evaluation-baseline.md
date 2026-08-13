@@ -6,7 +6,7 @@ and the checked-in projection/transcript snapshot is
 [phase0_baseline.json](../data/phase0_baseline.json).
 It fixes the model identifier, prompt version, temperature, token limit, and
 seed for each evaluation run. The fixture header also freezes the ordinary
-adapter protocol revisions for OpenAI, Ollama, and Cloudflare Workers AI.
+the Cloudflare Workers AI adapter protocol revision.
 
 ## Fixture slices
 
@@ -46,7 +46,7 @@ it does not infer failures from player-facing transcript wording.
 
 ## Stage 4 ordinary-runtime quality
 
-`evaluate_frozen_adapter_matrix` compares OpenAI, Ollama, and Cloudflare
+`evaluate_frozen_adapter_matrix` compares the Cloudflare
 Workers AI adapter revisions across every command in every frozen fixture. The
 credential-free matrix records the same deterministic acceptance criteria for
 each adapter: direct acceptance or success after the one permitted repair,

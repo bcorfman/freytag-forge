@@ -53,8 +53,6 @@ class EvaluationFixture(TypedDict):
 
 
 class AdapterRevisions(TypedDict):
-    openai: str
-    ollama: str
     cloudflare_workers_ai: str
 
 
@@ -197,7 +195,7 @@ def load_evaluation_adapter_revisions(path: Path | None = None) -> AdapterRevisi
     if not isinstance(payload, Mapping):
         raise ValueError("Evaluation fixture payload must be a mapping.")
     raw_revisions = payload.get("adapter_revisions")
-    required = ("openai", "ollama", "cloudflare_workers_ai")
+    required = ("cloudflare_workers_ai",)
     if not isinstance(raw_revisions, Mapping):
         raise ValueError("Evaluation fixture payload requires adapter_revisions.")
     revisions = {adapter: _require_string(raw_revisions, adapter) for adapter in required}

@@ -13,7 +13,6 @@ from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.web_demo import (
     _build_demo_narrator,
     _resolve_demo_cors_allow_origins,
-    _resolve_narrator_mode,
     create_demo_app,
 )
 from tests.fast_fixtures import InMemorySaveStore
@@ -132,12 +131,6 @@ def test_demo_configuration_normalization_is_adapter_independent(monkeypatch):
     monkeypatch.setenv("DEMO_CORS_ALLOW_ORIGINS", "https://one.example, ,https://two.example")
     assert _resolve_demo_cors_allow_origins(None) == ("https://one.example", "https://two.example")
     assert _resolve_demo_cors_allow_origins((" ",)) == ("*",)
-
-    with pytest.raises(ValueError, match="Narrator mode"):
-        _resolve_narrator_mode("invalid")
-    monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
-    assert _resolve_narrator_mode(None) == "ollama"
-
 
 def test_health_identifies_the_deployed_channel_and_revision(tmp_path, monkeypatch):
     monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "staging")

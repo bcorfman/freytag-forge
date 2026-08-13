@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from storygame.llm.story_director import StoryDirector
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web import _resolve_narrator_mode, create_app
+from storygame.web import create_app
 from tests.fast_fixtures import InMemorySaveStore
 from tests.narrator_stubs import StubNarrator
 
@@ -121,23 +121,6 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
 
 
 
-
-
-def test_resolve_narrator_mode_prefers_explicit_and_env(monkeypatch):
-    assert _resolve_narrator_mode("  OLLAMA ") == "ollama"
-    assert _resolve_narrator_mode(" OpenAI ") == "openai"
-
-    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
-    monkeypatch.delenv("OLLAMA_MODEL", raising=False)
-    assert _resolve_narrator_mode(None) == "openai"
-
-    monkeypatch.setenv("OPENAI_API_KEY", "abc")
-    assert _resolve_narrator_mode(None) == "openai"
-
-    monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
-    assert _resolve_narrator_mode("  ") == "ollama"
 
 
 def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):

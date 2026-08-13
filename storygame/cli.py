@@ -30,7 +30,7 @@ from storygame.engine.parser import Action, ActionKind, parse_control_command
 from storygame.engine.presentation import story_status_lines
 from storygame.engine.state import Event, GameState
 from storygame.engine.world import build_default_state
-from storygame.llm.adapters import Narrator, OllamaAdapter, OpenAIAdapter
+from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
 from storygame.llm.coherence import CoherenceTelemetry
 from storygame.llm.context import build_narration_context
 from storygame.llm.contracts import JudgeDecision, NumericDelta
@@ -118,7 +118,7 @@ def filter_opening_room_repetition(state: GameState, paragraphs: list[str]) -> l
 
 
 def _setup_phase_lines(state: GameState, story_director: StoryDirector | None = None) -> list[str]:
-    director = StoryDirector("openai") if story_director is None else story_director
+    director = StoryDirector("cloudflare") if story_director is None else story_director
     opening = filter_opening_room_repetition(state, director.compose_opening(state))
     remember_opening_introductions(state, opening)
     return opening
@@ -706,12 +706,8 @@ def _action_from_proposal(raw: str, action_proposal: dict[str, Any]) -> Action:
     return Action(ActionKind.UNKNOWN, raw=raw)
 
 
-def _build_narrator(mode: str) -> Narrator:
-    if mode == "openai":
-        return OpenAIAdapter()
-    if mode == "ollama":
-        return OllamaAdapter()
-    raise ValueError("Narrator mode must be 'openai' or 'ollama'.")
+def _build_narrator() -> Narrator:
+    return CloudflareWorkersAIAdapter()
 
 
 def _build_memory_tag_set(state: GameState, action) -> tuple[str, ...]:
@@ -774,7 +770,6 @@ def run_turn(
     freeform_adapter: FreeformProposalAdapter = DEFAULT_FREEFORM_ADAPTER,
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
-    narrator_mode: str = "openai",
     _confirmed_high_impact: bool = False,
     _confirmed_assessment: ImpactAssessment | None = None,
 ):
@@ -800,7 +795,6 @@ def run_turn(
                 freeform_adapter=active_freeform_adapter,
                 output_editor=output_editor,
                 story_director=story_director,
-                narrator_mode=narrator_mode,
                 _confirmed_high_impact=True,
                 _confirmed_assessment=confirmed_assessment,
             )
@@ -866,8 +860,8 @@ def run_turn(
         except Exception as exc:
             return state, [f"Failed to load: {exc}"], control_action.raw, "load", True
 
-    editor = build_output_editor(narrator_mode) if output_editor is None else output_editor
-    director = StoryDirector(narrator_mode, editor) if story_director is None else story_director
+    editor = build_output_editor() if output_editor is None else output_editor
+    director = StoryDirector("cloudflare", editor) if story_director is None else story_director
     preturn_state = state
     replan_event = None
     if state.player.flags.get("story_replan_required", False):
@@ -1088,11 +1082,10 @@ def run_replay(
     memory_db: Path | None = None,
     memory_slot: str = "default",
     narrator: Narrator | None = None,
-    narrator_mode: str = "openai",
 ) -> GameState:
     rng = Random(seed)
     state = build_default_state(seed, genre=genre, session_length=session_length, tone=tone)
-    active_narrator: Narrator = _build_narrator(narrator_mode) if narrator is None else narrator
+    active_narrator: Narrator = _build_narrator() if narrator is None else narrator
     save_store: SqliteSaveStore | None = SqliteSaveStore(save_db) if save_db is not None else None
     memory_store: SqliteVectorMemory | None = SqliteVectorMemory(memory_db) if memory_db is not None else None
     try:
@@ -1106,7 +1099,6 @@ def run_replay(
                 save_store=save_store,
                 memory_store=memory_store,
                 memory_slot=memory_slot,
-                narrator_mode=narrator_mode,
             )
             if not _continued:
                 break
@@ -1163,12 +1155,6 @@ def main(argv: list[str] | None = None) -> None:
         help="Auto-save state each turn to this slot (optional).",
     )
     parser.add_argument("--transcript", type=Path, default=None, help="Write transcript to a file")
-    parser.add_argument(
-        "--narrator",
-        choices=("openai", "ollama"),
-        default="openai",
-        help="Narration mode.",
-    )
 
     args = parser.parse_args(argv)
     console = Console()
@@ -1180,10 +1166,10 @@ def main(argv: list[str] | None = None) -> None:
         tone=args.tone,
     )
     rng = Random(args.seed)
-    narrator: Narrator = _build_narrator(args.narrator)
-    freeform_adapter = LlmFreeformProposalAdapter(mode=args.narrator)
-    output_editor = build_output_editor(args.narrator)
-    story_director = StoryDirector(args.narrator, output_editor)
+    narrator: Narrator = _build_narrator()
+    freeform_adapter = LlmFreeformProposalAdapter("cloudflare")
+    output_editor = build_output_editor()
+    story_director = StoryDirector("cloudflare", output_editor)
     save_store: SqliteSaveStore | None = SqliteSaveStore(args.save_db) if args.save_db is not None else None
     memory_store: SqliteVectorMemory | None = SqliteVectorMemory(args.memory_db) if args.memory_db is not None else None
     autosave_slot = args.autosave_slot
@@ -1220,7 +1206,6 @@ def main(argv: list[str] | None = None) -> None:
                     memory_slot=memory_slot,
                     output_editor=output_editor,
                     story_director=story_director,
-                    narrator_mode=args.narrator,
                 )
                 if autosave_slot is not None and save_store is not None:
                     save_store.save_run(
@@ -1251,7 +1236,6 @@ def main(argv: list[str] | None = None) -> None:
                 memory_slot=memory_slot,
                 output_editor=output_editor,
                 story_director=story_director,
-                narrator_mode=args.narrator,
             )
             for line in lines:
                 _emit_cli_line(console, line)
