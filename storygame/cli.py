@@ -1084,7 +1084,12 @@ def run_turn(
     # only generated narration (or an addressed NPC's generated reply).
     lines: list[str] = [narration.strip()] if narration.strip() else []
 
-    if effective_action.kind == ActionKind.MOVE and next_state.player.location != preturn_state.player.location:
+    if (
+        effective_action.kind == ActionKind.MOVE
+        and next_state.player.location != preturn_state.player.location
+        and judge_decision["status"] == "accepted"
+        and not narration.lower().startswith("[narrator failed:")
+    ):
         first_visit = not preturn_state.world_facts.holds("observed", "player", next_state.player.location)
         lines = list(room_arrival_lines(next_state, next_state.player.location, first_visit))
 
