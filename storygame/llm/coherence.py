@@ -533,6 +533,7 @@ def _context_with_memory_fragment(context: NarrationContext, fragment: str) -> N
         goal=context.goal,
         action=context.action,
         memory_fragments=revised_fragments,
+        turn_index=context.turn_index,
     )
 
 

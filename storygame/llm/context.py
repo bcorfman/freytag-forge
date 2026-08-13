@@ -76,6 +76,7 @@ class NarrationContext:
     case_facts: tuple[dict, ...] = ()
     affordances: dict = None
     completion_instruction: str = ""
+    turn_index: int = 0
 
     def as_dict(self) -> dict:
         return {
@@ -110,6 +111,7 @@ class NarrationContext:
             "case_facts": list(self.case_facts),
             "affordances": dict(self.affordances or {}),
             "completion_instruction": self.completion_instruction,
+            "turn_index": self.turn_index,
             "constraints": list(HARD_CONSTRAINTS),
         }
 
@@ -387,4 +389,5 @@ def build_narration_context(
         scene_facts=scene_facts,
         case_facts=permitted_case_facts,
         affordances=build_affordance_context(state),
+        turn_index=state.turn_index,
     )

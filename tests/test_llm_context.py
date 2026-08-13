@@ -3,6 +3,7 @@ from random import Random
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event
+from storygame.llm.coherence import _context_with_memory_fragment
 from storygame.llm.context import MAX_RECENT_EVENTS, build_narration_context
 from storygame.llm.prompts import build_prompt
 from tests.fast_fixtures import make_cached_story_state as build_default_state
@@ -143,6 +144,37 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
     assert f"Assistant anchor: {payload['assistant_name']}" in prompt["user"]
     assert "Assistant role: assistant" in prompt["user"]
     assert "Noah Kade" not in prompt["user"]
+
+
+def test_later_turn_prompt_preserves_opening_continuity_without_reintroductions():
+    state = build_default_state(seed=118, genre="mystery")
+    state.turn_index = 1
+    context = build_narration_context(state, parse_command("go inside"), "hook")
+    prompt = build_prompt(context)
+
+    assert "Turn index: 1" in prompt["user"]
+    assert "introduce the protagonist by name" in prompt["system"].lower()
+    assert "after turn 0, do not reintroduce the protagonist" in prompt["system"].lower()
+    assert "do not repeat already-established stakes" in prompt["system"].lower()
+
+
+def test_narration_revision_preserves_turn_index_for_continuity_rules():
+    state = build_default_state(seed=120, genre="mystery")
+    state.turn_index = 2
+    context = build_narration_context(state, parse_command("look"), "hook")
+
+    revised = _context_with_memory_fragment(context, "Keep the immediate response concise.")
+
+    assert revised.turn_index == 2
+
+
+def test_mystery_opening_contact_requires_private_case_file_review():
+    state = build_default_state(seed=119, genre="mystery")
+    context = build_narration_context(state, parse_command("look"), "setup_scene")
+    assistant = next(fact for fact in context.npc_facts if fact["id"] == "daria_stone")
+
+    assert "private" in assistant["scene_purpose"].lower()
+    assert "out of earshot" in assistant["scene_purpose"].lower()
 
 
 def test_context_can_resolve_assistant_identity_from_facts_without_bundle() -> None:

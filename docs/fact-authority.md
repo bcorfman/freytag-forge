@@ -90,6 +90,14 @@ opening knowledge boundaries, aliases, and effect-template shapes before world
 realization. Opening setup is declared in the validated story package and is
 not a runtime authority.
 
+Opening presentation is turn-aware: turn-zero narration introduces the
+protagonist before the setting and establishes visible contacts once. Later
+turns continue from that context rather than reintroducing people, repeating
+opening stakes, or replaying atmospheric setup. A contact's opening scene
+purpose is declarative package data; packages that defer document review state
+any privacy constraint there so narration keeps protected discussion away from
+witnesses.
+
 `storygame.story_packages` is an offline-only authoring boundary. Its generated
 packages are validated inputs, never runtime mutation authorities: only their
 subsequent realization may assert canonical facts. Package validation requires
