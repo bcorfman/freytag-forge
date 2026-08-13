@@ -486,9 +486,7 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     assert resolved["state"].player.flags.get("reviewed_case_file") is True
     assert "freeform:read_case_file" in resolved["state_update_envelope"]["reasons"]
     assert resolved["event"].delta_progress > 0.0
-    assert case_facts["victim_name"] in resolved["dialog_proposal"]["text"]
-    assert case_facts["victim_timeline"] in resolved["dialog_proposal"]["text"]
-    assert case_facts["strongest_lead"] in resolved["dialog_proposal"]["text"]
+    assert resolved["dialog_proposal"]["text"] != "read the case file"
     assert not resolved["state"].world_facts.holds(
         "player_context",
         "case_file_status",
@@ -519,6 +517,25 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
         "case_file_lead",
         case_facts["strongest_lead"],
     )
+
+
+def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> None:
+    state = build_default_state(seed=4071, genre="mystery")
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"narrator","text":"Review the case file.","tone":"in_world"},'
+            '"action_proposal":{"intent":"review","targets":["case_file"],"arguments":{},"proposed_effects":[]}}',
+            '{"dialog_proposal":{"speaker":"narrator","text":"Daria opens the file between you, and Emma Vale\'s timeline fixes the groundskeeper as the last verified witness.","tone":"in_world"},'
+            '"action_proposal":{"intent":"review","targets":["case_file"],"arguments":{},"proposed_effects":[]}}',
+        )
+    )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", lambda mode, system, user: next(responses))
+
+    dialog, action = LlmFreeformProposalAdapter(mode="openai").propose(state, "review the case file")
+
+    assert "Emma Vale" in dialog["text"]
+    assert action["arguments"]["planner_source"] == "llm"
 
 
 def test_resolve_freeform_roleplay_read_case_file_allows_nearby_assistant_holder() -> None:

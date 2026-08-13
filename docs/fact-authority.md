@@ -98,6 +98,12 @@ purpose is declarative package data; packages that defer document review state
 any privacy constraint there so narration keeps protected discussion away from
 witnesses.
 
+Every non-control-plane player input receives an LLM proposal. Deterministic
+affordance recognition may normalize and commit a document-read effect, but it
+does not author the player-facing reply. A proposal that merely echoes the
+player's statement is invalid, uses the bounded recovery request, and fails
+closed if the retry is also an echo.
+
 `storygame.story_packages` is an offline-only authoring boundary. Its generated
 packages are validated inputs, never runtime mutation authorities: only their
 subsequent realization may assert canonical facts. Package validation requires

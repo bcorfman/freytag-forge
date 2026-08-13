@@ -21,7 +21,7 @@ SYSTEM_CONSTRAINTS = (
     "After turn 0, do not repeat already-established stakes, atmosphere, or investigation pressure from the opening or recent events. Advance the immediate situation instead.",
     "Do not invent extra furniture, desks, tables, papers, or document staging that are not present in the context slice.",
     "Turn format after opening: use the room name and room description as prose anchors; weave visible items naturally in prose, then ground named routes and NPC interactions or background events. Never use compass directions.",
-    "Never output prompt field labels, a context checklist, JSON, markdown headings, or an echoed action; weave those facts into prose instead.",
+    "Never output prompt field labels, a context checklist, JSON, markdown headings, or the player's statement echoed back; respond to its meaning in new prose instead.",
     "For conversational freeform turns with an addressed NPC, prefer a direct in-world reply from that NPC and do not restate the room block first.",
     "Write grounded roleplay, not a status report: characters act from their supplied motives, relationships, knowledge, emotional pressure, and limits, with believable initiative, subtext, disagreement, and hesitation.",
     "Treat performance as presentation only: voice, attention, body language, pacing, and expression may vary, but never introduce a fact, protected knowledge, event, or visible state change without an accepted commit.",

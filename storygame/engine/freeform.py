@@ -17,9 +17,9 @@ from storygame.engine.facts import (
     room_items,
     room_npcs,
 )
-from storygame.engine.presentation import npc_reference_name
 from storygame.engine.interfaces import parse_action_proposal, parse_dialog_proposal, parse_state_update_envelope
 from storygame.engine.perception import observer_context_slice, speaker_context_slice
+from storygame.engine.presentation import npc_reference_name
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.state import Event, GameState
 from storygame.engine.turn_runtime import execute_turn_proposal
@@ -139,6 +139,13 @@ def _planner_relevant_facts(entries: list[object], query_tokens: set[str], broad
     return [entry for entry in entries if query_tokens.intersection(_planner_query_tokens(_planner_fact_text(entry)))]
 
 
+def is_player_statement_echo(raw_input: str, player_facing_text: str) -> bool:
+    """Identify a response that contributes nothing beyond the player's words."""
+    normalized_input = " ".join(re.findall(r"[a-z0-9]+", raw_input.lower()))
+    normalized_output = " ".join(re.findall(r"[a-z0-9]+", player_facing_text.lower()))
+    return bool(normalized_input) and normalized_output == normalized_input
+
+
 def _clean_topic_text(value: str) -> str:
     cleaned = value.strip().strip(" ,.;:!?")
     normalized = _normalize_target(cleaned)
@@ -165,9 +172,7 @@ def _explicit_npc_address_requested(raw_input: str) -> bool:
     words = stripped.lower().split()
     if not words:
         return False
-    if words[0] in _EXPLICIT_CONVERSATION_HEADS:
-        return True
-    return False
+    return words[0] in _EXPLICIT_CONVERSATION_HEADS
 
 
 def _topic_from_raw_input(raw_input: str, text: str) -> str:
@@ -640,6 +645,9 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "and do not invent conflicting wardrobe details. "
         "For an addressed NPC, use addressed_npc_context only for that NPC's private knowledge; "
         "do not infer global truth. "
+        "dialog_proposal.text must answer the player's meaning in new in-world prose; never simply repeat "
+        "or quote player_input. For a readable document, describe its fact-backed contents or the immediate "
+        "in-world consequence of reviewing it. "
         "Write grounded roleplay: characters act from supplied motivations, relationships, knowledge, "
         "pressure, and limits, with room for initiative, subtext, disagreement, and hesitation. "
         "Performance may shape voice, attention, body language, pacing, and expression, but cannot invent "
@@ -822,6 +830,8 @@ class LlmFreeformProposalAdapter:
             raise ValueError("planner_invalid_targeted_dialogue_speaker")
         if _dialogue_contains_code_artifact(dialog_payload):
             raise ValueError("planner_dialogue_code_artifact")
+        if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):
+            raise ValueError("planner_dialogue_player_echo")
         return dialog_payload, action_payload
 
     def _parse_planner_response(
@@ -918,29 +928,13 @@ def _apply_raw_command_overrides(
     lowered = raw_input.strip().lower()
     readable_item = _readable_item_for_input(state, raw_input)
     if readable_item and re.search(r"\b(read|review|examine|inspect)\b", lowered):
-        leads = [fact[2] for fact in state.world_facts.query("document_lead", readable_item, None)]
-        contexts = [fact[3] for fact in state.world_facts.query("document_context", readable_item, None)]
-        item_name = state.world.items[readable_item].name
         action = {
             "intent": "read",
             "targets": [readable_item],
             "arguments": {"source_command": "read"},
             "proposed_effects": [f"read:{readable_item}"],
         }
-        case_values = {
-            fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)
-        }
-        knowledge_values = [
-            case_values[key]
-            for _predicate, _item, key in state.world_facts.query("document_knowledge", readable_item, None)
-            if key in case_values
-        ]
-        dialog = {
-            "speaker": "narrator",
-            "text": " ".join([f"You read the {item_name}.", *knowledge_values, *contexts, *leads]),
-            "tone": "in_world",
-        }
-        return parse_action_proposal(action), parse_dialog_proposal(dialog)
+        return parse_action_proposal(action), dialog_proposal
     return action_proposal, dialog_proposal
 
 
@@ -1164,7 +1158,6 @@ def _format_character_reply_line(
 
     npc = state.world.npcs.get(normalized_speaker)
     speaker_name = npc_reference_name(state, npc) if npc is not None else normalized_speaker.replace("_", " ").title()
-    quoted_match = _DOUBLE_QUOTED_DIALOGUE_PATTERN.search(text)
     double_quoted = re.search(r'"([^"]+)"', text)
     if '"' in text:
         spoken = double_quoted.group(1).strip() if double_quoted is not None else text.strip(" \"'")

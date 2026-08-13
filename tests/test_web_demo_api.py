@@ -536,7 +536,7 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
     assert "daily cap" in payload["detail"].lower()
 
 
-def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
+def test_demo_does_not_call_retired_narrator_after_a_valid_proposal(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -552,9 +552,8 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert bootstrap.status_code == 200
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
-    assert response.status_code == 429
-    payload = response.json()
-    assert payload["status"] == "quota_exhausted"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
 def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
@@ -574,10 +573,8 @@ def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
 
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
 
-    assert response.status_code == 429
-    assert response.json()["status"] == "rate_limited"
-    assert response.headers["X-Narration-Error-Code"] == "AI_CAPACITY_EXCEEDED"
-    assert response.headers["X-Trace-ID"] == "worker-123"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
 def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
@@ -597,12 +594,11 @@ def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
 
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
 
-    assert response.status_code == 502
-    assert response.json()["status"] == "error"
-    assert response.headers["X-Narration-Error-Code"] == "AI_REQUEST_REJECTED"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
-def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
+def test_demo_ignores_retired_narrator_service_failure(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -618,12 +614,11 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert bootstrap.status_code == 200
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
-    assert response.status_code == 503
-    payload = response.json()
-    assert payload["status"] == "service_unavailable"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
-def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
+def test_demo_does_not_log_retired_narrator_failure(tmp_path, caplog):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
@@ -640,11 +635,5 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     assert bootstrap.status_code == 200
     with caplog.at_level(logging.WARNING):
         response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
-    assert response.status_code == 503
-    assert "Narrator failed" in caplog.text
-    assert "backend unavailable" in caplog.text
-    assert session_id in caplog.text
-    assert "command=go to foyer" in caplog.text
-    assert "beat=" in caplog.text
-    assert "location=foyer" in caplog.text
-    assert response.headers["X-Request-ID"] in caplog.text
+    assert response.status_code == 200
+    assert "Narrator failed" not in caplog.text

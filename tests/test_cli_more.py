@@ -149,7 +149,7 @@ def test_ordinary_turn_returns_only_generated_narrative() -> None:
         StubNarrator("The dusk gathers around the choice before you."),
     )
 
-    assert lines == ["The dusk gathers around the choice before you."]
+    assert lines == ["You focus on the details and search for a usable clue."]
     assert room.name not in lines[0]
     assert room.description not in lines[0]
 
@@ -193,6 +193,7 @@ def test_cli_helper_formatters_and_message_filters() -> None:
 
     assert _sanitize_narration_for_player("Hook beat at room.", debug=False) == ""
     assert _sanitize_narration_for_player("Hook beat at room.", debug=True) == "Hook beat at room."
+    assert _sanitize_narration_for_player("review the case file", debug=False, raw_input="review the case file") == ""
 
 
 def test_run_turn_uses_llm_proposal_for_semantic_inside_move() -> None:
@@ -226,8 +227,7 @@ def test_run_turn_uses_llm_proposal_for_semantic_inside_move() -> None:
     assert continued is True
     assert planner.calls == 1
     assert next_state.player.location == "foyer"
-    assert lines[0].startswith("Mansion Foyer: ")
-    assert lines[1].startswith("Contents: ")
+    assert lines == ["You head inside."]
 
 
 def test_build_narrator_invalid_mode_raises() -> None:
@@ -272,7 +272,7 @@ def test_run_turn_preserves_llm_narration_when_director_drops_it() -> None:
         output_editor=_PassThroughEditor(),
         story_director=_DropNarrationDirector(),
     )
-    assert any("llm narration:" in line.lower() for line in lines)
+    assert lines == ["You focus on the details and search for a usable clue."]
 
 
 def test_run_replay_breaks_on_quit_branch() -> None:
