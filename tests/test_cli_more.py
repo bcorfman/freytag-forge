@@ -226,7 +226,8 @@ def test_run_turn_uses_llm_proposal_for_semantic_inside_move() -> None:
     assert continued is True
     assert planner.calls == 1
     assert next_state.player.location == "foyer"
-    assert lines == ["You go inside through the mansion entrance and enter the foyer."]
+    assert lines[0].startswith("Mansion Foyer: ")
+    assert lines[1].startswith("Contents: ")
 
 
 def test_build_narrator_invalid_mode_raises() -> None:

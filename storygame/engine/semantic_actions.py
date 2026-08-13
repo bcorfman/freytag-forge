@@ -69,7 +69,10 @@ def commit_semantic_action(state: GameState, action: SemanticActionProposal) -> 
                 "target_id": target_id,
                 "item_id": item_id,
                 "location_id": location_id,
-                "fact_ops": [{"op": "assert", "fact": fact}],
+                "fact_ops": [
+                    {"op": "assert", "fact": fact},
+                    {"op": "assert", "fact": ("observed", actor_id, location_id)},
+                ],
             },
         )
 

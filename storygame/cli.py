@@ -27,7 +27,7 @@ from storygame.engine.impact import (
     requires_high_impact_confirmation,
 )
 from storygame.engine.interfaces import parse_action_proposal
-from storygame.engine.presentation import story_status_lines
+from storygame.engine.presentation import room_arrival_lines, story_status_lines
 from storygame.engine.parser import Action, ActionKind, parse_command, parse_control_command
 from storygame.engine.rules import apply_action
 from storygame.engine.simulation import advance_turn, run_post_commit_story
@@ -1083,6 +1083,10 @@ def run_turn(
     # a second player-facing prose channel. Ordinary turns therefore expose
     # only generated narration (or an addressed NPC's generated reply).
     lines: list[str] = [narration.strip()] if narration.strip() else []
+
+    if effective_action.kind == ActionKind.MOVE and next_state.player.location != preturn_state.player.location:
+        first_visit = not preturn_state.world_facts.holds("observed", "player", next_state.player.location)
+        lines = list(room_arrival_lines(next_state, next_state.player.location, first_visit))
 
     if debug:
         lines.extend(story_status_lines(next_state))

@@ -355,7 +355,13 @@ flowchart LR
 
 ### Output Contract
 - Non-debug mode keeps player-facing, diegetic output.
-- Bootstrap output includes the opening and initial room presentation. Ordinary turns render generated narration or accepted addressed-NPC dialogue; room, exit, inventory, and visibility facts remain grounded context rather than a competing output channel.
+- Bootstrap output includes the opening and initial room presentation. Ordinary
+  turns render generated narration or accepted addressed-NPC dialogue, except
+  committed player movement: a first observed arrival renders that room's new
+  presentation plus its current contents and exits, while later arrivals render
+  only current contents and exits. Arrival history is fact-backed; inventory,
+  goals, and repeated character introductions remain grounded context rather
+  than a competing output channel.
 - Room presentation uses plain title + prose layout (no bracketed room labels or event bullet prefixes) where a surface renders a room block.
 - Once an NPC has been introduced, later dialogue speaker labels should shorten to first-name-only when unambiguous, including after output-editor review.
 - Room presentation now uses cached long/short descriptions per location: `LOOK` renders long form; non-LOOK turns render short form.
