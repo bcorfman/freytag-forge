@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from storygame.engine.facts import active_story_goal, case_facts, discovered_leads, hidden_story_threads, planned_story_events
+from storygame.engine.facts import (
+    active_story_goal,
+    case_facts,
+    discovered_leads,
+    hidden_story_threads,
+    planned_story_events,
+)
 from storygame.engine.state import GameState, Item, Npc, Room
 
 ACTIONABLE_ITEM_KINDS = {"tool", "clue", "evidence", "vehicle"}
@@ -36,6 +42,29 @@ def is_actionable_item(item: Item) -> bool:
 def room_item_groups(state: GameState, room: Room) -> tuple[tuple[str, ...], int]:
     actionable = tuple(item_id for item_id in room.item_ids if is_actionable_item(state.world.items[item_id]))
     return actionable, len(room.item_ids) - len(actionable)
+
+
+def room_arrival_lines(state: GameState, room_id: str, first_visit: bool) -> tuple[str, ...]:
+    """Render a fact-backed room arrival without replaying the story opening."""
+    room = state.world.rooms[room_id]
+    lines: list[str] = []
+    if first_visit:
+        cache = state.world_package.get("room_presentation_cache", {}).get(room_id, {})
+        description = str(cache.get("long", room.description)).strip()
+        if description:
+            lines.append(f"{room.name}: {description}")
+
+    contents = [state.world.npcs[npc_id].name for npc_id in room.npc_ids if npc_id in state.world.npcs]
+    contents.extend(state.world.items[item_id].name for item_id in room.item_ids if item_id in state.world.items)
+    contents_text = ", ".join(contents) if contents else "nothing notable"
+    exits = [
+        state.world.rooms[destination].name
+        for destination in room.exits.values()
+        if destination in state.world.rooms
+    ]
+    exits_text = ", ".join(exits) if exits else "none"
+    lines.append(f"Contents: {contents_text}. Exits: {exits_text}.")
+    return tuple(lines)
 
 
 def filtered_inventory(state: GameState) -> tuple[str, ...]:

@@ -67,6 +67,7 @@ class FactStore:
 def initialize_world_facts(state) -> None:
     facts = FactStore()
     facts.assert_fact("at", "player", state.player.location)
+    facts.assert_fact("observed", "player", state.player.location)
     for item_id in state.player.inventory:
         facts.assert_fact("holding", "player", item_id)
     for flag_name, enabled in state.player.flags.items():

@@ -617,6 +617,42 @@ def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None
     assert next_state.player.location == "foyer"
 
 
+def test_room_arrivals_return_new_details_once_then_concise_contents_and_exits() -> None:
+    state = build_default_state(seed=22021, genre="mystery")
+
+    inside, inside_lines, _raw, _beat, continued = run_turn(
+        state,
+        "go inside the mansion",
+        Random(22021),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert inside.player.location == "foyer"
+    assert inside_lines[0].startswith("Mansion Foyer: ")
+    assert inside_lines[1].startswith("Contents: ")
+    assert ". Exits: " in inside_lines[1]
+    assert all("inventory" not in line.lower() and "objective" not in line.lower() for line in inside_lines)
+
+    outside, outside_lines, _raw, _beat, continued = run_turn(
+        inside,
+        "GO OUTSIDE",
+        Random(22022),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert outside.player.location == "front_steps"
+    assert len(outside_lines) == 1
+    assert outside_lines[0].startswith("Contents: ")
+    assert ". Exits: " in outside_lines[0]
+    assert "front steps:" not in outside_lines[0].lower()
+
+
 def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
     def _unexpected_advance_turn(*args, **kwargs):  # noqa: ANN002, ANN003
         raise AssertionError("advance_turn should not be used for ordinary movement turns")
