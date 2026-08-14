@@ -9,7 +9,7 @@ from storygame.llm.story_agents import agents as agent_module
 
 def test_narrator_opening_merges_protagonist_name_and_background_in_intro() -> None:
     state = build_default_state(seed=12, genre="mystery", tone="neutral")
-    narrator = DefaultNarratorOpeningAgent("openai")
+    narrator = DefaultNarratorOpeningAgent()
     architect = {
         "protagonist_name": "Noah Kade",
         "protagonist_background": (
@@ -49,7 +49,7 @@ def test_narrator_opening_merges_protagonist_name_and_background_in_intro() -> N
 
 def test_narrator_opening_draft_leans_on_character_pressure_over_scenery() -> None:
     state = build_default_state(seed=13, genre="mystery", tone="neutral")
-    narrator = DefaultNarratorOpeningAgent("openai")
+    narrator = DefaultNarratorOpeningAgent()
     architect = {
         "protagonist_name": "Noah Kade",
         "protagonist_background": "A detective dragged back by an old failure.",
@@ -81,7 +81,7 @@ def test_narrator_opening_draft_leans_on_character_pressure_over_scenery() -> No
 
 def test_narrator_opening_draft_avoids_scenery_led_opening() -> None:
     state = build_default_state(seed=14, genre="mystery", tone="neutral")
-    narrator = DefaultNarratorOpeningAgent("openai")
+    narrator = DefaultNarratorOpeningAgent()
     architect = {
         "protagonist_name": "Noah Kade",
         "protagonist_background": "A detective dragged back by an old failure.",

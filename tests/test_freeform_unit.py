@@ -532,7 +532,7 @@ def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> No
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", lambda mode, system, user: next(responses))
 
-    dialog, action = LlmFreeformProposalAdapter(mode="openai").propose(state, "review the case file")
+    dialog, action = LlmFreeformProposalAdapter().propose(state, "review the case file")
 
     assert "Emma Vale" in dialog["text"]
     assert action["arguments"]["planner_source"] == "llm"
@@ -721,7 +721,7 @@ def test_llm_freeform_adapter_uses_planner_payload_when_valid(monkeypatch) -> No
         )
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "ask daria about the ledger page")
 
     assert dialog["speaker"] == "daria_stone"
@@ -741,7 +741,7 @@ def test_llm_freeform_adapter_normalizes_semantic_move_target_to_destination(mon
         )
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "enter the mansion")
 
     assert dialog["speaker"] == "narrator"
@@ -762,7 +762,7 @@ def test_llm_freeform_adapter_preserves_explicit_named_destination(monkeypatch) 
         )
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    _dialog, action = LlmFreeformProposalAdapter(mode="openai").propose(state, "go to records office")
+    _dialog, action = LlmFreeformProposalAdapter().propose(state, "go to records office")
 
     assert action["intent"] == "move"
     assert tuple(action["targets"]) == ("records_office",)
@@ -893,7 +893,7 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
         )
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "Daria, what are you wearing?")
 
     assert dialog["speaker"] == "daria_stone"
@@ -919,7 +919,7 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_na
         return next(responses)
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
 
     assert dialog["speaker"] == "olivia_thompson"
@@ -946,7 +946,7 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_wrong_npc_answers(m
         return next(responses)
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "Olivia, tell me about the victim")
 
     assert dialog["speaker"] == "olivia_thompson"
@@ -971,7 +971,7 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
         return next(responses)
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "Daria, summarize the case file for me")
 
     assert dialog["speaker"] == "daria_stone"
@@ -995,7 +995,7 @@ def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(
         return next(responses)
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     dialog, action = adapter.propose(state, "HEAD INTO THE MANSION")
 
     assert dialog["speaker"] == "narrator"
@@ -1015,7 +1015,7 @@ def test_llm_freeform_adapter_exhausts_recovery_instead_of_using_a_fallback(monk
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
     with pytest.raises(OrdinaryTurnRecoveryExhausted) as error:
-        LlmFreeformProposalAdapter(mode="openai").propose(state, "head in the front door")
+        LlmFreeformProposalAdapter().propose(state, "head in the front door")
 
     assert error.value.code == "ORDINARY_TURN_RECOVERY_EXHAUSTED"
     assert error.value.attempts == error.value.budget == 2
@@ -1056,7 +1056,7 @@ def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> N
         raise RuntimeError("planner unavailable")
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _boom)
-    adapter = LlmFreeformProposalAdapter(mode="openai")
+    adapter = LlmFreeformProposalAdapter()
     with pytest.raises(OrdinaryTurnRecoveryExhausted, match="ORDINARY_TURN_RECOVERY_EXHAUSTED"):
         adapter.propose(state, "hello")
 
@@ -1073,7 +1073,7 @@ def test_llm_freeform_adapter_uses_at_most_two_provider_requests_when_recovery_f
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _non_json)
 
     with pytest.raises(OrdinaryTurnRecoveryExhausted) as error:
-        LlmFreeformProposalAdapter(mode="openai").propose(state, "try something unexpected")
+        LlmFreeformProposalAdapter().propose(state, "try something unexpected")
 
     assert calls == 2
     assert error.value.attempts == 2

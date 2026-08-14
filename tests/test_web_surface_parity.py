@@ -29,7 +29,6 @@ def _local_client(tmp_path) -> TestClient:
     return TestClient(
         create_app(
             save_db_path=tmp_path / "web_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("A cold certainty settles over the threshold."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -43,7 +42,6 @@ def _demo_client(tmp_path) -> TestClient:
     return TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("A cold certainty settles over the threshold."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),

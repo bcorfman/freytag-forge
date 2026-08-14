@@ -178,6 +178,7 @@ def create_demo_app(
         else freeform_adapter
     )
     use_fast_story_director_opening = story_director is None
+    use_story_director_bootstrap = story_director is not None
     active_story_director = (
         StoryDirector(active_output_editor) if story_director is None else story_director
     )
@@ -370,7 +371,7 @@ def create_demo_app(
                     active_narrator,
                     active_output_editor,
                     use_fast_story_director_opening=use_fast_story_director_opening,
-                    allow_story_director_bootstrap=True,
+                    allow_story_director_bootstrap=use_story_director_bootstrap,
                 )
             except RuntimeError as exc:
                 error_code, trace_id = _narration_failure_metadata(str(exc))
@@ -454,7 +455,7 @@ def _resolve_demo_cors_allow_origins(configured_origins: tuple[str, ...] | None 
     return cleaned or ("*",)
 
 
-def _build_demo_narrator() -> Narrator:
+def _build_demo_narrator(*_ignored: object) -> Narrator:
     return CloudflareWorkersAIAdapter()
 
 

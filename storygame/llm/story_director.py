@@ -50,8 +50,6 @@ class StoryDirector:
     ) -> None:
         if provider is not None and not isinstance(provider, str):
             output_editor = provider
-        if isinstance(provider, str) and provider != "cloudflare":
-            raise ValueError("StoryDirector requires the Cloudflare Workers AI provider.")
         self._use_turn_editor = output_editor is not None
         self._output_editor = build_output_editor() if output_editor is None else output_editor
         self._story_bootstrap = DefaultStoryBootstrapAgent() if story_bootstrap is None else story_bootstrap

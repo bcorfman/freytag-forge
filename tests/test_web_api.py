@@ -39,7 +39,6 @@ def _client(tmp_path, save_store=None):
     return TestClient(
         create_app(
             save_db_path=db_path,
-            narrator_mode="openai",
             narrator=StubNarrator(),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -137,7 +136,6 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     client = TestClient(
         create_app(
             save_db_path=tmp_path / "web_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -173,7 +171,6 @@ def test_web_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkey
     client = TestClient(
         create_app(
             save_db_path=tmp_path / "web_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("Opening fallback."),
             save_store=InMemorySaveStore(),
         )
