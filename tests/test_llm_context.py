@@ -56,12 +56,16 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
         for fact in payload["npc_facts"]
     )
     assert any("have not reviewed the case file yet" in fact.lower() for fact in payload["scene_facts"])
+    assert "private detective" in payload["protagonist_background"].lower()
+    assert "murder" in payload["protagonist_background"].lower()
     assert {fact["key"] for fact in payload["case_facts"]} == {
+        "case_status",
         "victim_name",
         "victim_timeline",
         "lead_suspect",
         "strongest_lead",
     }
+    assert any("murdered" in fact["value"].lower() for fact in payload["case_facts"])
 
 
 def test_prompt_uses_item_labels_not_internal_ids_for_visible_items() -> None:
@@ -137,7 +141,8 @@ def test_context_and_prompt_include_canonical_story_names_for_continuity():
 
     assert payload["protagonist_name"] == "Detective Elias Wren"
     assert payload["assistant_name"] == state.world.npcs[state.world.rooms[state.player.location].npc_ids[0]].name
-    assert payload["protagonist_background"] == "A detective haunted by an old failure."
+    assert "private detective" in payload["protagonist_background"].lower()
+    assert "emma vale's murder" in payload["protagonist_background"].lower()
     assert payload["assistant_role"] == "assistant"
     assert f"Protagonist: {payload['protagonist_name']}" in prompt["user"]
     assert f"Protagonist background: {payload['protagonist_background']}" in prompt["user"]

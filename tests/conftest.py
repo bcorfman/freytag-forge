@@ -53,6 +53,7 @@ _INTEGRATION_FILES = {
     "test_web_demo_api.py",
     "test_web_surface_parity.py",
     "test_hosted_demo_e2e.py",
+    "test_blueprint_runtime_e2e.py",
     "test_vector_memory.py",
     "test_mvp_gaps.py",
     "test_story_state_artifacts.py",

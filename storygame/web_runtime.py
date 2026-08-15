@@ -12,7 +12,7 @@ from storygame.cli import (
     remember_opening_introductions,
     run_turn,
 )
-from storygame.engine.facts import active_story_goal
+from storygame.engine.facts import active_story_goal, protagonist_profile
 from storygame.engine.facts import assistant_name as resolved_assistant_name
 from storygame.engine.freeform import FreeformProposalAdapter
 from storygame.engine.parser import parse_command
@@ -366,9 +366,10 @@ def _bootstrap_opening_from_narrator_opening_agent(
                 "trait": assistant_npc.description or "observant",
             }
         )
+    profile = protagonist_profile(state)
     architect = {
-        "protagonist_name": "Detective Elias Wren",
-        "protagonist_background": "",
+        "protagonist_name": profile["name"],
+        "protagonist_background": profile["background"],
     }
     cast = {"contacts": contacts}
     plan = {
