@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+from copy import deepcopy
+
+import pytest
+
 from storygame.engine.bootstrap import validate_bootstrap_plan
 from storygame.engine.world import build_state_from_bootstrap_plan
 from storygame.llm.bootstrap_contracts import parse_bootstrap_plan, parse_story_outline
@@ -186,3 +191,31 @@ def test_build_state_from_bootstrap_plan_realizes_world_and_facts() -> None:
     assert state.world_facts.holds("active_goal", "Recover the stolen ledger before it leaves the estate.")
     assert state.world_package["bootstrap_plan"]["outline_id"] == "estate_theft"
     assert len(state.world_package["trigger_specs"]) == 2
+
+
+def test_bootstrap_plan_validation_rejects_each_cross_reference_boundary() -> None:
+    mutations = (
+        ("duplicate location", lambda plan: plan["locations"].append(deepcopy(plan["locations"][0]))),
+        ("duplicate character", lambda plan: plan["characters"].append(deepcopy(plan["characters"][0]))),
+        ("duplicate item", lambda plan: plan["items"].append(deepcopy(plan["items"][0]))),
+        ("unknown protagonist", lambda plan: plan.update(protagonist_id="missing")),
+        ("unknown exit", lambda plan: plan["locations"][0]["exits"].update(north="missing")),
+        ("unknown character location", lambda plan: plan["characters"][0].update(location_id="missing")),
+        ("unknown inventory item", lambda plan: plan["characters"][0].update(inventory=["missing"])),
+        ("unplaced item", lambda plan: plan["items"][0].update(location_id="", holder_id="")),
+        ("unknown item location", lambda plan: plan["items"][0].update(location_id="missing")),
+        ("unknown holder", lambda plan: plan["items"][1].update(holder_id="missing")),
+        ("duplicate goal", lambda plan: plan["goals"].append(deepcopy(plan["goals"][0]))),
+        ("duplicate trigger", lambda plan: plan["triggers"].append(deepcopy(plan["triggers"][0]))),
+        ("unknown trigger actor", lambda plan: plan["triggers"][0].update(actor_ids=["missing"])),
+        ("unknown trigger target", lambda plan: plan["triggers"][0].update(target_ids=["missing"])),
+        ("unknown trigger item", lambda plan: plan["triggers"][0].update(item_ids=["missing"])),
+        ("unknown trigger location", lambda plan: plan["triggers"][0].update(location_ids=["missing"])),
+    )
+
+    for label, mutate in mutations:
+        plan = json.loads(json.dumps(_validated_bootstrap_plan()))
+        mutate(plan)
+        with pytest.raises(ValueError):
+            validate_bootstrap_plan(parse_bootstrap_plan(plan))
+        assert label
