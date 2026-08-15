@@ -181,6 +181,30 @@ def test_contract_is_immutable_after_parsing() -> None:
         blueprint.title = "Changed"  # type: ignore[misc]
 
 
+def test_contract_rejects_an_evidence_location_class_that_is_not_declared() -> None:
+    payload = _blueprint()
+    payload["location_classes"] = [{"id": "records", "summary": "A controlled records room."}]
+    payload["evidence_placements"] = [
+        {
+            "id": "ledger",
+            "truth_id": "key_evidence",
+            "custody": "The clerk keeps it secured.",
+            "location_classes": ["missing"],
+        }
+    ]
+
+    with pytest.raises(BlueprintValidationError, match="UNKNOWN_REFERENCE"):
+        validate_story_blueprint(payload)
+
+
+def test_contract_rejects_knowledge_of_a_truth_that_does_not_exist() -> None:
+    payload = _blueprint()
+    payload["participant_knowledge"] = [{"party_id": "witness", "known_truths": ["missing"]}]
+
+    with pytest.raises(BlueprintValidationError, match="UNKNOWN_REFERENCE"):
+        validate_story_blueprint(payload)
+
+
 @pytest.mark.parametrize("genre", ["mystery", "fantasy", "sci-fi", "relationship"])
 def test_checked_in_cross_genre_blueprint_fixtures_load(genre: str) -> None:
     assert load_story_blueprint_fixture(genre).genre == genre

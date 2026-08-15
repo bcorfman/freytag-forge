@@ -44,6 +44,14 @@ repair status; it is not a runtime input or mutable authority. The
 `storygame-blueprint` command is explicitly live-opt-in and never overwrites a
 reviewed fixture.
 
+Phase 4 adds an editor-reviewed Vale Mansion vertical slice at
+`data/story_blueprints/v1/vale_mansion_case.yaml`. The offline artifact
+declares the complete solution, initial party knowledge, bounded timeline,
+evidence custody, location classes, alternate routes, and protected release
+order. Its acceptance contracts prove two evidence-backed solution paths and
+reject early unsupported completion. It remains an immutable authoring input;
+runtime fact realization and progression enforcement begin in Phase 5.
+
 ## Goals
 - Deliver a playable CLI and web IF experience.
 - Keep world-state progression deterministic and replayable.

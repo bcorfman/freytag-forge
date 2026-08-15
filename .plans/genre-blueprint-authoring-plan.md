@@ -218,25 +218,25 @@ blueprint and an invalid model result cannot become a playable package.
 
 **Goal:** prove the contract with the demo without contaminating shared runtime.
 
-1. Create `data/story_blueprints/v1/vale_mansion_case.yaml`, generated then
+1. [x] Create `data/story_blueprints/v1/vale_mansion_case.yaml`, generated then
    editor-reviewed. Declare the complete crime solution, all parties’ knowledge,
    a minute-level or bounded-window timeline, and evidence/concealment facts.
-2. Define a reveal ladder: death is suspicious; the payment trail matters;
+2. [x] Define a reveal ladder: death is suspicious; the payment trail matters;
    groundskeeper accusation is unsound; the true perpetrator’s means/motive/
    opportunity are established; the case outcome is decided.
-3. Give every pivotal revelation at least two distinct routes—physical trace,
+3. [x] Give every pivotal revelation at least two distinct routes—physical trace,
    document, testimony, observed behavior, or consequence-created trace—and
    state their availability, custody, and failure-forward behavior.
-4. Replace the linear, generic map-only path with declarative location classes
+4. [x] Replace the linear, generic map-only path with declarative location classes
    and routes that can realize the same evidence in several appropriate places.
    Preserve canonical truth: alternate delivery may not change who killed Emma
    or what evidence proves it.
-5. Write acceptance tests from player perspective: solve through each route,
+5. [x] Write acceptance tests from player perspective: solve through each route,
    miss/contaminate a clue, accuse the groundskeeper early, pursue an unrelated
    action, and verify that the player can neither receive protected truth nor
    complete the accusation/exposure beats without supporting facts.
 
-**Exit criteria:** Vale Mansion is fairly solvable through more than one route,
+**Exit criteria:** [x] Vale Mansion is fairly solvable through more than one route,
 and its final answer follows committed evidence rather than narration or a bare
 completion tag.
 
