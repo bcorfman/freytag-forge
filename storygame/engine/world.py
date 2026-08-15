@@ -189,6 +189,7 @@ def _build_rooms(package: dict) -> dict[str, Room]:
 def _apply_opening_setup(state: GameState, package: dict) -> None:
     setup = dict(package.get("opening_setup", {}))
     protagonist_name = str(setup.get("protagonist_name", "")).strip()
+    protagonist_background = str(setup.get("protagonist_background", "")).strip()
     contact = dict(setup.get("opening_contact", {}))
     contact_id = str(contact.get("id", "")).strip()
     if not contact_id and "index" in contact:
@@ -200,6 +201,8 @@ def _apply_opening_setup(state: GameState, package: dict) -> None:
     ops: list[dict[str, object]] = []
     if protagonist_name:
         ops.append({"op": "assert", "fact": ("player_name", protagonist_name)})
+    if protagonist_background:
+        ops.append({"op": "assert", "fact": ("player_background", protagonist_background)})
     if contact_npc is not None:
         role = str(contact.get("role", "")).strip()
         relationship = str(contact.get("relationship", "")).strip()

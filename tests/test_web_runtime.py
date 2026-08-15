@@ -209,6 +209,9 @@ class _OpeningAgent:
     def run(self, state, architect, cast, plan):  # noqa: ANN001
         assert cast["contacts"]
         assert plan["assistant_name"]
+        assert architect["protagonist_name"] == "Detective Elias Wren"
+        assert "private detective" in architect["protagonist_background"].lower()
+        assert "murder" in architect["protagonist_background"].lower()
         return ["An agent-authored opening."]
 
 
