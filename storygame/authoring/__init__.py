@@ -1,5 +1,13 @@
 """Offline V2 story authoring contracts and compiler boundary."""
 
+from storygame.authoring.blueprint_compiler import (
+    BlueprintCompilation,
+    BlueprintCompilationError,
+    BlueprintCompiler,
+    BlueprintCriticResult,
+    BlueprintProvenance,
+    RouteFairnessCritic,
+)
 from storygame.authoring.blueprint_contracts import (
     BlueprintValidationError,
     CanonicalTruth,
@@ -26,6 +34,11 @@ __all__ = [
     "Beat",
     "BeatPacing",
     "BlueprintValidationError",
+    "BlueprintCompilation",
+    "BlueprintCompilationError",
+    "BlueprintCompiler",
+    "BlueprintCriticResult",
+    "BlueprintProvenance",
     "CanonicalTruth",
     "Character",
     "CompilationError",
@@ -47,6 +60,7 @@ __all__ = [
     "RealizationRoute",
     "Revelation",
     "RouteSatisfier",
+    "RouteFairnessCritic",
     "SourceOutlineProvenance",
     "StoryBlueprint",
     "validate_compiled_story",

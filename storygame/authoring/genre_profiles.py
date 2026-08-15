@@ -43,6 +43,7 @@ class GenreProfile(_ProfileContract):
     turning_points: tuple[TurningPoint, ...] = Field(min_length=1, max_length=16)
     ending_truth_roles: tuple[str, ...] = Field(default=(), max_length=32)
     evidence_requirements: tuple[EvidenceRequirement, ...] = Field(default=(), max_length=32)
+    minimum_routes_per_required_revelation: int = Field(default=2, ge=1, le=16)
     policy_mappings: Mapping[str, str] = Field(default_factory=dict)
 
 
@@ -57,6 +58,10 @@ class DeclarativeGenreBlueprintValidator:
 
     def __init__(self, profile: GenreProfile) -> None:
         self._profile = profile
+
+    @property
+    def profile(self) -> GenreProfile:
+        return self._profile
 
     def validate(self, blueprint: StoryBlueprint) -> StoryBlueprint:
         story = validate_story_blueprint(blueprint)
@@ -149,6 +154,11 @@ class GenreProfileRegistry:
 
     def __init__(self, validators: Mapping[str, GenreBlueprintValidator]) -> None:
         self._validators = dict(validators)
+        self._profiles = {
+            genre: validator.profile
+            for genre, validator in validators.items()
+            if isinstance(validator, DeclarativeGenreBlueprintValidator)
+        }
 
     @classmethod
     def from_directory(cls, root: Path | None = None) -> GenreProfileRegistry:
@@ -167,6 +177,12 @@ class GenreProfileRegistry:
     def resolve(self, genre: str) -> GenreBlueprintValidator:
         try:
             return self._validators[genre]
+        except KeyError as exc:
+            raise BlueprintValidationError("GENRE_PROFILE_NOT_FOUND", genre) from exc
+
+    def profile(self, genre: str) -> GenreProfile:
+        try:
+            return self._profiles[genre]
         except KeyError as exc:
             raise BlueprintValidationError("GENRE_PROFILE_NOT_FOUND", genre) from exc
 

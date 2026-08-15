@@ -1,6 +1,6 @@
 # Genre-blueprint authoring baseline
 
-Phases 0–2 establish the offline authoring boundary for Story Blueprints. They
+Phases 0–3 establish the offline authoring boundary for Story Blueprints. They
 do not change gameplay, package realization, or the current V2 runtime.
 
 ## Phase-1 generic contract
@@ -48,6 +48,34 @@ wound/need/choice/outcome structures.
 Adding a genre requires a profile, an injected validator adapter where the
 declarative adapter is insufficient, and valid/invalid fixtures. It does not
 authorize a new runtime branch or make a blueprint mutable.
+
+## Phase-3 compilation and evaluation
+
+`storygame.authoring.blueprint_compiler.BlueprintCompiler` accepts one raw
+outline, a selected injected `GenreProfileRegistry`, and a provider transport.
+The transport receives an explicit `json_object=True` choice. A JSON-mode
+rejection, malformed response, or local schema/profile/provenance failure uses
+the single shared fallback request with `json_object=False`; after that the
+compiler raises `BLUEPRINT_COMPILATION_EXHAUSTED`. No rejected response is a
+playable authoring input.
+
+The compiler plans from the profile terminal truth and asks for phases,
+required and optional beats, routes, protections, pressure, and
+failure-forward declarations. It validates the selected outline ID and SHA-256
+hash against the candidate's source provenance before critique. Injected
+continuity, causality, and dialogue critics receive the complete blueprint and
+opening facts. `RouteFairnessCritic` additionally requires the profile's
+`minimum_routes_per_required_revelation` genuinely distinct route roles for
+every required revelation (default: two). One injected repairer may revise a
+rejected candidate; the repaired result is fully revalidated and re-reviewed.
+
+`BlueprintCompilation` retains a review record: prompt version, source outline
+hash and ID, model metadata, validation diagnostics, critic results, request
+count, and whether repair occurred. The `storygame-blueprint` operator command
+is deliberately live-only: both `--live` and
+`FREYTAG_ENABLE_LIVE_COMPILER=1` are required, a transport factory is injected,
+and output must be a new `*.candidate.json` envelope. It never overwrites a
+reviewed fixture or makes raw outlines runtime inputs.
 
 ## Authority map
 

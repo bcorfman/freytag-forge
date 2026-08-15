@@ -6,4 +6,5 @@ allowed_revelation_roles: [discovery, decision]
 phase_order: [exposition, disruption, rising_action, midpoint_reversal, crisis, climax, falling_action, resolution]
 turning_points: [{role: disruption, phase: disruption}, {role: reversal, phase: midpoint_reversal}, {role: crisis, phase: crisis}, {role: climax, phase: climax}, {role: resolution, phase: resolution}]
 ending_truth_roles: [rule, cost]
+minimum_routes_per_required_revelation: 2
 policy_mappings: {climax_requires_required_discoveries: "true"}

@@ -44,6 +44,15 @@ profile's causal roles, revelation and evidence routes, Freytag turning points,
 phase order, and viable genre endings—without introducing runtime genre
 branches.
 
+Phase 3 adds the offline-only `BlueprintCompiler`. It requests an explicit
+JSON-object response, performs at most one plain-JSON recovery request, locally
+validates the blueprint and selected genre profile, and reviews route fairness
+before emitting a reviewable candidate. Candidate provenance records the source
+outline hash, prompt version, model metadata, validation diagnostics, critics,
+and any single repair. `storygame-blueprint` requires both `--live` and
+`FREYTAG_ENABLE_LIVE_COMPILER=1`, and refuses to overwrite files or write a
+candidate under a reviewed-fixture name.
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
@@ -110,6 +119,7 @@ validation do not require inference.
 | --- | --- |
 | `uv sync` | Install runtime and development dependencies. |
 | `uv run storygame --genre fantasy --tone epic` | Start a CLI story session through the Cloudflare Worker. |
+| `FREYTAG_ENABLE_LIVE_COMPILER=1 uv run storygame-blueprint --live --outline-id 123 --genre mystery --transport-factory package.module:factory --output data/story_blueprints/candidates/mystery_123.candidate.json` | Opt in to compile one raw outline into a non-overwriting reviewed-candidate envelope. |
 | `make run` | Start the local web app at `http://127.0.0.1:8000`. |
 | `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
 | `uv run ruff check .` | Check lint rules. |

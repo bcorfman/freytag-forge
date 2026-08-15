@@ -33,6 +33,17 @@ bootstrap or gameplay. A one-way reduced
 projection keeps the public `CompiledStory` fixture API available while future
 consumers migrate. See [genre-blueprint authoring](genre-blueprint-authoring.md).
 
+Phase 3 adds the offline-only blueprint compilation and review workflow.
+`BlueprintCompiler` requests provider JSON-object mode through an explicit
+transport option, retries at most once without that option, locally validates
+the complete generic/profile contract and source-outline provenance, then runs
+injected whole-blueprint critics and the route-fairness specialist. One bounded
+repair may be revalidated and re-reviewed. The resulting candidate envelope
+records prompt/version, model metadata, source hash, diagnostics, reviews, and
+repair status; it is not a runtime input or mutable authority. The
+`storygame-blueprint` command is explicitly live-opt-in and never overwrites a
+reviewed fixture.
+
 ## Goals
 - Deliver a playable CLI and web IF experience.
 - Keep world-state progression deterministic and replayable.

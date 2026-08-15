@@ -20,6 +20,7 @@ turning_points:
   - {role: climax, phase: climax}
   - {role: resolution, phase: resolution}
 ending_truth_roles: [crime_solution]
+minimum_routes_per_required_revelation: 2
 evidence_requirements:
   - {revelation_role: identify_party, subject_role: perpetrator, route_roles: [physical_evidence, document]}
   - {revelation_role: exonerate_party, subject_role: perpetrator, route_roles: [physical_evidence, testimony, document]}
