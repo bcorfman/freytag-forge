@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from storygame.runtime.blueprint import blueprint_observer_context
 from storygame.runtime.pacing import PaceDirective, PacingController
 from storygame.runtime.state import RuntimeState
 
@@ -69,5 +70,13 @@ class RuntimeContextBuilder:
                 "material_progress": "boolean",
             },
         }
+        if state.blueprint_runtime is not None:
+            payload["blueprint"] = blueprint_observer_context(state.blueprint_runtime, "player")
+            payload["turn_result_contract"]["beat_updates"] = (
+                "array of {beat_id,route_id,evidence_ids,route_failed}; use [] when no route resolves"
+            )
+            payload["turn_result_contract"]["route_rule"] = (
+                "select only an id in blueprint.legal_routes; never invent routes or evidence ids"
+            )
         encoded = json.dumps(payload, default=list, separators=(",", ":"))
         return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)

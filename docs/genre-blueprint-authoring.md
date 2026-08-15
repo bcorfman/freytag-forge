@@ -1,7 +1,8 @@
 # Genre-blueprint authoring baseline
 
-Phases 0–4 establish the offline authoring boundary for Story Blueprints. They
-do not change gameplay, package realization, or the current V2 runtime.
+Phases 0–5 establish the authoring boundary and its first fact-backed V2
+runtime realization. Blueprints remain immutable and do not replace canonical
+runtime facts.
 
 ## Phase-1 generic contract
 
@@ -18,8 +19,8 @@ Routes provide declarative truth satisfiers, availability constraints, eligible
 location classes, and a bounded failure-forward result. Evidence placements
 declare immutable custody and their valid location classes; participant
 knowledge declares what each party starts knowing. They are not executable
-runtime effects. Phase 5 will realize accepted declarations using the existing
-typed fact predicates and consequence contracts; no blueprint prose can mutate
+runtime effects. Phase 5 realizes accepted declarations into a dedicated V2
+fact map using the shared typed turn contract; no blueprint prose can mutate
 session state.
 
 Minimal immutable fixtures live in `data/story_blueprints/v1/` for mystery,
@@ -112,8 +113,28 @@ class, availability requirements, custody via evidence placement, and a
 failure-forward outcome. `tests/test_vale_mansion_blueprint.py` exercises a
 physical route and a document/testimony route, early groundskeeper accusation,
 an unrelated action, and failed/contaminated-clue progression. These are
-authoring acceptance contracts: they prove the immutable graph is fair and do
-not claim that Phase-5 runtime realization is already present.
+authoring acceptance contracts: they prove the immutable graph is fair.
+`tests/test_blueprint_runtime.py` additionally proves its Phase-5 fact
+realization, protected player context, evidence-backed route validation,
+atomic rejection, and failure-forward commit behavior.
+
+## Phase-5 runtime realization
+
+`realize_blueprint` copies a validated blueprint's canonical truth summaries,
+evidence availability and custody, participant knowledge, scene state,
+relationships, opposition clocks, revelation/beat state, and route history into
+one mutable fact map. `ProgressionValidator` accepts a stable route ID only if
+the route is currently legal and any supplied evidence IDs are available and
+support its satisfiers. It commits the route's declared truths—or its bounded
+failure-forward truths when `route_failed` is set—before returning. A rejected
+route leaves the fact map unchanged.
+
+For a V2 state bootstrapped with a blueprint, `BeatUpdate` requires `route_id`;
+the retained bare `completion_tags` bridge cannot advance blueprint
+progression. `RuntimeContextBuilder` adds only earned truth IDs and legal route
+metadata to the turn prompt, preserving the existing one-request plus one
+recovery-request budget. Protected canonical truth summaries never enter that
+observer context before their authored route conditions have completed.
 
 ## Authoring-quality suite
 

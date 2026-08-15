@@ -43,9 +43,10 @@ For an offline authoring experiment, inject a transport into
 runtime execution. `compile` remains available for injected deterministic
 transports used by authoring tests.
 
-Phase 3 consumes these immutable inputs through
-`storygame.runtime.bootstrap_runtime_state`. `RuntimeState` is the sole mutable
-session authority; compiled stories remain immutable inputs.
+`storygame.runtime.bootstrap_runtime_state` retains `CompiledStory` as its
+public bridge input and can additionally receive a validated Story Blueprint.
+The blueprint is realized into the runtime's fact-backed progression map; the
+immutable inputs remain authoring data, never mutation authorities.
 
 The V2 `mystery` fixture is a declarative projection of the retained authored
 Vale Mansion case: Detective Elias Wren, Daria Stone, Emma Vale's death, the

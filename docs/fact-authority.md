@@ -16,9 +16,11 @@ both representations contain a value. `StoryState.json` and `STORY.md` render
 runtime location, inventory, flags, room contents, and active goal from facts;
 their existing integrity hash chain remains enforced.
 
-The future Story Blueprint is also immutable authoring input. It will compile
-offline from a raw outline and genre profile, then realize declarations into
-canonical facts at bootstrap. Neither a raw outline, `WorldPackage`, legacy
+The immutable Story Blueprint compiles offline from a raw outline and genre
+profile, then realizes its declarations into the V2 blueprint fact map at
+bootstrap. Route discoveries, evidence availability/custody, participant
+knowledge, scene state, clocks, completed revelations, and beat state mutate
+only through that map. Neither a raw outline, `WorldPackage`, legacy
 `StoryPackage`, `CompiledStory`, nor Blueprint prose can mutate a live session.
 The complete Phase-0 authority map and Vale Mansion causality baseline are in
 [genre-blueprint authoring](genre-blueprint-authoring.md).
