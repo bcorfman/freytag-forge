@@ -244,27 +244,27 @@ completion tag.
 
 **Goal:** join authoring causality to the existing fact-backed runtime.
 
-1. Add a bootstrap adapter that realizes a validated blueprint into the existing
+1. [x] Add a bootstrap adapter that realizes a validated blueprint into the existing
    canonical fact store: truths, evidence, availability/custody, knowledge,
    scene state, clocks, beat state, and protected revelation boundaries.
-2. Extend shared proposal/commit contracts with a stable `route_id` and optional
+2. [x] Extend shared proposal/commit contracts with a stable `route_id` and optional
    `evidence_ids`; validate them against currently available blueprint-derived
    facts. The model may propose a route, but cannot invent one.
-3. Replace V2 bare completion-tag acceptance with a generic
+3. [x] Replace V2 bare completion-tag acceptance with a generic
    `ProgressionValidator`: a beat completes only after declared revelation and
    evidence/realization conditions are true. Maintain monotonic prerequisites
    and atomic rollback on rejection.
-4. Extend incidents and consequences to select from blueprint-declared routes
+4. [x] Extend incidents and consequences to select from blueprint-declared routes
    using current location, observer knowledge, custody, relationships, pressure,
    and clocks. A failed route commits its declared bounded consequence before
    narration and exposes an altered viable route.
-5. Build runtime prompt context exclusively from observer-scoped facts and
+5. [x] Build runtime prompt context exclusively from observer-scoped facts and
    currently legal routes; do not expose canonical solution fields unless the
    player has earned their relevant facts.
-6. Preserve one normal provider request and the shared two-request recovery
+6. [x] Preserve one normal provider request and the shared two-request recovery
    cap. Add timing and request-count tests around blueprint-aware turns.
 
-**Exit criteria:** a bounded runtime model can flexibly realize an authored route
+**Exit criteria:** [x] a bounded runtime model can flexibly realize an authored route
 without becoming the authority for story truth or progression.
 
 ### Phase 6 — Expand fixtures and migrate deployment safely

@@ -26,6 +26,9 @@ class StateOperation(BaseModel):
 class BeatUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     beat_id: str = Field(min_length=1, max_length=80)
+    route_id: str | None = Field(default=None, min_length=1, max_length=80)
+    evidence_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    route_failed: bool = False
     completion_tags: tuple[str, ...] = Field(default=(), max_length=16)
     evidence: str = Field(default="", max_length=800)
 

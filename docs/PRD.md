@@ -50,7 +50,12 @@ declares the complete solution, initial party knowledge, bounded timeline,
 evidence custody, location classes, alternate routes, and protected release
 order. Its acceptance contracts prove two evidence-backed solution paths and
 reject early unsupported completion. It remains an immutable authoring input;
-runtime fact realization and progression enforcement begin in Phase 5.
+Phase 5 realizes it into a fact-backed progression map at V2 bootstrap. A
+turn can propose only a declared `route_id` with optional `evidence_ids`; local
+progression policy validates current route availability and revelation/evidence
+conditions before atomically committing facts. Bare completion tags are
+rejected for blueprint-backed sessions, and the prompt receives only
+observer-earned facts and legal route metadata.
 
 ## Goals
 - Deliver a playable CLI and web IF experience.

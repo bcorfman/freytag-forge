@@ -58,8 +58,15 @@ Phase 4 adds the editor-reviewed Vale Mansion blueprint at
 crime solution, party knowledge, bounded timeline, evidence custody, location
 classes, protected truth, and two fair routes through every pivotal revelation.
 Its authoring acceptance suite verifies that a solved case follows declared
-evidence rather than a narration or completion tag. Runtime realization stays
-in Phase 5; facts remain the only mutable session authority.
+evidence rather than a narration or completion tag.
+
+Phase 5 realizes an accepted blueprint into a dedicated fact map at V2
+bootstrap. The shared turn contract carries a declared `route_id`, optional
+`evidence_ids`, and a failed-route signal. `ProgressionValidator` accepts only
+currently legal authored routes, atomically commits their satisfiers or bounded
+failure-forward facts, and rejects bare completion tags. Runtime prompts expose
+only player-earned truths and legal route metadata; protected canon remains out
+of model context until its declared revelation completes.
 
 ## Why it’s different
 
