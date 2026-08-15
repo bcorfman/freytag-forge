@@ -54,12 +54,12 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
     room_id = state.player.location
     npc_id = state.world.rooms[room_id].npc_ids[0]
 
-    captured: list[NarrationContext] = []
+    retrieved_tags: list[tuple[str, ...]] = []
+    retrieved_fragments: list[tuple[str, ...]] = []
 
-    class _CaptureNarrator:
+    class _ProposalFirstNarrator:
         def generate(self, context: NarrationContext) -> str:
-            captured.append(context)
-            return ""
+            raise AssertionError("Proposal-first turns must not make a second narrator request.")
 
     class _NpcReplyAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001
@@ -78,6 +78,15 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             )
 
     with SqliteVectorMemory(db_path) as memory_store:
+        original_retrieve = memory_store.retrieve
+
+        def retrieve(slot: str, tags: tuple[str, ...]) -> tuple[str, ...]:
+            retrieved_tags.append(tags)
+            fragments = original_retrieve(slot, tags)
+            retrieved_fragments.append(fragments)
+            return fragments
+
+        memory_store.retrieve = retrieve  # type: ignore[method-assign]
         memory_store.add_memory(
             "run",
             "A key ally trusts your judgment after repeated visits.",
@@ -89,7 +98,7 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             state,
             "look",
             rng,
-            _CaptureNarrator(),
+            _ProposalFirstNarrator(),
             memory_store=memory_store,
             memory_slot="run",
         )
@@ -97,14 +106,15 @@ def test_run_turn_stores_and_retrieves_soft_memory(tmp_path):
             state,
             f"talk {npc_id}",
             rng,
-            _CaptureNarrator(),
+            _ProposalFirstNarrator(),
             memory_store=memory_store,
             memory_slot="run",
             freeform_adapter=_NpcReplyAdapter(),
         )
 
-    assert captured
-    assert any("trusts your judgment" in "\n".join(context.memory_fragments) for context in captured)
+    assert retrieved_tags
+    assert any(f"npc_{npc_id}" in tags for tags in retrieved_tags)
+    assert any("trusts your judgment" in "\n".join(fragments) for fragments in retrieved_fragments)
     with SqliteVectorMemory(db_path) as reopened_store:
         retrieved_notes = reopened_store.retrieve("run", (f"npc_{npc_id}", "relationship"))
         assert any("spoke with" in note.lower() for note in retrieved_notes)

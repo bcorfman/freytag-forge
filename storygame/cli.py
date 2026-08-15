@@ -706,7 +706,9 @@ def _action_from_proposal(raw: str, action_proposal: dict[str, Any]) -> Action:
     return Action(ActionKind.UNKNOWN, raw=raw)
 
 
-def _build_narrator() -> Narrator:
+def _build_narrator(mode: str = "cloudflare") -> Narrator:
+    if mode != "cloudflare":
+        raise ValueError(f"Narrator mode '{mode}' is not supported.")
     return CloudflareWorkersAIAdapter()
 
 
@@ -1166,7 +1168,7 @@ def main(argv: list[str] | None = None) -> None:
         tone=args.tone,
     )
     rng = Random(args.seed)
-    narrator: Narrator = _build_narrator()
+    narrator: Narrator = _build_narrator("cloudflare")
     freeform_adapter = LlmFreeformProposalAdapter("cloudflare")
     output_editor = build_output_editor()
     story_director = StoryDirector("cloudflare", output_editor)

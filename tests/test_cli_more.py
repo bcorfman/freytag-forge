@@ -293,7 +293,7 @@ def test_main_covers_default_transcript_and_autosave_paths(tmp_path, monkeypatch
     autosave_db = tmp_path / "autosave.sqlite"
 
     monkeypatch.setattr(cli_module, "_build_narrator", lambda mode: StubNarrator())  # noqa: ARG005
-    monkeypatch.setattr(cli_module, "build_output_editor", lambda mode: _PassThroughEditor())  # noqa: ARG005
+    monkeypatch.setattr(cli_module, "build_output_editor", lambda: _PassThroughEditor())
     monkeypatch.setattr(cli_module, "StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
 
     main(
