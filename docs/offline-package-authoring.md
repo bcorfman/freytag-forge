@@ -19,6 +19,11 @@ strictly increasing pacing thresholds. Errors are typed and story-agnostic.
 The four checked-in deterministic fixtures are in
 `data/compiled_stories/v1/{mystery,fantasy,sci-fi,relationship}.json`.
 
+Phase 0 records `CompiledStory` as a reduced immutable bridge—not the future
+full causal Blueprint—and keeps its current Vale Mansion omissions explicit.
+The authority map, quality-suite baseline, and success measures are in
+[genre-blueprint authoring](genre-blueprint-authoring.md).
+
 `CompiledStoryCompiler` accepts an injected transport only at its outer edge.
 Live model compilation is intentionally disabled unless
 `FREYTAG_ENABLE_LIVE_COMPILER=1`; CI and deterministic tests load the checked-in

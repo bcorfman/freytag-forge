@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from os import getenv
 from pathlib import Path
 from random import Random
 from typing import Literal
@@ -85,7 +84,7 @@ class TurnResponse(BaseModel):
 def create_app(
     save_db_path: str | Path | None = None,
     default_seed: int = 123,
-    narrator_mode: str | None = None,
+    narrator_mode: str | None = None,  # noqa: ARG001
     narrator: Narrator | None = None,
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
@@ -97,17 +96,16 @@ def create_app(
     save_db = Path("runs/storygame_web_saves.sqlite") if save_db_path is None else Path(save_db_path)
     store = SqliteSaveStore(save_db, check_same_thread=False) if save_store is None else save_store
     sessions: dict[str, _SessionState] = {}
-    resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
-    active_narrator: Narrator = _build_narrator(resolved_narrator_mode) if narrator is None else narrator
-    active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
+    active_narrator: Narrator = _build_narrator() if narrator is None else narrator
+    active_output_editor = build_output_editor() if output_editor is None else output_editor
     active_freeform_adapter = (
-        LlmFreeformProposalAdapter(mode=resolved_narrator_mode)
+        LlmFreeformProposalAdapter()
         if freeform_adapter is None
         else freeform_adapter
     )
     use_fast_story_director_opening = story_director is None
     active_story_director = (
-        StoryDirector(resolved_narrator_mode, active_output_editor) if story_director is None else story_director
+        StoryDirector(active_output_editor) if story_director is None else story_director
     )
 
     @app.get("/", response_class=HTMLResponse)
@@ -159,7 +157,6 @@ def create_app(
             session.rng,
             active_narrator,
             active_freeform_adapter,
-            narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
             memory_slot=run_id,
@@ -186,29 +183,6 @@ def create_app(
         store.close()
 
     return app
-
-
-def _resolve_narrator_mode(requested_mode: str | None = None) -> str:
-    if requested_mode is not None:
-        requested_mode = requested_mode.strip().lower()
-        if requested_mode in {"openai", "ollama"}:
-            return requested_mode
-        if requested_mode:
-            raise ValueError("Narrator mode must be 'openai' or 'ollama'.")
-
-    explicit = getenv("FREYTAG_NARRATOR")
-    if explicit:
-        explicit = explicit.strip().lower()
-        if explicit in {"openai", "ollama"}:
-            return explicit
-
-    if getenv("OPENAI_API_KEY"):
-        return "openai"
-
-    if getenv("OLLAMA_BASE_URL") or getenv("OLLAMA_MODEL"):
-        return "ollama"
-
-    return "openai"
 
 
 app = create_app()

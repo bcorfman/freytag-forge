@@ -145,7 +145,7 @@ def _narration_failure_classification(code: str) -> tuple[int, str, str]:
 def create_demo_app(
     save_db_path: str | Path | None = None,
     default_seed: int = 123,
-    narrator_mode: str | None = None,
+    narrator_mode: str | None = None,  # noqa: ARG001
     narrator: Narrator | None = None,
     output_editor: OutputEditor | None = None,
     story_director: StoryDirector | None = None,
@@ -166,23 +166,21 @@ def create_demo_app(
     ip_window_hits: dict[str, list[datetime]] = {}
     ip_daily_hits: dict[tuple[str, str], int] = {}
 
-    resolved_narrator_mode = _resolve_narrator_mode(narrator_mode)
     active_narrator: Narrator = (
-        _build_demo_narrator(resolved_narrator_mode)
+        _build_demo_narrator()
         if narrator is None
         else narrator
     )
-    active_output_editor = build_output_editor(resolved_narrator_mode) if output_editor is None else output_editor
-    story_director_mode = "cloudflare" if getenv("CLOUDFLARE_WORKER_URL", "").strip() else resolved_narrator_mode
+    active_output_editor = build_output_editor() if output_editor is None else output_editor
     active_freeform_adapter = (
-        LlmFreeformProposalAdapter(mode=story_director_mode)
+        LlmFreeformProposalAdapter()
         if freeform_adapter is None
         else freeform_adapter
     )
     use_fast_story_director_opening = story_director is None
-    allow_story_director_bootstrap = story_director_mode != "cloudflare"
+    use_story_director_bootstrap = story_director is not None
     active_story_director = (
-        StoryDirector(story_director_mode, active_output_editor) if story_director is None else story_director
+        StoryDirector(active_output_editor) if story_director is None else story_director
     )
     resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
     app.add_middleware(
@@ -373,7 +371,7 @@ def create_demo_app(
                     active_narrator,
                     active_output_editor,
                     use_fast_story_director_opening=use_fast_story_director_opening,
-                    allow_story_director_bootstrap=allow_story_director_bootstrap,
+                    allow_story_director_bootstrap=use_story_director_bootstrap,
                 )
             except RuntimeError as exc:
                 error_code, trace_id = _narration_failure_metadata(str(exc))
@@ -405,7 +403,6 @@ def create_demo_app(
             session.rng,
             active_narrator,
             active_freeform_adapter,
-            narrator_mode=resolved_narrator_mode,
             debug=payload.debug,
             save_store=scoped_store,
             memory_slot=payload.session_id,
@@ -446,29 +443,6 @@ def create_demo_app(
     return app
 
 
-def _resolve_narrator_mode(requested_mode: str | None = None) -> str:
-    if requested_mode is not None:
-        requested_mode = requested_mode.strip().lower()
-        if requested_mode in {"openai", "ollama"}:
-            return requested_mode
-        if requested_mode:
-            raise ValueError("Narrator mode must be 'openai' or 'ollama'.")
-
-    explicit = getenv("FREYTAG_NARRATOR")
-    if explicit:
-        explicit = explicit.strip().lower()
-        if explicit in {"openai", "ollama"}:
-            return explicit
-
-    if getenv("OPENAI_API_KEY"):
-        return "openai"
-
-    if getenv("OLLAMA_BASE_URL") or getenv("OLLAMA_MODEL"):
-        return "ollama"
-
-    return "openai"
-
-
 def _resolve_demo_cors_allow_origins(configured_origins: tuple[str, ...] | None = None) -> tuple[str, ...]:
     if configured_origins is not None:
         cleaned = tuple(origin.strip() for origin in configured_origins if origin.strip())
@@ -481,10 +455,8 @@ def _resolve_demo_cors_allow_origins(configured_origins: tuple[str, ...] | None 
     return cleaned or ("*",)
 
 
-def _build_demo_narrator(resolved_narrator_mode: str) -> Narrator:
-    if getenv("CLOUDFLARE_WORKER_URL", "").strip():
-        return CloudflareWorkersAIAdapter()
-    return _build_narrator(resolved_narrator_mode)
+def _build_demo_narrator(*_ignored: object) -> Narrator:
+    return CloudflareWorkersAIAdapter()
 
 
 app = create_demo_app()

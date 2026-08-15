@@ -17,7 +17,7 @@ class _CountingNarrator:
         return self.text
 
 
-def test_deterministic_affordance_uses_one_story_model_render_call() -> None:
+def test_deterministic_affordance_does_not_make_a_second_narrator_call() -> None:
     narrator = _CountingNarrator("You study the committed room facts before choosing your next move.")
 
     state, _lines, _raw, _beat, _continued = run_turn(
@@ -29,7 +29,7 @@ def test_deterministic_affordance_uses_one_story_model_render_call() -> None:
     )
 
     assert state.turn_index == 1
-    assert narrator.calls == 1
+    assert narrator.calls == 0
 
 
 def test_post_commit_narration_cannot_create_custody_or_narration_facts() -> None:

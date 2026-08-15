@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from storygame.llm.story_director import StoryDirector
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web import _resolve_narrator_mode, create_app
+from storygame.web import create_app
 from tests.fast_fixtures import InMemorySaveStore
 from tests.narrator_stubs import StubNarrator
 
@@ -39,7 +39,6 @@ def _client(tmp_path, save_store=None):
     return TestClient(
         create_app(
             save_db_path=db_path,
-            narrator_mode="openai",
             narrator=StubNarrator(),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -123,23 +122,6 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
 
 
 
-def test_resolve_narrator_mode_prefers_explicit_and_env(monkeypatch):
-    assert _resolve_narrator_mode("  OLLAMA ") == "ollama"
-    assert _resolve_narrator_mode(" OpenAI ") == "openai"
-
-    monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
-    monkeypatch.delenv("OLLAMA_MODEL", raising=False)
-    assert _resolve_narrator_mode(None) == "openai"
-
-    monkeypatch.setenv("OPENAI_API_KEY", "abc")
-    assert _resolve_narrator_mode(None) == "openai"
-
-    monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
-    assert _resolve_narrator_mode("  ") == "ollama"
-
-
 def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):
     client = _client(tmp_path)
     response = client.get("/")
@@ -154,7 +136,6 @@ def test_bootstrap_only_response_includes_opening_and_initial_room_block(tmp_pat
     client = TestClient(
         create_app(
             save_db_path=tmp_path / "web_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("Rain needles the stone.\n\nDaria keeps the file close.\n\nThe case starts now."),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -190,7 +171,6 @@ def test_web_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkey
     client = TestClient(
         create_app(
             save_db_path=tmp_path / "web_saves.sqlite",
-            narrator_mode="openai",
             narrator=StubNarrator("Opening fallback."),
             save_store=InMemorySaveStore(),
         )

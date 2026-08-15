@@ -23,6 +23,14 @@ runtime `run_turn`, SQLite, and `TestClient` counts. Unit and component budgets 
 available with `--strict-test-budgets`; the normal CI run records counts and
 timings without making the existing behavioral suite brittle during migration.
 
+Separately, every test receives one exclusive quality classification:
+`runtime_safety` or `authoring_quality`. This is not a performance tier and
+does not alter the unit/component/integration/evaluation budgets. The
+`authoring_quality` suite covers offline completeness and causal baselines;
+its collection totals are informational, never fixed-count gates. See
+[genre-blueprint authoring](genre-blueprint-authoring.md) for the command and
+current coverage.
+
 ## Migration retirement rule
 
 During the LLM-first migration, tests for a surface scheduled for deletion are

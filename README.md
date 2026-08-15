@@ -29,6 +29,13 @@ Stone, Emma Vale, and the ledger-payment case) rather than a replacement
 placeholder. The existing package/fact web product remains the fallback until
 the V2 hosted path passes staging promotion and its observation window.
 
+Phase 0 of genre-blueprint authoring is complete: the project now has an
+explicit authority map, a cross-genre offline authoring-quality suite, and a
+strict expected-failure baseline for Vale Mansion's still-missing causal
+solution and fair discovery routes. This phase intentionally does not change
+gameplay. The planned immutable Blueprint will realize into facts; facts remain
+the sole mutable session truth.
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
@@ -76,6 +83,7 @@ fail-closed error.
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)
 - [V2 compiled-story authoring](docs/compiled-story-authoring.md)
+- [Genre-blueprint authoring baseline](docs/genre-blueprint-authoring.md)
 - [Tiered refactor plan](.plans/tiered-refactor-plan.md)
 - [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
 
@@ -84,18 +92,16 @@ fail-closed error.
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/)
 
-To play with OpenAI, set `OPENAI_API_KEY`. To play locally, install and run an
-Ollama model, then pass `--narrator ollama`. The engine keeps provider
-integrations behind injected adapters, so deterministic tests and offline
-package validation do not require paid inference.
+The hosted demo uses Cloudflare Workers AI. Configure its Worker endpoint and
+token before running a live session; deterministic tests and offline package
+validation do not require inference.
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
 | `uv sync` | Install runtime and development dependencies. |
-| `uv run storygame --genre fantasy --tone epic` | Start a CLI story session with OpenAI. |
-| `uv run storygame --narrator ollama --genre fantasy --tone epic` | Start a CLI story session with local Ollama. |
+| `uv run storygame --genre fantasy --tone epic` | Start a CLI story session through the Cloudflare Worker. |
 | `make run` | Start the local web app at `http://127.0.0.1:8000`. |
 | `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
 | `uv run ruff check .` | Check lint rules. |
@@ -126,8 +132,8 @@ fixtures with prompts, adapter revisions, sampling settings, and seeds.
 Evaluation measures proposal validity, direct acceptance, bounded-repair
 success, protected-information leakage, role drift, latency, and token use.
 Those measurements are informational baselines, not disguised release gates.
-The frozen adapter matrix compares the supported OpenAI, Ollama, and
-Cloudflare Workers AI revisions on every fixture turn. Its 95% direct-or-one-
+The frozen adapter matrix compares the Cloudflare Workers AI revision on every
+fixture turn. Its 95% direct-or-one-
 repair validation target is an informational SLO; scheduled runs are
 credential-free, while any paid provider experiment must be explicitly enabled
 with a bounded request budget.

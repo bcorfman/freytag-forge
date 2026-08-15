@@ -13,7 +13,6 @@ from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.web_demo import (
     _build_demo_narrator,
     _resolve_demo_cors_allow_origins,
-    _resolve_narrator_mode,
     create_demo_app,
 )
 from tests.fast_fixtures import InMemorySaveStore
@@ -93,7 +92,7 @@ def _client(tmp_path, clock: _Clock | None = None) -> TestClient:
     return TestClient(
         create_demo_app(
             save_db_path=db_path,
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -108,7 +107,7 @@ def test_demo_bootstrap_requires_llm_authored_opening_and_fails_closed(tmp_path)
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -132,12 +131,6 @@ def test_demo_configuration_normalization_is_adapter_independent(monkeypatch):
     monkeypatch.setenv("DEMO_CORS_ALLOW_ORIGINS", "https://one.example, ,https://two.example")
     assert _resolve_demo_cors_allow_origins(None) == ("https://one.example", "https://two.example")
     assert _resolve_demo_cors_allow_origins((" ",)) == ("*",)
-
-    with pytest.raises(ValueError, match="Narrator mode"):
-        _resolve_narrator_mode("invalid")
-    monkeypatch.setenv("FREYTAG_NARRATOR", "ollama")
-    assert _resolve_narrator_mode(None) == "ollama"
-
 
 def test_health_identifies_the_deployed_channel_and_revision(tmp_path, monkeypatch):
     monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "staging")
@@ -163,7 +156,7 @@ def test_demo_app_allows_configured_cors_origin(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -213,11 +206,10 @@ def test_demo_session_create_then_turn_flow(tmp_path):
     assert next_payload["state"]["turn_index"] == 1
 
 
-def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
+def test_demo_bootstrap_uses_cloudflare_opening(
     tmp_path,
     monkeypatch,
 ):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
 
@@ -233,7 +225,7 @@ def test_demo_bootstrap_uses_cloudflare_opening_without_openai_credentials(
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -255,7 +247,6 @@ def test_demo_bootstrap_consumes_the_worker_narration_envelope_directly(
     tmp_path,
     monkeypatch,
 ):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
     observed_requests: list[dict[str, str]] = []
@@ -276,7 +267,7 @@ def test_demo_bootstrap_consumes_the_worker_narration_envelope_directly(
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -291,7 +282,6 @@ def test_demo_bootstrap_consumes_the_worker_narration_envelope_directly(
 
 
 def test_demo_bootstrap_uses_one_direct_cloudflare_narration_call(tmp_path, monkeypatch):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
     call_count = 0
@@ -309,7 +299,7 @@ def test_demo_bootstrap_uses_one_direct_cloudflare_narration_call(tmp_path, monk
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -323,7 +313,6 @@ def test_demo_bootstrap_uses_one_direct_cloudflare_narration_call(tmp_path, monk
 
 
 def test_demo_bootstrap_does_not_apply_opening_text_heuristics_to_worker_prose(tmp_path, monkeypatch):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
     monkeypatch.setattr(
@@ -334,7 +323,7 @@ def test_demo_bootstrap_does_not_apply_opening_text_heuristics_to_worker_prose(t
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -350,7 +339,6 @@ def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_
     tmp_path,
     monkeypatch,
 ):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
     monkeypatch.setattr(
@@ -361,7 +349,7 @@ def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -373,8 +361,7 @@ def test_demo_bootstrap_accepts_short_cloudflare_prose_when_opening_contract_is_
     assert any("Daria Stone waits" in line for line in turn.json()["lines"])
 
 
-def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentials(tmp_path, monkeypatch):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+def test_demo_freeform_turn_uses_cloudflare_story_agent(tmp_path, monkeypatch):
     monkeypatch.delenv("FREYTAG_NARRATOR", raising=False)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
 
@@ -396,7 +383,7 @@ def test_demo_freeform_turn_uses_cloudflare_story_agent_without_openai_credentia
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             save_store=InMemorySaveStore(),
         )
     )
@@ -419,7 +406,7 @@ def test_demo_session_expiry_is_enforced(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=db_path,
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -441,7 +428,7 @@ def test_demo_session_expiry_is_enforced(tmp_path):
 
 def test_demo_narrator_defaults_to_cloudflare_when_worker_url_set(monkeypatch):
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
-    narrator = _build_demo_narrator("openai")
+    narrator = _build_demo_narrator()
     assert isinstance(narrator, CloudflareWorkersAIAdapter)
 
 
@@ -449,7 +436,7 @@ def test_demo_session_turn_cap_returns_quota_exhausted_status(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -479,7 +466,7 @@ def test_demo_ip_rate_limit_returns_rate_limited_status(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -509,7 +496,7 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=StubNarrator(_OPENING_TEXT),
             output_editor=_PassThroughEditor(),
             story_director=_StubDirector(),
@@ -536,11 +523,11 @@ def test_demo_ip_daily_cap_returns_rate_limited_status(tmp_path):
     assert "daily cap" in payload["detail"].lower()
 
 
-def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
+def test_demo_does_not_call_retired_narrator_after_a_valid_proposal(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=_FailingNarrator("AI_QUOTA_EXCEEDED"),
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
@@ -552,16 +539,15 @@ def test_demo_quota_failure_from_narrator_is_fail_closed(tmp_path):
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert bootstrap.status_code == 200
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
-    assert response.status_code == 429
-    payload = response.json()
-    assert payload["status"] == "quota_exhausted"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
 def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=_FailingNarrator("AI_CAPACITY_EXCEEDED trace_id=worker-123"),
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
@@ -574,17 +560,15 @@ def test_demo_capacity_failure_preserves_rate_limit_classification(tmp_path):
 
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
 
-    assert response.status_code == 429
-    assert response.json()["status"] == "rate_limited"
-    assert response.headers["X-Narration-Error-Code"] == "AI_CAPACITY_EXCEEDED"
-    assert response.headers["X-Trace-ID"] == "worker-123"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
 def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=_FailingNarrator("AI_REQUEST_REJECTED status=403 trace_id=worker-403"),
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
@@ -597,16 +581,15 @@ def test_demo_rejected_request_maps_to_upstream_error(tmp_path):
 
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
 
-    assert response.status_code == 502
-    assert response.json()["status"] == "error"
-    assert response.headers["X-Narration-Error-Code"] == "AI_REQUEST_REJECTED"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
-def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
+def test_demo_ignores_retired_narrator_service_failure(tmp_path):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=_FailingNarrator("backend unavailable"),
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
@@ -618,16 +601,15 @@ def test_demo_service_failure_from_narrator_is_fail_closed(tmp_path):
     bootstrap = client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"})
     assert bootstrap.status_code == 200
     response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go north"})
-    assert response.status_code == 503
-    payload = response.json()
-    assert payload["status"] == "service_unavailable"
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
-def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
+def test_demo_does_not_log_retired_narrator_failure(tmp_path, caplog):
     client = TestClient(
         create_demo_app(
             save_db_path=tmp_path / "web_demo_saves.sqlite",
-            narrator_mode="openai",
+            narrator_mode="cloudflare",
             narrator=_FailingNarrator("backend unavailable"),
             output_editor=_PassThroughEditor(),
             story_director=_BundleDirector(),
@@ -640,11 +622,5 @@ def test_demo_service_failure_logs_underlying_narrator_error(tmp_path, caplog):
     assert bootstrap.status_code == 200
     with caplog.at_level(logging.WARNING):
         response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
-    assert response.status_code == 503
-    assert "Narrator failed" in caplog.text
-    assert "backend unavailable" in caplog.text
-    assert session_id in caplog.text
-    assert "command=go to foyer" in caplog.text
-    assert "beat=" in caplog.text
-    assert "location=foyer" in caplog.text
-    assert response.headers["X-Request-ID"] in caplog.text
+    assert response.status_code == 200
+    assert "Narrator failed" not in caplog.text

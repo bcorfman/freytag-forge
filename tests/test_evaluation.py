@@ -32,8 +32,6 @@ def test_phase_zero_fixtures_cover_four_distinct_vertical_slices():
     assert all(fixture["prompt_version"] == "phase0-fixture-contract-v1" for fixture in fixtures)
     assert all(fixture["generation_settings"]["temperature"] == 0 for fixture in fixtures)
     assert revisions == {
-        "openai": "openai-chat-completions-v1",
-        "ollama": "ollama-generate-v1",
         "cloudflare_workers_ai": "cloudflare-workers-ai-v1",
     }
 
@@ -102,8 +100,8 @@ def test_adapter_measurements_report_every_required_baseline_without_creating_a_
     report = summarize_adapter_measurements(
         (
             {
-                "adapter": "openai",
-                "revision": "fixture-openai-v1",
+                "adapter": "cloudflare_workers_ai",
+                "revision": "fixture-cloudflare-v1",
                 "proposal_valid": True,
                 "directly_accepted": True,
                 "repaired": False,
@@ -114,8 +112,8 @@ def test_adapter_measurements_report_every_required_baseline_without_creating_a_
                 "output_tokens": 20,
             },
             {
-                "adapter": "openai",
-                "revision": "fixture-openai-v1",
+                "adapter": "cloudflare_workers_ai",
+                "revision": "fixture-cloudflare-v1",
                 "proposal_valid": False,
                 "directly_accepted": False,
                 "repaired": True,
@@ -126,13 +124,13 @@ def test_adapter_measurements_report_every_required_baseline_without_creating_a_
                 "output_tokens": 30,
             },
         ),
-        required_adapters=("openai", "ollama", "cloudflare_workers_ai"),
+        required_adapters=("cloudflare_workers_ai",),
     )
 
     assert report["kind"] == "informational_baseline"
-    assert report["missing_adapters"] == ("ollama", "cloudflare_workers_ai")
-    assert report["adapters"]["openai"] == {
-        "revision": "fixture-openai-v1",
+    assert report["missing_adapters"] == ()
+    assert report["adapters"]["cloudflare_workers_ai"] == {
+        "revision": "fixture-cloudflare-v1",
         "turns": 2,
         "proposal_validity": 0.5,
         "direct_acceptance": 0.5,

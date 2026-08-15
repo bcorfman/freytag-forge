@@ -10,7 +10,6 @@ import urllib.error
 import urllib.request
 from enum import StrEnum
 from typing import Any, Protocol
-from urllib.parse import urlparse, urlunparse
 from uuid import uuid4
 
 from storygame.engine.facts import assistant_name as resolved_assistant_name
@@ -125,153 +124,81 @@ def _short_raw_response(text: str, limit: int = 280) -> str:
 
 
 def _chat_complete(
-    mode: str,
+    provider: str,
     system: str,
     user: str,
     structured_output: StructuredOutput = StructuredOutput.JSON_OBJECT,
 ) -> str:
     """Request one story-agent response with an explicit output-shape contract."""
-    if mode == "openai":
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        if not api_key:
-            raise RuntimeError("OPENAI_API_KEY is required for story-agent execution.")
-        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1/chat/completions")
-        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        timeout = float(os.getenv("OPENAI_TIMEOUT", "10.0"))
-        request: dict[str, Any] = {
-            "model": model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            "temperature": 0.2,
-            "max_tokens": _STORY_AGENT_MAX_TOKENS,
-        }
-        if structured_output is StructuredOutput.JSON_OBJECT:
-            request["response_format"] = {"type": "json_object"}
+    if provider != "cloudflare":
+        raise ValueError("Story agents require the Cloudflare Workers AI provider.")
+    worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
+    token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
+    timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
+    retries = min(max(int(os.getenv("CLOUDFLARE_RETRIES", "1").strip()), 0), 1)
+    retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
+    if not worker_url:
+        raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
+
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "FreytagForgeDemo/1.0",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    base_request_payload = {
+        "system": system,
+        "user": user,
+        "trace_id": uuid4().hex,
+        "session_id": "",
+        "max_tokens": _STORY_AGENT_MAX_TOKENS,
+    }
+    # JSON object mode is selected by the typed request, never prompt text.
+    # Local typed contract parsing remains authoritative for semantics.
+    use_response_format = structured_output is StructuredOutput.JSON_OBJECT
+    attempt = 0
+    while True:
+        request_payload = dict(base_request_payload)
+        if use_response_format:
+            request_payload["response_format"] = {"type": "json_object"}
         http_request = urllib.request.Request(
-            base_url,
-            data=json.dumps(request).encode("utf-8"),
+            worker_url,
+            data=json.dumps(request_payload).encode("utf-8"),
             method="POST",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers=headers,
         )
         try:
             with urllib.request.urlopen(http_request, timeout=timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-            return str(payload["choices"][0]["message"]["content"]).strip()
+            narration = _provider_content(payload.get("narration"))
+            if narration:
+                return narration
+            if "choices" in payload:
+                return _provider_content(payload["choices"][0]["message"]["content"])
+            raise RuntimeError("Cloudflare story-agent response missing expected content.")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            if use_response_format and _json_mode_rejected(detail):
+                use_response_format = False
+                attempt += 1
+                continue
+            if 500 <= exc.code <= 599 and attempt < retries:
+                _sleep_before_retry(retry_backoff_ms, attempt)
+                attempt += 1
+                continue
+            raise RuntimeError(f"Cloudflare story-agent request failed: {exc.code} {detail}") from exc
+        except urllib.error.URLError as exc:
+            if attempt < retries:
+                _sleep_before_retry(retry_backoff_ms, attempt)
+                attempt += 1
+                continue
+            raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
         except Exception as exc:
-            raise RuntimeError(f"OpenAI story-agent request failed: {exc}") from exc
-
-    if mode == "ollama":
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/api/chat")
-        model = os.getenv("OLLAMA_MODEL", "llama3.2")
-        timeout = float(os.getenv("OLLAMA_TIMEOUT", "180.0"))
-        endpoints = _resolve_ollama_endpoints(base_url)
-        errors: list[str] = []
-
-        for endpoint in endpoints:
-            request = _build_ollama_request(endpoint, model, system, user)
-            http_request = urllib.request.Request(
-                endpoint,
-                data=json.dumps(request).encode("utf-8"),
-                method="POST",
-                headers={"Content-Type": "application/json"},
-            )
-            try:
-                with urllib.request.urlopen(http_request, timeout=timeout) as response:
-                    payload = json.loads(response.read().decode("utf-8"))
-                if "message" in payload and "content" in payload["message"]:
-                    return str(payload["message"]["content"]).strip()
-                if "response" in payload:
-                    return str(payload["response"]).strip()
-                raise RuntimeError("Ollama story-agent response missing expected content.")
-            except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace")
-                errors.append(f"{endpoint} -> HTTP {exc.code}: {detail}")
-                if exc.code in {404, 405, 500} and endpoint != endpoints[-1]:
-                    continue
-                raise RuntimeError(
-                    f"Ollama story-agent request failed: endpoint={endpoint} model={model} "
-                    f"status={exc.code} detail={detail}"
-                ) from exc
-            except Exception as exc:
-                errors.append(f"{endpoint} -> {type(exc).__name__}: {exc}")
-                if endpoint != endpoints[-1]:
-                    continue
-                raise RuntimeError(f"Ollama story-agent request failed: {exc}") from exc
-        raise RuntimeError(
-            "Ollama story-agent request failed across endpoints. "
-            f"model={model}. attempts={' | '.join(errors)}"
-        )
-    if mode == "cloudflare":
-        worker_url = os.getenv("CLOUDFLARE_WORKER_URL", "").strip()
-        token = os.getenv("CLOUDFLARE_WORKER_TOKEN", "").strip()
-        timeout = float(os.getenv("CLOUDFLARE_TIMEOUT", "8.0").strip())
-        retries = min(max(int(os.getenv("CLOUDFLARE_RETRIES", "1").strip()), 0), 1)
-        retry_backoff_ms = int(os.getenv("CLOUDFLARE_RETRY_BACKOFF_MS", "250").strip())
-        if not worker_url:
-            raise RuntimeError("CLOUDFLARE_WORKER_URL is required for story-agent execution.")
-
-        headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "FreytagForgeDemo/1.0",
-        }
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        base_request_payload = {
-            "system": system,
-            "user": user,
-            "trace_id": uuid4().hex,
-            "session_id": "",
-            "max_tokens": _STORY_AGENT_MAX_TOKENS,
-        }
-        # JSON object mode is selected by the typed request, never prompt text.
-        # Local typed contract parsing remains authoritative for semantics.
-        use_response_format = structured_output is StructuredOutput.JSON_OBJECT
-        attempt = 0
-        while True:
-            request_payload = dict(base_request_payload)
-            if use_response_format:
-                request_payload["response_format"] = {"type": "json_object"}
-            http_request = urllib.request.Request(
-                worker_url,
-                data=json.dumps(request_payload).encode("utf-8"),
-                method="POST",
-                headers=headers,
-            )
-            try:
-                with urllib.request.urlopen(http_request, timeout=timeout) as response:
-                    payload = json.loads(response.read().decode("utf-8"))
-                narration = _provider_content(payload.get("narration"))
-                if narration:
-                    return narration
-                if "choices" in payload:
-                    return _provider_content(payload["choices"][0]["message"]["content"])
-                raise RuntimeError("Cloudflare story-agent response missing expected content.")
-            except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace")
-                if use_response_format and _json_mode_rejected(detail):
-                    # JSON mode is an optimization.  A provider/schema rejection must
-                    # not strand the turn: local parsing and contract validation remain
-                    # the authoritative boundary.
-                    use_response_format = False
-                    attempt += 1
-                    continue
-                if 500 <= exc.code <= 599 and attempt < retries:
-                    _sleep_before_retry(retry_backoff_ms, attempt)
-                    attempt += 1
-                    continue
-                raise RuntimeError(f"Cloudflare story-agent request failed: {exc.code} {detail}") from exc
-            except urllib.error.URLError as exc:
-                if attempt < retries:
-                    _sleep_before_retry(retry_backoff_ms, attempt)
-                    attempt += 1
-                    continue
-                raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
-            except Exception as exc:
-                if isinstance(exc, socket.timeout) and attempt < retries:
-                    _sleep_before_retry(retry_backoff_ms, attempt)
-                    attempt += 1
-                    continue
-                raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
-    raise ValueError("Story agents require mode 'openai', 'ollama', or 'cloudflare'.")
+            if isinstance(exc, socket.timeout) and attempt < retries:
+                _sleep_before_retry(retry_backoff_ms, attempt)
+                attempt += 1
+                continue
+            raise RuntimeError(f"Cloudflare story-agent request failed: {exc}") from exc
 
 
 def _sleep_before_retry(retry_backoff_ms: int, attempt: int) -> None:
@@ -279,40 +206,6 @@ def _sleep_before_retry(retry_backoff_ms: int, attempt: int) -> None:
     if delay_ms <= 0:
         return
     time.sleep(delay_ms / 1000.0)
-
-
-def _resolve_ollama_endpoints(raw_url: str) -> tuple[str, ...]:
-    parsed = urlparse(raw_url)
-    if not parsed.scheme or not parsed.netloc:
-        return (raw_url,)
-    if parsed.path in ("", "/"):
-        base = urlunparse(parsed._replace(path="", params="", query="", fragment="")).rstrip("/")
-        return (f"{base}/api/chat", f"{base}/api/generate")
-    if parsed.path.endswith("/api/chat"):
-        base = urlunparse(parsed._replace(path=parsed.path[: -len("/api/chat")], params="", query="", fragment=""))
-        return (raw_url, f"{base.rstrip('/')}/api/generate")
-    if parsed.path.endswith("/api/generate"):
-        base = urlunparse(
-            parsed._replace(path=parsed.path[: -len("/api/generate")], params="", query="", fragment="")
-        )
-        return (raw_url, f"{base.rstrip('/')}/api/chat")
-    return (raw_url,)
-
-
-def _build_ollama_request(endpoint: str, model: str, system: str, user: str) -> dict[str, Any]:
-    if endpoint.endswith("/api/generate"):
-        return {
-            "model": model,
-            "prompt": f"{system}\n\n{user}",
-            "stream": False,
-            "options": {"temperature": 0.2, "num_predict": _STORY_AGENT_MAX_TOKENS},
-        }
-    return {
-        "model": model,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "stream": False,
-        "options": {"temperature": 0.2, "num_predict": _STORY_AGENT_MAX_TOKENS},
-    }
 
 
 def _summary_premise(state: GameState) -> str:
@@ -605,8 +498,8 @@ class RoomPresentationAgent(Protocol):
 
 
 class DefaultStoryArchitectAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState) -> dict[str, Any]:
         premise = _summary_premise(state)
@@ -615,7 +508,7 @@ class DefaultStoryArchitectAgent:
             str(state.world_package.get("story_plan", {}).get("protagonist_name", "")).strip(),
         )
         system, user = build_story_architect_prompt(premise, protagonist, state.story_genre, state.story_tone)
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("StoryArchitect agent returned non-JSON content.")
         try:
@@ -628,8 +521,8 @@ class DefaultStoryArchitectAgent:
 
 
 class DefaultStoryBootstrapAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState) -> dict[str, Any]:
         room = state.world.rooms[state.player.location]
@@ -671,7 +564,7 @@ class DefaultStoryBootstrapAgent:
             [item.replace("_", " ") for item in state.player.inventory[:3]],
             opening_facts,
         )
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("StoryBootstrap agent returned non-JSON content.")
         try:
@@ -711,8 +604,8 @@ class DefaultStoryBootstrapAgent:
 
 
 class DefaultStoryBootstrapCriticAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState, bootstrap_bundle: dict[str, Any]) -> dict[str, Any]:
         system, user = build_story_bootstrap_critique_prompt(
@@ -722,7 +615,7 @@ class DefaultStoryBootstrapCriticAgent:
             _items_seed(state),
             _opening_facts_seed(state),
         )
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("StoryBootstrapCritic agent returned non-JSON content.")
         try:
@@ -744,8 +637,8 @@ class DefaultStoryBootstrapCriticAgent:
             critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
         return critique
 class DefaultCharacterDesignerAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState, architect: dict[str, Any]) -> dict[str, Any]:
         contacts: list[dict[str, str]] = []
@@ -764,7 +657,7 @@ class DefaultCharacterDesignerAgent:
         if not contacts:
             raise RuntimeError("CharacterDesigner requires at least one NPC contact in world state.")
         system, user = build_character_designer_prompt(str(architect.get("protagonist_name", "")), contacts)
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("CharacterDesigner agent returned non-JSON content.")
         try:
@@ -775,8 +668,8 @@ class DefaultCharacterDesignerAgent:
 
 
 class DefaultPlotDesignerAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState, architect: dict[str, Any], cast: dict[str, Any]) -> dict[str, Any]:
         goal = state.active_goal
@@ -788,7 +681,7 @@ class DefaultPlotDesignerAgent:
             assistant or "Assistant",
             _opening_facts_seed(state).get("assistant", {}),
         )
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("PlotDesigner agent returned non-JSON content.")
         try:
@@ -805,8 +698,8 @@ class DefaultPlotDesignerAgent:
 
 
 class DefaultNarratorOpeningAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState, architect: dict[str, Any], cast: dict[str, Any], plan: dict[str, Any]) -> list[str]:
         room = state.world.rooms[state.player.location]
@@ -853,7 +746,7 @@ class DefaultNarratorOpeningAgent:
 
         opening = [paragraph_1, paragraph_2, paragraph_3, paragraph_4]
         system, user = build_narrator_opening_prompt("\n\n".join(opening), _opening_facts_seed(state))
-        raw_response = _chat_complete(self._mode, system, user)
+        raw_response = _chat_complete("cloudflare", system, user)
         payload = _json_from_text(raw_response)
         if payload is None:
             prose_paragraphs = _paragraphs_from_text(raw_response)
@@ -877,8 +770,8 @@ class DefaultNarratorOpeningAgent:
 
 
 class DefaultStoryReplanAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(self, state: GameState, disruption: dict[str, Any]) -> dict[str, Any]:
         impact_class = str(disruption.get("impact_class", "high")).strip().lower()
@@ -903,13 +796,13 @@ class DefaultStoryReplanAgent:
             "impact_class": impact_class,
             "trigger_command": command,
             "replan_scope": replan_scope,
-            "mode": self._mode,
+            "provider": "cloudflare_workers_ai",
         }
 
 
 class DefaultRoomPresentationAgent:
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    def __init__(self, *_ignored: object) -> None:
+        pass
 
     def run(
         self,
@@ -933,7 +826,7 @@ class DefaultRoomPresentationAgent:
                 }
             )
         system, user = build_room_presentation_prompt(state.story_genre, state.story_tone, room_seed)
-        payload = _json_from_text(_chat_complete(self._mode, system, user))
+        payload = _json_from_text(_chat_complete("cloudflare", system, user))
         if payload is None:
             raise RuntimeError("RoomPresentation agent returned non-JSON content.")
         try:

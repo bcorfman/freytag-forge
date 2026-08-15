@@ -47,6 +47,8 @@ markers = [
     "component: one subsystem tested with injected dependencies",
     "integration: composed runtime, persistence, or adapter contract",
     "evaluation: deterministic replay, artifact, parity, or cross-genre test",
+    "runtime_safety: runtime safety and behavior contract",
+    "authoring_quality: offline authoring completeness and causal-quality contract",
     "live_e2e: operator-owned test that intentionally reaches the deployed hosted demo",
 ]
 

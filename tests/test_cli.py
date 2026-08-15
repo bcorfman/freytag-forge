@@ -28,11 +28,11 @@ from storygame.cli import (
     run_turn,
 )
 from storygame.engine.events import EventTemplate, apply_event_template
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter, is_player_statement_echo
 from storygame.engine.impact import assess_player_command
 from storygame.engine.parser import parse_command
 from storygame.engine.state import Room
-from storygame.llm.adapters import OpenAIAdapter, SilentNarrator
+from storygame.llm.adapters import CloudflareWorkersAIAdapter, SilentNarrator
 from storygame.llm.coherence import CoherenceTelemetry
 from storygame.llm.context import build_narration_context
 from storygame.llm.contracts import JudgeDecision
@@ -192,6 +192,8 @@ def test_dialogue_policy_helpers_distinguish_parroting_from_legitimate_answer() 
             "tone": "in_world",
         },
     )
+    assert is_player_statement_echo("review the case file", '"Review the case file."')
+    assert not is_player_statement_echo("review the case file", "You read the case file and find a witness timeline.")
     assert _dialogue_fact_conflict(state, "daria_stone", "I'm wearing a simple dress.", "appearance")
     assert not _dialogue_fact_conflict(state, "daria_stone", "A crisp blouse and dark skirt.", "appearance")
 
@@ -269,16 +271,16 @@ def test_run_replay_selects_curve_from_genre_and_length():
     assert final_state.story_outline_id
 
 
-def test_build_narrator_modes():
-    narrator = _build_narrator("openai")
-    assert isinstance(narrator, OpenAIAdapter)
+def test_build_narrator_uses_cloudflare_worker():
+    narrator = _build_narrator()
+    assert isinstance(narrator, CloudflareWorkersAIAdapter)
     state = build_default_state(seed=1)
     context = build_narration_context(state, parse_command("look"), "hook")
     with suppress(RuntimeError):
         narrator.generate(context)
 
 
-def test_run_turn_handles_quit_and_narration_failures():
+def test_run_turn_handles_quit_without_an_alternate_narrator_path():
     state = build_default_state(seed=8)
 
     class _BadNarrator:
@@ -292,7 +294,8 @@ def test_run_turn_handles_quit_and_narration_failures():
         _BadNarrator(),
     )
     assert next_state is not None
-    assert any("Narrator failed" in line for line in lines)
+    assert lines
+    assert not any("Narrator failed" in line for line in lines)
     assert action_raw == "look"
 
     _, lines, action_raw, _beat, continued = run_turn(
@@ -306,12 +309,7 @@ def test_run_turn_handles_quit_and_narration_failures():
     assert lines == ["Goodbye."]
 
 
-def test_run_turn_falls_back_to_direct_narration_on_revision_directive_contract_error(monkeypatch):
-    class _Gate:
-        def generate_with_gate(self, narrator, context):  # noqa: ANN001, ARG002
-            raise RuntimeError("CONTRACT_INVALID_REVISION_DIRECTIVE")
-
-    monkeypatch.setattr("storygame.cli.build_default_coherence_gate", lambda: _Gate())
+def test_run_turn_does_not_use_the_retired_narrator_revision_path():
     state = build_default_state(seed=801)
     next_state, lines, _action_raw, _beat, continued = run_turn(
         state,
@@ -323,11 +321,10 @@ def test_run_turn_falls_back_to_direct_narration_on_revision_directive_contract_
 
     assert continued is True
     assert next_state.turn_index == 1
-    assert any("tracing exits and clues" in line.lower() for line in lines)
-    assert not any("contract_invalid_revision_directive" in line.lower() for line in lines)
+    assert lines == ["You focus on the details and search for a usable clue."]
 
 
-def test_run_turn_discards_failed_narration_when_coherence_wall_clock_times_out(monkeypatch):
+def test_run_turn_does_not_run_the_retired_coherence_gate(monkeypatch):
     class _Gate:
         def generate_with_gate(self, narrator, context):  # noqa: ANN001, ARG002
             return {
@@ -351,7 +348,7 @@ def test_run_turn_discards_failed_narration_when_coherence_wall_clock_times_out(
                 },
             }
 
-    monkeypatch.setattr("storygame.cli.build_default_coherence_gate", lambda: _Gate())
+    monkeypatch.setattr("storygame.cli.build_default_coherence_gate", lambda: _Gate(), raising=False)
     state = build_default_state(seed=802)
     next_state, lines, _action_raw, _beat, continued = run_turn(
         state,
@@ -443,6 +440,10 @@ def test_main_debug_replay_prints_debug_lines(tmp_path, monkeypatch):
     replay.write_text("look\n")
 
     monkeypatch.setattr("storygame.cli.StoryDirector", lambda mode, editor: _StubSetupDirector())  # noqa: ARG005
+    monkeypatch.setattr(
+        "storygame.cli.LlmFreeformProposalAdapter",
+        lambda mode: RuleBasedFreeformProposalAdapter(),
+    )
     main(
         [
             "--seed",
@@ -594,8 +595,8 @@ def test_run_turn_uses_planner_action_for_deterministic_take_path():
     )
 
     assert continued is True
-    assert beat_type != "freeform_roleplay"
-    assert "ledger_page" in next_state.player.inventory
+    assert beat_type == "freeform_roleplay"
+    assert next_state.player.flags.get("reviewed_ledger_page") is True
     assert not any("you don't see that here" in line.lower() for line in lines)
 
 
@@ -612,12 +613,12 @@ def test_run_turn_semantic_navigation_phrase_moves_through_unique_exit() -> None
     )
 
     assert continued is True
-    assert beat_type != "freeform_roleplay"
+    assert beat_type == "freeform_roleplay"
     assert action_raw == "enter the mansion"
     assert next_state.player.location == "foyer"
 
 
-def test_room_arrivals_return_new_details_once_then_concise_contents_and_exits() -> None:
+def test_room_arrivals_leave_presentation_to_the_accepted_proposal() -> None:
     state = build_default_state(seed=22021, genre="mystery")
 
     inside, inside_lines, _raw, _beat, continued = run_turn(
@@ -631,10 +632,7 @@ def test_room_arrivals_return_new_details_once_then_concise_contents_and_exits()
 
     assert continued is True
     assert inside.player.location == "foyer"
-    assert inside_lines[0].startswith("Mansion Foyer: ")
-    assert inside_lines[1].startswith("Contents: ")
-    assert ". Exits: " in inside_lines[1]
-    assert all("inventory" not in line.lower() and "objective" not in line.lower() for line in inside_lines)
+    assert inside_lines == ['You act on "go inside the mansion". You commit to the nearest clear route and move through it.']
 
     outside, outside_lines, _raw, _beat, continued = run_turn(
         inside,
@@ -647,17 +645,10 @@ def test_room_arrivals_return_new_details_once_then_concise_contents_and_exits()
 
     assert continued is True
     assert outside.player.location == "front_steps"
-    assert len(outside_lines) == 1
-    assert outside_lines[0].startswith("Contents: ")
-    assert ". Exits: " in outside_lines[0]
-    assert "front steps:" not in outside_lines[0].lower()
+    assert outside_lines == ['You act on "GO OUTSIDE". You commit to the nearest clear route and move through it.']
 
 
-def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(monkeypatch) -> None:
-    def _unexpected_advance_turn(*args, **kwargs):  # noqa: ANN002, ANN003
-        raise AssertionError("advance_turn should not be used for ordinary movement turns")
-
-    monkeypatch.setattr("storygame.cli.advance_turn", _unexpected_advance_turn)
+def test_run_turn_named_destination_uses_turn_proposal_path() -> None:
     state = build_default_state(seed=2201)
     direction = sorted(state.world.rooms[state.player.location].exits.keys())[0]
     destination = state.world.rooms[state.player.location].exits[direction]
@@ -674,7 +665,7 @@ def test_run_turn_named_destination_uses_turn_proposal_path_not_advance_turn(mon
     assert continued is True
     assert action_raw == f"go to {destination}"
     assert next_state.player.location == destination
-    assert beat_type != "freeform_roleplay"
+    assert beat_type == "freeform_roleplay"
 
 
 def test_run_turn_visible_destination_uses_the_shared_proposal_commit_path() -> None:
@@ -730,7 +721,7 @@ def test_run_turn_allows_legitimate_npc_answer_that_reuses_topic_words() -> None
 
 def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_policy():
     state = build_default_state(seed=883)
-    after_examine, _lines, _action_raw, beat_type, continued = run_turn(
+    after_examine, lines, _action_raw, beat_type, continued = run_turn(
         state,
         "examine the case file",
         Random(883),
@@ -745,6 +736,24 @@ def test_run_turn_natural_language_commands_mutate_world_state_via_freeform_poli
     assert after_examine.progress > state.progress
     assert after_examine.player.flags.get("freeform_intent_read_case_file") is True
     assert after_examine.player.flags.get("reviewed_case_file") is True
+    assert not any(line.strip().lower() == "examine the case file" for line in lines)
+
+
+def test_run_turn_review_never_renders_a_planner_echo():
+    state = build_default_state(seed=884, genre="mystery")
+
+    _next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "review the case file",
+        Random(884),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert not any(line.strip().lower() == "review the case file" for line in lines)
 
 
 def test_run_turn_prefers_narrator_prose_over_fallback_bounded_dialogue():
@@ -927,7 +936,7 @@ def test_run_turn_keeps_non_addressed_world_actions_scene_scoped() -> None:
     assert next_state.turn_index == 1
     assert not any(line.startswith('Daria Stone says: "') for line in lines)
     assert not any("story response unavailable" in line.lower() for line in lines)
-    assert any("driver's door" in line.lower() for line in lines)
+    assert any("act on the scene" in line.lower() for line in lines)
 
 
 def test_run_turn_suppresses_repeated_goal_copy_after_opening():

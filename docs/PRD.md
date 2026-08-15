@@ -18,6 +18,13 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
+Genre-blueprint authoring is beginning from an offline-only Phase-0 baseline.
+Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the
+future immutable Story Blueprint are authoring inputs or projections; canonical
+facts are the only mutable truth during a session. The baseline records the
+current Vale Mansion causal omissions without changing its playable runtime.
+See [genre-blueprint authoring](genre-blueprint-authoring.md).
+
 ## Goals
 - Deliver a playable CLI and web IF experience.
 - Keep world-state progression deterministic and replayable.
@@ -172,7 +179,7 @@ the prompt version and token estimate for traces.
 - Deterministic engine actions are an adapter target for proposal execution, not the primary authored experience for ordinary narrative turns.
 
 ### Narration + Coherence
-- `storygame.llm.adapters` defines narrator integrations (`openai`, `ollama`, `cloudflare_workers_ai`).
+- `storygame.llm.adapters` defines the Cloudflare Workers AI narrator integration.
 - `storygame.llm.context` constructs constrained narration context.
 - `storygame.llm.coherence` currently provides bounded narration gating, scoring, telemetry, and recovery for non-dialogue rendering. The target fast path is deterministic committed-state validation with, at most, one bounded repair; multi-critic package review remains offline evaluation rather than a required ordinary-turn dependency.
 - Offline package evaluation injects frontier generation and parallel continuity,
@@ -260,8 +267,7 @@ flowchart LR
 
 ### Web Surfaces
 - `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
-- Local/dev web uses the normal local narrator stack and story-agent stack:
-  - narrator mode resolved from OpenAI/Ollama configuration,
+- Local/dev web uses the Cloudflare Workers AI narrator and story-agent stack:
   - opening/bootstrap planning should use the same single-bootstrap-call fast opening path as hosted demo, with deterministic validation on the critical path,
   - and local misconfiguration may surface directly during development.
 - `storygame.web_demo` is the hosted-demo API surface:
@@ -269,9 +275,9 @@ flowchart LR
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:
-  - turn narration is driven through the hosted demo adapter path (Cloudflare Worker AI / Llama when configured),
-  - hosted bootstrap/opening must not require local OpenAI story-agent credentials,
-  - hosted bootstrap/opening still uses direct LLM-authored scene prose through the hosted backend path (for example Cloudflare Worker AI) rather than assuming local OpenAI credentials,
+  - turn narration is driven through the Cloudflare Workers AI path,
+  - hosted bootstrap/opening uses the same Cloudflare Worker credentials,
+  - hosted bootstrap/opening uses direct LLM-authored scene prose through that backend,
   - when the hosted backend cannot satisfy the story-bootstrap JSON contract, hosted demo bootstrap should fall back to a prose opening path over that same backend rather than failing the whole opening on contract shape alone,
   - hosted demo opening should use the same single-bootstrap-call fast opening path as local web, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
@@ -376,7 +382,7 @@ flowchart LR
 - Opening prose should default to present tense. Mutable player knowledge must come from fact-backed state transitions, not increasingly specific prompt guardrails.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
-- Hosted-demo bootstrap is an explicit compatibility boundary: it must remain playable without `OPENAI_API_KEY`, even when local web/bootstrap still uses OpenAI/Ollama story-agent paths.
+- Hosted-demo bootstrap is an explicit compatibility boundary: it uses the same Cloudflare Worker contract as every other live surface.
 - Opening prose should feel materially consistent across CLI, local web, and hosted demo: every surface should use direct LLM-authored scene prose grounded in the same planned story context, even if different backend adapters are used underneath.
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
 - First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
@@ -472,34 +478,8 @@ flowchart LR
 - CLI with story profile: `uv run python -m storygame --seed 123 --genre mystery --session-length medium --tone neutral`
 - Replay: `--replay <file> --transcript <file>`
 - Web: `uv run uvicorn storygame.web:app --reload`
-- Narrator mode: `--narrator openai|ollama`
-- Web narrator resolution precedence (when not explicitly passed in `create_app(...)`):
-  1. `FREYTAG_NARRATOR` (`openai|ollama`)
-  2. `OPENAI_API_KEY` => `openai`
-  3. `OLLAMA_BASE_URL` or `OLLAMA_MODEL` => `ollama`
-  4. default `openai`
-
 ## Environment Variables
-### Runtime selection
-- `FREYTAG_NARRATOR`
-
-### OpenAI adapter
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL` (default `gpt-4o-mini`)
-- `OPENAI_TIMEOUT` (default `10.0`)
-- `OPENAI_BASE_URL`
-- `OPENAI_TEMPERATURE` (default `0.2`)
-- `OPENAI_MAX_TOKENS` (default `512`)
-
-### Ollama adapter
-- `OLLAMA_MODEL` (default `llama3.2`)
-- `OLLAMA_TIMEOUT` (default `180.0`)
-- `OLLAMA_BASE_URL` (default `http://localhost:11434/api/chat`)
-  - Host-only values (for example `http://localhost:11434`) are normalized to `/api/chat` for story-agent requests.
-- `OLLAMA_TEMPERATURE` (default `0.2`)
-- `OLLAMA_MAX_TOKENS` (default `512`)
-
-### Cloudflare Workers adapter (demo mode)
+### Cloudflare Workers AI adapter
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
 - `CLOUDFLARE_TIMEOUT` (default `8.0`)

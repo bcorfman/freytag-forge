@@ -101,35 +101,19 @@ def test_actionable_objective_normalizer_rewrites_direct_questions_to_assistant(
     assert "consult daria" in alias_normalized.lower()
 
 
-def test_chat_complete_openai_and_ollama_branches(monkeypatch) -> None:
-    monkeypatch.setenv("OPENAI_API_KEY", "fake")
+def test_chat_complete_cloudflare_worker_branch(monkeypatch) -> None:
     captured_requests: list[dict[str, object]] = []
 
-    def _openai_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
         captured_requests.append(json.loads(request.data.decode("utf-8")))
-        return _FakeResponse('{"choices":[{"message":{"content":"ok-openai"}}]}')
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _openai_urlopen)
-    assert agent_module._chat_complete("openai", "s", "u") == "ok-openai"
-    assert int(captured_requests[-1]["max_tokens"]) >= 1400
-    assert captured_requests[-1]["response_format"] == {"type": "json_object"}
-
-    def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        return _FakeResponse('{"message":{"content":"ok-ollama"}}')
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
-    assert agent_module._chat_complete("ollama", "s", "u") == "ok-ollama"
+        return _FakeResponse('{"narration":"ok-cloudflare"}')
 
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
 
-    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        observed_payload = json.loads(request.data.decode("utf-8"))
-        if observed_payload["system"] == "Return JSON only.":
-            assert observed_payload["response_format"] == {"type": "json_object"}
-        return _FakeResponse('{"narration":"ok-cloudflare"}')
-
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
     assert agent_module._chat_complete("cloudflare", "s", "u") == "ok-cloudflare"
+    assert int(captured_requests[-1]["max_tokens"]) >= 1400
+    assert captured_requests[-1]["response_format"] == {"type": "json_object"}
 
     assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u") == "ok-cloudflare"
 
@@ -218,71 +202,27 @@ def test_chat_complete_cloudflare_json_mode_fallback_consumes_the_only_recovery_
     assert len(requests) == 2
 
 
-def test_chat_complete_ollama_normalizes_root_base_url_to_api_chat(monkeypatch) -> None:
-    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
-    def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        assert request.get_method() == "POST"
-        assert request.full_url == "http://localhost:11434/api/chat"
-        return _FakeResponse('{"message":{"content":"ok-ollama"}}')
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
-    assert agent_module._chat_complete("ollama", "s", "u") == "ok-ollama"
-
-
-def test_chat_complete_ollama_falls_back_to_generate_on_404(monkeypatch) -> None:
-    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434/api/chat")
-    called_urls: list[str] = []
-
-    def _ollama_urlopen(request, timeout):  # type: ignore[no-untyped-def]
-        called_urls.append(request.full_url)
-        if request.full_url.endswith("/api/chat"):
-            raise urllib.error.HTTPError(
-                request.full_url,
-                404,
-                "Not Found",
-                None,
-                io.BytesIO(b'{"error":"not found"}'),
-            )
-        return _FakeResponse('{"response":"ok-generate"}')
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _ollama_urlopen)
-    assert agent_module._chat_complete("ollama", "s", "u") == "ok-generate"
-    assert called_urls[:2] == ["http://localhost:11434/api/chat", "http://localhost:11434/api/generate"]
-
-
 def test_chat_complete_error_paths(monkeypatch) -> None:
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
-        agent_module._chat_complete("openai", "s", "u")
-
-    monkeypatch.setenv("OPENAI_API_KEY", "fake")
-
-    def _raise_http(*args, **kwargs):  # noqa: ANN002, ANN003
-        raise urllib.error.HTTPError("https://api.openai.com", 500, "boom", None, io.BytesIO(b"err"))
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _raise_http)
-    with pytest.raises(RuntimeError, match="OpenAI story-agent request failed"):
-        agent_module._chat_complete("openai", "s", "u")
-
-    def _bad_ollama(*args, **kwargs):  # noqa: ANN002, ANN003
-        return _FakeResponse('{"unexpected": true}')
-
-    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _bad_ollama)
-    with pytest.raises(RuntimeError, match="Ollama story-agent request failed"):
-        agent_module._chat_complete("ollama", "s", "u")
-
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     with pytest.raises(RuntimeError, match="CLOUDFLARE_WORKER_URL"):
         agent_module._chat_complete("cloudflare", "s", "u")
 
-    with pytest.raises(ValueError, match="require mode"):
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    def _raise_http(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise urllib.error.HTTPError("https://demo.example.workers.dev/api/narrate", 500, "boom", None, io.BytesIO(b"err"))
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _raise_http)
+    with pytest.raises(RuntimeError, match="Cloudflare story-agent request failed"):
+        agent_module._chat_complete("cloudflare", "s", "u")
+
+    with pytest.raises(ValueError, match="Cloudflare Workers AI provider"):
         agent_module._chat_complete("invalid", "s", "u")
 
 
 def test_story_architect_agent_success_and_failures(monkeypatch) -> None:
     state = build_default_state(seed=502)
-    agent = DefaultStoryArchitectAgent("openai")
+    agent = DefaultStoryArchitectAgent()
 
     monkeypatch.setattr(
         "storygame.llm.story_agents.agents._chat_complete",
@@ -313,7 +253,7 @@ def test_story_architect_agent_success_and_failures(monkeypatch) -> None:
 
 def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
     state = build_default_state(seed=550)
-    agent = DefaultStoryBootstrapAgent("openai")
+    agent = DefaultStoryBootstrapAgent()
 
     monkeypatch.setattr(
         "storygame.llm.story_agents.agents._chat_complete",
@@ -375,7 +315,7 @@ def test_story_bootstrap_agent_success_and_failures(monkeypatch) -> None:
 
 def test_story_bootstrap_agent_passes_canonical_opening_facts_to_prompt(monkeypatch) -> None:
     state = build_default_state(seed=551, genre="mystery")
-    agent = DefaultStoryBootstrapAgent("openai")
+    agent = DefaultStoryBootstrapAgent()
     captured: dict[str, object] = {}
 
     def _capture(mode, system, user):  # noqa: ANN001
@@ -427,7 +367,7 @@ def test_story_bootstrap_agent_passes_canonical_opening_facts_to_prompt(monkeypa
 
 def test_story_bootstrap_agent_normalizes_assistant_targeting_in_opening_paragraphs(monkeypatch) -> None:
     state = build_default_state(seed=553)
-    agent = DefaultStoryBootstrapAgent("openai")
+    agent = DefaultStoryBootstrapAgent()
 
     monkeypatch.setattr(
         "storygame.llm.story_agents.agents._chat_complete",
@@ -482,7 +422,7 @@ def test_story_bootstrap_agent_normalizes_assistant_targeting_in_opening_paragra
 
 def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypatch) -> None:
     state = build_default_state(seed=551)
-    agent = DefaultStoryBootstrapCriticAgent("openai")
+    agent = DefaultStoryBootstrapCriticAgent()
     bundle = {
         "protagonist_name": "Detective Elias Wren",
         "protagonist_background": "A detective on one final case.",
@@ -540,7 +480,7 @@ def test_story_bootstrap_critic_rejects_role_and_clue_opening_conflicts(monkeypa
 
 def test_story_bootstrap_critic_does_not_apply_named_location_or_item_rules(monkeypatch) -> None:
     state = build_default_state(seed=552)
-    agent = DefaultStoryBootstrapCriticAgent("openai")
+    agent = DefaultStoryBootstrapCriticAgent()
     bundle = {
         "assistant_name": "Daria Stone",
         "actionable_objective": "Review the grounds and decide which lead to press first.",
@@ -578,10 +518,10 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     cast = {"contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}]}
     plan = {"assistant_name": "Daria Stone", "actionable_objective": "Start with the case file."}
 
-    char_agent = DefaultCharacterDesignerAgent("openai")
-    plot_agent = DefaultPlotDesignerAgent("openai")
-    narr_agent = DefaultNarratorOpeningAgent("openai")
-    room_agent = DefaultRoomPresentationAgent("openai")
+    char_agent = DefaultCharacterDesignerAgent()
+    plot_agent = DefaultPlotDesignerAgent()
+    narr_agent = DefaultNarratorOpeningAgent()
+    room_agent = DefaultRoomPresentationAgent()
 
     # Character success
     monkeypatch.setattr(
@@ -680,7 +620,7 @@ def test_character_plot_narrator_agents_success_and_error_paths(monkeypatch) -> 
     for room in empty_state.world.rooms.values():
         room.npc_ids = ()
     with pytest.raises(RuntimeError, match="requires at least one NPC"):
-        DefaultCharacterDesignerAgent("openai").run(empty_state, architect)
+        DefaultCharacterDesignerAgent().run(empty_state, architect)
 
 
 def test_narrator_opening_logs_raw_response_when_contract_validation_fails(monkeypatch, caplog) -> None:
@@ -688,7 +628,7 @@ def test_narrator_opening_logs_raw_response_when_contract_validation_fails(monke
     architect = {"protagonist_name": "Noah Kade", "protagonist_background": "A detective."}
     cast = {"contacts": [{"name": "Daria Stone", "role": "assistant", "trait": "observant"}]}
     plan = {"assistant_name": "Daria Stone", "actionable_objective": "Start with the case file."}
-    narr_agent = DefaultNarratorOpeningAgent("openai")
+    narr_agent = DefaultNarratorOpeningAgent()
 
     monkeypatch.setattr(
         "storygame.llm.story_agents.agents._chat_complete",
@@ -722,7 +662,7 @@ def test_character_designer_pins_seeded_opening_contact_as_assistant(monkeypatch
         ),
     )
 
-    contacts = DefaultCharacterDesignerAgent("openai").run(state, architect)
+    contacts = DefaultCharacterDesignerAgent().run(state, architect)
 
     assert contacts["contacts"][0]["name"] == seeded_name
     assert contacts["contacts"][0]["role"] == "assistant"
@@ -730,7 +670,7 @@ def test_character_designer_pins_seeded_opening_contact_as_assistant(monkeypatch
 
 def test_story_replan_agent_branches() -> None:
     state = build_default_state(seed=505)
-    agent = DefaultStoryReplanAgent("openai")
+    agent = DefaultStoryReplanAgent()
 
     critical = agent.run(
         state,
