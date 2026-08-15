@@ -53,3 +53,18 @@ case file and ledger-payment clues, the groundskeeper accusation, and the
 evidence-gated resolution. It is data, not a mystery-specific runtime branch.
 The V1 package/fact runtime remains the production fallback until the V2 hosted
 path has passed staging promotion and its observation window.
+
+## Blueprint compilation candidates
+
+`CompiledStoryCompiler` remains the reduced-fixture bridge. Full causal
+blueprints use the separate offline `BlueprintCompiler`, an injected genre
+profile registry, and an explicit JSON-object transport request. It validates
+the raw-outline ID/hash and all generic/profile semantics locally, runs
+injected full-blueprint critics plus route-fairness review, and permits only one
+repair/revalidation pass. It records a non-playable candidate envelope with
+compiler provenance rather than overwriting a checked-in reviewed fixture.
+
+Use `storygame-blueprint --live` only with
+`FREYTAG_ENABLE_LIVE_COMPILER=1` and an injected `module.path:factory`
+transport. This tooling command is outside normal gameplay and may make a paid
+provider request.

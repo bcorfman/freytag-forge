@@ -192,26 +192,26 @@ the engine need not learn the genre’s names or causal fields.
 
 **Goal:** use a capable LLM before play, with deterministic acceptance.
 
-1. Extend the existing offline authoring compiler with a `BlueprintCompiler`
+1. [x] Extend the existing offline authoring compiler with a `BlueprintCompiler`
    transport. It takes one raw outline and a selected genre profile, returns the
    typed blueprint JSON, and never runs during normal gameplay.
-2. Prompt the compiler to plan backward from each genre’s terminal truth and to
+2. [x] Prompt the compiler to plan backward from each genre’s terminal truth and to
    produce phase → required beat → optional/substitutable beat → incident/route
    structures, multiple player routes, protected facts, pressure responses, and
    failure-forward options. Request provider JSON-object mode; parse and
    validate locally using the existing bounded authoring-recovery conventions.
-3. Run existing offline continuity/causality/dialogue critics against the entire
+3. [x] Run existing offline continuity/causality/dialogue critics against the entire
    blueprint and its opening facts. Add a specialist check for route fairness:
    every required revelation has at least two genuinely distinct paths unless a
    declared genre profile explicitly permits otherwise.
-4. Permit one bounded repair pass. Preserve compiler prompt/version, model
+4. [x] Permit one bounded repair pass. Preserve compiler prompt/version, model
    metadata, validation diagnostics, critic results, and source-outline hash in
    the artifact provenance.
-5. Add a CLI/tooling command to compile one selected outline into a checked-in
+5. [x] Add a CLI/tooling command to compile one selected outline into a checked-in
    candidate fixture. It must require explicit opt-in for live model use and
    never overwrite a reviewed fixture automatically.
 
-**Exit criteria:** a raw mystery outline can produce a reviewable candidate
+**Exit criteria:** [x] a raw mystery outline can produce a reviewable candidate
 blueprint and an invalid model result cannot become a playable package.
 
 ### Phase 4 — Author the Vale Mansion vertical slice backwards

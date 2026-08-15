@@ -30,6 +30,16 @@ Live model compilation is intentionally disabled unless
 fixtures instead. Phase 3 will bootstrap the standalone runtime from these
 inputs. Until Phase 4, the current V1 package path remains the running product.
 
+Full Story Blueprint compilation follows the same offline-only rule through
+`BlueprintCompiler`. It requires an injected JSON-object-capable transport,
+locally validates generic and profile semantics before review, applies one
+bounded repair at most, and retains provenance with the candidate. Its route
+fairness specialist checks every required revelation for the profile-declared
+minimum number of distinct paths. The live `storygame-blueprint` command
+requires explicit environment and command-line opt-in and writes only a new
+`*.candidate.json` review envelope; neither it nor raw outlines are runtime
+inputs.
+
 `storygame.story_packages` validates the offline authoring contract. A valid
 package declares locations and their presentation, characters and role
 contracts, items and custody, protected knowledge, clues and resilient

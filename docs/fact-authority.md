@@ -23,6 +23,11 @@ canonical facts at bootstrap. Neither a raw outline, `WorldPackage`, legacy
 The complete Phase-0 authority map and Vale Mansion causality baseline are in
 [genre-blueprint authoring](genre-blueprint-authoring.md).
 
+Phase-3 compiler candidates are also immutable offline artifacts. Their
+provenance envelope (source hash, prompt/model metadata, diagnostics, critic
+results, and repair record) is review evidence, not session state. A compiler
+or critic rejection cannot be loaded as a package or realized into facts.
+
 Proposal state deltas pass through the Phase 2 predicate-policy registry before
 they reach the committer. Each declarative predicate identifies its family,
 legal commit sources, normalization mode, invariants, and derived-update owner.
