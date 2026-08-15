@@ -16,6 +16,8 @@ from fastapi.testclient import TestClient
 from storygame.test_metrics import begin_test, end_test
 
 TIERS = ("unit", "component", "integration", "evaluation")
+QUALITY_TIERS = ("runtime_safety", "authoring_quality")
+_AUTHORING_QUALITY_FILES = {"test_authoring_quality_baseline.py"}
 _HEALTH: dict[str, dict[str, Any]] = {}
 _SESSION_WALL = 0.0
 _SESSION_CPU = 0.0
@@ -90,6 +92,12 @@ def _tier_for_path(path: Path) -> str:
     return "unit"
 
 
+def _quality_tier_for_path(path: Path) -> str:
+    if path.name in _AUTHORING_QUALITY_FILES:
+        return "authoring_quality"
+    return "runtime_safety"
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("test-suite-health")
     group.addoption("--tier-report", default="", help="Write tier, timing, and construction counts as JSON.")
@@ -107,6 +115,8 @@ def _duplicate_definitions(path: Path) -> list[str]:
 def pytest_configure(config: pytest.Config) -> None:
     for tier in TIERS:
         config.addinivalue_line("markers", f"{tier}: test-suite performance tier")
+    config.addinivalue_line("markers", "runtime_safety: runtime safety and behavior contract")
+    config.addinivalue_line("markers", "authoring_quality: offline authoring completeness and causal-quality contract")
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -126,9 +136,8 @@ def pytest_runtest_call(item: pytest.Item) -> Any:
     setup_started = float(record["setup_seconds"])
     record["setup_seconds"] = time.perf_counter() - setup_started
     call_started = time.perf_counter()
-    outcome = yield
+    yield
     record["call_seconds"] = time.perf_counter() - call_started
-    outcome.get_result()
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -161,8 +170,24 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             item.add_marker(getattr(pytest.mark, _tier_for_path(path)))
         elif len(markers) != 1:
             duplicate_errors.append(f"{item.nodeid}: expected exactly one test tier, got {markers}")
+        quality_markers = [tier for tier in QUALITY_TIERS if item.get_closest_marker(tier) is not None]
+        if not quality_markers:
+            item.add_marker(getattr(pytest.mark, _quality_tier_for_path(path)))
+        elif len(quality_markers) != 1:
+            duplicate_errors.append(f"{item.nodeid}: expected exactly one quality tier, got {quality_markers}")
     if duplicate_errors:
         raise pytest.UsageError("Test-suite collection guard failed:\n" + "\n".join(duplicate_errors))
+
+
+def pytest_collection_finish(session: pytest.Session) -> None:
+    counts = Counter(
+        next((tier for tier in QUALITY_TIERS if item.get_closest_marker(tier)), "unknown") for item in session.items
+    )
+    terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+    if terminal_reporter is not None:
+        terminal_reporter.write_line(
+            "Quality-suite collection (informational): " + ", ".join(f"{tier}={counts[tier]}" for tier in QUALITY_TIERS)
+        )
 
 
 def _source_construction_counts(item: pytest.Item) -> Counter[str]:
@@ -213,6 +238,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         "exit_status": exitstatus,
         "tests": len(records),
         "tiers": Counter(),
+        "quality_tiers": Counter(),
         "construction_counts": Counter(),
         "runtime_counts": Counter(),
         "runtime_counts_by_tier": {},
@@ -227,7 +253,9 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     timings: list[dict[str, Any]] = []
     for item in records:
         tier = next((name for name in TIERS if item.get_closest_marker(name)), "unknown")
+        quality_tier = next((name for name in QUALITY_TIERS if item.get_closest_marker(name)), "unknown")
         summary["tiers"][tier] += 1
+        summary["quality_tiers"][quality_tier] += 1
         health = getattr(item, "_test_health", {})
         for name, count in health.get("constructions", {}).items():
             summary["construction_counts"][name] += count
@@ -262,6 +290,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
             }
         )
     summary["tiers"] = dict(summary["tiers"])
+    summary["quality_tiers"] = dict(summary["quality_tiers"])
     summary["construction_counts"] = dict(summary["construction_counts"])
     summary["runtime_counts"] = dict(summary["runtime_counts"])
     summary["runtime_counts_by_tier"] = {

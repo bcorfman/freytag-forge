@@ -29,6 +29,13 @@ Stone, Emma Vale, and the ledger-payment case) rather than a replacement
 placeholder. The existing package/fact web product remains the fallback until
 the V2 hosted path passes staging promotion and its observation window.
 
+Phase 0 of genre-blueprint authoring is complete: the project now has an
+explicit authority map, a cross-genre offline authoring-quality suite, and a
+strict expected-failure baseline for Vale Mansion's still-missing causal
+solution and fair discovery routes. This phase intentionally does not change
+gameplay. The planned immutable Blueprint will realize into facts; facts remain
+the sole mutable session truth.
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
@@ -76,6 +83,7 @@ fail-closed error.
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)
 - [V2 compiled-story authoring](docs/compiled-story-authoring.md)
+- [Genre-blueprint authoring baseline](docs/genre-blueprint-authoring.md)
 - [Tiered refactor plan](.plans/tiered-refactor-plan.md)
 - [Test-suite conventions and performance guide](docs/test-suite-performance-guide.md)
 

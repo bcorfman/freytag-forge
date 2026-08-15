@@ -18,6 +18,13 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
+Genre-blueprint authoring is beginning from an offline-only Phase-0 baseline.
+Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the
+future immutable Story Blueprint are authoring inputs or projections; canonical
+facts are the only mutable truth during a session. The baseline records the
+current Vale Mansion causal omissions without changing its playable runtime.
+See [genre-blueprint authoring](genre-blueprint-authoring.md).
+
 ## Goals
 - Deliver a playable CLI and web IF experience.
 - Keep world-state progression deterministic and replayable.
