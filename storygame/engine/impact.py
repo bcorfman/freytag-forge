@@ -40,6 +40,7 @@ _CRIME_TERMS = {
     "kidnap",
 }
 _AUTHORITY_TERMS = {"police", "officer", "deputy", "sheriff", "guard"}
+_AUTHORITY_ESCALATION_TERMS = {"alert", "call", "contact", "notify", "report", "summon"}
 _PUBLIC_SPACE_TERMS = {"school", "hospital", "church", "station", "sign", "statue"}
 _IRREVERSIBLE_TERMS = {"explode", "ignite", "burn", "jump", "destroy"}
 class ImpactAssessment(TypedDict):
@@ -80,7 +81,9 @@ def assess_player_command(state: GameState, raw: str, action: Action) -> ImpactA
         or _contains_phrase(lower_raw, "harm myself")
     )
     crime = bool(words.intersection(_CRIME_TERMS))
-    authority_target = bool(words.intersection(_AUTHORITY_TERMS))
+    authority_target = bool(words.intersection(_AUTHORITY_TERMS)) and (
+        violent or bool(words.intersection(_AUTHORITY_ESCALATION_TERMS))
+    )
     public_space_target = bool(words.intersection(_PUBLIC_SPACE_TERMS))
     irreversible = bool(words.intersection(_IRREVERSIBLE_TERMS))
 
