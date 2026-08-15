@@ -1,6 +1,6 @@
 # Genre-blueprint authoring baseline
 
-Phases 0–1 establish the offline authoring boundary for Story Blueprints. They
+Phases 0–2 establish the offline authoring boundary for Story Blueprints. They
 do not change gameplay, package realization, or the current V2 runtime.
 
 ## Phase-1 generic contract
@@ -24,6 +24,30 @@ fantasy, sci-fi, and relationship stories. The authoring-quality contract tests
 load each fixture. `compiled_story_as_blueprint` is a temporary one-way,
 reduced projection from the retained public `CompiledStory` API, avoiding a
 second causal authority while consumers migrate.
+
+## Phase-2 genre profiles
+
+Versioned YAML profiles in `data/genre_profiles/` declare causal roles, allowed
+revelation roles, phase ordering, required turning points, ending truths,
+evidence-route requirements, and generic policy mappings for mystery, fantasy,
+sci-fi, and relationship stories. `GenreProfileRegistry` injects a validator
+selected by the blueprint's declared genre; shared engine and runtime code do
+not branch on genre names.
+
+`genre_causality` binds profile-defined roles to canonical truths, while each
+revelation may declare a profile-defined role and subject role. The declarative
+adapter validates role cardinality, revelation legality, phase order, turning
+points, ending support, required evidence routes, circular proof, and (where a
+profile requests it) climaxes backed by required discoveries. Mystery requires
+one complete crime solution and its victim, perpetrator, motive, means,
+opportunity, method, time window, concealment, and evidence-backed
+identification/exoneration routes. Fantasy, sci-fi, and relationship profiles
+instead require rule/source/cost, failure/constraint/remedy/trade-off, and
+wound/need/choice/outcome structures.
+
+Adding a genre requires a profile, an injected validator adapter where the
+declarative adapter is insufficient, and valid/invalid fixtures. It does not
+authorize a new runtime branch or make a blueprint mutable.
 
 ## Authority map
 

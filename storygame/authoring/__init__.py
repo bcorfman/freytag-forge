@@ -6,6 +6,7 @@ from storygame.authoring.blueprint_contracts import (
     DramaticBeat,
     EndState,
     FailureForward,
+    GenreCausality,
     OppositionClock,
     ProtectedFact,
     RealizationRoute,
@@ -19,6 +20,7 @@ from storygame.authoring.blueprint_contracts import (
 from storygame.authoring.blueprint_migration import compiled_story_as_blueprint
 from storygame.authoring.compiler import CompilationError, CompiledStoryCompiler, validate_compiled_story
 from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
+from storygame.authoring.genre_profiles import GenreBlueprintValidator, GenreProfile, GenreProfileRegistry
 
 __all__ = [
     "Beat",
@@ -34,6 +36,10 @@ __all__ = [
     "DramaticBeat",
     "EndState",
     "FailureForward",
+    "GenreBlueprintValidator",
+    "GenreCausality",
+    "GenreProfile",
+    "GenreProfileRegistry",
     "load_story_blueprint_fixture",
     "OppositionClock",
     "ProtectedRevelation",

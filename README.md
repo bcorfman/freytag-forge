@@ -29,7 +29,7 @@ Stone, Emma Vale, and the ledger-payment case) rather than a replacement
 placeholder. The existing package/fact web product remains the fallback until
 the V2 hosted path passes staging promotion and its observation window.
 
-Phases 0–1 of genre-blueprint authoring are complete. The project has an
+Phases 0–2 of genre-blueprint authoring are complete. The project has an
 explicit authority map, a cross-genre offline authoring-quality suite, and an
 immutable, locally validated `StoryBlueprint` contract with minimal mystery,
 fantasy, sci-fi, and relationship fixtures. The contract validates causal
@@ -37,6 +37,12 @@ references, revelation cycles, protected-fact release ordering, route
 reachability, ending viability, and optional-beat purpose. It remains
 offline-only: blueprint prose cannot mutate a session, and facts remain the
 sole mutable session truth.
+
+Phase 2 adds versioned declarative profiles for mystery, fantasy, sci-fi, and
+relationship stories. An injected authoring validator registry checks each
+profile's causal roles, revelation and evidence routes, Freytag turning points,
+phase order, and viable genre endings—without introducing runtime genre
+branches.
 
 ## Why it’s different
 

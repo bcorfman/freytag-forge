@@ -1,0 +1,27 @@
+schema_version: genre-profile-v1
+profile_version: 1
+genre: mystery
+causal_roles:
+  - {role: crime_solution}
+  - {role: victim}
+  - {role: perpetrator}
+  - {role: motive}
+  - {role: means}
+  - {role: opportunity}
+  - {role: method}
+  - {role: time_window}
+  - {role: concealment}
+allowed_revelation_roles: [discovery, identify_party, exonerate_party, decision]
+phase_order: [exposition, disruption, rising_action, midpoint_reversal, crisis, climax, falling_action, resolution]
+turning_points:
+  - {role: disruption, phase: disruption}
+  - {role: reversal, phase: midpoint_reversal}
+  - {role: crisis, phase: crisis}
+  - {role: climax, phase: climax}
+  - {role: resolution, phase: resolution}
+ending_truth_roles: [crime_solution]
+evidence_requirements:
+  - {revelation_role: identify_party, subject_role: perpetrator, route_roles: [physical_evidence, document]}
+  - {revelation_role: exonerate_party, subject_role: perpetrator, route_roles: [physical_evidence, testimony, document]}
+policy_mappings:
+  climax_requires_required_discoveries: "true"
