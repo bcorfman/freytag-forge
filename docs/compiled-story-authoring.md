@@ -5,10 +5,13 @@ does not read V1 world facts, proposals, policies, or runtime package contracts.
 Its only model integration is an injected `CompilerTransport` with
 `generate(prompt)`. Provider adapters remain transport concerns.
 
-`CompiledStory` remains a reduced, immutable bridge fixture while the future
-Story Blueprint contract is introduced. It does not yet encode a genre's full
-causal solution or alternate realization routes. The Phase-0 authority map,
-Vale Mansion omissions, and later success measures are documented in
+`CompiledStory` remains a reduced, immutable bridge fixture while the Phase-1
+Story Blueprint contract is introduced. It does not encode a genre's full
+causal solution or alternate realization routes. Its public API remains
+available, and `compiled_story_as_blueprint` provides a one-way reduced
+projection into `story-blueprint-v1` while consumers migrate; neither format
+becomes runtime mutation authority. The authority map, Vale Mansion omissions,
+and later success measures are documented in
 [genre-blueprint authoring](genre-blueprint-authoring.md).
 
 ## Contract

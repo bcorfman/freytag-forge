@@ -29,12 +29,14 @@ Stone, Emma Vale, and the ledger-payment case) rather than a replacement
 placeholder. The existing package/fact web product remains the fallback until
 the V2 hosted path passes staging promotion and its observation window.
 
-Phase 0 of genre-blueprint authoring is complete: the project now has an
-explicit authority map, a cross-genre offline authoring-quality suite, and a
-strict expected-failure baseline for Vale Mansion's still-missing causal
-solution and fair discovery routes. This phase intentionally does not change
-gameplay. The planned immutable Blueprint will realize into facts; facts remain
-the sole mutable session truth.
+Phases 0–1 of genre-blueprint authoring are complete. The project has an
+explicit authority map, a cross-genre offline authoring-quality suite, and an
+immutable, locally validated `StoryBlueprint` contract with minimal mystery,
+fantasy, sci-fi, and relationship fixtures. The contract validates causal
+references, revelation cycles, protected-fact release ordering, route
+reachability, ending viability, and optional-beat purpose. It remains
+offline-only: blueprint prose cannot mutate a session, and facts remain the
+sole mutable session truth.
 
 ## Why it’s different
 
@@ -171,6 +173,7 @@ storygame/
 
 data/              # validated story, rule, predicate, and evaluation inputs
 ├── compiled_stories/ # immutable V2 fixtures, grouped by schema version
+├── story_blueprints/ # immutable Phase-1 causal contract fixtures
 tests/             # unit, component, integration, and evaluation contracts
 docs/              # product, operational, and engineering reference
 ```

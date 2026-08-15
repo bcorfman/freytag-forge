@@ -17,7 +17,7 @@ from storygame.test_metrics import begin_test, end_test
 
 TIERS = ("unit", "component", "integration", "evaluation")
 QUALITY_TIERS = ("runtime_safety", "authoring_quality")
-_AUTHORING_QUALITY_FILES = {"test_authoring_quality_baseline.py"}
+_AUTHORING_QUALITY_FILES = {"test_authoring_quality_baseline.py", "test_blueprint_contracts.py"}
 _HEALTH: dict[str, dict[str, Any]] = {}
 _SESSION_WALL = 0.0
 _SESSION_CPU = 0.0

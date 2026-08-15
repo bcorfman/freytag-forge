@@ -130,10 +130,10 @@ describe the intended first vertical slice without changing gameplay.
 
 **Goal:** create the immutable authoring contract shared by all genres.
 
-1. Write contract tests before implementation for IDs, immutable parsing,
+1. [x] Write contract tests before implementation for IDs, immutable parsing,
    references, cycles, protected facts, revelation ordering, route reachability,
    ending viability, and cross-genre fixture loading.
-2. Add `storygame.authoring.blueprint_contracts` with typed models for:
+2. [x] Add `storygame.authoring.blueprint_contracts` with typed models for:
    - `StoryBlueprint`, identity/version/source-outline provenance, premise, and
      central question;
    - `CanonicalTruth` and `ProtectedFact`;
@@ -145,17 +145,17 @@ describe the intended first vertical slice without changing gameplay.
      phase/role/question, required outcome or narrative function, revelation
      dependencies, pressure change, and pacing;
    - `OppositionClock`, opportunity decay, and `EndState`.
-3. Require every optional/substitutable beat to state whether it is an
+3. [x] Require every optional/substitutable beat to state whether it is an
    alternative satisfier for a required outcome, a complication, or a
    relationship/world-development opportunity. The validator must reject an
    optional beat that silently becomes the only route to a required ending.
-4. Keep executable effects small and reuse existing typed fact predicates and
+4. [x] Keep executable effects small and reuse existing typed fact predicates and
    consequences. Blueprint prose is guidance; it cannot mutate state directly.
-5. Provide a format migration path from the current `CompiledStory` fixture:
+5. [x] Provide a format migration path from the current `CompiledStory` fixture:
    retain its public API temporarily, then load it as a reduced blueprint until
    all consumers migrate. Do not duplicate causal truth in both formats.
 
-**Exit criteria:** the generic contract rejects malformed graphs and validates a
+**Exit criteria:** [x] the generic contract rejects malformed graphs and validates a
 minimal fixture for mystery, fantasy, sci-fi, and relationship genres.
 
 ### Phase 2 — Add declarative genre profiles and validators

@@ -1,7 +1,29 @@
 # Genre-blueprint authoring baseline
 
-Phase 0 establishes the authoring boundary for the future Story Blueprint. It
-does not change gameplay, package realization, or the current V2 runtime.
+Phases 0–1 establish the offline authoring boundary for Story Blueprints. They
+do not change gameplay, package realization, or the current V2 runtime.
+
+## Phase-1 generic contract
+
+`storygame.authoring.blueprint_contracts` defines the frozen
+`story-blueprint-v1` authoring artifact. A blueprint carries source-outline
+provenance, canonical truths, protected facts, revelations, realization routes,
+required and optional beats, opposition clocks, and viable end states. Its
+local validator rejects duplicate or unknown IDs, revelation cycles,
+unreleased protected facts, route-less required revelations, invalid route
+references, endings that omit required revelations, and optional beats that
+silently become the only satisfier of a required outcome.
+
+Routes provide declarative truth satisfiers, availability constraints, and a
+bounded failure-forward result. They are not executable runtime effects. Phase
+5 will realize accepted declarations using the existing typed fact predicates
+and consequence contracts; no blueprint prose can mutate session state.
+
+Minimal immutable fixtures live in `data/story_blueprints/v1/` for mystery,
+fantasy, sci-fi, and relationship stories. The authoring-quality contract tests
+load each fixture. `compiled_story_as_blueprint` is a temporary one-way,
+reduced projection from the retained public `CompiledStory` API, avoiding a
+second causal authority while consumers migrate.
 
 ## Authority map
 
