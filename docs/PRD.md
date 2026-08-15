@@ -18,13 +18,18 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
-Genre-blueprint authoring has completed its offline-only Phase-1 contract.
+Genre-blueprint authoring has completed its offline-only Phases 1–2 contract
+and profile-validation layer.
 Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the
 immutable Story Blueprint are authoring inputs or projections; canonical facts
 are the only mutable truth during a session. `StoryBlueprint` locally validates
 generic causal references, protected-fact release order, revelation graphs,
 route reachability, optional beat intent, and viable endings for all supported
-genres. It does not yet alter runtime bootstrap or gameplay. A one-way reduced
+genres. Versioned, injected genre profiles add semantic causal roles, allowed
+revelation/evidence routes, phase and turning-point requirements, and ending
+requirements for mystery, fantasy, sci-fi, and relationship stories; no shared
+runtime code branches on these genre names. It does not yet alter runtime
+bootstrap or gameplay. A one-way reduced
 projection keeps the public `CompiledStory` fixture API available while future
 consumers migrate. See [genre-blueprint authoring](genre-blueprint-authoring.md).
 

@@ -162,30 +162,30 @@ minimal fixture for mystery, fantasy, sci-fi, and relationship genres.
 
 **Goal:** encode genre-specific causality without genre-specific runtime code.
 
-1. Add versioned profiles under `data/genre_profiles/`, beginning with mystery,
+1. [x] Add versioned profiles under `data/genre_profiles/`, beginning with mystery,
    fantasy, sci-fi, and relationship. Profiles declare required causal roles,
    allowed revelation roles, ending requirements, and generic policy mappings.
-2. Implement an injected `GenreBlueprintValidator` protocol and a registry that
+2. [x] Implement an injected `GenreBlueprintValidator` protocol and a registry that
    resolves a profile by declared genre; no `if genre == ...` branches in engine
    code.
-3. Define the profile's accepted phase ordering and turning-point semantics.
+3. [x] Define the profile's accepted phase ordering and turning-point semantics.
    Profiles may merge the preferred eight Freytag regions but must still
    identify the disruption, reversal (when applicable), crisis, climax, and
    resolution functions needed by their story form.
-4. The mystery profile must require exactly one canonical crime solution with:
+4. [x] The mystery profile must require exactly one canonical crime solution with:
    victim, perpetrator, motive, means, opportunity, method, time window,
    concealment, and at least one evidence-backed route to identify/exonerate
    each decisive party. It must reject circular proof, clue placement that is
    inaccessible before its revelation, and a climax unsupported by required
    discoveries.
-5. Other profiles must use their own semantic requirements, e.g. a sci-fi
+5. [x] Other profiles must use their own semantic requirements, e.g. a sci-fi
    failure cause/constraints/remedies/trade-off; fantasy rule/source/cost; and
    relationship wounds/needs/choice/outcomes. They share the generic contract
    but do not inherit mystery fields.
-6. Add validator fixtures that demonstrate both valid and invalid instances for
+6. [x] Add validator fixtures that demonstrate both valid and invalid instances for
    every supported genre.
 
-**Exit criteria:** adding a new genre is data plus a validator adapter and tests;
+**Exit criteria:** [x] adding a new genre is data plus a validator adapter and tests;
 the engine need not learn the genre’s names or causal fields.
 
 ### Phase 3 — Build the offline compilation and evaluation workflow

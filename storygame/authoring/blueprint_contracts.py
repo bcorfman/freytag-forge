@@ -35,6 +35,13 @@ class CanonicalTruth(_BlueprintContract):
     summary: str = Field(min_length=1, max_length=600)
 
 
+class GenreCausality(_BlueprintContract):
+    """A profile-defined semantic role bound to one canonical truth."""
+
+    role: str = Field(pattern=_ID_PATTERN, max_length=80)
+    truth_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+
+
 class ProtectedFact(_BlueprintContract):
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
     truth_id: str = Field(pattern=_ID_PATTERN, max_length=80)
@@ -43,6 +50,8 @@ class ProtectedFact(_BlueprintContract):
 
 class Revelation(_BlueprintContract):
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    role: str = Field(default="discovery", pattern=_ID_PATTERN, max_length=80)
+    subject_role: str | None = Field(default=None, pattern=_ID_PATTERN, max_length=80)
     summary: str = Field(min_length=1, max_length=600)
     prerequisite_truths: tuple[str, ...] = Field(default=(), max_length=16)
     prerequisite_revelations: tuple[str, ...] = Field(default=(), max_length=16)
@@ -109,6 +118,7 @@ class StoryBlueprint(_BlueprintContract):
     premise: str = Field(min_length=1, max_length=1200)
     central_question: str = Field(min_length=1, max_length=500)
     canonical_truths: tuple[CanonicalTruth, ...] = Field(min_length=1, max_length=128)
+    genre_causality: tuple[GenreCausality, ...] = Field(default=(), max_length=64)
     protected_facts: tuple[ProtectedFact, ...] = Field(default=(), max_length=64)
     revelations: tuple[Revelation, ...] = Field(min_length=1, max_length=64)
     realization_routes: tuple[RealizationRoute, ...] = Field(min_length=1, max_length=128)
@@ -243,6 +253,10 @@ def validate_story_blueprint(payload: Mapping[str, object] | StoryBlueprint) -> 
         path = ".".join(str(part) for part in first["loc"])
         raise BlueprintValidationError("CONTRACT_INVALID", f"{path}: {first['type']}") from exc
     truth_ids = _ids(story.canonical_truths, "canonical truth")
+    roles = [binding.role for binding in story.genre_causality]
+    if len(roles) != len(set(roles)):
+        raise BlueprintValidationError("DUPLICATE_ID", "duplicate genre causal role")
+    _references((binding.truth_id for binding in story.genre_causality), truth_ids, "genre causality")
     protected_ids = _ids(story.protected_facts, "protected fact")
     revelation_ids = {revelation.id for revelation in story.revelations}
     for protected in story.protected_facts:
