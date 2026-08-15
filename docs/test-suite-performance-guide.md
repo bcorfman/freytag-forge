@@ -26,7 +26,9 @@ timings without making the existing behavioral suite brittle during migration.
 Separately, every test receives one exclusive quality classification:
 `runtime_safety` or `authoring_quality`. This is not a performance tier and
 does not alter the unit/component/integration/evaluation budgets. The
-`authoring_quality` suite covers offline completeness and causal baselines;
+`authoring_quality` suite covers offline completeness, the Phase-1 immutable
+Story Blueprint graph contract, cross-genre blueprint fixture loading, and
+causal baselines;
 its collection totals are informational, never fixed-count gates. See
 [genre-blueprint authoring](genre-blueprint-authoring.md) for the command and
 current coverage.
