@@ -7,6 +7,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Literal
 
+import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 _ID_PATTERN = r"^[a-z][a-z0-9_]*$"
@@ -48,6 +49,13 @@ class ProtectedFact(_BlueprintContract):
     release_after: tuple[str, ...] = Field(min_length=1, max_length=16)
 
 
+class KnowledgeAssignment(_BlueprintContract):
+    """An author's immutable declaration of one party's starting knowledge."""
+
+    party_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    known_truths: tuple[str, ...] = Field(default=(), max_length=64)
+
+
 class Revelation(_BlueprintContract):
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
     role: str = Field(default="discovery", pattern=_ID_PATTERN, max_length=80)
@@ -71,12 +79,29 @@ class FailureForward(_BlueprintContract):
     unlocks: tuple[str, ...] = Field(default=(), max_length=16)
 
 
+class LocationClass(_BlueprintContract):
+    """A declarative class of locations that may realize authored evidence."""
+
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    summary: str = Field(min_length=1, max_length=600)
+
+
+class EvidencePlacement(_BlueprintContract):
+    """Static custody and eligible delivery locations for one evidence truth."""
+
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    truth_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    custody: str = Field(min_length=1, max_length=160)
+    location_classes: tuple[str, ...] = Field(min_length=1, max_length=16)
+
+
 class RealizationRoute(_BlueprintContract):
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
     revelation_id: str = Field(pattern=_ID_PATTERN, max_length=80)
     role: str = Field(min_length=1, max_length=80)
     satisfiers: tuple[RouteSatisfier, ...] = Field(min_length=1, max_length=16)
     availability_constraints: tuple[str, ...] = Field(default=(), max_length=16)
+    location_classes: tuple[str, ...] = Field(default=(), max_length=16)
     failure_forward: FailureForward
 
 
@@ -120,7 +145,10 @@ class StoryBlueprint(_BlueprintContract):
     canonical_truths: tuple[CanonicalTruth, ...] = Field(min_length=1, max_length=128)
     genre_causality: tuple[GenreCausality, ...] = Field(default=(), max_length=64)
     protected_facts: tuple[ProtectedFact, ...] = Field(default=(), max_length=64)
+    participant_knowledge: tuple[KnowledgeAssignment, ...] = Field(default=(), max_length=64)
     revelations: tuple[Revelation, ...] = Field(min_length=1, max_length=64)
+    location_classes: tuple[LocationClass, ...] = Field(default=(), max_length=64)
+    evidence_placements: tuple[EvidencePlacement, ...] = Field(default=(), max_length=128)
     realization_routes: tuple[RealizationRoute, ...] = Field(min_length=1, max_length=128)
     required_beats: tuple[DramaticBeat, ...] = Field(min_length=1, max_length=64)
     optional_beats: tuple[DramaticBeat, ...] = Field(default=(), max_length=64)
@@ -176,10 +204,16 @@ def _validate_revelation_graph(story: StoryBlueprint, truth_ids: set[str], prote
 
 def _validate_routes(story: StoryBlueprint, truth_ids: set[str], revelation_ids: set[str]) -> None:
     _ids(story.realization_routes, "realization route")
+    location_class_ids = _ids(story.location_classes, "location class")
+    _ids(story.evidence_placements, "evidence placement")
+    for placement in story.evidence_placements:
+        _references((placement.truth_id,), truth_ids, f"evidence placement '{placement.id}'")
+        _references(placement.location_classes, location_class_ids, f"evidence placement '{placement.id}'")
     revelations_by_id = {revelation.id: revelation for revelation in story.revelations}
     for route in story.realization_routes:
         _references((route.revelation_id,), revelation_ids, f"route '{route.id}'")
         _references(route.availability_constraints, truth_ids, f"route '{route.id}'")
+        _references(route.location_classes, location_class_ids, f"route '{route.id}'")
         _references((item.truth_id for item in route.satisfiers), truth_ids, f"route '{route.id}'")
         _references(route.failure_forward.result_truths, truth_ids, f"route '{route.id}' failure-forward")
         _references(route.failure_forward.unlocks, revelation_ids, f"route '{route.id}' failure-forward")
@@ -258,6 +292,11 @@ def validate_story_blueprint(payload: Mapping[str, object] | StoryBlueprint) -> 
         raise BlueprintValidationError("DUPLICATE_ID", "duplicate genre causal role")
     _references((binding.truth_id for binding in story.genre_causality), truth_ids, "genre causality")
     protected_ids = _ids(story.protected_facts, "protected fact")
+    parties = [assignment.party_id for assignment in story.participant_knowledge]
+    if len(parties) != len(set(parties)):
+        raise BlueprintValidationError("DUPLICATE_ID", "duplicate knowledge party")
+    for assignment in story.participant_knowledge:
+        _references(assignment.known_truths, truth_ids, f"knowledge party '{assignment.party_id}'")
     revelation_ids = {revelation.id for revelation in story.revelations}
     for protected in story.protected_facts:
         _references((protected.truth_id,), truth_ids, f"protected fact '{protected.id}'")
@@ -274,11 +313,16 @@ def load_story_blueprint_fixture(genre: str, root: Path | None = None) -> StoryB
     """Load a checked-in Phase-1 blueprint fixture without making it runtime state."""
 
     fixture_root = root or Path("data/story_blueprints/v1")
-    path = fixture_root / f"{genre}.json"
+    json_path = fixture_root / f"{genre}.json"
+    yaml_path = fixture_root / f"{genre}.yaml"
+    path = json_path if json_path.exists() else yaml_path
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        source = path.read_text(encoding="utf-8")
+        payload = json.loads(source) if path.suffix == ".json" else yaml.safe_load(source)
     except FileNotFoundError as exc:
         raise BlueprintValidationError("FIXTURE_NOT_FOUND", f"blueprint fixture '{genre}' does not exist") from exc
-    except json.JSONDecodeError as exc:
-        raise BlueprintValidationError("FIXTURE_INVALID", f"blueprint fixture '{genre}' is not JSON") from exc
+    except (json.JSONDecodeError, yaml.YAMLError) as exc:
+        raise BlueprintValidationError(
+            "FIXTURE_INVALID", f"blueprint fixture '{genre}' is not valid JSON or YAML"
+        ) from exc
     return validate_story_blueprint(payload)

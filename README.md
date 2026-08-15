@@ -53,6 +53,14 @@ and any single repair. `storygame-blueprint` requires both `--live` and
 `FREYTAG_ENABLE_LIVE_COMPILER=1`, and refuses to overwrite files or write a
 candidate under a reviewed-fixture name.
 
+Phase 4 adds the editor-reviewed Vale Mansion blueprint at
+`data/story_blueprints/v1/vale_mansion_case.yaml`. It records the complete
+crime solution, party knowledge, bounded timeline, evidence custody, location
+classes, protected truth, and two fair routes through every pivotal revelation.
+Its authoring acceptance suite verifies that a solved case follows declared
+evidence rather than a narration or completion tag. Runtime realization stays
+in Phase 5; facts remain the only mutable session authority.
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |

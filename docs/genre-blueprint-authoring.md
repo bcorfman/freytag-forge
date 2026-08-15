@@ -1,6 +1,6 @@
 # Genre-blueprint authoring baseline
 
-Phases 0–3 establish the offline authoring boundary for Story Blueprints. They
+Phases 0–4 establish the offline authoring boundary for Story Blueprints. They
 do not change gameplay, package realization, or the current V2 runtime.
 
 ## Phase-1 generic contract
@@ -14,10 +14,13 @@ unreleased protected facts, route-less required revelations, invalid route
 references, endings that omit required revelations, and optional beats that
 silently become the only satisfier of a required outcome.
 
-Routes provide declarative truth satisfiers, availability constraints, and a
-bounded failure-forward result. They are not executable runtime effects. Phase
-5 will realize accepted declarations using the existing typed fact predicates
-and consequence contracts; no blueprint prose can mutate session state.
+Routes provide declarative truth satisfiers, availability constraints, eligible
+location classes, and a bounded failure-forward result. Evidence placements
+declare immutable custody and their valid location classes; participant
+knowledge declares what each party starts knowing. They are not executable
+runtime effects. Phase 5 will realize accepted declarations using the existing
+typed fact predicates and consequence contracts; no blueprint prose can mutate
+session state.
 
 Minimal immutable fixtures live in `data/story_blueprints/v1/` for mystery,
 fantasy, sci-fi, and relationship stories. The authoring-quality contract tests
@@ -95,19 +98,22 @@ effect or establish truth. A model may propose a bounded effect or a route, but
 policy must validate and commit the corresponding facts before narration can
 state it.
 
-## Vale Mansion baseline audit
+## Phase-4 Vale Mansion reviewed vertical slice
 
-`data/compiled_stories/v1/mystery.json` retains the authored opening, public
-briefing, protected revelation, and linear five-beat progression. It does not
-yet declare the causal evidence needed to fairly solve the case. The omitted
-fields are: perpetrator, motive, means, opportunity, method, bounded timeline,
-concealment, exonerating evidence, proof threshold, and multiple independent
-routes for each pivotal revelation.
+`data/story_blueprints/v1/vale_mansion_case.yaml` is the editor-reviewed
+mystery vertical slice. It declares Beatrice Harrow's complete crime solution,
+every relevant party's initial knowledge, the 23:42–23:50 west-gallery window,
+and payment, physical, alibi, and concealment evidence. Its reveal ladder is:
+suspicious death; significant payment trail; unsound groundskeeper accusation;
+Harrow's means, motive, and opportunity; then a supported case decision.
 
-`tests/test_authoring_quality_baseline.py` records this as a strict expected
-failure. The test must remain failing until the reviewed Vale Blueprint arrives;
-an unexpected pass means the baseline needs to become a normal Phase-4
-acceptance contract.
+Every pivotal revelation has two different declared routes, a valid location
+class, availability requirements, custody via evidence placement, and a
+failure-forward outcome. `tests/test_vale_mansion_blueprint.py` exercises a
+physical route and a document/testimony route, early groundskeeper accusation,
+an unrelated action, and failed/contaminated-clue progression. These are
+authoring acceptance contracts: they prove the immutable graph is fair and do
+not claim that Phase-5 runtime realization is already present.
 
 ## Authoring-quality suite
 
@@ -131,9 +137,9 @@ accepted as a quality gate.
 | --- | --- | --- |
 | Compilation pass rate | Accepted blueprint compilations / attempted compilations. | Not applicable until Phase 3. |
 | Genre-validator failure rate | Genre validation failures / submitted candidate blueprints, by genre and error code. | Not applicable until Phase 2. |
-| Independent routes | Minimum number of distinct declared realization routes per pivotal revelation. | Vale: 0 declared. |
+| Independent routes | Minimum number of distinct declared realization routes per pivotal revelation. | Vale: 2 distinct routes per pivotal revelation. |
 | Premature-leak rate | Protected-truth leaks before their required facts / protected-truth exposure attempts. | Measure at runtime realization in Phase 5. |
-| Clue-route completion rate | Completed declared clue routes / routes made available to scripted play. | Not applicable until Phase 4. |
-| Fail-forward coverage | Routes with a declared viable failure-forward result / all routes. | Vale: 0 declared. |
+| Clue-route completion rate | Completed declared clue routes / routes made available to scripted play. | Authoring routes are covered by two solved-route acceptance paths. |
+| Fail-forward coverage | Routes with a declared viable failure-forward result / all routes. | Vale: 100% of declared routes. |
 | Normal-turn model calls | Inference requests per ordinary player turn. | Preserve the current cap: one normal request plus at most one shared recovery request. |
 | p95 latency | 95th percentile end-to-end ordinary-turn latency. | Preserve the under-ten-second target. |
