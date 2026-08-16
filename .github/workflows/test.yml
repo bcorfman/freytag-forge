@@ -188,6 +188,20 @@ jobs:
           done
           test -n "$run_id"
           gh run watch "$run_id" --exit-status
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          pages_metadata_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/dev/deployment.json"
+          pages_metadata=''
+          pages_channel=''
+          pages_sha=''
+          for attempt in $(seq 1 30); do
+            pages_metadata="$(curl --fail --silent --show-error "$pages_metadata_url" || true)"
+            pages_channel="$(jq -r '.channel // empty' <<<"$pages_metadata" 2>/dev/null || true)"
+            pages_sha="$(jq -r '.sha // empty' <<<"$pages_metadata" 2>/dev/null || true)"
+            test "$pages_channel" = staging && test "$pages_sha" = "$GITHUB_SHA" && break
+            sleep 2
+          done
+          test "$pages_channel" = staging
+          test "$pages_sha" = "$GITHUB_SHA"
   hosted-demo-staging-e2e:
     name: Hosted demo staging E2E
     needs: deploy-staging

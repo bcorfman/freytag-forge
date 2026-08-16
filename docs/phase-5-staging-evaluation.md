@@ -7,11 +7,17 @@ to the isolated staging API and the hosted browser E2E has passed.
 It starts one session for each compiled fixture (mystery, fantasy, sci-fi, and
 relationship), plays these seven generic styles in each session, then verifies
 save/load: investigate, travel, social, avoidant, adversarial, repeated
-failure, and unexpected action. The evaluator verifies the API version response
+failure, and unexpected action. This is automated engine-regression coverage,
+not a requirement to manually review four player-facing releases. The evaluator verifies the API version response
 is `staging` and exactly the candidate SHA; reports one-call and repair rates,
 p95 request latency, typed fail-closed errors, protected-revelation text,
 continuity checks, completion rate, and user-facing session failures; and
 writes `staging-evaluation.json` as a SHA-named workflow artifact.
+
+The deployment workflow also stamps each Pages bundle with a channel/SHA
+`deployment.json` and blocks staging until the deployed `/dev/deployment.json`
+and staging API health response both match the candidate. Identity reconciliation
+is automated; it is not a human-review task.
 
 For every package that declares an opening document briefing, the evaluator
 also derives a direct NPC question from that package's `npc_disclosures` data.
@@ -65,30 +71,33 @@ the baseline scorecard before issuing their SHA-specific approval.
 
 Completion rate remains a recorded scorecard measure, not a required scripted
 ending: the seven styles are deliberately agency probes, not a prescribed
-solution. A human reviewer assesses completion and qualitative pacing from the
-transcripts before approval.
+solution. The automated report retains their transcripts as diagnostic evidence;
+the human reviewer assesses the currently shipped story rather than treating
+each engine fixture as a separate release.
 
 ## Human review and approval
 
 After the workflow succeeds, use the staged SHA from its artifact and follow
 this review without changing prompts, pacing thresholds, or fixtures in place:
 
-1. Visit `https://bcorfman.github.io/freytag-forge/dev/` and confirm the
-   non-production badge is visible.
-2. Start and freely play one unscripted session in each of the four genres.
-   Record the URL, SHA, reviewer, and short notes on narrative flow, agency,
-   clarity, and genre fit.
-3. In one session, use a freeform move, `/save <slot>`, another move, and
-   `/load <slot>`.
-   Confirm the displayed location and turn index restore; trigger one harmless
-   error (for example an invalid/expired session in a separate browser tab) and
-   confirm the client presents a safe error rather than raw provider text.
-4. Review `staging-evaluation.json`, the hosted E2E result, and the transcript
-   notes. Explicitly record **approve** or **reject** for that exact SHA.
-5. If pacing or prompt guidance changes, increment the relevant compiled-story
+1. Visit `https://bcorfman.github.io/freytag-forge/dev/`, confirm the
+   non-production badge, and play one short unscripted Elias Wren session. Make
+   several ordinary freeform moves, use `/save <slot>`, make another move, then
+   `/load <slot>`. Record brief notes on narrative flow, agency, clarity, and
+   whether the restored location and turn index are correct.
+2. To **approve**, open the GitHub Actions workflow **Promote staged SHA to
+   production** and run it with the SHA input blank. It resolves the newest
+   successful staging candidate on `main`; provide a full SHA only to promote a
+   deliberate older candidate. Approve the protected `freytag-forge /
+   production` environment when GitHub pauses the run. That environment
+   approval is the SHA-bound decision and audit record. To **reject**, do not
+   dispatch the promotion workflow; retain the staging evidence and, if useful,
+   record the reason in the workflow or issue.
+3. If pacing or prompt guidance changes, increment the relevant compiled-story
    fixture version, rerun the full regression suite and staging gate, then
    review the new SHA. Do not repair a finding with deterministic incidents or
    genre-specific runtime logic.
 
-The explicit human approval is the remaining Phase 5 exit criterion and is the
-authorization to invoke the separate SHA-pinned production-promotion workflow.
+The protected-environment approval in the SHA-pinned production-promotion
+workflow is the remaining Phase 5 exit criterion. Complete
+`production-promotion-record.md` only after that workflow succeeds.

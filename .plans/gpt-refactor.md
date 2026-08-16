@@ -293,13 +293,14 @@ before it replaces the existing production runtime.
 1. **[Automated]** Run the four genre fixtures and scripted player styles against staging with
 fixed model/version/prompt settings. Include investigate, travel, social,
 avoidant, adversarial, repeated-failure, and unexpected-action scripts.
-   **[User testing]** Play at least one unscripted session in each genre to
-   confirm the scripted coverage has not made the experience feel constrained.
+   **[User testing]** Play one short unscripted session of the currently shipped
+   story. The fixture matrix is engine-regression coverage, not a requirement
+   to manually review four player-facing releases.
 2. **[Automated]** Evaluate protected revelations, state continuity, entity/custody validity,
 beat order, completion, player agency, one-call/repair rates, latency, and
 typed fail-closed errors; record the evidence alongside the exact deployed SHA.
-   **[User testing]** Sample model-authored output for narrative flow, agency,
-   clarity, and cross-genre fit; record the reviewer and findings with that SHA.
+   **[User testing]** Sample the shipped story for narrative flow, agency, and
+   clarity; record the reviewer and findings with that SHA.
 3. **[Automated]** Validate every proposed compiler pacing, `PacingController`,
 or prompt change with a new compiled-fixture version and the full regression suite.
    **[User testing]** Tune compiler pacing defaults, `PacingController` thresholds, and runtime
@@ -309,8 +310,9 @@ repair an evaluation failure.
 4. **[Automated]** Require a staging soak window with fresh sessions, persistence reloads, and
 browser E2E runs. Verify the staged API's channel/version endpoint matches the
 candidate SHA displayed in Pages build metadata.
-   **[User testing]** During the soak, manually exercise `/dev/` in a browser,
-   including a new session, freeform turn, save/load, and error presentation.
+   **[User testing]** During the soak, manually exercise `/dev/` in a browser
+   with one new session, freeform turns, and save/load. Automated hosted E2E
+   covers error presentation and the cross-genre fixture matrix.
 5. **[Automated]** Define and verify the first-promotion gate: no critical validator or
 revelation failures, no unresolved channel-isolation failures, all required
 hosted checks green, and scorecard metrics acceptable relative to Phase 0.

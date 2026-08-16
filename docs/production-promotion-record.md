@@ -8,7 +8,7 @@ IDs, production model revisions, and the human approval are operator-owned.
 | --- | --- |
 | Candidate SHA | _pending_ |
 | Staging evaluation artifact URL | _pending_ |
-| Human reviewer and approval timestamp | _pending_ |
+| Human reviewer, approval timestamp, and shipped-story smoke-test notes | _pending_ |
 | Railway production deployment ID | _pending_ |
 | Pages production deployment ID | _pending_ |
 | Model / prompt revision | _pending_ |
