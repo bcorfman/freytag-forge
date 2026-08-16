@@ -905,6 +905,7 @@ def run_turn(
     planner_action_payload: dict[str, Any] | None = None
     accepted_proposal_text = ""
     planner_parse_error = ""
+    staging_trace: dict[str, Any] = {}
     fallback_action = Action(ActionKind.UNKNOWN, raw=raw_input)
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
@@ -932,6 +933,7 @@ def run_turn(
                     preturn_state, raw_input, dialog, action
                 ),
             )
+            staging_trace = dict(active_freeform_adapter.last_staging_trace)
         else:
             planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(
@@ -977,6 +979,7 @@ def run_turn(
         raw_input,
         planner_dialog_payload,
         planner_action_payload,
+        staging_trace,
     )
     next_state = freeform["state"]
     events = list(freeform["events"])
@@ -994,6 +997,7 @@ def run_turn(
         "state_update_envelope": dict(freeform["state_update_envelope"]),
         "fact_ops": list(freeform["event"].metadata.get("fact_ops", [])),
         "planner_error": planner_parse_error,
+        "staging_trace": staging_trace,
         "proposal_first": True,
         "story_delta": {
             "progress": freeform["event"].delta_progress,

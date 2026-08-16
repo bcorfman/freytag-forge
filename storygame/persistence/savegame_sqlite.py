@@ -206,6 +206,15 @@ def deserialize_state(
     return state
 
 
+def _latest_grounded_turn_staging_trace(state: GameState) -> dict[str, Any]:
+    """Project locally generated staging telemetry from the latest accepted event."""
+    for event in reversed(state.event_log.events):
+        trace = event.metadata.get("staging_trace")
+        if isinstance(trace, dict) and trace.get("contract") == "grounded_turn_staging.v1":
+            return dict(trace)
+    return {}
+
+
 class SqliteSaveStore:
     def __init__(
         self,
@@ -305,6 +314,7 @@ class SqliteSaveStore:
             "beat_type": beat_type or "",
             "template_key": template_key or "",
             "judge_decision": accepted_judge_decision,
+            "grounded_turn_staging": _latest_grounded_turn_staging_trace(state),
         }
         with self.conn:
             self.conn.execute("DELETE FROM turns WHERE slot = ?", (slot,))

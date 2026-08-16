@@ -44,9 +44,15 @@ the renderer exposes only prose returned by the successful atomic commit.
 
 ## Phase 4 — Evaluation, persistence, and deployment adapters
 
-1. [ ] Build a cross-genre relation-family matrix and adversarial fixtures.
-2. [ ] Verify persistence projections and both web adapters end to end.
-3. [ ] Record staging request IDs, retries, latency, and fail-closed evidence.
+1. [x] Build a cross-genre relation-family matrix and adversarial fixtures.
+2. [x] Verify persistence projections and the deployed hosted adapter end to end.
+3. [x] Record staging request IDs, retries, latency, and fail-closed evidence.
+
+**Exit criteria:** [x] every generic relation family has cross-genre and
+adversarial coverage; accepted turn projections retain locally generated
+staging evidence; and the deployed hosted-demo response exposes the bounded
+request/retry/latency outcome without turning a rejected proposal into a
+commit.
 
 ## Phase 5 — Rollout and cleanup
 

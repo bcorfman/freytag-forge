@@ -10,12 +10,12 @@ from random import Random
 from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter
+from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter, grounded_turn_trace
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
 from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
@@ -144,6 +144,18 @@ def _narration_failure_classification(code: str) -> tuple[int, str, str]:
     return 503, "service_unavailable", "Narration service is temporarily unavailable."
 
 
+def _grounded_turn_trace_headers(trace: dict[str, object]) -> dict[str, str]:
+    request_ids = trace.get("request_ids", ())
+    if not isinstance(request_ids, tuple) or not request_ids:
+        return {}
+    return {
+        "X-Grounded-Turn-Request-ID": str(request_ids[-1]),
+        "X-Grounded-Turn-Retries": str(trace.get("retries", 0)),
+        "X-Grounded-Turn-Latency-Ms": str(trace.get("latency_ms", 0)),
+        "X-Grounded-Turn-Outcome": str(trace.get("outcome", "")),
+    }
+
+
 def create_demo_app(
     save_db_path: str | Path | None = None,
     default_seed: int = 123,
@@ -236,6 +248,7 @@ def create_demo_app(
         state: GameState,
         beat: str,
         request_id: str,
+        staging_trace: dict[str, object],
     ) -> JSONResponse | None:
         room = state.world.rooms[state.player.location]
         for line in lines:
@@ -256,6 +269,7 @@ def create_demo_app(
                     "X-Request-ID": request_id,
                     "X-Narration-Error-Code": "AI_PLANNER_UNAVAILABLE",
                 }
+                response_headers.update(_grounded_turn_trace_headers(staging_trace))
                 return _error_response(
                     503,
                     "service_unavailable",
@@ -285,6 +299,7 @@ def create_demo_app(
                 }
                 if trace_id:
                     response_headers["X-Trace-ID"] = trace_id
+                response_headers.update(_grounded_turn_trace_headers(staging_trace))
                 return _error_response(
                     status_code,
                     status,
@@ -336,7 +351,7 @@ def create_demo_app(
         )
 
     @app.post("/api/v1/turn", response_model=TurnResponse | ErrorResponse)
-    def submit_turn(payload: TurnRequest, request: Request) -> TurnResponse | JSONResponse:
+    def submit_turn(payload: TurnRequest, request: Request, response: Response) -> TurnResponse | JSONResponse:
         session = _resolve_session(payload.session_id)
         current_time = now()
         request_id = uuid4().hex
@@ -401,6 +416,7 @@ def create_demo_app(
             output_editor=active_output_editor,
             story_director=active_story_director,
         )
+        staging_trace = grounded_turn_trace(active_freeform_adapter)
         narrator_error = _narrator_fail_closed(
             result.lines,
             session_id=payload.session_id,
@@ -408,12 +424,14 @@ def create_demo_app(
             state=result.next_state,
             beat=result.beat,
             request_id=request_id,
+            staging_trace=staging_trace,
         )
         if narrator_error is not None:
             return narrator_error
         session.state = result.next_state
         session.turns_used += 1
         _touch(session)
+        response.headers.update(_grounded_turn_trace_headers(staging_trace))
 
         payload_body = build_turn_response_payload(
             result.next_state,

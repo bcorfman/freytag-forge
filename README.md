@@ -63,12 +63,16 @@ failure-forward facts, and rejects bare completion tags. Runtime prompts expose
 only player-earned truths and legal route metadata; protected canon remains out
 of model context until its declared revelation completes.
 
-Grounded-turn-contract Phases 0–3 are complete. The planner sees only what the
+Grounded-turn-contract Phases 0–4 are complete. The planner sees only what the
 current observer can legitimately stage, tells atmosphere apart from changing
 the world, and gets checked before anything sticks. The player sees prose only
 after that check has accepted the turn. The same promise holds for a mansion
 investigation, fantasy journey, sci-fi crisis, or relationship scene. See the
 [grounded turn-contract baseline](docs/grounded-turn-contract-baseline.md).
+Each accepted model-planned turn also leaves a compact audit trail—local request
+IDs, retries, latency, and outcome—in integrity-checked save projections and
+the hosted-demo response headers. Rejected turns stay rejected: evidence, not
+invented progress.
 
 ## Why it’s different
 
