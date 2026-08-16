@@ -11,8 +11,8 @@ from storygame.engine.facts import (
     room_npcs,
     room_paths,
 )
-from storygame.engine.presentation import npc_talk_message, take_item_message
 from storygame.engine.parser import Action, ActionKind
+from storygame.engine.presentation import npc_talk_message, take_item_message
 from storygame.engine.state import Event, GameState
 
 
@@ -114,9 +114,7 @@ def _assistant_follow_is_suppressed(state: GameState, npc_id: str) -> bool:
         return True
     if state.world_facts.query("npc_assignment", npc_id, None):
         return True
-    if state.world_facts.query("npc_presence_mode", npc_id, "independent"):
-        return True
-    return False
+    return bool(state.world_facts.query("npc_presence_mode", npc_id, "independent"))
 
 
 def _assistant_follow_fact_ops(state: GameState, origin: str, destination: str) -> list[dict[str, object]]:

@@ -58,9 +58,7 @@ class RuntimeState:
         )
 
 
-def bootstrap_runtime_state(
-    compiled_story: CompiledStory, blueprint: StoryBlueprint | None = None
-) -> RuntimeState:
+def bootstrap_runtime_state(compiled_story: CompiledStory, blueprint: StoryBlueprint | None = None) -> RuntimeState:
     """Realize an immutable story into the only mutable V2 state object."""
     initial = compiled_story.initial_world_state
     location = initial.get("location")

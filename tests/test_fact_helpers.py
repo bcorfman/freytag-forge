@@ -89,7 +89,22 @@ def test_scene_fact_helpers_read_back_refresh_scene_state_outputs() -> None:
 def test_scene_fact_helpers_fall_back_when_scene_facts_are_absent() -> None:
     state = build_default_state(seed=54, genre="thriller")
     state.world_facts.replace_all(
-        tuple(fact for fact in state.world_facts.all() if fact[0] not in {"current_scene", "scene_location", "scene_objective", "dramatic_question", "scene_pressure", "beat_phase", "beat_role", "player_approach", "scene_participant"})
+        tuple(
+            fact
+            for fact in state.world_facts.all()
+            if fact[0]
+            not in {
+                "current_scene",
+                "scene_location",
+                "scene_objective",
+                "dramatic_question",
+                "scene_pressure",
+                "beat_phase",
+                "beat_role",
+                "player_approach",
+                "scene_participant",
+            }
+        )
     )
 
     fallback_scene_id = f"scene:{state.player.location}"

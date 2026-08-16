@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from storygame.engine.impact import assess_player_command, replan_scope_for_assessment, requires_high_impact_confirmation
+from storygame.engine.impact import (
+    assess_player_command,
+    replan_scope_for_assessment,
+    requires_high_impact_confirmation,
+)
 from storygame.engine.parser import parse_command
 from tests.fast_fixtures import make_tiny_state
 

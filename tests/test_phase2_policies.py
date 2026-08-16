@@ -37,7 +37,7 @@ def test_proposal_policy_rejects_unknown_predicates_without_mutating_state() -> 
     with pytest.raises(ValueError, match="unauthorized predicate"):
         validate_proposed_fact_ops(
             state,
-            [{"op": "assert", "fact": ("secret_truth", "villain") }],
+            [{"op": "assert", "fact": ("secret_truth", "villain")}],
             registry=registry,
         )
 

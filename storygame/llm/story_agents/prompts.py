@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
@@ -93,7 +95,9 @@ def build_character_designer_prompt(protagonist_name: str, contacts_seed: list[d
     return system, user
 
 
-def build_plot_designer_prompt(active_goal: str, assistant_name: str, assistant_facts: dict[str, object]) -> tuple[str, str]:
+def build_plot_designer_prompt(
+    active_goal: str, assistant_name: str, assistant_facts: dict[str, object]
+) -> tuple[str, str]:
     system = (
         "You are Plot Designer Agent. Return JSON only with keys assistant_name and actionable_objective. "
         "actionable_objective must be concrete and immediately playable. "

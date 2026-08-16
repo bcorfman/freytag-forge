@@ -6,8 +6,8 @@ from storygame.engine.incidents import load_incident_specs, parse_incident_specs
 from storygame.engine.parser import parse_command
 from storygame.engine.simulation import advance_turn
 from storygame.engine.state import Event
-from tests.fast_fixtures import make_cached_story_state as build_default_state
 from storygame.plot.beat_manager import Beat
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def _action_event(event_type: str, entities: tuple[str, ...], turn_index: int = 1) -> Event:

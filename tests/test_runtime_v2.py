@@ -142,8 +142,8 @@ def test_unknown_completion_tag_still_fails_with_the_declared_tags() -> None:
         _state(),
         StubModel(
             [
-                    _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
-                    _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
+                _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
+                _turn(beat_updates=[{"beat_id": beat_id, "completion_tags": ["invented"]}]),
             ]
         ),
     )

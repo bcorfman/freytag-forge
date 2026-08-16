@@ -114,11 +114,7 @@ def observer_context_slice(state, observer: str) -> tuple[tuple[str, ...], ...]:
                 permitted.append(fact)
             continue
         entities = _fact_entities(fact)
-        observer_owned = (
-            fact[0] in {"discovery", "interpreted", "recognized"}
-            and len(fact) > 1
-            and fact[1] == observer
-        )
+        observer_owned = fact[0] in {"discovery", "interpreted", "recognized"} and len(fact) > 1 and fact[1] == observer
         if not entities or any(resolver.resolve(observer, entity).perceptible for entity in entities) or observer_owned:
             permitted.append(fact)
     return tuple(sorted(permitted))
@@ -137,18 +133,40 @@ def speaker_context_slice(state, speaker: str) -> tuple[tuple[str, ...], ...]:
 
 def _fact_entities(fact: tuple[str, ...]) -> tuple[str, ...]:
     if fact[0] in {
-        "at", "npc_at", "holding", "room_item", "visible", "observed", "recognized",
-        "concealed", "exposed", "accessible",
+        "at",
+        "npc_at",
+        "holding",
+        "room_item",
+        "visible",
+        "observed",
+        "recognized",
+        "concealed",
+        "exposed",
+        "accessible",
     }:
         return tuple(term for term in fact[1:] if term not in {"player"})
     if fact[0] in {
-        "item_name", "item_kind", "item_description", "item_owner", "item_driver", "item_state",
-        "clue_text", "trace", "evidence_state", "evidence_contaminated",
+        "item_name",
+        "item_kind",
+        "item_description",
+        "item_owner",
+        "item_driver",
+        "item_state",
+        "clue_text",
+        "trace",
+        "evidence_state",
+        "evidence_contaminated",
     }:
         return (fact[1],) if len(fact) > 1 else ()
     if fact[0] in {
-        "npc_name", "npc_trait", "npc_identity", "npc_appearance", "npc_pronouns", "npc_role",
-        "npc_relationship", "npc_scene_purpose",
+        "npc_name",
+        "npc_trait",
+        "npc_identity",
+        "npc_appearance",
+        "npc_pronouns",
+        "npc_role",
+        "npc_relationship",
+        "npc_scene_purpose",
     }:
         return (fact[1],) if len(fact) > 1 else ()
     if fact[0] in {"room_name", "room_description", "light", "weather", "sensory_blocked"}:

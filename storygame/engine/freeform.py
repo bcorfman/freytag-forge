@@ -1,7 +1,8 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any, Protocol, TypedDict
 
@@ -57,9 +58,7 @@ _MOVEMENT_PHRASE_PATTERN = re.compile(
     r"\b(enter|head|go|walk|step|move|return|back|inside|outside|indoors|outdoors|door|entrance|exit)\b",
     re.IGNORECASE,
 )
-_TAKE_REQUEST_PATTERN = re.compile(
-    r"\b(?:take|get|grab|acquire|pick\s+up)\b", re.IGNORECASE
-)
+_TAKE_REQUEST_PATTERN = re.compile(r"\b(?:take|get|grab|acquire|pick\s+up)\b", re.IGNORECASE)
 _HIDDEN_FREEFORM_MESSAGE_KEYS = {
     "query",
     "ask_about",
@@ -357,16 +356,14 @@ def _readable_item_for_input(state: GameState, raw_input: str) -> str:
     """Resolve one currently accessible readable item from fact-backed aliases."""
     normalized = f" {_normalize_target(raw_input).replace('_', ' ')} "
     accessible = set(state.player.inventory) | set(room_items(state, player_location(state)))
-    accessible.update(
-        item_id
-        for item_id in state.world.items
-        if _nearby_holder_for_item(state, item_id)
-    )
+    accessible.update(item_id for item_id in state.world.items if _nearby_holder_for_item(state, item_id))
     matches = [
         item_id
         for item_id in sorted(accessible)
         if state.world_facts.holds("item_affordance", item_id, "read")
-        and any(f" {str(fact[2]).lower()} " in normalized for fact in state.world_facts.query("item_alias", item_id, None))
+        and any(
+            f" {str(fact[2]).lower()} " in normalized for fact in state.world_facts.query("item_alias", item_id, None)
+        )
     ]
     return matches[0] if len(matches) == 1 else ""
 
@@ -509,7 +506,11 @@ def _document_reveal_facts_for_input(state: GameState, raw_input: str) -> list[d
     if not item_id:
         return []
     visible_items = room_items(state, player_location(state))
-    if item_id not in state.player.inventory and item_id not in visible_items and not _nearby_holder_for_item(state, item_id):
+    if (
+        item_id not in state.player.inventory
+        and item_id not in visible_items
+        and not _nearby_holder_for_item(state, item_id)
+    ):
         return []
     case_values = {fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)}
     return [
@@ -644,11 +645,15 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     ]
     movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
     addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
-    speaker_facts = tuple(
-        fact
-        for fact in speaker_context_slice(state, addressed_npc_id)
-        if fact[0] in {"knows", "believes", "suspects", "conceals", "may_infer", "case_fact"}
-    ) if addressed_npc_id else ()
+    speaker_facts = (
+        tuple(
+            fact
+            for fact in speaker_context_slice(state, addressed_npc_id)
+            if fact[0] in {"knows", "believes", "suspects", "conceals", "may_infer", "case_fact"}
+        )
+        if addressed_npc_id
+        else ()
+    )
     payload = {
         "player_input": raw_input,
         "goal": _short_text(active_story_goal(state), 240),
@@ -665,13 +670,16 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "visible_items": relevant_item_facts,
             "exits": [
                 next(
-                    (str(fact[3]) for fact in state.world_facts.query("path_label", state.player.location, route_id, None)),
+                    (
+                        str(fact[3])
+                        for fact in state.world_facts.query("path_label", state.player.location, route_id, None)
+                    ),
                     route_id.replace("_", " "),
                 )
                 for route_id in sorted(room.exits)
             ],
             "exit_facts": [
-            {
+                {
                     "label": next(
                         (
                             str(fact[3])
@@ -858,6 +866,7 @@ def _scene_scoped_dialog_override(
 class LlmFreeformProposalAdapter:
     def __init__(self, *_ignored: object, **_ignored_options: object) -> None:
         pass
+
     def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
@@ -973,7 +982,10 @@ def _dialog_line(intent: str, target: str, topic: str, state: GameState | None =
                 return f"You ask {speaker} what stands out at {room_label}, with the {first_item} already drawing attention."
             exits = [
                 next(
-                    (str(fact[3]) for fact in state.world_facts.query("path_label", state.player.location, route_id, None)),
+                    (
+                        str(fact[3])
+                        for fact in state.world_facts.query("path_label", state.player.location, route_id, None)
+                    ),
                     route_id.replace("_", " "),
                 )
                 for route_id in sorted(room.exits)
@@ -1020,9 +1032,7 @@ def _apply_raw_command_overrides(
     return action_proposal, dialog_proposal
 
 
-def _envelope_for_action(
-    state: GameState, action_proposal: dict[str, Any], raw_input: str = ""
-) -> dict[str, Any]:
+def _envelope_for_action(state: GameState, action_proposal: dict[str, Any], raw_input: str = "") -> dict[str, Any]:
     targets = tuple(action_proposal["targets"])
     intent = str(action_proposal["intent"]).strip().lower()
     if not intent:
@@ -1045,9 +1055,18 @@ def _envelope_for_action(
             {"fact": ["flag", "player", f"freeform_intent_read_{item_id}"]},
             {"fact": ["discovered_clue", discovery]},
         ]
-        assert_ops.extend({"fact": ["discovered_lead", item_id, fact[2]]} for fact in state.world_facts.query("document_lead", item_id, None))
-        assert_ops.extend({"fact": ["knows", "player", fact[2]]} for fact in state.world_facts.query("document_knowledge", item_id, None))
-        assert_ops.extend({"fact": ["player_context", fact[2], fact[3]]} for fact in state.world_facts.query("document_context", item_id, None))
+        assert_ops.extend(
+            {"fact": ["discovered_lead", item_id, fact[2]]}
+            for fact in state.world_facts.query("document_lead", item_id, None)
+        )
+        assert_ops.extend(
+            {"fact": ["knows", "player", fact[2]]}
+            for fact in state.world_facts.query("document_knowledge", item_id, None)
+        )
+        assert_ops.extend(
+            {"fact": ["player_context", fact[2], fact[3]]}
+            for fact in state.world_facts.query("document_context", item_id, None)
+        )
         case_values = {fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)}
         assert_ops.extend(
             {

@@ -168,9 +168,7 @@ class CloudflareWorkersAIAdapter:
         self.timeout = timeout if timeout is not None else float(env_timeout.strip())
         configured_retries = retries if retries is not None else int(env_retries.strip())
         self.retries = min(max(configured_retries, 0), 1)
-        self.retry_backoff_ms = (
-            retry_backoff_ms if retry_backoff_ms is not None else int(env_retry_backoff_ms.strip())
-        )
+        self.retry_backoff_ms = retry_backoff_ms if retry_backoff_ms is not None else int(env_retry_backoff_ms.strip())
         self.worker_revision = ""
 
     def generate(self, context: NarrationContext) -> str:
@@ -258,8 +256,7 @@ class CloudflareWorkersAIAdapter:
             except Exception as exc:  # noqa: BLE001
                 if isinstance(exc, socket.timeout) and attempt < self.retries:
                     _LOGGER.warning(
-                        "Cloudflare Workers AI timeout; retrying: "
-                        "attempt=%s retry_limit=%s trace_id=%s",
+                        "Cloudflare Workers AI timeout; retrying: attempt=%s retry_limit=%s trace_id=%s",
                         attempt + 1,
                         self.retries,
                         trace_id,
@@ -335,8 +332,7 @@ class CloudflareWorkersAIAdapter:
         started_at: float,
     ) -> None:
         _LOGGER.error(
-            "Cloudflare Workers AI request failed: status=%s attempt=%s elapsed_ms=%s "
-            "trace_id=%s detail=%s",
+            "Cloudflare Workers AI request failed: status=%s attempt=%s elapsed_ms=%s trace_id=%s detail=%s",
             status,
             attempt + 1,
             round((time.monotonic() - started_at) * 1000),

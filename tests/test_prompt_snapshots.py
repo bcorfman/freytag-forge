@@ -54,7 +54,10 @@ def test_prompt_includes_if_storytelling_quality_checklist():
     assert "focus primarily on protagonist background, motivation, communication, and relationships" in system_text
     assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system_text
     assert "introduce them by full name" in system_text
-    assert "materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system_text
+    assert (
+        "materially consistent with the room description, exits, visible items, visible npcs, and inventory"
+        in system_text
+    )
     assert "do not invent extra furniture, desks, tables, papers, or document staging" in system_text
     assert "room name" in system_text
     assert "room description" in system_text

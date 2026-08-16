@@ -19,6 +19,7 @@ from storygame.plot.freytag import get_phase
 def _scene_id_for_location(location_id: str) -> str:
     return f"scene:{location_id}"
 
+
 def scene_snapshot(state) -> dict[str, object]:
     scene_id = current_scene(state)
     phase = beat_phase(state) or get_phase(state.progress)
@@ -59,10 +60,14 @@ def refresh_scene_state(state, turn_focus: dict[str, str] | None = None) -> dict
     approach = str(focus.get("player_approach", "")).strip() or prior_approach or "observe"
     pressure = str(focus.get("scene_pressure", "")).strip() or pressure_bucket(state.tension)
     role = str(focus.get("beat_role", "")).strip() or infer_beat_role(phase, approach, pressure)
-    question = str(focus.get("dramatic_question", "")).strip() or prior_question or infer_dramatic_question(
-        goal=objective,
-        approach=approach,
-        intent=approach,
+    question = (
+        str(focus.get("dramatic_question", "")).strip()
+        or prior_question
+        or infer_dramatic_question(
+            goal=objective,
+            approach=approach,
+            intent=approach,
+        )
     )
 
     replace_fact_group(state, "current_scene", (("current_scene", scene_id),))

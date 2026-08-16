@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import pytest
@@ -308,6 +310,7 @@ def test_bootstrap_preserves_structured_cloudflare_failures() -> None:
             _CloudflareFailureNarrator(),
             _PassThroughEditor(),
         )
+
 
 def test_narrator_opening_agent_receives_fact_backed_contacts() -> None:
     state = make_cached_story_state(seed=907)

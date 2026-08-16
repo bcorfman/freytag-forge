@@ -373,7 +373,7 @@ def test_run_turn_save_load_error_paths():
     state = build_default_state(seed=17)
     _, no_store_save_lines, *_ = run_turn(
         state,
-            "/save quicksave",
+        "/save quicksave",
         Random(17),
         SilentNarrator(),
         save_store=None,
@@ -382,7 +382,7 @@ def test_run_turn_save_load_error_paths():
 
     _, no_store_load_lines, *_ = run_turn(
         state,
-            "/load missing",
+        "/load missing",
         Random(17),
         SilentNarrator(),
         save_store=None,
@@ -638,7 +638,9 @@ def test_room_arrivals_leave_presentation_to_the_accepted_proposal() -> None:
 
     assert continued is True
     assert inside.player.location == "foyer"
-    assert inside_lines == ['You act on "go inside the mansion". You commit to the nearest clear route and move through it.']
+    assert inside_lines == [
+        'You act on "go inside the mansion". You commit to the nearest clear route and move through it.'
+    ]
 
     outside, outside_lines, _raw, _beat, continued = run_turn(
         inside,
@@ -874,7 +876,7 @@ def test_run_turn_renders_direct_npc_dialogue_without_narrator_action_wrapper() 
     assert continued is True
     assert beat_type == "freeform_roleplay"
     assert next_state.turn_index == 1
-    assert any(line.startswith('Daria') and 'says: "The file links' in line for line in lines)
+    assert any(line.startswith("Daria") and 'says: "The file links' in line for line in lines)
     assert not any(line.startswith("You act on") for line in lines)
 
 
@@ -1260,7 +1262,7 @@ def test_save_persists_last_accepted_judge_decision(tmp_path):
     with SqliteSaveStore(db_path) as store:
         _state, save_lines, _action_raw, _beat, _continued = run_turn(
             state,
-                "/save checkpoint",
+            "/save checkpoint",
             rng,
             StubNarrator(),
             save_store=store,

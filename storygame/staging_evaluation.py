@@ -116,7 +116,15 @@ def _run_fixture(
     if disclosure is not None:
         opening_visible = " ".join(value for value in opening.get("lines", []) if isinstance(value, str)).casefold()
         if disclosure["value"].casefold() in opening_visible:
-            return {"passed": False, "failure": "opening_disclosure", "disclosure": {"passed": False, **disclosure}}, [], [], 0, 1, 0, 0
+            return (
+                {"passed": False, "failure": "opening_disclosure", "disclosure": {"passed": False, **disclosure}},
+                [],
+                [],
+                0,
+                1,
+                0,
+                0,
+            )
         status, result = request(
             "POST",
             "/api/v1/turn",
@@ -130,7 +138,19 @@ def _run_fixture(
             or disclosure["key"] not in known_facts
             or disclosure["value"].casefold() not in visible
         ):
-            return {"passed": False, "failure": "opening_disclosure", "disclosure": {"passed": False, **disclosure, **_request_metadata(result)}}, [], [], 1, 0, 1, 0
+            return (
+                {
+                    "passed": False,
+                    "failure": "opening_disclosure",
+                    "disclosure": {"passed": False, **disclosure, **_request_metadata(result)},
+                },
+                [],
+                [],
+                1,
+                0,
+                1,
+                0,
+            )
         previous_turn = 1
         disclosure = {**disclosure, **_request_metadata(result)}
     calls: list[int] = []
@@ -164,7 +184,11 @@ def _run_fixture(
             return {"passed": False, "failure": command}, calls, latencies, typed_errors, leaks, continuity, 0
     completed = int(isinstance(result.get("state"), dict) and result["state"].get("active_beats") == [])
     return (
-        {"passed": leaks == 0, "styles": list(SCRIPTED_PLAYER_STYLES), "disclosure": {"passed": True, **disclosure} if disclosure else {}},
+        {
+            "passed": leaks == 0,
+            "styles": list(SCRIPTED_PLAYER_STYLES),
+            "disclosure": {"passed": True, **disclosure} if disclosure else {},
+        },
         calls,
         latencies,
         typed_errors,
@@ -247,11 +271,7 @@ def _response_metadata(headers: Mapping[str, str]) -> dict[str, str]:
 
 
 def _request_metadata(result: dict[str, object]) -> dict[str, str]:
-    return {
-        key: str(result[key])
-        for key in ("request_id", "trace_id")
-        if str(result.get(key, "")).strip()
-    }
+    return {key: str(result[key]) for key in ("request_id", "trace_id") if str(result.get(key, "")).strip()}
 
 
 if __name__ == "__main__":

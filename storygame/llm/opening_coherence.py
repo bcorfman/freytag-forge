@@ -47,7 +47,7 @@ def _normalized_line(value: str) -> str:
 
 
 def _ends_sentence(value: str) -> bool:
-    return value.rstrip().rstrip('"\'”’»)]}').endswith((".", "!", "?"))
+    return value.rstrip().rstrip("\"'”’»)]}").endswith((".", "!", "?"))
 
 
 def opening_paragraphs_are_complete(paragraphs: tuple[str, ...] | list[str]) -> bool:
@@ -206,13 +206,13 @@ def opening_fact_parity_issues(
     normalized_role = " ".join(assistant_role.split()).strip().lower()
     held_labels = {_normalized_line(label).lower() for label in assistant_held_item_labels if _normalized_line(label)}
     player_held_labels = {
-        _normalized_line(label).lower()
-        for label in player_held_item_labels
-        if _normalized_line(label)
+        _normalized_line(label).lower() for label in player_held_item_labels if _normalized_line(label)
     }
     seen_messages: set[str] = set()
 
-    assistant_lines = [line for line in normalized_lines if normalized_assistant and normalized_assistant in line.lower()]
+    assistant_lines = [
+        line for line in normalized_lines if normalized_assistant and normalized_assistant in line.lower()
+    ]
     for line in assistant_lines:
         lowered = line.lower()
         if _contains_any(lowered, _SUPPORT_ROLE_TERMS) and normalized_role != "assistant":
@@ -233,19 +233,12 @@ def opening_fact_parity_issues(
                 seen_messages.add(message)
         if not _contains_any(lowered, _ITEM_HOLDING_TERMS):
             continue
-        mentioned = tuple(
-            label
-            for label in item_labels
-            if label in lowered
-        )
+        mentioned = tuple(label for label in item_labels if label in lowered)
         if mentioned:
             for label in mentioned:
                 if label in held_labels:
                     continue
-                message = (
-                    f"The opening gives {assistant_name} custody of the {label}, "
-                    "but committed facts do not."
-                )
+                message = f"The opening gives {assistant_name} custody of the {label}, but committed facts do not."
                 if message not in seen_messages:
                     issues.append(message)
                     seen_messages.add(message)

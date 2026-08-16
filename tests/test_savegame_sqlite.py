@@ -172,7 +172,7 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
 
         state, _lines, _action_raw, _beat, _continued = run_turn(
             state,
-                "/save checkpoint",
+            "/save checkpoint",
             rng,
             narrator,
             save_store=store,
@@ -181,7 +181,7 @@ def test_load_resume_replays_deterministically_with_post_load_commands(tmp_path)
 
         state, _lines, _action_raw, _beat, _continued = run_turn(
             state,
-                "/load checkpoint",
+            "/load checkpoint",
             rng,
             narrator,
             save_store=store,

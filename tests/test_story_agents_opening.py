@@ -104,6 +104,8 @@ def test_narrator_opening_draft_avoids_scenery_led_opening() -> None:
     finally:
         agent_module._chat_complete = original_chat_complete
 
-    draft_paragraphs = [part.strip().lower() for part in str(observed_user["opening_draft"]).split("\n\n") if part.strip()]
+    draft_paragraphs = [
+        part.strip().lower() for part in str(observed_user["opening_draft"]).split("\n\n") if part.strip()
+    ]
     assert draft_paragraphs
     assert draft_paragraphs[0].startswith("you are noah kade")
