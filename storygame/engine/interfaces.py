@@ -136,6 +136,7 @@ class ActionProposalModel(BaseModel):
     intent: str = Field(min_length=1)
     targets: tuple[str, ...] = ()
     arguments: dict[str, str] = {}
+    disclosed_knowledge: str = ""
     proposed_effects: tuple[str, ...] = ()
 
 

@@ -29,6 +29,20 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
         if command == "look":
             return 200, {"status": "ok", "lines": ["An opening."], "state": {"location": "opening", "turn_index": 0}}
         session_id = str(payload["session_id"])
+        if "case file" in command:
+            turns[session_id] = 1
+            return 200, {
+                "status": "ok",
+                "lines": ["The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["ledger_entry_time"]},
+            }
+        if "warded scroll" in command:
+            turns[session_id] = 1
+            return 200, {
+                "status": "ok",
+                "lines": ["The warded scroll marks the moonlit ford as the safe route through the enchanted wood."],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["warded_route"]},
+            }
         if command in {"/save staging-evaluation", "/load staging-evaluation"}:
             return 200, {
                 "status": "ok",
@@ -65,6 +79,54 @@ def test_staging_evaluation_fails_the_gate_for_wrong_sha_or_typed_error() -> Non
     assert report["metrics"]["typed_errors"] == 4
 
 
+def test_staging_evaluation_requires_committed_opening_disclosures() -> None:
+    sessions: dict[str, dict[str, object]] = {}
+
+    def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
+        if method == "GET":
+            return 200, {"status": "ok", "channel": "staging", "sha": "a" * 40}
+        if path.endswith("/session"):
+            assert payload is not None
+            genre = str(payload["genre"])
+            session_id = f"session-{genre}"
+            sessions[session_id] = {"genre": genre, "turn": 0}
+            return 200, {"session_id": session_id}
+        assert payload is not None
+        session = sessions[str(payload["session_id"])]
+        command = str(payload["command"])
+        if command == "look":
+            return 200, {"status": "ok", "lines": ["An opening."], "state": {"location": "opening", "turn_index": 0}}
+        if "case file" in command:
+            session["turn"] = 1
+            return 200, {
+                "status": "ok",
+                "lines": ["The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["ledger_entry_time"]},
+            }
+        if "warded scroll" in command:
+            session["turn"] = 1
+            return 200, {
+                "status": "ok",
+                "lines": ["The warded scroll marks the moonlit ford as the safe route through the enchanted wood."],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["warded_route"]},
+            }
+        if command in {"/save staging-evaluation", "/load staging-evaluation"}:
+            return 200, {"status": "ok", "lines": [command], "state": {"location": "opening", "turn_index": session["turn"]}}
+        session["turn"] = int(session["turn"]) + 1
+        return 200, {
+            "status": "ok",
+            "lines": ["The scene responds."],
+            "state": {"location": "opening", "turn_index": session["turn"]},
+            "model_calls": 1,
+        }
+
+    report = run_staging_evaluation("https://staging.example", "a" * 40, request=request)
+
+    assert report["promotion_gate"]["passed"] is True
+    assert report["fixtures"]["mystery"]["disclosure"]["key"] == "ledger_entry_time"
+    assert report["fixtures"]["fantasy"]["disclosure"]["key"] == "warded_route"
+
+
 def test_staging_evaluation_records_session_and_opening_failures() -> None:
     def unavailable_session(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
         if method == "GET":
@@ -92,6 +154,7 @@ def test_http_request_serializes_payload_and_decodes_error_response(monkeypatch)
 
     class Response:
         status = 201
+        headers: dict[str, str] = {}
 
         def read(self) -> bytes:
             return b'{"session_id":"one"}'

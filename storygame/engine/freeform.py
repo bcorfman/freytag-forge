@@ -557,6 +557,22 @@ def _bind_direct_npc_conversation_target(
     return normalized
 
 
+def _required_document_disclosure(state: GameState, raw_input: str, action_payload: dict[str, Any]) -> str:
+    item_id = _readable_item_for_input(state, raw_input)
+    targets = tuple(str(target) for target in action_payload.get("targets", ()))
+    if not item_id or not targets:
+        return ""
+    speaker_id = targets[0]
+    return next(
+        (
+            fact[3]
+            for fact in state.world_facts.query("document_disclosure", item_id, speaker_id, None)
+            if not state.world_facts.holds("knows", "player", fact[3])
+        ),
+        "",
+    )
+
+
 def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str]:
     room = state.world.rooms[state.player.location]
     query_tokens = _planner_query_tokens(raw_input)
@@ -661,7 +677,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "You are Freeform Action Planner Agent. "
         "Return JSON only with keys dialog_proposal and action_proposal. "
         "dialog_proposal requires: speaker, text, tone. "
-        "action_proposal requires: intent, targets, arguments, proposed_effects. "
+        "action_proposal requires: intent, targets, arguments, disclosed_knowledge, proposed_effects. "
         "Use only entities from provided context. "
         "For uncertain targets, use an empty targets list and a generic intent. "
         "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed "
@@ -675,6 +691,8 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "dialog_proposal.text must answer the player's meaning in new in-world prose; never simply repeat "
         "or quote player_input. For a readable document, describe its fact-backed contents or the immediate "
         "in-world consequence of reviewing it. "
+        "When an addressed NPC reveals a document fact not known to the player, set disclosed_knowledge to "
+        "that fact key; otherwise use an empty string. "
         "Write grounded roleplay: characters act from supplied motivations, relationships, knowledge, "
         "pressure, and limits, with room for initiative, subtext, disagreement, and hesitation. "
         "Performance may shape voice, attention, body language, pacing, and expression, but cannot invent "
@@ -704,6 +722,7 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
         "intent": intent or "freeform",
         "targets": [target for target in targets if target],
         "arguments": arguments,
+        "disclosed_knowledge": str(action_payload.get("disclosed_knowledge", "")).strip(),
         "proposed_effects": proposed_effects,
     }
 
@@ -854,6 +873,9 @@ class LlmFreeformProposalAdapter:
             dialog_payload, action_payload
         ):
             raise ValueError("planner_invalid_targeted_dialogue_speaker")
+        required_disclosure = _required_document_disclosure(state, raw_input, action_payload)
+        if required_disclosure and action_payload.get("disclosed_knowledge") != required_disclosure:
+            raise ValueError("planner_missing_required_document_disclosure")
         if _dialogue_contains_code_artifact(dialog_payload):
             raise ValueError("planner_dialogue_code_artifact")
         if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):
@@ -966,7 +988,9 @@ def _apply_raw_command_overrides(
     return action_proposal, dialog_proposal
 
 
-def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> dict[str, Any]:
+def _envelope_for_action(
+    state: GameState, action_proposal: dict[str, Any], raw_input: str = ""
+) -> dict[str, Any]:
     targets = tuple(action_proposal["targets"])
     intent = str(action_proposal["intent"]).strip().lower()
     if not intent:
@@ -1015,6 +1039,27 @@ def _envelope_for_action(state: GameState, action_proposal: dict[str, Any]) -> d
             "numeric_delta": [],
             "reasons": [f"freeform:read_{item_id}"],
         }
+
+    disclosed_knowledge = str(action_proposal.get("disclosed_knowledge", "")).strip()
+    if disclosed_knowledge and targets:
+        speaker_id = str(targets[0])
+        document_id = _readable_item_for_input(state, raw_input) if raw_input else ""
+        permitted = bool(document_id) and state.world_facts.holds(
+            "document_disclosure", document_id, speaker_id, disclosed_knowledge
+        )
+        if (
+            permitted
+            and speaker_id in room_npcs(state, player_location(state))
+            and state.world_facts.holds("knows", speaker_id, disclosed_knowledge)
+            and not state.world_facts.holds("knows", "player", disclosed_knowledge)
+        ):
+            return {
+                "assert": [{"fact": ["knows", "player", disclosed_knowledge]}],
+                "retract": [],
+                "numeric_delta": [],
+                "reasons": [f"freeform:disclose_{disclosed_knowledge}"],
+            }
+        return {"assert": [], "retract": [], "numeric_delta": [], "reasons": ["POLICY_INVALID_DISCLOSURE"]}
 
     if not targets or intent not in _ALLOWED_INTENTS:
         normalized_intent = _topic_flag_fragment(intent)
@@ -1259,7 +1304,7 @@ def resolve_freeform_roleplay_with_proposals(
         action_proposal,
         dialog_proposal,
     )
-    envelope = parse_state_update_envelope(_envelope_for_action(state, action_proposal))
+    envelope = parse_state_update_envelope(_envelope_for_action(state, action_proposal, raw_input))
     if "POLICY_TARGET_NOT_PRESENT" in envelope["reasons"]:
         dialog_proposal = parse_dialog_proposal(
             {

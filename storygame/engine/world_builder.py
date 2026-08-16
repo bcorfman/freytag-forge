@@ -156,6 +156,11 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
             for field in ("knowledge", "leads"):
                 if not isinstance(readable.get(field, []), list):
                     raise WorldPackageValidationError(f"readable item {field} must be a list")
+            disclosures = readable.get("npc_disclosures", {})
+            if not isinstance(disclosures, dict) or any(
+                not isinstance(keys, list) or not keys for keys in disclosures.values()
+            ):
+                raise WorldPackageValidationError("readable item NPC disclosures must map NPCs to knowledge lists")
             if (
                 not isinstance(readable.get("context", {}), dict)
                 or not isinstance(readable.get("retract_context", {}), dict)
@@ -169,9 +174,30 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     protected = set(map(str, opening.get("protected_knowledge", [])))
     if public & protected:
         raise WorldPackageValidationError("protected knowledge is exposed as public briefing")
+    case_facts = opening.get("case_facts", {})
+    if not isinstance(case_facts, dict):
+        raise WorldPackageValidationError("opening case_facts must be a mapping")
+    character_knowledge = {
+        str(character["id"]): {str(key) for key in character.get("initial_knowledge", ())}
+        for character in package["characters"]
+    }
     for item in package["items"]:
         readable = item.get("readable", {})
         document_knowledge = {str(key).strip() for key in readable.get("knowledge", ()) if str(key).strip()}
+        for npc_id, keys in readable.get("npc_disclosures", {}).items():
+            normalized_npc_id = str(npc_id).strip()
+            if normalized_npc_id not in character_knowledge:
+                raise WorldPackageValidationError("document disclosure references an unknown NPC")
+            for key in keys:
+                normalized_key = str(key).strip()
+                if normalized_key not in document_knowledge:
+                    raise WorldPackageValidationError("document disclosure key must be declared by the readable document")
+                if normalized_key not in case_facts:
+                    raise WorldPackageValidationError("document disclosure key must name a canonical case_fact")
+                if normalized_key not in character_knowledge[normalized_npc_id]:
+                    raise WorldPackageValidationError("document disclosure key must be known by NPC")
+                if normalized_key in public:
+                    raise WorldPackageValidationError("document disclosure key must not be public at opening")
         if document_knowledge and document_knowledge <= public:
             raise WorldPackageValidationError(
                 "readable document knowledge must include a fact not granted by the opening briefing"

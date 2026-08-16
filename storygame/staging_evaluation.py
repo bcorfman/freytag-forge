@@ -7,11 +7,12 @@ import os
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
 from storygame.authoring.compiler import load_compiled_story_fixture
+from storygame.engine.world_builder import build_world_package
 
 SCRIPTED_PLAYER_STYLES: dict[str, str] = {
     "investigate": "I examine the scene closely for a useful detail.",
@@ -50,6 +51,7 @@ def run_staging_evaluation(
     protected_leaks = 0
     continuity_violations = 0
     completed_sessions = 0
+    disclosure_failures = 0
     for genre in ("mystery", "fantasy", "sci-fi", "relationship"):
         story = load_compiled_story_fixture(genre)
         fixture, calls, latencies, errors, leaks, continuity, completed = _run_fixture(request, genre, story)
@@ -60,6 +62,8 @@ def run_staging_evaluation(
         protected_leaks += leaks
         continuity_violations += continuity
         completed_sessions += completed
+        disclosure = fixture.get("disclosure", {})
+        disclosure_failures += int(isinstance(disclosure, dict) and not disclosure.get("passed", True))
     scripted_turns = len(model_calls) + typed_errors
     one_call_turns = sum(calls == 1 for calls in model_calls)
     failures = []
@@ -71,6 +75,8 @@ def run_staging_evaluation(
         failures.append("protected_revelation")
     if continuity_violations:
         failures.append("state_continuity")
+    if disclosure_failures:
+        failures.append("opening_disclosure")
     if scripted_turns != 4 * len(SCRIPTED_PLAYER_STYLES):
         failures.append("incomplete_scripted_coverage")
     return {
@@ -87,6 +93,7 @@ def run_staging_evaluation(
             "p95_turn_latency_ms": _p95(latencies_ms),
             "premature_revelations": protected_leaks,
             "continuity_violations": continuity_violations,
+            "opening_disclosure_failures": disclosure_failures,
             "completion_rate": completed_sessions / 4,
             "user_facing_session_failures": sum(not bool(fixture["passed"]) for fixture in fixtures.values()),
         },
@@ -105,6 +112,27 @@ def _run_fixture(
     if opening_status != 200 or not _valid_state(opening.get("state"), 0):
         return {"passed": False, "failure": "opening"}, [], [], 1, 0, 1, 0
     previous_turn = 0
+    disclosure = _opening_disclosure(genre)
+    if disclosure is not None:
+        opening_visible = " ".join(value for value in opening.get("lines", []) if isinstance(value, str)).casefold()
+        if disclosure["value"].casefold() in opening_visible:
+            return {"passed": False, "failure": "opening_disclosure", "disclosure": {"passed": False, **disclosure}}, [], [], 0, 1, 0, 0
+        status, result = request(
+            "POST",
+            "/api/v1/turn",
+            {"session_id": session_id, "command": disclosure["command"]},
+        )
+        visible = " ".join(value for value in result.get("lines", []) if isinstance(value, str)).casefold()
+        known_facts = result.get("state", {}).get("known_facts", ()) if isinstance(result.get("state"), dict) else ()
+        if (
+            status != 200
+            or not _valid_state(result.get("state"), 1)
+            or disclosure["key"] not in known_facts
+            or disclosure["value"].casefold() not in visible
+        ):
+            return {"passed": False, "failure": "opening_disclosure", "disclosure": {"passed": False, **disclosure, **_request_metadata(result)}}, [], [], 1, 0, 1, 0
+        previous_turn = 1
+        disclosure = {**disclosure, **_request_metadata(result)}
     calls: list[int] = []
     latencies: list[float] = []
     typed_errors = leaks = continuity = 0
@@ -136,7 +164,7 @@ def _run_fixture(
             return {"passed": False, "failure": command}, calls, latencies, typed_errors, leaks, continuity, 0
     completed = int(isinstance(result.get("state"), dict) and result["state"].get("active_beats") == [])
     return (
-        {"passed": leaks == 0, "styles": list(SCRIPTED_PLAYER_STYLES)},
+        {"passed": leaks == 0, "styles": list(SCRIPTED_PLAYER_STYLES), "disclosure": {"passed": True, **disclosure} if disclosure else {}},
         calls,
         latencies,
         typed_errors,
@@ -144,6 +172,29 @@ def _run_fixture(
         continuity,
         completed,
     )
+
+
+def _opening_disclosure(genre: str) -> dict[str, str] | None:
+    package_genre = "romance" if genre == "relationship" else genre
+    package = build_world_package(package_genre, "short", 1)
+    case_facts = package["opening_setup"].get("case_facts", {})
+    characters = {str(character["id"]): character for character in package["characters"]}
+    for item in package["items"]:
+        readable = item.get("readable", {})
+        for npc_id, keys in readable.get("npc_disclosures", {}).items():
+            if not keys or str(npc_id) not in characters:
+                continue
+            key = str(keys[0])
+            value = str(case_facts.get(key, "")).strip()
+            aliases = readable.get("aliases", ())
+            if not value or not aliases:
+                continue
+            return {
+                "command": f"{characters[str(npc_id)]['name']}, what does the {aliases[0]} say?",
+                "key": key,
+                "value": value,
+            }
+    return None
 
 
 def _valid_state(state: object, expected_turn: int) -> bool:
@@ -178,11 +229,29 @@ def _http_request(api_base_url: str) -> Request:
         target = urllib.request.Request(f"{api_base_url}{path}", data=body, method=method, headers=headers)
         try:
             with urllib.request.urlopen(target, timeout=30) as response:
-                return response.status, json.loads(response.read().decode())
+                result = json.loads(response.read().decode())
+                return response.status, {**result, **_response_metadata(response.headers)}
         except urllib.error.HTTPError as exc:
-            return exc.code, json.loads(exc.read().decode())
+            result = json.loads(exc.read().decode())
+            return exc.code, {**result, **_response_metadata(exc.headers)}
 
     return request
+
+
+def _response_metadata(headers: Mapping[str, str]) -> dict[str, str]:
+    return {
+        key: value
+        for key, header in (("request_id", "X-Request-ID"), ("trace_id", "X-Trace-ID"))
+        if (value := str(headers.get(header, "")).strip())
+    }
+
+
+def _request_metadata(result: dict[str, object]) -> dict[str, str]:
+    return {
+        key: str(result[key])
+        for key in ("request_id", "trace_id")
+        if str(result.get(key, "")).strip()
+    }
 
 
 if __name__ == "__main__":

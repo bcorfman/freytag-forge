@@ -129,6 +129,9 @@ def build_state_snapshot_payload(
         "progress": state.progress,
         "tension": state.tension,
         "turn_index": state.turn_index,
+        "known_facts": sorted(
+            str(fact[2]) for fact in state.world_facts.query("knows", "player", None) if len(fact) == 3
+        ),
     }
 
 
