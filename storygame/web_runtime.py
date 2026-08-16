@@ -487,6 +487,7 @@ def build_bootstrap_response_payload_from_lines(
 ) -> dict[str, Any]:
     filtered_opening = [line for line in opening_lines if line.strip()]
     filtered_opening = filter_opening_room_repetition(state, filtered_opening)
+    _reject_uncommitted_opening_knowledge(state, filtered_opening)
     remember_opening_introductions(state, filtered_opening)
     return {
         scope_field: scope_id,
@@ -500,6 +501,16 @@ def build_bootstrap_response_payload_from_lines(
         ],
         "state": build_state_snapshot_payload(state, scope_field, scope_id),
     }
+
+
+def _reject_uncommitted_opening_knowledge(state: GameState, lines: list[str]) -> None:
+    visible = " ".join(lines).casefold()
+    for _predicate, key, value in state.world_facts.query("case_fact", None, None):
+        if state.world_facts.holds("knows", "player", key):
+            continue
+        normalized_value = str(value).strip().casefold()
+        if normalized_value and normalized_value in visible:
+            raise RuntimeError(f"OPENING_UNCOMMITTED_KNOWLEDGE:{key}")
 
 
 def build_turn_response_payload(

@@ -15,6 +15,7 @@ from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
     LlmFreeformProposalAdapter,
+    _normalized_dialog_speaker_id,
     _normalized_movement_action_payload,
     is_player_statement_echo,
     resolve_freeform_roleplay_with_proposals,
@@ -499,18 +500,25 @@ def _targeted_conversation_requires_npc_reply(
 
 
 def _is_invalid_targeted_dialogue_speaker(
+    state: GameState,
     planner_dialog_payload: dict[str, Any],
     planner_action_payload: dict[str, Any],
 ) -> bool:
     targets = planner_action_payload.get("targets", ())
     if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
         return False
-    speaker = re.sub(r"[^a-z0-9]+", "_", str(planner_dialog_payload.get("speaker", "")).strip().lower()).strip("_")
-    if speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}:
+    speaker = _normalized_dialog_speaker_id(
+        state,
+        str(planner_dialog_payload.get("speaker", "")),
+        planner_action_payload,
+    )
+    if speaker in {"narrator", "player"}:
         return True
-    if speaker in {"ai_assistant", "assistant"}:
-        return False
-    primary_target = str(next((target for target in targets if str(target).strip()), "")).strip().lower()
+    primary_target = _normalized_dialog_speaker_id(
+        state,
+        str(next((target for target in targets if str(target).strip()), "")),
+        planner_action_payload,
+    )
     return bool(primary_target and speaker != primary_target)
 
 
@@ -549,6 +557,7 @@ def _freeform_dialogue_policy_error(
     if not _is_conversational_freeform_request(raw_input, fallback_action):
         return ""
     if _targeted_conversation_requires_npc_reply(fallback_action, planner_action_payload) and _is_invalid_targeted_dialogue_speaker(
+        state,
         planner_dialog_payload,
         planner_action_payload,
     ):

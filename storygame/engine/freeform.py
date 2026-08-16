@@ -727,16 +727,22 @@ def _normalize_action_payload(action_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _has_invalid_targeted_dialogue_speaker(dialog_payload: dict[str, Any], action_payload: dict[str, Any]) -> bool:
+def _has_invalid_targeted_dialogue_speaker(
+    state: GameState,
+    dialog_payload: dict[str, Any],
+    action_payload: dict[str, Any],
+) -> bool:
     targets = action_payload.get("targets", ())
     if not isinstance(targets, (list, tuple)) or not any(str(target).strip() for target in targets):
         return False
-    speaker = re.sub(r"[^a-z0-9]+", "_", str(dialog_payload.get("speaker", "")).strip().lower()).strip("_")
-    if speaker in {"", "narrator", "player", "you", "user", "detective", "elias", "elias_wren", "detective_elias_wren"}:
+    speaker = _normalized_dialog_speaker_id(state, str(dialog_payload.get("speaker", "")), action_payload)
+    if speaker in {"narrator", "player"}:
         return True
-    if speaker in {"ai_assistant", "assistant"}:
-        return False
-    primary_target = str(next((target for target in targets if str(target).strip()), "")).strip().lower()
+    primary_target = _normalized_dialog_speaker_id(
+        state,
+        str(next((target for target in targets if str(target).strip()), "")),
+        action_payload,
+    )
     return bool(primary_target and speaker != primary_target)
 
 
@@ -870,7 +876,7 @@ class LlmFreeformProposalAdapter:
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         dialog_payload, action_payload = self._parse_planner_response(state, raw_input, system, user)
         if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(
-            dialog_payload, action_payload
+            state, dialog_payload, action_payload
         ):
             raise ValueError("planner_invalid_targeted_dialogue_speaker")
         required_disclosure = _required_document_disclosure(state, raw_input, action_payload)
