@@ -683,6 +683,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed "
         "or questioned that NPC. "
         "If the player clearly addresses or questions a visible NPC, dialog_proposal.speaker must be that NPC and "
+        "must use the exact canonical id in addressed_npc_context.id, "
         "dialog_proposal.text must be the NPC's in-character reply, not the player's line and not narrator summary. "
         "When answering appearance or clothing questions, treat npc_facts.appearance as authoritative "
         "and do not invent conflicting wardrobe details. "
@@ -1272,6 +1273,13 @@ def _normalized_dialog_speaker_id(state: GameState, speaker_id: str, action_prop
     matched_npc = _visible_npc_match(state, speaker_id)
     if matched_npc:
         return matched_npc
+    for npc_id in room_npcs(state, player_location(state)):
+        npc = state.world.npcs.get(npc_id)
+        if npc is None:
+            continue
+        npc_name = _normalize_target(npc.name)
+        if npc_name and normalized.startswith(f"{npc_name}_"):
+            return npc_id
     if normalized in {"ai_assistant", "assistant"}:
         targets = action_proposal.get("targets", ())
         if isinstance(targets, (list, tuple)):
