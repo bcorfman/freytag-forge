@@ -218,7 +218,8 @@ def room_npcs(state, room_id: str) -> tuple[str, ...]:
 
 
 def room_paths(state, room_id: str) -> dict[str, str]:
-    return {fact[1]: fact[3] for fact in state.world_facts.query("path", None, room_id, None)}
+    blocked = {fact[2] for fact in state.world_facts.query("route_blocked", room_id, None, None)}
+    return {fact[1]: fact[3] for fact in state.world_facts.query("path", None, room_id, None) if fact[1] not in blocked}
 
 
 def room_locked(state, room_id: str) -> dict[str, str]:

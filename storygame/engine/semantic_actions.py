@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from storygame.engine.environment import apply_environment_transition, resolve_environment_complication
 from storygame.engine.facts import player_location, room_items, room_paths
 from storygame.engine.policies import resolve_visible_aliases
 from storygame.engine.state import Event, GameState
@@ -16,6 +17,28 @@ def commit_semantic_action(state: GameState, action: SemanticActionProposal) -> 
     target_id = str(action["target_id"]).strip()
     item_id = str(action["item_id"]).strip()
     location_id = str(action["location_id"]).strip()
+
+    if action_type == "transition_environment":
+        fact_ops = apply_environment_transition(state, target_id)
+        return Event(
+            type="semantic_action",
+            message_key="transition_environment",
+            entities=(target_id,),
+            tags=("semantic_action", action_type),
+            turn_index=state.turn_index,
+            metadata={"action_id": str(action["action_id"]).strip(), "fact_ops": list(fact_ops)},
+        )
+
+    if action_type == "resolve_environment":
+        fact_ops = resolve_environment_complication(state, target_id, item_id)
+        return Event(
+            type="semantic_action",
+            message_key="resolve_environment",
+            entities=(target_id, item_id),
+            tags=("semantic_action", action_type),
+            turn_index=state.turn_index,
+            metadata={"action_id": str(action["action_id"]).strip(), "fact_ops": list(fact_ops)},
+        )
 
     if action_type == "take_item":
         room_id = location_id or player_location(state)

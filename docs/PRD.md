@@ -57,13 +57,15 @@ conditions before atomically committing facts. Bare completion tags are
 rejected for blueprint-backed sessions, and the prompt receives only
 observer-earned facts and legal route metadata.
 
-Grounded-turn-contract Phase 0 has audited the V1 and V2 proposal/rendering
-boundaries and recorded an adapter-wide provider-call and in-process latency
-baseline. The ordinary V1 freeform path still has a temporary phrase-based
-held-item guard, while the V2 `narration_claims` field is not yet the closed
-material-staging contract. Strict expected-failure specifications now cover
-contradictory custody, environment, access, and event prose without relying on
-story-specific runtime behavior. See the
+Grounded-turn-contract Phases 0–2 have audited the V1 and V2
+proposal/rendering boundaries, recorded the adapter-wide provider-call and
+in-process latency baseline, and closed the generic material-staging path.
+Ordinary V1 freeform turns carry typed `staging_claims`, checked only against
+candidate facts after validated effects. Story packages declare fact-backed
+environment transitions, bounded dramatic consequence classes, route blocks,
+and evidence recoveries; validation rejects an unwinnable fully blocked route.
+The same contract is exercised by mystery, fantasy, sci-fi, and relationship
+sessions without a runtime genre branch. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
 ## Goals

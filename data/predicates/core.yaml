@@ -78,6 +78,41 @@ predicates:
     arg_types: [room, condition]
     family: perception
     commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: environment
+    arity: 2
+    arg_types: [room, condition]
+    family: perception
+    commit_sources: [bootstrap, intent, rule, trigger, system]
+  - name: environment_transition
+    arity: 4
+    arg_types: [transition, room, condition, condition]
+    family: world
+    commit_sources: [bootstrap, system]
+  - name: environment_consequence
+    arity: 2
+    arg_types: [transition, consequence_class]
+    family: dramatic
+    commit_sources: [bootstrap, system]
+  - name: transition_blocks_route
+    arity: 2
+    arg_types: [transition, route]
+    family: world
+    commit_sources: [bootstrap, system]
+  - name: environment_recovery
+    arity: 3
+    arg_types: [transition, evidence, route]
+    family: world
+    commit_sources: [bootstrap, system]
+  - name: route_blocked
+    arity: 3
+    arg_types: [room, route, transition]
+    family: world
+    commit_sources: [intent, rule, trigger, system]
+  - name: dramatic_consequence
+    arity: 2
+    arg_types: [transition, consequence_class]
+    family: dramatic
+    commit_sources: [intent, rule, trigger, system]
   - name: sensory
     arity: 2
     arg_types: [observer, mode]

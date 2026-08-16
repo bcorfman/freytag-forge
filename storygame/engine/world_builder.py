@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from storygame.engine.environment import validate_environment_transitions
 from storygame.engine.interfaces import load_policy_bundle
 from storygame.plot.curves import normalize_session_length, select_curve_template
 
@@ -107,6 +108,20 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
         if lock.get("room") not in room_ids or not str(lock.get("route", lock.get("direction", ""))).strip():
             raise WorldPackageValidationError("unknown map room in lock")
     item_ids = _validate_ids([str(item.get("id", "")) for item in package["items"] if isinstance(item, dict)], "items")
+    declared_transitions = package.get("environment_transitions")
+    if (
+        isinstance(declared_transitions, list)
+        and declared_transitions
+        and all(isinstance(transition, dict) for transition in declared_transitions)
+        and all(str(transition.get("room_id", "")) not in room_ids for transition in declared_transitions)
+    ):
+        package["environment_transitions"] = _build_environment_transitions(map_data, sorted(item_ids))
+    try:
+        package["environment_transitions"] = validate_environment_transitions(
+            package.get("environment_transitions"), room_ids, paths, item_ids
+        )
+    except ValueError as exc:
+        raise WorldPackageValidationError(str(exc)) from exc
     for lock in map_data.get("locks", []):
         if lock.get("key_id") not in item_ids:
             raise WorldPackageValidationError("unknown item in lock")
@@ -508,6 +523,28 @@ def _room_presentation_from_template(template: dict[str, Any], room_ids: list[st
     return presentation
 
 
+def _build_environment_transitions(map_section: dict[str, Any], item_ids: list[str]) -> list[dict[str, Any]]:
+    """Declare a bounded condition shift in every generated story package."""
+    room_id = str(map_section["rooms"][0])
+    routes = [
+        str(path.get("id", path.get("direction", ""))).strip()
+        for path in map_section["paths"]
+        if path["from"] == room_id
+    ]
+    initial = str(map_section["environment"][room_id]["exposure"])
+    return [
+        {
+            "id": f"{room_id}_conditions_shift",
+            "room_id": room_id,
+            "from_state": initial,
+            "to_state": f"{initial}_compromised",
+            "consequence_class": "pressure" if initial == "outdoor" else "setback",
+            "blocked_route_ids": routes[:1],
+            "evidence_routes": [{"evidence_id": item_ids[0], "route_id": routes[0]}] if routes else [],
+        }
+    ]
+
+
 def build_world_package(
     genre: str,
     session_length: int | str,
@@ -531,7 +568,7 @@ def build_world_package(
     character_names = _extract_character_names(outline["outline"])
     template = load_story_package_templates().get(normalized_genre, load_story_package_templates()["default"])
     map_section = _build_map_from_template(template)
-    item_ids = list(template.get("items", ()))
+    item_ids: list[str] = [str(item_id) for item_id in template.get("items", ())]
     if not item_ids:
         raise WorldPackageValidationError("package items require declared ids")
     beat_candidates = list(curve["obligatory_moments"])
@@ -617,6 +654,7 @@ def build_world_package(
         "trigger_seeds": trigger_seeds,
         "intent_aliases": deepcopy(template.get("intent_aliases", {})),
         "effect_templates": deepcopy(template.get("effect_templates", {})),
+        "environment_transitions": _build_environment_transitions(map_section, item_ids),
     }
     if len(map_section["rooms"]) >= 3 and item_ids:
         gate_room = map_section["rooms"][1]
