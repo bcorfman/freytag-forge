@@ -165,8 +165,14 @@ def test_dialogue_policy_helpers_reject_wrong_speaker_and_code_artifacts() -> No
     state.world.rooms["foyer"].npc_ids = ("olivia_thompson", "daria_stone")
 
     assert _is_invalid_targeted_dialogue_speaker(
+        state,
         {"speaker": "daria_stone", "text": "The victim died before midnight.", "tone": "in_world"},
         {"intent": "ask_about", "targets": ["olivia_thompson"], "arguments": {}, "proposed_effects": []},
+    )
+    assert not _is_invalid_targeted_dialogue_speaker(
+        state,
+        {"speaker": "Daria", "text": "The ledger is in the case file.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
     )
     assert _dialogue_contains_code_artifact(
         {

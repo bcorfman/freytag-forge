@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from storygame.engine import freeform as freeform_module
-from storygame.engine.facts import initialize_world_facts, set_player_location
+from storygame.engine.facts import initialize_world_facts, room_npcs, set_player_location
 from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     OrdinaryTurnRecoveryExhausted,
@@ -26,6 +26,7 @@ from storygame.engine.freeform import (
     resolve_freeform_roleplay_with_proposals,
 )
 from storygame.engine.state import Npc, Room
+from storygame.engine.world_builder import load_story_package_templates
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
@@ -207,19 +208,34 @@ def test_format_character_reply_line_maps_ai_assistant_to_target_npc() -> None:
     assert line == 'Daria Stone says: "Stay sharp."'
 
 
-def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_named_npc() -> None:
+@pytest.mark.parametrize("genre", sorted(genre for genre in load_story_package_templates() if genre != "default"))
+def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_visible_npc_aliases(genre: str) -> None:
+    state = build_default_state(seed=4143, genre=genre)
+    npc_id = room_npcs(state, state.player.location)[0]
+    npc_name = state.world.npcs[npc_id].name
+    short_name = npc_name.split()[0]
     assert _has_invalid_targeted_dialogue_speaker(
+        state,
         {"speaker": "player", "text": "I answer myself.", "tone": "in_world"},
-        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+        {"intent": "ask_about", "targets": [npc_id], "arguments": {}, "proposed_effects": []},
     )
     assert not _has_invalid_targeted_dialogue_speaker(
-        {"speaker": "daria_stone", "text": "Ask quickly.", "tone": "in_world"},
-        {"intent": "ask_about", "targets": ["daria_stone"], "arguments": {}, "proposed_effects": []},
+        state,
+        {"speaker": npc_id, "text": "Ask quickly.", "tone": "in_world"},
+        {"intent": "ask_about", "targets": [npc_id], "arguments": {}, "proposed_effects": []},
     )
+    for speaker in (short_name, npc_name):
+        assert not _has_invalid_targeted_dialogue_speaker(
+            state,
+            {"speaker": speaker, "text": "Ask quickly.", "tone": "in_world"},
+            {"intent": "ask_about", "targets": [npc_id], "arguments": {}, "proposed_effects": []},
+        )
 
 
 def test_invalid_targeted_dialogue_speaker_ignores_empty_targets() -> None:
+    state = build_default_state(seed=4143, genre="mystery")
     assert not _has_invalid_targeted_dialogue_speaker(
+        state,
         {"speaker": "narrator", "text": "No target.", "tone": "in_world"},
         {"intent": "freeform", "targets": [], "arguments": {}, "proposed_effects": []},
     )
@@ -1157,6 +1173,31 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
     assert "getStringExtra" not in dialog["text"]
     assert "victim timeline" in dialog["text"]
     assert action["intent"] == "ask_about"
+
+
+def test_llm_freeform_adapter_accepts_visible_npc_short_name_for_case_file_request(monkeypatch) -> None:
+    state = build_default_state(seed=40515, genre="mystery")
+    calls = 0
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        return (
+            '{"dialog_proposal":{"speaker":"Daria","text":"The ledger entry is stamped 11:40 p.m., '
+            'twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],'
+            '"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
+            '"proposed_effects":["asked:case_file"]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    dialog, action = LlmFreeformProposalAdapter().propose(state, "DARIA, TELL ME ABOUT THE CASE FILE.")
+
+    assert calls == 1
+    assert dialog["speaker"] == "Daria"
+    assert _normalized_dialog_speaker_id(state, dialog["speaker"], action) == "daria_stone"
+    assert action["disclosed_knowledge"] == "ledger_entry_time"
 
 
 def test_llm_freeform_adapter_retries_when_first_reply_is_non_json_for_movement(monkeypatch) -> None:
