@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
+from storygame.engine.freeform import LlmFreeformProposalAdapter, RuleBasedFreeformProposalAdapter
 from storygame.llm.adapters import CloudflareWorkersAIAdapter
 from storygame.llm.story_agents.agents import DefaultNarratorOpeningAgent
 from storygame.web_demo import (
@@ -719,3 +719,49 @@ def test_demo_does_not_log_retired_narrator_failure(tmp_path, caplog):
         response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
     assert response.status_code == 200
     assert "Narrator failed" not in caplog.text
+
+
+def test_demo_movement_retries_an_invalid_pre_move_staging_claim(tmp_path, monkeypatch) -> None:
+    responses = iter(
+        (
+            {
+                "dialog_proposal": {"speaker": "narrator", "text": "You enter the foyer.", "tone": "in_world"},
+                "action_proposal": {"intent": "move", "targets": ["foyer"], "arguments": {}, "proposed_effects": []},
+                "staging_claims": [
+                    {
+                        "relation": "access",
+                        "subject_id": "mansion_entrance",
+                        "target_id": "",
+                        "location_id": "front_steps",
+                        "state_id": "available",
+                    }
+                ],
+            },
+            {
+                "dialog_proposal": {"speaker": "narrator", "text": "You enter the foyer.", "tone": "in_world"},
+                "action_proposal": {"intent": "move", "targets": ["foyer"], "arguments": {}, "proposed_effects": []},
+                "staging_claims": [],
+            },
+        )
+    )
+    monkeypatch.setattr(
+        "storygame.engine.freeform._story_agent_chat_complete",
+        lambda *_args: json.dumps(next(responses)),
+    )
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_BundleDirector(),
+            save_store=InMemorySaveStore(),
+            freeform_adapter=LlmFreeformProposalAdapter(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 123}).json()["session_id"]
+    assert client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"}).status_code == 200
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
+
+    assert response.status_code == 200
+    assert response.json()["state"]["location"] == "foyer"

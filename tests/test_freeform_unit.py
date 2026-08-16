@@ -1341,6 +1341,15 @@ def test_freeform_planner_prompt_includes_observer_scoped_staging_contract() -> 
     assert "foyer" not in user
 
 
+def test_freeform_planner_prompt_omits_pre_move_access_claims() -> None:
+    state = build_default_state(seed=4054, genre="mystery")
+
+    _system, user = _freeform_planner_prompt(state, "go to foyer")
+
+    assert '"move_destination_ids": ["foyer"]' in user
+    assert '"relation": "access"' not in user
+
+
 def test_freeform_planner_prompt_includes_relevant_case_facts_for_a_brief() -> None:
     state = build_default_state(seed=4052, genre="mystery")
 

@@ -622,7 +622,7 @@ def _planner_staging_context(state: GameState, movement_request: bool) -> dict[s
                     "state_id": str(fact[2]),
                 }
             )
-        elif fact[0] == "path" and location_id in fact[2:]:
+        elif not movement_request and fact[0] == "path" and location_id in fact[2:]:
             legal_claims.append(
                 {
                     "relation": "access",
@@ -632,7 +632,7 @@ def _planner_staging_context(state: GameState, movement_request: bool) -> dict[s
                     "state_id": "available",
                 }
             )
-        elif fact[0] == "locked" and fact[2] == location_id:
+        elif not movement_request and fact[0] == "locked" and fact[2] == location_id:
             legal_claims.append(
                 {
                     "relation": "access",
@@ -732,7 +732,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     relevant_item_facts = [
         fact for fact in item_facts if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
     ]
-    movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
+    movement_request = _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
     addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
     speaker_facts = (
         tuple(
@@ -821,7 +821,8 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "Staging is a visible world assertion: 'the item remains with its visible holder' needs a matching "
         "staging_claim from staging_contract.legal_claims after the proposed effect. "
         "Use staging_contract.legal_effects only for material effects; omit staging_claims when the prose "
-        "makes no material assertion. Performance may shape voice, attention, body language, pacing, and "
+        "makes no material assertion. A move needs no staging_claim unless it makes another visible assertion "
+        "in the destination scene. Performance may shape voice, attention, body language, pacing, and "
         "expression, but cannot invent facts, hidden knowledge, events, or visible state changes."
     )
     return system, json.dumps(payload, ensure_ascii=True)
