@@ -124,6 +124,15 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     for item in package["items"]:
         if not isinstance(item, dict):
             raise WorldPackageValidationError("items must contain mappings")
+        readable = item.get("readable", {})
+        if readable and not isinstance(readable, dict):
+            raise WorldPackageValidationError("readable item contract must be a mapping")
+        fragility = str(item.get("fragility", "durable")).strip()
+        if fragility not in {"durable", "weather_sensitive"}:
+            raise WorldPackageValidationError("invalid item fragility")
+        placement_security = str(item.get("placement_security", "none")).strip()
+        if placement_security not in {"none", "protected"}:
+            raise WorldPackageValidationError("invalid item placement security")
         custody = item.get("initial_custody")
         if custody:
             custody_key = str(item["id"])
@@ -134,19 +143,13 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
                 raise WorldPackageValidationError("unknown custody reference")
             if custody.get("kind") == "room" and custody.get("id") not in room_ids:
                 raise WorldPackageValidationError("unknown custody reference")
-            if (
-                custody.get("kind") == "room"
-                and item.get("fragility") == "weather_sensitive"
-                and environment[str(custody["id"])]["exposure"] == "outdoor"
-            ):
-                raise WorldPackageValidationError("fragile item cannot be staged in an exposed room")
-        if str(item.get("fragility", "durable")) not in {"durable", "weather_sensitive"}:
-            raise WorldPackageValidationError("invalid item fragility")
+            if custody.get("kind") == "room" and environment[str(custody["id"])]["exposure"] == "outdoor":
+                if placement_security == "none" and readable:
+                    raise WorldPackageValidationError("wind-vulnerable item cannot be staged in an exposed room")
+                if placement_security == "none" and fragility == "weather_sensitive":
+                    raise WorldPackageValidationError("fragile item cannot be staged in an exposed room")
         if str(item.get("document_visibility", "discoverable")) not in {"public", "discoverable", "protected"}:
             raise WorldPackageValidationError("invalid document visibility")
-        readable = item.get("readable", {})
-        if readable and not isinstance(readable, dict):
-            raise WorldPackageValidationError("readable item contract must be a mapping")
         if readable:
             aliases = readable.get("aliases", [])
             if not isinstance(aliases, list) or not aliases or any(not str(alias).strip() for alias in aliases):
@@ -475,6 +478,7 @@ def _build_item_spec(
         "affordances": ["examine", "take"],
         "initial_state": str(detail.get("initial_state", "available")),
         "fragility": str(detail.get("fragility", "durable")),
+        "placement_security": str(detail.get("placement_security", "none")),
         "initial_custody": deepcopy(detail.get("initial_custody", default_custody)),
         "owner": str(detail.get("owner", "")),
         "driver": str(detail.get("driver", "")),
