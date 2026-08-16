@@ -17,6 +17,7 @@ def test_v2_mystery_fixture_preserves_the_authored_vale_mansion_opening() -> Non
         "Detective Elias Wren", "Daria Stone", "Emma Vale", "The Groundskeeper"
     }
     assert state.world.items["case_file"]["holder"] == "npc:daria_stone"
+    assert "11:40 p.m." in state.world.items["case_file"]["description"]
     assert context["world"]["attributes"]["public_briefing"]["victim"] == "Emma Vale"
     assert "missing ledger payment" in context["world"]["attributes"]["public_briefing"]["strongest_lead"]
 

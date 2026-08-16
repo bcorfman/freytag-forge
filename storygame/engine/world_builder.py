@@ -169,6 +169,13 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
     protected = set(map(str, opening.get("protected_knowledge", [])))
     if public & protected:
         raise WorldPackageValidationError("protected knowledge is exposed as public briefing")
+    for item in package["items"]:
+        readable = item.get("readable", {})
+        document_knowledge = {str(key).strip() for key in readable.get("knowledge", ()) if str(key).strip()}
+        if document_knowledge and document_knowledge <= public:
+            raise WorldPackageValidationError(
+                "readable document knowledge must include a fact not granted by the opening briefing"
+            )
     if not isinstance(package["intent_aliases"], dict) or not isinstance(package["effect_templates"], dict):
         raise WorldPackageValidationError("intent aliases and effect templates must be mappings")
     presentation = package["map"].get("room_presentation", {})

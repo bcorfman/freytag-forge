@@ -79,6 +79,11 @@ generic `read` intent validates current access (including an on-scene holder)
 and commits only those declared effects. Path aliases are likewise package data
 realized as facts for natural-language exit resolution.
 
+An authored readable document that grants knowledge must include at least one
+fact absent from the opening briefing. The planner receives those still-unknown,
+declared facts only when the player requests that accessible document, so reading
+advances information without leaking it through ordinary scene context.
+
 ## Post-commit rendering
 
 Ordinary rendering receives observer-scoped context after direct effects,

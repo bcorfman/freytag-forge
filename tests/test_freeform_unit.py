@@ -519,6 +519,23 @@ def test_resolve_freeform_roleplay_read_case_file_sets_specific_progress_flag() 
     )
 
 
+def test_reading_a_document_reveals_knowledge_not_in_the_opening_briefing() -> None:
+    state = build_default_state(seed=4072, genre="mystery")
+    adapter = RuleBasedFreeformProposalAdapter()
+
+    assert not state.world_facts.holds("knows", "player", "ledger_entry_time")
+
+    resolved = resolve_freeform_roleplay(state, "read the case file", adapter)
+
+    assert resolved["state"].world_facts.holds("knows", "player", "ledger_entry_time")
+    assert resolved["state"].world_facts.holds(
+        "player_context",
+        "case_file_time",
+        "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.",
+    )
+    assert "11:40 p.m." in resolved["dialog_proposal"]["text"]
+
+
 def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> None:
     state = build_default_state(seed=4071, genre="mystery")
     responses = iter(
@@ -1047,6 +1064,17 @@ def test_freeform_planner_prompt_includes_relevant_case_facts_for_a_brief() -> N
     assert '"victim_timeline"' in user
     assert '"strongest_lead"' in user
     assert len(user) < 3600
+
+
+def test_freeform_planner_receives_new_document_facts_only_for_the_read_action() -> None:
+    state = build_default_state(seed=4053, genre="mystery")
+
+    _system, read_prompt = _freeform_planner_prompt(state, "read the case file")
+    _system, look_prompt = _freeform_planner_prompt(state, "look around")
+
+    assert '"ledger_entry_time"' in read_prompt
+    assert "twenty minutes before Emma Vale was last seen" in read_prompt
+    assert '"document_reveal_facts": []' in look_prompt
 
 
 def test_llm_freeform_adapter_fails_closed_when_planner_errors(monkeypatch) -> None:
