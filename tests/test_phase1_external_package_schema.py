@@ -56,6 +56,15 @@ def test_world_package_rejects_fragile_items_staged_in_exposed_rooms() -> None:
         validate_world_package(package)
 
 
+def test_world_package_requires_a_readable_document_to_reveal_new_opening_knowledge() -> None:
+    package = build_world_package("mystery", "short", 33, "mysterious")
+    case_file = next(item for item in package["items"] if item["id"] == "case_file")
+    case_file["readable"]["knowledge"] = ["victim_name", "victim_timeline"]
+
+    with pytest.raises(WorldPackageValidationError, match="fact not granted by the opening briefing"):
+        validate_world_package(package)
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [

@@ -318,6 +318,9 @@ class RuleBasedFreeformProposalAdapter:
             "proposed_effects": [f"{intent}:{targets[0] if targets else 'none'}"],
         }
         response = _dialog_line(intent=intent, target=target, topic=topic, state=state)
+        document_reveals = _document_reveal_facts_for_input(state, raw_input)
+        if document_reveals:
+            response = f"The document fixes one new point: {document_reveals[0]['value']}"
         if explicit_target_requested and not target:
             response = "No one here answers that. Try speaking to someone in the room."
         dialog_payload = {"speaker": "narrator", "text": response, "tone": "in_world"}
@@ -497,6 +500,24 @@ def _nearby_holder_for_item(state: GameState, item_id: str) -> str:
     return ""
 
 
+def _document_reveal_facts_for_input(state: GameState, raw_input: str) -> list[dict[str, str]]:
+    """Expose declared document facts only while planning that document's read."""
+    if not re.search(r"\b(read|review|examine|inspect)\b", raw_input, re.IGNORECASE):
+        return []
+    item_id = _readable_item_for_input(state, raw_input)
+    if not item_id:
+        return []
+    visible_items = room_items(state, player_location(state))
+    if item_id not in state.player.inventory and item_id not in visible_items and not _nearby_holder_for_item(state, item_id):
+        return []
+    case_values = {fact[1]: fact[2] for fact in state.world_facts.query("case_fact", None, None)}
+    return [
+        {"key": fact[2], "value": case_values[fact[2]]}
+        for fact in state.world_facts.query("document_knowledge", item_id, None)
+        if fact[2] in case_values and not state.world_facts.holds("knows", "player", fact[2])
+    ]
+
+
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
     candidate = _normalize_target(raw_target)
     if not candidate:
@@ -579,6 +600,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "turn_index": state.turn_index,
         "scene_facts": _planner_relevant_facts(scene_entries, query_tokens, broad_fact_request),
         "case_facts": _planner_relevant_facts(case_entries, query_tokens, broad_fact_request),
+        "document_reveal_facts": _document_reveal_facts_for_input(state, raw_input),
         "room": {
             "id": room.id,
             "name": room.name,
