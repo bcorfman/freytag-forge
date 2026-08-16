@@ -95,6 +95,12 @@ generic `read` intent validates current access (including an on-scene holder)
 and commits only those declared effects. Path aliases are likewise package data
 realized as facts for natural-language exit resolution.
 
+Package validation applies a genre-neutral physical-placement invariant:
+readable documents and weather-sensitive items cannot begin in an outdoor room
+unless their declarative `placement_security` is `protected`. Player or NPC
+custody is already protected; `protected` covers an authored secure, enclosed,
+anchored, or locked placement without hard-coding its form.
+
 An authored readable document that grants knowledge must include at least one
 fact absent from the opening briefing. The planner receives those still-unknown,
 declared facts only when the player requests that accessible document, so reading

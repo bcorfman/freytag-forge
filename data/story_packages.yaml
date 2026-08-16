@@ -234,6 +234,7 @@ packages:
     items: [letter, locket, keepsake]
     item_details:
       letter:
+        placement_security: protected
         readable:
           aliases: [letter, note]
           discovery: letter

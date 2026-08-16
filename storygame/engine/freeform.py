@@ -519,6 +519,24 @@ def _document_reveal_facts_for_input(state: GameState, raw_input: str) -> list[d
     ]
 
 
+def _dialogue_conflicts_with_held_item_custody(state: GameState, text: str) -> bool:
+    """Reject prose that places a fact-held item unattended in the scene."""
+    lowered = " ".join(text.lower().split())
+    exposed_location = r"(?:on (?:the )?(?:ground|floor|front steps|steps)|at (?:your )?feet|in (?:the )?mud|out in (?:the )?open|beside (?:the )?\w+|wedged|lodged|lying|rests?|resting)"
+    for fact in state.world_facts.query("holding", None, None):
+        if len(fact) != 3:
+            continue
+        item_id = fact[2]
+        item = state.world.items.get(item_id)
+        labels = {item_id.replace("_", " ")}
+        if item is not None and item.name.strip():
+            labels.add(item.name.lower())
+        for label in labels:
+            if re.search(rf"\b{re.escape(label)}\b[^.!?]{{0,100}}\b{exposed_location}\b", lowered):
+                return True
+    return False
+
+
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
     candidate = _normalize_target(raw_target)
     if not candidate:
@@ -888,6 +906,8 @@ class LlmFreeformProposalAdapter:
         required_disclosure = _required_document_disclosure(state, raw_input, action_payload)
         if required_disclosure and action_payload.get("disclosed_knowledge") != required_disclosure:
             raise ValueError("planner_missing_required_document_disclosure")
+        if _dialogue_conflicts_with_held_item_custody(state, str(dialog_payload.get("text", ""))):
+            raise ValueError("planner_dialogue_custody_conflict")
         if _dialogue_contains_code_artifact(dialog_payload):
             raise ValueError("planner_dialogue_code_artifact")
         if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):

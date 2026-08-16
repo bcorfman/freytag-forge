@@ -56,6 +56,24 @@ def test_world_package_rejects_fragile_items_staged_in_exposed_rooms() -> None:
         validate_world_package(package)
 
 
+def test_world_package_rejects_wind_vulnerable_documents_left_outdoors() -> None:
+    package = build_world_package("mystery", "short", 33, "mysterious")
+    case_file = next(item for item in package["items"] if item["id"] == "case_file")
+    case_file["initial_custody"] = {"kind": "room", "id": "front_steps"}
+
+    with pytest.raises(WorldPackageValidationError, match="wind-vulnerable item.*exposed room"):
+        validate_world_package(package)
+
+
+def test_world_package_allows_a_protected_wind_vulnerable_item_outdoors() -> None:
+    package = build_world_package("mystery", "short", 33, "mysterious")
+    case_file = next(item for item in package["items"] if item["id"] == "case_file")
+    case_file["initial_custody"] = {"kind": "room", "id": "front_steps"}
+    case_file["placement_security"] = "protected"
+
+    assert validate_world_package(package) is package
+
+
 def test_world_package_requires_a_readable_document_to_reveal_new_opening_knowledge() -> None:
     package = build_world_package("mystery", "short", 33, "mysterious")
     case_file = next(item for item in package["items"] if item["id"] == "case_file")
