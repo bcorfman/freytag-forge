@@ -588,20 +588,25 @@ def bind_direct_npc_conversation_target(
     return normalized
 
 
-def _required_document_disclosure(state: GameState, raw_input: str, action_payload: dict[str, Any]) -> str:
+def _document_disclosure_for_npc_input(state: GameState, raw_input: str, speaker_id: str) -> tuple[str, str] | None:
     item_id = _readable_item_for_input(state, raw_input)
+    if not item_id or not speaker_id:
+        return None
+    for fact in state.world_facts.query("document_disclosure", item_id, speaker_id, None):
+        key = str(fact[3])
+        if state.world_facts.holds("knows", "player", key):
+            continue
+        value = next((str(case_fact[2]) for case_fact in state.world_facts.query("case_fact", key, None)), "")
+        if value:
+            return key, value
+    return None
+
+
+def _required_document_disclosure(
+    state: GameState, raw_input: str, action_payload: dict[str, Any]
+) -> tuple[str, str] | None:
     targets = tuple(str(target) for target in action_payload.get("targets", ()))
-    if not item_id or not targets:
-        return ""
-    speaker_id = targets[0]
-    return next(
-        (
-            fact[3]
-            for fact in state.world_facts.query("document_disclosure", item_id, speaker_id, None)
-            if not state.world_facts.holds("knows", "player", fact[3])
-        ),
-        "",
-    )
+    return _document_disclosure_for_npc_input(state, raw_input, targets[0] if targets else "")
 
 
 def _planner_staging_context(state: GameState, movement_request: bool) -> dict[str, object]:
@@ -757,6 +762,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     ]
     movement_request = _MOVEMENT_PHRASE_PATTERN.search(raw_input) is not None
     addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
+    required_document_disclosure = _document_disclosure_for_npc_input(state, raw_input, addressed_npc_id)
     speaker_facts = (
         tuple(
             fact
@@ -811,6 +817,11 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "id": addressed_npc_id,
             "facts": [list(fact) for fact in speaker_facts],
         },
+        "required_document_disclosure": (
+            {"key": required_document_disclosure[0], "value": required_document_disclosure[1]}
+            if required_document_disclosure
+            else {}
+        ),
         "staging_contract": _planner_staging_context(state, movement_request),
         "inventory": list(state.player.inventory),
         "recent_events": [
@@ -843,7 +854,8 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "or quote player_input. For a readable document, describe its fact-backed contents or the immediate "
         "in-world consequence of reviewing it. "
         "When an addressed NPC reveals a document fact not known to the player, set disclosed_knowledge to "
-        "that fact key; otherwise use an empty string. "
+        "that fact key and include required_document_disclosure.value verbatim in dialog_proposal.text; otherwise use "
+        "an empty string. "
         "Write grounded roleplay: characters act from supplied motivations, relationships, knowledge, "
         "pressure, and limits, with room for initiative, subtext, disagreement, and hesitation. "
         "Atmosphere is prose-only: 'rain needles the windows' needs no staging_claim. "
@@ -1080,8 +1092,13 @@ class LlmFreeformProposalAdapter:
         ):
             raise ValueError("planner_invalid_targeted_dialogue_speaker")
         required_disclosure = _required_document_disclosure(state, raw_input, action_payload)
-        if required_disclosure and action_payload.get("disclosed_knowledge") != required_disclosure:
+        if required_disclosure and action_payload.get("disclosed_knowledge") != required_disclosure[0]:
             raise ValueError("planner_missing_required_document_disclosure")
+        if (
+            required_disclosure
+            and required_disclosure[1].casefold() not in str(dialog_payload.get("text", "")).casefold()
+        ):
+            raise ValueError("planner_missing_required_document_disclosure_value")
         if _dialogue_contains_code_artifact(dialog_payload):
             raise ValueError("planner_dialogue_code_artifact")
         if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):
