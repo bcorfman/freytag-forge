@@ -6,9 +6,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from storygame.authoring.blueprint_contracts import StoryBlueprint
 from storygame.authoring.contracts import Beat, CompiledStory
-from storygame.runtime.blueprint import BlueprintRuntime, realize_blueprint
 
 
 @dataclass
@@ -43,7 +41,6 @@ class RuntimeState:
     compiled_story: CompiledStory
     world: WorldState
     beat_runtime: dict[str, BeatRuntime]
-    blueprint_runtime: BlueprintRuntime | None = None
     turn_index: int = 0
     recent_events: list[RuntimeEvent] = field(default_factory=list)
     story_summary: str = ""
@@ -58,7 +55,7 @@ class RuntimeState:
         )
 
 
-def bootstrap_runtime_state(compiled_story: CompiledStory, blueprint: StoryBlueprint | None = None) -> RuntimeState:
+def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
     """Realize an immutable story into the only mutable V2 state object."""
     initial = compiled_story.initial_world_state
     location = initial.get("location")
@@ -72,7 +69,6 @@ def bootstrap_runtime_state(compiled_story: CompiledStory, blueprint: StoryBluep
         compiled_story=compiled_story,
         world=WorldState(location=location, flags=flags, attributes=attributes, items=items),
         beat_runtime={beat.id: BeatRuntime(beat_id=beat.id) for beat in compiled_story.beats},
-        blueprint_runtime=realize_blueprint(blueprint) if blueprint is not None else None,
     )
 
 

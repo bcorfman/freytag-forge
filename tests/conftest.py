@@ -11,9 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-
-from storygame.test_metrics import begin_test, end_test
 
 TIERS = ("unit", "component", "integration", "evaluation")
 QUALITY_TIERS = ("runtime_safety", "authoring_quality")
@@ -128,7 +125,6 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
-    begin_test()
     _HEALTH[item.nodeid] = {"setup_seconds": time.perf_counter()}
 
 
@@ -153,7 +149,7 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     teardown_started = record.pop("teardown_started", None)
     if teardown_started is not None:
         record["teardown_seconds"] = time.perf_counter() - float(teardown_started)
-    record["runtime"] = end_test()
+    record["runtime"] = {}
     outcome.get_result()
 
 
@@ -318,18 +314,3 @@ def _block_outbound_network(request: pytest.FixtureRequest, monkeypatch: pytest.
         raise RuntimeError("Outbound network is disabled in tests. Mock urllib.request.urlopen in this test.")
 
     monkeypatch.setattr(urllib.request, "urlopen", _blocked_urlopen)
-
-
-@pytest.fixture(autouse=True)
-def _record_runtime_adapter_constructions(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Record actual client construction without sharing mutable app state."""
-
-    original_init = TestClient.__init__
-
-    def _recording_init(self: TestClient, *args: Any, **kwargs: Any) -> None:
-        from storygame.test_metrics import record
-
-        record("test_client")
-        original_init(self, *args, **kwargs)
-
-    monkeypatch.setattr(TestClient, "__init__", _recording_init)

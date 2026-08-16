@@ -161,7 +161,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Verify browser flow at the production root
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py
 
   record-production-promotion:
     name: Record production promotion

@@ -1,5 +1,7 @@
 # Freytag Forge
 
+> V2 cutover complete: the hosted V2 runtime is the only executable product surface. `RuntimeState` is its sole mutable authority; V1 engine, CLI, local-web, fact-policy, and proposal runtime code have been retired. All authored material under `data/` is intentionally retained as immutable V2 input or source data. The historical material below is pending consolidation; it must not be read as a current runtime contract.
+
 Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bcorfman/freytag-forge)
 
 ## Write anything. Keep the story true.

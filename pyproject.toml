@@ -1,6 +1,6 @@
 [project]
 name = "storygame"
-description = "A deterministic, LLM-narrated text adventure with Freytag-driven plot control."
+description = "An LLM-first interactive-fiction runtime with validated state commits."
 version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -15,8 +15,6 @@ dependencies = [
 ]
 
 [project.scripts]
-storygame = "storygame.cli:main"
-storygame-blueprint = "storygame.authoring.blueprint_cli:main"
 
 [tool.uv]
 

@@ -38,4 +38,4 @@ jobs:
       - name: Require a deployed API target
         run: test -n "$HOSTED_DEMO_API_BASE_URL"
       - name: Exercise the deployed browser session flow
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py

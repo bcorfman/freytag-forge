@@ -1,74 +1,16 @@
-"""Offline V2 story authoring contracts and compiler boundary."""
+"""Offline V2 compiled-story authoring boundary."""
 
-from storygame.authoring.blueprint_compiler import (
-    BlueprintCompilation,
-    BlueprintCompilationError,
-    BlueprintCompiler,
-    BlueprintCriticResult,
-    BlueprintProvenance,
-    RouteFairnessCritic,
-)
-from storygame.authoring.blueprint_contracts import (
-    BlueprintValidationError,
-    CanonicalTruth,
-    DramaticBeat,
-    EndState,
-    EvidencePlacement,
-    FailureForward,
-    GenreCausality,
-    KnowledgeAssignment,
-    LocationClass,
-    OppositionClock,
-    ProtectedFact,
-    RealizationRoute,
-    Revelation,
-    RouteSatisfier,
-    SourceOutlineProvenance,
-    StoryBlueprint,
-    load_story_blueprint_fixture,
-    validate_story_blueprint,
-)
-from storygame.authoring.blueprint_migration import compiled_story_as_blueprint
 from storygame.authoring.compiler import CompilationError, CompiledStoryCompiler, validate_compiled_story
 from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
-from storygame.authoring.genre_profiles import GenreBlueprintValidator, GenreProfile, GenreProfileRegistry
 
 __all__ = [
     "Beat",
     "BeatPacing",
-    "BlueprintValidationError",
-    "BlueprintCompilation",
-    "BlueprintCompilationError",
-    "BlueprintCompiler",
-    "BlueprintCriticResult",
-    "BlueprintProvenance",
-    "CanonicalTruth",
     "Character",
     "CompilationError",
     "CompiledStory",
     "CompiledStoryCompiler",
-    "compiled_story_as_blueprint",
     "CompletionTag",
-    "DramaticBeat",
-    "EvidencePlacement",
-    "EndState",
-    "FailureForward",
-    "GenreBlueprintValidator",
-    "GenreCausality",
-    "GenreProfile",
-    "GenreProfileRegistry",
-    "load_story_blueprint_fixture",
-    "KnowledgeAssignment",
-    "LocationClass",
-    "OppositionClock",
     "ProtectedRevelation",
-    "ProtectedFact",
-    "RealizationRoute",
-    "Revelation",
-    "RouteSatisfier",
-    "RouteFairnessCritic",
-    "SourceOutlineProvenance",
-    "StoryBlueprint",
     "validate_compiled_story",
-    "validate_story_blueprint",
 ]

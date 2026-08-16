@@ -6,7 +6,6 @@ import copy
 import json
 from typing import Any
 
-from storygame.runtime.blueprint import ProgressionValidator
 from storygame.runtime.contracts import RuntimeFailure, TurnResult
 from storygame.runtime.state import RuntimeState
 
@@ -48,14 +47,6 @@ def _apply_beat_updates(state: RuntimeState, result: TurnResult) -> None:
     beats = {beat.id: beat for beat in state.compiled_story.beats}
     completed = {beat_id for beat_id, runtime in state.beat_runtime.items() if runtime.completed_tags}
     for update in result.beat_updates:
-        if state.blueprint_runtime is not None:
-            if not update.route_id:
-                raise RuntimeFailure("BLUEPRINT_ROUTE_REQUIRED", "blueprint progression requires a declared route_id")
-            try:
-                ProgressionValidator(state.blueprint_runtime).commit(update, failed=update.route_failed)
-            except ValueError as exc:
-                raise RuntimeFailure("INVALID_BLUEPRINT_PROGRESSION", str(exc)) from exc
-            continue
         beat = beats.get(update.beat_id)
         if beat is None:
             raise RuntimeFailure("UNKNOWN_BEAT", f"unknown beat '{update.beat_id}'")
