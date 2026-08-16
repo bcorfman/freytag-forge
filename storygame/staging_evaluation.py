@@ -37,7 +37,7 @@ def run_staging_evaluation(
     """Exercise every V2 fixture and return promotion-gate evidence, never a verdict by prose."""
     api_base_url = api_base_url.rstrip("/")
     request = _rate_limit_aware(request or _http_request(api_base_url), sleep_fn)
-    health_status, health = request("GET", "/api/v1/version", None)
+    health_status, health = request("GET", "/api/v1/health", None)
     identity_ok = (
         health_status == 200
         and health.get("status") == "ok"
@@ -113,13 +113,30 @@ def run_staging_evaluation(
 def _run_fixture(
     request: Request, genre: str, story: object
 ) -> tuple[dict[str, object], list[int], list[float], int, int, int, int]:
-    created_status, created = request("POST", "/api/v1/session", {"genre": genre})
+    api_genre = "romance" if genre == "relationship" else genre
+    created_status, created = request("POST", "/api/v1/session", {"genre": api_genre})
     if created_status != 200 or not isinstance(created.get("session_id"), str):
-        return {"passed": False, "failure": "session_creation"}, [], [], 1, 0, 0, 0
+        return (
+            {"passed": False, "failure": "session_creation", "response": _failure_response(created_status, created)},
+            [],
+            [],
+            1,
+            0,
+            0,
+            0,
+        )
     session_id = created["session_id"]
     opening_status, opening = request("POST", "/api/v1/turn", {"session_id": session_id, "command": "look"})
     if opening_status != 200 or not _valid_state(opening.get("state"), 0):
-        return {"passed": False, "failure": "opening"}, [], [], 1, 0, 1, 0
+        return (
+            {"passed": False, "failure": "opening", "response": _failure_response(opening_status, opening)},
+            [],
+            [],
+            1,
+            0,
+            1,
+            0,
+        )
     previous_turn = 0
     disclosure = _opening_disclosure(genre)
     if disclosure is not None:
@@ -141,17 +158,20 @@ def _run_fixture(
         )
         visible = " ".join(value for value in result.get("lines", []) if isinstance(value, str)).casefold()
         known_facts = result.get("state", {}).get("known_facts", ()) if isinstance(result.get("state"), dict) else ()
-        if (
-            status != 200
-            or not _valid_state(result.get("state"), 1)
-            or disclosure["key"] not in known_facts
-            or disclosure["value"].casefold() not in visible
-        ):
+        disclosure_checks = {
+            "http_success": status == 200,
+            "state_committed": _valid_state(result.get("state"), 1),
+            "fact_committed": disclosure["key"] in known_facts,
+            "value_rendered": disclosure["value"].casefold() in visible,
+        }
+        if not all(disclosure_checks.values()):
             return (
                 {
                     "passed": False,
                     "failure": "opening_disclosure",
                     "disclosure": {"passed": False, **disclosure, **_request_metadata(result)},
+                    "checks": disclosure_checks,
+                    "response": _failure_response(status, result),
                 },
                 [],
                 [],
@@ -172,25 +192,60 @@ def _run_fixture(
         latencies.append((time.monotonic() - started) * 1000)
         if status != 200:
             typed_errors += int(result.get("status") == "service_unavailable")
-            return {"passed": False, "failure": style}, calls, latencies, typed_errors, leaks, continuity, 0
+            return (
+                {"passed": False, "failure": style, "response": _failure_response(status, result)},
+                calls,
+                latencies,
+                typed_errors,
+                leaks,
+                continuity,
+                0,
+            )
         state = result.get("state")
         expected_turn = previous_turn + 1
         if not _valid_state(state, expected_turn):
             continuity += 1
-            return {"passed": False, "failure": style}, calls, latencies, typed_errors, leaks, continuity, 0
+            return (
+                {"passed": False, "failure": style, "response": _failure_response(status, result)},
+                calls,
+                latencies,
+                typed_errors,
+                leaks,
+                continuity,
+                0,
+            )
         previous_turn = expected_turn
         visible = " ".join(value for value in result.get("lines", []) if isinstance(value, str)).casefold()
         leaks += sum(protection in visible for protection in protections)
         model_calls = result.get("model_calls")
+        retries = result.get("grounded_turn_retries", "")
+        if model_calls is None and isinstance(retries, str) and retries.isdigit():
+            model_calls = int(retries) + 1
         if not isinstance(model_calls, int) or model_calls not in {1, 2}:
             continuity += 1
-            return {"passed": False, "failure": "turn_metrics"}, calls, latencies, typed_errors, leaks, continuity, 0
+            return (
+                {"passed": False, "failure": "turn_metrics", "response": _failure_response(status, result)},
+                calls,
+                latencies,
+                typed_errors,
+                leaks,
+                continuity,
+                0,
+            )
         calls.append(model_calls)
     for command in ("/save staging-evaluation", "/load staging-evaluation"):
         status, result = request("POST", "/api/v1/turn", {"session_id": session_id, "command": command})
         if status != 200 or not _valid_state(result.get("state"), previous_turn):
             continuity += 1
-            return {"passed": False, "failure": command}, calls, latencies, typed_errors, leaks, continuity, 0
+            return (
+                {"passed": False, "failure": command, "response": _failure_response(status, result)},
+                calls,
+                latencies,
+                typed_errors,
+                leaks,
+                continuity,
+                0,
+            )
     completed = int(isinstance(result.get("state"), dict) and result["state"].get("active_beats") == [])
     return (
         {
@@ -274,13 +329,26 @@ def _http_request(api_base_url: str) -> Request:
 def _response_metadata(headers: Mapping[str, str]) -> dict[str, str]:
     return {
         key: value
-        for key, header in (("request_id", "X-Request-ID"), ("trace_id", "X-Trace-ID"))
+        for key, header in (
+            ("request_id", "X-Request-ID"),
+            ("trace_id", "X-Trace-ID"),
+            ("grounded_turn_retries", "X-Grounded-Turn-Retries"),
+        )
         if (value := str(headers.get(header, "")).strip())
     }
 
 
 def _request_metadata(result: dict[str, object]) -> dict[str, str]:
     return {key: str(result[key]) for key in ("request_id", "trace_id") if str(result.get(key, "")).strip()}
+
+
+def _failure_response(status_code: int, result: dict[str, object]) -> dict[str, object]:
+    """Retain safe HTTP evidence without copying narration into a promotion artifact."""
+    return {
+        "http_status": status_code,
+        **{key: value for key in ("status", "detail") if (value := result.get(key)) is not None},
+        **_request_metadata(result),
+    }
 
 
 if __name__ == "__main__":

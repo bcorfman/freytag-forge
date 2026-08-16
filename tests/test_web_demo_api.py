@@ -312,6 +312,7 @@ def test_demo_document_briefing_is_visible_and_committed_before_save(tmp_path) -
 
     assert turn.status_code == 200
     assert "11:40 p.m." in "\n".join(turn.json()["lines"])
+    assert "ledger_entry_time" in turn.json()["state"]["known_facts"]
 
     saved = client.post("/api/v1/turn", json={"session_id": session_id, "command": "/save disclosure"})
     assert saved.status_code == 200
@@ -342,6 +343,7 @@ def test_demo_fantasy_document_briefing_is_visible_and_committed_before_save(tmp
 
     assert turn.status_code == 200
     assert "moonlit ford" in "\n".join(turn.json()["lines"])
+    assert "warded_route" in turn.json()["state"]["known_facts"]
 
     client.post("/api/v1/turn", json={"session_id": session_id, "command": "/save disclosure"})
     saved_state, _rng = store.load_run(f"{session_id}:disclosure")

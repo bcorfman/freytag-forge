@@ -16,13 +16,17 @@ from storygame.staging_evaluation import (
 def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> None:
     sessions = 0
     turns: dict[str, int] = {}
+    session_genres: list[str] = []
 
     def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
         nonlocal sessions
         if method == "GET":
+            assert path == "/api/v1/health"
             return 200, {"status": "ok", "channel": "staging", "sha": "a" * 40}
         if path.endswith("/session"):
             sessions += 1
+            assert payload is not None
+            session_genres.append(str(payload["genre"]))
             return 200, {"session_id": f"session-{sessions}"}
         assert payload is not None
         command = str(payload["command"])
@@ -56,7 +60,7 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
             "status": "ok",
             "lines": ["The scene responds."],
             "state": {"location": "opening", "turn_index": turns[session_id]},
-            "model_calls": 1,
+            "grounded_turn_retries": "0",
         }
 
     report = run_staging_evaluation("https://staging.example", "a" * 40, request=request)
@@ -66,6 +70,7 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
     assert set(report["fixtures"]) == {"mystery", "fantasy", "sci-fi", "relationship"}
     assert report["metrics"]["scripted_turns"] == 4 * len(SCRIPTED_PLAYER_STYLES)
     assert report["metrics"]["one_call_rate"] == 1.0
+    assert session_genres == ["mystery", "fantasy", "sci-fi", "romance"]
     assert report["baseline_comparison"] == {
         "source": "docs/v2-acceptance-scorecard.md",
         "normal_turn_provider_request_cap": 2,
@@ -85,6 +90,11 @@ def test_staging_evaluation_fails_the_gate_for_wrong_sha_or_typed_error() -> Non
     assert report["promotion_gate"]["passed"] is False
     assert "deployment_identity" in report["promotion_gate"]["failures"]
     assert report["metrics"]["typed_errors"] == 4
+    assert report["fixtures"]["mystery"]["response"] == {
+        "http_status": 503,
+        "status": "service_unavailable",
+        "detail": "unavailable",
+    }
 
 
 def test_staging_evaluation_requires_committed_opening_disclosures() -> None:
@@ -168,7 +178,7 @@ def test_http_request_serializes_payload_and_decodes_error_response(monkeypatch)
 
     class Response:
         status = 201
-        headers: dict[str, str] = {}
+        headers = {"X-Grounded-Turn-Retries": "1"}
 
         def read(self) -> bytes:
             return b'{"session_id":"one"}'
@@ -186,7 +196,10 @@ def test_http_request_serializes_payload_and_decodes_error_response(monkeypatch)
 
     monkeypatch.setattr("urllib.request.urlopen", success)
     request = _http_request("https://staging.example")
-    assert request("POST", "/api/v1/session", {"genre": "mystery"}) == (201, {"session_id": "one"})
+    assert request("POST", "/api/v1/session", {"genre": "mystery"}) == (
+        201,
+        {"session_id": "one", "grounded_turn_retries": "1"},
+    )
     assert captured == {"url": "https://staging.example/api/v1/session", "payload": {"genre": "mystery"}}
 
     from urllib.error import HTTPError
