@@ -86,8 +86,9 @@ channel, and Railway-reported commit SHA.
    newest successful staging deployment on `main`, then approve the protected
    production environment. Supply a full SHA only to promote an older staged
    candidate. Before uploading, the workflow prints the Railway deployment
-   IDs/statuses it can see and fails closed unless it identifies a successful
-   or active rollback candidate. It validates health and the root browser E2E
+   IDs/statuses it can see and fails closed unless it identifies a successful,
+   active, or idle-sleeping known-good deployment. This is a preflight record,
+   not an automatic rollback. It validates health and the root browser E2E
    before treating the promotion as successful.
 
 ## Diagnostic E2E
