@@ -11,7 +11,7 @@
     "flags": ["arrived_at_mansion"],
     "opening_situation": "Rain and fresh mud mark the steps outside Vale Mansion. Emma Vale was last seen shortly before midnight in the west gallery.",
     "protagonist": {"id": "detective_elias_wren", "name": "Detective Elias Wren", "role": "investigator", "background": "A detective haunted by an old failure who has only just arrived at the mansion."},
-    "public_briefing": {"victim": "Emma Vale", "timeline": "Emma Vale was last seen shortly before midnight in the west gallery.", "lead_suspect": "The groundskeeper was the last verified witness to see Emma alive.", "strongest_lead": "A missing ledger payment tied to the mansion and tonight's visit."},
+    "public_briefing": {"victim": "Emma Vale", "timeline": "Emma Vale was last seen shortly before midnight in the west gallery."},
     "opening_contact": {"id": "daria_stone", "relationship": "assistant", "scene_purpose": "Brief Elias on the public outline of the death, then bring him inside to review the case file."},
     "locations": {"front_steps": "Outside the mansion, beside the drive and its mud-marked path.", "foyer": "The dim mansion entry beneath shuttered portraits.", "market_lane": "The lane where a route key marks a service passage.", "records_office": "A place to trace the ledger payment.", "safehouse": "A concealed refuge beyond the records office.", "watch_tower": "A sheltered overlook above the service route.", "old_chapel": "An enclosed final meeting place."},
     "items": {

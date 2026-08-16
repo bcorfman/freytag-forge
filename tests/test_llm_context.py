@@ -62,8 +62,6 @@ def test_mystery_context_exposes_arrival_car_in_visible_items() -> None:
         "case_status",
         "victim_name",
         "victim_timeline",
-        "lead_suspect",
-        "strongest_lead",
     }
     assert any("murdered" in fact["value"].lower() for fact in payload["case_facts"])
 

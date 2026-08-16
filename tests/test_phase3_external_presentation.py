@@ -16,7 +16,9 @@ def test_opening_briefing_is_an_explicit_player_knowledge_grant() -> None:
     state = build_default_state(seed=803, genre="mystery")
 
     assert state.world_facts.holds("knows", "player", "victim_name")
-    assert state.world_facts.holds("knows", "player", "strongest_lead")
+    assert state.world_facts.holds("knows", "player", "victim_timeline")
+    assert not state.world_facts.holds("knows", "player", "lead_suspect")
+    assert not state.world_facts.holds("knows", "player", "strongest_lead")
 
 
 def test_opening_facts_and_planner_exclude_unpermitted_case_truth() -> None:

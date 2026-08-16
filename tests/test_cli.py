@@ -843,6 +843,41 @@ def test_run_turn_fails_closed_when_targeted_conversation_returns_player_speaker
     assert any("story response unavailable" in line.lower() for line in lines)
 
 
+def test_run_turn_renders_direct_npc_dialogue_without_narrator_action_wrapper() -> None:
+    class _DariaReplyAdapter:
+        def propose(self, state, raw_input):  # noqa: ANN001
+            return (
+                {
+                    "speaker": "daria_stone",
+                    "text": "The file links a missing ledger payment to the mansion and tonight's visit.",
+                    "tone": "in_world",
+                },
+                {
+                    "intent": "freeform",
+                    "targets": [],
+                    "arguments": {"planner_source": "llm"},
+                    "proposed_effects": [],
+                },
+            )
+
+    state = build_default_state(seed=8833810, genre="mystery")
+
+    next_state, lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "DARIA, WHAT'S IN THE CASE FILE?",
+        Random(8833810),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=_DariaReplyAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.turn_index == 1
+    assert any(line.startswith('Daria') and 'says: "The file links' in line for line in lines)
+    assert not any(line.startswith("You act on") for line in lines)
+
+
 def test_run_turn_fails_closed_when_wrong_npc_answers_targeted_conversation() -> None:
     class _WrongSpeakerAdapter:
         def propose(self, state, raw_input):  # noqa: ANN001

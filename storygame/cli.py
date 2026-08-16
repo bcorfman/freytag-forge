@@ -17,6 +17,8 @@ from storygame.engine.freeform import (
     LlmFreeformProposalAdapter,
     _normalized_dialog_speaker_id,
     _normalized_movement_action_payload,
+    addressed_visible_npc_id,
+    bind_direct_npc_conversation_target,
     is_player_statement_echo,
     resolve_freeform_roleplay_with_proposals,
 )
@@ -880,6 +882,7 @@ def run_turn(
         replan_event = director.replan_if_needed(preturn_state)
     if replan_event is not None:
         preturn_state.append_event(replan_event)
+    direct_addressed_npc_id = addressed_visible_npc_id(preturn_state, raw_input)
 
     planner_dialog_payload: dict[str, Any] | None = None
     planner_action_payload: dict[str, Any] | None = None
@@ -891,7 +894,11 @@ def run_turn(
     try:
         planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(
-            _normalized_movement_action_payload(preturn_state, raw_input, planner_action_payload)
+            bind_direct_npc_conversation_target(
+                preturn_state,
+                raw_input,
+                _normalized_movement_action_payload(preturn_state, raw_input, planner_action_payload),
+            )
         )
         planner_action_payload = normalized_action_payload
         dialogue_policy_error = _freeform_dialogue_policy_error(
@@ -980,7 +987,7 @@ def run_turn(
         "elapsed_ms": 0,
         "hard_fail_reason": "NARRATOR_RUNTIME_ERROR",
     }
-    narration = accepted_proposal_text
+    narration = freeform["event"].message_key if direct_addressed_npc_id else accepted_proposal_text
     judge_decision["status"] = "accepted"
     judge_decision["decision_id"] = "post-commit-proposal"
     coherence_telemetry["hard_fail_reason"] = ""
@@ -989,7 +996,8 @@ def run_turn(
         _record_major_disruption(next_state, events, effective_action.raw, impact_assessment)
 
     narration = _sanitize_narration_for_player(narration, debug=debug, raw_input=raw_input)
-    narration = _ensure_action_grounded_narration(narration, effective_action)
+    if not direct_addressed_npc_id:
+        narration = _ensure_action_grounded_narration(narration, effective_action)
 
     # Room identity, exits, inventory, visible entities, and event state remain
     # in the observer-scoped narration context. They are continuity inputs, not
