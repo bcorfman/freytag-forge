@@ -693,6 +693,34 @@ def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_recovery_restates_the_complete_json_shape(monkeypatch) -> None:
+    state = build_default_state(seed=4072, genre="fantasy")
+    systems: list[str] = []
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"narrator","text":"The player acts.","tone":"in_world"},'
+            '"action_proposal":{"intent":"freeform"},"staging_claims":"wrong"}',
+            '{"dialog_proposal":{"speaker":"narrator","text":"The gatekeeper watches the road in silence.",'
+            '"tone":"in_world"},"action_proposal":{"intent":"freeform","targets":[],"arguments":{},'
+            '"disclosed_knowledge":"","proposed_effects":[]},"staging_claims":[]}',
+        )
+    )
+
+    def _chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        systems.append(system)
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _chat)
+
+    dialog, action = LlmFreeformProposalAdapter().propose(state, "I examine the gate.")
+
+    assert dialog["text"] == "The gatekeeper watches the road in silence."
+    assert action["intent"] == "freeform"
+    assert len(systems) == 2
+    assert '"disclosed_knowledge":""' in systems[0]
+    assert "never echo or repeat player_input" in systems[1]
+
+
 def test_resolve_freeform_roleplay_read_case_file_allows_nearby_assistant_holder() -> None:
     state = build_default_state(seed=414, genre="mystery")
     assert "case_file" not in state.player.inventory

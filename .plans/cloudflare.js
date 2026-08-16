@@ -47,6 +47,7 @@ var cloudflare_default = {
     const system = asString(body?.system);
     const user = asString(body?.user);
     const maxTokens = boundedInteger(body?.max_tokens, 512, 64, 2048);
+    const responseFormat = body?.response_format && typeof body.response_format === "object" ? body.response_format : null;
     const accountId = asString(env.CF_ACCOUNT_ID).trim();
     const apiToken = asString(env.CF_API_TOKEN).trim();
     const model = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.1-8b-instruct-fast";
@@ -82,7 +83,8 @@ var cloudflare_default = {
             { role: "user", content: user }
           ],
           max_tokens: maxTokens,
-          ...body?.response_format ? { response_format: body.response_format } : {}
+          // Structured planner calls favor contract conformance; prose calls retain the model default.
+          ...(responseFormat ? { response_format: responseFormat, temperature: 0 } : {})
         })
       });
     } catch (error) {
