@@ -137,6 +137,47 @@ def test_claim_failure_uses_shared_recovery_budget_before_commit(monkeypatch: py
     assert result["state"].turn_index == state.turn_index + 1
 
 
+def test_typed_claim_parity_replaces_phrase_based_custody_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = build_default_state(seed=907, genre="mystery")
+    calls = 0
+
+    def _reply(*_args: object) -> str:
+        nonlocal calls
+        calls += 1
+        return __import__("json").dumps(
+            {
+                "dialog_proposal": {
+                    "speaker": "narrator",
+                    "text": "The case file rests on the ground beside Daria.",
+                    "tone": "in_world",
+                },
+                "action_proposal": {
+                    "intent": "inspect",
+                    "targets": [],
+                    "arguments": {},
+                    "proposed_effects": [],
+                },
+                "staging_claims": [
+                    {
+                        "relation": "custody",
+                        "subject_id": "case_file",
+                        "target_id": "daria_stone",
+                        "location_id": "",
+                        "state_id": "",
+                    }
+                ],
+            }
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _reply)
+
+    result = resolve_freeform_roleplay(state, "inspect the scene", LlmFreeformProposalAdapter())
+
+    assert calls == 1
+    assert result["state"].turn_index == state.turn_index + 1
+    assert result["accepted_prose"] == "The case file rests on the ground beside Daria."
+
+
 def test_declarative_environment_transition_commits_bounded_consequence() -> None:
     state = build_default_state(seed=913, genre="mystery")
     transition = next(iter(state.world_facts.query("environment_transition")))

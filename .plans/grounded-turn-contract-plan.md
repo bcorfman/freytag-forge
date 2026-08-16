@@ -33,10 +33,14 @@ Facts remain the sole authority for consequential world state. The model may aut
 
 ## Phase 3 — Planner and renderer integration
 
-1. [ ] Supply observer-scoped legal claim/effect context to the planner.
-2. [ ] Add planner instruction examples distinguishing atmosphere and staging.
-3. [ ] Render only accepted proposal prose after atomic commit.
-4. [ ] Remove the temporary phrase-based custody guard after parity coverage.
+1. [x] Supply observer-scoped legal claim/effect context to the planner.
+2. [x] Add planner instruction examples distinguishing atmosphere and staging.
+3. [x] Render only accepted proposal prose after atomic commit.
+4. [x] Remove the temporary phrase-based custody guard after parity coverage.
+
+**Exit criteria:** [x] the planner receives only observer-scoped, fact-backed
+claim/effect choices; material staging is validated through typed claims; and
+the renderer exposes only prose returned by the successful atomic commit.
 
 ## Phase 4 — Evaluation, persistence, and deployment adapters
 

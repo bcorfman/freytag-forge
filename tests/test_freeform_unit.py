@@ -1144,29 +1144,24 @@ def test_llm_freeform_adapter_retries_missing_required_document_disclosure(monke
     assert action["disclosed_knowledge"] == "ledger_entry_time"
 
 
-def test_llm_freeform_adapter_retries_a_document_custody_conflict(monkeypatch) -> None:
+def test_llm_freeform_adapter_uses_typed_claims_instead_of_custody_phrase_matching(monkeypatch) -> None:
     state = build_default_state(seed=405104, genre="mystery")
     calls = 0
-    responses = iter(
-        (
-            '{"dialog_proposal":{"speaker":"narrator","text":"The case file is on the front steps.","tone":"in_world"},'
-            '"action_proposal":{"intent":"review","targets":["case_file"],"arguments":{},"proposed_effects":[]}}',
-            '{"dialog_proposal":{"speaker":"narrator","text":"Daria opens the case file between you.","tone":"in_world"},'
-            '"action_proposal":{"intent":"review","targets":["case_file"],"arguments":{},"proposed_effects":[]}}',
-        )
-    )
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
         nonlocal calls
         calls += 1
-        return next(responses)
+        return (
+            '{"dialog_proposal":{"speaker":"narrator","text":"The case file is on the front steps.","tone":"in_world"},'
+            '"action_proposal":{"intent":"review","targets":["case_file"],"arguments":{},"proposed_effects":[]}}'
+        )
 
     monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
 
     dialog, _action = LlmFreeformProposalAdapter().propose(state, "review the case file")
 
-    assert calls == 2
-    assert dialog["text"] == "Daria opens the case file between you."
+    assert calls == 1
+    assert dialog["text"] == "The case file is on the front steps."
 
 
 def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_narrator(monkeypatch) -> None:
@@ -1330,7 +1325,20 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
     assert '"visible_items": []' in user
     assert '"exit_facts": []' in user
     assert '"visible_item_ids"' not in user
-    assert len(user) < 2400
+    assert len(user) < 3000
+
+
+def test_freeform_planner_prompt_includes_observer_scoped_staging_contract() -> None:
+    state = build_default_state(seed=4053, genre="mystery")
+
+    _system, user = _freeform_planner_prompt(state, "take the dark sedan")
+
+    assert '"staging_contract"' in user
+    assert '"legal_claims"' in user
+    assert '"legal_effects"' in user
+    assert '"relation": "environment"' in user
+    assert '"item_id": "arrival_sedan"' in user
+    assert "foyer" not in user
 
 
 def test_freeform_planner_prompt_includes_relevant_case_facts_for_a_brief() -> None:
