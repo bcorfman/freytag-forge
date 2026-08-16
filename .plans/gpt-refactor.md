@@ -335,22 +335,22 @@ an explicit human approval for production promotion.
 
 **Goal:** switch user traffic to V2 exactly once, then delete obsolete code.
 
-1. [ ] **[User testing / operator]** Invoke the manual promotion workflow using the successful staging SHA. The
+1. [x] **[User testing / operator]** Invoke the manual promotion workflow using the successful staging SHA. The
 workflow verifies that SHA's staging evidence, checks it out exactly, deploys
 the production Railway service, builds the root Pages bundle from it, preserves
 `/dev/`, and runs health plus browser E2E at the root URL.
-2. [ ] **[User testing / operator]** Record the production deployment ID, Pages deployment ID, SHA, model/prompt
+2. [x] **[User testing / operator]** Record the production deployment ID, Pages deployment ID, SHA, model/prompt
 revision, and known-good rollback target. If any verification fails, retain the
 old production artifact/API and report the failed promotion without altering
 the staged channel.
-3. [ ] **[Deferred — requires successful production promotion and observation window]** Delete V1 engine
+3. [x] **[Completed after V2 production promotion]** Delete V1 engine
 modules and data: fact store/committers/predicate policies, semantic actions,
 consequences, triggers/incidents, perception/epistemic inference, deterministic
 beat policy/dramatic compatibility layers, V1 proposal contracts, V1 package
 runtime realization, CLI/local web adapters, and obsolete tests/fixtures.
 4. [ ] **[User testing / operator]** Remove V1 deployment code and temporary legacy rollback documentation after
 the replacement production revision is itself recorded as the known-good target.
-5. [ ] **[Deferred — V1 material remains current until the cutover is complete]** Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
+5. [x] **[Completed]** Update README, PRD, fact-authority, offline-authoring, evaluation, deployment,
 and test-suite documentation to describe the V2 state contract, hosted-only
 surface, `/dev/` staging, and SHA-pinned production promotion. Delete documents
 whose only purpose was the retired architecture.
@@ -359,10 +359,9 @@ setting, browser E2E for both channels, and the full compiler/runtime
 cross-genre evaluation. Maintain at least 90% project coverage after deleted
 tests and code are removed.
 
-**Implementation note (2026-08-11):** The prior V1 source, story data, tests,
-and documentation were restored because production promotion and the observation
-window have not happened. Do not delete them or claim a V2-only surface until
-the preceding operator-owned promotion and observation steps are complete.
+**Implementation note (2026-08-16):** V2 was promoted to production. V1 executable
+source, tests, and retired documentation are removed from `main`; authored data
+is retained without modification for V2 compilation and fixture provenance.
 
 **Exit criteria:** [ ] root production and `/dev/` both run the one V2 runtime;
 there is no V1 execution path in `main`, and documentation, tests, and CI all

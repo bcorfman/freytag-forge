@@ -46,7 +46,7 @@ jobs:
       - name: Run deterministic frozen adapter comparison
         run: >-
           TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_runtime_quality_evaluation.py tests/test_evaluation.py
+          tests/test_runtime_v2.py tests/test_web_demo_v2.py
           --tier-report=artifacts/frozen-runtime-quality.json
       - name: Upload frozen runtime-quality evidence
         if: always()

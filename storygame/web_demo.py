@@ -1,473 +1,146 @@
+"""The hosted V2 application adapter; no V1 runtime is reachable here."""
+
 from __future__ import annotations
 
-import logging
-import re
-from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from dataclasses import dataclass
 from os import getenv
 from pathlib import Path
-from random import Random
-from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter, grounded_turn_trace
-from storygame.engine.state import GameState
-from storygame.engine.world import build_default_state
-from storygame.llm.adapters import CloudflareWorkersAIAdapter, Narrator
-from storygame.llm.output_editor import OutputEditor, build_output_editor
-from storygame.llm.story_director import StoryDirector
-from storygame.persistence.savegame_sqlite import SqliteSaveStore
-from storygame.web_runtime import (
-    SaveStore,
-    ScopedSaveStore,
-    bootstrap_failure_debug_payload,
-    build_bootstrap_response_payload,
-    build_turn_response_payload,
-    execute_turn,
-    is_bootstrap_command,
-)
-
-_LOGGER = logging.getLogger(__name__)
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
-class _DemoSession:
-    def __init__(self, state: GameState, rng: Random, expires_at: datetime) -> None:
-        self.state = state
-        self.rng = rng
-        self.expires_at = expires_at
-        self.turns_used = 0
+from storygame.authoring.compiler import CompilationError, load_compiled_story_fixture
+from storygame.persistence.runtime_state_sqlite import RuntimeSaveError, RuntimeStateSqliteStore
+from storygame.runtime.cloudflare import CloudflareTurnModel
+from storygame.runtime.engine import RuntimeEngine, TurnModel
+from storygame.runtime.state import RuntimeState, bootstrap_runtime_state
 
 
 class SessionCreateRequest(BaseModel):
-    seed: int | None = None
-    genre: Literal[
-        "sci-fi",
-        "mystery",
-        "romance",
-        "adventure",
-        "action",
-        "suspense",
-        "drama",
-        "fantasy",
-        "horror",
-        "thriller",
-    ] = "mystery"
-    session_length: Literal["short", "medium", "long"] = "medium"
-    tone: Literal["neutral", "dark", "light", "romantic", "tense", "mysterious", "epic"] = "neutral"
-
-
-class SessionCreateResponse(BaseModel):
-    session_id: str
-    seed: int
-    expires_at: str
+    genre: str = Field(default="mystery", min_length=1, max_length=80)
 
 
 class TurnRequest(BaseModel):
-    session_id: str
-    command: str
-    debug: bool = False
+    session_id: str = Field(min_length=1, max_length=128)
+    command: str = Field(min_length=1, max_length=4000)
 
 
-class StateSnapshot(BaseModel):
-    session_id: str
-    location: str
-    room_name: str
-    inventory: list[str]
-    genre: str
-    tone: str
-    session_length: str
-    plot_curve_id: str
-    story_outline_id: str
-    objective: str
-    phase: str
-    progress: float
-    tension: float
-    turn_index: int
-    known_facts: list[str]
+class SessionLoadRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=128)
+    genre: str = Field(default="mystery", min_length=1, max_length=80)
 
 
-class TurnResponse(BaseModel):
-    status: Literal["ok"] = "ok"
-    session_id: str
-    command: str
-    action_raw: str
-    beat: str
-    continued: bool
-    lines: list[str]
-    state: StateSnapshot
+class _UnavailableModel:
+    def play_turn(self, context: object, *, json_object: bool) -> object:
+        raise RuntimeError("V2 turn model is not configured")
 
 
-class HealthResponse(BaseModel):
-    status: Literal["ok"] = "ok"
-    channel: str
-    sha: str
+@dataclass
+class _Session:
+    engine: RuntimeEngine
 
 
-class ErrorResponse(BaseModel):
-    status: Literal["rate_limited", "quota_exhausted", "service_unavailable", "error"]
-    detail: str
+def _default_model() -> TurnModel:
+    try:
+        return CloudflareTurnModel()
+    except ValueError:
+        return _UnavailableModel()
 
 
-_NARRATION_ERROR_CODE_PATTERN = re.compile(r"\b(?:AI|WORKER)_[A-Z0-9_]+\b")
-_TRACE_ID_PATTERN = re.compile(r"\btrace_id=([A-Za-z0-9._:-]+)")
+def _state_payload(state: RuntimeState) -> dict[str, object]:
+    return {"location": state.world.location, "room_name": state.world.location, "turn_index": state.turn_index}
 
 
-def _narration_failure_metadata(detail: str) -> tuple[str, str]:
-    code_match = _NARRATION_ERROR_CODE_PATTERN.search(detail.upper())
-    trace_match = _TRACE_ID_PATTERN.search(detail)
-    return (
-        code_match.group(0) if code_match else "NARRATION_ERROR",
-        trace_match.group(1) if trace_match else "",
-    )
-
-
-def _narration_failure_classification(code: str) -> tuple[int, str, str]:
-    if code == "AI_QUOTA_EXCEEDED":
-        return 429, "quota_exhausted", "Narration quota exhausted for the hosted demo. Please retry later."
-    if code in {"AI_CAPACITY_EXCEEDED", "AI_RATE_LIMITED"}:
-        return 429, "rate_limited", "Narration capacity is temporarily limited. Please retry shortly."
-    if code in {
-        "AI_REQUEST_REJECTED",
-        "AI_CLIENT_ERROR",
-        "AI_WORKER_REVISION_MISMATCH",
-        "WORKER_CONFIGURATION_ERROR",
-    }:
-        return 502, "error", "The narration service rejected the request configuration."
-    return 503, "service_unavailable", "Narration service is temporarily unavailable."
-
-
-def _grounded_turn_trace_headers(trace: dict[str, object]) -> dict[str, str]:
-    request_ids = trace.get("request_ids", ())
-    if not isinstance(request_ids, tuple) or not request_ids:
-        return {}
-    return {
-        "X-Grounded-Turn-Request-ID": str(request_ids[-1]),
-        "X-Grounded-Turn-Retries": str(trace.get("retries", 0)),
-        "X-Grounded-Turn-Latency-Ms": str(trace.get("latency_ms", 0)),
-        "X-Grounded-Turn-Outcome": str(trace.get("outcome", "")),
-    }
+def _story_for(genre: str):
+    try:
+        return load_compiled_story_fixture(genre)
+    except CompilationError as exc:
+        raise HTTPException(status_code=422, detail=exc.message) from exc
 
 
 def create_demo_app(
     save_db_path: str | Path | None = None,
-    default_seed: int = 123,
-    narrator_mode: str | None = None,  # noqa: ARG001
-    narrator: Narrator | None = None,
-    output_editor: OutputEditor | None = None,
-    story_director: StoryDirector | None = None,
-    session_ttl_seconds: int = 30 * 60,
-    session_turn_cap: int = 30,
-    ip_rate_limit_per_min: int = 20,
-    ip_daily_turn_cap: int = 300,
+    *,
+    model: TurnModel | None = None,
+    channel: str | None = None,
     cors_allow_origins: tuple[str, ...] | None = None,
-    now_fn: Callable[[], datetime] | None = None,
-    save_store: SaveStore | None = None,
-    freeform_adapter: FreeformProposalAdapter | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="Freytag Forge Demo API", version="0.1.0")
-    now = _utc_now if now_fn is None else now_fn
-    save_db = Path("runs/storygame_web_demo_saves.sqlite") if save_db_path is None else Path(save_db_path)
-    store = SqliteSaveStore(save_db, check_same_thread=False) if save_store is None else save_store
-    sessions: dict[str, _DemoSession] = {}
-    ip_window_hits: dict[str, list[datetime]] = {}
-    ip_daily_hits: dict[tuple[str, str], int] = {}
-
-    active_narrator: Narrator = _build_demo_narrator() if narrator is None else narrator
-    active_output_editor = build_output_editor() if output_editor is None else output_editor
-    active_freeform_adapter = LlmFreeformProposalAdapter() if freeform_adapter is None else freeform_adapter
-    use_fast_story_director_opening = story_director is None
-    use_story_director_bootstrap = story_director is not None
-    active_story_director = StoryDirector(active_output_editor) if story_director is None else story_director
-    resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
+    """Build the one public product surface over `RuntimeState` snapshots."""
+    resolved_channel = channel or getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown"
+    namespace = f"runtime-v2:{resolved_channel}"
+    store = RuntimeStateSqliteStore(
+        save_db_path or Path("runs/storygame_runtime_v2.sqlite"), namespace=namespace, check_same_thread=False
+    )
+    active_model = _default_model() if model is None else model
+    sessions: dict[str, _Session] = {}
+    app = FastAPI(title="Freytag Forge", version="2")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(resolved_cors_allow_origins),
+        allow_origins=list(cors_allow_origins or ("https://bcorfman.github.io",)),
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["X-Request-ID"],
     )
 
-    def _expiry(now_at: datetime) -> datetime:
-        return now_at + timedelta(seconds=session_ttl_seconds)
-
-    def _touch(session: _DemoSession) -> None:
-        session.expires_at = _expiry(now())
-
-    def _error_response(
-        status_code: int,
-        status: str,
-        detail: str,
-        *,
-        headers: dict[str, str] | None = None,
-    ) -> JSONResponse:
-        return JSONResponse(
-            status_code=status_code,
-            content={"status": status, "detail": detail},
-            headers=headers,
-        )
-
-    def _enforce_ip_limits(ip: str, current_time: datetime) -> JSONResponse | None:
-        if ip_rate_limit_per_min > 0:
-            threshold = current_time - timedelta(seconds=60)
-            recent_hits = [value for value in ip_window_hits.get(ip, []) if value > threshold]
-            if len(recent_hits) >= ip_rate_limit_per_min:
-                return _error_response(
-                    429,
-                    "rate_limited",
-                    "Rate limit exceeded for this IP. Please retry shortly.",
-                )
-            recent_hits.append(current_time)
-            ip_window_hits[ip] = recent_hits
-
-        if ip_daily_turn_cap > 0:
-            day = current_time.date().isoformat()
-            key = (ip, day)
-            current_count = ip_daily_hits.get(key, 0)
-            if current_count >= ip_daily_turn_cap:
-                return _error_response(
-                    429,
-                    "rate_limited",
-                    "Daily cap reached for this IP. Please retry tomorrow.",
-                )
-            ip_daily_hits[key] = current_count + 1
-        return None
-
-    def _narrator_fail_closed(
-        lines: list[str],
-        *,
-        session_id: str,
-        command: str,
-        state: GameState,
-        beat: str,
-        request_id: str,
-        staging_trace: dict[str, object],
-    ) -> JSONResponse | None:
-        room = state.world.rooms[state.player.location]
-        for line in lines:
-            lowered = line.lower()
-            if "story response unavailable:" in lowered:
-                _LOGGER.warning(
-                    "Story planner unavailable: request_id=%s session_id=%s command=%s "
-                    "beat=%s location=%s turn_index=%s detail=%s",
-                    request_id,
-                    session_id,
-                    command,
-                    beat,
-                    state.player.location,
-                    state.turn_index,
-                    line,
-                )
-                response_headers = {
-                    "X-Request-ID": request_id,
-                    "X-Narration-Error-Code": "AI_PLANNER_UNAVAILABLE",
-                }
-                response_headers.update(_grounded_turn_trace_headers(staging_trace))
-                return _error_response(
-                    503,
-                    "service_unavailable",
-                    "The story planner is temporarily unavailable. Please retry shortly.",
-                    headers=response_headers,
-                )
-            if "[narrator failed:" in lowered:
-                error_code, trace_id = _narration_failure_metadata(line)
-                status_code, status, detail = _narration_failure_classification(error_code)
-                _LOGGER.warning(
-                    "Narrator failed: %s | code=%s request_id=%s session_id=%s "
-                    "command=%s beat=%s location=%s room_name=%s turn_index=%s lines=%s",
-                    line,
-                    error_code,
-                    request_id,
-                    session_id,
-                    command,
-                    beat,
-                    state.player.location,
-                    room.name,
-                    state.turn_index,
-                    lines[:4],
-                )
-                response_headers = {
-                    "X-Request-ID": request_id,
-                    "X-Narration-Error-Code": error_code,
-                }
-                if trace_id:
-                    response_headers["X-Trace-ID"] = trace_id
-                response_headers.update(_grounded_turn_trace_headers(staging_trace))
-                return _error_response(
-                    status_code,
-                    status,
-                    detail,
-                    headers=response_headers,
-                )
-        return None
-
-    def _resolve_session(session_id: str) -> _DemoSession:
-        session = sessions.get(session_id)
-        if session is None:
-            raise HTTPException(status_code=404, detail=f"Unknown or expired session_id '{session_id}'.")
-        if session.expires_at <= now():
-            sessions.pop(session_id, None)
-            raise HTTPException(status_code=404, detail=f"Unknown or expired session_id '{session_id}'.")
-        return session
-
-    @app.get("/api/v1/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
-        return HealthResponse(
-            channel=getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown",
-            sha=(
+    @app.get("/api/v1/health")
+    def health() -> dict[str, str]:
+        return {
+            "status": "ok",
+            "channel": resolved_channel,
+            "sha": (
                 getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
                 or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
                 or "unknown"
             ),
-        )
+        }
 
-    @app.post("/api/v1/session", response_model=SessionCreateResponse)
-    def create_session(payload: SessionCreateRequest) -> SessionCreateResponse:
-        session_seed = default_seed if payload.seed is None else payload.seed
+    @app.post("/api/v1/session")
+    def create_session(payload: SessionCreateRequest) -> dict[str, object]:
+        story = _story_for(payload.genre)
         session_id = uuid4().hex
-        created_at = now()
-        session = _DemoSession(
-            state=build_default_state(
-                seed=session_seed,
-                genre=payload.genre,
-                session_length=payload.session_length,
-                tone=payload.tone,
-            ),
-            rng=Random(session_seed),
-            expires_at=_expiry(created_at),
-        )
-        sessions[session_id] = session
-        return SessionCreateResponse(
-            session_id=session_id,
-            seed=session_seed,
-            expires_at=session.expires_at.isoformat(),
-        )
+        state = bootstrap_runtime_state(story)
+        store.save(session_id, state)
+        sessions[session_id] = _Session(RuntimeEngine(state, active_model))
+        return {"session_id": session_id, "state": _state_payload(state)}
 
-    @app.post("/api/v1/turn", response_model=TurnResponse | ErrorResponse)
-    def submit_turn(payload: TurnRequest, request: Request, response: Response) -> TurnResponse | JSONResponse:
-        session = _resolve_session(payload.session_id)
-        current_time = now()
-        request_id = uuid4().hex
-        client_host = request.client.host if request.client is not None else "unknown"
-        ip_limit_error = _enforce_ip_limits(client_host, current_time)
-        if ip_limit_error is not None:
-            return ip_limit_error
-        if session_turn_cap > 0 and session.turns_used >= session_turn_cap:
-            return _error_response(
-                429,
-                "quota_exhausted",
-                "Session turn cap reached for this demo session.",
+    @app.post("/api/v1/session/load")
+    def load_session(payload: SessionLoadRequest) -> dict[str, object]:
+        story = _story_for(payload.genre)
+        try:
+            state = store.load(payload.session_id, story)
+        except RuntimeSaveError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        sessions[payload.session_id] = _Session(RuntimeEngine(state, active_model))
+        return {"session_id": payload.session_id, "state": _state_payload(state)}
+
+    @app.post("/api/v1/turn")
+    def submit_turn(payload: TurnRequest) -> dict[str, object]:
+        session = sessions.get(payload.session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Unknown session. Load a V2 session before continuing.")
+        result = session.engine.turn(payload.command)
+        if not result.ok:
+            detail = result.error.message if result.error is not None else "V2 runtime failed."
+            return JSONResponse(
+                status_code=503,
+                content={"status": "runtime_failure", "detail": detail},
+                headers={"X-Runtime-Error": result.error.code if result.error else "RUNTIME_FAILURE"},
             )
-        start_state = session.state
-        bootstrap_only = session.turns_used == 0 and is_bootstrap_command(payload.command)
-        if bootstrap_only:
-            try:
-                payload_body = build_bootstrap_response_payload(
-                    start_state,
-                    payload.command,
-                    "session_id",
-                    payload.session_id,
-                    active_story_director,
-                    active_narrator,
-                    active_output_editor,
-                    use_fast_story_director_opening=use_fast_story_director_opening,
-                    allow_story_director_bootstrap=use_story_director_bootstrap,
-                )
-            except RuntimeError as exc:
-                error_code, trace_id = _narration_failure_metadata(str(exc))
-                status_code, status, detail = _narration_failure_classification(error_code)
-                _LOGGER.warning(
-                    "Bootstrap opening unavailable: request_id=%s error=%s | debug=%s",
-                    request_id,
-                    str(exc),
-                    bootstrap_failure_debug_payload(
-                        start_state,
-                        payload.command,
-                        "session_id",
-                        payload.session_id,
-                    ),
-                )
-                response_headers = {
-                    "X-Request-ID": request_id,
-                    "X-Narration-Error-Code": error_code,
-                }
-                if trace_id:
-                    response_headers["X-Trace-ID"] = trace_id
-                return _error_response(status_code, status, detail, headers=response_headers)
-            payload_body["status"] = "ok"
-            return TurnResponse.model_validate(payload_body)
-        scoped_store = ScopedSaveStore(store, payload.session_id)
-        result = execute_turn(
-            session.state,
-            payload.command,
-            session.rng,
-            active_narrator,
-            active_freeform_adapter,
-            debug=payload.debug,
-            save_store=scoped_store,
-            memory_slot=payload.session_id,
-            output_editor=active_output_editor,
-            story_director=active_story_director,
-        )
-        staging_trace = grounded_turn_trace(active_freeform_adapter)
-        narrator_error = _narrator_fail_closed(
-            result.lines,
-            session_id=payload.session_id,
-            command=payload.command,
-            state=result.next_state,
-            beat=result.beat,
-            request_id=request_id,
-            staging_trace=staging_trace,
-        )
-        if narrator_error is not None:
-            return narrator_error
-        session.state = result.next_state
-        session.turns_used += 1
-        _touch(session)
-        response.headers.update(_grounded_turn_trace_headers(staging_trace))
-
-        payload_body = build_turn_response_payload(
-            result.next_state,
-            payload.command,
-            result.action_raw,
-            result.beat,
-            result.continued,
-            result.lines,
-            "session_id",
-            payload.session_id,
-        )
-        payload_body["status"] = "ok"
-        return TurnResponse.model_validate(payload_body)
+        store.save(payload.session_id, session.engine.state)
+        return {
+            "status": "ok",
+            "lines": [result.narration],
+            "state": _state_payload(session.engine.state),
+            "model_calls": result.model_calls,
+        }
 
     @app.on_event("shutdown")
-    def _close_store() -> None:
+    def close_store() -> None:
         store.close()
 
     return app
-
-
-def _resolve_demo_cors_allow_origins(configured_origins: tuple[str, ...] | None = None) -> tuple[str, ...]:
-    if configured_origins is not None:
-        cleaned = tuple(origin.strip() for origin in configured_origins if origin.strip())
-        return cleaned or ("*",)
-
-    raw = getenv("DEMO_CORS_ALLOW_ORIGINS", "").strip()
-    if not raw:
-        return ("*",)
-    cleaned = tuple(origin.strip() for origin in raw.split(",") if origin.strip())
-    return cleaned or ("*",)
-
-
-def _build_demo_narrator(*_ignored: object) -> Narrator:
-    return CloudflareWorkersAIAdapter()
 
 
 app = create_demo_app()

@@ -1,5 +1,1 @@
-"""storygame package."""
-
-from .cli import main
-
-__all__ = ["main"]
+"""Freytag Forge V2 hosted runtime package."""

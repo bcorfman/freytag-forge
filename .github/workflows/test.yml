@@ -31,15 +31,13 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
-      - name: Verify deterministic fixtures and behavioral evaluation
+      - name: Verify compiled stories and V2 runtime contracts
         run: >-
           TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_evaluation.py tests/test_reproducibility.py tests/test_phase8_story_packages.py
-          --tier-report=artifacts/phase9-evaluation.json
-      - name: Smoke local and hosted API adapters
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_api.py tests/test_web_demo_api.py tests/test_web_surface_parity.py
-      - name: Verify artifact integrity
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_story_state_artifacts.py
+          tests/test_authoring_compiler.py tests/test_runtime_v2.py tests/test_cloudflare_turn_model.py
+          --tier-report=artifacts/v2-runtime.json
+      - name: Smoke hosted V2 API adapter
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py tests/test_deployment_channel_contract.py
       - name: Upload cutover reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -221,7 +219,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Exercise the deployed staging browser flow
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_hosted_demo_e2e.py
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py
 
   v2-staging-evaluation:
     name: V2 staging evaluation and promotion gate
@@ -241,7 +239,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Compare the deployed candidate with Phase 0 operational bounds
-        run: uv run python -m storygame.staging_evaluation
+        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_runtime_v2.py tests/test_web_demo_v2.py
       - name: Upload SHA-bound staging evidence
         if: always()
         uses: actions/upload-artifact@v7

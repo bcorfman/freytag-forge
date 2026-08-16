@@ -1,5 +1,7 @@
 # Test-suite performance guide
 
+> V2 cutover update: the suite covers compiled-story authoring, the standalone runtime, V2 persistence, the Cloudflare turn-model transport, hosted adapter behavior, and deployment-channel isolation. V1 parser, fact-policy, CLI, local-web, package-realization, and deterministic-replay tests were retired with their code; retained `data/` remains available to V2 fixtures.
+
 The live implementation checklist, measured results, and phase status are
 maintained in the [test-suite performance implementation plan](../.plans/test-suite-performance-plan.md).
 This guide documents the stable test-suite conventions; update the plan when

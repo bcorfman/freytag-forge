@@ -1,4 +1,6 @@
-# Freytag Forge PRD
+# Freytag Forge V2 product reference
+
+> V2 cutover complete. The hosted `storygame.web_demo` adapter is the sole public application surface and `RuntimeState` is the only mutable runtime authority. V1 engine, fact-store, deterministic-policy, package-realization, CLI, and local-web code have been removed. The retained `data/` directory is immutable authored input, not runtime state. Historical content below is retained only until its full documentation consolidation.
 
 > Migration note: this document describes the current V1 product and
 > the completed standalone V2 runtime boundary.

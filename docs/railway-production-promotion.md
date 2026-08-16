@@ -1,5 +1,7 @@
 # Railway staging and production promotion
 
+> V2 cutover: deployments launch only `storygame.web_demo:app`. No V1 runtime or saves are part of the hosted service; immutable authored material under `data/` is retained for V2.
+
 Phase 1 uses two isolated Railway channels. A successful trusted `main` CI run
 uploads its exact SHA to staging and publishes the browser bundle under `/dev/`.
 It cannot deploy production. Production is promoted only through the manual
