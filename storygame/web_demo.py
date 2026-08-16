@@ -92,6 +92,7 @@ class StateSnapshot(BaseModel):
     progress: float
     tension: float
     turn_index: int
+    known_facts: list[str]
 
 
 class TurnResponse(BaseModel):
