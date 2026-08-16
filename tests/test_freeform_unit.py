@@ -919,6 +919,28 @@ def test_llm_freeform_adapter_tolerates_list_shaped_arguments(monkeypatch) -> No
     assert action["arguments"]["planner_source"] == "llm"
 
 
+def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monkeypatch) -> None:
+    state = build_default_state(seed=40510, genre="mystery")
+
+    _system, prompt = _freeform_planner_prompt(state, "Daria, what's in the case file?")
+    assert '"id": "daria_stone"' in prompt
+    assert len(prompt) < 3600
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file ties the payment to tonight\'s visit.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":[]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    dialog, action = LlmFreeformProposalAdapter().propose(state, "Daria, what's in the case file?")
+
+    assert dialog["speaker"] == "daria_stone"
+    assert tuple(action["targets"]) == ("daria_stone",)
+
+
 def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_narrator(monkeypatch) -> None:
     state = build_default_state(seed=40511, genre="mystery")
     responses = iter(

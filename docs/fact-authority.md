@@ -56,6 +56,10 @@ and interpretation status from facts. `observer_context_slice` and
 `speaker_context_slice` are the only supported projections for model context:
 protected case truth is included only when the observer knows its key, while
 scene facts are included only when the observer can perceive their entities.
+For a direct NPC question, short visible-name aliases resolve to that NPC and
+the conversational action target is bound to the same addressee; planner input
+includes only that NPC's epistemic facts because scene facts are supplied
+separately.
 
 Concealment, exposure, lighting, weather, sensory blocking, portals, traces,
 discovery, evidence state, and contamination are declared in the core policy
