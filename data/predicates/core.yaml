@@ -273,6 +273,11 @@ predicates:
     arg_types: [item, knowledge]
     family: knowledge
     commit_sources: [bootstrap, system]
+  - name: document_disclosure
+    arity: 3
+    arg_types: [item, observer, fact]
+    family: knowledge
+    commit_sources: [bootstrap, system]
   - name: document_lead
     arity: 2
     arg_types: [item, lead]

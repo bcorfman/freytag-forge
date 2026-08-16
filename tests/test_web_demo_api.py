@@ -71,6 +71,42 @@ class _FailingNarrator:
         raise RuntimeError(self._error_message)
 
 
+class _DisclosureAdapter:
+    def propose(self, _state, _raw_input):  # noqa: ANN001
+        return (
+            {
+                "speaker": "daria_stone",
+                "text": "The final ledger entry is time-stamped 11:40 p.m.",
+                "tone": "in_world",
+            },
+            {
+                "intent": "ask_about",
+                "targets": ["daria_stone"],
+                "arguments": {"topic": "case file"},
+                "disclosed_knowledge": "ledger_entry_time",
+                "proposed_effects": [],
+            },
+        )
+
+
+class _FantasyDisclosureAdapter:
+    def propose(self, _state, _raw_input):  # noqa: ANN001
+        return (
+            {
+                "speaker": "selene_ward",
+                "text": "The warded scroll marks the moonlit ford as the safe route through the enchanted wood.",
+                "tone": "in_world",
+            },
+            {
+                "intent": "ask_about",
+                "targets": ["selene_ward"],
+                "arguments": {"topic": "warded scroll"},
+                "disclosed_knowledge": "warded_route",
+                "proposed_effects": [],
+            },
+        )
+
+
 class _FakeResponse:
     def __init__(self, body: str) -> None:
         self._body = body.encode("utf-8")
@@ -204,6 +240,65 @@ def test_demo_session_create_then_turn_flow(tmp_path):
     next_payload = next_turn.json()
     assert next_payload["lines"][0].startswith(">GO NORTH")
     assert next_payload["state"]["turn_index"] == 1
+
+
+def test_demo_document_briefing_is_visible_and_committed_before_save(tmp_path) -> None:
+    store = InMemorySaveStore()
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="cloudflare",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            save_store=store,
+            freeform_adapter=_DisclosureAdapter(),
+        )
+    )
+    session_id = client.post(
+        "/api/v1/session", json={"seed": 4076, "genre": "mystery", "session_length": "short", "tone": "dark"}
+    ).json()["session_id"]
+
+    turn = client.post(
+        "/api/v1/turn", json={"session_id": session_id, "command": "Daria, what's in the case file?"}
+    )
+
+    assert turn.status_code == 200
+    assert "11:40 p.m." in "\n".join(turn.json()["lines"])
+
+    saved = client.post("/api/v1/turn", json={"session_id": session_id, "command": "/save disclosure"})
+    assert saved.status_code == 200
+    saved_state, _rng = store.load_run(f"{session_id}:disclosure")
+    assert saved_state.world_facts.holds("knows", "player", "ledger_entry_time")
+
+
+def test_demo_fantasy_document_briefing_is_visible_and_committed_before_save(tmp_path) -> None:
+    store = InMemorySaveStore()
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="cloudflare",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            save_store=store,
+            freeform_adapter=_FantasyDisclosureAdapter(),
+        )
+    )
+    session_id = client.post(
+        "/api/v1/session", json={"seed": 4077, "genre": "fantasy", "session_length": "short", "tone": "epic"}
+    ).json()["session_id"]
+
+    turn = client.post(
+        "/api/v1/turn", json={"session_id": session_id, "command": "Selene, what does the warded scroll say?"}
+    )
+
+    assert turn.status_code == 200
+    assert "moonlit ford" in "\n".join(turn.json()["lines"])
+
+    client.post("/api/v1/turn", json={"session_id": session_id, "command": "/save disclosure"})
+    saved_state, _rng = store.load_run(f"{session_id}:disclosure")
+    assert saved_state.world_facts.holds("knows", "player", "warded_route")
 
 
 def test_demo_bootstrap_uses_cloudflare_opening(

@@ -536,6 +536,118 @@ def test_reading_a_document_reveals_knowledge_not_in_the_opening_briefing() -> N
     assert "11:40 p.m." in resolved["dialog_proposal"]["text"]
 
 
+def test_authorized_npc_document_briefing_commits_declared_player_knowledge() -> None:
+    state = build_default_state(seed=4073, genre="mystery")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "Daria, what's in the case file?",
+        {"speaker": "daria_stone", "text": "The final ledger entry is time-stamped 11:40 p.m.", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "case file"},
+            "disclosed_knowledge": "ledger_entry_time",
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["state"].world_facts.holds("knows", "player", "ledger_entry_time")
+    assert any("ledger_entry_time" in reason for reason in resolved["state_update_envelope"]["reasons"])
+
+
+def test_fantasy_document_briefing_commits_package_declared_player_knowledge() -> None:
+    state = build_default_state(seed=40731, genre="fantasy")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "Selene, what does the warded scroll say?",
+        {
+            "speaker": "selene_ward",
+            "text": "It marks the moonlit ford as the safe route through the wood.",
+            "tone": "in_world",
+        },
+        {
+            "intent": "ask_about",
+            "targets": ["selene_ward"],
+            "arguments": {"topic": "warded scroll"},
+            "disclosed_knowledge": "warded_route",
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["state"].world_facts.holds("knows", "player", "warded_route")
+    assert "freeform:disclose_warded_route" in resolved["state_update_envelope"]["reasons"]
+
+
+def test_document_disclosure_does_not_commit_again_after_player_already_knows_it() -> None:
+    state = build_default_state(seed=4074, genre="mystery")
+    state.world_facts.assert_fact("knows", "player", "ledger_entry_time")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "Daria, what's in the case file?",
+        {"speaker": "daria_stone", "text": "The final entry remains time-stamped 11:40 p.m.", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "case file"},
+            "disclosed_knowledge": "ledger_entry_time",
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["state_update_envelope"]["reasons"] == ("POLICY_INVALID_DISCLOSURE",)
+    assert resolved["state"].world_facts.holds("knows", "player", "ledger_entry_time")
+    assert not any(
+        operation.get("fact") == ("knows", "player", "ledger_entry_time")
+        for operation in resolved["event"].metadata["fact_ops"]
+    )
+
+
+def test_uninformed_npc_cannot_commit_document_disclosure() -> None:
+    state = build_default_state(seed=4075, genre="mystery")
+    state.world_facts.retract_fact("knows", "daria_stone", "ledger_entry_time")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "Daria, what's in the case file?",
+        {"speaker": "daria_stone", "text": "The final entry is time-stamped 11:40 p.m.", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "case file"},
+            "disclosed_knowledge": "ledger_entry_time",
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["state_update_envelope"]["reasons"] == ("POLICY_INVALID_DISCLOSURE",)
+    assert not resolved["state"].world_facts.holds("knows", "player", "ledger_entry_time")
+
+
+def test_document_disclosure_must_belong_to_the_document_in_the_player_question() -> None:
+    state = build_default_state(seed=4076, genre="mystery")
+    state.world_facts.retract_fact("document_disclosure", "case_file", "daria_stone", "ledger_entry_time")
+    state.world_facts.assert_fact("document_disclosure", "ledger_page", "daria_stone", "ledger_entry_time")
+
+    resolved = resolve_freeform_roleplay_with_proposals(
+        state,
+        "Daria, what's in the case file?",
+        {"speaker": "daria_stone", "text": "The final entry is time-stamped 11:40 p.m.", "tone": "in_world"},
+        {
+            "intent": "ask_about",
+            "targets": ["daria_stone"],
+            "arguments": {"topic": "case file"},
+            "disclosed_knowledge": "ledger_entry_time",
+            "proposed_effects": [],
+        },
+    )
+
+    assert resolved["state_update_envelope"]["reasons"] == ("POLICY_INVALID_DISCLOSURE",)
+    assert not resolved["state"].world_facts.holds("knows", "player", "ledger_entry_time")
+
+
 def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> None:
     state = build_default_state(seed=4071, genre="mystery")
     responses = iter(
@@ -924,12 +1036,13 @@ def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monke
 
     _system, prompt = _freeform_planner_prompt(state, "Daria, what's in the case file?")
     assert '"id": "daria_stone"' in prompt
+    assert "11:40 p.m." in prompt
     assert len(prompt) < 3600
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
         return (
-            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file ties the payment to tonight\'s visit.","tone":"in_world"},'
-            '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},'
+                '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma was last seen.","tone":"in_world"},'
+                '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":[]}}'
         )
 
@@ -939,6 +1052,33 @@ def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monke
 
     assert dialog["speaker"] == "daria_stone"
     assert tuple(action["targets"]) == ("daria_stone",)
+
+
+def test_llm_freeform_adapter_retries_missing_required_document_disclosure(monkeypatch) -> None:
+    state = build_default_state(seed=405101, genre="mystery")
+    calls = 0
+    responses = iter(
+        (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file is worth a close look.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"proposed_effects":[]}}',
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}',
+        )
+    )
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        return next(responses)
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    _dialog, action = LlmFreeformProposalAdapter().propose(state, "Daria, what's in the case file?")
+
+    assert calls == 2
+    assert action["disclosed_knowledge"] == "ledger_entry_time"
 
 
 def test_llm_freeform_adapter_retries_directed_npc_turn_when_first_reply_uses_narrator(monkeypatch) -> None:
@@ -998,10 +1138,10 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
     responses = iter(
         (
             '{"dialog_proposal":{"speaker":"daria_stone","text":"getStringExtra from the case file is not available yet, but it is extensive.","tone":"in_world"},'
-            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+                '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
             '{"dialog_proposal":{"speaker":"daria_stone","text":"The file fixes the victim timeline, names the last verified witness, and points us to the strongest lead inside.","tone":"in_world"},'
-            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+                '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
         )
     )

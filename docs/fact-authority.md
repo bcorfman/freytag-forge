@@ -60,6 +60,14 @@ For a direct NPC question, short visible-name aliases resolve to that NPC and
 the conversational action target is bound to the same addressee; planner input
 includes only that NPC's epistemic facts because scene facts are supplied
 separately.
+When an NPC is meant to brief the player on a document, that document-only
+fact must be declared in the NPC's knowledge as well as in the document's
+readable contract; otherwise the NPC may only repeat the public briefing.
+The package validator rejects a disclosure whose key is not document-declared,
+a canonical `case_fact`, known by its named NPC, or still non-public at the
+opening. The planner may select only this validated declaration, and local
+validation consumes its existing one-retry recovery budget when it omits a
+required briefing disclosure.
 
 Concealment, exposure, lighting, weather, sensory blocking, portals, traces,
 discovery, evidence state, and contamination are declared in the core policy

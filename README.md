@@ -86,6 +86,17 @@ of model context until its declared revelation completes.
 | One story-agnostic engine supports mystery, fantasy, sci-fi, relationship scenes, and new genres without shared-runtime genre branches. | Observer-scoped perception and knowledge prevent the player or an NPC from receiving information they have not earned. | Provider responses are untrusted at the JSON boundary; malformed output gets at most one repair request, then fails closed with a typed error rather than fabricating a successful turn. |
 | Offline authoring and evaluation can use frontier models; runtime packages remain locally validated. | NPCs operate under explicit role contracts for goals, knowledge, location, capabilities, limitations, and delegated work. | Local web and hosted-demo adapters stay separate while sharing the same engine contracts below the deployment boundary. |
 
+Direct NPC briefings about readable documents use the same fact-commit boundary
+as reading the document. A proposal names at most one declared, still-unknown
+fact; the engine verifies the addressed on-scene speaker and document, commits
+`knows(player, key)`, then renders the reply. The hosted-demo API contract test
+confirms that this player-visible reply is committed before it can be saved.
+Package validation requires each briefing key to be a document-declared,
+canonical fact known by its holder and absent from the opening briefing. The
+mystery case file and fantasy warded scroll demonstrate the same generic route.
+The staging gate derives these opening questions from package data and verifies
+both the rendered fact and its committed `known_facts` API projection.
+
 ## The core loop
 
 ```text

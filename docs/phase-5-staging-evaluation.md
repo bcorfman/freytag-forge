@@ -13,6 +13,14 @@ p95 request latency, typed fail-closed errors, protected-revelation text,
 continuity checks, completion rate, and user-facing session failures; and
 writes `staging-evaluation.json` as a SHA-named workflow artifact.
 
+For every package that declares an opening document briefing, the evaluator
+also derives a direct NPC question from that package's `npc_disclosures` data.
+It rejects an opening that already exposes the document-only value, then
+requires the question's reply to render the declared fact value and the API
+state projection to include its committed key in `known_facts`. A missing
+commit, repeated public-only briefing, 503, protected leak, continuity break,
+or SHA mismatch fails the promotion gate.
+
 The Pages build also publishes `/dev/deployment.json`, containing its channel
 and immutable SHA. The gate compares that metadata with `/api/v1/version`
 before it evaluates a turn, so a deployed API and browser bundle cannot be

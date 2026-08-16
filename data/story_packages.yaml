@@ -85,7 +85,7 @@ packages:
         role: assistant
         relationship: assistant
         scene_purpose: Review the case file privately, out of earshot; first give the public outline at the threshold.
-        initial_knowledge: [opening_situation]
+        initial_knowledge: [opening_situation, ledger_entry_time]
         protected_knowledge: [case_file_contents]
     items: [case_file, ledger_page, route_key, arrival_sedan]
     item_details:
@@ -97,6 +97,7 @@ packages:
           aliases: [case file, file]
           discovery: case_file
           knowledge: [victim_name, victim_timeline, lead_suspect, strongest_lead, ledger_entry_time]
+          npc_disclosures: {daria_stone: [ledger_entry_time]}
           leads: [The strongest documented lead is a missing ledger payment tied to the mansion and tonight's visit.]
           context:
             case_file_status: You have reviewed the case file and can cite the victim, timeline, and strongest documented lead.
@@ -164,13 +165,43 @@ packages:
         enchanted_wood: {exposure: outdoor, ambient_source: the woods}
         citadel_steps: {exposure: outdoor, ambient_source: the citadel steps}
         sanctum: {exposure: enclosed}
+    characters:
+      traits: [observant, independent]
+      appearance: "A distinct, scene-appropriate figure."
+      role: contact
+      relationship: arrives_with_the_player
+      scene_purpose: "Offer a relevant perspective on the opening situation."
+      initial_knowledge: [public_briefing]
+      protected_knowledge: []
+      opening_contact:
+        id: selene_ward
+        name: Selene Ward
+        location: village_gate
+        pronouns: she/her
+        appearance: "A travel-stained blue mantle pinned with a silver quill."
+        description: "Selene Ward guards a warded scroll beneath her blue mantle."
+        role: guide
+        relationship: trusted_guide
+        scene_purpose: "Brief the player on the warded-scroll route before the enchanted wood."
+        initial_knowledge: [public_briefing, warded_route]
+        protected_knowledge: []
     items: [rune_token, moon_blade, warded_scroll]
     item_details:
       warded_scroll:
+        initial_custody: {kind: npc, id: selene_ward}
         readable:
           aliases: [warded scroll, scroll]
           discovery: warded_scroll
+          knowledge: [warded_route]
+          npc_disclosures: {selene_ward: [warded_route]}
           leads: [The warded scroll names a safe route through the enchanted wood.]
+    opening_setup:
+      arrival_order: [player, opening_contact]
+      public_briefing: [opening_situation]
+      pending_knowledge: [local_context]
+      protected_knowledge: [future_revelations]
+      case_facts:
+        warded_route: The warded scroll marks the moonlit ford as the safe route through the enchanted wood.
   sci-fi:
     <<: *default
     map:

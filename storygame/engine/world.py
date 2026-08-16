@@ -297,6 +297,12 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
                 ops.append({"op": "assert", "fact": ("document_discovery", item_id, discovery)})
             ops.extend({"op": "assert", "fact": ("document_knowledge", item_id, str(key).strip())}
                        for key in readable.get("knowledge", ()) if str(key).strip())
+            ops.extend(
+                {"op": "assert", "fact": ("document_disclosure", item_id, str(npc_id).strip(), str(key).strip())}
+                for npc_id, keys in readable.get("npc_disclosures", {}).items()
+                for key in keys
+                if str(npc_id).strip() and str(key).strip()
+            )
             ops.extend({"op": "assert", "fact": ("document_lead", item_id, str(lead).strip())}
                        for lead in readable.get("leads", ()) if str(lead).strip())
             ops.extend({"op": "assert", "fact": ("document_context", item_id, str(key).strip(), str(value).strip())}

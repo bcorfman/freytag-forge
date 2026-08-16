@@ -60,9 +60,63 @@ def test_world_package_requires_a_readable_document_to_reveal_new_opening_knowle
     package = build_world_package("mystery", "short", 33, "mysterious")
     case_file = next(item for item in package["items"] if item["id"] == "case_file")
     case_file["readable"]["knowledge"] = ["victim_name", "victim_timeline"]
+    case_file["readable"]["npc_disclosures"] = {}
 
     with pytest.raises(WorldPackageValidationError, match="fact not granted by the opening briefing"):
         validate_world_package(package)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (
+            lambda package: next(item for item in package["items"] if item["id"] == "case_file")["readable"].update(
+                {"npc_disclosures": {"missing_npc": ["ledger_entry_time"]}}
+            ),
+            "unknown NPC",
+        ),
+        (
+            lambda package: (
+                next(item for item in package["items"] if item["id"] == "case_file")["readable"].update(
+                    {"knowledge": ["ledger_entry_time", "missing_fact"]}
+                ),
+                next(item for item in package["items"] if item["id"] == "case_file")["readable"].update(
+                    {"npc_disclosures": {"daria_stone": ["missing_fact"]}}
+                ),
+            ),
+            "canonical case_fact",
+        ),
+        (
+            lambda package: next(character for character in package["characters"] if character["id"] == "daria_stone").update(
+                {"initial_knowledge": ["opening_situation"]}
+            ),
+            "must be known by NPC",
+        ),
+        (
+            lambda package: package["opening_setup"].update(
+                {"public_briefing": [*package["opening_setup"]["public_briefing"], "ledger_entry_time"]}
+            ),
+            "must not be public",
+        ),
+    ],
+)
+def test_world_package_validates_document_npc_disclosures(change, message) -> None:
+    package = build_world_package("mystery", "short", 33, "mysterious")
+    change(package)
+
+    with pytest.raises(WorldPackageValidationError, match=message):
+        validate_world_package(package)
+
+
+def test_fantasy_package_declares_a_document_npc_disclosure_path() -> None:
+    package = build_world_package("fantasy", "short", 33, "epic")
+    scroll = next(item for item in package["items"] if item["id"] == "warded_scroll")
+
+    assert scroll["readable"]["npc_disclosures"] == {"selene_ward": ["warded_route"]}
+    assert package["opening_setup"]["case_facts"]["warded_route"]
+    assert next(character for character in package["characters"] if character["id"] == "selene_ward")[
+        "initial_knowledge"
+    ] == ["public_briefing", "warded_route"]
 
 
 @pytest.mark.parametrize(

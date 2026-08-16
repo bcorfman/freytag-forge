@@ -168,6 +168,17 @@ the prompt version and token estimate for traces.
   - not a classic command parser with LLM text layered on top.
 - For direct-address conversation with a visible NPC, accepted freeform proposals must surface that NPC as the dialogue speaker. Player-speech echoes and narrator summaries are invalid substitutes for the NPC reply and should fail closed.
 - For direct-address conversation with a visible NPC, the accepted dialogue speaker must match the addressed NPC target (assistant aliases may resolve to that target), and in-character dialogue must not leak code or implementation artifacts into story text.
+- A direct question about a readable document may disclose one package-declared,
+  still-unknown fact only when the addressed NPC is on scene and knows that
+  fact. The typed action proposal carries the selected disclosure key; policy
+  commits `knows(player, key)` before the NPC reply is rendered. A selected key
+  for another document, an unavailable speaker, or already-known player fact
+  is rejected without a new commit.
+- Authoring validation requires every `readable.npc_disclosures` entry to name
+  a readable-document fact, a canonical package `case_fact`, an existing NPC
+  who knows it, and a fact absent from the opening public briefing. The schema
+  is genre-neutral; the mystery case file and fantasy warded scroll are
+  declarative examples rather than runtime exceptions.
 
 ### Core Engine
 - `storygame.engine` handles control-plane parsing, deterministic-affordance normalization, world rules, state transitions, and event emission.
