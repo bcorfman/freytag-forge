@@ -82,7 +82,22 @@ jobs:
         run: |
           set -euo pipefail
           for required in RAILWAY_TOKEN RAILWAY_PROJECT_ID RAILWAY_SERVICE_ID RAILWAY_ENVIRONMENT_ID RAILWAY_PUBLIC_API_URL; do test -n "${!required}" || { echo "Missing production configuration: $required" >&2; exit 1; }; done
-          rollback_deployment_id="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json | jq -er 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id')"
+          if ! rollback_deployments="$(railway deployment list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --limit 100 --json)"; then
+            echo "Unable to list Railway deployments for the configured production target." >&2
+            exit 1
+          fi
+          if ! jq -e 'type == "array"' >/dev/null <<<"$rollback_deployments"; then
+            echo "Railway deployment list did not return a JSON array:" >&2
+            jq -c . <<<"$rollback_deployments" >&2 || printf '%s\\n' "$rollback_deployments" >&2
+            exit 1
+          fi
+          echo "Railway deployments visible before promotion (id, status, createdAt):"
+          jq -r 'sort_by(.createdAt) | reverse | .[] | [.id, .status, .createdAt] | @tsv' <<<"$rollback_deployments"
+          rollback_deployment_id="$(jq -r 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id // empty' <<<"$rollback_deployments")"
+          if test -z "$rollback_deployment_id"; then
+            echo "No eligible Railway rollback deployment (expected status SUCCESS or ACTIVE) for the configured production target." >&2
+            exit 1
+          fi
           echo "- Railway rollback candidate before promotion: \`$rollback_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
           railway variable set "FREYTAG_DEPLOYMENT_SHA=$DEPLOYED_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
           timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA"
@@ -159,7 +174,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEPLOYMENT_RESULT: ${{ needs.deploy-production.result }}
           E2E_RESULT: ${{ needs.hosted-demo-production-e2e.result }}
-          DEPLOYED_SHA: ${{ inputs.sha }}
+          DEPLOYED_SHA: ${{ needs.validate-staged-sha.outputs.sha }}
         run: |
           set -euo pipefail
           state=failure
