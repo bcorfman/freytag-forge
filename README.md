@@ -15,65 +15,6 @@ write the scene; the engine keeps the world honest.
 It is a story simulation with an open-language interface, durable choices, and
 no tiny menu of approved verbs.
 
-Phase 3 of the V2 migration provides the standalone in-process runtime.
-Versioned `CompiledStory` fixtures bootstrap its sole mutable authority,
-`RuntimeState`; model turns use one structured request plus at most one shared
-recovery request and fail closed without partial commits. The V2 mystery
-fixture now carries the authored Vale Mansion investigation (Elias Wren, Daria
-Stone, Emma Vale, and the ledger-payment case) rather than a replacement
-placeholder. The existing package/fact web product remains the fallback until
-the V2 hosted path passes staging promotion and its observation window.
-
-Phases 0–2 of genre-blueprint authoring are complete. The project has an
-explicit authority map, a cross-genre offline authoring-quality suite, and an
-immutable, locally validated `StoryBlueprint` contract with minimal mystery,
-fantasy, sci-fi, and relationship fixtures. The contract validates causal
-references, revelation cycles, protected-fact release ordering, route
-reachability, ending viability, and optional-beat purpose. It remains
-offline-only: blueprint prose cannot mutate a session, and facts remain the
-sole mutable session truth.
-
-Phase 2 adds versioned declarative profiles for mystery, fantasy, sci-fi, and
-relationship stories. An injected authoring validator registry checks each
-profile's causal roles, revelation and evidence routes, Freytag turning points,
-phase order, and viable genre endings—without introducing runtime genre
-branches.
-
-Phase 3 adds the offline-only `BlueprintCompiler`. It requests an explicit
-JSON-object response, performs at most one plain-JSON recovery request, locally
-validates the blueprint and selected genre profile, and reviews route fairness
-before emitting a reviewable candidate. Candidate provenance records the source
-outline hash, prompt version, model metadata, validation diagnostics, critics,
-and any single repair. `storygame-blueprint` requires both `--live` and
-`FREYTAG_ENABLE_LIVE_COMPILER=1`, and refuses to overwrite files or write a
-candidate under a reviewed-fixture name.
-
-Phase 4 adds the editor-reviewed Vale Mansion blueprint at
-`data/story_blueprints/v1/vale_mansion_case.yaml`. It records the complete
-crime solution, party knowledge, bounded timeline, evidence custody, location
-classes, protected truth, and two fair routes through every pivotal revelation.
-Its authoring acceptance suite verifies that a solved case follows declared
-evidence rather than a narration or completion tag.
-
-Phase 5 realizes an accepted blueprint into a dedicated fact map at V2
-bootstrap. The shared turn contract carries a declared `route_id`, optional
-`evidence_ids`, and a failed-route signal. `ProgressionValidator` accepts only
-currently legal authored routes, atomically commits their satisfiers or bounded
-failure-forward facts, and rejects bare completion tags. Runtime prompts expose
-only player-earned truths and legal route metadata; protected canon remains out
-of model context until its declared revelation completes.
-
-Grounded-turn-contract Phases 0–4 are complete. The planner sees only what the
-current observer can legitimately stage, tells atmosphere apart from changing
-the world, and gets checked before anything sticks. The player sees prose only
-after that check has accepted the turn. The same promise holds for a mansion
-investigation, fantasy journey, sci-fi crisis, or relationship scene. See the
-[grounded turn-contract baseline](docs/grounded-turn-contract-baseline.md).
-Each accepted model-planned turn also leaves a compact audit trail—local request
-IDs, retries, latency, and outcome—in integrity-checked save projections and
-the hosted-demo response headers. Rejected turns stay rejected: evidence, not
-invented progress.
-
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |
