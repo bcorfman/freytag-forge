@@ -78,13 +78,13 @@ def _json_mode_rejected(detail: str) -> bool:
 _SYSTEM_PROMPT = (
     "Return one JSON object only, with no markdown. Author an open-ended interactive-fiction turn from the supplied "
     "state. Do not dictate the player's action or reveal protected information before its release tags. The exact "
-    "shape is {\"narration\":string,\"operations\":array,\"beat_updates\":array,\"material_progress\":boolean,"
-    "\"summary_delta\":string|null}. operations must be an array of {\"kind\":\"set|add|remove\","
-    "\"path\":string,\"value\":any}; never use an object keyed by path. beat_updates must be an array of "
-    "{\"beat_id\":string,\"completion_tags\":array of strings,\"evidence\":string}; never include id, phase, "
+    'shape is {"narration":string,"operations":array,"beat_updates":array,"material_progress":boolean,'
+    '"summary_delta":string|null}. operations must be an array of {"kind":"set|add|remove",'
+    '"path":string,"value":any}; never use an object keyed by path. beat_updates must be an array of '
+    '{"beat_id":string,"completion_tags":array of strings,"evidence":string}; never include id, phase, '
     "or summary. Copy a completion tag only if it exactly matches a tag listed on its active beat; otherwise use []. "
-    "For example, a listed evidence_found tag produces {\"beat_id\":\"find_evidence\","
-    "\"completion_tags\":[\"evidence_found\"],\"evidence\":\"brief support\"}. Use [] for operations or "
+    'For example, a listed evidence_found tag produces {"beat_id":"find_evidence",'
+    '"completion_tags":["evidence_found"],"evidence":"brief support"}. Use [] for operations or '
     "beat_updates when none apply, and a boolean—not an object—for material_progress. Narration may describe only "
     "committed effects."
     " If the input includes recovery_instruction, correct that failure and return the complete object again."

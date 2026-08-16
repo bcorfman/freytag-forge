@@ -30,8 +30,7 @@ def _condition_bindings(state: GameState, rule: RuleModel) -> tuple[dict[str, st
             for current in bindings:
                 trial = dict(current)
                 if all(
-                    _term_matches(term, value, trial)
-                    for term, value in zip(condition.args, candidate[1:], strict=True)
+                    _term_matches(term, value, trial) for term, value in zip(condition.args, candidate[1:], strict=True)
                 ):
                     next_bindings.append(trial)
         bindings = next_bindings
@@ -47,8 +46,7 @@ def _condition_bindings(state: GameState, rule: RuleModel) -> tuple[dict[str, st
                     continue
                 trial = dict(binding)
                 if all(
-                    _term_matches(term, value, trial)
-                    for term, value in zip(condition.args, candidate[1:], strict=True)
+                    _term_matches(term, value, trial) for term, value in zip(condition.args, candidate[1:], strict=True)
                 ):
                     rejected = True
                     break

@@ -5,6 +5,14 @@ goals, flags, scene state, roles, and other asserted world state are changed
 through `ValidatedFactCommitter`, which validates invariants before refreshing
 compatibility projections.
 
+Grounded-turn-contract Phase 0 has recorded the remaining narration-integrity
+gap: the current V1 freeform planner has a temporary regex custody guard, but
+not yet a typed material-staging claim contract for custody, environment,
+access, and events. The Phase 1 contract will validate those claims against a
+candidate post-effect fact state; until then, the relation-family gap is kept
+as strict expected-failure tests. The audit and current provider-call baseline
+are in [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
+
 `GameState.player`, room collections, and `active_goal` are read-after-commit
 projections. `world_package` is authoring/session input, not a second runtime
 authority. Control-plane command handling is separate from semantic turn

@@ -236,11 +236,7 @@ def bootstrap_failure_debug_payload(
 ) -> dict[str, Any]:
     room = state.world.rooms[state.player.location]
     bundle = dict(state.world_package.get("llm_story_bundle", {}))
-    opening_paragraphs = [
-        str(line).strip()
-        for line in bundle.get("opening_paragraphs", ())
-        if str(line).strip()
-    ]
+    opening_paragraphs = [str(line).strip() for line in bundle.get("opening_paragraphs", ()) if str(line).strip()]
     assistant = str(bundle.get("assistant_name", "")).strip() or resolved_assistant_name(state).strip()
     return {
         scope_field: scope_id,
@@ -335,13 +331,11 @@ def _llm_bootstrap_opening_lines(
 
     if story_director_error:
         raise RuntimeError(
-            "Web bootstrap requires an LLM-authored opening. "
-            f"story_director={story_director_error}; narrator=empty"
+            f"Web bootstrap requires an LLM-authored opening. story_director={story_director_error}; narrator=empty"
         )
     if opening_agent_error:
         raise RuntimeError(
-            "Web bootstrap requires an LLM-authored opening. "
-            f"opening_agent={opening_agent_error}; narrator=empty"
+            f"Web bootstrap requires an LLM-authored opening. opening_agent={opening_agent_error}; narrator=empty"
         )
     raise RuntimeError("Web bootstrap requires an LLM-authored opening. narrator=empty")
 
@@ -353,11 +347,7 @@ def _bootstrap_opening_from_narrator_opening_agent(
 ) -> list[str]:
     assistant = resolved_assistant_name(state).strip()
     assistant_npc = next(
-        (
-            npc
-            for npc in state.world.npcs.values()
-            if npc.name.strip().lower() == assistant.lower()
-        ),
+        (npc for npc in state.world.npcs.values() if npc.name.strip().lower() == assistant.lower()),
         None,
     )
     contacts: list[dict[str, str]] = []
@@ -447,6 +437,7 @@ def _bootstrap_opening_from_narrator_once(
     if issues:
         raise RuntimeError("Opening validation failed: " + "; ".join(dict.fromkeys(issues)))
     return output_editor.review_opening(opening_lines, active_story_goal(state))
+
 
 def _bootstrap_opening_from_narrator(
     state: GameState,

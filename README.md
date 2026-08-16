@@ -68,6 +68,14 @@ failure-forward facts, and rejects bare completion tags. Runtime prompts expose
 only player-earned truths and legal route metadata; protected canon remains out
 of model context until its declared revelation completes.
 
+Grounded-turn-contract Phase 0 is complete. Its boundary audit maps the CLI,
+local web, hosted demo, freeform adapter, opening agents, and Story Director;
+it records the current one-call normal / two-call bounded-recovery budget. The
+audit keeps custody, environment, access, and event contradiction cases as
+strict expected-failure specifications until the Phase 1 typed `staging_claims`
+contract replaces the temporary phrase-based custody guard. See the
+[grounded turn-contract baseline](docs/grounded-turn-contract-baseline.md).
+
 ## Why it’s different
 
 | Player freedom | Narrative intelligence | World integrity |

@@ -31,9 +31,7 @@ def _matches_action(trigger: dict[str, Any], event: Event) -> bool:
         return False
     if trigger["item_ids"] and str(metadata.get("item_id", "")) not in trigger["item_ids"]:
         return False
-    if trigger["location_ids"] and str(metadata.get("location_id", "")) not in trigger["location_ids"]:
-        return False
-    return True
+    return not trigger["location_ids"] or str(metadata.get("location_id", "")) in trigger["location_ids"]
 
 
 def _trigger_eligible(trigger: dict[str, Any], state: GameState, action_events: tuple[Event, ...]) -> bool:
@@ -53,9 +51,7 @@ def _trigger_eligible(trigger: dict[str, Any], state: GameState, action_events: 
     if any(_fact_holds(state, fact) for fact in trigger["forbidden_facts"]):
         return False
     if trigger["kind"] == "turn":
-        if trigger["location_ids"] and state.player.location not in trigger["location_ids"]:
-            return False
-        return True
+        return not trigger["location_ids"] or state.player.location in trigger["location_ids"]
     return any(_matches_action(trigger, event) for event in action_events)
 
 

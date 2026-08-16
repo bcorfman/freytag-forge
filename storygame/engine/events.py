@@ -18,7 +18,6 @@ class EventTemplate:
     clear_flags: tuple[str, ...] = ()
 
 
-
 def list_event_templates() -> tuple[EventTemplate, ...]:
     return (
         EventTemplate(
@@ -153,12 +152,8 @@ def apply_event_template(
     rng,
 ) -> tuple[GameState, list[Event]]:
     next_state = state.clone()
-    fact_ops = [
-        {"op": "assert", "fact": ("flag", "player", flag)}
-        for flag in template.set_flags
-    ] + [
-        {"op": "retract", "fact": ("flag", "player", flag)}
-        for flag in template.clear_flags
+    fact_ops = [{"op": "assert", "fact": ("flag", "player", flag)} for flag in template.set_flags] + [
+        {"op": "retract", "fact": ("flag", "player", flag)} for flag in template.clear_flags
     ]
     if fact_ops:
         apply_fact_ops(next_state, fact_ops)

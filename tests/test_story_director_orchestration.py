@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import pytest
@@ -213,7 +215,9 @@ def test_story_director_applies_villain_identity_from_fact_store_not_story_plan_
     state.world_package["story_plan"]["villains"] = ()
     state.world.npcs["magistrate_voss"].identity = "local official"
 
-    director._apply_contacts_to_world(state, [{"name": "Daria Stone", "role": "assistant", "trait": "sharp"}], "Daria Stone")
+    director._apply_contacts_to_world(
+        state, [{"name": "Daria Stone", "role": "assistant", "trait": "sharp"}], "Daria Stone"
+    )
 
     assert state.world.npcs["magistrate_voss"].identity == "suspect with motive: Protect the network."
 

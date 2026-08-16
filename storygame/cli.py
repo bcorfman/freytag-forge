@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
@@ -281,7 +283,9 @@ def _preview_state_delta(preview_events: list[Event], skip_facts: tuple[tuple[st
     }
 
 
-def _semantic_actions_for_action(state: GameState, action: Action, preview_events: list[Event]) -> tuple[dict[str, Any], ...]:
+def _semantic_actions_for_action(
+    state: GameState, action: Action, preview_events: list[Event]
+) -> tuple[dict[str, Any], ...]:
     room_id = state.player.location
     if action.kind == ActionKind.MOVE and preview_events and preview_events[0].type == "move":
         destination = preview_events[0].entities[1] if len(preview_events[0].entities) > 1 else ""
@@ -324,7 +328,9 @@ def _semantic_actions_for_action(state: GameState, action: Action, preview_event
     return ()
 
 
-def _structured_turn_proposal_for_action(state: GameState, action: Action, preview_events: list[Event]) -> dict[str, Any]:
+def _structured_turn_proposal_for_action(
+    state: GameState, action: Action, preview_events: list[Event]
+) -> dict[str, Any]:
     semantic_actions = _semantic_actions_for_action(state, action, preview_events)
     skipped_fact_ops: tuple[tuple[str, ...], ...] = ()
     if semantic_actions:
@@ -446,7 +452,9 @@ _PARROTING_STOPWORDS = {
     "your",
 }
 _CODE_ARTIFACT_TOKEN_PATTERN = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
-_GARMENT_TOKEN_PATTERN = re.compile(r"\b(blouse|skirt|dress|gown|robe|uniform|coat|jacket|shirt|pants|trousers|jeans|boots|hat)\b")
+_GARMENT_TOKEN_PATTERN = re.compile(
+    r"\b(blouse|skirt|dress|gown|robe|uniform|coat|jacket|shirt|pants|trousers|jeans|boots|hat)\b"
+)
 
 
 def _normalized_dialogue_text(value: str) -> str:
@@ -458,7 +466,9 @@ def _is_conversational_freeform_request(raw_input: str, fallback_action: Action)
     if fallback_action.kind == ActionKind.TALK:
         return True
     return bool(
-        re.search(r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|which|summarize|explain)\b", lowered)
+        re.search(
+            r"\b(ask|tell|say|speak|talk|hello|hi|who|what|when|where|why|how|which|summarize|explain)\b", lowered
+        )
         or "," in lowered
     )
 
@@ -558,7 +568,9 @@ def _freeform_dialogue_policy_error(
         return ""
     if not _is_conversational_freeform_request(raw_input, fallback_action):
         return ""
-    if _targeted_conversation_requires_npc_reply(fallback_action, planner_action_payload) and _is_invalid_targeted_dialogue_speaker(
+    if _targeted_conversation_requires_npc_reply(
+        fallback_action, planner_action_payload
+    ) and _is_invalid_targeted_dialogue_speaker(
         state,
         planner_dialog_payload,
         planner_action_payload,
@@ -827,7 +839,9 @@ def run_turn(
     if control_action.kind == ActionKind.HELP:
         return (
             state,
-            ["Controls: /help, /save <slot>, /load <slot>, /quit. Write anything else as an in-world action or dialogue."],
+            [
+                "Controls: /help, /save <slot>, /load <slot>, /quit. Write anything else as an in-world action or dialogue."
+            ],
             control_action.raw,
             "help",
             True,
@@ -941,7 +955,13 @@ def run_turn(
     events = list(freeform["events"])
     accepted_proposal_text = str(freeform["dialog_proposal"].get("text", "")).strip()
     if is_player_statement_echo(raw_input, accepted_proposal_text):
-        return state.clone(), _freeform_unavailable_lines("ORDINARY_TURN_POLICY_REJECTED: player-statement echo"), raw_input, "freeform_roleplay", True
+        return (
+            state.clone(),
+            _freeform_unavailable_lines("ORDINARY_TURN_POLICY_REJECTED: player-statement echo"),
+            raw_input,
+            "freeform_roleplay",
+            True,
+        )
     freeform_policy_debug = {
         "action_proposal": dict(freeform["action_proposal"]),
         "state_update_envelope": dict(freeform["state_update_envelope"]),
@@ -1023,8 +1043,8 @@ def run_turn(
             lines.append(
                 "[debug] freeform_policy "
                 f"intent={proposal.get('intent', '')} "
-                f"targets={tuple(proposal.get('targets', ())) } "
-                f"reasons={tuple(envelope.get('reasons', ())) } "
+                f"targets={tuple(proposal.get('targets', ()))} "
+                f"reasons={tuple(envelope.get('reasons', ()))} "
                 f"fact_ops={tuple(freeform_policy_debug['fact_ops'])} "
                 f"story_delta={freeform_policy_debug['story_delta']}"
             )

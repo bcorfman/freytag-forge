@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from storygame.llm.story_director import StoryDirector
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
+from storygame.llm.story_director import StoryDirector
 from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from storygame.web import create_app
 from tests.fast_fixtures import InMemorySaveStore
@@ -119,9 +119,6 @@ def test_save_and_load_are_available_through_web_turn_endpoint(tmp_path):
     assert loaded_payload["state"]["location"] == room_after_move
 
 
-
-
-
 def test_web_ui_bootstraps_new_scene_after_new_game_click(tmp_path):
     client = _client(tmp_path)
     response = client.get("/")
@@ -180,24 +177,6 @@ def test_web_bootstrap_uses_fast_story_director_path_by_default(tmp_path, monkey
 
     assert response.status_code == 200
     assert observed["fast"] == 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def test_first_substantive_command_does_not_repeat_opening_text(tmp_path):

@@ -1,21 +1,23 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import pytest
 
 from storygame.llm.story_agents.contracts import (
-    parse_story_bootstrap_output,
     StoryAgentContractError,
     parse_character_designer_output,
     parse_narrator_opening_output,
     parse_plot_designer_output,
     parse_story_architect_output,
+    parse_story_bootstrap_output,
 )
 from storygame.llm.story_agents.prompts import (
-    build_story_bootstrap_prompt,
     build_character_designer_prompt,
     build_narrator_opening_prompt,
     build_plot_designer_prompt,
     build_story_architect_prompt,
+    build_story_bootstrap_prompt,
 )
 
 
@@ -79,9 +81,7 @@ def test_story_agent_contracts_accept_valid_payloads():
     plot = parse_plot_designer_output(
         {"assistant_name": "Mina Cole", "actionable_objective": "Review the case file and pick first lead."}
     )
-    opening = parse_narrator_opening_output(
-        {"paragraphs": ["p1", "p2", "p3"]}
-    )
+    opening = parse_narrator_opening_output({"paragraphs": ["p1", "p2", "p3"]})
 
     assert bootstrap["assistant_name"] == "Mina Cole"
     assert bootstrap["villains"][0]["name"] == "Magistrate Voss"
@@ -119,16 +119,31 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
             "items": ["case_file"],
             "npcs": ["Mina Cole"],
         },
-        [{"room_id": "front_steps", "name": "Outside The Mansion", "description": "Cold stone.", "items": ["case_file"], "npcs": ["Mina Cole"], "exits": {"north": "foyer"}}],
+        [
+            {
+                "room_id": "front_steps",
+                "name": "Outside The Mansion",
+                "description": "Cold stone.",
+                "items": ["case_file"],
+                "npcs": ["Mina Cole"],
+                "exits": {"north": "foyer"},
+            }
+        ],
         [{"item_id": "case_file", "name": "Case File", "description": "Folder.", "kind": "clue"}],
         ["field kit"],
-        {"assistant": {"name": "Mina Cole", "role": "assistant"}, "scene_facts": ["You have not reviewed the case file yet."]},
+        {
+            "assistant": {"name": "Mina Cole", "role": "assistant"},
+            "scene_facts": ["You have not reviewed the case file yet."],
+        },
     )
     assert "json only" in system.lower()
     assert "opening_paragraphs" in system
     assert "story_beats" in system
     assert "villains" in system
-    assert "opening_paragraphs must stay materially consistent with opening_room description, exits, visible npcs, visible items, and inventory_seed" in system.lower()
+    assert (
+        "opening_paragraphs must stay materially consistent with opening_room description, exits, visible npcs, visible items, and inventory_seed"
+        in system.lower()
+    )
     assert "prioritize character setup over scenic repetition" in system.lower()
     assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system.lower()
     assert "use that npc's full name" in system.lower()
@@ -144,7 +159,9 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     system, _user = build_character_designer_prompt("Noah", [{"name": "Mina"}])
     assert "contacts" in system
 
-    system, user = build_plot_designer_prompt("Goal", "Mina", {"role": "assistant", "scene_purpose": "Brief you at the door."})
+    system, user = build_plot_designer_prompt(
+        "Goal", "Mina", {"role": "assistant", "scene_purpose": "Brief you at the door."}
+    )
     assert "actionable_objective" in system
     assert "assistant_facts" in user
 
@@ -154,7 +171,10 @@ def test_story_agent_prompts_contain_contract_and_json_instruction():
     assert "favor character background, motivation, communication, and relationship tension" in system.lower()
     assert "remove scenery-first filler unless it is needed for flow or story cohesion" in system.lower()
     assert "first mention of a visible npc" in system.lower()
-    assert "stay materially consistent with the room description, exits, visible items, visible npcs, and inventory" in system.lower()
+    assert (
+        "stay materially consistent with the room description, exits, visible items, visible npcs, and inventory"
+        in system.lower()
+    )
     assert "opening_facts as canonical state" in system.lower()
     assert "opening_facts" in user.lower()
 

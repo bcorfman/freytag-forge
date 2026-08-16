@@ -33,7 +33,9 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
             turns[session_id] = 1
             return 200, {
                 "status": "ok",
-                "lines": ["The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."],
+                "lines": [
+                    "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."
+                ],
                 "state": {"location": "opening", "turn_index": 1, "known_facts": ["ledger_entry_time"]},
             }
         if "warded scroll" in command:
@@ -100,7 +102,9 @@ def test_staging_evaluation_requires_committed_opening_disclosures() -> None:
             session["turn"] = 1
             return 200, {
                 "status": "ok",
-                "lines": ["The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."],
+                "lines": [
+                    "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."
+                ],
                 "state": {"location": "opening", "turn_index": 1, "known_facts": ["ledger_entry_time"]},
             }
         if "warded scroll" in command:
@@ -111,7 +115,11 @@ def test_staging_evaluation_requires_committed_opening_disclosures() -> None:
                 "state": {"location": "opening", "turn_index": 1, "known_facts": ["warded_route"]},
             }
         if command in {"/save staging-evaluation", "/load staging-evaluation"}:
-            return 200, {"status": "ok", "lines": [command], "state": {"location": "opening", "turn_index": session["turn"]}}
+            return 200, {
+                "status": "ok",
+                "lines": [command],
+                "state": {"location": "opening", "turn_index": session["turn"]},
+            }
         session["turn"] = int(session["turn"]) + 1
         return 200, {
             "status": "ok",

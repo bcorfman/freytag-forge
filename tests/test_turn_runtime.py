@@ -192,7 +192,7 @@ def test_turn_runtime_refreshes_scene_facts_from_conversational_proposal() -> No
             "turn_id": "turn-conversation",
             "intent": "ask_about",
             "narration": "Mara narrows her eyes and answers your question about the ledger.",
-            "dialogue_lines": ["Mara Vale says: \"The ledger was moved before dawn.\""],
+            "dialogue_lines": ['Mara Vale says: "The ledger was moved before dawn."'],
             "semantic_actions": [
                 {
                     "action_id": "question-mara",

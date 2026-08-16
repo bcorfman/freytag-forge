@@ -228,10 +228,7 @@ def _apply_opening_setup(state: GameState, package: dict) -> None:
     # A briefing is an explicit epistemic grant, not an invitation for a
     # presentation layer to read every case fact.  The same keys are later
     # filtered by observer_context_slice before they reach a model.
-    ops.extend(
-        {"op": "assert", "fact": ("knows", "player", key)}
-        for key in setup.get("public_briefing", ())
-    )
+    ops.extend({"op": "assert", "fact": ("knows", "player", key)} for key in setup.get("public_briefing", ()))
     if ops:
         apply_fact_ops(state, ops)
 
@@ -290,27 +287,45 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
         readable = item.get("readable", {})
         if readable:
             ops.append({"op": "assert", "fact": ("item_affordance", item_id, "read")})
-            ops.extend({"op": "assert", "fact": ("item_alias", item_id, str(alias).strip())}
-                       for alias in readable.get("aliases", ()) if str(alias).strip())
+            ops.extend(
+                {"op": "assert", "fact": ("item_alias", item_id, str(alias).strip())}
+                for alias in readable.get("aliases", ())
+                if str(alias).strip()
+            )
             discovery = str(readable.get("discovery", item_id)).strip()
             if discovery:
                 ops.append({"op": "assert", "fact": ("document_discovery", item_id, discovery)})
-            ops.extend({"op": "assert", "fact": ("document_knowledge", item_id, str(key).strip())}
-                       for key in readable.get("knowledge", ()) if str(key).strip())
+            ops.extend(
+                {"op": "assert", "fact": ("document_knowledge", item_id, str(key).strip())}
+                for key in readable.get("knowledge", ())
+                if str(key).strip()
+            )
             ops.extend(
                 {"op": "assert", "fact": ("document_disclosure", item_id, str(npc_id).strip(), str(key).strip())}
                 for npc_id, keys in readable.get("npc_disclosures", {}).items()
                 for key in keys
                 if str(npc_id).strip() and str(key).strip()
             )
-            ops.extend({"op": "assert", "fact": ("document_lead", item_id, str(lead).strip())}
-                       for lead in readable.get("leads", ()) if str(lead).strip())
-            ops.extend({"op": "assert", "fact": ("document_context", item_id, str(key).strip(), str(value).strip())}
-                       for key, value in readable.get("context", {}).items() if str(key).strip() and str(value).strip())
-            ops.extend({"op": "assert", "fact": ("document_retract_context", item_id, str(key).strip(), str(value).strip())}
-                       for key, value in readable.get("retract_context", {}).items() if str(key).strip() and str(value).strip())
-            ops.extend({"op": "assert", "fact": ("document_context_template", item_id, str(key).strip(), str(value).strip())}
-                       for key, value in readable.get("context_from_knowledge", {}).items() if str(key).strip() and str(value).strip())
+            ops.extend(
+                {"op": "assert", "fact": ("document_lead", item_id, str(lead).strip())}
+                for lead in readable.get("leads", ())
+                if str(lead).strip()
+            )
+            ops.extend(
+                {"op": "assert", "fact": ("document_context", item_id, str(key).strip(), str(value).strip())}
+                for key, value in readable.get("context", {}).items()
+                if str(key).strip() and str(value).strip()
+            )
+            ops.extend(
+                {"op": "assert", "fact": ("document_retract_context", item_id, str(key).strip(), str(value).strip())}
+                for key, value in readable.get("retract_context", {}).items()
+                if str(key).strip() and str(value).strip()
+            )
+            ops.extend(
+                {"op": "assert", "fact": ("document_context_template", item_id, str(key).strip(), str(value).strip())}
+                for key, value in readable.get("context_from_knowledge", {}).items()
+                if str(key).strip() and str(value).strip()
+            )
     for character in package["characters"]:
         npc_id = str(character["id"])
         for knowledge in character.get("initial_knowledge", []):

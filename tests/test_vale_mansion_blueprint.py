@@ -16,8 +16,10 @@ def _apply(route: RealizationRoute, established: set[str]) -> set[str]:
     """Model the evidence a route can commit, including its declared fallback."""
 
     assert set(route.availability_constraints) <= established
-    return established | {item.truth_id for item in route.satisfiers if item.operator == "establish"} | set(
-        route.failure_forward.result_truths
+    return (
+        established
+        | {item.truth_id for item in route.satisfiers if item.operator == "establish"}
+        | set(route.failure_forward.result_truths)
     )
 
 

@@ -194,7 +194,9 @@ def validate_world_package(package: dict[str, Any]) -> dict[str, Any]:
             for key in keys:
                 normalized_key = str(key).strip()
                 if normalized_key not in document_knowledge:
-                    raise WorldPackageValidationError("document disclosure key must be declared by the readable document")
+                    raise WorldPackageValidationError(
+                        "document disclosure key must be declared by the readable document"
+                    )
                 if normalized_key not in case_facts:
                     raise WorldPackageValidationError("document disclosure key must name a canonical case_fact")
                 if normalized_key not in character_knowledge[normalized_npc_id]:
@@ -257,7 +259,9 @@ def _outline_fragments(outline_text: str) -> list[str]:
     return fragments
 
 
-def _build_outline_goals(goal_template: dict[str, Any], outline_text: str, beat_candidates: list[str]) -> dict[str, Any]:
+def _build_outline_goals(
+    goal_template: dict[str, Any], outline_text: str, beat_candidates: list[str]
+) -> dict[str, Any]:
     fragments = _outline_fragments(outline_text)
     setup = str(goal_template.get("setup", "")).strip()
     primary = str(goal_template.get("primary", "")).strip()
@@ -617,9 +621,7 @@ def build_world_package(
     if len(map_section["rooms"]) >= 3 and item_ids:
         gate_room = map_section["rooms"][1]
         route_ids = sorted(
-            str(path.get("id", path.get("direction", "")))
-            for path in map_section["paths"]
-            if path["from"] == gate_room
+            str(path.get("id", path.get("direction", ""))) for path in map_section["paths"] if path["from"] == gate_room
         )
         if route_ids:
             package["map"]["locks"] = [{"room": gate_room, "route": route_ids[0], "key_id": item_ids[0]}]

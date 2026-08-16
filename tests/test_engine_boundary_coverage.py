@@ -214,7 +214,14 @@ def test_semantic_actions_and_room_presentation_cover_success_and_rejections() -
     with pytest.raises(ValueError, match="not available"):
         commit_semantic_action(
             state,
-            {"action_id": "missing", "action_type": "take_item", "actor_id": "player", "target_id": "", "item_id": "missing", "location_id": room_id},
+            {
+                "action_id": "missing",
+                "action_type": "take_item",
+                "actor_id": "player",
+                "target_id": "",
+                "item_id": "missing",
+                "location_id": room_id,
+            },
         )
 
 

@@ -19,10 +19,10 @@ from storygame.engine.facts import (
     protagonist_profile,
     story_goals,
 )
-from storygame.engine.presentation import filtered_inventory, room_item_groups
 from storygame.engine.npc import role_facts
 from storygame.engine.parser import Action
 from storygame.engine.perception import observer_context_slice, visible_entities
+from storygame.engine.presentation import filtered_inventory, room_item_groups
 from storygame.engine.scene_state import scene_snapshot
 from storygame.engine.state import EventLog, GameState, Npc
 from storygame.story_canon import canonical_detective_name

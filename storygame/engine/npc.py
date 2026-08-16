@@ -74,8 +74,7 @@ def install_role_contract(state, contract: RoleContract) -> None:
     if contract.npc_id not in state.world.npcs:
         raise ValueError(f"unknown NPC '{contract.npc_id}'")
     ops: list[dict[str, object]] = [
-        {"op": "retract", "fact": fact}
-        for fact in state.world_facts.query("npc_role", contract.npc_id, None)
+        {"op": "retract", "fact": fact} for fact in state.world_facts.query("npc_role", contract.npc_id, None)
     ]
     ops.append({"op": "assert", "fact": ("npc_role", contract.npc_id, contract.role)})
     for predicate, values in (
@@ -94,9 +93,7 @@ def install_role_contract(state, contract: RoleContract) -> None:
     )
     for trait, value in contract.adaptive_traits.items():
         _validate_trait_value(value)
-        ops.append(
-            {"op": "assert", "fact": ("npc_adaptive_trait", contract.npc_id, trait, _format_value(value))}
-        )
+        ops.append({"op": "assert", "fact": ("npc_adaptive_trait", contract.npc_id, trait, _format_value(value))})
     ops.extend(
         {"op": "retract", "fact": fact}
         for fact in state.world_facts.query("npc_relationship", contract.npc_id, "player", None)
@@ -239,10 +236,7 @@ def ensure_default_role_contracts(state) -> None:
                 {"op": "assert", "fact": ("npc_advisory_style", npc_id, "direct")},
                 {"op": "assert", "fact": ("npc_adaptive_trait", npc_id, "trust", "0.5")},
             ]
-            ops.extend(
-                {"op": "assert", "fact": ("npc_stable_trait", npc_id, trait)}
-                for trait in npc.tags
-            )
+            ops.extend({"op": "assert", "fact": ("npc_stable_trait", npc_id, trait)} for trait in npc.tags)
             _commit(state, ops, "npc_role_bootstrap")
 
 

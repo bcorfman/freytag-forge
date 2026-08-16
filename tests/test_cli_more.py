@@ -7,8 +7,6 @@ from random import Random
 import pytest
 
 from storygame import cli as cli_module
-from storygame.engine.parser import Action, ActionKind, parse_command
-from storygame.engine.state import Event
 from storygame.cli import (
     _action_from_proposal,
     _build_narrator,
@@ -21,17 +19,19 @@ from storygame.cli import (
     _preview_state_delta,
     _proposal_mode_for_action,
     _public_event_message,
-    remember_opening_introductions,
-    _semantic_actions_for_action,
-    _structured_turn_proposal_for_action,
     _sanitize_narration_for_player,
+    _semantic_actions_for_action,
     _setup_phase_lines,
+    _structured_turn_proposal_for_action,
     _suppress_repeated_goal_copy,
     _targeted_conversation_requires_npc_reply,
     main,
+    remember_opening_introductions,
     run_replay,
     run_turn,
 )
+from storygame.engine.parser import Action, ActionKind, parse_command
+from storygame.engine.state import Event
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 from tests.narrator_stubs import StubNarrator
 
@@ -52,15 +52,18 @@ def test_cli_policy_helpers_cover_narrative_turn_variants() -> None:
 
     assert _action_from_proposal("go", {"intent": "go", "targets": ["north"]}).kind.value == "move"
     assert _action_from_proposal("take", {"intent": "take", "targets": ["key"]}).kind.value == "take"
-    assert _action_from_proposal(
-        "use", {"intent": "use", "targets": ["key"], "arguments": {"target": "lock"}}
-    ).target == "key:lock"
+    assert (
+        _action_from_proposal("use", {"intent": "use", "targets": ["key"], "arguments": {"target": "lock"}}).target
+        == "key:lock"
+    )
     assert _action_from_proposal("?", {"intent": "unknown"}).kind.value == "unknown"
 
     assert _context_goal_for_turn("look", "goal", 0) == "goal"
     assert _context_goal_for_turn("what is my objective?", "goal", 2) == "goal"
     assert _context_goal_for_turn("look", "goal", 2) == ""
-    assert _suppress_repeated_goal_copy(["The immediate objective is clear.", "Keep moving."], "look", "goal") == ["Keep moving."]
+    assert _suppress_repeated_goal_copy(["The immediate objective is clear.", "Keep moving."], "look", "goal") == [
+        "Keep moving."
+    ]
 
 
 def test_cli_proposal_and_dialogue_guards_cover_bounded_effects() -> None:
@@ -241,7 +244,7 @@ def test_run_turn_save_and_load_generic_exception_paths() -> None:
 
     _next, lines, _raw, _beat, _continued = run_turn(
         state,
-            "/save slot1",
+        "/save slot1",
         Random(701),
         StubNarrator(),
         save_store=save_store,
@@ -252,7 +255,7 @@ def test_run_turn_save_and_load_generic_exception_paths() -> None:
 
     _next, lines, _raw, _beat, _continued = run_turn(
         state,
-            "/load slot1",
+        "/load slot1",
         Random(701),
         StubNarrator(),
         save_store=save_store,

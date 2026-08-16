@@ -3,13 +3,13 @@ from __future__ import annotations
 import pytest
 
 from storygame.llm.story_agents.contracts import (
-    parse_story_bootstrap_output,
     StoryAgentContractError,
     parse_character_designer_output,
     parse_narrator_opening_output,
     parse_plot_designer_output,
     parse_room_presentation_output,
     parse_story_architect_output,
+    parse_story_bootstrap_output,
 )
 
 

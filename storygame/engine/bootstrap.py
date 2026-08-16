@@ -53,11 +53,18 @@ def validate_bootstrap_plan(plan: BootstrapPlan) -> None:
         if trigger["trigger_id"] in trigger_ids:
             raise ValueError(f"Duplicate trigger id '{trigger['trigger_id']}'.")
         trigger_ids.add(trigger["trigger_id"])
-        unknown_actor = next((actor_id for actor_id in trigger["actor_ids"] if actor_id not in character_ids and actor_id != "player"), "")
+        unknown_actor = next(
+            (actor_id for actor_id in trigger["actor_ids"] if actor_id not in character_ids and actor_id != "player"),
+            "",
+        )
         if unknown_actor:
             raise ValueError(f"Unknown actor id '{unknown_actor}' in trigger '{trigger['trigger_id']}'.")
         unknown_target = next(
-            (target_id for target_id in trigger["target_ids"] if target_id not in character_ids and target_id != "player"),
+            (
+                target_id
+                for target_id in trigger["target_ids"]
+                if target_id not in character_ids and target_id != "player"
+            ),
             "",
         )
         if unknown_target:
@@ -65,6 +72,8 @@ def validate_bootstrap_plan(plan: BootstrapPlan) -> None:
         unknown_item = next((item_id for item_id in trigger["item_ids"] if item_id not in item_ids), "")
         if unknown_item:
             raise ValueError(f"Unknown item id '{unknown_item}' in trigger '{trigger['trigger_id']}'.")
-        unknown_location = next((location_id for location_id in trigger["location_ids"] if location_id not in location_ids), "")
+        unknown_location = next(
+            (location_id for location_id in trigger["location_ids"] if location_id not in location_ids), ""
+        )
         if unknown_location:
             raise ValueError(f"Unknown location id '{unknown_location}' in trigger '{trigger['trigger_id']}'.")

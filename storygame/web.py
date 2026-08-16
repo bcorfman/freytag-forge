@@ -33,6 +33,7 @@ class _SessionState:
     state: GameState
     rng: Random
 
+
 class TurnRequest(BaseModel):
     command: str
     run_id: str | None = None
@@ -98,15 +99,9 @@ def create_app(
     sessions: dict[str, _SessionState] = {}
     active_narrator: Narrator = _build_narrator() if narrator is None else narrator
     active_output_editor = build_output_editor() if output_editor is None else output_editor
-    active_freeform_adapter = (
-        LlmFreeformProposalAdapter()
-        if freeform_adapter is None
-        else freeform_adapter
-    )
+    active_freeform_adapter = LlmFreeformProposalAdapter() if freeform_adapter is None else freeform_adapter
     use_fast_story_director_opening = story_director is None
-    active_story_director = (
-        StoryDirector(active_output_editor) if story_director is None else story_director
-    )
+    active_story_director = StoryDirector(active_output_editor) if story_director is None else story_director
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:

@@ -356,7 +356,9 @@ def parse_story_architect_output(payload: dict) -> StoryArchitectOutput:
         "protagonist_background": _ensure_terminal_punctuation(
             _strip_label(str(parsed["protagonist_background"]), ("background", "history"))
         ),
-        "secrets_to_hide": [_trim_sentence(str(secret)) for secret in parsed["secrets_to_hide"] if _trim_sentence(str(secret))],
+        "secrets_to_hide": [
+            _trim_sentence(str(secret)) for secret in parsed["secrets_to_hide"] if _trim_sentence(str(secret))
+        ],
         "tone": _trim_sentence(str(parsed["tone"])).lower(),
     }
     if not normalized["protagonist_name"]:
@@ -407,9 +409,7 @@ def parse_story_bootstrap_output(payload: dict) -> StoryBootstrapOutput:
             _strip_label(str(parsed["primary_goal"]), ("primary_goal", "primary", "goal"))
         ),
         "secondary_goals": [
-            _ensure_terminal_punctuation(str(goal))
-            for goal in parsed["secondary_goals"]
-            if _trim_sentence(str(goal))
+            _ensure_terminal_punctuation(str(goal)) for goal in parsed["secondary_goals"] if _trim_sentence(str(goal))
         ],
         "expanded_outline": _ensure_terminal_punctuation(
             _strip_label(str(parsed["expanded_outline"]), ("expanded_outline", "outline"))
@@ -440,9 +440,7 @@ def parse_story_bootstrap_output(payload: dict) -> StoryBootstrapOutput:
                 "min_turn": int(entry["min_turn"]),
                 "location": _trim_sentence(str(entry["location"])),
                 "participants": [
-                    _trim_sentence(str(name))
-                    for name in entry["participants"]
-                    if _trim_sentence(str(name))
+                    _trim_sentence(str(name)) for name in entry["participants"] if _trim_sentence(str(name))
                 ],
             }
             for entry in parsed["timed_events"]
@@ -568,7 +566,9 @@ def parse_story_bootstrap_critique_output(payload: dict) -> StoryBootstrapCritiq
     normalized = {
         "verdict": _trim_sentence(str(parsed["verdict"])).lower(),
         "continuity_summary": _ensure_terminal_punctuation(str(parsed["continuity_summary"])),
-        "issues": [_ensure_terminal_punctuation(str(issue)) for issue in parsed["issues"] if _trim_sentence(str(issue))],
+        "issues": [
+            _ensure_terminal_punctuation(str(issue)) for issue in parsed["issues"] if _trim_sentence(str(issue))
+        ],
     }
     if normalized["verdict"] not in {"accepted", "revise"}:
         raise StoryAgentContractError("STORY_BOOTSTRAP_CRITIQUE_CONTRACT_INVALID", "verdict:invalid_choice")

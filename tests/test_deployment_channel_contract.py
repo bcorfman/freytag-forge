@@ -69,7 +69,7 @@ def test_production_pages_publish_preserves_the_downloaded_dev_directory() -> No
     root = Path(__file__).resolve().parents[1]
     pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
 
-    assert 'mkdir -p published-pages/dev' in pages
+    assert "mkdir -p published-pages/dev" in pages
     assert 'cp -R "$source_dir/." published-pages/dev/' in pages
 
 
