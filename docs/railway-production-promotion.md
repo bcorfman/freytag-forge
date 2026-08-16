@@ -82,9 +82,13 @@ channel, and Railway-reported commit SHA.
    and the exact triggering SHA. Verify `/freytag-forge/dev/` shows the persistent
    **Staging — non-production** badge and reaches only the staging API.
 4. Keep the recorded V1 production deployment untouched. To promote, dispatch
-   `Promote staged SHA to production`, paste the full successful staging SHA,
-   and approve the protected production environment. The workflow validates
-   health and the root browser E2E before treating the promotion as successful.
+   `Promote staged SHA to production` with its SHA field blank to select the
+   newest successful staging deployment on `main`, then approve the protected
+   production environment. Supply a full SHA only to promote an older staged
+   candidate. Before uploading, the workflow prints the Railway deployment
+   IDs/statuses it can see and fails closed unless it identifies a successful
+   or active rollback candidate. It validates health and the root browser E2E
+   before treating the promotion as successful.
 
 ## Diagnostic E2E
 

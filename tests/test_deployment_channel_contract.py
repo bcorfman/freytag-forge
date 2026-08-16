@@ -55,6 +55,9 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "Hosted demo production E2E" in promotion
     assert "Record production promotion" in promotion
     assert "railway deployment list" in promotion
+    assert "Railway deployments visible before promotion" in promotion
+    assert "No eligible Railway rollback deployment" in promotion
+    assert "DEPLOYED_SHA: ${{ needs.validate-staged-sha.outputs.sha }}" in promotion
     assert "RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID" not in promotion
     assert "deploy-production:" not in (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
     assert "VITE_STAGING_API_BASE_URL" in pages
