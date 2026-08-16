@@ -56,7 +56,13 @@ commit.
 
 ## Phase 5 — Rollout and cleanup
 
-1. [ ] Gate the new contract during its initial staging window.
-2. [ ] Compare staging metrics with the Phase 0 baseline.
-3. [ ] Promote only with bounded recovery, latency target, and 90% coverage.
-4. [ ] Remove compatibility paths and update remaining authoring/runtime docs.
+1. [x] Gate the new contract during its initial staging window.
+2. [x] Compare staging metrics with the Phase 0 baseline.
+3. [x] Promote only with bounded recovery, latency target, and 90% coverage.
+4. [x] Remove compatibility paths and update remaining authoring/runtime docs.
+
+**Exit criteria:** [x] every staged SHA produces a retained, SHA-bound
+cross-genre evaluation artifact; only candidates with bounded recovery, zero
+integrity failures, p95 latency below ten seconds, and the upstream 90%
+coverage gate can publish the `staging-deployment` status. Human approval and
+the production-promotion record remain operator-owned release evidence.

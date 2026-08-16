@@ -65,7 +65,10 @@ fail-closed error.
 The grounded turn contract checks material staging claims for custody,
 environment, access, and events against a cloned post-effect world before
 rendering accepted prose. It uses structured relations, not prose keyword
-matching.
+matching. Every staging candidate then plays all four genre fixtures through
+the public hosted surface; SHA-bound evidence must clear the two-request cap,
+integrity checks, under-ten-second p95 target, and the project’s 90% coverage
+gate before it can be promoted.
 
 ## Start here
 
@@ -77,6 +80,7 @@ matching.
 - [Fact-authority contract](docs/fact-authority.md)
 - [Grounded turn-contract plan](.plans/grounded-turn-contract-plan.md)
 - [Grounded turn-contract boundary](docs/grounded-turn-contract-baseline.md)
+- [Phase 5 staging and promotion gate](docs/phase-5-staging-evaluation.md)
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)
 - [V2 compiled-story authoring](docs/compiled-story-authoring.md)

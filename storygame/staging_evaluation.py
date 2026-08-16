@@ -66,6 +66,7 @@ def run_staging_evaluation(
         disclosure_failures += int(isinstance(disclosure, dict) and not disclosure.get("passed", True))
     scripted_turns = len(model_calls) + typed_errors
     one_call_turns = sum(calls == 1 for calls in model_calls)
+    p95_turn_latency_ms = _p95(latencies_ms)
     failures = []
     if not identity_ok:
         failures.append("deployment_identity")
@@ -79,6 +80,8 @@ def run_staging_evaluation(
         failures.append("opening_disclosure")
     if scripted_turns != 4 * len(SCRIPTED_PLAYER_STYLES):
         failures.append("incomplete_scripted_coverage")
+    if p95_turn_latency_ms >= 10_000:
+        failures.append("p95_turn_latency")
     return {
         "schema_version": "phase5-staging-evaluation-v1",
         "candidate_sha": candidate_sha,
@@ -90,12 +93,18 @@ def run_staging_evaluation(
             "one_call_rate": one_call_turns / len(model_calls) if model_calls else 0.0,
             "repair_rate": sum(calls == 2 for calls in model_calls) / len(model_calls) if model_calls else 0.0,
             "typed_errors": typed_errors,
-            "p95_turn_latency_ms": _p95(latencies_ms),
+            "p95_turn_latency_ms": p95_turn_latency_ms,
             "premature_revelations": protected_leaks,
             "continuity_violations": continuity_violations,
             "opening_disclosure_failures": disclosure_failures,
             "completion_rate": completed_sessions / 4,
             "user_facing_session_failures": sum(not bool(fixture["passed"]) for fixture in fixtures.values()),
+        },
+        "baseline_comparison": {
+            "source": "docs/v2-acceptance-scorecard.md",
+            "normal_turn_provider_request_cap": 2,
+            "p95_turn_latency_target_ms": 10_000,
+            "coverage_floor_percent": 90,
         },
         "promotion_gate": {"passed": not failures, "failures": failures},
     }

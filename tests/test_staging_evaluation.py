@@ -66,6 +66,12 @@ def test_staging_evaluation_records_all_genres_styles_and_sha_bound_gate() -> No
     assert set(report["fixtures"]) == {"mystery", "fantasy", "sci-fi", "relationship"}
     assert report["metrics"]["scripted_turns"] == 4 * len(SCRIPTED_PLAYER_STYLES)
     assert report["metrics"]["one_call_rate"] == 1.0
+    assert report["baseline_comparison"] == {
+        "source": "docs/v2-acceptance-scorecard.md",
+        "normal_turn_provider_request_cap": 2,
+        "p95_turn_latency_target_ms": 10_000,
+        "coverage_floor_percent": 90,
+    }
 
 
 def test_staging_evaluation_fails_the_gate_for_wrong_sha_or_typed_error() -> None:
@@ -206,3 +212,59 @@ def test_staging_evaluation_retries_one_public_rate_limit_window() -> None:
     limited = _rate_limit_aware(request, waits.append)
     assert limited("POST", "/api/v1/turn", {}) == (200, {"status": "ok"})
     assert waits == [61]
+
+
+def test_staging_evaluation_rejects_a_p95_latency_over_ten_seconds(monkeypatch) -> None:
+    import storygame.staging_evaluation as staging_evaluation
+
+    sessions = 0
+    turns: dict[str, int] = {}
+    clock = iter(float(value) for value in range(10_000, 850_000, 15_000))
+    monkeypatch.setattr(staging_evaluation.time, "monotonic", lambda: next(clock))
+
+    def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
+        nonlocal sessions
+        if method == "GET":
+            return 200, {"status": "ok", "channel": "staging", "sha": "a" * 40}
+        if path.endswith("/session"):
+            sessions += 1
+            return 200, {"session_id": f"session-{sessions}"}
+        assert payload is not None
+        command = str(payload["command"])
+        session_id = str(payload["session_id"])
+        if command == "look":
+            return 200, {"status": "ok", "lines": ["An opening."], "state": {"location": "opening", "turn_index": 0}}
+        if "case file" in command:
+            turns[session_id] = 1
+            return 200, {
+                "status": "ok",
+                "lines": [
+                    "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."
+                ],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["ledger_entry_time"]},
+            }
+        if "warded scroll" in command:
+            turns[session_id] = 1
+            return 200, {
+                "status": "ok",
+                "lines": ["The warded scroll marks the moonlit ford as the safe route through the enchanted wood."],
+                "state": {"location": "opening", "turn_index": 1, "known_facts": ["warded_route"]},
+            }
+        if command in {"/save staging-evaluation", "/load staging-evaluation"}:
+            return 200, {
+                "status": "ok",
+                "lines": [command],
+                "state": {"location": "opening", "turn_index": turns[session_id]},
+            }
+        turns[session_id] = turns.get(session_id, 0) + 1
+        return 200, {
+            "status": "ok",
+            "lines": ["The scene responds."],
+            "state": {"location": "opening", "turn_index": turns[session_id]},
+            "model_calls": 1,
+        }
+
+    report = run_staging_evaluation("https://staging.example", "a" * 40, request=request)
+
+    assert report["metrics"]["p95_turn_latency_ms"] > 10_000
+    assert "p95_turn_latency" in report["promotion_gate"]["failures"]
