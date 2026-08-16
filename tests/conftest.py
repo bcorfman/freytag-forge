@@ -61,6 +61,7 @@ _INTEGRATION_FILES = {
 _COMPONENT_FILES = {
     "test_adapters.py",
     "test_freeform_unit.py",
+    "test_grounded_turn_contract_baseline.py",
     "test_llm_context.py",
     "test_dialogue_policy.py",
     "test_world_builder.py",
