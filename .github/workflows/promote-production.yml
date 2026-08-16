@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: Full 40-character SHA previously deployed successfully to staging.
-        required: true
+        description: Optional full 40-character staging SHA; leave blank to promote the latest successful staging SHA.
+        required: false
         type: string
 
 permissions:
@@ -33,10 +33,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          [[ "$INPUT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "A full lowercase immutable SHA is required." >&2; exit 1; }
-          gh api "repos/${GITHUB_REPOSITORY}/commits/${INPUT_SHA}" >/dev/null
-          gh api "repos/${GITHUB_REPOSITORY}/commits/${INPUT_SHA}/status" --jq '.statuses[] | select(.context == "staging-deployment" and .state == "success")' | grep -q . || { echo "SHA was not staged successfully." >&2; exit 1; }
-          echo "sha=$INPUT_SHA" >> "$GITHUB_OUTPUT"
+          candidate_sha="$INPUT_SHA"
+          if test -z "$candidate_sha"; then
+            while read -r sha; do
+              status="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${sha}/status" --jq '[.statuses[] | select(.context == "staging-deployment") | .state] | any(. == "success")')"
+              if test "$status" = true; then
+                candidate_sha="$sha"
+                break
+              fi
+            done < <(gh api "repos/${GITHUB_REPOSITORY}/commits?sha=main&per_page=100" --paginate --jq '.[].sha')
+          fi
+          [[ "$candidate_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "No successful staging SHA is available on main." >&2; exit 1; }
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${candidate_sha}" >/dev/null
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${candidate_sha}/status" --jq '.statuses[] | select(.context == "staging-deployment" and .state == "success")' | grep -q . || { echo "SHA was not staged successfully." >&2; exit 1; }
+          echo "Promoting staging candidate: $candidate_sha" >> "$GITHUB_STEP_SUMMARY"
+          echo "sha=$candidate_sha" >> "$GITHUB_OUTPUT"
 
   deploy-production:
     name: Deploy production

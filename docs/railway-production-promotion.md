@@ -3,8 +3,9 @@
 Phase 1 uses two isolated Railway channels. A successful trusted `main` CI run
 uploads its exact SHA to staging and publishes the browser bundle under `/dev/`.
 It cannot deploy production. Production is promoted only through the manual
-`Promote staged SHA to production` workflow, which accepts a full SHA only when
-that SHA has a successful `staging-deployment` status. Both deployments launch
+`Promote staged SHA to production` workflow, which selects the newest successful
+staging SHA on `main` when its optional SHA input is blank. A supplied full SHA
+must have a successful `staging-deployment` status. Both deployments launch
 `storygame.web_demo:app` from [`railway.toml`](../railway.toml).
 
 The health endpoint returns `status`, `channel`, and `sha`. The workflows reject

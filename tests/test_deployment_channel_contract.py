@@ -43,6 +43,9 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "Record staging deployment" in staging
     assert "workflow_dispatch" in promotion
     assert "^[0-9a-f]{40}$" in promotion
+    assert "required: false" in promotion
+    assert "latest successful staging SHA" in promotion
+    assert "commits?sha=main&per_page=100" in promotion
     assert "staging-deployment" in promotion
     assert "freytag-forge / production" in promotion
     assert "RAILWAY_PRODUCTION_ENVIRONMENT_ID" in promotion
@@ -71,6 +74,21 @@ def test_production_pages_publish_preserves_the_downloaded_dev_directory() -> No
 
     assert "mkdir -p published-pages/dev" in pages
     assert 'cp -R "$source_dir/." published-pages/dev/' in pages
+
+
+def test_staging_promotion_automatically_verifies_pages_and_api_identity() -> None:
+    root = Path(__file__).resolve().parents[1]
+    staging = (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
+    pages = (root / ".github/workflows/deploy-frontend-pages.yml").read_text(encoding="utf-8")
+
+    assert "frontend/dist/deployment.json" in pages
+    assert "Stamp the selected bundle with its immutable deployment identity" in pages
+    assert '"${{ inputs.channel }}" "${{ inputs.sha }}"' in pages
+    assert "pages_metadata_url=" in staging
+    assert "/dev/deployment.json" in staging
+    assert 'test "$pages_channel" = staging' in staging
+    assert 'test "$pages_sha" = "$GITHUB_SHA"' in staging
+    assert 'test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA"' in staging
 
 
 def test_non_production_badge_stays_hidden_until_the_staging_bundle_enables_it() -> None:
