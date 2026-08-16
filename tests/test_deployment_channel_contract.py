@@ -60,6 +60,7 @@ def test_phase_one_delivery_workflows_keep_staging_and_production_separate() -> 
     assert "No eligible Railway known-good deployment" in promotion
     assert "Railway known-good deployment before promotion" in promotion
     assert "DEPLOYED_SHA: ${{ needs.validate-staged-sha.outputs.sha }}" in promotion
+    assert "needs: [validate-staged-sha, deploy-production, hosted-demo-production-e2e]" in promotion
     assert "RAILWAY_KNOWN_GOOD_DEPLOYMENT_ID" not in promotion
     assert "deploy-production:" not in (root / ".github/workflows/test.yml").read_text(encoding="utf-8")
     assert "VITE_STAGING_API_BASE_URL" in pages
