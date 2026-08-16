@@ -44,6 +44,11 @@ budget. If it is exhausted, the runtime raises the typed
 `ORDINARY_TURN_RECOVERY_EXHAUSTED` error and retains the pre-turn facts; any
 follow-up belongs to offline evaluation, never a runtime fallback.
 
+Phase 1 of the grounded turn contract adds `staging_claims` to the local action
+and turn proposals. The closed relation vocabulary (`custody`, `environment`,
+`access`, and `event`) is verified only against cloned post-effect facts. It
+does not parse narration into facts or grant prose any mutation authority.
+
 Story-agent provider responses are normalized at the JSON boundary before local
 contract parsing. Supported envelopes include `narration`, `result.response`,
 `choices[].message.content`, and direct structured proposal objects.

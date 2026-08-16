@@ -7,6 +7,7 @@ from storygame.engine.facts import apply_fact_ops, dramatic_metric, set_dramatic
 from storygame.engine.policies import PredicatePolicyRegistry, validate_proposed_fact_ops
 from storygame.engine.scene_state import refresh_scene_state
 from storygame.engine.semantic_actions import commit_semantic_action
+from storygame.engine.staging_claims import validate_staging_claims
 from storygame.engine.state import Event, GameState
 from storygame.engine.triggers import evaluate_triggers
 from storygame.plot.dramatic_policy import turn_focus_from_proposal
@@ -96,6 +97,7 @@ def execute_turn_proposal(state: GameState, proposal: TurnProposal, rng) -> dict
         next_state.append_event(event)
 
     refresh_scene_state(next_state, turn_focus_from_proposal(next_state, proposal))
+    validate_staging_claims(next_state, proposal["staging_claims"])
 
     return {
         "state": next_state,

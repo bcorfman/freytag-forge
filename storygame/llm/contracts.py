@@ -132,6 +132,14 @@ class BeatHintsProposal(TypedDict):
     obstacle_mode: str
 
 
+class StagingClaim(TypedDict):
+    relation: str
+    subject_id: str
+    target_id: str
+    location_id: str
+    state_id: str
+
+
 class TurnProposal(TypedDict):
     turn_id: str
     mode: str
@@ -143,6 +151,7 @@ class TurnProposal(TypedDict):
     candidate_effects: tuple[SemanticActionProposal, ...]
     state_delta: StateDeltaProposal
     narration_claims: tuple[FactMutation, ...]
+    staging_claims: tuple[StagingClaim, ...]
     beat_hints: BeatHintsProposal
 
 
@@ -296,6 +305,26 @@ class _BeatHintsProposalModel(BaseModel):
     obstacle_mode: str = Field(default="", max_length=80)
 
 
+class _StagingClaimModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    relation: Literal["custody", "environment", "access", "event"]
+    subject_id: str = Field(default="", max_length=80)
+    target_id: str = Field(default="", max_length=80)
+    location_id: str = Field(default="", max_length=80)
+    state_id: str = Field(default="", max_length=80)
+
+    @model_validator(mode="after")
+    def _require_relation_ids(self) -> _StagingClaimModel:
+        if self.relation == "custody" and not self.subject_id:
+            raise ValueError("custody requires subject_id")
+        if self.relation in {"environment", "access", "event"} and not self.location_id:
+            raise ValueError(f"{self.relation} requires location_id")
+        if self.relation in {"access", "event"} and not self.subject_id:
+            raise ValueError(f"{self.relation} requires subject_id")
+        return self
+
+
 class _TurnProposalModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -309,6 +338,7 @@ class _TurnProposalModel(BaseModel):
     candidate_effects: tuple[_SemanticActionProposalModel, ...] = Field(default=(), max_length=12)
     state_delta: _StateDeltaProposalModel
     narration_claims: tuple[_FactMutationModel, ...] = Field(default=(), max_length=16)
+    staging_claims: tuple[_StagingClaimModel, ...] = Field(default=(), max_length=16)
     beat_hints: _BeatHintsProposalModel = _BeatHintsProposalModel()
 
     @model_validator(mode="before")
@@ -361,6 +391,7 @@ class _TurnProposalModel(BaseModel):
             "candidate_effects": payload.get("candidate_effects", ()),
             "state_delta": payload.get("state_delta", {}),
             "narration_claims": payload.get("narration_claims", ()),
+            "staging_claims": payload.get("staging_claims", ()),
             "npc_dialogue": {
                 "speaker_id": speaker_id,
                 "text": dialogue_text,

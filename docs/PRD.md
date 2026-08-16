@@ -492,6 +492,10 @@ flowchart LR
 - NPC presence consistency (off-screen NPCs cannot be narrated as present in-room)
 - Committed-state contradiction checks
 - Beat-transition legality
+- Grounded material staging claims: a local candidate-state validator checks
+  `custody`, `environment`, `access`, and `event` claims after bounded effects
+  apply to a clone. Unknown, duplicate, contradictory, and off-scene claims
+  consume the shared recovery budget and fail closed without a fact commit.
 
 ### Evaluation Harness
 - Fixed-seed regression tests for replay stability.

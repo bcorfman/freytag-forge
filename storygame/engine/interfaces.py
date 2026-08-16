@@ -138,6 +138,7 @@ class ActionProposalModel(BaseModel):
     arguments: dict[str, str] = {}
     disclosed_knowledge: str = ""
     proposed_effects: tuple[str, ...] = ()
+    staging_claims: tuple[dict[str, str], ...] = Field(default=(), max_length=16)
 
 
 class DialogProposalModel(BaseModel):
@@ -197,13 +198,9 @@ def load_rule_pack(scope_or_genre: str) -> dict[str, Any]:
 def load_policy_bundle(genre: str = "") -> dict[str, Any]:
     """Load and deterministically merge core and optional genre policy data."""
     normalized_genre = genre.strip().lower()
-    core = PredicateSchemaModel.model_validate(
-        _load_yaml(_data_path() / "predicates" / "core.yaml")
-    )
+    core = PredicateSchemaModel.model_validate(_load_yaml(_data_path() / "predicates" / "core.yaml"))
     predicates = list(core.predicates)
-    rules = list(
-        RulePackModel.model_validate(_load_yaml(_data_path() / "rules" / "core_rules.yaml")).rules
-    )
+    rules = list(RulePackModel.model_validate(_load_yaml(_data_path() / "rules" / "core_rules.yaml")).rules)
     if normalized_genre:
         predicate_path = _data_path() / "predicates" / "genres" / f"{normalized_genre}.yaml"
         rule_path = _data_path() / "rules" / "genres" / f"{normalized_genre}_rules.yaml"
@@ -231,9 +228,7 @@ def load_policy_bundle(genre: str = "") -> dict[str, Any]:
         key = (condition, rule.precedence)
         previous = signatures.get(key)
         if previous is not None and previous[0] != effects:
-            raise ValueError(
-                f"Conflicting rules '{previous[2]}' and '{rule.rule_id}' at precedence {rule.precedence}."
-            )
+            raise ValueError(f"Conflicting rules '{previous[2]}' and '{rule.rule_id}' at precedence {rule.precedence}.")
         signatures[key] = (effects, rule.precedence, rule.rule_id)
 
     predicates.sort(key=lambda predicate: predicate.name)
