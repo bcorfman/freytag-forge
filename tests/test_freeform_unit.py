@@ -224,7 +224,7 @@ def test_invalid_targeted_dialogue_speaker_flags_player_and_allows_visible_npc_a
         {"speaker": npc_id, "text": "Ask quickly.", "tone": "in_world"},
         {"intent": "ask_about", "targets": [npc_id], "arguments": {}, "proposed_effects": []},
     )
-    for speaker in (short_name, npc_name):
+    for speaker in (short_name, npc_name, f"{npc_name}, speaking in character"):
         assert not _has_invalid_targeted_dialogue_speaker(
             state,
             {"speaker": speaker, "text": "Ask quickly.", "tone": "in_world"},
@@ -1183,7 +1183,7 @@ def test_llm_freeform_adapter_accepts_visible_npc_short_name_for_case_file_reque
         nonlocal calls
         calls += 1
         return (
-            '{"dialog_proposal":{"speaker":"Daria","text":"The ledger entry is stamped 11:40 p.m., '
+            '{"dialog_proposal":{"speaker":"Daria Stone, your assistant","text":"The ledger entry is stamped 11:40 p.m., '
             'twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],'
             '"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
@@ -1195,7 +1195,7 @@ def test_llm_freeform_adapter_accepts_visible_npc_short_name_for_case_file_reque
     dialog, action = LlmFreeformProposalAdapter().propose(state, "DARIA, TELL ME ABOUT THE CASE FILE.")
 
     assert calls == 1
-    assert dialog["speaker"] == "Daria"
+    assert dialog["speaker"] == "Daria Stone, your assistant"
     assert _normalized_dialog_speaker_id(state, dialog["speaker"], action) == "daria_stone"
     assert action["disclosed_knowledge"] == "ledger_entry_time"
 
