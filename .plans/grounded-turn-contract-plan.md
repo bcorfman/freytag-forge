@@ -23,11 +23,13 @@ Facts remain the sole authority for consequential world state. The model may aut
 
 ## Phase 2 — Generic policy/data support
 
-1. [ ] Realize consequential environmental package declarations as facts.
-2. [ ] Add generic environment-transition policy support.
-3. [ ] Add bounded dramatic consequence classes.
-4. [ ] Validate route/evidence viability under complications.
-5. [ ] Exercise declarative paths in mystery, fantasy, and two more genres.
+1. [x] Realize consequential environmental package declarations as facts.
+2. [x] Add generic environment-transition policy support.
+3. [x] Add bounded dramatic consequence classes.
+4. [x] Validate route/evidence viability under complications.
+5. [x] Exercise declarative paths in mystery, fantasy, and two more genres.
+
+**Exit criteria:** [x] package-declared condition shifts, route blocks, and evidence recoveries commit as generic facts across mystery, fantasy, sci-fi, and relationship sessions.
 
 ## Phase 3 — Planner and renderer integration
 

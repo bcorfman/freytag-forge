@@ -20,6 +20,7 @@
 - Follow this priority order: developer experience, simplicity, fit with underlying APIs, API quality, testability, best practices.
 - Write tests first, implement to the tests, then update documentation. Add varied cross-genre regression coverage for generalized behavior.
 - Maintain project-wide coverage of at least 90%; verify with `uv run pytest -q`. Use `uv run python`, never plain `python`.
+- As the final implementation stage for every feature change, run Ruff in autofix mode: `uv run ruff check --fix . && uv run ruff format .`. Do this after tests and documentation updates, then rerun any focused verification affected by the fixes.
 - Do not pin CI, benchmark, documentation, or local pytest commands to a fixed
   collected-test count. The collection guard must enforce test quality through
   tiers and duplicate detection, while collection totals remain informational.

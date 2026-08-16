@@ -253,6 +253,7 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
     ops: list[dict[str, object]] = []
     for room_id, environment in package["map"]["environment"].items():
         ops.append({"op": "assert", "fact": ("room_exposure", str(room_id), str(environment["exposure"]))})
+        ops.append({"op": "assert", "fact": ("environment", str(room_id), str(environment["exposure"]))})
         source = str(environment.get("ambient_source", "")).strip()
         if source:
             ops.append({"op": "assert", "fact": ("ambient_source", str(room_id), source)})
@@ -266,6 +267,46 @@ def _package_fact_ops(package: dict) -> list[dict[str, object]]:
         )
         if label:
             ops.append({"op": "assert", "fact": ("path_label", str(path["from"]), route_id, label)})
+    for transition in package.get("environment_transitions", ()):
+        transition_id = str(transition["id"])
+        room_id = str(transition["room_id"])
+        ops.append(
+            {
+                "op": "assert",
+                "fact": (
+                    "environment_transition",
+                    transition_id,
+                    room_id,
+                    str(transition["from_state"]),
+                    str(transition["to_state"]),
+                ),
+            }
+        )
+        ops.append(
+            {
+                "op": "assert",
+                "fact": ("environment_consequence", transition_id, str(transition["consequence_class"])),
+            }
+        )
+        ops.extend(
+            {
+                "op": "assert",
+                "fact": ("transition_blocks_route", transition_id, str(route_id)),
+            }
+            for route_id in transition["blocked_route_ids"]
+        )
+        ops.extend(
+            {
+                "op": "assert",
+                "fact": (
+                    "environment_recovery",
+                    transition_id,
+                    str(recovery["evidence_id"]),
+                    str(recovery["route_id"]),
+                ),
+            }
+            for recovery in transition["evidence_routes"]
+        )
     for item in package["items"]:
         item_id = str(item["id"])
         custody = item.get("initial_custody") or {}
