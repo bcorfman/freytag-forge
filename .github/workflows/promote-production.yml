@@ -166,7 +166,7 @@ jobs:
   record-production-promotion:
     name: Record production promotion
     if: always()
-    needs: [deploy-production, hosted-demo-production-e2e]
+    needs: [validate-staged-sha, deploy-production, hosted-demo-production-e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Publish promotion status
