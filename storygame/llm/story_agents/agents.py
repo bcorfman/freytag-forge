@@ -82,6 +82,30 @@ def _provider_content(value: Any) -> str:
     return ""
 
 
+def _story_agent_response_content(payload: Any) -> str:
+    """Normalize supported provider response envelopes at the JSON boundary."""
+    if not isinstance(payload, dict):
+        return ""
+    narration = _provider_content(payload.get("narration"))
+    if narration:
+        return narration
+    result = payload.get("result")
+    if isinstance(result, dict):
+        response = _provider_content(result.get("response"))
+        if response:
+            return response
+    choices = payload.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        message = choices[0].get("message")
+        if isinstance(message, dict):
+            content = _provider_content(message.get("content"))
+            if content:
+                return content
+    if "dialog_proposal" in payload or "action_proposal" in payload:
+        return _provider_content(payload)
+    return ""
+
+
 def _json_mode_rejected(detail: str) -> bool:
     try:
         payload = json.loads(detail)
@@ -170,11 +194,9 @@ def _chat_complete(
         try:
             with urllib.request.urlopen(http_request, timeout=timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-            narration = _provider_content(payload.get("narration"))
+            narration = _story_agent_response_content(payload)
             if narration:
                 return narration
-            if "choices" in payload:
-                return _provider_content(payload["choices"][0]["message"]["content"])
             raise RuntimeError("Cloudflare story-agent response missing expected content.")
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
