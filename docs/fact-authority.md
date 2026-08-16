@@ -44,6 +44,10 @@ budget. If it is exhausted, the runtime raises the typed
 `ORDINARY_TURN_RECOVERY_EXHAUSTED` error and retains the pre-turn facts; any
 follow-up belongs to offline evaluation, never a runtime fallback.
 
+Story-agent provider responses are normalized at the JSON boundary before local
+contract parsing. Supported envelopes include `narration`, `result.response`,
+`choices[].message.content`, and direct structured proposal objects.
+
 ## Observer and evidence boundaries
 
 `storygame.engine.perception.ObservationResolver` derives an observer's

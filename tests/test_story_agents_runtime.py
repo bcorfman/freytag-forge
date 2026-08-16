@@ -22,6 +22,7 @@ from storygame.llm.story_agents.agents import (
     _json_from_text,
     _normalize_actionable_objective_language,
     _normalize_background_clause,
+    _story_agent_response_content,
     _summary_premise,
 )
 from storygame.llm.story_agents.contracts import StoryAgentContractError
@@ -116,6 +117,42 @@ def test_chat_complete_cloudflare_worker_branch(monkeypatch) -> None:
     assert captured_requests[-1]["response_format"] == {"type": "json_object"}
 
     assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u") == "ok-cloudflare"
+
+
+@pytest.mark.parametrize(
+    ("envelope", "expected"),
+    (
+        (None, ""),
+        ({"narration": "narrated"}, "narrated"),
+        ({"result": {"response": "nested"}}, "nested"),
+        ({"choices": [{"message": {"content": "choice"}}]}, "choice"),
+        ({"dialog_proposal": {"text": "direct"}}, '{"dialog_proposal":{"text":"direct"}}'),
+        ({"result": {"response": ""}, "choices": []}, ""),
+    ),
+)
+def test_story_agent_response_content_normalizes_supported_envelopes(envelope, expected: str) -> None:
+    assert _story_agent_response_content(envelope) == expected
+
+
+@pytest.mark.parametrize(
+    "response",
+    (
+        '{"result":{"response":{"dialog_proposal":{"speaker":"daria_stone","text":"The payment was diverted.","tone":"in_world"},"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{},"proposed_effects":[]}}}}',
+        '{"dialog_proposal":{"speaker":"daria_stone","text":"The payment was diverted.","tone":"in_world"},"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{},"proposed_effects":[]}}',
+    ),
+)
+def test_chat_complete_cloudflare_normalizes_structured_story_agent_envelopes(monkeypatch, response: str) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
+
+    def _cloudflare_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        return _FakeResponse(response)
+
+    monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
+
+    payload = json.loads(agent_module._chat_complete("cloudflare", "s", "u"))
+
+    assert payload["dialog_proposal"]["speaker"] == "daria_stone"
+    assert payload["action_proposal"]["intent"] == "ask_about"
 
 
 def test_chat_complete_cloudflare_uses_bounded_default_timeout_and_no_retry(monkeypatch) -> None:
