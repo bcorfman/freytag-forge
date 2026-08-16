@@ -906,7 +906,16 @@ def run_turn(
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
     try:
-        planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(preturn_state, raw_input)
+        if type(active_freeform_adapter) is LlmFreeformProposalAdapter:
+            planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(
+                preturn_state,
+                raw_input,
+                lambda dialog, action: resolve_freeform_roleplay_with_proposals(
+                    preturn_state, raw_input, dialog, action
+                ),
+            )
+        else:
+            planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(preturn_state, raw_input)
         normalized_action_payload = parse_action_proposal(
             bind_direct_npc_conversation_target(
                 preturn_state,
