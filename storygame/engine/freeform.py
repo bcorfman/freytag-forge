@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from typing import Any, Protocol, TypedDict
 
 from storygame.engine.facts import (
@@ -867,10 +868,15 @@ class LlmFreeformProposalAdapter:
     def __init__(self, *_ignored: object, **_ignored_options: object) -> None:
         pass
 
-    def propose(self, state: GameState, raw_input: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    def propose(
+        self,
+        state: GameState,
+        raw_input: str,
+        candidate_validator: Callable[[dict[str, Any], dict[str, Any]], None] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         system, user = _freeform_planner_prompt(state, raw_input)
         try:
-            dialog_payload, action_payload = self._planned_payloads(state, raw_input, system, user)
+            dialog_payload, action_payload = self._planned_payloads(state, raw_input, system, user, candidate_validator)
             dialog_payload, action_payload = _scope_normalized_proposals(
                 state, raw_input, dialog_payload, action_payload
             )
@@ -888,9 +894,10 @@ class LlmFreeformProposalAdapter:
         raw_input: str,
         system: str,
         user: str,
+        candidate_validator: Callable[[dict[str, Any], dict[str, Any]], None] | None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
-            return self._validated_planner_payloads(state, raw_input, system, user)
+            return self._validated_planner_payloads(state, raw_input, system, user, candidate_validator)
         except Exception as exc:
             retry_system = (
                 system
@@ -898,7 +905,7 @@ class LlmFreeformProposalAdapter:
                 + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
                 + "return JSON only, with no prose before or after the object."
             )
-            return self._validated_planner_payloads(state, raw_input, retry_system, user)
+            return self._validated_planner_payloads(state, raw_input, retry_system, user, candidate_validator)
 
     def _validated_planner_payloads(
         self,
@@ -906,6 +913,7 @@ class LlmFreeformProposalAdapter:
         raw_input: str,
         system: str,
         user: str,
+        candidate_validator: Callable[[dict[str, Any], dict[str, Any]], None] | None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         dialog_payload, action_payload = self._parse_planner_response(state, raw_input, system, user)
         if _explicit_npc_address_requested(raw_input) and _has_invalid_targeted_dialogue_speaker(
@@ -921,6 +929,8 @@ class LlmFreeformProposalAdapter:
             raise ValueError("planner_dialogue_code_artifact")
         if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):
             raise ValueError("planner_dialogue_player_echo")
+        if candidate_validator is not None:
+            candidate_validator(dialog_payload, action_payload)
         return dialog_payload, action_payload
 
     def _parse_planner_response(
@@ -935,6 +945,7 @@ class LlmFreeformProposalAdapter:
             raise ValueError("planner_non_json")
         dialog_payload = parse_dialog_proposal(dict(payload.get("dialog_proposal", {})))
         raw_action_payload = _normalize_action_payload(dict(payload.get("action_proposal", {})))
+        raw_action_payload["staging_claims"] = payload.get("staging_claims", ())
         action_payload = parse_action_proposal(
             _normalized_movement_action_payload(state, raw_input, raw_action_payload)
         )
@@ -1341,7 +1352,14 @@ def resolve_freeform_roleplay(
 ) -> FreeformResolution:
     planning_state = state.clone()
     planning_state.turn_index += 1
-    dialog_payload, action_payload = adapter.propose(planning_state, raw_input)
+    if isinstance(adapter, LlmFreeformProposalAdapter):
+        dialog_payload, action_payload = adapter.propose(
+            planning_state,
+            raw_input,
+            lambda dialog, action: resolve_freeform_roleplay_with_proposals(state, raw_input, dialog, action),
+        )
+    else:
+        dialog_payload, action_payload = adapter.propose(planning_state, raw_input)
     return resolve_freeform_roleplay_with_proposals(state, raw_input, dialog_payload, action_payload)
 
 
@@ -1397,6 +1415,7 @@ def resolve_freeform_roleplay_with_proposals(
                 "text": str(dialog_proposal["text"]),
             },
             "narration": str(dialog_proposal["text"]),
+            "staging_claims": action_proposal["staging_claims"],
             "semantic_actions": _semantic_actions_for_freeform(state, action_proposal, envelope),
             "state_delta": envelope,
             "beat_hints": {

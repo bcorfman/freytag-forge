@@ -123,6 +123,11 @@ No response establishes world truth by itself. If a result is rejected, the
 engine preserves the byte-identical prior runtime state and returns a typed
 fail-closed error.
 
+Phase 1 of the grounded turn contract is complete: material staging claims for
+custody, environment, access, and events are checked against canonical facts
+on a cloned post-effect candidate before narration can be accepted. This is
+structured relation validation, not prose keyword matching.
+
 ## Start here
 
 - [Product and architecture reference](docs/PRD.md)
@@ -131,7 +136,8 @@ fail-closed error.
 - [V2 acceptance matrix](docs/v2-acceptance-matrix.md)
 - [V2 migration scorecard](docs/v2-acceptance-scorecard.md)
 - [Fact-authority contract](docs/fact-authority.md)
-- [Grounded turn-contract baseline](docs/grounded-turn-contract-baseline.md)
+- [Grounded turn-contract plan](.plans/grounded-turn-contract-plan.md)
+- [Grounded turn-contract boundary](docs/grounded-turn-contract-baseline.md)
 - [Frozen evaluation baseline](docs/evaluation-baseline.md)
 - [Offline package authoring and playability](docs/offline-package-authoring.md)
 - [V2 compiled-story authoring](docs/compiled-story-authoring.md)

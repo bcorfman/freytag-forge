@@ -138,6 +138,7 @@ class ActionProposalModel(BaseModel):
     arguments: dict[str, str] = {}
     disclosed_knowledge: str = ""
     proposed_effects: tuple[str, ...] = ()
+    staging_claims: tuple[dict[str, str], ...] = Field(default=(), max_length=16)
 
 
 class DialogProposalModel(BaseModel):
