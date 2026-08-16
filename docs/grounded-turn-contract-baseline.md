@@ -1,11 +1,23 @@
 # Grounded turn contract
 
-Phases 1–3 are complete as of 2026-08-16. Ordinary freeform proposals carry local typed `staging_claims`; no provider-side schema is trusted for semantics.
+Phases 1–4 are complete as of 2026-08-16. Ordinary freeform proposals carry local typed `staging_claims`; no provider-side schema is trusted for semantics.
 
 The four generic relation families are `custody`, `environment`, `access`, and `event`. Before a proposal is accepted, the normal turn pipeline applies its already validated effects to a clone and verifies every claim against that candidate's canonical facts. Claims with an unknown relation, insufficient IDs, duplicate or contradictory identity, unavailable entity, or off-scene location fail local validation. The source fact store remains unchanged.
 
 Planner claim failures use the same two-request recovery budget as malformed JSON, contract, speaker, and disclosure failures. Exhaustion raises `ORDINARY_TURN_RECOVERY_EXHAUSTED`; it never returns an invented successful turn. The planner receives only the observer-scoped current claims and deterministic effects it may stage, including post-effect custody claims for available takes. Unambiguous visible destinations and item aliases normalize locally through that same proposal/commit contract, so they do not depend on a provider response. Movement context omits pre-move access claims because validation observes the destination candidate. Its instructions distinguish atmosphere from material staging. After the atomic commit succeeds, renderers use only the accepted prose returned by that commit. The temporary phrase-based custody guard is retired: prose is never parsed as state, and typed claims remain the only material-staging check.
 
-The shared CLI, local web, and hosted-demo turn path receives this behavior below their separate deployment adapters. Focused deterministic coverage is in `tests/test_grounded_turn_contract.py`.
+The deployed hosted-demo turn path receives this behavior below its deployment adapter. Focused deterministic coverage is in `tests/test_grounded_turn_contract.py`.
+
+Phase 4 adds durable operational evidence without making it world truth. Every
+accepted LLM-planned turn records locally generated attempt IDs, bounded retry
+count, elapsed milliseconds, rejection codes, and final outcome in the
+committed event metadata. Save artifacts project the latest accepted record
+under `trace.grounded_turn_staging`; SQLite event snapshots retain the same
+metadata. The deployed hosted-demo adapter projects the final attempt ID,
+retry count, latency, and outcome in `X-Grounded-Turn-*` response headers. A
+failed exhausted proposal remains fail-closed and uncommitted, while its
+adapter-visible failure remains diagnosable. The relation-family matrix tests
+custody, environment, access, and event claims across mystery, fantasy,
+sci-fi, and relationship sessions, with a contradictory fixture for each.
 
 Phase 2 makes consequential conditions package data rather than prose luck. Every generated package declares a named room-condition transition, its bounded consequence class (`pressure`, `setback`, `cost`, or `opportunity`), affected routes, and any evidence-based recovery. Bootstrap realizes those declarations as canonical facts. The shared semantic-action boundary can apply only a currently declared transition or resolve only a declared block using held evidence. Package validation rejects unknown rooms, routes, evidence, malformed classes, and a fully blocked room without a recovery route. Mystery, fantasy, sci-fi, and relationship fixtures exercise the same contract.

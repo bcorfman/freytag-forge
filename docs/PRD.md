@@ -57,7 +57,7 @@ conditions before atomically committing facts. Bare completion tags are
 rejected for blueprint-backed sessions, and the prompt receives only
 observer-earned facts and legal route metadata.
 
-Grounded-turn-contract Phases 0–3 have audited the V1 and V2
+Grounded-turn-contract Phases 0–4 have audited the V1 and V2
 proposal/rendering boundaries, recorded the adapter-wide provider-call and
 in-process latency baseline, and closed the generic material-staging path.
 Ordinary V1 freeform turns carry typed `staging_claims`, checked only against
@@ -67,7 +67,11 @@ and evidence recoveries; validation rejects an unwinnable fully blocked route.
 The planner receives only observer-scoped claim/effect choices, distinguishes
 atmosphere from material staging, and renderers receive prose only after the
 atomic commit accepts it. The same contract is exercised by mystery, fantasy,
-sci-fi, and relationship sessions without a runtime genre branch. See the
+sci-fi, and relationship sessions without a runtime genre branch. Accepted
+planner turns project locally generated request IDs, retries, latency,
+rejection codes, and outcome into committed event metadata, integrity-checked
+save traces, and hosted-demo response headers; exhausted failures stay
+uncommitted. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
 ## Goals

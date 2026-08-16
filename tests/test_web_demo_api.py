@@ -244,6 +244,53 @@ def test_demo_session_create_then_turn_flow(tmp_path):
     assert next_payload["state"]["turn_index"] == 1
 
 
+def _staging_response(text: str, holder: str) -> dict[str, object]:
+    return {
+        "dialog_proposal": {"speaker": "narrator", "text": text, "tone": "in_world"},
+        "action_proposal": {"intent": "inspect", "targets": [], "arguments": {}, "proposed_effects": []},
+        "staging_claims": [
+            {
+                "relation": "custody",
+                "subject_id": "case_file",
+                "target_id": holder,
+                "location_id": "",
+                "state_id": "",
+            }
+        ],
+    }
+
+
+def test_demo_projects_grounded_turn_trace_headers(tmp_path, monkeypatch) -> None:
+    replies = iter(
+        (
+            _staging_response("The file is yours.", "player"),
+            _staging_response("Daria keeps the file close.", "daria_stone"),
+        )
+    )
+    monkeypatch.setattr(
+        "storygame.engine.freeform._story_agent_chat_complete", lambda *_args: json.dumps(next(replies))
+    )
+    client = TestClient(
+        create_demo_app(
+            save_db_path=tmp_path / "web_demo_saves.sqlite",
+            narrator_mode="cloudflare",
+            narrator=StubNarrator(_OPENING_TEXT),
+            output_editor=_PassThroughEditor(),
+            story_director=_StubDirector(),
+            save_store=InMemorySaveStore(),
+            freeform_adapter=LlmFreeformProposalAdapter(),
+        )
+    )
+    session_id = client.post("/api/v1/session", json={"seed": 42}).json()["session_id"]
+
+    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "inspect the scene"})
+
+    assert response.status_code == 200
+    assert response.headers["x-grounded-turn-outcome"] == "accepted"
+    assert response.headers["x-grounded-turn-retries"] == "1"
+    assert response.headers["x-grounded-turn-request-id"]
+
+
 def test_demo_document_briefing_is_visible_and_committed_before_save(tmp_path) -> None:
     store = InMemorySaveStore()
     client = TestClient(

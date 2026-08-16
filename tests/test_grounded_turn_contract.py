@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from random import Random
+
 import pytest
 
 from storygame.engine.environment import apply_environment_transition, resolve_environment_complication
@@ -7,6 +10,7 @@ from storygame.engine.freeform import LlmFreeformProposalAdapter, resolve_freefo
 from storygame.engine.semantic_actions import commit_semantic_action
 from storygame.engine.staging_claims import validate_staging_claims
 from storygame.engine.world_builder import WorldPackageValidationError, build_world_package, validate_world_package
+from storygame.persistence.savegame_sqlite import SqliteSaveStore
 from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
@@ -47,6 +51,49 @@ def test_candidate_claims_cover_each_generic_relation() -> None:
             },
         ),
     )
+
+
+@pytest.mark.parametrize("genre", ("mystery", "fantasy", "sci-fi", "romance"))
+def test_relation_family_matrix_is_valid_across_genres_and_rejects_adversarial_claims(genre: str) -> None:
+    state = build_default_state(seed=909, genre=genre)
+    location_id = next(fact[2] for fact in state.world_facts.query("at", "player", None))
+    environment = next(fact for fact in state.world_facts.query("environment", location_id, None))
+    access = next(fact for fact in state.world_facts.query("path") if location_id in fact[2:])
+    state.world_facts.assert_fact("event", "phase4_marker", location_id)
+    claims = (
+        {"relation": "custody", "subject_id": "field_kit", "target_id": "player", "location_id": "", "state_id": ""},
+        {
+            "relation": "environment",
+            "subject_id": "",
+            "target_id": "",
+            "location_id": location_id,
+            "state_id": environment[2],
+        },
+        {
+            "relation": "access",
+            "subject_id": access[1],
+            "target_id": "",
+            "location_id": location_id,
+            "state_id": "available",
+        },
+        {
+            "relation": "event",
+            "subject_id": "phase4_marker",
+            "target_id": "",
+            "location_id": location_id,
+            "state_id": "",
+        },
+    )
+
+    validate_staging_claims(state, claims)
+    for claim in claims:
+        adversarial = {**claim, "state_id": "fabricated"}
+        if claim["relation"] == "custody":
+            adversarial["target_id"] = "fabricated"
+        elif claim["relation"] == "event":
+            adversarial["subject_id"] = "fabricated"
+        with pytest.raises(ValueError, match="STAGING_CLAIM"):
+            validate_staging_claims(state, (adversarial,))
 
 
 @pytest.mark.parametrize(
@@ -135,6 +182,66 @@ def test_claim_failure_uses_shared_recovery_budget_before_commit(monkeypatch: py
     result = resolve_freeform_roleplay(state, "inspect the scene", LlmFreeformProposalAdapter())
 
     assert result["state"].turn_index == state.turn_index + 1
+
+
+def test_accepted_turn_projects_request_retry_latency_and_fact_evidence(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state = build_default_state(seed=907, genre="mystery")
+    responses = iter(
+        (
+            {
+                "dialog_proposal": {"speaker": "narrator", "text": "The file is yours.", "tone": "in_world"},
+                "action_proposal": {"intent": "inspect", "targets": [], "arguments": {}, "proposed_effects": []},
+                "staging_claims": [
+                    {
+                        "relation": "custody",
+                        "subject_id": "case_file",
+                        "target_id": "player",
+                        "location_id": "",
+                        "state_id": "",
+                    }
+                ],
+            },
+            {
+                "dialog_proposal": {"speaker": "narrator", "text": "Daria keeps the file close.", "tone": "in_world"},
+                "action_proposal": {"intent": "inspect", "targets": [], "arguments": {}, "proposed_effects": []},
+                "staging_claims": [
+                    {
+                        "relation": "custody",
+                        "subject_id": "case_file",
+                        "target_id": "daria_stone",
+                        "location_id": "",
+                        "state_id": "",
+                    }
+                ],
+            },
+        )
+    )
+    monkeypatch.setattr(
+        "storygame.engine.freeform._story_agent_chat_complete", lambda *_args: json.dumps(next(responses))
+    )
+
+    result = resolve_freeform_roleplay(state, "inspect the scene", LlmFreeformProposalAdapter())
+    trace = result["event"].metadata["staging_trace"]
+
+    assert trace["outcome"] == "accepted"
+    assert trace["retries"] == 1
+    assert len(trace["request_ids"]) == 2
+    assert trace["attempts"][0]["status"] == "rejected"
+    assert trace["attempts"][1]["status"] == "accepted"
+    assert trace["latency_ms"] >= 0
+
+    store = SqliteSaveStore(tmp_path / "saves.sqlite")
+    try:
+        store.save_run("phase4", result["state"], Random(907), raw_command="inspect the scene")
+        artifact = json.loads((store.artifacts_root / "phase4" / "StoryState.json").read_text(encoding="utf-8"))
+    finally:
+        store.close()
+    persisted_trace = artifact["trace"]["grounded_turn_staging"]
+    assert persisted_trace["request_ids"] == list(trace["request_ids"])
+    assert persisted_trace["retries"] == trace["retries"]
+    assert persisted_trace["outcome"] == "accepted"
 
 
 def test_typed_claim_parity_replaces_phrase_based_custody_guard(monkeypatch: pytest.MonkeyPatch) -> None:

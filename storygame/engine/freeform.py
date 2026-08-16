@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable
+from time import perf_counter
 from typing import Any, Protocol, TypedDict
+from uuid import uuid4
 
 from storygame.engine.facts import (
     active_story_goal,
@@ -211,6 +213,27 @@ class OrdinaryTurnRecoveryExhausted(RuntimeError):
     def __init__(self, cause: Exception) -> None:
         self.cause = _short_text(str(cause), 120)
         super().__init__(f"{self.code}: {self.cause}")
+
+
+def _staging_failure_code(error: Exception) -> str:
+    """Return a bounded, persistence-safe rejection code for one planner attempt."""
+    message = str(error).strip().upper()
+    if message.startswith("STAGING_") or message.startswith("CONTRACT_"):
+        return message.split(":", 1)[0][:80]
+    if message.startswith("PLANNER_"):
+        return message.split(":", 1)[0][:80]
+    return type(error).__name__.upper()
+
+
+def _staging_trace(attempts: list[dict[str, Any]], started_at: float, outcome: str) -> dict[str, Any]:
+    return {
+        "contract": "grounded_turn_staging.v1",
+        "outcome": outcome,
+        "request_ids": tuple(str(attempt["request_id"]) for attempt in attempts),
+        "attempts": tuple(dict(attempt) for attempt in attempts),
+        "retries": max(0, len(attempts) - 1),
+        "latency_ms": round((perf_counter() - started_at) * 1000, 3),
+    }
 
 
 class FreeformResolution(TypedDict):
@@ -960,7 +983,7 @@ def _scene_scoped_dialog_override(
 
 class LlmFreeformProposalAdapter:
     def __init__(self, *_ignored: object, **_ignored_options: object) -> None:
-        pass
+        self.last_staging_trace: dict[str, Any] = {}
 
     def propose(
         self,
@@ -990,8 +1013,36 @@ class LlmFreeformProposalAdapter:
         user: str,
         candidate_validator: Callable[[dict[str, Any], dict[str, Any]], None] | None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        started_at = perf_counter()
+        attempts: list[dict[str, Any]] = []
+
+        def attempt(planner_system: str) -> tuple[dict[str, Any], dict[str, Any]]:
+            request_id = uuid4().hex
+            request_started_at = perf_counter()
+            try:
+                result = self._validated_planner_payloads(state, raw_input, planner_system, user, candidate_validator)
+            except Exception as exc:
+                attempts.append(
+                    {
+                        "request_id": request_id,
+                        "status": "rejected",
+                        "latency_ms": round((perf_counter() - request_started_at) * 1000, 3),
+                        "failure_code": _staging_failure_code(exc),
+                    }
+                )
+                raise
+            attempts.append(
+                {
+                    "request_id": request_id,
+                    "status": "accepted",
+                    "latency_ms": round((perf_counter() - request_started_at) * 1000, 3),
+                    "failure_code": "",
+                }
+            )
+            return result
+
         try:
-            return self._validated_planner_payloads(state, raw_input, system, user, candidate_validator)
+            result = attempt(system)
         except Exception as exc:
             retry_system = (
                 system
@@ -999,7 +1050,13 @@ class LlmFreeformProposalAdapter:
                 + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
                 + "return JSON only, with no prose before or after the object."
             )
-            return self._validated_planner_payloads(state, raw_input, retry_system, user, candidate_validator)
+            try:
+                result = attempt(retry_system)
+            except Exception:
+                self.last_staging_trace = _staging_trace(attempts, started_at, "failed")
+                raise
+        self.last_staging_trace = _staging_trace(attempts, started_at, "accepted")
+        return result
 
     def _validated_planner_payloads(
         self,
@@ -1044,6 +1101,13 @@ class LlmFreeformProposalAdapter:
         return dialog_payload, parse_action_proposal(
             bind_direct_npc_conversation_target(state, raw_input, action_payload)
         )
+
+
+def grounded_turn_trace(adapter: FreeformProposalAdapter) -> dict[str, Any]:
+    """Expose only locally generated planner telemetry to deployment adapters."""
+    if isinstance(adapter, LlmFreeformProposalAdapter):
+        return dict(adapter.last_staging_trace)
+    return {}
 
 
 def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:
@@ -1452,7 +1516,8 @@ def resolve_freeform_roleplay(
         )
     else:
         dialog_payload, action_payload = adapter.propose(planning_state, raw_input)
-    return resolve_freeform_roleplay_with_proposals(state, raw_input, dialog_payload, action_payload)
+    staging_trace = dict(adapter.last_staging_trace) if isinstance(adapter, LlmFreeformProposalAdapter) else {}
+    return resolve_freeform_roleplay_with_proposals(state, raw_input, dialog_payload, action_payload, staging_trace)
 
 
 def resolve_freeform_roleplay_with_proposals(
@@ -1460,6 +1525,7 @@ def resolve_freeform_roleplay_with_proposals(
     raw_input: str,
     dialog_payload: dict[str, Any],
     action_payload: dict[str, Any],
+    staging_trace: dict[str, Any] | None = None,
 ) -> FreeformResolution:
     dialog_proposal = parse_dialog_proposal(dialog_payload)
     action_proposal = parse_action_proposal(action_payload)
@@ -1552,6 +1618,7 @@ def resolve_freeform_roleplay_with_proposals(
             "state_update_envelope": envelope,
             "fact_ops": committed_fact_ops,
             "committed_event_types": [event.type for event in committed_events],
+            "staging_trace": dict(staging_trace or {}),
         },
     )
     next_state.append_event(compatibility_event)
