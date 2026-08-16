@@ -93,12 +93,12 @@ jobs:
           fi
           echo "Railway deployments visible before promotion (id, status, createdAt):"
           jq -r 'sort_by(.createdAt) | reverse | .[] | [.id, .status, .createdAt] | @tsv' <<<"$rollback_deployments"
-          rollback_deployment_id="$(jq -r 'map(select(.status == "SUCCESS" or .status == "ACTIVE")) | sort_by(.createdAt) | last | .id // empty' <<<"$rollback_deployments")"
-          if test -z "$rollback_deployment_id"; then
-            echo "No eligible Railway rollback deployment (expected status SUCCESS or ACTIVE) for the configured production target." >&2
+          known_good_deployment_id="$(jq -r 'map(select(.status == "SUCCESS" or .status == "ACTIVE" or .status == "SLEEPING")) | sort_by(.createdAt) | last | .id // empty' <<<"$rollback_deployments")"
+          if test -z "$known_good_deployment_id"; then
+            echo "No eligible Railway known-good deployment (expected status SUCCESS, ACTIVE, or SLEEPING) for the configured production target." >&2
             exit 1
           fi
-          echo "- Railway rollback candidate before promotion: \`$rollback_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Railway known-good deployment before promotion: \`$known_good_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
           railway variable set "FREYTAG_DEPLOYMENT_SHA=$DEPLOYED_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
           timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA"
           health_channel=''
