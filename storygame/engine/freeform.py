@@ -822,6 +822,12 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "Return JSON only with keys dialog_proposal, action_proposal, and staging_claims. "
         "dialog_proposal requires: speaker, text, tone. "
         "action_proposal requires: intent, targets, arguments, disclosed_knowledge, proposed_effects. "
+        "Always emit this complete shape, replacing only its values: "
+        '{"dialog_proposal":{"speaker":"narrator","text":"new in-world response","tone":"in_world"},'
+        '"action_proposal":{"intent":"freeform","targets":[],"arguments":{},'
+        '"disclosed_knowledge":"","proposed_effects":[]},"staging_claims":[]}. '
+        "speaker, text, tone, intent, and disclosed_knowledge are strings; targets, proposed_effects, and "
+        "staging_claims are arrays; arguments is an object whose values are strings. "
         "Use only entities from provided context. "
         "For uncertain targets, use an empty targets list and a generic intent. "
         "Do not auto-target a visible NPC for a world interaction unless the player clearly addressed "
@@ -1048,7 +1054,9 @@ class LlmFreeformProposalAdapter:
                 system
                 + " Your previous planner reply failed local validation "
                 + f"({str(exc)[:120]}). Retry now with both proposal objects complete and "
-                + "return JSON only, with no prose before or after the object."
+                + "return JSON only, with no prose before or after the object. Include every field in the "
+                + "complete JSON shape above with the required types, and never echo or repeat player_input "
+                + "as dialog_proposal.text."
             )
             try:
                 result = attempt(retry_system)
