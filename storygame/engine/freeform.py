@@ -537,6 +537,26 @@ def _visible_npc_match(state: GameState, raw_target: str) -> str:
     return ""
 
 
+def _addressed_visible_npc_id(state: GameState, raw_input: str) -> str:
+    direct_match = _DIRECT_ADDRESS_PATTERN.match(raw_input)
+    ask_match = _ASK_TARGET_PATTERN.search(raw_input)
+    candidate = direct_match.group(1) if direct_match is not None else ask_match.group(1) if ask_match else ""
+    return _visible_npc_match(state, candidate.strip()) if candidate else ""
+
+
+def _bind_direct_npc_conversation_target(
+    state: GameState, raw_input: str, action_payload: dict[str, Any]
+) -> dict[str, Any]:
+    """Keep a direct NPC question's action target aligned with its reply speaker."""
+    addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
+    intent = str(action_payload.get("intent", "")).strip().lower()
+    if not addressed_npc_id or intent not in {"ask_about", "greet", "apologize", "threaten", "query"}:
+        return action_payload
+    normalized = dict(action_payload)
+    normalized["targets"] = [addressed_npc_id]
+    return normalized
+
+
 def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str]:
     room = state.world.rooms[state.player.location]
     query_tokens = _planner_query_tokens(raw_input)
@@ -584,16 +604,12 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         fact for fact in item_facts if query_tokens.intersection(_planner_query_tokens(str(fact["name"])))
     ]
     movement_request = bool(query_tokens.intersection(_MOVEMENT_PHRASE_PATTERN.findall(raw_input.lower())))
-    addressed_npc_id = next(
-        (
-            npc_id
-            for npc_id in room.npc_ids
-            if npc_id in state.world.npcs
-            and state.world.npcs[npc_id].name.strip().lower() in raw_input.lower()
-        ),
-        "",
-    )
-    speaker_facts = speaker_context_slice(state, addressed_npc_id) if addressed_npc_id else ()
+    addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
+    speaker_facts = tuple(
+        fact
+        for fact in speaker_context_slice(state, addressed_npc_id)
+        if fact[0] in {"knows", "believes", "suspects", "conceals", "may_infer", "case_fact"}
+    ) if addressed_npc_id else ()
     payload = {
         "player_input": raw_input,
         "goal": _short_text(active_story_goal(state), 240),
@@ -859,7 +875,9 @@ class LlmFreeformProposalAdapter:
         action_payload = parse_action_proposal(
             _normalized_movement_action_payload(state, raw_input, raw_action_payload)
         )
-        return dialog_payload, action_payload
+        return dialog_payload, parse_action_proposal(
+            _bind_direct_npc_conversation_target(state, raw_input, action_payload)
+        )
 
 
 def _dialog_line(intent: str, target: str, topic: str, state: GameState | None = None) -> str:
