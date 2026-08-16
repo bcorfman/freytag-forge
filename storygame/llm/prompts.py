@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from storygame.llm.context import HARD_CONSTRAINTS, NarrationContext
@@ -33,7 +35,9 @@ SYSTEM_CONSTRAINTS = (
 def build_prompt(context: NarrationContext) -> dict[str, str]:
     system = "\n".join(SYSTEM_CONSTRAINTS)
     payload = context.as_dict()
-    visible_item_labels = [str(fact.get("name", "")).strip() for fact in payload["item_facts"] if str(fact.get("name", "")).strip()]
+    visible_item_labels = [
+        str(fact.get("name", "")).strip() for fact in payload["item_facts"] if str(fact.get("name", "")).strip()
+    ]
     npc_facts_line = ", ".join(
         f"{fact['name']} [{fact['pronouns']}] ({fact['identity']}) @ {fact['location']}"
         + (f" appearance={fact['appearance']}" if str(fact.get("appearance", "")).strip() else "")

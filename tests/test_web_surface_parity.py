@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from storygame.web import create_app
 from storygame.web_demo import create_demo_app
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
 from tests.fast_fixtures import InMemorySaveStore
 from tests.narrator_stubs import StubNarrator
 

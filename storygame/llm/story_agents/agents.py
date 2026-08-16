@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
@@ -277,7 +279,6 @@ def _items_seed(state: GameState) -> list[dict[str, object]]:
 
 
 def _opening_facts_seed(state: GameState) -> dict[str, object]:
-    room = state.world.rooms[state.player.location]
     visible_npc_ids = room_npcs(state, state.player.location)
     assistant = resolved_assistant_name(state).strip()
     assistant_id = ""
@@ -408,7 +409,9 @@ def _pin_seeded_assistant(contacts: list[dict[str, str]], seeded_contact: dict[s
     if not seeded_name:
         return contacts
 
-    matched = next((contact for contact in contacts if _same_contact_name(str(contact.get("name", "")), seeded_name)), None)
+    matched = next(
+        (contact for contact in contacts if _same_contact_name(str(contact.get("name", "")), seeded_name)), None
+    )
     pinned = [
         {
             "name": seeded_name,
@@ -649,7 +652,11 @@ class DefaultStoryBootstrapCriticAgent:
             str(bootstrap_bundle.get("assistant_name", "")).strip(),
             str(bootstrap_bundle.get("actionable_objective", "")).strip(),
             item_labels_for_opening(tuple(state.world.items.keys())),
-            tuple(str(contact.get("name", "")).strip() for contact in bootstrap_bundle.get("contacts", ()) if str(contact.get("name", "")).strip()),
+            tuple(
+                str(contact.get("name", "")).strip()
+                for contact in bootstrap_bundle.get("contacts", ())
+                if str(contact.get("name", "")).strip()
+            ),
         )
         if issues:
             critique["verdict"] = "revise"
@@ -658,6 +665,8 @@ class DefaultStoryBootstrapCriticAgent:
             )
             critique["issues"] = list(dict.fromkeys([*critique["issues"], *issues]))
         return critique
+
+
 class DefaultCharacterDesignerAgent:
     def __init__(self, *_ignored: object) -> None:
         pass
@@ -724,7 +733,6 @@ class DefaultNarratorOpeningAgent:
         pass
 
     def run(self, state: GameState, architect: dict[str, Any], cast: dict[str, Any], plan: dict[str, Any]) -> list[str]:
-        room = state.world.rooms[state.player.location]
         protagonist = canonical_detective_name(state.story_genre, str(architect.get("protagonist_name", "")).strip())
         if not protagonist:
             protagonist = canonical_detective_name(state.story_genre, "")
@@ -750,19 +758,14 @@ class DefaultNarratorOpeningAgent:
             f"{carry_line} {assistant_name} is beside you as your {assistant_role or 'assistant'}, "
             f"{assistant_name}'s {assistant_trait or 'measured'} manner making clear that this is a shared decision, not an order to await."
         )
-        paragraph_3 = (
-            f"{assistant_name} studies you for a beat, then asks what part of the case you want to understand before either of you crosses the door."
-        )
+        paragraph_3 = f"{assistant_name} studies you for a beat, then asks what part of the case you want to understand before either of you crosses the door."
         objective = _normalize_actionable_objective_language(
             str(plan.get("actionable_objective", state.active_goal)).strip(),
             assistant_name,
             suspect_name,
         )
         if assistant_name:
-            paragraph_4 = (
-                f"\"We start with what we can verify,\" {assistant_name} says. "
-                f"\"{objective}\""
-            )
+            paragraph_4 = f'"We start with what we can verify," {assistant_name} says. "{objective}"'
         else:
             paragraph_4 = f"Your immediate objective is practical and immediate: {objective}"
 

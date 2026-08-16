@@ -56,12 +56,11 @@ class StoryDirector:
         self._story_bootstrap_critic = (
             DefaultStoryBootstrapCriticAgent() if story_bootstrap_critic is None else story_bootstrap_critic
         )
-        self._room_presentation = (
-            DefaultRoomPresentationAgent() if room_presentation is None else room_presentation
-        )
+        self._room_presentation = DefaultRoomPresentationAgent() if room_presentation is None else room_presentation
         self._story_replan = DefaultStoryReplanAgent() if story_replan is None else story_replan
         self._ignored_legacy_components = any(
-            component is not None for component in (story_architect, character_designer, plot_designer, narrator_opening)
+            component is not None
+            for component in (story_architect, character_designer, plot_designer, narrator_opening)
         )
 
     def compose_opening(self, state: GameState) -> list[str]:
@@ -80,8 +79,7 @@ class StoryDirector:
         bundle["bootstrap_critique"] = critique
         if str(critique.get("verdict", "")).strip().lower() != "accepted":
             raise RuntimeError(
-                "Story bootstrap critique rejected plan: "
-                + str(critique.get("continuity_summary", "")).strip()
+                "Story bootstrap critique rejected plan: " + str(critique.get("continuity_summary", "")).strip()
             )
         self._apply_story_bundle(state, bundle)
         contacts = cast(list[dict[str, object]], bundle.get("contacts", []))
@@ -151,7 +149,9 @@ class StoryDirector:
         )
         secondary_goals = cast(list[str] | tuple[str, ...], bundle.get("secondary_goals", ()))
         hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
-        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
+        reveal_schedule = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ())
+        )
         bootstrap_critique = cast(dict[str, object], bundle.get("bootstrap_critique", {}))
         protagonist_name = canonical_detective_name(state.story_genre, str(bundle.get("protagonist_name", "")).strip())
         opening_paragraphs = tuple(str(paragraph).strip() for paragraph in opening_lines if str(paragraph).strip())
@@ -200,7 +200,9 @@ class StoryDirector:
         )
         timed_events = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("timed_events", ()))
         hidden_threads = cast(list[str] | tuple[str, ...], bundle.get("hidden_threads", ()))
-        reveal_schedule = cast(list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ()))
+        reveal_schedule = cast(
+            list[dict[str, object]] | tuple[dict[str, object], ...], bundle.get("reveal_schedule", ())
+        )
         if str(goals.get("setup", "")).strip():
             goal_facts.append(("story_goal", "setup", str(goals["setup"]).strip()))
         if str(goals.get("primary", "")).strip():
@@ -226,7 +228,9 @@ class StoryDirector:
             "player_background",
             tuple(fact for fact in profile_facts if fact[0] == "player_background"),
         )
-        replace_fact_group(state, "assistant_name", tuple(fact for fact in profile_facts if fact[0] == "assistant_name"))
+        replace_fact_group(
+            state, "assistant_name", tuple(fact for fact in profile_facts if fact[0] == "assistant_name")
+        )
 
         contact_role_facts: list[tuple[str, ...]] = []
         for contact in contacts:
@@ -266,7 +270,9 @@ class StoryDirector:
                 )
             )
         replace_fact_group(state, "villain", tuple(fact for fact in villain_facts if fact[0] == "villain"))
-        replace_fact_group(state, "villain_motive", tuple(fact for fact in villain_facts if fact[0] == "villain_motive"))
+        replace_fact_group(
+            state, "villain_motive", tuple(fact for fact in villain_facts if fact[0] == "villain_motive")
+        )
         replace_fact_group(state, "villain_means", tuple(fact for fact in villain_facts if fact[0] == "villain_means"))
         replace_fact_group(
             state,
@@ -311,7 +317,9 @@ class StoryDirector:
             for participant in participants:
                 if event_id and str(participant).strip():
                     timed_event_facts.append(("planned_event_participant", event_id, str(participant).strip()))
-        replace_fact_group(state, "planned_event", tuple(fact for fact in timed_event_facts if fact[0] == "planned_event"))
+        replace_fact_group(
+            state, "planned_event", tuple(fact for fact in timed_event_facts if fact[0] == "planned_event")
+        )
         replace_fact_group(
             state,
             "planned_event_participant",
@@ -319,9 +327,7 @@ class StoryDirector:
         )
 
         hidden_thread_facts = tuple(
-            ("story_hidden_thread", str(thread).strip())
-            for thread in hidden_threads
-            if str(thread).strip()
+            ("story_hidden_thread", str(thread).strip()) for thread in hidden_threads if str(thread).strip()
         )
         replace_fact_group(state, "story_hidden_thread", hidden_thread_facts)
 
@@ -338,7 +344,9 @@ class StoryDirector:
             reveal_schedule_facts.append(("story_reveal_schedule", thread_index, min_progress))
         replace_fact_group(state, "story_reveal_schedule", tuple(reveal_schedule_facts))
 
-    def _apply_contacts_to_world(self, state: GameState, contacts: list[dict[str, object]], assistant_name: str) -> None:
+    def _apply_contacts_to_world(
+        self, state: GameState, contacts: list[dict[str, object]], assistant_name: str
+    ) -> None:
         villains = {
             str(entry.get("name", "")).strip().lower(): dict(entry)
             for entry in villain_profiles(state)
@@ -385,7 +393,11 @@ class StoryDirector:
             hidden_reason = str(entry.get("hidden_reason", "")).strip()
             if hidden_reason:
                 item.description = f"{item.description.rstrip('.')} Hidden because {hidden_reason.rstrip('.')}."
-            if room_id == state.player.location and assistant_npc_id and assistant_npc_id in state.world.rooms[room_id].npc_ids:
+            if (
+                room_id == state.player.location
+                and assistant_npc_id
+                and assistant_npc_id in state.world.rooms[room_id].npc_ids
+            ):
                 fact_ops.append({"op": "assert", "fact": ("holding", assistant_npc_id, item_id)})
                 for fact in state.world_facts.query("clue_room", item_id, None):
                     fact_ops.append({"op": "retract", "fact": fact})
@@ -418,14 +430,12 @@ class StoryDirector:
         assistant_role = ""
         if assistant_name:
             assistant_role = next(
-                (
-                    fact[2]
-                    for fact in state.world_facts.query("npc_role", assistant_name, None)
-                    if len(fact) > 2
-                ),
+                (fact[2] for fact in state.world_facts.query("npc_role", assistant_name, None) if len(fact) > 2),
                 "",
             )
-        assistant_present = bool(assistant_npc_id) and state.world_facts.holds("npc_at", assistant_npc_id, state.player.location)
+        assistant_present = bool(assistant_npc_id) and state.world_facts.holds(
+            "npc_at", assistant_npc_id, state.player.location
+        )
         assistant_items = tuple(
             item_labels_for_opening(
                 tuple(fact[2] for fact in state.world_facts.query("holding", assistant_npc_id, None) if len(fact) > 2)

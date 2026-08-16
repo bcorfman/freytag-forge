@@ -4,8 +4,13 @@ from random import Random
 
 import pytest
 
-from storygame.engine.freeform import RuleBasedFreeformProposalAdapter, resolve_freeform_roleplay, resolve_freeform_roleplay_with_proposals
-from tests.fast_fixtures import InMemorySaveStore, make_cached_story_state as build_default_state
+from storygame.engine.freeform import (
+    RuleBasedFreeformProposalAdapter,
+    resolve_freeform_roleplay,
+    resolve_freeform_roleplay_with_proposals,
+)
+from tests.fast_fixtures import InMemorySaveStore
+from tests.fast_fixtures import make_cached_story_state as build_default_state
 
 
 def _disclosure_cases() -> list[tuple[str, str, str, str, str, str, str]]:
@@ -40,7 +45,9 @@ def test_player_visible_disclosure_matrix(
         "proposed_effects": [],
     }
     dialog = {"speaker": npc_id, "text": value, "tone": "in_world"}
-    disclosed = resolve_freeform_roleplay_with_proposals(state, f"{npc_name}, what does the {alias} say?", dialog, proposal)
+    disclosed = resolve_freeform_roleplay_with_proposals(
+        state, f"{npc_name}, what does the {alias} say?", dialog, proposal
+    )
     assert disclosed["state"].world_facts.holds("knows", "player", key)
     assert disclosed["event"].metadata["fact_ops"]
 

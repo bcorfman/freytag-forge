@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import io
@@ -45,8 +47,8 @@ class _FakeResponse:
 
 def test_json_from_text_handles_direct_and_embedded_json() -> None:
     assert _json_from_text('{"a":1}') == {"a": 1}
-    assert _json_from_text("noise\n{\"a\":1}\nnoise") == {"a": 1}
-    assert _json_from_text("```json\n{\"a\":1}\n```") == {"a": 1}
+    assert _json_from_text('noise\n{"a":1}\nnoise') == {"a": 1}
+    assert _json_from_text('```json\n{"a":1}\n```') == {"a": 1}
     assert _json_from_text("[]") is None
     assert _json_from_text("not json") is None
 
@@ -181,9 +183,12 @@ def test_chat_complete_cloudflare_selects_json_mode_from_the_typed_request(monke
         return _FakeResponse('{"narration":"ok-cloudflare"}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
-    assert agent_module._chat_complete(
-        "cloudflare", "Do not mention a response format.", "u", StructuredOutput.JSON_OBJECT
-    ) == "ok-cloudflare"
+    assert (
+        agent_module._chat_complete(
+            "cloudflare", "Do not mention a response format.", "u", StructuredOutput.JSON_OBJECT
+        )
+        == "ok-cloudflare"
+    )
     assert payloads[-1]["response_format"] == {"type": "json_object"}
 
     assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u", StructuredOutput.PLAIN_TEXT) == (
@@ -210,9 +215,7 @@ def test_chat_complete_cloudflare_falls_back_when_json_mode_is_rejected(monkeypa
         return _FakeResponse('{"narration":{"dialog_proposal":{"text":"ok"}}}')
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _cloudflare_urlopen)
-    assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u") == (
-        '{"dialog_proposal":{"text":"ok"}}'
-    )
+    assert agent_module._chat_complete("cloudflare", "Return JSON only.", "u") == ('{"dialog_proposal":{"text":"ok"}}')
     assert "response_format" in requests[0]
     assert "response_format" not in requests[1]
 
@@ -226,9 +229,7 @@ def test_chat_complete_cloudflare_json_mode_fallback_consumes_the_only_recovery_
         payload = json.loads(request.data.decode("utf-8"))
         requests.append(payload)
         detail = (
-            b'{"code":"AI_JSON_MODE_REJECTED"}'
-            if "response_format" in payload
-            else b'{"code":"AI_UPSTREAM_ERROR"}'
+            b'{"code":"AI_JSON_MODE_REJECTED"}' if "response_format" in payload else b'{"code":"AI_UPSTREAM_ERROR"}'
         )
         raise urllib.error.HTTPError(request.full_url, 502, "bad gateway", {}, io.BytesIO(detail))
 
@@ -247,7 +248,9 @@ def test_chat_complete_error_paths(monkeypatch) -> None:
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://demo.example.workers.dev/api/narrate")
 
     def _raise_http(*args, **kwargs):  # noqa: ANN002, ANN003
-        raise urllib.error.HTTPError("https://demo.example.workers.dev/api/narrate", 500, "boom", None, io.BytesIO(b"err"))
+        raise urllib.error.HTTPError(
+            "https://demo.example.workers.dev/api/narrate", 500, "boom", None, io.BytesIO(b"err")
+        )
 
     monkeypatch.setattr("storygame.llm.story_agents.agents.urllib.request.urlopen", _raise_http)
     with pytest.raises(RuntimeError, match="Cloudflare story-agent request failed"):
@@ -672,9 +675,8 @@ def test_narrator_opening_logs_raw_response_when_contract_validation_fails(monke
         lambda mode, system, user: json.dumps({"paragraphs": ["only one"]}),
     )
 
-    with caplog.at_level(logging.WARNING):
-        with pytest.raises(RuntimeError, match="contract validation failed"):
-            narr_agent.run(state, architect, cast, plan)
+    with caplog.at_level(logging.WARNING), pytest.raises(RuntimeError, match="contract validation failed"):
+        narr_agent.run(state, architect, cast, plan)
 
     assert "NarratorOpening contract validation failed with raw response" in caplog.text
     assert '{"paragraphs": ["only one"]}' in caplog.text

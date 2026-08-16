@@ -43,6 +43,8 @@ _AUTHORITY_TERMS = {"police", "officer", "deputy", "sheriff", "guard"}
 _AUTHORITY_ESCALATION_TERMS = {"alert", "call", "contact", "notify", "report", "summon"}
 _PUBLIC_SPACE_TERMS = {"school", "hospital", "church", "station", "sign", "statue"}
 _IRREVERSIBLE_TERMS = {"explode", "ignite", "burn", "jump", "destroy"}
+
+
 class ImpactAssessment(TypedDict):
     score: float
     impact_class: str

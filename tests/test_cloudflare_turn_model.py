@@ -125,6 +125,4 @@ def test_cloudflare_turn_model_converts_transport_failures_to_runtime_error(monk
 
     monkeypatch.setattr("urllib.request.urlopen", urlopen)
     with pytest.raises(RuntimeError, match="Cloudflare AI agent request failed"):
-        CloudflareTurnModel(url="https://agent.test").play_turn(
-            RuntimeContext("v1", 1, {}), json_object=json_object
-        )
+        CloudflareTurnModel(url="https://agent.test").play_turn(RuntimeContext("v1", 1, {}), json_object=json_object)

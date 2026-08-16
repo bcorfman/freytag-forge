@@ -147,9 +147,7 @@ class BeatPolicy:
     def progression_events(self, state: Any) -> list[Event]:
         """Materialize eligible fact-backed reveals and timed events once."""
         plan: dict[str, Any] = {
-            "hidden_threads": tuple(
-                fact[1] for fact in state.world_facts.query("story_hidden_thread", None)
-            ),
+            "hidden_threads": tuple(fact[1] for fact in state.world_facts.query("story_hidden_thread", None)),
             "reveal_schedule": tuple(
                 {"thread_index": int(fact[1]), "min_progress": float(fact[2])}
                 for fact in state.world_facts.query("story_reveal_schedule", None, None)
@@ -180,11 +178,16 @@ class BeatPolicy:
             if index < 0 or index >= len(hidden_threads) or state.progress < threshold or state.player.flags.get(flag):
                 continue
             apply_fact_ops(state, [{"op": "assert", "fact": ("flag", "player", flag)}])
-            events.append(Event(
-                type="story_reveal", message_key=f"New lead: {hidden_threads[index]}",
-                entities=(f"thread_{index}",), tags=("story_reveal",),
-                turn_index=state.turn_index, delta_tension=0.02,
-            ))
+            events.append(
+                Event(
+                    type="story_reveal",
+                    message_key=f"New lead: {hidden_threads[index]}",
+                    entities=(f"thread_{index}",),
+                    tags=("story_reveal",),
+                    turn_index=state.turn_index,
+                    delta_tension=0.02,
+                )
+            )
         for entry in tuple(plan.get("timed_events", ())):
             if not isinstance(entry, dict):
                 continue
@@ -199,9 +202,14 @@ class BeatPolicy:
             participants = entry.get("participants", ())
             if not isinstance(participants, (tuple, list)):
                 participants = ()
-            events.append(Event(
-                type="timed_story_event", message_key=summary,
-                entities=tuple(str(name).strip() for name in participants if str(name).strip()),
-                tags=("story", "timed_event"), turn_index=state.turn_index, delta_tension=0.03,
-            ))
+            events.append(
+                Event(
+                    type="timed_story_event",
+                    message_key=summary,
+                    entities=tuple(str(name).strip() for name in participants if str(name).strip()),
+                    tags=("story", "timed_event"),
+                    turn_index=state.turn_index,
+                    delta_tension=0.03,
+                )
+            )
         return events

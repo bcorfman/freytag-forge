@@ -101,14 +101,14 @@ class PredicatePolicyRegistry:
         proposal_source_allowed = bool(
             policy is not None and source == "proposal" and "intent" in policy.commit_sources
         )
-        if policy is None or not policy.proposal_allowed or (
-            source not in policy.commit_sources and not proposal_source_allowed
+        if (
+            policy is None
+            or not policy.proposal_allowed
+            or (source not in policy.commit_sources and not proposal_source_allowed)
         ):
             raise ValueError(f"unauthorized predicate '{predicate_name}' for source '{source}'")
         if len(fact) - 1 != policy.arity:
-            raise ValueError(
-                f"predicate '{predicate_name}' expects {policy.arity} terms, got {len(fact) - 1}"
-            )
+            raise ValueError(f"predicate '{predicate_name}' expects {policy.arity} terms, got {len(fact) - 1}")
         return (predicate_name, *(self._normalize(term, policy.normalization) for term in fact[1:]))
 
     @staticmethod

@@ -15,7 +15,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from storygame.cli import _build_narrator
 from storygame.engine.freeform import FreeformProposalAdapter, LlmFreeformProposalAdapter
 from storygame.engine.state import GameState
 from storygame.engine.world import build_default_state
@@ -34,6 +33,8 @@ from storygame.web_runtime import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -44,6 +45,7 @@ class _DemoSession:
         self.rng = rng
         self.expires_at = expires_at
         self.turns_used = 0
+
 
 class SessionCreateRequest(BaseModel):
     seed: int | None = None
@@ -166,22 +168,12 @@ def create_demo_app(
     ip_window_hits: dict[str, list[datetime]] = {}
     ip_daily_hits: dict[tuple[str, str], int] = {}
 
-    active_narrator: Narrator = (
-        _build_demo_narrator()
-        if narrator is None
-        else narrator
-    )
+    active_narrator: Narrator = _build_demo_narrator() if narrator is None else narrator
     active_output_editor = build_output_editor() if output_editor is None else output_editor
-    active_freeform_adapter = (
-        LlmFreeformProposalAdapter()
-        if freeform_adapter is None
-        else freeform_adapter
-    )
+    active_freeform_adapter = LlmFreeformProposalAdapter() if freeform_adapter is None else freeform_adapter
     use_fast_story_director_opening = story_director is None
     use_story_director_bootstrap = story_director is not None
-    active_story_director = (
-        StoryDirector(active_output_editor) if story_director is None else story_director
-    )
+    active_story_director = StoryDirector(active_output_editor) if story_director is None else story_director
     resolved_cors_allow_origins = _resolve_demo_cors_allow_origins(cors_allow_origins)
     app.add_middleware(
         CORSMiddleware,

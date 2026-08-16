@@ -4,9 +4,9 @@ import threading
 
 from storygame.llm.coherence import (
     CRITIQUE_DIMENSIONS,
-    CoherenceGate,
     DEFAULT_CRITICAL_FLOORS,
     DEFAULT_THRESHOLD,
+    CoherenceGate,
     CritiqueReport,
     ValidationReport,
     _revision_directive,
@@ -67,15 +67,11 @@ def test_fast_gate_rejects_prompt_context_block_in_narration():
                 "Recent events: guide says the forged directive moved east"
             )
 
-    result = build_fast_post_commit_gate(max_validation_revisions=1).generate_with_gate(
-        _EchoingNarrator(), _context()
-    )
+    result = build_fast_post_commit_gate(max_validation_revisions=1).generate_with_gate(_EchoingNarrator(), _context())
 
     assert result["judge_decision"]["status"] == "failed"
     assert any(
-        "VLD_PROMPT_CONTEXT_ECHO" in code
-        for report in result["validator_reports"]
-        for code in report["reason_codes"]
+        "VLD_PROMPT_CONTEXT_ECHO" in code for report in result["validator_reports"] for code in report["reason_codes"]
     )
 
 

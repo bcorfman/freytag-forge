@@ -1,10 +1,11 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
 import logging
 from datetime import UTC, datetime, timedelta
 
-import pytest
 from fastapi.testclient import TestClient
 
 from storygame.engine.freeform import RuleBasedFreeformProposalAdapter
@@ -168,6 +169,7 @@ def test_demo_configuration_normalization_is_adapter_independent(monkeypatch):
     assert _resolve_demo_cors_allow_origins(None) == ("https://one.example", "https://two.example")
     assert _resolve_demo_cors_allow_origins((" ",)) == ("*",)
 
+
 def test_health_identifies_the_deployed_channel_and_revision(tmp_path, monkeypatch):
     monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "staging")
     monkeypatch.setenv("FREYTAG_DEPLOYMENT_SHA", "a" * 40)
@@ -259,9 +261,7 @@ def test_demo_document_briefing_is_visible_and_committed_before_save(tmp_path) -
         "/api/v1/session", json={"seed": 4076, "genre": "mystery", "session_length": "short", "tone": "dark"}
     ).json()["session_id"]
 
-    turn = client.post(
-        "/api/v1/turn", json={"session_id": session_id, "command": "Daria, what's in the case file?"}
-    )
+    turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "Daria, what's in the case file?"})
 
     assert turn.status_code == 200
     assert "11:40 p.m." in "\n".join(turn.json()["lines"])

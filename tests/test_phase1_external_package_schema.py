@@ -105,9 +105,9 @@ def test_world_package_requires_a_readable_document_to_reveal_new_opening_knowle
             "canonical case_fact",
         ),
         (
-            lambda package: next(character for character in package["characters"] if character["id"] == "daria_stone").update(
-                {"initial_knowledge": ["opening_situation"]}
-            ),
+            lambda package: next(
+                character for character in package["characters"] if character["id"] == "daria_stone"
+            ).update({"initial_knowledge": ["opening_situation"]}),
             "must be known by NPC",
         ),
         (
@@ -141,15 +141,11 @@ def test_fantasy_package_declares_a_document_npc_disclosure_path() -> None:
     ("change", "message"),
     [
         (
-            lambda package: package["map"]["paths"].append(
-                {"direction": "north", "from": "missing", "to": "camp"}
-            ),
+            lambda package: package["map"]["paths"].append({"direction": "north", "from": "missing", "to": "camp"}),
             "unknown map room",
         ),
         (
-            lambda package: package["items"][0].update(
-                {"initial_custody": {"kind": "npc", "id": "missing"}}
-            ),
+            lambda package: package["items"][0].update({"initial_custody": {"kind": "npc", "id": "missing"}}),
             "unknown custody",
         ),
         (

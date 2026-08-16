@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import pytest
@@ -101,7 +103,9 @@ def test_dialog_line_covers_targetless_and_topic_specific_branches() -> None:
 
 def test_dialog_line_covers_item_place_and_default_specific_question_branches() -> None:
     state = build_default_state(seed=4102, genre="mystery")
-    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + ("ledger_page",)
+    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + (
+        "ledger_page",
+    )
     npc_id = "daria_stone"
 
     item_line = _dialog_line("ask_about", npc_id, "ledger page", state)
@@ -293,11 +297,13 @@ def test_scope_normalized_proposals_leaves_direct_address_and_non_npc_targets_un
 
 def test_semantic_actions_for_freeform_emits_move_and_take_actions() -> None:
     state = build_default_state(seed=4142, genre="mystery")
-    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + ("route_key",)
+    state.world.rooms[state.player.location].item_ids = state.world.rooms[state.player.location].item_ids + (
+        "route_key",
+    )
 
     move_actions = _semantic_actions_for_freeform(
         state,
-            {"intent": "move", "targets": ["mansion_entrance"], "arguments": {}, "proposed_effects": []},
+        {"intent": "move", "targets": ["mansion_entrance"], "arguments": {}, "proposed_effects": []},
         {"assert": [], "retract": [], "numeric_delta": [], "reasons": []},
     )
     take_actions = _semantic_actions_for_freeform(
@@ -677,7 +683,9 @@ def test_llm_freeform_adapter_retries_a_player_statement_echo(monkeypatch) -> No
         )
     )
 
-    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", lambda mode, system, user: next(responses))
+    monkeypatch.setattr(
+        "storygame.engine.freeform._story_agent_chat_complete", lambda mode, system, user: next(responses)
+    )
 
     dialog, action = LlmFreeformProposalAdapter().propose(state, "review the case file")
 
@@ -1059,8 +1067,8 @@ def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monke
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
         return (
-                '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma was last seen.","tone":"in_world"},'
-                '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma was last seen.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":[]}}'
         )
 
@@ -1089,7 +1097,9 @@ def test_llm_freeform_adapter_binds_direct_address_even_when_planner_misclassifi
 
 
 @pytest.mark.parametrize("genre", sorted(genre for genre in load_story_package_templates() if genre != "default"))
-def test_llm_freeform_adapter_routes_direct_dialogue_to_the_named_visible_npc_across_genres(monkeypatch, genre: str) -> None:
+def test_llm_freeform_adapter_routes_direct_dialogue_to_the_named_visible_npc_across_genres(
+    monkeypatch, genre: str
+) -> None:
     state = build_default_state(seed=405103, genre=genre)
     npc_id = room_npcs(state, state.player.location)[0]
     npc_name = state.world.npcs[npc_id].name
@@ -1216,10 +1226,10 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
     responses = iter(
         (
             '{"dialog_proposal":{"speaker":"daria_stone","text":"getStringExtra from the case file is not available yet, but it is extensive.","tone":"in_world"},'
-                '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
             '{"dialog_proposal":{"speaker":"daria_stone","text":"The file fixes the victim timeline, names the last verified witness, and points us to the strongest lead inside.","tone":"in_world"},'
-                '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
         )
     )
@@ -1312,7 +1322,10 @@ def test_freeform_planner_prompt_includes_scene_and_item_facts() -> None:
 
     assert '"case_facts": []' in user
     assert "drove your own sedan" not in user
-    assert '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"' in user
+    assert (
+        '"appearance": "a crisp white blouse and a tailored black skirt with dark hair pulled back into a neat bun"'
+        in user
+    )
     assert '"visible_item_names": ["dark sedan"]' in user
     assert '"visible_items": []' in user
     assert '"exit_facts": []' in user

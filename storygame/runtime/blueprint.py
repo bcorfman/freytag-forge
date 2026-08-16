@@ -74,9 +74,7 @@ def blueprint_observer_context(runtime: BlueprintRuntime, observer_id: str) -> d
     )
     protected_truths = {item.truth_id for item in runtime.blueprint.protected_facts}
     visible = sorted(
-        truth_id
-        for truth_id in known
-        if truth_id not in protected_truths or truth_id in runtime.player_truths
+        truth_id for truth_id in known if truth_id not in protected_truths or truth_id in runtime.player_truths
     )
     return {
         "known_truth_ids": visible,
@@ -105,8 +103,10 @@ class ProgressionValidator:
             raise ValueError(f"route '{route_id}' cannot complete beat '{update.beat_id}'")
         self._validate_evidence(route, update.evidence_ids)
         candidate = self.runtime.snapshot()
-        truths = route.failure_forward.result_truths if failed else tuple(
-            item.truth_id for item in route.satisfiers if item.operator == "establish"
+        truths = (
+            route.failure_forward.result_truths
+            if failed
+            else tuple(item.truth_id for item in route.satisfiers if item.operator == "establish")
         )
         candidate["player_truths"].update(truths)
         revelation = next(item for item in self.runtime.blueprint.revelations if item.id == route.revelation_id)

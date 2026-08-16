@@ -1,5 +1,7 @@
 """Generic, fact-backed presentation helpers for runtime projections."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from storygame.engine.facts import (
@@ -58,9 +60,7 @@ def room_arrival_lines(state: GameState, room_id: str, first_visit: bool) -> tup
     contents.extend(state.world.items[item_id].name for item_id in room.item_ids if item_id in state.world.items)
     contents_text = ", ".join(contents) if contents else "nothing notable"
     exits = [
-        state.world.rooms[destination].name
-        for destination in room.exits.values()
-        if destination in state.world.rooms
+        state.world.rooms[destination].name for destination in room.exits.values() if destination in state.world.rooms
     ]
     exits_text = ", ".join(exits) if exits else "none"
     lines.append(f"Contents: {contents_text}. Exits: {exits_text}.")
