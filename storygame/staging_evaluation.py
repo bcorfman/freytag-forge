@@ -171,6 +171,7 @@ def _run_fixture(
                     "failure": "opening_disclosure",
                     "disclosure": {"passed": False, **disclosure, **_request_metadata(result)},
                     "checks": disclosure_checks,
+                    "rendered_excerpt": _rendered_excerpt(result),
                     "response": _failure_response(status, result),
                 },
                 [],
@@ -340,6 +341,13 @@ def _response_metadata(headers: Mapping[str, str]) -> dict[str, str]:
 
 def _request_metadata(result: dict[str, object]) -> dict[str, str]:
     return {key: str(result[key]) for key in ("request_id", "trace_id") if str(result.get(key, "")).strip()}
+
+
+def _rendered_excerpt(result: dict[str, object]) -> str:
+    lines = result.get("lines", ())
+    if not isinstance(lines, (list, tuple)):
+        return ""
+    return " ".join(str(line).strip() for line in lines if str(line).strip())[:500]
 
 
 def _failure_response(status_code: int, result: dict[str, object]) -> dict[str, object]:

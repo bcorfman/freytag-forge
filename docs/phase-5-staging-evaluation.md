@@ -25,7 +25,9 @@ It rejects an opening that already exposes the document-only value, then
 requires the question's reply to render the declared fact value and the API
 state projection to include its committed key in `known_facts`. A missing
 commit, repeated public-only briefing, 503, protected leak, continuity break,
-or SHA mismatch fails the promotion gate.
+or SHA mismatch fails the promotion gate. When that disclosure check fails, the
+SHA-bound report retains up to 500 characters of the rendered reply so the
+candidate can be diagnosed without replaying the staging session.
 
 The Pages build also publishes `/dev/deployment.json`, containing its channel
 and immutable SHA. The gate compares that metadata with `/api/v1/version`

@@ -1095,7 +1095,7 @@ def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monke
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
         return (
-            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma was last seen.","tone":"in_world"},'
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["case_file"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":[]}}'
         )
@@ -1113,7 +1113,7 @@ def test_llm_freeform_adapter_binds_direct_address_even_when_planner_misclassifi
 
     def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
         return (
-            '{"dialog_proposal":{"speaker":"daria_stone","text":"The case file ties the ledger payment to tonight\'s visit.","tone":"in_world"},'
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"freeform","targets":[],"arguments":{},"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}'
         )
 
@@ -1152,8 +1152,8 @@ def test_llm_freeform_adapter_retries_missing_required_document_disclosure(monke
         (
             '{"dialog_proposal":{"speaker":"daria_stone","text":"The file is worth a close look.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
-            '"proposed_effects":[]}}',
-            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m.","tone":"in_world"},'
+            '"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}',
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
             '"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}',
         )
@@ -1169,6 +1169,28 @@ def test_llm_freeform_adapter_retries_missing_required_document_disclosure(monke
     _dialog, action = LlmFreeformProposalAdapter().propose(state, "Daria, what's in the case file?")
 
     assert calls == 2
+    assert action["disclosed_knowledge"] == "ledger_entry_time"
+
+
+def test_llm_freeform_adapter_supplies_the_required_document_fact_to_the_planner(monkeypatch) -> None:
+    state = build_default_state(seed=405105, genre="mystery")
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        assert (
+            '"required_document_disclosure": {"key": "ledger_entry_time", "value": "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen."}'
+            in user
+        )
+        return (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., '
+            'twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
+            '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},'
+            '"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    _dialog, action = LlmFreeformProposalAdapter().propose(state, "Daria, what's in the case file?")
+
     assert action["disclosed_knowledge"] == "ledger_entry_time"
 
 
@@ -1251,7 +1273,7 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
             '{"dialog_proposal":{"speaker":"daria_stone","text":"getStringExtra from the case file is not available yet, but it is extensive.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
-            '{"dialog_proposal":{"speaker":"daria_stone","text":"The file fixes the victim timeline, names the last verified witness, and points us to the strongest lead inside.","tone":"in_world"},'
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'
             '"proposed_effects":["asked:case_file"]}}',
         )
@@ -1266,7 +1288,7 @@ def test_llm_freeform_adapter_retries_directed_npc_turn_when_reply_leaks_code_ar
 
     assert dialog["speaker"] == "daria_stone"
     assert "getStringExtra" not in dialog["text"]
-    assert "victim timeline" in dialog["text"]
+    assert "Emma Vale was last seen" in dialog["text"]
     assert action["intent"] == "ask_about"
 
 
@@ -1278,7 +1300,7 @@ def test_llm_freeform_adapter_accepts_visible_npc_short_name_for_case_file_reque
         nonlocal calls
         calls += 1
         return (
-            '{"dialog_proposal":{"speaker":"Daria Stone, your assistant","text":"The ledger entry is stamped 11:40 p.m., '
+            '{"dialog_proposal":{"speaker":"Daria Stone, your assistant","text":"The final ledger entry is time-stamped 11:40 p.m., '
             'twenty minutes before Emma Vale was last seen.","tone":"in_world"},'
             '"action_proposal":{"intent":"ask_about","targets":["daria_stone"],'
             '"arguments":{"topic":"case file"},"disclosed_knowledge":"ledger_entry_time",'

@@ -151,6 +151,35 @@ def test_staging_evaluation_requires_committed_opening_disclosures() -> None:
     assert report["fixtures"]["fantasy"]["disclosure"]["key"] == "warded_route"
 
 
+def test_staging_evaluation_records_a_bounded_failed_disclosure_excerpt() -> None:
+    sessions: dict[str, int] = {}
+
+    def request(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
+        if method == "GET":
+            return 200, {"status": "ok", "channel": "staging", "sha": "a" * 40}
+        if path.endswith("/session"):
+            assert payload is not None
+            session_id = f"session-{payload['genre']}"
+            sessions[session_id] = 0
+            return 200, {"session_id": session_id}
+        assert payload is not None
+        session_id = str(payload["session_id"])
+        if str(payload["command"]) == "look":
+            return 200, {"status": "ok", "lines": ["An opening."], "state": {"location": "opening", "turn_index": 0}}
+        sessions[session_id] += 1
+        return 200, {
+            "status": "ok",
+            "lines": ["A reply that did not disclose the document value."],
+            "state": {"location": "opening", "turn_index": sessions[session_id], "known_facts": ["ledger_entry_time"]},
+        }
+
+    report = run_staging_evaluation("https://staging.example", "a" * 40, request=request)
+
+    mystery = report["fixtures"]["mystery"]
+    assert mystery["failure"] == "opening_disclosure"
+    assert mystery["rendered_excerpt"] == "A reply that did not disclose the document value."
+
+
 def test_staging_evaluation_records_session_and_opening_failures() -> None:
     def unavailable_session(method: str, path: str, payload: dict[str, object] | None) -> tuple[int, dict[str, object]]:
         if method == "GET":
