@@ -549,6 +549,8 @@ def test_reading_a_document_reveals_knowledge_not_in_the_opening_briefing() -> N
         "case_file_time",
         "The final ledger entry is time-stamped 11:40 p.m., twenty minutes before Emma Vale was last seen.",
     )
+    assert "groundskeeper" in resolved["dialog_proposal"]["text"].lower()
+    assert "missing ledger payment" in resolved["dialog_proposal"]["text"].lower()
     assert "11:40 p.m." in resolved["dialog_proposal"]["text"]
 
 
@@ -1070,6 +1072,41 @@ def test_llm_freeform_adapter_binds_a_direct_question_to_the_addressed_npc(monke
     assert tuple(action["targets"]) == ("daria_stone",)
 
 
+def test_llm_freeform_adapter_binds_direct_address_even_when_planner_misclassifies_intent(monkeypatch) -> None:
+    state = build_default_state(seed=405102, genre="mystery")
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            '{"dialog_proposal":{"speaker":"daria_stone","text":"The case file ties the ledger payment to tonight\'s visit.","tone":"in_world"},'
+            '"action_proposal":{"intent":"freeform","targets":[],"arguments":{},"disclosed_knowledge":"ledger_entry_time","proposed_effects":[]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    _dialog, action = LlmFreeformProposalAdapter().propose(state, "DARIA, WHAT'S IN THE CASE FILE?")
+
+    assert tuple(action["targets"]) == ("daria_stone",)
+
+
+@pytest.mark.parametrize("genre", sorted(genre for genre in load_story_package_templates() if genre != "default"))
+def test_llm_freeform_adapter_routes_direct_dialogue_to_the_named_visible_npc_across_genres(monkeypatch, genre: str) -> None:
+    state = build_default_state(seed=405103, genre=genre)
+    npc_id = room_npcs(state, state.player.location)[0]
+    npc_name = state.world.npcs[npc_id].name
+
+    def _fake_chat(mode: str, system: str, user: str) -> str:  # noqa: ARG001
+        return (
+            f'{{"dialog_proposal":{{"speaker":"{npc_id}","text":"I can tell you what I know.","tone":"in_world"}},'
+            '"action_proposal":{"intent":"freeform","targets":[],"arguments":{},"proposed_effects":[]}}'
+        )
+
+    monkeypatch.setattr("storygame.engine.freeform._story_agent_chat_complete", _fake_chat)
+
+    _dialog, action = LlmFreeformProposalAdapter().propose(state, f"{npc_name.upper()}, what do you know?")
+
+    assert tuple(action["targets"]) == (npc_id,)
+
+
 def test_llm_freeform_adapter_retries_missing_required_document_disclosure(monkeypatch) -> None:
     state = build_default_state(seed=405101, genre="mystery")
     calls = 0
@@ -1265,7 +1302,8 @@ def test_freeform_planner_prompt_includes_relevant_case_facts_for_a_brief() -> N
 
     assert '"victim_name"' in user
     assert '"victim_timeline"' in user
-    assert '"strongest_lead"' in user
+    assert '"lead_suspect"' not in user
+    assert '"strongest_lead"' not in user
     assert len(user) < 3600
 
 

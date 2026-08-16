@@ -320,7 +320,8 @@ class RuleBasedFreeformProposalAdapter:
         response = _dialog_line(intent=intent, target=target, topic=topic, state=state)
         document_reveals = _document_reveal_facts_for_input(state, raw_input)
         if document_reveals:
-            response = f"The document fixes one new point: {document_reveals[0]['value']}"
+            revealed_values = "; ".join(str(reveal["value"]) for reveal in document_reveals)
+            response = f"The document fixes new points: {revealed_values}"
         if explicit_target_requested and not target:
             response = "No one here answers that. Try speaking to someone in the room."
         dialog_payload = {"speaker": "narrator", "text": response, "tone": "in_world"}
@@ -544,13 +545,17 @@ def _addressed_visible_npc_id(state: GameState, raw_input: str) -> str:
     return _visible_npc_match(state, candidate.strip()) if candidate else ""
 
 
-def _bind_direct_npc_conversation_target(
+def addressed_visible_npc_id(state: GameState, raw_input: str) -> str:
+    """Resolve a direct player address to its visible NPC, if any."""
+    return _addressed_visible_npc_id(state, raw_input)
+
+
+def bind_direct_npc_conversation_target(
     state: GameState, raw_input: str, action_payload: dict[str, Any]
 ) -> dict[str, Any]:
     """Keep a direct NPC question's action target aligned with its reply speaker."""
-    addressed_npc_id = _addressed_visible_npc_id(state, raw_input)
-    intent = str(action_payload.get("intent", "")).strip().lower()
-    if not addressed_npc_id or intent not in {"ask_about", "greet", "apologize", "threaten", "query"}:
+    addressed_npc_id = addressed_visible_npc_id(state, raw_input)
+    if not addressed_npc_id:
         return action_payload
     normalized = dict(action_payload)
     normalized["targets"] = [addressed_npc_id]
@@ -905,7 +910,7 @@ class LlmFreeformProposalAdapter:
             _normalized_movement_action_payload(state, raw_input, raw_action_payload)
         )
         return dialog_payload, parse_action_proposal(
-            _bind_direct_npc_conversation_target(state, raw_input, action_payload)
+            bind_direct_npc_conversation_target(state, raw_input, action_payload)
         )
 
 

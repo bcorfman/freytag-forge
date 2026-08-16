@@ -136,7 +136,7 @@ packages:
       protagonist_background: "A meticulous private detective hired to investigate Emma Vale's murder, you rely on patient observation while the memory of one unsolved case keeps you wary of easy answers."
       opening_contact: {role: assistant, relationship: assistant}
       arrival_order: [player, daria_stone]
-      public_briefing: [opening_situation, case_status, victim_name, victim_timeline, lead_suspect, strongest_lead]
+      public_briefing: [opening_situation, case_status, victim_name, victim_timeline]
       pending_knowledge: [local_context]
       protected_knowledge: [future_revelations]
       player_context:
