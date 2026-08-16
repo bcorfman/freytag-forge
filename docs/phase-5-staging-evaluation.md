@@ -42,9 +42,26 @@ Phase 5 candidate evaluation.
 
 A candidate passes automatically only when all fixture/style turns finish, the
 staging identity matches the immutable SHA, no typed fail-closed error occurs,
-no protected revelation or state-continuity violation is observed, and the
-hosted E2E passes. The workflow status `staging-deployment` is published only
-after this gate, so production promotion continues to reject untested SHAs.
+no protected revelation or state-continuity violation is observed, the p95
+ordinary-turn latency is below ten seconds, and the hosted E2E passes. The
+workflow status `staging-deployment` is published only after this gate, so
+production promotion continues to reject untested SHAs. The full-coverage job
+is a prerequisite of staging deployment and retains the project-wide 90%
+coverage floor; each evaluated turn must report one or two model calls, so the
+same gate also rejects an unbounded recovery path.
+
+## Baseline comparison
+
+`staging-evaluation.json` is the immutable candidate-side comparison record.
+It records the Phase 0 measures from the
+[V2 migration acceptance scorecard](v2-acceptance-scorecard.md): one-call and
+repair rates, typed failures, p95 latency, revelation leaks, continuity,
+completion, and user-facing failures. The historical V1 measurements are
+comparison-only because they used in-process stubs rather than a live provider;
+the actionable Phase 5 comparisons are therefore the preserved two-request
+recovery cap, zero integrity failures, the under-ten-second p95 target, and
+the upstream 90% coverage gate. Reviewers compare the candidate artifact with
+the baseline scorecard before issuing their SHA-specific approval.
 
 Completion rate remains a recorded scorecard measure, not a required scripted
 ending: the seven styles are deliberately agency probes, not a prescribed
