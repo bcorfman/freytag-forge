@@ -975,6 +975,23 @@ def test_run_turn_blocks_high_impact_action_until_player_confirms() -> None:
     assert any("type proceed" in line.lower() for line in lines)
 
 
+def test_run_turn_does_not_gate_a_question_about_authorities() -> None:
+    state = build_default_state(seed=960)
+
+    next_state, _lines, _action_raw, beat_type, continued = run_turn(
+        state,
+        "Daria, are the police inside?",
+        Random(960),
+        SilentNarrator(),
+        debug=False,
+        freeform_adapter=RuleBasedFreeformProposalAdapter(),
+    )
+
+    assert continued is True
+    assert beat_type == "freeform_roleplay"
+    assert next_state.pending_high_impact_command == ""
+
+
 def test_high_impact_helpers_accept_typed_assessment_contract() -> None:
     state = build_default_state(seed=961)
     assessment = assess_player_command(state, "punch police officer", parse_command("punch police officer"))

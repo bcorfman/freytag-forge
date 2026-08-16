@@ -55,3 +55,26 @@ def test_assess_player_command_can_limit_replan_to_light_scope() -> None:
 
     assert requires_high_impact_confirmation(assessment) is False
     assert replan_scope_for_assessment(assessment) == "light"
+
+
+def test_assess_player_command_keeps_authority_status_questions_playable() -> None:
+    state = make_tiny_state(seed=305)
+
+    assessment = assess_player_command(
+        state,
+        "Daria, are the police inside?",
+        parse_command("Daria, are the police inside?"),
+    )
+
+    assert assessment["impact_class"] == "low"
+    assert "authority_target" not in assessment["reasons"]
+    assert requires_high_impact_confirmation(assessment) is False
+
+
+def test_assess_player_command_flags_an_actual_authority_escalation() -> None:
+    state = make_tiny_state(seed=306)
+
+    assessment = assess_player_command(state, "Call the police.", parse_command("Call the police."))
+
+    assert "authority_target" in assessment["reasons"]
+    assert requires_high_impact_confirmation(assessment) is True
