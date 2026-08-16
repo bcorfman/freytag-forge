@@ -17,8 +17,11 @@ from storygame.engine.freeform import (
     DEFAULT_FREEFORM_ADAPTER,
     FreeformProposalAdapter,
     LlmFreeformProposalAdapter,
+    RuleBasedFreeformProposalAdapter,
     _normalized_dialog_speaker_id,
     _normalized_movement_action_payload,
+    _semantic_exit_direction,
+    _takeable_item_for_input,
     addressed_visible_npc_id,
     bind_direct_npc_conversation_target,
     is_player_statement_echo,
@@ -905,8 +908,23 @@ def run_turn(
     fallback_action = Action(ActionKind.UNKNOWN, raw=raw_input)
     effective_action = fallback_action
     freeform_policy_debug: dict[str, Any] | None = None
+    semantic_destination = _semantic_exit_direction(preturn_state, raw_input)
+    named_destination = semantic_destination and any(
+        label in raw_input.lower()
+        for label in (
+            semantic_destination.replace("_", " "),
+            preturn_state.world.rooms[semantic_destination].name.lower(),
+        )
+    )
     try:
-        if type(active_freeform_adapter) is LlmFreeformProposalAdapter:
+        if named_destination or _takeable_item_for_input(preturn_state, raw_input):
+            planner_dialog_payload, planner_action_payload = RuleBasedFreeformProposalAdapter().propose(
+                preturn_state, raw_input
+            )
+            planner_action_payload = _normalized_movement_action_payload(
+                preturn_state, raw_input, planner_action_payload
+            )
+        elif type(active_freeform_adapter) is LlmFreeformProposalAdapter:
             planner_dialog_payload, planner_action_payload = active_freeform_adapter.propose(
                 preturn_state,
                 raw_input,

@@ -721,32 +721,17 @@ def test_demo_does_not_log_retired_narrator_failure(tmp_path, caplog):
     assert "Narrator failed" not in caplog.text
 
 
-def test_demo_movement_retries_an_invalid_pre_move_staging_claim(tmp_path, monkeypatch) -> None:
-    responses = iter(
-        (
-            {
-                "dialog_proposal": {"speaker": "narrator", "text": "You enter the foyer.", "tone": "in_world"},
-                "action_proposal": {"intent": "move", "targets": ["foyer"], "arguments": {}, "proposed_effects": []},
-                "staging_claims": [
-                    {
-                        "relation": "access",
-                        "subject_id": "mansion_entrance",
-                        "target_id": "",
-                        "location_id": "front_steps",
-                        "state_id": "available",
-                    }
-                ],
-            },
-            {
-                "dialog_proposal": {"speaker": "narrator", "text": "You enter the foyer.", "tone": "in_world"},
-                "action_proposal": {"intent": "move", "targets": ["foyer"], "arguments": {}, "proposed_effects": []},
-                "staging_claims": [],
-            },
-        )
-    )
+def test_demo_visible_destination_uses_the_shared_deterministic_proposal_path(tmp_path, monkeypatch) -> None:
+    calls = 0
+
+    def _unexpected_planner(*_args: object) -> str:
+        nonlocal calls
+        calls += 1
+        return "{}"
+
     monkeypatch.setattr(
         "storygame.engine.freeform._story_agent_chat_complete",
-        lambda *_args: json.dumps(next(responses)),
+        _unexpected_planner,
     )
     client = TestClient(
         create_demo_app(
@@ -761,7 +746,14 @@ def test_demo_movement_retries_an_invalid_pre_move_staging_claim(tmp_path, monke
     session_id = client.post("/api/v1/session", json={"seed": 123}).json()["session_id"]
     assert client.post("/api/v1/turn", json={"session_id": session_id, "command": "look"}).status_code == 200
 
-    response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
+    foyer = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to foyer"})
+    market_lane = client.post("/api/v1/turn", json={"session_id": session_id, "command": "go to market lane"})
+    collected = client.post("/api/v1/turn", json={"session_id": session_id, "command": "take route key"})
 
-    assert response.status_code == 200
-    assert response.json()["state"]["location"] == "foyer"
+    assert foyer.status_code == 200
+    assert foyer.json()["state"]["location"] == "foyer"
+    assert market_lane.status_code == 200
+    assert market_lane.json()["state"]["location"] == "market_lane"
+    assert collected.status_code == 200
+    assert "route_key" in collected.json()["state"]["inventory"]
+    assert calls == 0
