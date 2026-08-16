@@ -4,21 +4,16 @@ Project docs: [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki
 
 ## Write anything. Keep the story true.
 
-Freytag Forge is an interactive-fiction engine for stories that need to feel
-open-ended without becoming incoherent. Players can negotiate, investigate,
-improvise, travel, deceive, help, refuse, and take the scene in unexpected
-directions. The next runtime answers with model-authored narration—but only
-after local validation has accepted the state changes.
+Freytag Forge is an interactive-fiction engine where you can try the wild idea
+without breaking the story. Investigate, bargain, lie, help, run, refuse, or
+change the plan entirely. The story answers in the moment—and remembers what
+actually happened.
 
-The bet is simple: compelling AI storytelling does not need to choose between
-freedom and continuity. Put mutable session truth in a typed runtime state; let
-models propose the move and write the moment; commit only what the story schema
-can support.
+The promise is simple: player freedom with consequences that stick. Models
+write the scene; the engine keeps the world honest.
 
-This is not an LLM text generator wrapped around a command parser. It is a
-story simulation with an open language interface, durable consequences, and a
-clear boundary between immutable authored possibility, canonical runtime state,
-and prose.
+It is a story simulation with an open-language interface, durable choices, and
+no tiny menu of approved verbs.
 
 Phase 3 of the V2 migration provides the standalone in-process runtime.
 Versioned `CompiledStory` fixtures bootstrap its sole mutable authority,
@@ -68,13 +63,11 @@ failure-forward facts, and rejects bare completion tags. Runtime prompts expose
 only player-earned truths and legal route metadata; protected canon remains out
 of model context until its declared revelation completes.
 
-Grounded-turn-contract Phases 0–2 are complete. The shared typed
-`staging_claims` contract validates custody, environment, access, and event
-assertions against candidate facts before a turn can commit. Packages now also
-declare condition shifts, bounded dramatic costs, route blocks, and
-evidence-based recoveries. Whether the story is a mansion investigation, a
-fantasy journey, a sci-fi crisis, or a relationship scene, the same local
-policy keeps consequences playable and true. See the
+Grounded-turn-contract Phases 0–3 are complete. The planner sees only what the
+current observer can legitimately stage, tells atmosphere apart from changing
+the world, and gets checked before anything sticks. The player sees prose only
+after that check has accepted the turn. The same promise holds for a mansion
+investigation, fantasy journey, sci-fi crisis, or relationship scene. See the
 [grounded turn-contract baseline](docs/grounded-turn-contract-baseline.md).
 
 ## Why it’s different
@@ -124,10 +117,10 @@ No response establishes world truth by itself. If a result is rejected, the
 engine preserves the byte-identical prior runtime state and returns a typed
 fail-closed error.
 
-Phase 1 of the grounded turn contract is complete: material staging claims for
-custody, environment, access, and events are checked against canonical facts
-on a cloned post-effect candidate before narration can be accepted. This is
-structured relation validation, not prose keyword matching.
+The grounded turn contract checks material staging claims for custody,
+environment, access, and events against a cloned post-effect world before
+rendering accepted prose. It uses structured relations, not prose keyword
+matching.
 
 ## Start here
 

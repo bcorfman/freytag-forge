@@ -953,7 +953,7 @@ def run_turn(
     )
     next_state = freeform["state"]
     events = list(freeform["events"])
-    accepted_proposal_text = str(freeform["dialog_proposal"].get("text", "")).strip()
+    accepted_proposal_text = str(freeform["accepted_prose"]).strip()
     if is_player_statement_echo(raw_input, accepted_proposal_text):
         return (
             state.clone(),

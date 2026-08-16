@@ -219,6 +219,7 @@ class FreeformResolution(TypedDict):
     event: Event
     action_proposal: dict[str, Any]
     dialog_proposal: dict[str, Any]
+    accepted_prose: str
     state_update_envelope: dict[str, Any]
 
 
@@ -521,24 +522,6 @@ def _document_reveal_facts_for_input(state: GameState, raw_input: str) -> list[d
     ]
 
 
-def _dialogue_conflicts_with_held_item_custody(state: GameState, text: str) -> bool:
-    """Reject prose that places a fact-held item unattended in the scene."""
-    lowered = " ".join(text.lower().split())
-    exposed_location = r"(?:on (?:the )?(?:ground|floor|front steps|steps)|at (?:your )?feet|in (?:the )?mud|out in (?:the )?open|beside (?:the )?\w+|wedged|lodged|lying|rests?|resting)"
-    for fact in state.world_facts.query("holding", None, None):
-        if len(fact) != 3:
-            continue
-        item_id = fact[2]
-        item = state.world.items.get(item_id)
-        labels = {item_id.replace("_", " ")}
-        if item is not None and item.name.strip():
-            labels.add(item.name.lower())
-        for label in labels:
-            if re.search(rf"\b{re.escape(label)}\b[^.!?]{{0,100}}\b{exposed_location}\b", lowered):
-                return True
-    return False
-
-
 def _visible_npc_match(state: GameState, raw_target: str) -> str:
     candidate = _normalize_target(raw_target)
     if not candidate:
@@ -596,6 +579,111 @@ def _required_document_disclosure(state: GameState, raw_input: str, action_paylo
         ),
         "",
     )
+
+
+def _planner_staging_context(state: GameState, movement_request: bool) -> dict[str, object]:
+    """Return only claimable scene facts and deterministic effect choices."""
+
+    location_id = player_location(state)
+    facts = state.world_facts.all()
+    visible_npc_ids = set(room_npcs(state, location_id))
+    legal_claims: list[dict[str, str]] = []
+
+    for fact in sorted(facts):
+        if fact[0] == "holding" and (
+            fact[1] == "player" or (fact[1] in visible_npc_ids and ("npc_at", fact[1], location_id) in facts)
+        ):
+            legal_claims.append(
+                {
+                    "relation": "custody",
+                    "subject_id": str(fact[2]),
+                    "target_id": str(fact[1]),
+                    "location_id": "",
+                    "state_id": "",
+                }
+            )
+        elif fact[0] == "room_item" and fact[1] == location_id:
+            legal_claims.append(
+                {
+                    "relation": "custody",
+                    "subject_id": str(fact[2]),
+                    "target_id": "",
+                    "location_id": location_id,
+                    "state_id": "",
+                }
+            )
+        elif fact[0] in {"environment", "room_exposure"} and fact[1] == location_id:
+            legal_claims.append(
+                {
+                    "relation": "environment",
+                    "subject_id": "",
+                    "target_id": "",
+                    "location_id": location_id,
+                    "state_id": str(fact[2]),
+                }
+            )
+        elif fact[0] == "path" and location_id in fact[2:]:
+            legal_claims.append(
+                {
+                    "relation": "access",
+                    "subject_id": str(fact[1]),
+                    "target_id": "",
+                    "location_id": location_id,
+                    "state_id": "available",
+                }
+            )
+        elif fact[0] == "locked" and fact[2] == location_id:
+            legal_claims.append(
+                {
+                    "relation": "access",
+                    "subject_id": str(fact[1]),
+                    "target_id": str(fact[3]),
+                    "location_id": location_id,
+                    "state_id": "blocked",
+                }
+            )
+        elif fact[0] == "event" and fact[2] == location_id:
+            legal_claims.append(
+                {
+                    "relation": "event",
+                    "subject_id": str(fact[1]),
+                    "target_id": "",
+                    "location_id": location_id,
+                    "state_id": "",
+                }
+            )
+
+    readable_item_ids = sorted(
+        item_id
+        for item_id in set(room_items(state, location_id)).union(state.player.inventory)
+        if ("item_affordance", item_id, "read") in facts
+    )
+    legal_claims = list(
+        {
+            (claim["relation"], claim["subject_id"], claim["target_id"], claim["location_id"], claim["state_id"]): claim
+            for claim in legal_claims
+        }.values()
+    )
+    effects: dict[str, object] = {
+        "visible_npc_ids": sorted(visible_npc_ids),
+        "take": [
+            {
+                "item_id": item_id,
+                "resulting_claim": {
+                    "relation": "custody",
+                    "subject_id": item_id,
+                    "target_id": "player",
+                    "location_id": "",
+                    "state_id": "",
+                },
+            }
+            for item_id in sorted(room_items(state, location_id))
+        ],
+        "read_item_ids": readable_item_ids,
+    }
+    if movement_request:
+        effects["move_destination_ids"] = sorted(state.world.rooms[location_id].exits.values())
+    return {"legal_claims": legal_claims, "legal_effects": effects}
 
 
 def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str]:
@@ -700,6 +788,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
             "id": addressed_npc_id,
             "facts": [list(fact) for fact in speaker_facts],
         },
+        "staging_contract": _planner_staging_context(state, movement_request),
         "inventory": list(state.player.inventory),
         "recent_events": [
             str(event.message_key).strip() for event in state.event_log.events[-5:] if str(event.message_key).strip()
@@ -707,7 +796,7 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
     }
     system = (
         "You are Freeform Action Planner Agent. "
-        "Return JSON only with keys dialog_proposal and action_proposal. "
+        "Return JSON only with keys dialog_proposal, action_proposal, and staging_claims. "
         "dialog_proposal requires: speaker, text, tone. "
         "action_proposal requires: intent, targets, arguments, disclosed_knowledge, proposed_effects. "
         "Use only entities from provided context. "
@@ -728,8 +817,12 @@ def _freeform_planner_prompt(state: GameState, raw_input: str) -> tuple[str, str
         "that fact key; otherwise use an empty string. "
         "Write grounded roleplay: characters act from supplied motivations, relationships, knowledge, "
         "pressure, and limits, with room for initiative, subtext, disagreement, and hesitation. "
-        "Performance may shape voice, attention, body language, pacing, and expression, but cannot invent "
-        "facts, hidden knowledge, events, or visible state changes."
+        "Atmosphere is prose-only: 'rain needles the windows' needs no staging_claim. "
+        "Staging is a visible world assertion: 'the item remains with its visible holder' needs a matching "
+        "staging_claim from staging_contract.legal_claims after the proposed effect. "
+        "Use staging_contract.legal_effects only for material effects; omit staging_claims when the prose "
+        "makes no material assertion. Performance may shape voice, attention, body language, pacing, and "
+        "expression, but cannot invent facts, hidden knowledge, events, or visible state changes."
     )
     return system, json.dumps(payload, ensure_ascii=True)
 
@@ -923,8 +1016,6 @@ class LlmFreeformProposalAdapter:
         required_disclosure = _required_document_disclosure(state, raw_input, action_payload)
         if required_disclosure and action_payload.get("disclosed_knowledge") != required_disclosure:
             raise ValueError("planner_missing_required_document_disclosure")
-        if _dialogue_conflicts_with_held_item_custody(state, str(dialog_payload.get("text", ""))):
-            raise ValueError("planner_dialogue_custody_conflict")
         if _dialogue_contains_code_artifact(dialog_payload):
             raise ValueError("planner_dialogue_code_artifact")
         if is_player_statement_echo(raw_input, str(dialog_payload.get("text", ""))):
@@ -1427,6 +1518,7 @@ def resolve_freeform_roleplay_with_proposals(
     )
     runtime_result = execute_turn_proposal(state, turn_proposal, None)
     next_state = runtime_result["state"]
+    accepted_prose = str(runtime_result["accepted_narration"])
     committed_events = list(runtime_result["events"])
     committed_fact_ops: list[dict[str, Any]] = _envelope_to_fact_ops(envelope)
     for committed_event in committed_events:
@@ -1443,7 +1535,11 @@ def resolve_freeform_roleplay_with_proposals(
     delta_tension = max(0.0, next_state.tension - state.tension)
     compatibility_event = Event(
         type="freeform_roleplay",
-        message_key=_format_character_reply_line(next_state, dialog_proposal, action_proposal),
+        message_key=_format_character_reply_line(
+            next_state,
+            {**dialog_proposal, "text": accepted_prose},
+            action_proposal,
+        ),
         entities=tuple(action_proposal["targets"]),
         tags=("dialog", "freeform"),
         delta_progress=delta_progress,
@@ -1466,6 +1562,7 @@ def resolve_freeform_roleplay_with_proposals(
         "event": compatibility_event,
         "action_proposal": action_proposal,
         "dialog_proposal": dialog_proposal,
+        "accepted_prose": accepted_prose,
         "state_update_envelope": envelope,
     }
 

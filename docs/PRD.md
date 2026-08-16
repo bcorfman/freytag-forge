@@ -57,15 +57,17 @@ conditions before atomically committing facts. Bare completion tags are
 rejected for blueprint-backed sessions, and the prompt receives only
 observer-earned facts and legal route metadata.
 
-Grounded-turn-contract Phases 0–2 have audited the V1 and V2
+Grounded-turn-contract Phases 0–3 have audited the V1 and V2
 proposal/rendering boundaries, recorded the adapter-wide provider-call and
 in-process latency baseline, and closed the generic material-staging path.
 Ordinary V1 freeform turns carry typed `staging_claims`, checked only against
 candidate facts after validated effects. Story packages declare fact-backed
 environment transitions, bounded dramatic consequence classes, route blocks,
 and evidence recoveries; validation rejects an unwinnable fully blocked route.
-The same contract is exercised by mystery, fantasy, sci-fi, and relationship
-sessions without a runtime genre branch. See the
+The planner receives only observer-scoped claim/effect choices, distinguishes
+atmosphere from material staging, and renderers receive prose only after the
+atomic commit accepts it. The same contract is exercised by mystery, fantasy,
+sci-fi, and relationship sessions without a runtime genre branch. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
 ## Goals
@@ -396,7 +398,7 @@ flowchart LR
 - Runtime adapters produce dialogue, action, event, and state-delta proposals.
 - Freeform turn planning may retry once when the model responds with non-JSON text, but ordinary gameplay must still fail closed if a valid typed proposal cannot be recovered.
 - Engine policy maps proposals into bounded deterministic fact deltas before commit.
-- Candidate visible changes are accepted only as typed proposal claims and bounded effects before commit. Rendered narration is never an extraction source or a mutation authority.
+- Candidate visible changes are accepted only as typed proposal claims and bounded effects before commit. Planner context is observer-scoped and names only legal claim/effect choices; rendered prose comes only from a successful atomic commit and is never an extraction source or a mutation authority.
 - In-scope proposals should usually yield meaningful world or relationship consequences rather than collapsing to generic flag-only bookkeeping.
 - Unknown or weakly-specified intents should still be interpreted through proposal/policy contracts; if the runtime cannot author the turn through that path, it should fail closed instead of inventing deterministic substitute prose.
 - Package-declared readable items and other unambiguous affordances resolve through generic intent policy and commit only their declared discovery, knowledge, or state effects.
@@ -507,6 +509,7 @@ flowchart LR
   `custody`, `environment`, `access`, and `event` claims after bounded effects
   apply to a clone. Unknown, duplicate, contradictory, and off-scene claims
   consume the shared recovery budget and fail closed without a fact commit.
+  Phrase matching is not a second custody authority.
 
 ### Evaluation Harness
 - Fixed-seed regression tests for replay stability.
