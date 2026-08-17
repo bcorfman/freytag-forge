@@ -21,17 +21,14 @@ def build_compiler_prompt(outline: str, genre_profile: Mapping[str, object]) -> 
 
 
 def build_blueprint_compiler_prompt(outline: str, genre_profile: Mapping[str, object]) -> str:
-    """Request a full causal blueprint as a JSON object before play begins."""
+    """Request one immutable causal V2 blueprint as a JSON object before play begins."""
 
     profile = json.dumps(dict(genre_profile), sort_keys=True, separators=(",", ":"))
     return (
-        "Return one JSON object only, labelled by this contract: STORY_BLUEPRINT_JSON. "
-        "Compile immutable story-blueprint-v1 data, never runtime facts or executable effects. "
-        "Plan backward from the genre terminal truth. Declare dramatic phases, required outcomes, "
-        "optional/substitutable beats, multiple genuinely distinct player-facing realization routes, "
-        "protected facts, pressure responses, and bounded failure-forward results. Every required "
-        "revelation needs the profile's minimum distinct route roles unless the profile explicitly says otherwise. "
-        "Include source_outline.id and source_outline.content_hash as placeholders that the caller may "
-        "verify locally.\n"
+        "Return one JSON object only for the STORY_BLUEPRINT_V2_JSON contract. "
+        "Compile immutable story-blueprint-v2 authoring data, never runtime facts or executable effects. "
+        "Declare structured locations, routes, participants, causal events, evidence opportunities, "
+        "knowledge protections, revelations, realization routes, outcomes, beats, and end states. "
+        "Include the supplied source provenance unchanged. Local validation is authoritative.\n"
         f"Genre profile: {profile}\nOutline: {outline.strip()}"
     )

@@ -242,33 +242,33 @@ reviewable raw source rather than an implied or reconstructed one.
 
 ### Work package — OpenAI transport and candidate orchestration (Phase 2; tests first)
 
-- [ ] Add `OpenAIBlueprintTransport` at the authoring boundary, implementing
+- [x] Add `OpenAIBlueprintTransport` at the authoring boundary, implementing
   the existing `BlueprintCompilerTransport.generate(prompt, *, json_object)`
   Protocol.
-- [ ] Add a typed, constructor-injected configuration object containing API
+- [x] Add a typed, constructor-injected configuration object containing API
   key, selected model, optional base URL, and finite request timeout. Read
   `OPENAI_API_KEY` only from the CLI/factory boundary; fail with a typed,
   non-secret configuration error when it or the model is absent.
-- [ ] Use the OpenAI Responses API with provider JSON-object mode when
+- [x] Use the OpenAI Responses API with provider JSON-object mode when
   `json_object=True`; return normalized text/object output to the existing
   parser. Do not send a deep provider-side schema—the local V2 contract is
   authoritative.
-- [ ] Normalize supported response envelopes and surface transport, refusal,
+- [x] Normalize supported response envelopes and surface transport, refusal,
   empty-output, malformed-output, and JSON-mode-rejected cases as typed
   compiler errors. Let `BlueprintCompiler` own the single retry without JSON
   mode; do not add hidden adapter retries.
-- [ ] Extend provenance with provider name, configured model, response/request
+- [x] Extend provenance with provider name, configured model, response/request
   identifier when available, prompt version, source hash, and local validation
   results. Never store credentials or raw headers.
-- [ ] Extend `storygame-blueprint` with a first-party
+- [x] Extend `storygame-blueprint` with a first-party
   `--provider openai` selection and `--model`; retain
   `--transport-factory` solely as a mutually exclusive test/custom seam.
-- [ ] Require exactly one source selector: `--outline-id` resolves through the
+- [x] Require exactly one source selector: `--outline-id` resolves through the
   inventory loader, while `--story` resolves through the Story Brief loader.
   Reject missing IDs/paths, schema failures, and genre/profile mismatches before
   any network request; write the normalized source identity, source format, and
   SHA-256 source hash into candidate provenance.
-- [ ] Document the explicit environment setup and one-shot candidate command;
+- [x] Document the explicit environment setup and one-shot candidate command;
   add a non-CI live smoke command that is skipped without credentials.
 
 **Tests:** mocked Responses success, plain/structured output normalization,
@@ -278,7 +278,7 @@ conflicts, valid compilation setup for every selected inventory outline and
 Story Brief fixture, unknown outline ID or brief path, declared-genre mismatch,
 changed-source hash, and proof that no test performs a paid request.
 
-**Exit criteria:** with an injected fake OpenAI client, a valid V2 causal
+**Exit criteria: [x]** with an injected fake OpenAI client, a valid V2 causal
 candidate follows the exact two-request maximum; no key or secret appears in
 an artifact or failure message.
 
@@ -415,7 +415,7 @@ required of every future genre.
 
 ## Completion checklist
 
-- [ ] OpenAI adapter is explicit, credential-safe, mocked in tests, and never
+- [x] OpenAI adapter is explicit, credential-safe, mocked in tests, and never
   invoked by gameplay or CI.
 - [x] V2 contracts express concrete topology, party knowledge, failure-forward
   guidance, required outcomes, optional/substitutable beats, and backwards
@@ -426,9 +426,9 @@ required of every future genre.
   the defective template.
 - [ ] A reviewed V2 artifact bootstraps `RuntimeState` and passes generic V2
   runtime, staging, and promotion evaluation.
-- [ ] Documentation explains the paid/offline workflow, artifact review, and
+- [x] Documentation explains the paid/offline workflow, artifact review, and
   provider configuration without exposing credentials.
-- [ ] The offline compiler command and tests demonstrate that every selected
+- [x] The offline compiler command and tests demonstrate that every selected
   outline in `data/story_outlines.yaml` and every valid standalone Story Brief
   can enter the same compiler pipeline using its own declared profile; Vale is
   only the first reviewed rebuild.
