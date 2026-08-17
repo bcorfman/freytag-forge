@@ -2,6 +2,7 @@
 
 from storygame.authoring.compiler import CompilationError, CompiledStoryCompiler, validate_compiled_story
 from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
+from storygame.authoring.sources import NormalizedStorySource, StoryBrief, StorySourceLoader
 
 __all__ = [
     "Beat",
@@ -12,5 +13,8 @@ __all__ = [
     "CompiledStoryCompiler",
     "CompletionTag",
     "ProtectedRevelation",
+    "NormalizedStorySource",
+    "StoryBrief",
+    "StorySourceLoader",
     "validate_compiled_story",
 ]

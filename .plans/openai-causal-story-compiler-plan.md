@@ -17,10 +17,11 @@ owner's `OPENAI_API_KEY`.
 
 ## Outcome
 
-An explicit, paid, offline command can turn **any selected outline** from
-[`data/story_outlines.yaml`](../data/story_outlines.yaml) into a reviewable,
-typed `story-blueprint-v2` candidate using an OpenAI model. The candidate must
-plan backward from the genre's terminal resolution, derive concrete reachable
+An explicit, paid, offline command can turn either **any selected outline**
+from [`data/story_outlines.yaml`](../data/story_outlines.yaml) or a standalone,
+author-owned `freytag-story-brief-v1` YAML document into a reviewable, typed
+`story-blueprint-v2` candidate using an OpenAI model. The candidate must plan
+backward from the genre's terminal resolution, derive concrete reachable
 locations and causal opportunities, and bind every revelation to the Freytag
 progression. A mystery profile will require a complete solution graph (event,
 timeline, means, motive, opportunity, concealment, proof, and alternatives)
@@ -30,7 +31,26 @@ The compiler output remains an immutable authoring artifact. Only a separately
 reviewed artifact may bootstrap V2 `RuntimeState`; `RuntimeState` is the sole
 mutable runtime authority.
 
-### Vale source decision
+### Source formats and Vale source decision
+
+`data/story_outlines.yaml` remains a supported compact source inventory, but
+it is not the only authoring entry point. `freytag-story-brief-v1` is a
+standalone, user-friendly YAML source format that an author may keep outside
+that inventory. It has stable story identity, declared genre/profile, premise,
+opening public boundary, world and cast notes, hard truths/protections/ending
+constraints, desired dramatic beats, a non-canonical possibility library, and
+freeform namespaced extensions. It distinguishes hard compiler constraints from
+creative direction and notes, so authors may expand a brief without needing to
+understand the compact source-inventory format or accidentally establish
+runtime truth.
+
+The offline command validates and normalizes either source format into the
+compiler's one raw-source contract. It records the selected source format,
+stable source ID, path or inventory key, schema version where applicable, and
+SHA-256 content hash in candidate provenance. The brief, its `extensions`, and
+the normalized source are immutable offline inputs only: they cannot execute
+effects, become mutable runtime state, or bypass the reviewed causal-artifact
+workflow.
 
 Vale Mansion is **not** currently an entry in `data/story_outlines.yaml`.
 Its surviving sources are a reduced `compiled-story-v1` fixture and a V1
@@ -87,6 +107,11 @@ provenance record <--- critic / bounded repair --- causal + map + Freytag gates
   declared genre and content hash before and after generation. It must never
   substitute Vale, select an outline by incidental prompt text, or contain a
   fixed list of outline IDs.
+- Standalone brief selection is equally explicit: `--story path/to/brief.yaml`
+  selects exactly one `freytag-story-brief-v1` source and is mutually exclusive
+  with `--outline-id`. Validate its schema, stable ID, declared genre/profile,
+  and content hash before any network request. Do not register or copy a brief
+  into `data/story_outlines.yaml` merely to compile it.
 - An `authoring_only` outline is eligible only for the explicit offline
   compiler command. The hosted bootstrap rejects it until a reviewed artifact
   is promoted through the normal V2 fixture workflow.
@@ -156,7 +181,7 @@ of phases.
 
 | Phase | Bounded deliverable | Work package |
 | --- | --- | --- |
-| 0 | A source-selection and provenance boundary for every outline, including the authoring-only Vale source | Source and authority |
+| 0 | A source-selection, Story Brief normalization, and provenance boundary for every outline or standalone author source, including the authoring-only Vale source | Source and authority |
 | 1 | A locally validated causal `CompiledStory` contract with profiles, route diversity, optional beats, knowledge, and failure-forward guarantees | Causal contract and profiles |
 | 2 | An explicit, credential-safe OpenAI transport and offline compiler command that produces an unreviewed candidate | OpenAI transport and candidate orchestration |
 | 3 | A bounded backwards-planning, critic, and repair pipeline that either accepts a fully validated candidate or returns diagnostics | Compilation, critics, and repair |
@@ -165,30 +190,55 @@ of phases.
 
 ### Work package — Source and authority (Phase 0)
 
-- [ ] Inventory every current V2 authoring and hosted-bootstrap consumer of
+- [x] Inventory every current V2 authoring and hosted-bootstrap consumer of
   `CompiledStory`, and confirm no retired V1 blueprint/package surface is a
   dependency.
-- [ ] Add a concise authority note identifying raw outlines and reviewed causal
+- [x] Add a concise authority note identifying raw outlines and reviewed causal
   artifacts as immutable inputs and `RuntimeState` as the sole mutable truth.
-- [ ] Record the current Vale defects as failing authoring cases: absent west
+- [x] Record the current Vale defects as failing authoring cases: absent west
   gallery, prose-only upper gallery/long hall, unreachable evidence locations,
   and a solution graph that cannot be proven through the playable map.
-- [ ] Add a source-selection inventory covering every outline in
+- [x] Add a source-selection inventory covering every outline in
   `data/story_outlines.yaml`: stable ID, declared genre, tone/variant fields,
   and content hash. Treat the file as immutable compiler input, never runtime
   state.
-- [ ] Create the new `authoring_only` Vale raw-outline entry. Its source ID is
+- [x] Define and document `freytag-story-brief-v1` as a standalone YAML
+  contract. Require stable ID, genre/profile, premise, opening public boundary,
+  and enough author intent to select a profile and compile; support optional
+  world/cast notes, hard truths and protections, ending constraints, dramatic
+  beats, possibility-library entries, freeform author notes, and namespaced
+  extensions. Make the distinction between hard constraints and non-canonical
+  creative direction explicit.
+- [x] Add a typed, constructor-injected brief loader/normalizer that produces
+  the same raw-source contract used by inventory outlines. Preserve supported
+  extension content for the compiler prompt and provenance, but reject unknown
+  fields outside the explicit `extensions` namespace rather than silently
+  interpreting them as canonical facts.
+- [x] Extend `storygame-blueprint` source selection with a mutually exclusive
+  `--story path/to/brief.yaml` option. Resolve its path and validate its
+  format/ID/genre/profile/source hash locally before provider construction;
+  candidate provenance records source format, normalized identity, path, and
+  hash without exposing unrelated filesystem data.
+- [x] Create the new `authoring_only` Vale raw-outline entry. Its source ID is
   the provenance ID for the rebuild; do not claim that the existing compiled
   fixture or V1 blueprint is its raw outline.
-- [ ] Extend outline schema/selection tests so the compiler can select an
-  `authoring_only` outline by exact ID, while normal runtime template selection
-  excludes it.
-- [ ] Decide and document the reviewed-artifact location and versioning policy
+- [x] Extend source schema/selection tests so the compiler can select an
+  `authoring_only` inventory outline by exact ID or a valid standalone brief by
+  path, while normal runtime template selection excludes `authoring_only`
+  outlines and all standalone briefs.
+- [x] Decide and document the reviewed-artifact location and versioning policy
   before generating any paid candidate.
 
-**Exit criteria:** no runtime consumer silently starts loading a candidate, and
-any selected source outline can be resolved deterministically by ID. Vale has a
-distinct, reviewable raw source rather than an implied or reconstructed one.
+**Tests:** valid minimal and expanded Story Briefs; invalid/missing required
+identity or opening fields; unknown top-level fields; extension preservation;
+hard constraint versus creative-direction normalization; source-option
+conflicts; malformed YAML; path/ID/genre/profile/hash failures; and proof that
+neither source format can enter runtime bootstrap unreviewed.
+
+**Exit criteria: [x]** no runtime consumer silently starts loading a candidate, and
+any selected inventory outline or standalone Story Brief resolves
+deterministically to one normalized source with provenance. Vale has a distinct,
+reviewable raw source rather than an implied or reconstructed one.
 
 ### Work package — OpenAI transport and candidate orchestration (Phase 2; tests first)
 
@@ -213,19 +263,20 @@ distinct, reviewable raw source rather than an implied or reconstructed one.
 - [ ] Extend `storygame-blueprint` with a first-party
   `--provider openai` selection and `--model`; retain
   `--transport-factory` solely as a mutually exclusive test/custom seam.
-- [ ] Keep `--outline-id` as the required source selector. Resolve it through
-  the existing outline loader, reject missing IDs and genre mismatches before
-  any network request, and write the selected ID plus SHA-256 source hash into
-  candidate provenance.
+- [ ] Require exactly one source selector: `--outline-id` resolves through the
+  inventory loader, while `--story` resolves through the Story Brief loader.
+  Reject missing IDs/paths, schema failures, and genre/profile mismatches before
+  any network request; write the normalized source identity, source format, and
+  SHA-256 source hash into candidate provenance.
 - [ ] Document the explicit environment setup and one-shot candidate command;
   add a non-CI live smoke command that is skipped without credentials.
 
 **Tests:** mocked Responses success, plain/structured output normalization,
 JSON-mode rejection then one non-JSON retry, malformed output exhaustion,
 missing key/model, timeout, refusal, provenance redaction, CLI argument
-conflicts, valid compilation setup for every selected outline fixture, unknown
-outline ID, declared-genre mismatch, changed-source hash, and proof that no
-test performs a paid request.
+conflicts, valid compilation setup for every selected inventory outline and
+Story Brief fixture, unknown outline ID or brief path, declared-genre mismatch,
+changed-source hash, and proof that no test performs a paid request.
 
 **Exit criteria:** with an injected fake OpenAI client, a valid V2 causal
 candidate follows the exact two-request maximum; no key or secret appears in
@@ -378,5 +429,6 @@ required of every future genre.
 - [ ] Documentation explains the paid/offline workflow, artifact review, and
   provider configuration without exposing credentials.
 - [ ] The offline compiler command and tests demonstrate that every selected
-  outline in `data/story_outlines.yaml` can enter the same compiler pipeline
-  using its own declared profile; Vale is only the first reviewed rebuild.
+  outline in `data/story_outlines.yaml` and every valid standalone Story Brief
+  can enter the same compiler pipeline using its own declared profile; Vale is
+  only the first reviewed rebuild.

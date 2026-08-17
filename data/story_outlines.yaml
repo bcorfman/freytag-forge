@@ -171406,3 +171406,15 @@ stories:
     \ this realization, feels like she has made a mistake in her wish and starts to\
     \ regret her decision. Scene: Eileen's apartment, as she is talking to herself\
     \ or her best friend Lily. Characters: Eileen Reese"
+- id: vale_mansion_rebuild
+  genre: mystery
+  tone: gothic_investigation
+  variant: closed_house
+  authoring_only: true
+  outline: During a winter gathering at Vale Mansion, the host is found dead in the west gallery.
+  opening_public_boundary: >-
+    The death, gathered household, and accessible foyer, study, library, and grounds
+    are public; the solution, private motives, and protected evidence are not.
+  terminal_constraints:
+    - A reviewed causal artifact must provide a fair, evidence-backed resolution.
+    - Every material opportunity must be reachable; prose-only locations are invalid.

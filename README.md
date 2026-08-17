@@ -27,6 +27,20 @@ no tiny menu of approved verbs.
 
 **Less prompt luck. More playable story.**
 
+## Build the story before you run it
+
+Every future causal story starts with an immutable source, never a runtime
+shortcut. Pick an inventory outline or bring a standalone Story Brief; either
+one resolves to a hash-bound, reviewable compiler input with its own declared
+genre profile. Hard truths and ending constraints stay hard. World notes,
+beats, possibilities, and author experiments stay creative direction—not
+hidden mutable state.
+
+The new Vale Mansion rebuild begins the same way: a distinct,
+`authoring_only` raw outline, not an inferred copy of its old fixture. It can
+be compiled offline and reviewed on its merits, while the hosted game continues
+to boot only checked-in, reviewed `CompiledStory` artifacts.
+
 ## Highlights
 
 | Build worlds | Run scenes | Trust the result |
@@ -105,7 +119,8 @@ validation do not require inference.
 | --- | --- |
 | `uv sync` | Install runtime and development dependencies. |
 | `uv run storygame --genre fantasy --tone epic` | Start a CLI story session through the Cloudflare Worker. |
-| `FREYTAG_ENABLE_LIVE_COMPILER=1 uv run storygame-blueprint --live --outline-id 123 --genre mystery --transport-factory package.module:factory --output data/story_blueprints/candidates/mystery_123.candidate.json` | Opt in to compile one raw outline into a non-overwriting reviewed-candidate envelope. |
+| `uv run storygame-blueprint --outline-id vale_mansion_rebuild` | Inspect one immutable inventory source and its hash-bound compiler provenance; no provider is constructed. |
+| `uv run storygame-blueprint --story path/to/brief.yaml` | Validate one standalone `freytag-story-brief-v1` source with its declared profile; no provider is constructed. |
 | `make run` | Start the local web app at `http://127.0.0.1:8000`. |
 | `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
 | `uv run ruff check .` | Check lint rules. |
