@@ -1,5 +1,6 @@
 """Offline V2 compiled-story authoring boundary."""
 
+from storygame.authoring.blueprint_compiler import BlueprintCompilation, BlueprintCompiler, BlueprintCompilerTransport
 from storygame.authoring.causal_contracts import (
     CausalCompiledStory,
     CausalValidationError,
@@ -9,11 +10,15 @@ from storygame.authoring.causal_critics import CausalCompletenessCritic, Freytag
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError, CompiledStoryCompiler, validate_compiled_story
 from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
+from storygame.authoring.openai_transport import OpenAIBlueprintTransport, OpenAICompilerConfig
 from storygame.authoring.sources import NormalizedStorySource, StoryBrief, StorySourceLoader
 
 __all__ = [
     "Beat",
     "BeatPacing",
+    "BlueprintCompilation",
+    "BlueprintCompiler",
+    "BlueprintCompilerTransport",
     "Character",
     "CausalCompiledStory",
     "CausalCompletenessCritic",
@@ -25,6 +30,8 @@ __all__ = [
     "CompletionTag",
     "ProtectedRevelation",
     "NormalizedStorySource",
+    "OpenAIBlueprintTransport",
+    "OpenAICompilerConfig",
     "StoryBrief",
     "StorySourceLoader",
     "FreytagProgressionCritic",

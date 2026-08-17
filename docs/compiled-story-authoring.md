@@ -103,7 +103,42 @@ injected full-blueprint critics plus route-fairness review, and permits only one
 repair/revalidation pass. It records a non-playable candidate envelope with
 compiler provenance rather than overwriting a checked-in reviewed fixture.
 
-Use `storygame-blueprint --live` only with
-`FREYTAG_ENABLE_LIVE_COMPILER=1` and an injected `module.path:factory`
-transport. This tooling command is outside normal gameplay and may make a paid
-provider request.
+## Phase-2 OpenAI candidate command
+
+The first-party `OpenAIBlueprintTransport` uses the OpenAI Responses API at the
+offline authoring boundary. It receives an explicit `OpenAICompilerConfig`
+(API key, model, optional base URL, finite timeout) and implements the
+`BlueprintCompilerTransport.generate(prompt, *, json_object)` protocol. It
+normalizes plain text, fenced JSON, structured output, nested `result.response`,
+and chat-choice envelopes before local parsing. Refusals, empty output,
+timeouts, malformed envelopes, and rejected JSON mode are typed failures.
+
+Run a paid compilation only when both the environment gate and the command
+acknowledgement are present:
+
+```text
+OPENAI_API_KEY=... FREYTAG_COMPILER_MODEL=gpt-5.6 FREYTAG_ENABLE_LIVE_COMPILER=1 \
+  uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live
+```
+
+`--model` overrides `FREYTAG_COMPILER_MODEL`. `OPENAI_BASE_URL` optionally
+selects a compatible Responses endpoint. `--transport-factory module.path:factory`
+is a mutually exclusive test/custom seam and still requires `--model` and the
+same live gate. The normal non-live command remains a source inspection tool.
+
+The compiler owns one shared recovery budget: it requests JSON-object mode,
+then at most once retries without it. It locally validates the result and writes
+only a fresh `data/story_blueprints/candidates/*.candidate.json` envelope. The
+envelope records source format, ID, path, SHA-256 hash, provider, configured
+model, prompt version, response ID when available, and local validation result.
+It never includes API keys, headers, or a reviewed fixture overwrite. CI and
+ordinary play do not invoke the live command; operator-owned smoke use is
+deliberately skipped without credentials.
+
+To exercise that provider boundary intentionally, an operator may run the
+following only with a disposable budget and explicit opt-in; without both the
+flag and credentials it skips without a request:
+
+```text
+FREYTAG_RUN_LIVE_SMOKE=1 TMPDIR=/tmp uv run pytest tests/test_openai_live_smoke.py -q --no-cov
+```

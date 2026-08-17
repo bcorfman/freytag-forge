@@ -31,6 +31,13 @@ class SourceProvenance(_Contract):
     source_format: Literal["story-outline-inventory-v1", "freytag-story-brief-v1"]
     source_id: str = Field(min_length=1, max_length=120)
     source_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    source_path: str | None = Field(default=None, min_length=1)
+    source_schema_version: str | None = Field(default=None, min_length=1, max_length=80)
+    provider: str | None = Field(default=None, min_length=1, max_length=80)
+    model: str | None = Field(default=None, min_length=1, max_length=160)
+    response_id: str | None = Field(default=None, min_length=1, max_length=200)
+    prompt_version: str | None = Field(default=None, min_length=1, max_length=80)
+    validation_results: tuple[str, ...] = Field(default=(), max_length=64)
 
 
 class Truth(_Contract):

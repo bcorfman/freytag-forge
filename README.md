@@ -49,6 +49,24 @@ revelations, premature knowledge, impossible timelines, dead-end failures, and
 optional detours masquerading as endings. Genre profiles set the obligations;
 the engine stays genre-agnostic.
 
+Phase 2 turns that spine into an intentional, paid drafting room—not a hidden
+runtime dependency. The offline `storygame-blueprint` command can call OpenAI's
+Responses API only when you explicitly acknowledge `--live` and enable it with
+`FREYTAG_ENABLE_LIVE_COMPILER=1`. It binds each unreviewed candidate to its
+source hash, selected model, prompt version, response ID when available, and
+local validation record. Secrets and raw headers never enter the artifact.
+
+```text
+OPENAI_API_KEY=... FREYTAG_COMPILER_MODEL=gpt-5.6 FREYTAG_ENABLE_LIVE_COMPILER=1 \
+  uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live
+```
+
+That command writes a new `*.candidate.json` under
+`data/story_blueprints/candidates/`; it will not overwrite a reviewed story.
+The compiler asks OpenAI for JSON-object output first, then gets exactly one
+plain-JSON recovery attempt if the provider rejects that mode or the response
+is unusable. Gameplay and CI never make the call.
+
 ## Highlights
 
 | Build worlds | Run scenes | Trust the result |
