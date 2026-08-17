@@ -56,7 +56,10 @@ class RuntimeState:
 
 
 def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
-    """Realize an immutable story into the only mutable V2 state object."""
+    """Realize a reviewed immutable story into the only mutable V2 state object."""
+
+    if not isinstance(compiled_story, CompiledStory):
+        raise TypeError("runtime bootstrap requires a reviewed CompiledStory fixture")
     initial = compiled_story.initial_world_state
     location = initial.get("location")
     if not isinstance(location, str) or not location:

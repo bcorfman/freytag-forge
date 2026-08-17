@@ -43,6 +43,44 @@ For an offline authoring experiment, inject a transport into
 runtime execution. `compile` remains available for injected deterministic
 transports used by authoring tests.
 
+## Phase-0 source selection
+
+The offline compiler has one immutable `NormalizedStorySource` boundary. An
+explicit `--outline-id` selects exactly one entry from
+`data/story_outlines.yaml`; an explicit `--story path/to/brief.yaml` selects
+one standalone `freytag-story-brief-v1` document. The selectors are mutually
+exclusive. Both paths validate the declared genre/profile locally and produce
+stable source ID, source format, a SHA-256 content hash, and a deliberately
+limited provenance path (inventory name plus ID, or brief filename).
+
+A Story Brief requires `schema_version`, stable `id`, `genre`, `profile`,
+`premise`, and `opening_public_boundary`. It may add `world_notes`,
+`cast_notes`, `hard_truths`, `protections`, `ending_constraints`,
+`dramatic_beats`, `possibility_library`, and `author_notes`. The hard-truth,
+protection, and ending fields are compiler constraints; all note, beat, and
+possibility fields are non-canonical creative direction. Extra top-level keys
+are rejected. Open-ended metadata belongs only under `extensions`, whose keys
+must be namespaced, such as `author.palette`.
+
+`vale_mansion_rebuild` is an `authoring_only` raw inventory entry. It may be
+selected by the offline source selector, but hosted bootstrap still loads only
+reviewed `data/compiled_stories/v1/` fixtures. Candidate artifacts will live
+under `data/story_blueprints/candidates/` as new versioned
+`*.candidate.json` files; they never overwrite reviewed artifacts in
+`data/compiled_stories/v1/`.
+
+The existing Vale artifact is deliberately not source authority. Its absent west
+gallery, prose-only upper gallery and long hall, unreachable evidence locations,
+and unprovable solution graph are recorded as failures a later causal artifact
+must reject rather than patch with narration.
+
+Use Phase 0 to inspect a source without constructing a provider:
+
+```text
+uv run storygame-blueprint --outline-id vale_mansion_rebuild
+uv run storygame-blueprint --story path/to/brief.yaml
+```
+
 `storygame.runtime.bootstrap_runtime_state` retains `CompiledStory` as its
 public bridge input and can additionally receive a validated Story Blueprint.
 The blueprint is realized into the runtime's fact-backed progression map; the
