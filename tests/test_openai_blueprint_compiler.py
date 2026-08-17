@@ -13,6 +13,7 @@ from storygame.authoring.causal_contracts import validate_causal_compiled_story
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.openai_transport import OpenAIBlueprintTransport, OpenAICompilerConfig
+from storygame.authoring.prompts import build_blueprint_compiler_prompt
 from storygame.authoring.sources import NormalizedStorySource
 from tests.test_causal_story_contract import _story
 
@@ -213,6 +214,62 @@ def test_blueprint_compiler_exhausts_after_two_malformed_attempts():
     with pytest.raises(CompilationError, match="BLUEPRINT_COMPILATION_EXHAUSTED"):
         BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source())
     assert transport.calls == [True, False]
+
+
+def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
+    incomplete = _candidate()
+    incomplete["provenance"] = _source().provenance()
+    incomplete["causal_events"][1]["output_truths"] = ["remedy"]
+    repaired = _candidate()
+    repaired["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            assert json_object
+            self.prompts.append(prompt)
+            return incomplete if len(self.prompts) == 1 else repaired
+
+    transport = FakeTransport()
+    compilation = BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source())
+
+    assert compilation.accepted
+    assert compilation.request_count == 2
+    assert compilation.validation_results[-1] == "repair_valid"
+    assert '"source_hash":"' + "a" * 64 in transport.prompts[0]
+    assert "lacks a causal evidence/route chain" in transport.prompts[1]
+    assert "Diagnostics:" in transport.prompts[1]
+
+
+def test_blueprint_compiler_persists_unplayable_candidate_diagnostics() -> None:
+    incomplete = _candidate()
+    incomplete["provenance"] = _source().provenance()
+    incomplete["causal_events"][1]["output_truths"] = ["remedy"]
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            return incomplete
+
+    compilation = BlueprintCompiler(FakeTransport(), _profiles(), provider="openai", model="gpt-5.6").compile(_source())
+
+    assert not compilation.accepted
+    assert compilation.story.provenance.validation_results[-1] == "candidate_rejected"
+    assert compilation.diagnostics[0].critic == "causal_completeness"
+
+
+def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -> None:
+    prompt = build_blueprint_compiler_prompt(
+        "A crew must solve a crisis.",
+        {"genre": "sci-fi", "minimum_independent_proof_routes": 2},
+        _source().provenance(),
+    )
+
+    assert "terminal truths; enumerate causal events and timeline; work backward" in prompt
+    assert "independently realizable proof routes" in prompt
+    assert "source_hash" in prompt
+    assert "mystery" not in prompt
 
 
 def test_blueprint_parser_and_source_validation_reject_untrusted_shapes():

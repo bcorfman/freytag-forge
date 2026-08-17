@@ -20,15 +20,33 @@ def build_compiler_prompt(outline: str, genre_profile: Mapping[str, object]) -> 
     )
 
 
-def build_blueprint_compiler_prompt(outline: str, genre_profile: Mapping[str, object]) -> str:
-    """Request one immutable causal V2 blueprint as a JSON object before play begins."""
+def build_blueprint_compiler_prompt(
+    outline: str,
+    genre_profile: Mapping[str, object],
+    source_provenance: Mapping[str, object],
+    *,
+    diagnostics: tuple[Mapping[str, str], ...] = (),
+) -> str:
+    """Request an immutable, backwards-planned causal V2 blueprint."""
 
     profile = json.dumps(dict(genre_profile), sort_keys=True, separators=(",", ":"))
+    provenance = json.dumps(dict(source_provenance), sort_keys=True, separators=(",", ":"))
+    repair = ""
+    if diagnostics:
+        repair = (
+            "\nRepair the candidate against these structured local diagnostics only. "
+            "Do not change source provenance, weaken profile obligations, or remove obligations. "
+            f"Diagnostics: {json.dumps(diagnostics, sort_keys=True, separators=(',', ':'))}"
+        )
     return (
         "Return one JSON object only for the STORY_BLUEPRINT_V2_JSON contract. "
         "Compile immutable story-blueprint-v2 authoring data, never runtime facts or executable effects. "
-        "Declare structured locations, routes, participants, causal events, evidence opportunities, "
-        "knowledge protections, revelations, realization routes, outcomes, beats, and end states. "
+        "Plan in order: establish terminal truths; enumerate causal events and timeline; work backward "
+        "to evidence, testimony, and reachable opportunities; bind them to concrete locations; then assign "
+        "revelation gates and Freytag beats. "
+        "For every profile-required revelation declare independently realizable proof routes, distinguish proof "
+        "from suspicion, classify each beat as required, optional/substitutable, or an alternative satisfier, "
+        "and provide bounded failure-forward consequences without prescribing player actions. "
         "Include the supplied source provenance unchanged. Local validation is authoritative.\n"
-        f"Genre profile: {profile}\nOutline: {outline.strip()}"
+        f"Genre profile: {profile}\nSource provenance: {provenance}\nOutline: {outline.strip()}{repair}"
     )

@@ -322,22 +322,22 @@ locally validated.
 
 ### Work package — Compilation, critics, and repair (Phase 3)
 
-- [ ] Use a staged V2 instruction: establish
+- [x] Use a staged V2 instruction: establish
   terminal truth; enumerate causal event/timeline; work backward to evidence,
   testimony, and opportunities; bind them to concrete reachable locations;
   then assign revelation gates and Freytag beats.
-- [ ] Require the candidate to emit multiple independent realization routes
+- [x] Require the candidate to emit multiple independent realization routes
   for every profile-required revelation and to distinguish proof from mere
   suspicion. It must classify each beat as required, optional/substitutable,
   or an alternative satisfier, and declare bounded failure-forward guidance
   without prescribing a player action.
-- [ ] Pass the complete profile and source-outline hash to the model; verify
+- [x] Pass the complete profile and source-outline hash to the model; verify
   the source ID/hash locally after parsing. Compile against the selected
   outline's profile; do not use a Vale-specific prompt or fallback.
-- [ ] Keep the existing one optional critic/repair pass. Repair receives only
+- [x] Keep the existing one optional critic/repair pass. Repair receives only
   structured diagnostics; it cannot change source provenance, weaken a
   profile, or remove failed obligations.
-- [ ] Persist diagnostics explaining exactly which causal, route, map, or
+- [x] Persist diagnostics explaining exactly which causal, route, map, or
   Freytag invariant rejected a candidate.
 
 **Tests:** prompt snapshot/contract assertions; a transport payload that has
@@ -345,7 +345,7 @@ all mystery labels but lacks a logical proof chain; repair that fixes a single
 reachable-route issue; repair exhaustion; and profile-driven non-mystery
 backward planning without shared named-genre conditionals.
 
-**Exit criteria:** a candidate either passes all local causal/map/progression
+**Exit criteria: [x]** a candidate either passes all local causal/map/progression
 checks or is an explicitly non-playable artifact with actionable diagnostics.
 
 ### Work package — Reviewed artifact corpus (Phase 4)
