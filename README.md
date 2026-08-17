@@ -41,6 +41,14 @@ The new Vale Mansion rebuild begins the same way: a distinct,
 be compiled offline and reviewed on its merits, while the hosted game continues
 to boot only checked-in, reviewed `CompiledStory` artifacts.
 
+Phase 1 gives that review a real spine. The new immutable `story-blueprint-v2`
+contract names the map, connected routes, participants, causal events, timeline,
+evidence custody, knowledge protections, outcomes, and Freytag gates. Local
+critics prove terminal truths have evidence-backed routes and reject one-path
+revelations, premature knowledge, impossible timelines, dead-end failures, and
+optional detours masquerading as endings. Genre profiles set the obligations;
+the engine stays genre-agnostic.
+
 ## Highlights
 
 | Build worlds | Run scenes | Trust the result |

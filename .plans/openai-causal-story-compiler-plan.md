@@ -284,28 +284,28 @@ an artifact or failure message.
 
 ### Work package — Causal contract and profiles (Phase 1; tests first)
 
-- [ ] Add V2 contract types for concrete locations, connected routes, causal
+- [x] Add V2 contract types for concrete locations, connected routes, causal
   events, timeline constraints, evidence opportunities, party knowledge,
   failure-forward declarations, and beat/revelation gates. Give every
   cross-reference a stable ID.
-- [ ] Model required outcomes separately from optional/substitutable beats.
+- [x] Model required outcomes separately from optional/substitutable beats.
   Each optional beat declares whether it is an alternative satisfier,
   complication, or relationship/world-development opportunity; validation
   rejects an optional beat that silently becomes the sole route to a required
   ending.
-- [ ] Make profiles data-driven for required terminal and causal roles,
+- [x] Make profiles data-driven for required terminal and causal roles,
   minimum independent proof routes, allowed opportunity types, and required
   Freytag gates. Keep role labels in profile data, not shared engine branches.
-- [ ] Add validators for graph cycles, impossible timelines, unknown actors,
+- [x] Add validators for graph cycles, impossible timelines, unknown actors,
   locations, evidence, holders, and truths; incompatible custody; unreachable
   required locations; routes whose prerequisites cannot be satisfied; and
   premature protected knowledge. Require each pivotal revelation to have two
   genuinely distinct routes unless its profile explicitly permits one.
-- [ ] Add a `CausalCompletenessCritic` alongside `RouteFairnessCritic`. It
+- [x] Add a `CausalCompletenessCritic` alongside `RouteFairnessCritic`. It
   proves each terminal truth has a backwards chain through declared evidence
   or testimony to reachable opportunities, then forward into a valid end
   state.
-- [ ] Add a `FreytagProgressionCritic` that validates ordered gates,
+- [x] Add a `FreytagProgressionCritic` that validates ordered gates,
   prerequisite revelations, pressure changes, and at least one viable
   alternative route where the profile requires one.
 
@@ -316,7 +316,7 @@ single-route proof where two are required; optional-only ending route;
 failure-forward path that dead-ends a required ending; and a Freytag gate that
 opens before its prerequisites.
 
-**Exit criteria:** no prose scan is needed to establish map validity: all
+**Exit criteria: [x]** no prose scan is needed to establish map validity: all
 navigation, clue, participant, and progression dependencies are structured and
 locally validated.
 
@@ -417,10 +417,10 @@ required of every future genre.
 
 - [ ] OpenAI adapter is explicit, credential-safe, mocked in tests, and never
   invoked by gameplay or CI.
-- [ ] V2 contracts express concrete topology, party knowledge, failure-forward
+- [x] V2 contracts express concrete topology, party knowledge, failure-forward
   guidance, required outcomes, optional/substitutable beats, and backwards
   causal/Freytag progression graphs.
-- [ ] Local validators and critics reject incomplete, unreachable, leaking,
+- [x] Local validators and critics reject incomplete, unreachable, leaking,
   temporally impossible, single-route, or optional-only-ending stories.
 - [ ] Vale is regenerated as a reviewed candidate, not manually patched from
   the defective template.

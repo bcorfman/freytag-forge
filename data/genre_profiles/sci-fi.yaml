@@ -1,10 +1,8 @@
-schema_version: genre-profile-v1
+schema_version: causal-profile-v2
 profile_version: 1
 genre: sci-fi
+terminal_roles: [{role: remedy}, {role: trade_off}]
 causal_roles: [{role: failure_cause}, {role: constraint}, {role: remedy}, {role: trade_off}]
-allowed_revelation_roles: [discovery, decision]
-phase_order: [exposition, disruption, rising_action, midpoint_reversal, crisis, climax, falling_action, resolution]
-turning_points: [{role: disruption, phase: disruption}, {role: reversal, phase: midpoint_reversal}, {role: crisis, phase: crisis}, {role: climax, phase: climax}, {role: resolution, phase: resolution}]
-ending_truth_roles: [remedy, trade_off]
-minimum_routes_per_required_revelation: 2
-policy_mappings: {climax_requires_required_discoveries: "true"}
+minimum_independent_proof_routes: 2
+allowed_opportunity_types: [scan, log, testimony]
+required_freytag_phases: [setup, rising_action, crisis, climax, resolution]
