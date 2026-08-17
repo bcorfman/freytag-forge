@@ -67,6 +67,13 @@ The compiler asks OpenAI for JSON-object output first, then gets exactly one
 plain-JSON recovery attempt if the provider rejects that mode or the response
 is unusable. Gameplay and CI never make the call.
 
+Phase 3 makes every draft earn its ending. The compiler plans backward—from
+terminal truth, through cause and proof, to reachable opportunities—then locks
+those discoveries to Freytag gates. Local causal, route-fairness, and
+progression critics get one bounded repair pass with structured diagnostics.
+Pass, and the candidate is marked locally validated. Fail, and it is still a
+clearly non-playable review artifact with the exact obligations it missed.
+
 ## Highlights
 
 | Build worlds | Run scenes | Trust the result |
