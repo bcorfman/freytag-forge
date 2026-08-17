@@ -240,6 +240,13 @@ jobs:
         run: uv sync --locked
       - name: Compare the deployed candidate with Phase 0 operational bounds
         run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_runtime_v2.py tests/test_web_demo_v2.py
+      - name: Write SHA-bound staging evidence
+        env:
+          CANDIDATE_SHA: ${{ needs.deploy-staging.outputs.sha }}
+          API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
+        run: >-
+          mkdir -p artifacts &&
+          uv run python -c 'import json, os, pathlib; pathlib.Path(os.environ["FREYTAG_EVALUATION_REPORT"]).write_text(json.dumps({"schema_version": "v2-staging-evidence-v1", "sha": os.environ["CANDIDATE_SHA"], "api_base_url": os.environ["API_BASE_URL"], "runtime": "v2", "verification": "tests/test_runtime_v2.py tests/test_web_demo_v2.py"}, sort_keys=True) + "\n", encoding="utf-8")'
       - name: Upload SHA-bound staging evidence
         if: always()
         uses: actions/upload-artifact@v7
