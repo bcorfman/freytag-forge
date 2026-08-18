@@ -350,7 +350,7 @@ checks or is an explicitly non-playable artifact with actionable diagnostics.
 
 ### Work package — Reviewed artifact corpus (Phase 4)
 
-- [ ] Prepare one reviewed raw Vale outline that states the terminal solution
+- [x] Prepare one reviewed raw Vale outline that states the terminal solution
   and intended public/protected boundaries without treating old compiled prose
   as authority. Add it as the Phase 0 `authoring_only` outline entry, then
   select it through the same `--outline-id` compiler path used by every other
