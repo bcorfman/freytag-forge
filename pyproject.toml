@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 storygame-blueprint = "storygame.authoring.cli:main"
+storygame-blueprint-review = "storygame.authoring.review_cli:main"
 
 [tool.uv]
 

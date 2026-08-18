@@ -142,3 +142,31 @@ flag and credentials it skips without a request:
 ```text
 FREYTAG_RUN_LIVE_SMOKE=1 TMPDIR=/tmp uv run pytest tests/test_openai_live_smoke.py -q --no-cov
 ```
+
+## Phase-4 candidate review and promotion
+
+Candidates remain unreviewed even when their local compiler checks pass. After
+an editor has reviewed the generated `*.candidate.json`, use the separate
+offline command to rerun the causal, profile, route-fairness, and Freytag
+checks and write a new, immutable `reviewed-story-blueprint-v2` artifact. The
+record binds the exact candidate bytes with SHA-256 and includes the named
+reviewer, notes, and every required review acknowledgement:
+
+```text
+uv run storygame-blueprint-review \
+  --candidate data/story_blueprints/candidates/vale_mansion_case.candidate.json \
+  --output data/compiled_stories/v2/vale_mansion_case.reviewed.json \
+  --reviewer 'editor@example.com' \
+  --notes 'Verified map, custody, solution timeline, protections, and two proof paths.' \
+  --approve \
+  --check terminal_roles \
+  --check knowledge_boundaries \
+  --check route_diversity \
+  --check failure_forward \
+  --check map_and_custody
+```
+
+The command rejects an unaccepted or malformed candidate, incomplete approval,
+failed revalidation, and any attempt to overwrite an existing reviewed file.
+It is an authoring-only promotion record; Phase 5 remains responsible for any
+runtime loader or hosted bootstrap.

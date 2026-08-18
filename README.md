@@ -74,6 +74,15 @@ progression critics get one bounded repair pass with structured diagnostics.
 Pass, and the candidate is marked locally validated. Fail, and it is still a
 clearly non-playable review artifact with the exact obligations it missed.
 
+Phase 4 makes acceptance deliberate. A locally valid candidate still cannot
+become a reviewed story by accident: `storygame-blueprint-review` reruns the
+causal, profile, fairness, and Freytag checks; records the candidate's SHA-256;
+requires a named reviewer; and requires an explicit check of terminal roles,
+knowledge boundaries, route diversity, failure-forward behavior, and map/custody.
+It writes a fresh immutable reviewed artifact and never overwrites a prior one.
+The Vale source now states the intended solution as raw compiler constraints—
+not as inherited prose—and stays `authoring_only` until that human review happens.
+
 ## Highlights
 
 | Build worlds | Run scenes | Trust the result |
@@ -154,6 +163,7 @@ validation do not require inference.
 | `uv run storygame --genre fantasy --tone epic` | Start a CLI story session through the Cloudflare Worker. |
 | `uv run storygame-blueprint --outline-id vale_mansion_rebuild` | Inspect one immutable inventory source and its hash-bound compiler provenance; no provider is constructed. |
 | `uv run storygame-blueprint --story path/to/brief.yaml` | Validate one standalone `freytag-story-brief-v1` source with its declared profile; no provider is constructed. |
+| `uv run storygame-blueprint-review --help` | Review and promote one locally valid candidate with an explicit, SHA-bound human approval. |
 | `make run` | Start the local web app at `http://127.0.0.1:8000`. |
 | `TMPDIR=/tmp uv run pytest -q` | Run the full test suite with the required WSL temporary-directory setting. |
 | `uv run ruff check .` | Check lint rules. |
