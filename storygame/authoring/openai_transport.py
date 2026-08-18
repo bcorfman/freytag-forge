@@ -11,6 +11,19 @@ from urllib.request import Request, urlopen
 
 from storygame.authoring.compiler import CompilationError
 
+_SAFE_RATE_LIMIT_HEADERS = (
+    ("x-request-id", "request_id"),
+    ("x-ratelimit-limit-requests", "limit_requests"),
+    ("x-ratelimit-remaining-requests", "remaining_requests"),
+    ("x-ratelimit-reset-requests", "reset_requests"),
+    ("x-ratelimit-limit-tokens", "limit_tokens"),
+    ("x-ratelimit-remaining-tokens", "remaining_tokens"),
+    ("x-ratelimit-reset-tokens", "reset_tokens"),
+    ("x-ratelimit-limit-project-tokens", "limit_project_tokens"),
+    ("x-ratelimit-remaining-project-tokens", "remaining_project_tokens"),
+    ("x-ratelimit-reset-project-tokens", "reset_project_tokens"),
+)
+
 
 class OpenAIResponsesClient(Protocol):
     def create_response(self, **kwargs: object) -> object: ...
@@ -110,6 +123,14 @@ def _extract_output(response: object) -> tuple[object, str | None]:
     return payload, response_id
 
 
+def _rate_limit_detail(error: HTTPError) -> str:
+    """Return only documented, non-secret diagnostics from a 429 response."""
+
+    details = [f"{label}={value}" for header, label in _SAFE_RATE_LIMIT_HEADERS if (value := error.headers.get(header))]
+    suffix = f" ({'; '.join(details)})" if details else ""
+    return f"OpenAI request was rate limited (status 429){suffix}"
+
+
 class OpenAIBlueprintTransport:
     """A first-party, injected-client adapter over the OpenAI Responses API."""
 
@@ -133,6 +154,8 @@ class OpenAIBlueprintTransport:
         except HTTPError as exc:
             if json_object and exc.code == 400:
                 raise CompilationError("OPENAI_JSON_MODE_REJECTED", "OpenAI rejected JSON-object mode") from exc
+            if exc.code == 429:
+                raise CompilationError("OPENAI_RATE_LIMIT", _rate_limit_detail(exc)) from exc
             raise CompilationError("OPENAI_TRANSPORT_ERROR", f"OpenAI request failed with status {exc.code}") from exc
         except URLError as exc:
             raise CompilationError("OPENAI_TRANSPORT_ERROR", "OpenAI request could not be completed") from exc

@@ -135,6 +135,13 @@ It never includes API keys, headers, or a reviewed fixture overwrite. CI and
 ordinary play do not invoke the live command; operator-owned smoke use is
 deliberately skipped without credentials.
 
+For an OpenAI HTTP 429 response, the command reports only the safe diagnostic
+allowlist: `request_id`, request/token limit, remaining, and reset values, plus
+the corresponding project-token values when OpenAI supplies them. It never
+prints the API key, authorization header, or arbitrary response headers. Use
+the request ID and reset values to distinguish a temporary limit from a
+project-level capacity problem.
+
 To exercise that provider boundary intentionally, an operator may run the
 following only with a disposable budget and explicit opt-in; without both the
 flag and credentials it skips without a request:

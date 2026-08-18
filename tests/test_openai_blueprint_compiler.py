@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from email.message import Message
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
@@ -164,6 +165,32 @@ def test_openai_transport_sanitizes_network_errors(error: Exception, code: str):
 
     with pytest.raises(CompilationError, match=code):
         transport.generate("prompt", json_object=False)
+
+
+def test_openai_transport_surfaces_only_safe_rate_and_project_limit_metadata():
+    headers = Message()
+    headers["x-request-id"] = "req_123"
+    headers["x-ratelimit-remaining-requests"] = "0"
+    headers["x-ratelimit-reset-requests"] = "1m"
+    headers["x-ratelimit-remaining-project-tokens"] = "0"
+    headers["x-ratelimit-reset-project-tokens"] = "24h"
+    headers["authorization"] = "Bearer should-not-appear"
+    error = HTTPError("https://example.test", 429, "limit", headers, None)
+    transport = OpenAIBlueprintTransport(
+        OpenAICompilerConfig(api_key="sk-super-secret", model="gpt-5.6"), FakeResponsesClient([error], [])
+    )
+
+    with pytest.raises(CompilationError, match="OPENAI_RATE_LIMIT") as raised:
+        transport.generate("prompt", json_object=False)
+
+    detail = str(raised.value)
+    assert "request_id=req_123" in detail
+    assert "remaining_requests=0" in detail
+    assert "reset_requests=1m" in detail
+    assert "remaining_project_tokens=0" in detail
+    assert "reset_project_tokens=24h" in detail
+    assert "should-not-appear" not in detail
+    assert "sk-super-secret" not in detail
 
 
 def test_openai_transport_handles_raw_text_and_json_mode_http_rejection():
