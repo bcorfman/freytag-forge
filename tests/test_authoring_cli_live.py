@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from storygame.authoring import cli
+from storygame.authoring.blueprint_compiler import BlueprintCompilationExhausted
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.sources import StorySourceLoader
 from tests.test_causal_story_contract import _story
@@ -96,3 +97,39 @@ def test_live_command_requires_gate_provider_and_candidate_suffix(tmp_path: Path
 def test_transport_factory_is_a_validated_custom_seam(monkeypatch: pytest.MonkeyPatch):
     with pytest.raises(CompilationError, match="TRANSPORT_FACTORY_INVALID"):
         cli._load_transport_factory("not-a-factory")
+
+
+def test_live_command_writes_an_explicit_nonplayable_diagnostic_on_exhaustion(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    output = tmp_path / "failure.diagnostic.json"
+
+    def fail(_: object) -> dict[str, object]:
+        raise BlueprintCompilationExhausted(
+            "invalid response",
+            (),
+            provider="openai",
+            model="gpt-5.5",
+            source=StorySourceLoader(Path("data/story_outlines.yaml"), Path("data/genre_profiles")).select_outline(
+                "vale_mansion_rebuild"
+            ),
+        )
+
+    monkeypatch.setattr(cli, "_compile_candidate", fail)
+
+    with pytest.raises(SystemExit, match="diagnostic saved"):
+        cli.main(
+            [
+                "--outline-id",
+                "vale_mansion_rebuild",
+                "--provider",
+                "openai",
+                "--live",
+                "--diagnostic-output",
+                str(output),
+            ]
+        )
+
+    assert json.loads(output.read_text(encoding="utf-8"))["schema_version"] == "story-blueprint-diagnostic-v1"
+    with pytest.raises(SystemExit, match="BLUEPRINT_COMPILATION_EXHAUSTED"):
+        cli.main(["--replay-diagnostic", str(output)])

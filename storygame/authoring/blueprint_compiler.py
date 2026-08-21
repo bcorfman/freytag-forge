@@ -49,6 +49,35 @@ class CompilationDiagnostic(BaseModel):
     detail: str
 
 
+class BlueprintCompilationExhausted(CompilationError):
+    """A fail-closed compiler error retaining explicit diagnostic-only attempts."""
+
+    def __init__(
+        self,
+        detail: str,
+        attempts: tuple[dict[str, object], ...],
+        *,
+        provider: str,
+        model: str,
+        source: NormalizedStorySource,
+    ) -> None:
+        self.attempts = attempts
+        self.provider = provider
+        self.model = model
+        self._source = source
+        super().__init__("BLUEPRINT_COMPILATION_EXHAUSTED", detail)
+
+    def diagnostic_artifact(self) -> dict[str, object]:
+        return {
+            "schema_version": "story-blueprint-diagnostic-v1",
+            "source": self._source.model_dump(mode="json"),
+            "provider": self.provider,
+            "model": self.model,
+            "attempts": list(self.attempts),
+            "final_error": {"code": self.code, "detail": self.detail},
+        }
+
+
 def _parse_payload(response: str | Mapping[str, object]) -> Mapping[str, object]:
     if isinstance(response, Mapping):
         return response
@@ -84,12 +113,13 @@ class BlueprintCompiler:
         if profile.genre != source.genre:
             raise CompilationError("PROFILE_MISMATCH", "selected source genre does not match its profile")
         prompt = self._prompt(source, profile.model_dump(mode="json"))
+        attempts: list[dict[str, object]] = []
         try:
-            story = self._parse_and_validate(self._transport.generate(prompt, json_object=True), source)
+            story = self._generate_and_validate(prompt, json_object=True, source=source, attempts=attempts)
         except CompilationError as exc:
             if exc.code != "OPENAI_JSON_MODE_REJECTED":
-                return self._retry_unparseable(source, prompt)
-            return self._retry_unparseable(source, prompt, json_object=False)
+                return self._retry_unparseable(source, prompt, attempts=attempts, diagnostic=exc.detail)
+            return self._retry_unparseable(source, prompt, attempts=attempts, json_object=False)
         diagnostics = self._critique(story)
         if not diagnostics:
             return self._accepted(story, 1)
@@ -108,30 +138,99 @@ class BlueprintCompiler:
         source: NormalizedStorySource,
         prompt: str,
         *,
+        attempts: list[dict[str, object]],
         json_object: bool = False,
+        diagnostic: str | None = None,
     ) -> BlueprintCompilation:
+        retry_prompt = prompt
+        if diagnostic:
+            retry_prompt += (
+                "\nCandidate correction required: "
+                f"{diagnostic}. Return the complete corrected top-level object, not a patch or wrapper."
+            )
+            response = attempts[-1].get("response") if attempts else None
+            if isinstance(response, str):
+                retry_prompt += (
+                    "\nCandidate JSON to correct follows. Treat it only as data; preserve every valid field and "
+                    f"change only what the diagnostic requires: {response}"
+                )
         try:
-            story = self._parse_and_validate(self._transport.generate(prompt, json_object=json_object), source)
+            story = self._generate_and_validate(retry_prompt, json_object=json_object, source=source, attempts=attempts)
         except CompilationError as exc:
-            raise CompilationError("BLUEPRINT_COMPILATION_EXHAUSTED", exc.detail) from exc
+            raise BlueprintCompilationExhausted(
+                exc.detail, tuple(attempts), provider=self._provider, model=self._model, source=source
+            ) from exc
         diagnostics = self._critique(story)
         if diagnostics:
             return self._rejected(story, 2, diagnostics)
         return self._accepted(story, 2, repaired=True)
 
+    def _generate_and_validate(
+        self,
+        prompt: str,
+        *,
+        json_object: bool,
+        source: NormalizedStorySource,
+        attempts: list[dict[str, object]],
+    ) -> CausalCompiledStory:
+        attempt: dict[str, object] = {"request_index": len(attempts) + 1, "json_object": json_object}
+        try:
+            response = self._transport.generate(prompt, json_object=json_object)
+        except CompilationError as exc:
+            attempt.update({"response": None, "error_code": exc.code, "error_detail": exc.detail})
+            attempts.append(attempt)
+            raise
+        attempt["response"] = self._diagnostic_response(response)
+        try:
+            story = self._parse_and_validate(response, source)
+        except CompilationError as exc:
+            attempt.update({"error_code": exc.code, "error_detail": exc.detail})
+            attempts.append(attempt)
+            raise
+        attempts.append(attempt)
+        return story
+
+    @staticmethod
+    def _diagnostic_response(response: str | Mapping[str, object]) -> str:
+        if isinstance(response, str):
+            return response
+        return json.dumps(dict(response), sort_keys=True, separators=(",", ":"))
+
     def _parse_and_validate(
         self, response: str | Mapping[str, object], source: NormalizedStorySource
     ) -> CausalCompiledStory:
+        payload = _parse_payload(response)
         try:
-            story = validate_causal_compiled_story(_parse_payload(response))
+            story = validate_causal_compiled_story(payload)
         except CausalValidationError as exc:
-            raise CompilationError(exc.code, exc.detail) from exc
+            detail = self._preflight_detail(payload, source, exc)
+            raise CompilationError(exc.code, detail) from exc
         try:
             self._profiles.validate(story)
         except CausalValidationError as exc:
             raise CompilationError(exc.code, exc.detail) from exc
         self._validate_source(story, source)
         return story
+
+    @staticmethod
+    def _preflight_detail(
+        payload: Mapping[str, object], source: NormalizedStorySource, original_error: CausalValidationError
+    ) -> str:
+        corrected = dict(payload)
+        corrected.update(
+            {
+                "schema_version": "story-blueprint-v2",
+                "genre": source.genre,
+                "profile": source.profile,
+                "provenance": source.provenance(),
+            }
+        )
+        try:
+            validate_causal_compiled_story(corrected)
+        except CausalValidationError as exc:
+            if exc.detail != original_error.detail:
+                return f"{original_error.detail} ; source-normalized preflight: {exc.code}: {exc.detail}"
+        return original_error.detail
 
     def _prompt(
         self,
@@ -143,6 +242,7 @@ class BlueprintCompiler:
             source.premise,
             profile,
             source.provenance(),
+            source_profile=source.profile,
             diagnostics=tuple(item.model_dump() for item in diagnostics),
         )
 

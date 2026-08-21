@@ -9,7 +9,12 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 from storygame.authoring import openai_transport
-from storygame.authoring.blueprint_compiler import BlueprintCompiler, BlueprintCompilerTransport, _parse_payload
+from storygame.authoring.blueprint_compiler import (
+    BlueprintCompilationExhausted,
+    BlueprintCompiler,
+    BlueprintCompilerTransport,
+    _parse_payload,
+)
 from storygame.authoring.causal_contracts import validate_causal_compiled_story
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
@@ -115,6 +120,45 @@ def test_openai_configuration_requires_key_and_explicit_model(monkeypatch: pytes
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
     with pytest.raises(CompilationError, match="OPENAI_MODEL_REQUIRED"):
         OpenAICompilerConfig.from_environment()
+
+
+def test_openai_configuration_accepts_an_explicit_finite_timeout(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setenv("FREYTAG_COMPILER_MODEL", "gpt-5.5")
+
+    config = OpenAICompilerConfig.from_environment(timeout_seconds=120)
+
+    assert config.timeout_seconds == 120
+
+
+def test_openai_configuration_rejects_a_nonpositive_timeout_from_the_cli():
+    with pytest.raises(CompilationError, match="OPENAI_TIMEOUT_INVALID"):
+        OpenAICompilerConfig(api_key="sk-test-key", model="gpt-5.5", timeout_seconds=0)
+
+
+def test_openai_transport_polls_a_background_response_to_completion(monkeypatch: pytest.MonkeyPatch):
+    class BackgroundClient:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+            self.retrievals: list[tuple[str, float]] = []
+
+        def create_response(self, **kwargs: object) -> object:
+            self.calls.append(kwargs)
+            return {"id": "resp_123", "status": "queued"}
+
+        def retrieve_response(self, response_id: str, *, timeout_seconds: float) -> object:
+            self.retrievals.append((response_id, timeout_seconds))
+            return {"id": response_id, "status": "completed", "output_text": '{"ok": true}'}
+
+    monkeypatch.setattr(openai_transport.time, "sleep", lambda _: None)
+    client = BackgroundClient()
+    transport = OpenAIBlueprintTransport(
+        OpenAICompilerConfig(api_key="sk-test-key", model="gpt-5.5", timeout_seconds=120, background=True), client
+    )
+
+    assert transport.generate("prompt", json_object=True) == {"ok": True}
+    assert client.calls[0]["background"] is True
+    assert client.retrievals[0][0] == "resp_123"
 
 
 def test_openai_default_responses_client_posts_to_the_configured_endpoint(monkeypatch: pytest.MonkeyPatch):
@@ -243,6 +287,80 @@ def test_blueprint_compiler_exhausts_after_two_malformed_attempts():
     assert transport.calls == [True, False]
 
 
+def test_blueprint_compiler_retains_nonplayable_attempts_for_explicit_diagnostics():
+    class FakeTransport(BlueprintCompilerTransport):
+        def generate(self, prompt: str, *, json_object: bool) -> str:
+            return "not json"
+
+    compiler = BlueprintCompiler(FakeTransport(), _profiles(), provider="openai", model="gpt-5.5")
+    with pytest.raises(BlueprintCompilationExhausted) as raised:
+        compiler.compile(_source())
+
+    artifact = raised.value.diagnostic_artifact()
+    assert artifact["schema_version"] == "story-blueprint-diagnostic-v1"
+    assert artifact["source"]["source_id"] == "signal"
+    assert [attempt["json_object"] for attempt in artifact["attempts"]] == [True, False]
+    assert [attempt["response"] for attempt in artifact["attempts"]] == ["not json", "not json"]
+    assert all(attempt["error_code"] == "BLUEPRINT_OUTPUT_INVALID" for attempt in artifact["attempts"])
+
+
+def test_blueprint_compiler_retries_invalid_contracts_with_the_local_diagnostic():
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    del invalid["truths"][0]["summary"]
+    invalid["locations"][0]["initial_access"] = "not_a_boolean"
+    invalid["causal_events"][1]["earliest"] = -1
+    for beat in invalid["required_beats"]:
+        beat["pressure"] = "escalating"
+    for beat in invalid["optional_beats"]:
+        beat["pressure"] = "side_story"
+        beat["purpose"] = "optional"
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+    compilation = BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.5").compile(_source())
+
+    assert compilation.accepted
+    assert "truths.0.summary: missing" in transport.prompts[1]
+    assert "locations.0.initial_access: bool_parsing" in transport.prompts[1]
+    assert "causal_events.1.earliest: greater_than_equal" in transport.prompts[1]
+    assert "required_beats.0.pressure: int_parsing" in transport.prompts[1]
+    assert "optional_beats.0.purpose: literal_error" in transport.prompts[1]
+    assert "Candidate JSON to correct" in transport.prompts[1]
+    assert '"schema_version":"story-blueprint-v2"' in transport.prompts[1]
+
+
+def test_blueprint_compiler_reports_latent_errors_behind_invalid_source_metadata():
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    invalid["profile"] = {"genre": "sci-fi"}
+    invalid["timeline_constraints"] = [{"before_event_id": "repair_event", "after_event_id": "failure_event"}]
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+    assert BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.5").compile(_source()).accepted
+    assert "profile: string_type" in transport.prompts[1]
+    assert "source-normalized preflight: TIMELINE_INVALID" in transport.prompts[1]
+
+
 def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
     incomplete = _candidate()
     incomplete["provenance"] = _source().provenance()
@@ -291,11 +409,25 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
         "A crew must solve a crisis.",
         {"genre": "sci-fi", "minimum_independent_proof_routes": 2},
         _source().provenance(),
+        source_profile="sci-fi",
     )
 
     assert "terminal truths; enumerate causal events and timeline; work backward" in prompt
     assert "independently realizable proof routes" in prompt
     assert "source_hash" in prompt
+    assert "Source profile ID: sci-fi" in prompt
+    assert "before_event_id.latest must be less than or equal to after_event_id.earliest" in prompt
+    assert "evidence_opportunities[].route_id must equal a realization_routes[].id" in prompt
+    assert "evidence_opportunities[].holder_id must equal a participants[].id" in prompt
+    assert "Every evidence_opportunity.location_id must be reachable from an initial_access location" in prompt
+    assert "setting-appropriate transition locations" in prompt
+    assert "mansion" not in prompt
+    assert "Do not wrap it in a STORY_BLUEPRINT_V2_JSON key" in prompt
+    assert "JSON booleans must be the unquoted literals true or false" in prompt
+    assert "pressure is an integer from 0 through 100" in prompt
+    assert "alternative_satisfier, complication, relationship_development, or world_development" in prompt
+    assert 'truths: [{"id":"lowercase_id","summary":"non-empty summary","roles":["profile_role"]?}]' in prompt
+    assert "realization_routes: [{id,revelation_id,opportunity_ids,result_truth_ids,failure_forward}]" in prompt
     assert "mystery" not in prompt
 
 

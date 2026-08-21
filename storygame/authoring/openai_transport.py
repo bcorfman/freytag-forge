@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from collections.abc import Mapping
 from typing import Protocol
 from urllib.error import HTTPError, URLError
@@ -28,6 +29,8 @@ _SAFE_RATE_LIMIT_HEADERS = (
 class OpenAIResponsesClient(Protocol):
     def create_response(self, **kwargs: object) -> object: ...
 
+    def retrieve_response(self, response_id: str, *, timeout_seconds: float) -> object: ...
+
 
 class OpenAICompilerConfig:
     """Explicit live-authoring configuration; credentials never leave this boundary."""
@@ -39,6 +42,7 @@ class OpenAICompilerConfig:
         model: str,
         base_url: str = "https://api.openai.com/v1",
         timeout_seconds: float = 30,
+        background: bool = False,
     ) -> None:
         if not api_key.strip():
             raise CompilationError("OPENAI_API_KEY_REQUIRED", "OPENAI_API_KEY is required for live compilation")
@@ -50,13 +54,27 @@ class OpenAICompilerConfig:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
+        self.background = background
 
     @classmethod
-    def from_environment(cls, *, model: str | None = None, base_url: str | None = None) -> OpenAICompilerConfig:
+    def from_environment(
+        cls,
+        *,
+        model: str | None = None,
+        base_url: str | None = None,
+        timeout_seconds: float | None = None,
+        background: bool = False,
+    ) -> OpenAICompilerConfig:
         api_key = os.getenv("OPENAI_API_KEY", "")
         selected_model = model or os.getenv("FREYTAG_COMPILER_MODEL", "")
         selected_base_url = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        return cls(api_key=api_key, model=selected_model, base_url=selected_base_url)
+        return cls(
+            api_key=api_key,
+            model=selected_model,
+            base_url=selected_base_url,
+            timeout_seconds=timeout_seconds if timeout_seconds is not None else 30,
+            background=background,
+        )
 
 
 class _UrllibOpenAIResponsesClient:
@@ -77,6 +95,15 @@ class _UrllibOpenAIResponsesClient:
             method="POST",
         )
         with urlopen(request, timeout=timeout) as response:  # noqa: S310 - explicit configured endpoint
+            return json.loads(response.read().decode("utf-8"))
+
+    def retrieve_response(self, response_id: str, *, timeout_seconds: float) -> object:
+        request = Request(
+            f"{self._config.base_url}/responses/{response_id}",
+            headers={"Authorization": f"Bearer {self._config.api_key}"},
+            method="GET",
+        )
+        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310 - explicit configured endpoint
             return json.loads(response.read().decode("utf-8"))
 
 
@@ -147,8 +174,12 @@ class OpenAIBlueprintTransport:
         }
         if json_object:
             request["text"] = {"format": {"type": "json_object"}}
+        if self._config.background:
+            request["background"] = True
         try:
             response = self._client.create_response(**request)
+            if self._config.background:
+                response = self._await_background_response(response)
         except TimeoutError as exc:
             raise CompilationError("OPENAI_TIMEOUT", "OpenAI request timed out") from exc
         except HTTPError as exc:
@@ -176,3 +207,24 @@ class OpenAIBlueprintTransport:
         if isinstance(output, Mapping):
             return output
         raise CompilationError("OPENAI_MALFORMED_OUTPUT", "OpenAI returned an unsupported response envelope")
+
+    def _await_background_response(self, initial_response: object) -> object:
+        response = initial_response
+        deadline = time.monotonic() + self._config.timeout_seconds
+        while True:
+            payload = _mapping(response)
+            if payload is None:
+                raise CompilationError("OPENAI_MALFORMED_OUTPUT", "OpenAI returned an unsupported response envelope")
+            status = payload.get("status")
+            if status == "completed":
+                return response
+            if status in {"failed", "cancelled", "incomplete"}:
+                raise CompilationError("OPENAI_BACKGROUND_FAILED", "OpenAI background request did not complete")
+            response_id = payload.get("id")
+            if not isinstance(response_id, str) or not response_id:
+                raise CompilationError("OPENAI_MALFORMED_OUTPUT", "OpenAI background response did not include an ID")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise CompilationError("OPENAI_TIMEOUT", "OpenAI request timed out")
+            time.sleep(min(1, remaining))
+            response = self._client.retrieve_response(response_id, timeout_seconds=remaining)

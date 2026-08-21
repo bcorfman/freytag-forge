@@ -61,7 +61,36 @@ The transport receives an explicit `json_object=True` choice. A JSON-mode
 rejection, malformed response, or local schema/profile/provenance failure uses
 the single shared fallback request with `json_object=False`; after that the
 compiler raises `BLUEPRINT_COMPILATION_EXHAUSTED`. No rejected response is a
-playable authoring input.
+playable authoring input. When local validation supplies a safe diagnostic, the
+fallback request receives it and must return the complete corrected object.
+That request also receives the rejected candidate as inert JSON data, so it can
+preserve valid authored fields instead of regenerating the blueprint wholesale.
+When invalid source-owned metadata masks deeper structural or timeline failures,
+the compiler performs a diagnostic-only source-normalized preflight and includes
+those latent failures in the same repair instruction; the original candidate is
+still rejected until it declares the correct source metadata itself.
+Timeline diagnostics name every infeasible ordering pair in one pass, and the
+prompt requires each constrained predecessor to end no later than its successor
+begins.
+Evidence opportunities must bind to realization routes, not connected map routes;
+the compiler batches every invalid opportunity-to-realization-route reference in
+the one recovery diagnostic.
+It also distinguishes an opportunity's participant holder from its location, and
+reports the exact invalid reference field rather than an ambiguous unknown ID.
+Every evidence opportunity also has to be reachable from an initially accessible
+location through an authored connected-route graph; the prompt requires a map
+connection or a reachable evidence placement before it returns a candidate.
+Those connections must reflect the outline's declared setting through
+setting-appropriate transition locations and layered travel, rather than using
+an implausible direct edge solely to pass reachability validation.
+The compiler prompt also enumerates the generic top-level and nested collection
+shapes; it does not send a provider-enforced schema, and local validation stays
+authoritative. It additionally specifies JSON primitive types so the candidate
+cannot replace boolean, numeric, or array fields with prose.
+For malformed candidates, local validation batches up to 20 structural failures
+into that one repair prompt, preventing a costly field-by-field recovery cycle.
+The prompt states bounded numeric values, required Freytag phases, and the
+closed optional-beat purpose vocabulary before generation.
 
 The compiler plans from the profile terminal truth and asks for phases,
 required and optional beats, routes, protections, pressure, and
