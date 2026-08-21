@@ -58,7 +58,8 @@ local validation record. Secrets and raw headers never enter the artifact.
 
 ```text
 OPENAI_API_KEY=... FREYTAG_COMPILER_MODEL=gpt-5.6 FREYTAG_ENABLE_LIVE_COMPILER=1 \
-  uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live
+  uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live \
+    --background --timeout-seconds 600
 ```
 
 That command writes a new `*.candidate.json` under

@@ -213,6 +213,40 @@ def test_phase_one_contract_rejects_invalid_causal_dependencies(mutate, code: st
         validate_causal_compiled_story(payload)
 
 
+def test_phase_one_contract_batches_every_infeasible_timeline_constraint() -> None:
+    payload = _story()
+    payload["causal_events"][0]["latest"] = 4
+    payload["timeline_constraints"].append({"before_event_id": "repair_event", "after_event_id": "failure_event"})
+
+    with pytest.raises(CausalValidationError, match="TIMELINE_INVALID") as raised:
+        validate_causal_compiled_story(payload)
+
+    assert "failure_event->repair_event" in raised.value.detail
+    assert "repair_event->failure_event" in raised.value.detail
+
+
+def test_phase_one_contract_batches_opportunities_with_unknown_realization_routes() -> None:
+    payload = _story()
+    payload["evidence_opportunities"][0]["route_id"] = "missing_scan_route"
+    payload["evidence_opportunities"][1]["route_id"] = "missing_log_route"
+
+    with pytest.raises(CausalValidationError, match="UNKNOWN_REFERENCE") as raised:
+        validate_causal_compiled_story(payload)
+
+    assert "scan.route_id->missing_scan_route" in raised.value.detail
+    assert "log.route_id->missing_log_route" in raised.value.detail
+
+
+def test_phase_one_contract_names_invalid_opportunity_reference_fields() -> None:
+    payload = _story()
+    payload["evidence_opportunities"][0]["holder_id"] = "dock"
+
+    with pytest.raises(CausalValidationError, match="UNKNOWN_REFERENCE") as raised:
+        validate_causal_compiled_story(payload)
+
+    assert "scan.holder_id->dock" in raised.value.detail
+
+
 def test_phase_one_contract_rejects_an_unreachable_required_opportunity() -> None:
     payload = _story()
     payload["locations"].append({"id": "sealed", "role": "sealed"})

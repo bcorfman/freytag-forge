@@ -240,10 +240,13 @@ def _validate_events(
             raise CausalValidationError("TIMELINE_INVALID", f"event '{event.id}' ends before it begins")
     _acyclic(event_ids, {event.id: event.prerequisite_event_ids for event in story.causal_events}, "CAUSAL_CYCLE")
     by_id = {event.id: event for event in story.causal_events}
+    infeasible: list[str] = []
     for constraint in story.timeline_constraints:
         _references((constraint.before_event_id, constraint.after_event_id), event_ids, "timeline constraint")
         if by_id[constraint.before_event_id].latest > by_id[constraint.after_event_id].earliest:
-            raise CausalValidationError("TIMELINE_INVALID", "timeline constraint has no feasible order")
+            infeasible.append(f"{constraint.before_event_id}->{constraint.after_event_id}")
+    if infeasible:
+        raise CausalValidationError("TIMELINE_INVALID", f"infeasible timeline constraints: {', '.join(infeasible)}")
 
 
 def _reachable_locations(story: CausalCompiledStory) -> set[str]:
@@ -286,11 +289,22 @@ def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], p
         raise CausalValidationError("DUPLICATE_ID", "a beat cannot be required and optional")
     opportunity_ids = _ids(story.evidence_opportunities, "evidence opportunity")
     location_ids = {location.id for location in story.locations}
-    for opportunity in story.evidence_opportunities:
-        _references((opportunity.truth_id,), truth_ids, f"opportunity '{opportunity.id}'")
-        _references((opportunity.holder_id,), participant_ids, f"opportunity '{opportunity.id}'")
-        _references((opportunity.location_id,), location_ids, f"opportunity '{opportunity.id}'")
-        _references((opportunity.route_id,), route_ids, f"opportunity '{opportunity.id}'")
+    opportunity_reference_errors = [
+        f"{opportunity.id}.{field}->{value}"
+        for opportunity in story.evidence_opportunities
+        for field, value, known_ids in (
+            ("truth_id", opportunity.truth_id, truth_ids),
+            ("holder_id", opportunity.holder_id, participant_ids),
+            ("location_id", opportunity.location_id, location_ids),
+            ("route_id", opportunity.route_id, route_ids),
+        )
+        if value not in known_ids
+    ]
+    if opportunity_reference_errors:
+        raise CausalValidationError(
+            "UNKNOWN_REFERENCE",
+            f"invalid opportunity references: {', '.join(opportunity_reference_errors)}",
+        )
     for knowledge in story.party_knowledge:
         _references((knowledge.participant_id,), participant_ids, "party knowledge")
         _references(knowledge.truth_ids, truth_ids, f"knowledge '{knowledge.participant_id}'")
@@ -354,9 +368,11 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
     try:
         story = payload if isinstance(payload, CausalCompiledStory) else CausalCompiledStory.model_validate(payload)
     except ValidationError as exc:
-        first = exc.errors()[0]
-        path = ".".join(str(part) for part in first["loc"])
-        raise CausalValidationError("CONTRACT_INVALID", f"{path}: {first['type']}") from exc
+        diagnostics = tuple(
+            f"{'.'.join(str(part) for part in error['loc'])}: {error['type']}" for error in exc.errors()[:20]
+        )
+        suffix = " (additional contract errors omitted)" if len(exc.errors()) > len(diagnostics) else ""
+        raise CausalValidationError("CONTRACT_INVALID", f"{' ; '.join(diagnostics)}{suffix}") from exc
     truth_ids = _ids(story.truths, "truth")
     participant_ids = _ids(story.participants, "participant")
     location_ids = _ids(story.locations, "location")

@@ -122,7 +122,12 @@ OPENAI_API_KEY=... FREYTAG_COMPILER_MODEL=gpt-5.6 FREYTAG_ENABLE_LIVE_COMPILER=1
 ```
 
 `--model` overrides `FREYTAG_COMPILER_MODEL`. `OPENAI_BASE_URL` optionally
-selects a compatible Responses endpoint. `--transport-factory module.path:factory`
+selects a compatible Responses endpoint. `--timeout-seconds` sets a finite
+per-request timeout (default: 30 seconds); use a larger value for a deliberate,
+offline long-form compilation. `--background` creates and polls an OpenAI
+background Response, avoiding one long-lived HTTP connection. It requires a
+project without Zero Data Retention because OpenAI retains that request briefly
+for polling. `--transport-factory module.path:factory`
 is a mutually exclusive test/custom seam and still requires `--model` and the
 same live gate. The normal non-live command remains a source inspection tool.
 
@@ -134,6 +139,26 @@ model, prompt version, response ID when available, and local validation result.
 It never includes API keys, headers, or a reviewed fixture overwrite. CI and
 ordinary play do not invoke the live command; operator-owned smoke use is
 deliberately skipped without credentials.
+
+When a paid compilation exhausts, an operator may explicitly retain its raw
+model attempts and typed local errors as a non-playable diagnostic artifact:
+
+```text
+uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live \
+  --background --timeout-seconds 600 \
+  --diagnostic-output data/story_blueprints/diagnostics/vale_mansion.diagnostic.json
+```
+
+The path must end in `.diagnostic.json` and cannot overwrite an existing file.
+Replay it without a provider request with:
+
+```text
+uv run storygame-blueprint \
+  --replay-diagnostic data/story_blueprints/diagnostics/vale_mansion.diagnostic.json
+```
+
+Diagnostic artifacts are debugging data only: they cannot be reviewed, promoted,
+or used as runtime input.
 
 For an OpenAI HTTP 429 response, the command reports only the safe diagnostic
 allowlist: `request_id`, request/token limit, remaining, and reset values, plus
