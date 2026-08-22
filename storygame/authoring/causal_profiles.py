@@ -9,6 +9,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
 from storygame.authoring.causal_contracts import CausalCompiledStory, CausalValidationError
 
 
@@ -57,24 +58,26 @@ class CausalProfileRegistry:
         except KeyError as exc:
             raise CausalValidationError("PROFILE_NOT_FOUND", profile_id) from exc
 
-    def validate(self, story: CausalCompiledStory) -> CausalCompiledStory:
-        profile = self.resolve(story.profile)
-        if profile.genre != story.genre:
-            raise CausalValidationError("PROFILE_MISMATCH", f"profile '{story.profile}' is not '{story.genre}'")
-        kinds = {item.kind for item in story.evidence_opportunities}
+    def validate(self, story: CausalCompiledStory | BoundBlueprint) -> CausalCompiledStory:
+        bound = story if isinstance(story, BoundBlueprint) else bind_blueprint(story)
+        candidate = bound.story
+        profile = self.resolve(candidate.profile)
+        if profile.genre != candidate.genre:
+            raise CausalValidationError("PROFILE_MISMATCH", f"profile '{candidate.profile}' is not '{candidate.genre}'")
+        kinds = {item.kind for item in bound.evidence_opportunities}
         if not kinds <= set(profile.allowed_opportunity_types):
             raise CausalValidationError("OPPORTUNITY_TYPE_INVALID", "opportunity type is not allowed by profile")
-        phases = {beat.phase for beat in story.required_beats}
+        phases = {beat.declaration.phase for beat in bound.required_beats}
         missing = set(profile.required_freytag_phases) - phases
         if missing:
             raise CausalValidationError("FREYTAG_GATE_REQUIRED", f"missing phases: {', '.join(sorted(missing))}")
         for requirement in (*profile.terminal_roles, *profile.causal_roles):
-            count = sum(requirement.role in truth.roles for truth in story.truths)
+            count = sum(requirement.role in truth.declaration.roles for truth in bound.truths)
             if count < requirement.min_count:
                 raise CausalValidationError("CAUSAL_ROLE_REQUIRED", f"missing '{requirement.role}'")
-        if len(story.suspect_hypotheses) < profile.minimum_alternative_suspects:
+        if len(bound.hypotheses) < profile.minimum_alternative_suspects:
             raise CausalValidationError(
                 "ALTERNATIVE_SUSPECTS_REQUIRED",
                 f"requires {profile.minimum_alternative_suspects} plausible alternative suspects",
             )
-        return story
+        return candidate

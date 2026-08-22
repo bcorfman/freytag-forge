@@ -8,6 +8,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict
 
+from storygame.authoring.bound_ir import bind_blueprint
 from storygame.authoring.causal_contracts import (
     CausalCompiledStory,
     CausalValidationError,
@@ -381,10 +382,11 @@ class BlueprintCompiler:
         )
 
     def _critique(self, story: CausalCompiledStory) -> tuple[CompilationDiagnostic, ...]:
+        bound = bind_blueprint(story)
         results: tuple[CausalCriticResult, ...] = (
-            CausalCompletenessCritic().critique(story),
-            RouteFairnessCritic(self._profiles).critique(story),
-            FreytagProgressionCritic(self._profiles).critique(story),
+            CausalCompletenessCritic().critique(bound),
+            RouteFairnessCritic(self._profiles).critique(bound),
+            FreytagProgressionCritic(self._profiles).critique(bound),
         )
         return tuple(
             CompilationDiagnostic(critic=result.critic, code="LOCAL_INVARIANT", detail=detail)

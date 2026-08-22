@@ -25,8 +25,10 @@ Just a living story that meets you where you are.
 - Follow different paths to an ending. A failed approach can change the story
   without ending it prematurely.
 - Build and review new stories before they become playable.
-- Catch broken story connections before they reach players, with clear guidance
-  when a story points at the wrong thing.
+- Check story logic before it reaches players, with clear guidance when a
+  connection points at the wrong thing.
+- Shape stories around causes, discoveries, alternate approaches, and endings
+  that can actually be reached.
 
 **Less prompt luck. More playable story.**
 
