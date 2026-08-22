@@ -284,7 +284,7 @@ def test_blueprint_compiler_exhausts_after_two_malformed_attempts():
     transport = FakeTransport()
     with pytest.raises(CompilationError, match="BLUEPRINT_COMPILATION_EXHAUSTED"):
         BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source())
-    assert transport.calls == [True, False]
+    assert transport.calls == [True, True]
 
 
 def test_blueprint_compiler_retains_nonplayable_attempts_for_explicit_diagnostics():
@@ -299,7 +299,7 @@ def test_blueprint_compiler_retains_nonplayable_attempts_for_explicit_diagnostic
     artifact = raised.value.diagnostic_artifact()
     assert artifact["schema_version"] == "story-blueprint-diagnostic-v1"
     assert artifact["source"]["source_id"] == "signal"
-    assert [attempt["json_object"] for attempt in artifact["attempts"]] == [True, False]
+    assert [attempt["json_object"] for attempt in artifact["attempts"]] == [True, True]
     assert [attempt["response"] for attempt in artifact["attempts"]] == ["not json", "not json"]
     assert all(attempt["error_code"] == "BLUEPRINT_OUTPUT_INVALID" for attempt in artifact["attempts"])
 
@@ -321,9 +321,11 @@ def test_blueprint_compiler_retries_invalid_contracts_with_the_local_diagnostic(
     class FakeTransport(BlueprintCompilerTransport):
         def __init__(self) -> None:
             self.prompts: list[str] = []
+            self.calls: list[bool] = []
 
         def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
             self.prompts.append(prompt)
+            self.calls.append(json_object)
             return invalid if len(self.prompts) == 1 else candidate
 
     transport = FakeTransport()
@@ -337,6 +339,7 @@ def test_blueprint_compiler_retries_invalid_contracts_with_the_local_diagnostic(
     assert "optional_beats.0.purpose: literal_error" in transport.prompts[1]
     assert "Candidate JSON to correct" in transport.prompts[1]
     assert '"schema_version":"story-blueprint-v2"' in transport.prompts[1]
+    assert transport.calls == [True, True]
 
 
 def test_blueprint_compiler_reports_latent_errors_behind_invalid_source_metadata():
@@ -359,6 +362,29 @@ def test_blueprint_compiler_reports_latent_errors_behind_invalid_source_metadata
     assert BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.5").compile(_source()).accepted
     assert "profile: string_type" in transport.prompts[1]
     assert "source-normalized preflight: TIMELINE_INVALID" in transport.prompts[1]
+
+
+def test_blueprint_compiler_repairs_authoring_metadata_leaks_from_fictional_fields():
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    invalid["truths"][0]["summary"] = "A reviewed causal artifact proves the system failure."
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+    compilation = BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source())
+
+    assert compilation.accepted
+    assert "fictional fields reference authoring metadata" in transport.prompts[1]
+    assert "reviewed causal artifact" in transport.prompts[1]
 
 
 def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
@@ -390,6 +416,48 @@ def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
     assert '"id":"signal_crisis"' in transport.prompts[1]
 
 
+def test_blueprint_compiler_repair_prompt_requires_unknown_truth_references_to_match_declared_ids() -> None:
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+    candidate["realization_routes"][0]["failure_forward"]["consequence_truth_ids"] = ["missing_truth"]
+
+    prompt = BlueprintCompiler._candidate_repair_prompt(
+        "Diagnostics: route 'diagnose_scan' failure-forward references unknown 'missing_truth'",
+        candidate,
+    )
+
+    assert "UNKNOWN_REFERENCE repair protocol" in prompt
+    assert "declared truths[].id values" in prompt
+    assert "CUSTODY_INCOMPATIBLE repair protocol" in prompt
+    assert "preserve the separate alternative-suspect routes" in prompt
+    assert "party_knowledge[].truth_ids specifically" in prompt
+    assert "unknown connected-route prerequisite" in prompt
+    assert "TIMELINE_INVALID repair protocol" in prompt
+    assert "preserve causal event prerequisite ordering" in prompt
+    assert "CAUSAL_COMPLETENESS repair protocol" in prompt
+    assert "ROUTE_FAIRNESS repair protocol" in prompt
+    assert "END_STATE repair protocol" in prompt
+    assert "ID preservation protocol" in prompt
+    assert "Reference inventory for repair follows" in prompt
+    assert '"evidence_opportunity_truth_ids":{"crew_testimony":"tradeoff"' in prompt
+    assert '"truth_ids":["constraint","failure","opening","remedy","tradeoff"]' in prompt
+    assert "missing_truth" in prompt
+
+
+def test_blueprint_compiler_marks_reference_inventory_unavailable_for_malformed_candidates() -> None:
+    prompt = BlueprintCompiler._candidate_repair_prompt("Diagnostics: malformed output", "{")
+
+    assert "Reference inventory: unavailable because the rejected candidate is not parseable JSON" in prompt
+
+
+def test_blueprint_compiler_handles_nonobject_and_partial_reference_inventories() -> None:
+    nonobject_prompt = BlueprintCompiler._candidate_repair_prompt("Diagnostics: malformed output", "[]")
+    partial_prompt = BlueprintCompiler._candidate_repair_prompt("Diagnostics: partial output", {"truths": "invalid"})
+
+    assert "Reference inventory: unavailable because the rejected candidate is not parseable JSON" in nonobject_prompt
+    assert '"truth_ids":[]' in partial_prompt
+
+
 def test_blueprint_compiler_persists_unplayable_candidate_diagnostics() -> None:
     incomplete = _candidate()
     incomplete["provenance"] = _source().provenance()
@@ -412,24 +480,68 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
         {"genre": "sci-fi", "minimum_independent_proof_routes": 2},
         _source().provenance(),
         source_profile="sci-fi",
+        source_authoring_context={
+            "opening_public_boundary": "The malfunction is public; its cause is not.",
+            "hard_constraints": {"terminal_constraints": ["The crew must preserve the beacon."]},
+            "creative_direction": {"tone": ["tense"]},
+            "extensions": {},
+        },
     )
 
     assert "terminal truths; enumerate causal events and timeline; work backward" in prompt
     assert "independently realizable proof routes" in prompt
+    assert (
+        "For every required revelation, use at least the genre profile's minimum number of distinct evidence "
+        "opportunity kinds across its realization routes" in prompt
+    )
     assert "source_hash" in prompt
     assert "Source profile ID: sci-fi" in prompt
+    assert "Source authoring context" in prompt
+    assert "The crew must preserve the beacon." in prompt
+    assert "Hard constraints are non-negotiable" in prompt
+    assert "Authoring controls are instructions, never diegetic story content" in prompt
+    assert (
+        "Every end_states[].required_truth_ids value must appear verbatim in at least one causal event output_truths, "
+        "evidence opportunity truth_id, and realization route result_truth_ids" in prompt
+    )
     assert "before_event_id.latest must be less than or equal to after_event_id.earliest" in prompt
+    assert "Timeline constraints must agree with causal_events[].prerequisite_event_ids" in prompt
+    assert "every end state has at least one required_outcome_id" in prompt
     assert "evidence_opportunities[].route_id must equal a realization_routes[].id" in prompt
+    assert "Every connected_routes[].prerequisite_truths value must be a declared truths[].id" in prompt
+    assert (
+        "every ID in a realization route's opportunity_ids must name an evidence opportunity whose route_id equals "
+        "that realization route's id" in prompt
+    )
+    assert "Treat opportunity ownership as a partition" in prompt
+    assert "Alternative-suspect supporting and exonerating opportunities must remain" in prompt
+    assert "not additional proof of the terminal culprit solution" in prompt
     assert "evidence_opportunities[].holder_id must equal a participants[].id" in prompt
+    assert "party_knowledge[].truth_ids may contain only values from truths[].id" in prompt
     assert "Every evidence_opportunity.location_id must be reachable from an initial_access location" in prompt
     assert "setting-appropriate transition locations" in prompt
     assert "mansion" not in prompt
     assert "Do not wrap it in a STORY_BLUEPRINT_V2_JSON key" in prompt
     assert "JSON booleans must be the unquoted literals true or false" in prompt
+    assert 'schema_version must be the exact JSON string "story-blueprint-v2"' in prompt
     assert "pressure is an integer from 0 through 100" in prompt
     assert "alternative_satisfier, complication, relationship_development, or world_development" in prompt
+    assert "is mandatory on every optional beat whose purpose is alternative_satisfier" in prompt
+    assert "A plausible alternative suspect is not automatically an alternative_satisfier" in prompt
+    assert "profile must be the exact Source profile ID JSON string, never an object" in prompt
+    assert "Every failure_forward.consequence_truth_ids array must contain at least one declared truth ID" in prompt
+    assert (
+        "A required outcome may be assigned to an alternative_satisfier optional beat only when at least one "
+        "required beat also names that outcome" in prompt
+    )
     assert 'truths: [{"id":"lowercase_id","summary":"non-empty summary","roles":["profile_role"]?}]' in prompt
     assert "realization_routes: [{id,revelation_id,opportunity_ids,result_truth_ids,failure_forward}]" in prompt
+    assert "suspect_hypotheses: [{participant_id,supporting_truth_ids,exonerating_truth_ids}]" in prompt
+    assert "When the genre profile requires alternative suspects" in prompt
+    assert (
+        "Every route's failure_forward must either establish at least one of that route's result_truth_ids or name "
+        "an alternative realization route" in prompt
+    )
     assert "mystery" not in prompt
 
 

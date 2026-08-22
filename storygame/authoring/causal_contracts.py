@@ -140,6 +140,12 @@ class OptionalBeat(Beat):
     purpose: Literal["alternative_satisfier", "complication", "relationship_development", "world_development"]
 
 
+class SuspectHypothesis(_Contract):
+    participant_id: str = Field(pattern=_ID, max_length=80)
+    supporting_truth_ids: tuple[str, ...] = Field(min_length=2, max_length=16)
+    exonerating_truth_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+
+
 class EndState(_Contract):
     id: str = Field(pattern=_ID, max_length=80)
     required_outcome_ids: tuple[str, ...] = Field(min_length=1, max_length=32)
@@ -172,6 +178,7 @@ class CausalCompiledStory(_Contract):
     required_outcomes: tuple[RequiredOutcome, ...] = Field(min_length=1, max_length=64)
     required_beats: tuple[Beat, ...] = Field(min_length=1, max_length=64)
     optional_beats: tuple[OptionalBeat, ...] = Field(default=(), max_length=64)
+    suspect_hypotheses: tuple[SuspectHypothesis, ...] = Field(default=(), max_length=32)
     end_states: tuple[EndState, ...] = Field(min_length=1, max_length=16)
 
 
@@ -281,6 +288,7 @@ def _reachable_locations(story: CausalCompiledStory) -> set[str]:
 
 def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], participant_ids: set[str]) -> None:
     route_ids = _ids(story.realization_routes, "realization route")
+    event_ids = _ids(story.causal_events, "causal event")
     revelation_ids = _ids(story.revelations, "revelation")
     outcome_ids = _ids(story.required_outcomes, "required outcome")
     required_beat_ids = _ids(story.required_beats, "required beat")
@@ -305,18 +313,50 @@ def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], p
             "UNKNOWN_REFERENCE",
             f"invalid opportunity references: {', '.join(opportunity_reference_errors)}",
         )
+    opportunity_truth_ids = {opportunity.id: opportunity.truth_id for opportunity in story.evidence_opportunities}
+    knowledge_reference_errors: list[str] = []
     for knowledge in story.party_knowledge:
         _references((knowledge.participant_id,), participant_ids, "party knowledge")
-        _references(knowledge.truth_ids, truth_ids, f"knowledge '{knowledge.participant_id}'")
+        for value in knowledge.truth_ids:
+            if value in truth_ids:
+                continue
+            if value in opportunity_truth_ids:
+                knowledge_reference_errors.append(
+                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is evidence opportunity ID; "
+                    f"use truth_id '{opportunity_truth_ids[value]}'"
+                )
+            elif value in route_ids:
+                knowledge_reference_errors.append(
+                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is realization route ID"
+                )
+            elif value in event_ids:
+                knowledge_reference_errors.append(
+                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is causal event ID"
+                )
+            elif value in participant_ids:
+                knowledge_reference_errors.append(
+                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is participant ID"
+                )
+            else:
+                knowledge_reference_errors.append(
+                    f"knowledge '{knowledge.participant_id}' references unknown '{value}'"
+                )
+    if knowledge_reference_errors:
+        raise CausalValidationError("UNKNOWN_REFERENCE", "; ".join(knowledge_reference_errors))
+    hypothesis_participants = [hypothesis.participant_id for hypothesis in story.suspect_hypotheses]
+    if len(hypothesis_participants) != len(set(hypothesis_participants)):
+        raise CausalValidationError("DUPLICATE_ID", "suspect hypotheses repeat a participant")
+    for hypothesis in story.suspect_hypotheses:
+        _references((hypothesis.participant_id,), participant_ids, "suspect hypothesis")
+        _references(hypothesis.supporting_truth_ids, truth_ids, f"suspect hypothesis '{hypothesis.participant_id}'")
+        _references(hypothesis.exonerating_truth_ids, truth_ids, f"suspect hypothesis '{hypothesis.participant_id}'")
+        if set(hypothesis.supporting_truth_ids) & set(hypothesis.exonerating_truth_ids):
+            raise CausalValidationError(
+                "SUSPECT_HYPOTHESIS_INVALID", f"suspect hypothesis '{hypothesis.participant_id}' reuses its evidence"
+            )
     for protection in story.knowledge_protections:
         _references((protection.truth_id,), truth_ids, "knowledge protection")
         _references(protection.release_after_revelation_ids, revelation_ids, "knowledge protection")
-    protected = {item.truth_id for item in story.knowledge_protections}
-    for knowledge in story.party_knowledge:
-        if protected & set(knowledge.truth_ids):
-            raise CausalValidationError(
-                "PREMATURE_PROTECTED_KNOWLEDGE", f"'{knowledge.participant_id}' knows protected truth"
-            )
     for revelation in story.revelations:
         _references((revelation.truth_id,), truth_ids, f"revelation '{revelation.id}'")
         _references(revelation.gate_beat_ids, required_beat_ids, f"revelation '{revelation.id}'")
@@ -341,9 +381,14 @@ def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], p
         _references(beat.prerequisite_revelation_ids, revelation_ids, f"beat '{beat.id}'")
         if beat.required_outcome_id is not None:
             _references((beat.required_outcome_id,), outcome_ids, f"beat '{beat.id}'")
-    for optional in story.optional_beats:
-        if optional.purpose == "alternative_satisfier" and optional.required_outcome_id is None:
-            raise CausalValidationError("OPTIONAL_BEAT_INCOMPLETE", f"optional beat '{optional.id}' needs an outcome")
+    incomplete_alternative_satisfiers = [
+        optional.id
+        for optional in story.optional_beats
+        if optional.purpose == "alternative_satisfier" and optional.required_outcome_id is None
+    ]
+    if incomplete_alternative_satisfiers:
+        beat_list = ", ".join(f"'{beat_id}'" for beat_id in incomplete_alternative_satisfiers)
+        raise CausalValidationError("OPTIONAL_BEAT_INCOMPLETE", f"optional beats {beat_list} need an outcome")
     required_outcomes = {beat.required_outcome_id for beat in story.required_beats}
     for optional in story.optional_beats:
         if optional.purpose == "alternative_satisfier" and optional.required_outcome_id not in required_outcomes:

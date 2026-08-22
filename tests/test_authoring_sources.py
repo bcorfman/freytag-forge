@@ -91,6 +91,11 @@ def test_checked_in_outline_inventory_is_complete_and_vale_is_offline_only():
     assert vale.authoring_only is True
     assert any("Beatrice Harrow" in constraint for constraint in vale.hard_constraints["terminal_constraints"])
     assert any("west gallery" in constraint for constraint in vale.hard_constraints["terminal_constraints"])
+    assert any("diegetic" in constraint for constraint in vale.hard_constraints["terminal_constraints"])
+    assert any(
+        "within Vale Mansion and its estate" in constraint
+        for constraint in vale.hard_constraints["terminal_constraints"]
+    )
 
 
 def test_minimal_and_expanded_briefs_keep_constraints_separate_from_creative_direction(tmp_path: Path):
