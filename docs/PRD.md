@@ -20,6 +20,32 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
+## Causal compiler Phase 0: symbol-resolution baseline
+
+The offline causal compiler now carries a checked-in Phase 0 characterization
+corpus at `tests/fixtures/causal_compiler_phase0.json` and a versioned baseline
+at `data/story_blueprints/diagnostics/phase0-baseline.json`. The corpus covers
+truth, participant, location, connected-route, causal-event,
+evidence-opportunity, realization-route, revelation, required-outcome, and
+required-beat namespaces. It includes known references, wrong-namespace
+references, ambiguous IDs, and candidates containing multiple reference
+failures, with mystery, fantasy, sci-fi, and relationship coverage.
+
+Phase 0 is intentionally characterization-only. It does not add a runtime
+authority, mutate an artifact, or call a provider. The current compiler
+contract is recorded explicitly: syntax errors precede binding errors;
+`UNKNOWN_REFERENCE` remains the compatibility code for an unbound reference;
+`AMBIGUOUS_REFERENCE` is reserved for the symbol-resolution migration; and
+independent bindable failures are reported in deterministic source-collection
+and field-declaration order. A rejected candidate keeps the existing bounded
+repair behavior: one initial request plus one repair request, never more than
+two inference requests.
+
+The baseline is evidence for the Phase 1 registry and bound-IR work. It is not
+a promotion artifact and cannot become runtime input. Future diagnostic-code
+changes must update the compatibility record and the characterization tests in
+the same change.
+
 Genre-blueprint authoring has completed its offline-only Phases 1–2 contract
 and profile-validation layer.
 Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the
@@ -77,7 +103,7 @@ uncommitted. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
 ## Goals
-- Deliver a playable CLI and web IF experience.
+- Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.
 - Let LLMs drive ordinary in-scope story progression, NPC dialogue, and turn framing inside deterministic safety rails.
 - Improve narration quality via bounded, reproducible coherence workflows.
@@ -88,8 +114,6 @@ uncommitted. See the
 ```text
 .
 ├── storygame/
-│   ├── cli.py
-│   ├── web.py
 │   ├── web_demo.py
 │   ├── engine/
 │   ├── llm/
@@ -266,7 +290,7 @@ the prompt version and token estimate for traces.
   - `RevisionDirective`
 - `TurnProposal` is the structured execution contract for semantic actions, bounded state deltas, narration claims, dialogue, and beat hints.
 - Current LLM freeform planning first validates paired `DialogProposal` and `ActionProposal` payloads, then resolves them through the same policy and commit boundary. Deterministic affordances likewise construct a `TurnProposal` after normalization. Slash-prefixed control-plane commands stay outside semantic turn execution.
-- CLI orchestration and runtime execution should preserve typed contract boundaries instead of widening accepted `TurnProposal`, `JudgeDecision`, `CoherenceTelemetry`, or `ImpactAssessment` payloads into ad-hoc dicts. When a payload crosses persistence or pending-confirmation storage, normalize it back into the explicit contract at that boundary before reuse.
+- Application orchestration and runtime execution should preserve typed contract boundaries instead of widening accepted `TurnProposal`, `JudgeDecision`, `CoherenceTelemetry`, or `ImpactAssessment` payloads into ad-hoc dicts. When a payload crosses persistence or pending-confirmation storage, normalize it back into the explicit contract at that boundary before reuse.
 - A valid runtime proposal may suggest:
   - dialogue,
   - room-facing narration,
@@ -328,11 +352,7 @@ flowchart LR
 - Per-turn artifact history is retained under `story_artifacts/<slot>/turns/<turn_index>/`.
 
 ### Web Surfaces
-- `storygame.web` is the local/dev web surface with embedded UI (`GET /`) and turn endpoint (`POST /turn`) keyed by `run_id`.
-- Local/dev web uses the Cloudflare Workers AI narrator and story-agent stack:
-  - opening/bootstrap planning should use the same single-bootstrap-call fast opening path as hosted demo, with deterministic validation on the critical path,
-  - and local misconfiguration may surface directly during development.
-- `storygame.web_demo` is the hosted-demo API surface:
+- `storygame.web_demo` is the sole application surface:
   - `GET /api/v1/health`
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
@@ -341,9 +361,8 @@ flowchart LR
   - hosted bootstrap/opening uses the same Cloudflare Worker credentials,
   - hosted bootstrap/opening uses direct LLM-authored scene prose through that backend,
   - when the hosted backend cannot satisfy the story-bootstrap JSON contract, hosted demo bootstrap should fall back to a prose opening path over that same backend rather than failing the whole opening on contract shape alone,
-  - hosted demo opening should use the same single-bootstrap-call fast opening path as local web, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
+  - hosted demo opening should use a single-bootstrap-call fast path, with deterministic validation on the first-response critical path and bootstrap-critic, output-editor, and remote room-presentation passes kept out of that latency-sensitive path,
   - and hosted failures must fail closed with typed client responses rather than surfacing backend configuration exceptions.
-- Local web and hosted demo may share payload/session/turn helpers below the adapter boundary, but they must not be refactored into a single opening/narrator path that assumes the same credential or model stack.
 - `frontend/` is a minimal static GitHub Pages client for the hosted demo API. It creates a session, auto-runs `look`, and sends subsequent commands to the Railway-hosted `web_demo` backend via `VITE_API_BASE_URL`.
 - Hosted-demo sessions use explicit TTL expiry with server-side `session_id` continuity.
 - Demo app save/load slots are scoped by `session_id` for deterministic isolation.
@@ -439,15 +458,15 @@ flowchart LR
 - Opening and early-turn text must agree on clue custody and placement. If a character is holding a clue item, the same clue must not also be described as lying in the environment or discovered elsewhere in the same scene.
 - Opening fact staging must be coherent at the canonical-state level and must not be repaired through fallback world mutation. Bootstrap validation rejects conflicts between declared custody, location, exposure, and opening prose.
 - Accepted opening text must be a projection of committed canonical facts. If opening prose conflicts with committed role, location, custody, or clue-staging facts, bootstrap/opening validation must fail closed instead of repairing runtime truth after the fact.
-- Opening/bootstrap regression coverage should verify validator-oriented failures in varied categories rather than replaying a single named clue example. At minimum, tests should cover role continuity, NPC location continuity, item/clue custody continuity, and opening-to-fact parity across local and hosted web bootstrap paths.
-- Opening scene paragraphs are rendered with blank-line separation in CLI output/transcripts for readability.
+- Opening/bootstrap regression coverage should verify validator-oriented failures in varied categories rather than replaying a single named clue example. At minimum, tests should cover role continuity, NPC location continuity, item/clue custody continuity, and opening-to-fact parity across the hosted frontend and API.
+- Opening scene paragraphs are rendered with blank-line separation in hosted client transcripts for readability.
 - Opening prose should default to present tense. Mutable player knowledge must come from fact-backed state transitions, not increasingly specific prompt guardrails.
 - Web turn responses now also preserve opening paragraph spacing with explicit blank-line separators.
 - Web bootstrap response (`start`/`look` on a fresh run) returns opening scene text plus the initial room block.
 - Hosted-demo bootstrap is an explicit compatibility boundary: it uses the same Cloudflare Worker contract as every other live surface.
-- Opening prose should feel materially consistent across CLI, local web, and hosted demo: every surface should use direct LLM-authored scene prose grounded in the same planned story context, even if different backend adapters are used underneath.
+- Opening prose should feel materially consistent across the hosted frontend and API: both surfaces use direct LLM-authored scene prose grounded in the same planned story context.
 - First substantive command in a fresh web run no longer prepends opening text; it returns only the command echo + turn body.
-- First substantive command parity should be shared across local web and hosted demo at the story/output level, but backend integration details may differ by surface when required by deployment constraints.
+- First substantive command parity should be shared across the hosted frontend and API at the story/output level.
 - Opening intro combines protagonist name and background in one natural sentence (for example, `You are <name>, <background>.`) with punctuation normalization.
 - Opening generation must remain LLM-authored. If bootstrap/opening generation fails, the surface should fail closed instead of fabricating deterministic opening prose.
 - Opening prose is still LLM-authored, but it must be authored from deterministic fact-backed context rather than from an untracked side-plan that can diverge from world state.
@@ -492,8 +511,8 @@ flowchart LR
 - Replan context includes whether the disruption is a light adaptation or a player-confirmed goal-change event.
 - Goal-breaking confirmation must interrupt before the official response to the triggering prompt; after `PROCEED`, the system should answer that original prompt under the new fact state rather than substituting a different authored action.
 - Transcript command echo uses `>COMMAND` format.
-- CLI/replay transcripts insert a blank line before each `>COMMAND` echo for readability between turns.
-- Web turn response lines now prepend `>COMMAND` each turn for transcript-style continuity in clients.
+- Hosted transcripts insert a blank line before each `>COMMAND` echo for readability between turns.
+- Hosted turn responses prepend `>COMMAND` each turn for transcript-style continuity in clients.
 - Debug mode includes parseable structured trace via `[debug-json] ...`.
 - Debug traces for runtime turns include proposal/policy diagnostics (proposal source/error, accepted vs rejected deltas, applied fact ops, event decisions, and story delta) to explain why and how state changed.
 
@@ -540,12 +559,19 @@ flowchart LR
   - and tests must lock these behaviors in before refactors land.
 - If implementation begins drifting back toward parser-dominant turn handling, update `AGENTS.md` with explicit architecture rules or a required checklist for proposal-first routing and validation boundaries.
 
-## CLI and Runtime Modes
-- CLI: `uv run python -m storygame --seed 123`
-- CLI with story profile: `uv run python -m storygame --seed 123 --genre mystery --session-length medium --tone neutral`
-- Replay: `--replay <file> --transcript <file>`
-- Web: `uv run uvicorn storygame.web:app --reload`
+## Hosted runtime
+- Public play is delivered through the GitHub Pages frontend and the hosted `storygame.web_demo` API.
+- Deployment and hosted smoke tests are managed by the repository workflows; there is no local application mode.
 ## Environment Variables
+
+Players do not configure environment variables. The hosted frontend and API
+receive their deployment configuration through GitHub Pages and Railway.
+
+### Offline authoring/compiler
+- `OPENAI_API_KEY` is required only for live offline blueprint compilation.
+- `FREYTAG_ENABLE_LIVE_COMPILER=1` is required to opt into paid compiler calls.
+- `FREYTAG_COMPILER_MODEL` selects the explicitly configured compiler model.
+
 ### Cloudflare Workers AI adapter
 - `CLOUDFLARE_WORKER_URL`
 - `CLOUDFLARE_WORKER_TOKEN` (optional, depending on worker auth config)
