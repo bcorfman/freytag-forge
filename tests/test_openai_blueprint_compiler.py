@@ -386,6 +386,8 @@ def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
     assert '"source_hash":"' + "a" * 64 in transport.prompts[0]
     assert "lacks a causal evidence/route chain" in transport.prompts[1]
     assert "Diagnostics:" in transport.prompts[1]
+    assert "Candidate JSON to correct" in transport.prompts[1]
+    assert '"id":"signal_crisis"' in transport.prompts[1]
 
 
 def test_blueprint_compiler_persists_unplayable_candidate_diagnostics() -> None:
