@@ -28,6 +28,7 @@ class CausalProfile(_Profile):
     terminal_roles: tuple[RoleRequirement, ...] = Field(min_length=1, max_length=64)
     causal_roles: tuple[RoleRequirement, ...] = Field(min_length=1, max_length=64)
     minimum_independent_proof_routes: int = Field(default=2, ge=1, le=16)
+    minimum_alternative_suspects: int = Field(default=0, ge=0, le=16)
     allowed_opportunity_types: tuple[str, ...] = Field(min_length=1, max_length=64)
     required_freytag_phases: tuple[str, ...] = Field(min_length=1, max_length=16)
 
@@ -71,4 +72,9 @@ class CausalProfileRegistry:
             count = sum(requirement.role in truth.roles for truth in story.truths)
             if count < requirement.min_count:
                 raise CausalValidationError("CAUSAL_ROLE_REQUIRED", f"missing '{requirement.role}'")
+        if len(story.suspect_hypotheses) < profile.minimum_alternative_suspects:
+            raise CausalValidationError(
+                "ALTERNATIVE_SUSPECTS_REQUIRED",
+                f"requires {profile.minimum_alternative_suspects} plausible alternative suspects",
+            )
         return story

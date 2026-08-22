@@ -169,6 +169,51 @@ def test_phase_one_contract_validates_topology_causality_knowledge_and_freytag()
     assert FreytagProgressionCritic(profiles).critique(story).accepted
 
 
+def test_freytag_critic_uses_declared_beat_order_for_revelation_gates() -> None:
+    payload = _story()
+    payload["required_beats"][-1]["pressure"] = 0
+    story = validate_causal_compiled_story(payload)
+    critic = FreytagProgressionCritic(_profiles())
+
+    assert critic.critique(story).accepted
+
+    payload["revelations"][0]["gate_beat_ids"] = ["resolution"]
+    story = validate_causal_compiled_story(payload)
+
+    assert "beat 'rise' opens before a revelation gate" in critic.critique(story).diagnostics
+
+
+def test_mystery_profile_requires_plausible_alternative_suspect_hypotheses() -> None:
+    payload = _story()
+    profile = _profiles().resolve("mystery")
+    payload["genre"] = "mystery"
+    payload["profile"] = "mystery"
+    roles = [item.role for item in (*profile.terminal_roles, *profile.causal_roles)]
+    for truth in payload["truths"]:
+        truth["roles"] = roles
+    for index, opportunity in enumerate(payload["evidence_opportunities"]):
+        opportunity["kind"] = profile.allowed_opportunity_types[index % len(profile.allowed_opportunity_types)]
+
+    with pytest.raises(CausalValidationError, match="ALTERNATIVE_SUSPECTS_REQUIRED"):
+        _profiles().validate(validate_causal_compiled_story(payload))
+
+    payload["participants"].extend([{"id": "suspect_one", "role": "guest"}, {"id": "suspect_two", "role": "staff"}])
+    payload["suspect_hypotheses"] = [
+        {
+            "participant_id": "suspect_one",
+            "supporting_truth_ids": ["failure", "constraint"],
+            "exonerating_truth_ids": ["remedy"],
+        },
+        {
+            "participant_id": "suspect_two",
+            "supporting_truth_ids": ["constraint", "remedy"],
+            "exonerating_truth_ids": ["tradeoff"],
+        },
+    ]
+
+    assert _profiles().validate(validate_causal_compiled_story(payload)).genre == "mystery"
+
+
 @pytest.mark.parametrize("genre", ["mystery", "fantasy", "sci-fi", "relationship"])
 def test_data_driven_profiles_validate_the_same_generic_contract(genre: str) -> None:
     payload = _story()
@@ -181,6 +226,20 @@ def test_data_driven_profiles_validate_the_same_generic_contract(genre: str) -> 
         truth["roles"] = roles
     for index, opportunity in enumerate(payload["evidence_opportunities"]):
         opportunity["kind"] = profile.allowed_opportunity_types[index % len(profile.allowed_opportunity_types)]
+    if genre == "mystery":
+        payload["participants"].extend([{"id": "suspect_one", "role": "guest"}, {"id": "suspect_two", "role": "staff"}])
+        payload["suspect_hypotheses"] = [
+            {
+                "participant_id": "suspect_one",
+                "supporting_truth_ids": ["failure", "constraint"],
+                "exonerating_truth_ids": ["remedy"],
+            },
+            {
+                "participant_id": "suspect_two",
+                "supporting_truth_ids": ["constraint", "remedy"],
+                "exonerating_truth_ids": ["tradeoff"],
+            },
+        ]
 
     assert profiles.validate(validate_causal_compiled_story(payload)).genre == genre
 
@@ -192,7 +251,6 @@ def test_data_driven_profiles_validate_the_same_generic_contract(genre: str) -> 
         (lambda value: value["causal_events"][1].update(earliest=1, latest=1), "TIMELINE_INVALID"),
         (lambda value: value["evidence_opportunities"][0].update(location_id="missing"), "UNKNOWN_REFERENCE"),
         (lambda value: value["evidence_opportunities"][1].update(location_id="isolated"), "UNKNOWN_REFERENCE"),
-        (lambda value: value["party_knowledge"][0].update(truth_ids=["tradeoff"]), "PREMATURE_PROTECTED_KNOWLEDGE"),
         (
             lambda value: value["optional_beats"][0].update(
                 purpose="alternative_satisfier", required_outcome_id="missing"
@@ -225,6 +283,31 @@ def test_phase_one_contract_batches_every_infeasible_timeline_constraint() -> No
     assert "repair_event->failure_event" in raised.value.detail
 
 
+def test_phase_one_contract_batches_incomplete_alternative_satisfier_beats() -> None:
+    payload = _story()
+    payload["optional_beats"] = [
+        {"id": "first_alternative", "phase": "rising_action", "pressure": 40, "purpose": "alternative_satisfier"},
+        {"id": "second_alternative", "phase": "rising_action", "pressure": 45, "purpose": "alternative_satisfier"},
+    ]
+
+    with pytest.raises(CausalValidationError, match="OPTIONAL_BEAT_INCOMPLETE") as raised:
+        validate_causal_compiled_story(payload)
+
+    assert "'first_alternative'" in raised.value.detail
+    assert "'second_alternative'" in raised.value.detail
+
+
+def test_phase_one_contract_explains_foreign_party_knowledge_ids() -> None:
+    payload = _story()
+    payload["party_knowledge"][0]["truth_ids"] = ["scan"]
+
+    with pytest.raises(CausalValidationError, match="UNKNOWN_REFERENCE") as raised:
+        validate_causal_compiled_story(payload)
+
+    assert "is evidence opportunity ID" in raised.value.detail
+    assert "use truth_id 'failure'" in raised.value.detail
+
+
 def test_phase_one_contract_batches_opportunities_with_unknown_realization_routes() -> None:
     payload = _story()
     payload["evidence_opportunities"][0]["route_id"] = "missing_scan_route"
@@ -254,6 +337,13 @@ def test_phase_one_contract_rejects_an_unreachable_required_opportunity() -> Non
 
     with pytest.raises(CausalValidationError, match="LOCATION_UNREACHABLE"):
         validate_causal_compiled_story(payload)
+
+
+def test_phase_one_contract_allows_participants_to_know_player_protected_truths() -> None:
+    payload = _story()
+    payload["party_knowledge"][0]["truth_ids"] = ["tradeoff"]
+
+    assert validate_causal_compiled_story(payload).party_knowledge[0].truth_ids == ("tradeoff",)
 
 
 def test_critics_reject_single_route_proof_and_missing_terminal_chain() -> None:

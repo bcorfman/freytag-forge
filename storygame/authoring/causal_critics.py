@@ -57,7 +57,7 @@ class FreytagProgressionCritic:
 
     def critique(self, story: CausalCompiledStory) -> CausalCriticResult:
         required = self._profiles.resolve(story.profile).required_freytag_phases
-        beats = {beat.id: beat for beat in story.required_beats}
+        beat_order = {beat.id: index for index, beat in enumerate(story.required_beats)}
         phase_order = {phase: index for index, phase in enumerate(required)}
         prior = -1
         diagnostics: list[str] = []
@@ -73,6 +73,6 @@ class FreytagProgressionCritic:
                 if revelation.id in beat.prerequisite_revelation_ids
                 for gate in revelation.gate_beat_ids
             )
-            if any(beats[gate].pressure > beat.pressure for gate in gated_beat_ids):
+            if any(beat_order[gate] > beat_order[beat.id] for gate in gated_beat_ids):
                 diagnostics.append(f"beat '{beat.id}' opens before a revelation gate")
         return CausalCriticResult("freytag_progression", not diagnostics, tuple(diagnostics))

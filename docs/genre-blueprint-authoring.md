@@ -14,6 +14,9 @@ local validator rejects duplicate or unknown IDs, revelation cycles,
 unreleased protected facts, route-less required revelations, invalid route
 references, endings that omit required revelations, and optional beats that
 silently become the only satisfier of a required outcome.
+Every declared end state must contain at least one required outcome and one
+required truth; a nonviable ending is omitted rather than represented with
+empty requirement arrays.
 
 Routes provide declarative truth satisfiers, availability constraints, eligible
 location classes, and a bounded failure-forward result. Evidence placements
@@ -22,6 +25,10 @@ knowledge declares what each party starts knowing. They are not executable
 runtime effects. Phase 5 realizes accepted declarations into a dedicated V2
 fact map using the shared typed turn contract; no blueprint prose can mutate
 session state.
+
+Knowledge protections gate what reaches the player-facing observer context until
+their release revelations complete. They do not prohibit legitimate NPC knowledge:
+for example, a culprit may know their own act before the player can discover it.
 
 Minimal immutable fixtures live in `data/story_blueprints/v1/` for mystery,
 fantasy, sci-fi, and relationship stories. The authoring-quality contract tests
@@ -45,7 +52,9 @@ points, ending support, required evidence routes, circular proof, and (where a
 profile requests it) climaxes backed by required discoveries. Mystery requires
 one complete crime solution and its victim, perpetrator, motive, means,
 opportunity, method, time window, concealment, and evidence-backed
-identification/exoneration routes. Fantasy, sci-fi, and relationship profiles
+identification/exoneration routes. Its profile also requires two declared
+alternative suspect hypotheses, each with separate playable supporting and
+exonerating truths. Fantasy, sci-fi, and relationship profiles
 instead require rule/source/cost, failure/constraint/remedy/trade-off, and
 wound/need/choice/outcome structures.
 
@@ -58,15 +67,22 @@ authorize a new runtime branch or make a blueprint mutable.
 `storygame.authoring.blueprint_compiler.BlueprintCompiler` accepts one raw
 outline, a selected injected `GenreProfileRegistry`, and a provider transport.
 The transport receives an explicit `json_object=True` choice. A JSON-mode
-rejection, malformed response, or local schema/profile/provenance failure uses
-the single shared fallback request with `json_object=False`; after that the
+rejection uses the single shared fallback request with `json_object=False`.
+Malformed responses and local schema/profile/provenance failures use the same
+single recovery request while retaining `json_object=True`; after that the
 compiler raises `BLUEPRINT_COMPILATION_EXHAUSTED`. No rejected response is a
 playable authoring input. When local validation supplies a safe diagnostic, the
-fallback request receives it and must return the complete corrected object.
+recovery request receives it and must return the complete corrected object.
 That request also receives the rejected candidate as inert JSON data, so it can
 preserve valid authored fields instead of regenerating the blueprint wholesale.
 The same preservation rule applies to critic-driven repair, including
 route-fairness and Freytag diagnostics.
+Every parseable repair candidate also receives a compact local ID ledger for
+truths, participants, locations, events, opportunities, realization routes,
+revelations, outcomes, and beats. The repair prompt treats existing IDs and
+collection membership as stable unless the diagnostic directly requires a
+change, and maps each reference-bearing field to its permitted ID namespace.
+This ledger is compiler context, never fictional content.
 When invalid source-owned metadata masks deeper structural or timeline failures,
 the compiler performs a diagnostic-only source-normalized preflight and includes
 those latent failures in the same repair instruction; the original candidate is
@@ -79,6 +95,12 @@ the compiler batches every invalid opportunity-to-realization-route reference in
 the one recovery diagnostic.
 It also distinguishes an opportunity's participant holder from its location, and
 reports the exact invalid reference field rather than an ambiguous unknown ID.
+Opportunity ownership is a partition: an opportunity may appear only on the
+realization route named by its `route_id`. Alternative-suspect supporting and
+exonerating evidence stays on that suspect's own playable routes and must not be
+copied into the terminal culprit's solution-synthesis routes. A custody repair
+removes the misplaced route reference while preserving the opportunity's declared
+owner and the separate alternative-suspect routes.
 Every evidence opportunity also has to be reachable from an initially accessible
 location through an authored connected-route graph; the prompt requires a map
 connection or a reachable evidence placement before it returns a candidate.
@@ -92,7 +114,23 @@ cannot replace boolean, numeric, or array fields with prose.
 For malformed candidates, local validation batches up to 20 structural failures
 into that one repair prompt, preventing a costly field-by-field recovery cycle.
 The prompt states bounded numeric values, required Freytag phases, and the
-closed optional-beat purpose vocabulary before generation.
+closed optional-beat purpose vocabulary before generation. It also makes the
+profile's scalar identifier and the alternative-satisfier rule explicit: every
+`alternative_satisfier` optional beat must declare a `required_outcome_id`,
+and optional beats cannot be the only way to satisfy a required outcome. Local
+validation reports all missing alternative-satisfier outcomes together so one
+bounded repair can correct the complete candidate. A plausible alternative
+suspect is not automatically an alternative satisfier; use that purpose only
+when the beat genuinely provides another way to satisfy a declared outcome.
+It explicitly names the literal schema version and requires realization-route
+opportunity IDs to agree with each opportunity's declared route ID.
+Every failure-forward declaration names at least one bounded consequence truth.
+It must also either establish one of the failed route's own result truths or
+offer an alternative realization route, preventing dead-end investigations.
+On an `UNKNOWN_REFERENCE` repair, the compiler explicitly requires every truth
+reference—including failure-forward and suspect-hypothesis references—to match
+one of the candidate's declared truth IDs; an error never authorizes inventing
+a replacement ID.
 
 The compiler plans from the profile terminal truth and asks for phases,
 required and optional beats, routes, protections, pressure, and
@@ -103,6 +141,25 @@ opening facts. `RouteFairnessCritic` additionally requires the profile's
 `minimum_routes_per_required_revelation` genuinely distinct route roles for
 every required revelation (default: two). One injected repairer may revise a
 rejected candidate; the repaired result is fully revalidated and re-reviewed.
+Freytag revelation gates use the declared required-beat sequence, rather than
+pressure values, so a resolution may correctly lower dramatic pressure after a
+climax gate.
+
+The compiler sends the full normalized authoring context to its provider:
+opening-public boundary, hard constraints, creative direction, and extensions.
+Hard constraints are non-negotiable source facts, not creative suggestions; a
+candidate that substitutes their identities, events, motives, methods, or
+required resolution outcomes must be rejected during editorial review.
+Each terminal end-state truth must be declared consistently in a causal event,
+an evidence opportunity, and a realization route, so the critic can prove its
+complete playable chain.
+Authoring controls remain outside the fictional world: local compilation
+rejects explicit references to reviewed causal artifacts, compiler artifacts,
+blueprint candidates, source provenance, and story blueprints in fictional
+fields while retaining provenance as artifact metadata.
+Every required revelation must use the profile's minimum number of distinct
+evidence-opportunity kinds across its realization routes; multiple routes of
+one evidence type do not establish route fairness.
 
 `BlueprintCompilation` retains a review record: prompt version, source outline
 hash and ID, model metadata, validation diagnostics, critic results, request
