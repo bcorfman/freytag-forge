@@ -437,8 +437,9 @@ def test_blueprint_compiler_repair_prompt_requires_unknown_truth_references_to_m
     assert "CAUSAL_COMPLETENESS repair protocol" in prompt
     assert "ROUTE_FAIRNESS repair protocol" in prompt
     assert "END_STATE repair protocol" in prompt
-    assert "ID preservation protocol" in prompt
     assert "Reference inventory for repair follows" in prompt
+    assert "Prior valid symbol ledger" in prompt
+    assert "UNRELATED_REPAIR_CHANGE" not in prompt
     assert '"evidence_opportunity_truth_ids":{"crew_testimony":"tradeoff"' in prompt
     assert '"truth_ids":["constraint","failure","opening","remedy","tradeoff"]' in prompt
     assert "missing_truth" in prompt

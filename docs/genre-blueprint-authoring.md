@@ -193,6 +193,51 @@ is deliberately live-only: both `--live` and
 and output must be a new `*.candidate.json` envelope. It never overwrites a
 reviewed fixture or makes raw outlines runtime inputs.
 
+## Phase-5 compiler operations
+
+The compiler pipeline is staged: syntax parsing, symbol definitions, reference
+binding, semantic passes, and critics. The bound IR is an immutable validation
+projection; it is discarded after the candidate is accepted or rejected and
+never becomes runtime state.
+
+Reference fields use explicit namespaces:
+
+| Reference family | Namespace |
+| --- | --- |
+| truths, prerequisites, knowledge, and protections | `truth` |
+| actors, holders, and hypothesis participants | `participant` |
+| map and opportunity locations | `location` |
+| map endpoints | `connected_route` |
+| causal prerequisites and timeline endpoints | `causal_event` |
+| evidence ownership | `evidence_opportunity` |
+| opportunity ownership and failure-forward alternatives | `realization_route` |
+| revelation and beat gates | `revelation`, `required_beat` |
+| outcomes, beats, and endings | `required_outcome`, `required_beat`, `optional_beat`, `end_state` |
+
+Binding diagnostics are deterministic and grouped by source path. Each records
+the expected namespace, supplied ID, supplied namespace when known, and a
+suggestion only when the mapping is unambiguous. `UNKNOWN_REFERENCE` remains
+the compatibility code for an unbound ID. Syntax failures stop before binding,
+binding failures stop before semantic passes, and no unbound candidate is
+accepted.
+
+Repair context contains the rejected JSON, the current symbol ledger, and the
+prior valid ledger. The local structural diff classifies declaration additions,
+removals, renames, ownership changes, and reference changes by namespace. An
+unrelated destructive change produces `UNRELATED_REPAIR_CHANGE` and is
+rejected; the compiler never silently restores or merges a repair. The local
+check is authoritative, so the prompt does not duplicate ID-preservation or
+destructive-change policy as a second rule system.
+
+For operator troubleshooting, inspect stages in order: malformed output or
+schema errors indicate a provider-boundary problem; `UNKNOWN_REFERENCE` or a
+wrong-namespace diagnostic indicates a candidate binding problem;
+`UNRELATED_REPAIR_CHANGE` indicates that the repair changed unrelated story
+content; semantic or critic diagnostics indicate a graph or profile defect.
+The compiler has one initial request and at most one recovery request. An
+exhausted run is a non-playable diagnostic artifact, never a reviewed or
+runtime input.
+
 ## Authority map
 
 | Artifact | Lifecycle and purpose | May mutate during a session? |

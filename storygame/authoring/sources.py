@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -104,14 +105,14 @@ class StorySourceLoader:
     def list_outlines(self) -> tuple[NormalizedStorySource, ...]:
         """Return the complete immutable inventory with one hash per selected entry."""
 
-        payload = _load_yaml(self._inventory_path)
-        if not isinstance(payload, Mapping) or not isinstance(payload.get("stories"), list):
-            raise CompilationError("SOURCE_INVALID", "outline inventory must contain a stories list")
-        sources = tuple(self._normalize_outline(item) for item in payload["stories"])
-        source_ids = [source.source_id for source in sources]
-        if len(source_ids) != len(set(source_ids)):
-            raise CompilationError("SOURCE_INVALID", "outline inventory contains duplicate IDs")
-        return sources
+        try:
+            raw = self._inventory_path.read_bytes()
+        except FileNotFoundError as exc:
+            raise CompilationError(
+                "SOURCE_NOT_FOUND", f"authoring source '{self._inventory_path}' does not exist"
+            ) from exc
+        cached = self._cached_outlines(self._inventory_path.name, raw)
+        return tuple(source.model_copy(deep=True) for source in cached)
 
     def select_outline(self, outline_id: str) -> NormalizedStorySource:
         matches = [source for source in self.list_outlines() if source.source_id == outline_id]
@@ -119,7 +120,23 @@ class StorySourceLoader:
             raise CompilationError("OUTLINE_NOT_FOUND", f"outline '{outline_id}' does not resolve exactly once")
         return matches[0]
 
-    def _normalize_outline(self, payload: object) -> NormalizedStorySource:
+    @staticmethod
+    @lru_cache(maxsize=4)
+    def _cached_outlines(inventory_name: str, raw: bytes) -> tuple[NormalizedStorySource, ...]:
+        try:
+            payload = yaml.safe_load(raw)
+        except yaml.YAMLError as exc:
+            raise CompilationError("SOURCE_INVALID", "authoring source is not valid YAML") from exc
+        if not isinstance(payload, Mapping) or not isinstance(payload.get("stories"), list):
+            raise CompilationError("SOURCE_INVALID", "outline inventory must contain a stories list")
+        sources = tuple(StorySourceLoader._normalize_outline(item, inventory_name) for item in payload["stories"])
+        source_ids = [source.source_id for source in sources]
+        if len(source_ids) != len(set(source_ids)):
+            raise CompilationError("SOURCE_INVALID", "outline inventory contains duplicate IDs")
+        return sources
+
+    @staticmethod
+    def _normalize_outline(payload: object, inventory_name: str) -> NormalizedStorySource:
         try:
             outline = StoryOutline.model_validate(payload)
         except ValidationError as exc:
@@ -129,7 +146,7 @@ class StorySourceLoader:
             source_id=str(outline.id),
             genre=outline.genre,
             profile=outline.genre,
-            source_path=f"{self._inventory_path.name}#{outline.id}",
+            source_path=f"{inventory_name}#{outline.id}",
             source_schema_version="story-outline-inventory-v1",
             source_hash=_hash(payload),
             authoring_only=outline.authoring_only,

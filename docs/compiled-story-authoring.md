@@ -140,6 +140,32 @@ It never includes API keys, headers, or a reviewed fixture overwrite. CI and
 ordinary play do not invoke the live command; operator-owned smoke use is
 deliberately skipped without credentials.
 
+## Phase-5 diagnostics and troubleshooting
+
+Full causal blueprints are checked in stages: syntax, symbol definitions,
+reference binding, semantic passes, and critics. Binding uses explicit
+namespaces for truths, participants, locations, map routes, causal events,
+evidence opportunities, realization routes, revelations, outcomes, beats, and
+end states. A binding diagnostic names the source path, expected namespace,
+supplied ID, supplied namespace when known, and an unambiguous replacement when
+one exists. `UNKNOWN_REFERENCE` remains the compatibility code for an ID that
+does not bind; syntax and binding failures prevent later passes from masking
+the original problem.
+
+Repair requests receive the rejected candidate plus current and prior symbol
+ledgers. The local structural audit classifies declaration additions,
+removals, renames, ownership changes, and reference changes by namespace. It
+rejects unrelated destructive edits as `UNRELATED_REPAIR_CHANGE`; it does not
+silently merge or restore candidate content. The prompt supplies semantic
+repair guidance, while the ledger and structural audit enforce identity and
+scope locally.
+
+When troubleshooting a failed run, start with the earliest stage in the
+diagnostic report: provider syntax/schema failures, then binding errors, then
+semantic or critic findings. The compiler allows one initial request and one
+recovery request. An exhausted run remains a non-playable diagnostic artifact
+and must be corrected and reviewed before promotion.
+
 When a paid compilation exhausts, an operator may explicitly retain its raw
 model attempts and typed local errors as a non-playable diagnostic artifact:
 

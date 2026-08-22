@@ -165,14 +165,15 @@ wrong-namespace and unrelated-repair failures without weakened semantic rules;
 
 ### Phase 5 — Documentation and cleanup
 
-- Update authoring documentation with namespace rules, bound-IR diagnostics,
+- [x] Update authoring documentation with namespace rules, bound-IR diagnostics,
   repair-diff behavior, and operator troubleshooting.
-- Remove superseded prompt-only repair instructions once their behavior is
+- [x] Remove superseded prompt-only repair instructions once their behavior is
   represented by symbol-ledger and structural-diff context.
-- Keep concise compatibility notes for diagnostic code changes.
+- [x] Keep concise compatibility notes for diagnostic code changes.
 
-**Exit criteria:** `TMPDIR=/tmp uv run pytest -q` retains at least 90% project
-coverage; Ruff passes; documentation describes the actual compiler pipeline.
+**Exit criteria:** [x] `TMPDIR=/tmp uv run pytest -q` retains at least 90% project
+coverage; [x] Ruff passes; [x] documentation describes the actual compiler
+pipeline.
 
 ## Risks and decisions requiring review
 

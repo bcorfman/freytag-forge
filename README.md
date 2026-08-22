@@ -29,6 +29,8 @@ Just a living story that meets you where you are.
 - Fix broken story connections without losing the good work around them.
 - Check story logic before it reaches players, with clear guidance when a
   connection points at the wrong thing.
+- Catch broken story connections in named categories, then protect unrelated
+  authored work when a repair is needed.
 - Shape stories around causes, discoveries, alternate approaches, and endings
   that can actually be reached.
 

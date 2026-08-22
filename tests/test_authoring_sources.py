@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import storygame.authoring.sources as source_module
 from storygame.authoring.cli import build_parser, select_source
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.sources import StorySourceLoader
@@ -82,6 +83,29 @@ def test_inventory_sources_have_deterministic_provenance_and_authoring_only_sele
     }
 
 
+def test_inventory_normalization_is_shared_across_loaders_for_unchanged_bytes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    inventory = tmp_path / "outlines.yaml"
+    profiles = tmp_path / "profiles"
+    _inventory(inventory)
+    _profiles(profiles)
+    inventory.write_text(inventory.read_text(encoding="utf-8") + "\n# cache-key test\n", encoding="utf-8")
+    original_safe_load = source_module.yaml.safe_load
+    calls = 0
+
+    def counting_safe_load(value: object) -> object:
+        nonlocal calls
+        calls += 1
+        return original_safe_load(value)
+
+    monkeypatch.setattr(source_module.yaml, "safe_load", counting_safe_load)
+    StorySourceLoader(inventory, profiles).list_outlines()
+    StorySourceLoader(inventory, profiles).list_outlines()
+
+    assert calls == 1
+
+
 def test_checked_in_outline_inventory_is_complete_and_vale_is_offline_only():
     sources = StorySourceLoader(Path("data/story_outlines.yaml"), Path("data/genre_profiles")).list_outlines()
 
@@ -152,6 +176,8 @@ def test_source_loader_rejects_malformed_yaml_missing_path_profile_mismatch_and_
     loader = StorySourceLoader(tmp_path / "missing.yaml", profiles)
     with pytest.raises(CompilationError, match="SOURCE_NOT_FOUND"):
         loader.select_outline("missing")
+    with pytest.raises(CompilationError, match="SOURCE_NOT_FOUND"):
+        loader.load_brief(tmp_path / "missing-brief.yaml")
 
     malformed = tmp_path / "malformed.yaml"
     malformed.write_text("schema_version: [", encoding="utf-8")
@@ -172,6 +198,23 @@ def test_source_loader_rejects_malformed_yaml_missing_path_profile_mismatch_and_
     )
     with pytest.raises(CompilationError, match="PROFILE_MISMATCH"):
         loader.load_brief(mismatch)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "not: a list",
+        "stories:\n  - id: duplicate\n    genre: fantasy\n    outline: one\n"
+        "  - id: duplicate\n    genre: fantasy\n    outline: two\n",
+        "stories:\n  - id: [invalid]\n    genre: fantasy\n    outline: invalid\n",
+    ],
+)
+def test_inventory_loader_rejects_invalid_cached_payloads(tmp_path: Path, content: str):
+    inventory = tmp_path / "invalid.yaml"
+    inventory.write_text(content, encoding="utf-8")
+
+    with pytest.raises(CompilationError, match="SOURCE_INVALID"):
+        StorySourceLoader(inventory, tmp_path / "profiles").list_outlines()
 
 
 def test_cli_requires_exactly_one_source_selector_and_never_bootstraps_raw_source(tmp_path: Path):

@@ -139,3 +139,11 @@ results should include the commit, exact command, test count, coverage mode,
 pytest elapsed time, and a link to the machine-readable health artifact. Use
 the implementation plan for the current baseline, comparisons, and phase
 exit criteria.
+
+The causal compiler's source loader caches normalized outline inventories by
+their exact bytes for the lifetime of the process. This matters because the
+inventory contains thousands of outlines and Phase 3 validation previously
+parsed and re-hashed the entire file for every `select_outline()` call. Cache
+hits still return independent model copies, so callers cannot mutate the
+cached authoring input. A changed file gets a new cache key and is fully
+revalidated.
