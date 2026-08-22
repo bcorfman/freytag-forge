@@ -18,6 +18,14 @@ Every declared end state must contain at least one required outcome and one
 required truth; a nonviable ending is omitted rather than represented with
 empty requirement arrays.
 
+The authoring validator first builds one symbol registry for every declared
+truth, participant, location, route, event, opportunity, revelation, outcome,
+beat, and ending. It then binds every reference through its declared namespace
+in stable path order. Duplicate declarations and all bindable reference
+failures are reported together; wrong-namespace failures identify the expected
+and supplied namespaces, and an unambiguous opportunity-to-truth correction is
+shown where available. Binding is read-only and does not alter the candidate.
+
 Routes provide declarative truth satisfiers, availability constraints, eligible
 location classes, and a bounded failure-forward result. Evidence placements
 declare immutable custody and their valid location classes; participant

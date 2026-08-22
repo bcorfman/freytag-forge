@@ -25,6 +25,8 @@ Just a living story that meets you where you are.
 - Follow different paths to an ending. A failed approach can change the story
   without ending it prematurely.
 - Build and review new stories before they become playable.
+- Catch broken story connections before they reach players, with clear guidance
+  when a story points at the wrong thing.
 
 **Less prompt luck. More playable story.**
 
@@ -70,4 +72,3 @@ are never needed for hosted play.
 | `TMPDIR=/tmp uv run pytest -q` | Run the test suite. |
 | `uv run ruff check .` | Check the code. |
 | `uv run ruff format .` | Format the code. |
-
