@@ -11,7 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from storygame.authoring.symbol_resolution import Namespace, SymbolRegistry, SymbolResolutionError
+from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
+from storygame.authoring.symbol_resolution import SymbolRegistry, SymbolResolutionError
 
 _ID = r"^[a-z][a-z0-9_]*$"
 
@@ -202,112 +203,115 @@ def _acyclic(nodes: set[str], edges: Mapping[str, tuple[str, ...]], code: str) -
         visit(node)
 
 
-def _validate_topology(story: CausalCompiledStory, truth_ids: set[str], location_ids: set[str]) -> None:
-    route_ids = {route.id for route in story.connected_routes}
-    for route in story.connected_routes:
-        if len(set(route.aliases)) != len(route.aliases):
+def _as_bound(story: CausalCompiledStory | BoundBlueprint) -> BoundBlueprint:
+    return story if isinstance(story, BoundBlueprint) else bind_blueprint(story)
+
+
+def _validate_topology(bound: BoundBlueprint) -> None:
+    story = bound.story
+    for route in bound.connected_routes:
+        if len(set(route.declaration.aliases)) != len(route.declaration.aliases):
             raise CausalValidationError("DUPLICATE_ALIAS", f"route '{route.id}' repeats an alias")
-    if not any(location.initial_access for location in story.locations):
+    if not any(location.declaration.initial_access for location in bound.locations):
         raise CausalValidationError("OPENING_LOCATION_REQUIRED", "one location needs initial access")
-    aliases = [alias.casefold() for route in story.connected_routes for alias in route.aliases]
+    aliases = [alias.casefold() for route in bound.connected_routes for alias in route.declaration.aliases]
     if len(aliases) != len(set(aliases)):
         raise CausalValidationError("DUPLICATE_ALIAS", "route aliases must be unique")
-    _ = route_ids
+    _ = story
 
 
-def _validate_events(
-    story: CausalCompiledStory,
-    truth_ids: set[str],
-    participant_ids: set[str],
-    location_ids: set[str],
-) -> None:
-    event_ids = {event.id for event in story.causal_events}
-    for event in story.causal_events:
-        if event.earliest > event.latest:
+def _validate_events(bound: BoundBlueprint) -> None:
+    event_ids = {event.id for event in bound.causal_events}
+    for event in bound.causal_events:
+        if event.declaration.earliest > event.declaration.latest:
             raise CausalValidationError("TIMELINE_INVALID", f"event '{event.id}' ends before it begins")
-    _acyclic(event_ids, {event.id: event.prerequisite_event_ids for event in story.causal_events}, "CAUSAL_CYCLE")
-    by_id = {event.id: event for event in story.causal_events}
+    _acyclic(
+        event_ids,
+        {event.id: tuple(item.id for item in event.prerequisites) for event in bound.causal_events},
+        "CAUSAL_CYCLE",
+    )
     infeasible: list[str] = []
-    for constraint in story.timeline_constraints:
-        if by_id[constraint.before_event_id].latest > by_id[constraint.after_event_id].earliest:
-            infeasible.append(f"{constraint.before_event_id}->{constraint.after_event_id}")
+    for constraint in bound.timeline_constraints:
+        before = constraint.before
+        after = constraint.after
+        if before.declaration.latest > after.declaration.earliest:
+            infeasible.append(f"{before.id}->{after.id}")
     if infeasible:
         raise CausalValidationError("TIMELINE_INVALID", f"infeasible timeline constraints: {', '.join(infeasible)}")
 
 
-def _reachable_locations(story: CausalCompiledStory) -> set[str]:
-    reachable = {location.id for location in story.locations if location.initial_access}
-    available_truths = set(story.opening_truth_ids)
+def _reachable_locations(bound: BoundBlueprint) -> set[str]:
+    reachable = {location.id for location in bound.locations if location.declaration.initial_access}
+    available_truths = {truth.id for truth in bound.opening_truths}
     changed = True
     while changed:
         changed = False
-        for event in story.causal_events:
-            if set(event.input_truths) <= available_truths:
-                new_truths = set(event.output_truths) - available_truths
+        for event in bound.causal_events:
+            if {truth.id for truth in event.inputs} <= available_truths:
+                new_truths = {truth.id for truth in event.outputs} - available_truths
                 if new_truths:
                     available_truths.update(new_truths)
                     changed = True
-        for route in story.connected_routes:
+        for route in bound.connected_routes:
             if (
-                route.from_location_id in reachable
-                and set(route.prerequisite_truths) <= available_truths
-                and route.to_location_id not in reachable
+                route.source.id in reachable
+                and {truth.id for truth in route.prerequisites} <= available_truths
+                and route.destination.id not in reachable
             ):
-                reachable.add(route.to_location_id)
+                reachable.add(route.destination.id)
                 changed = True
             if (
-                route.to_location_id in reachable
-                and set(route.prerequisite_truths) <= available_truths
-                and route.from_location_id not in reachable
+                route.destination.id in reachable
+                and {truth.id for truth in route.prerequisites} <= available_truths
+                and route.source.id not in reachable
             ):
-                reachable.add(route.from_location_id)
+                reachable.add(route.source.id)
                 changed = True
     return reachable
 
 
-def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], participant_ids: set[str]) -> None:
-    outcome_ids = {outcome.id for outcome in story.required_outcomes}
-    required_beat_ids = {beat.id for beat in story.required_beats}
-    optional_ids = {beat.id for beat in story.optional_beats}
+def _validate_authoring_graph(bound: BoundBlueprint) -> None:
+    outcome_ids = {outcome.id for outcome in bound.outcomes}
+    required_beat_ids = {beat.id for beat in bound.required_beats}
+    optional_ids = {beat.id for beat in bound.optional_beats}
     if required_beat_ids & optional_ids:
         raise CausalValidationError("DUPLICATE_ID", "a beat cannot be required and optional")
-    hypothesis_participants = [hypothesis.participant_id for hypothesis in story.suspect_hypotheses]
+    hypothesis_participants = [hypothesis.participant.id for hypothesis in bound.hypotheses]
     if len(hypothesis_participants) != len(set(hypothesis_participants)):
         raise CausalValidationError("DUPLICATE_ID", "suspect hypotheses repeat a participant")
-    for hypothesis in story.suspect_hypotheses:
-        if set(hypothesis.supporting_truth_ids) & set(hypothesis.exonerating_truth_ids):
+    for hypothesis in bound.hypotheses:
+        if {item.id for item in hypothesis.supporting_truths} & {item.id for item in hypothesis.exonerating_truths}:
             raise CausalValidationError(
-                "SUSPECT_HYPOTHESIS_INVALID", f"suspect hypothesis '{hypothesis.participant_id}' reuses its evidence"
+                "SUSPECT_HYPOTHESIS_INVALID", f"suspect hypothesis '{hypothesis.participant.id}' reuses its evidence"
             )
-    for route in story.realization_routes:
-        failure_completes_route = set(route.failure_forward.consequence_truth_ids) & set(route.result_truth_ids)
-        if not failure_completes_route and not route.failure_forward.alternative_route_ids:
+    for route in bound.realization_routes:
+        failure_completes_route = {item.id for item in route.failure_consequences} & {item.id for item in route.results}
+        if not failure_completes_route and not route.alternatives:
             raise CausalValidationError("FAILURE_FORWARD_DEAD_END", f"route '{route.id}' cannot fail forward")
-        selected_opportunities = (
-            opportunity for opportunity in story.evidence_opportunities if opportunity.id in route.opportunity_ids
-        )
-        if any(opportunity.route_id != route.id for opportunity in selected_opportunities):
+        if any(opportunity.route.id != route.id for opportunity in route.opportunities):
             raise CausalValidationError("CUSTODY_INCOMPATIBLE", f"route '{route.id}' does not hold its opportunity")
     incomplete_alternative_satisfiers = [
         optional.id
-        for optional in story.optional_beats
-        if optional.purpose == "alternative_satisfier" and optional.required_outcome_id is None
+        for optional in bound.optional_beats
+        if optional.declaration.purpose == "alternative_satisfier" and optional.outcome is None
     ]
     if incomplete_alternative_satisfiers:
         beat_list = ", ".join(f"'{beat_id}'" for beat_id in incomplete_alternative_satisfiers)
         raise CausalValidationError("OPTIONAL_BEAT_INCOMPLETE", f"optional beats {beat_list} need an outcome")
-    required_outcomes = {beat.required_outcome_id for beat in story.required_beats}
-    for optional in story.optional_beats:
-        if optional.purpose == "alternative_satisfier" and optional.required_outcome_id not in required_outcomes:
+    required_outcomes = {beat.outcome.id for beat in bound.required_beats if beat.outcome is not None}
+    for optional in bound.optional_beats:
+        if optional.declaration.purpose == "alternative_satisfier" and (
+            optional.outcome is None or optional.outcome.id not in required_outcomes
+        ):
             raise CausalValidationError(
                 "OPTIONAL_ONLY_REQUIRED_OUTCOME", f"optional beat '{optional.id}' is the sole route"
             )
-    _validate_endings(story, outcome_ids, truth_ids)
+    _validate_endings(bound, outcome_ids)
 
 
-def _validate_endings(story: CausalCompiledStory, outcome_ids: set[str], truth_ids: set[str]) -> None:
-    for end_state in story.end_states:
-        if set(outcome_ids) - set(end_state.required_outcome_ids):
+def _validate_endings(bound: BoundBlueprint, outcome_ids: set[str]) -> None:
+    for end_state in bound.end_states:
+        if set(outcome_ids) - {outcome.id for outcome in end_state.outcomes}:
             raise CausalValidationError("ENDING_NOT_VIABLE", f"end state '{end_state.id}' omits an outcome")
 
 
@@ -344,14 +348,12 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
         if any(item.path.startswith("party_knowledge[") for item in exc.diagnostics):
             detail += "; party knowledge reference uses a foreign namespace; use the mapped declared truth ID"
         raise CausalValidationError(code, detail) from exc
-    truth_ids = set(registry.ids(Namespace.TRUTH))
-    participant_ids = set(registry.ids(Namespace.PARTICIPANT))
-    location_ids = set(registry.ids(Namespace.LOCATION))
-    _validate_topology(story, truth_ids, location_ids)
-    _validate_events(story, truth_ids, participant_ids, location_ids)
-    _validate_authoring_graph(story, truth_ids, participant_ids)
-    reachable = _reachable_locations(story)
-    blocked = [item.id for item in story.evidence_opportunities if item.location_id not in reachable]
+    bound = bind_blueprint(story)
+    _validate_topology(bound)
+    _validate_events(bound)
+    _validate_authoring_graph(bound)
+    reachable = _reachable_locations(bound)
+    blocked = [item.id for item in bound.evidence_opportunities if item.location.id not in reachable]
     if blocked:
         raise CausalValidationError("LOCATION_UNREACHABLE", f"opportunities are unreachable: {', '.join(blocked)}")
     return story

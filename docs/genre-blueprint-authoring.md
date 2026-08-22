@@ -26,6 +26,13 @@ failures are reported together; wrong-namespace failures identify the expected
 and supplied namespaces, and an unambiguous opportunity-to-truth correction is
 shown where available. Binding is read-only and does not alter the candidate.
 
+After binding, semantic validation uses one immutable bound projection of the
+candidate. Map reachability, event ordering, evidence ownership, endings,
+profile rules, and the local fairness/completeness reviewers follow those
+typed links instead of repeatedly resolving raw IDs. The compiler keeps each
+reviewer's diagnostics grouped and reports all independent findings available
+within the same bounded repair attempt.
+
 Routes provide declarative truth satisfiers, availability constraints, eligible
 location classes, and a bounded failure-forward result. Evidence placements
 declare immutable custody and their valid location classes; participant

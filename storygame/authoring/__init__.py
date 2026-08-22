@@ -1,6 +1,7 @@
 """Offline V2 compiled-story authoring boundary."""
 
 from storygame.authoring.blueprint_compiler import BlueprintCompilation, BlueprintCompiler, BlueprintCompilerTransport
+from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
 from storygame.authoring.candidate_review import CandidateReview, ReviewedCausalStory, promote_candidate
 from storygame.authoring.causal_contracts import (
     CausalCompiledStory,
@@ -20,6 +21,7 @@ __all__ = [
     "BlueprintCompilation",
     "BlueprintCompiler",
     "BlueprintCompilerTransport",
+    "BoundBlueprint",
     "CandidateReview",
     "Character",
     "CausalCompiledStory",
@@ -40,6 +42,7 @@ __all__ = [
     "RouteFairnessCritic",
     "ReviewedCausalStory",
     "promote_candidate",
+    "bind_blueprint",
     "validate_causal_compiled_story",
     "validate_compiled_story",
 ]

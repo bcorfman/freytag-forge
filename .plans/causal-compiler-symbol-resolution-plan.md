@@ -122,17 +122,17 @@ namespaces; [x] no candidate is accepted when a reference remains unbound.
 
 ### Phase 2 — Bound IR and semantic-pass migration
 
-- Construct an immutable bound blueprint projection only after Phase 1 binding
+- [x] Construct an immutable bound blueprint projection only after Phase 1 binding
   succeeds.
-- Migrate map reachability, causal ordering, evidence ownership, knowledge and
+- [x] Migrate map reachability, causal ordering, evidence ownership, knowledge and
   protection checks, endings, profile checks, and fairness/completeness critics
   to consume the bound IR.
-- Keep semantic diagnostics aggregated by pass so a repair receives the full
+- [x] Keep semantic diagnostics aggregated by pass so a repair receives the full
   set of independent defects within its bounded request budget.
 
-**Exit criteria:** semantic passes contain no repeated raw-ID lookup loops for
-bound fields; existing valid fixtures preserve behavior; invalid cross-genre
-fixtures identify all independent failures in their relevant pass.
+**Exit criteria:** [x] semantic passes contain no repeated raw-ID lookup loops
+for bound fields; [x] existing valid fixtures preserve behavior; [x] invalid
+cross-genre fixtures identify all independent failures in their relevant pass.
 
 ### Phase 3 — Stable repair context and change audit
 

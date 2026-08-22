@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
 from storygame.authoring.causal_contracts import CausalCompiledStory
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 
@@ -19,17 +20,15 @@ class RouteFairnessCritic:
     def __init__(self, profiles: CausalProfileRegistry) -> None:
         self._profiles = profiles
 
-    def critique(self, story: CausalCompiledStory) -> CausalCriticResult:
-        minimum = self._profiles.resolve(story.profile).minimum_independent_proof_routes
+    def critique(self, story: CausalCompiledStory | BoundBlueprint) -> CausalCriticResult:
+        bound = story if isinstance(story, BoundBlueprint) else bind_blueprint(story)
+        minimum = self._profiles.resolve(bound.story.profile).minimum_independent_proof_routes
         by_revelation: dict[str, set[str]] = {}
-        opportunities = {item.id: item for item in story.evidence_opportunities}
-        for route in story.realization_routes:
-            by_revelation.setdefault(route.revelation_id, set()).update(
-                opportunities[item].kind for item in route.opportunity_ids
-            )
+        for route in bound.realization_routes:
+            by_revelation.setdefault(route.revelation.id, set()).update(item.kind for item in route.opportunities)
         diagnostics = tuple(
             f"revelation '{revelation.id}' has fewer than {minimum} independent opportunity kinds"
-            for revelation in story.revelations
+            for revelation in bound.revelations
             if revelation.required and len(by_revelation.get(revelation.id, set())) < minimum
         )
         return CausalCriticResult("route_fairness", not diagnostics, diagnostics)
@@ -38,11 +37,12 @@ class RouteFairnessCritic:
 class CausalCompletenessCritic:
     """Proves terminal truth -> route/evidence -> reachable opportunity chains."""
 
-    def critique(self, story: CausalCompiledStory) -> CausalCriticResult:
-        end_truths = {truth for ending in story.end_states for truth in ending.required_truth_ids}
-        route_truths = {truth for route in story.realization_routes for truth in route.result_truth_ids}
-        event_truths = {truth for event in story.causal_events for truth in event.output_truths}
-        evidence_truths = {item.truth_id for item in story.evidence_opportunities}
+    def critique(self, story: CausalCompiledStory | BoundBlueprint) -> CausalCriticResult:
+        bound = story if isinstance(story, BoundBlueprint) else bind_blueprint(story)
+        end_truths = {truth.id for ending in bound.end_states for truth in ending.truths}
+        route_truths = {truth.id for route in bound.realization_routes for truth in route.results}
+        event_truths = {truth.id for event in bound.causal_events for truth in event.outputs}
+        evidence_truths = {item.truth.id for item in bound.evidence_opportunities}
         diagnostics = tuple(
             f"terminal truth '{truth}' lacks a causal evidence/route chain"
             for truth in sorted(end_truths)
@@ -55,24 +55,25 @@ class FreytagProgressionCritic:
     def __init__(self, profiles: CausalProfileRegistry) -> None:
         self._profiles = profiles
 
-    def critique(self, story: CausalCompiledStory) -> CausalCriticResult:
-        required = self._profiles.resolve(story.profile).required_freytag_phases
-        beat_order = {beat.id: index for index, beat in enumerate(story.required_beats)}
+    def critique(self, story: CausalCompiledStory | BoundBlueprint) -> CausalCriticResult:
+        bound = story if isinstance(story, BoundBlueprint) else bind_blueprint(story)
+        required = self._profiles.resolve(bound.story.profile).required_freytag_phases
+        beat_order = {beat.id: index for index, beat in enumerate(bound.required_beats)}
         phase_order = {phase: index for index, phase in enumerate(required)}
         prior = -1
         diagnostics: list[str] = []
-        for beat in story.required_beats:
-            position = phase_order.get(beat.phase)
+        for beat in bound.required_beats:
+            position = phase_order.get(beat.declaration.phase)
             if position is None or position < prior:
                 diagnostics.append(f"beat '{beat.id}' regresses Freytag progression")
             else:
                 prior = position
             gated_beat_ids = (
                 gate
-                for revelation in story.revelations
-                if revelation.id in beat.prerequisite_revelation_ids
-                for gate in revelation.gate_beat_ids
+                for revelation in bound.revelations
+                if revelation.id in {item.id for item in beat.prerequisites}
+                for gate in revelation.gates
             )
-            if any(beat_order[gate] > beat_order[beat.id] for gate in gated_beat_ids):
+            if any(beat_order[gate.id] > beat_order[beat.id] for gate in gated_beat_ids):
                 diagnostics.append(f"beat '{beat.id}' opens before a revelation gate")
         return CausalCriticResult("freytag_progression", not diagnostics, tuple(diagnostics))
