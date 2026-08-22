@@ -1,0 +1,275 @@
+"""Namespace-aware symbol collection and reference binding for authoring.
+
+The registry is a validation projection only.  It never changes the authored
+candidate and deliberately stores IDs rather than mutable model objects.
+"""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from enum import StrEnum
+
+
+class Namespace(StrEnum):
+    """The symbol namespaces exposed by a causal story candidate."""
+
+    TRUTH = "truth"
+    PARTICIPANT = "participant"
+    LOCATION = "location"
+    CONNECTED_ROUTE = "connected_route"
+    CAUSAL_EVENT = "causal_event"
+    EVIDENCE_OPPORTUNITY = "evidence_opportunity"
+    REALIZATION_ROUTE = "realization_route"
+    REVELATION = "revelation"
+    REQUIRED_OUTCOME = "required_outcome"
+    REQUIRED_BEAT = "required_beat"
+    OPTIONAL_BEAT = "optional_beat"
+    END_STATE = "end_state"
+
+
+@dataclass(frozen=True)
+class Symbol:
+    """One declared ID and its namespace."""
+
+    namespace: Namespace
+    identifier: str
+    related_identifier: str | None = None
+
+
+@dataclass(frozen=True)
+class ReferenceSite:
+    """A candidate field and the namespace in which its value must resolve."""
+
+    path: str
+    expected_namespace: Namespace
+    supplied_id: str
+
+
+@dataclass(frozen=True)
+class BindingDiagnostic:
+    """A deterministic, provider-safe binding diagnostic."""
+
+    code: str
+    path: str
+    expected_namespace: Namespace
+    supplied_id: str
+    supplied_namespace: Namespace | None = None
+    suggestion: str | None = None
+
+    def render(self) -> str:
+        detail = f"{self.path}: expected {self.expected_namespace.value}, supplied '{self.supplied_id}'"
+        if self.supplied_namespace is not None:
+            detail += f" ({self.supplied_namespace.value} namespace)"
+            if self.supplied_namespace is Namespace.EVIDENCE_OPPORTUNITY:
+                detail += " (is evidence opportunity ID)"
+        if self.suggestion is not None:
+            detail += (
+                f"; use truth_id '{self.suggestion}'"
+                if self.expected_namespace is Namespace.TRUTH
+                else f"; use '{self.suggestion}'"
+            )
+        return detail
+
+
+class SymbolResolutionError(ValueError):
+    """Grouped duplicate-definition or unbound-reference failures."""
+
+    def __init__(self, diagnostics: Iterable[BindingDiagnostic]) -> None:
+        self.diagnostics = tuple(diagnostics)
+        super().__init__("; ".join(diagnostic.render() for diagnostic in self.diagnostics))
+
+
+class SymbolRegistry:
+    """Collect declarations once and bind every declared reference site."""
+
+    _COLLECTIONS: tuple[tuple[str, Namespace], ...] = (
+        ("truths", Namespace.TRUTH),
+        ("participants", Namespace.PARTICIPANT),
+        ("locations", Namespace.LOCATION),
+        ("connected_routes", Namespace.CONNECTED_ROUTE),
+        ("causal_events", Namespace.CAUSAL_EVENT),
+        ("evidence_opportunities", Namespace.EVIDENCE_OPPORTUNITY),
+        ("realization_routes", Namespace.REALIZATION_ROUTE),
+        ("revelations", Namespace.REVELATION),
+        ("required_outcomes", Namespace.REQUIRED_OUTCOME),
+        ("required_beats", Namespace.REQUIRED_BEAT),
+        ("optional_beats", Namespace.OPTIONAL_BEAT),
+        ("end_states", Namespace.END_STATE),
+    )
+
+    def __init__(self, symbols: Mapping[Namespace, Mapping[str, Symbol]]) -> None:
+        self._symbols = {namespace: dict(values) for namespace, values in symbols.items()}
+
+    @classmethod
+    def from_story(cls, story: object) -> SymbolRegistry:
+        symbols: dict[Namespace, dict[str, Symbol]] = defaultdict(dict)
+        duplicates: list[BindingDiagnostic] = []
+        for collection, namespace in cls._COLLECTIONS:
+            for index, declaration in enumerate(getattr(story, collection, ())):
+                identifier = getattr(declaration, "id", None)
+                if not isinstance(identifier, str):
+                    continue
+                if identifier in symbols[namespace]:
+                    duplicates.append(
+                        BindingDiagnostic(
+                            "DUPLICATE_SYMBOL",
+                            f"{collection}[{index}].id",
+                            namespace,
+                            identifier,
+                        )
+                    )
+                else:
+                    related_identifier = (
+                        getattr(declaration, "truth_id", None) if namespace is Namespace.EVIDENCE_OPPORTUNITY else None
+                    )
+                    symbols[namespace][identifier] = Symbol(namespace, identifier, related_identifier)
+        registry = cls(symbols)
+        if duplicates:
+            raise SymbolResolutionError(duplicates)
+        return registry
+
+    def ids(self, namespace: Namespace) -> tuple[str, ...]:
+        """Return declared IDs in deterministic order."""
+
+        return tuple(sorted(self._symbols.get(namespace, {})))
+
+    def symbol(self, namespace: Namespace, identifier: str) -> Symbol | None:
+        return self._symbols.get(namespace, {}).get(identifier)
+
+    def _foreign_namespace(self, identifier: str, expected: Namespace) -> Namespace | None:
+        matches = [
+            namespace for namespace, values in self._symbols.items() if namespace != expected and identifier in values
+        ]
+        return matches[0] if len(matches) == 1 else None
+
+    def bind(self, sites: Iterable[ReferenceSite]) -> tuple[Symbol, ...]:
+        """Bind all sites, reporting every failure in path order."""
+
+        bound: list[Symbol] = []
+        diagnostics: list[BindingDiagnostic] = []
+        for site in sorted(sites, key=lambda item: item.path):
+            symbol = self.symbol(site.expected_namespace, site.supplied_id)
+            if symbol is not None:
+                bound.append(symbol)
+                continue
+            foreign = self._foreign_namespace(site.supplied_id, site.expected_namespace)
+            suggestion = None
+            if site.expected_namespace is Namespace.TRUTH and foreign is Namespace.EVIDENCE_OPPORTUNITY:
+                opportunity = self.symbol(Namespace.EVIDENCE_OPPORTUNITY, site.supplied_id)
+                suggestion = self._opportunity_truth_id(opportunity)
+            diagnostics.append(
+                BindingDiagnostic(
+                    "WRONG_NAMESPACE" if foreign is not None else "UNKNOWN_REFERENCE",
+                    site.path,
+                    site.expected_namespace,
+                    site.supplied_id,
+                    foreign,
+                    suggestion,
+                )
+            )
+        if diagnostics:
+            raise SymbolResolutionError(diagnostics)
+        return tuple(bound)
+
+    @staticmethod
+    def _opportunity_truth_id(opportunity: Symbol | None) -> str | None:
+        # The registry stores only IDs; the special suggestion is supplied by
+        # ``reference_sites`` where the typed opportunity is available.
+        return opportunity.related_identifier if opportunity is not None else None
+
+    @staticmethod
+    def reference_sites(story: object) -> tuple[ReferenceSite, ...]:
+        """Describe all reference-bearing fields in the causal contract."""
+
+        sites: list[ReferenceSite] = []
+
+        def add(path: str, namespace: Namespace, values: Iterable[str]) -> None:
+            sites.extend(ReferenceSite(f"{path}[{index}]", namespace, value) for index, value in enumerate(values))
+
+        def add_one(path: str, namespace: Namespace, value: str) -> None:
+            sites.append(ReferenceSite(path, namespace, value))
+
+        add("opening_truth_ids", Namespace.TRUTH, story.opening_truth_ids)
+        for index, route in enumerate(story.connected_routes):
+            add_one(f"connected_routes[{index}].from_location_id", Namespace.LOCATION, route.from_location_id)
+            add_one(f"connected_routes[{index}].to_location_id", Namespace.LOCATION, route.to_location_id)
+            add(f"connected_routes[{index}].prerequisite_truths", Namespace.TRUTH, route.prerequisite_truths)
+        for index, event in enumerate(story.causal_events):
+            add(f"causal_events[{index}].actor_ids", Namespace.PARTICIPANT, event.actor_ids)
+            add_one(f"causal_events[{index}].location_id", Namespace.LOCATION, event.location_id)
+            add(f"causal_events[{index}].input_truths", Namespace.TRUTH, event.input_truths)
+            add(f"causal_events[{index}].output_truths", Namespace.TRUTH, event.output_truths)
+            add(f"causal_events[{index}].prerequisite_event_ids", Namespace.CAUSAL_EVENT, event.prerequisite_event_ids)
+        for index, constraint in enumerate(story.timeline_constraints):
+            add_one(
+                f"timeline_constraints[{index}].before_event_id",
+                Namespace.CAUSAL_EVENT,
+                constraint.before_event_id,
+            )
+            add_one(f"timeline_constraints[{index}].after_event_id", Namespace.CAUSAL_EVENT, constraint.after_event_id)
+        for index, opportunity in enumerate(story.evidence_opportunities):
+            add_one(f"evidence_opportunities[{index}].truth_id", Namespace.TRUTH, opportunity.truth_id)
+            add_one(f"evidence_opportunities[{index}].holder_id", Namespace.PARTICIPANT, opportunity.holder_id)
+            add_one(f"evidence_opportunities[{index}].location_id", Namespace.LOCATION, opportunity.location_id)
+            add_one(f"evidence_opportunities[{index}].route_id", Namespace.REALIZATION_ROUTE, opportunity.route_id)
+        for index, knowledge in enumerate(story.party_knowledge):
+            add_one(f"party_knowledge[{index}].participant_id", Namespace.PARTICIPANT, knowledge.participant_id)
+            add(f"party_knowledge[{index}].truth_ids", Namespace.TRUTH, knowledge.truth_ids)
+        for index, protection in enumerate(story.knowledge_protections):
+            add_one(f"knowledge_protections[{index}].truth_id", Namespace.TRUTH, protection.truth_id)
+            add(
+                f"knowledge_protections[{index}].release_after_revelation_ids",
+                Namespace.REVELATION,
+                protection.release_after_revelation_ids,
+            )
+        for index, revelation in enumerate(story.revelations):
+            add_one(f"revelations[{index}].truth_id", Namespace.TRUTH, revelation.truth_id)
+            add(f"revelations[{index}].gate_beat_ids", Namespace.REQUIRED_BEAT, revelation.gate_beat_ids)
+        for index, route in enumerate(story.realization_routes):
+            add_one(f"realization_routes[{index}].revelation_id", Namespace.REVELATION, route.revelation_id)
+            add(f"realization_routes[{index}].opportunity_ids", Namespace.EVIDENCE_OPPORTUNITY, route.opportunity_ids)
+            add(f"realization_routes[{index}].prerequisite_truths", Namespace.TRUTH, route.prerequisite_truths)
+            add(
+                f"realization_routes[{index}].prerequisite_revelation_ids",
+                Namespace.REVELATION,
+                route.prerequisite_revelation_ids,
+            )
+            add(f"realization_routes[{index}].result_truth_ids", Namespace.TRUTH, route.result_truth_ids)
+            add(
+                f"realization_routes[{index}].failure_forward.consequence_truth_ids",
+                Namespace.TRUTH,
+                route.failure_forward.consequence_truth_ids,
+            )
+            add(
+                f"realization_routes[{index}].failure_forward.alternative_route_ids",
+                Namespace.REALIZATION_ROUTE,
+                route.failure_forward.alternative_route_ids,
+            )
+        for index, outcome in enumerate(story.required_outcomes):
+            add_one(f"required_outcomes[{index}].truth_id", Namespace.TRUTH, outcome.truth_id)
+        for collection, _namespace in (
+            ("required_beats", Namespace.REQUIRED_BEAT),
+            ("optional_beats", Namespace.OPTIONAL_BEAT),
+        ):
+            for index, beat in enumerate(getattr(story, collection)):
+                add(
+                    f"{collection}[{index}].prerequisite_revelation_ids",
+                    Namespace.REVELATION,
+                    beat.prerequisite_revelation_ids,
+                )
+                if beat.required_outcome_id is not None:
+                    add_one(
+                        f"{collection}[{index}].required_outcome_id",
+                        Namespace.REQUIRED_OUTCOME,
+                        beat.required_outcome_id,
+                    )
+        for index, hypothesis in enumerate(story.suspect_hypotheses):
+            add_one(f"suspect_hypotheses[{index}].participant_id", Namespace.PARTICIPANT, hypothesis.participant_id)
+            add(f"suspect_hypotheses[{index}].supporting_truth_ids", Namespace.TRUTH, hypothesis.supporting_truth_ids)
+            add(f"suspect_hypotheses[{index}].exonerating_truth_ids", Namespace.TRUTH, hypothesis.exonerating_truth_ids)
+        for index, end_state in enumerate(story.end_states):
+            add(f"end_states[{index}].required_outcome_ids", Namespace.REQUIRED_OUTCOME, end_state.required_outcome_ids)
+            add(f"end_states[{index}].required_truth_ids", Namespace.TRUTH, end_state.required_truth_ids)
+        return tuple(sites)

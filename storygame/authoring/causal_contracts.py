@@ -6,10 +6,12 @@ describe runtime effects or mutable state.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from storygame.authoring.symbol_resolution import Namespace, SymbolRegistry, SymbolResolutionError
 
 _ID = r"^[a-z][a-z0-9_]*$"
 
@@ -182,22 +184,6 @@ class CausalCompiledStory(_Contract):
     end_states: tuple[EndState, ...] = Field(min_length=1, max_length=16)
 
 
-def _ids(values: Iterable[object], category: str) -> set[str]:
-    seen: set[str] = set()
-    for value in values:
-        identifier = value.id  # type: ignore[attr-defined]
-        if identifier in seen:
-            raise CausalValidationError("DUPLICATE_ID", f"duplicate {category} id '{identifier}'")
-        seen.add(identifier)
-    return seen
-
-
-def _references(values: Iterable[str], known: set[str], owner: str) -> None:
-    missing = next((value for value in values if value not in known), None)
-    if missing is not None:
-        raise CausalValidationError("UNKNOWN_REFERENCE", f"{owner} references unknown '{missing}'")
-
-
 def _acyclic(nodes: set[str], edges: Mapping[str, tuple[str, ...]], code: str) -> None:
     visiting: set[str] = set()
     visited: set[str] = set()
@@ -217,10 +203,8 @@ def _acyclic(nodes: set[str], edges: Mapping[str, tuple[str, ...]], code: str) -
 
 
 def _validate_topology(story: CausalCompiledStory, truth_ids: set[str], location_ids: set[str]) -> None:
-    route_ids = _ids(story.connected_routes, "connected route")
+    route_ids = {route.id for route in story.connected_routes}
     for route in story.connected_routes:
-        _references((route.from_location_id, route.to_location_id), location_ids, f"route '{route.id}'")
-        _references(route.prerequisite_truths, truth_ids, f"route '{route.id}'")
         if len(set(route.aliases)) != len(route.aliases):
             raise CausalValidationError("DUPLICATE_ALIAS", f"route '{route.id}' repeats an alias")
     if not any(location.initial_access for location in story.locations):
@@ -237,19 +221,14 @@ def _validate_events(
     participant_ids: set[str],
     location_ids: set[str],
 ) -> None:
-    event_ids = _ids(story.causal_events, "causal event")
+    event_ids = {event.id for event in story.causal_events}
     for event in story.causal_events:
-        _references(event.actor_ids, participant_ids, f"event '{event.id}'")
-        _references((event.location_id,), location_ids, f"event '{event.id}'")
-        _references((*event.input_truths, *event.output_truths), truth_ids, f"event '{event.id}'")
-        _references(event.prerequisite_event_ids, event_ids, f"event '{event.id}'")
         if event.earliest > event.latest:
             raise CausalValidationError("TIMELINE_INVALID", f"event '{event.id}' ends before it begins")
     _acyclic(event_ids, {event.id: event.prerequisite_event_ids for event in story.causal_events}, "CAUSAL_CYCLE")
     by_id = {event.id: event for event in story.causal_events}
     infeasible: list[str] = []
     for constraint in story.timeline_constraints:
-        _references((constraint.before_event_id, constraint.after_event_id), event_ids, "timeline constraint")
         if by_id[constraint.before_event_id].latest > by_id[constraint.after_event_id].earliest:
             infeasible.append(f"{constraint.before_event_id}->{constraint.after_event_id}")
     if infeasible:
@@ -287,86 +266,20 @@ def _reachable_locations(story: CausalCompiledStory) -> set[str]:
 
 
 def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], participant_ids: set[str]) -> None:
-    route_ids = _ids(story.realization_routes, "realization route")
-    event_ids = _ids(story.causal_events, "causal event")
-    revelation_ids = _ids(story.revelations, "revelation")
-    outcome_ids = _ids(story.required_outcomes, "required outcome")
-    required_beat_ids = _ids(story.required_beats, "required beat")
-    optional_ids = _ids(story.optional_beats, "optional beat")
+    outcome_ids = {outcome.id for outcome in story.required_outcomes}
+    required_beat_ids = {beat.id for beat in story.required_beats}
+    optional_ids = {beat.id for beat in story.optional_beats}
     if required_beat_ids & optional_ids:
         raise CausalValidationError("DUPLICATE_ID", "a beat cannot be required and optional")
-    opportunity_ids = _ids(story.evidence_opportunities, "evidence opportunity")
-    location_ids = {location.id for location in story.locations}
-    opportunity_reference_errors = [
-        f"{opportunity.id}.{field}->{value}"
-        for opportunity in story.evidence_opportunities
-        for field, value, known_ids in (
-            ("truth_id", opportunity.truth_id, truth_ids),
-            ("holder_id", opportunity.holder_id, participant_ids),
-            ("location_id", opportunity.location_id, location_ids),
-            ("route_id", opportunity.route_id, route_ids),
-        )
-        if value not in known_ids
-    ]
-    if opportunity_reference_errors:
-        raise CausalValidationError(
-            "UNKNOWN_REFERENCE",
-            f"invalid opportunity references: {', '.join(opportunity_reference_errors)}",
-        )
-    opportunity_truth_ids = {opportunity.id: opportunity.truth_id for opportunity in story.evidence_opportunities}
-    knowledge_reference_errors: list[str] = []
-    for knowledge in story.party_knowledge:
-        _references((knowledge.participant_id,), participant_ids, "party knowledge")
-        for value in knowledge.truth_ids:
-            if value in truth_ids:
-                continue
-            if value in opportunity_truth_ids:
-                knowledge_reference_errors.append(
-                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is evidence opportunity ID; "
-                    f"use truth_id '{opportunity_truth_ids[value]}'"
-                )
-            elif value in route_ids:
-                knowledge_reference_errors.append(
-                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is realization route ID"
-                )
-            elif value in event_ids:
-                knowledge_reference_errors.append(
-                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is causal event ID"
-                )
-            elif value in participant_ids:
-                knowledge_reference_errors.append(
-                    f"knowledge '{knowledge.participant_id}' truth_ids '{value}' is participant ID"
-                )
-            else:
-                knowledge_reference_errors.append(
-                    f"knowledge '{knowledge.participant_id}' references unknown '{value}'"
-                )
-    if knowledge_reference_errors:
-        raise CausalValidationError("UNKNOWN_REFERENCE", "; ".join(knowledge_reference_errors))
     hypothesis_participants = [hypothesis.participant_id for hypothesis in story.suspect_hypotheses]
     if len(hypothesis_participants) != len(set(hypothesis_participants)):
         raise CausalValidationError("DUPLICATE_ID", "suspect hypotheses repeat a participant")
     for hypothesis in story.suspect_hypotheses:
-        _references((hypothesis.participant_id,), participant_ids, "suspect hypothesis")
-        _references(hypothesis.supporting_truth_ids, truth_ids, f"suspect hypothesis '{hypothesis.participant_id}'")
-        _references(hypothesis.exonerating_truth_ids, truth_ids, f"suspect hypothesis '{hypothesis.participant_id}'")
         if set(hypothesis.supporting_truth_ids) & set(hypothesis.exonerating_truth_ids):
             raise CausalValidationError(
                 "SUSPECT_HYPOTHESIS_INVALID", f"suspect hypothesis '{hypothesis.participant_id}' reuses its evidence"
             )
-    for protection in story.knowledge_protections:
-        _references((protection.truth_id,), truth_ids, "knowledge protection")
-        _references(protection.release_after_revelation_ids, revelation_ids, "knowledge protection")
-    for revelation in story.revelations:
-        _references((revelation.truth_id,), truth_ids, f"revelation '{revelation.id}'")
-        _references(revelation.gate_beat_ids, required_beat_ids, f"revelation '{revelation.id}'")
     for route in story.realization_routes:
-        _references((route.revelation_id,), revelation_ids, f"route '{route.id}'")
-        _references(route.opportunity_ids, opportunity_ids, f"route '{route.id}'")
-        _references((*route.prerequisite_truths, *route.result_truth_ids), truth_ids, f"route '{route.id}'")
-        _references(route.prerequisite_revelation_ids, revelation_ids, f"route '{route.id}'")
-        _references(route.failure_forward.consequence_truth_ids, truth_ids, f"route '{route.id}' failure-forward")
-        _references(route.failure_forward.alternative_route_ids, route_ids, f"route '{route.id}' failure-forward")
         failure_completes_route = set(route.failure_forward.consequence_truth_ids) & set(route.result_truth_ids)
         if not failure_completes_route and not route.failure_forward.alternative_route_ids:
             raise CausalValidationError("FAILURE_FORWARD_DEAD_END", f"route '{route.id}' cannot fail forward")
@@ -375,12 +288,6 @@ def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], p
         )
         if any(opportunity.route_id != route.id for opportunity in selected_opportunities):
             raise CausalValidationError("CUSTODY_INCOMPATIBLE", f"route '{route.id}' does not hold its opportunity")
-    for outcome in story.required_outcomes:
-        _references((outcome.truth_id,), truth_ids, f"outcome '{outcome.id}'")
-    for beat in (*story.required_beats, *story.optional_beats):
-        _references(beat.prerequisite_revelation_ids, revelation_ids, f"beat '{beat.id}'")
-        if beat.required_outcome_id is not None:
-            _references((beat.required_outcome_id,), outcome_ids, f"beat '{beat.id}'")
     incomplete_alternative_satisfiers = [
         optional.id
         for optional in story.optional_beats
@@ -399,10 +306,7 @@ def _validate_authoring_graph(story: CausalCompiledStory, truth_ids: set[str], p
 
 
 def _validate_endings(story: CausalCompiledStory, outcome_ids: set[str], truth_ids: set[str]) -> None:
-    _ids(story.end_states, "end state")
     for end_state in story.end_states:
-        _references(end_state.required_outcome_ids, outcome_ids, f"end state '{end_state.id}'")
-        _references(end_state.required_truth_ids, truth_ids, f"end state '{end_state.id}'")
         if set(outcome_ids) - set(end_state.required_outcome_ids):
             raise CausalValidationError("ENDING_NOT_VIABLE", f"end state '{end_state.id}' omits an outcome")
 
@@ -418,10 +322,31 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
         )
         suffix = " (additional contract errors omitted)" if len(exc.errors()) > len(diagnostics) else ""
         raise CausalValidationError("CONTRACT_INVALID", f"{' ; '.join(diagnostics)}{suffix}") from exc
-    truth_ids = _ids(story.truths, "truth")
-    participant_ids = _ids(story.participants, "participant")
-    location_ids = _ids(story.locations, "location")
-    _references(story.opening_truth_ids, truth_ids, "opening")
+    try:
+        registry = SymbolRegistry.from_story(story)
+        registry.bind(SymbolRegistry.reference_sites(story))
+    except SymbolResolutionError as exc:
+        duplicate = any(item.code == "DUPLICATE_SYMBOL" for item in exc.diagnostics)
+        code = "DUPLICATE_ID" if duplicate else "UNKNOWN_REFERENCE"
+        if all(item.path.startswith("evidence_opportunities[") for item in exc.diagnostics):
+            legacy = "invalid opportunity references: " + ", ".join(
+                f"{story.evidence_opportunities[int(item.path.split('[', 1)[1].split(']', 1)[0])].id}."
+                f"{item.path.rsplit('.', 1)[-1]}->{item.supplied_id}"
+                for item in exc.diagnostics
+            )
+            detail = (
+                legacy
+                if all(item.path.endswith("].route_id") for item in exc.diagnostics)
+                else legacy + "; " + "; ".join(item.render() for item in exc.diagnostics)
+            )
+        else:
+            detail = "; ".join(item.render() for item in exc.diagnostics)
+        if any(item.path.startswith("party_knowledge[") for item in exc.diagnostics):
+            detail += "; party knowledge reference uses a foreign namespace; use the mapped declared truth ID"
+        raise CausalValidationError(code, detail) from exc
+    truth_ids = set(registry.ids(Namespace.TRUTH))
+    participant_ids = set(registry.ids(Namespace.PARTICIPANT))
+    location_ids = set(registry.ids(Namespace.LOCATION))
     _validate_topology(story, truth_ids, location_ids)
     _validate_events(story, truth_ids, participant_ids, location_ids)
     _validate_authoring_graph(story, truth_ids, participant_ids)

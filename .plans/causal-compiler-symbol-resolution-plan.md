@@ -107,18 +107,18 @@ fantasy, sci-fi, and relationship coverage.
 
 ### Phase 1 — Symbol registry and reference binding
 
-- Introduce explicit symbol-table and reference-site contracts below the
+- [x] Introduce explicit symbol-table and reference-site contracts below the
   authoring boundary.
-- Define every collection once, reject duplicate definitions locally, and bind
+- [x] Define every collection once, reject duplicate definitions locally, and bind
   every known reference field through its declared namespace.
-- Emit grouped diagnostics with path, expected namespace, supplied ID, and an
+- [x] Emit grouped diagnostics with path, expected namespace, supplied ID, and an
   unambiguous suggestion where one exists (for example, an opportunity ID maps
   to its declared truth ID in a knowledge field).
-- Preserve current public validation entry points during migration.
+- [x] Preserve current public validation entry points during migration.
 
-**Exit criteria:** generic binding replaces raw `_references` scans for all
-reference families; wrong-namespace diagnostics identify both source and target
-namespaces; no candidate is accepted when a reference remains unbound.
+**Exit criteria:** [x] generic binding replaces raw `_references` scans for all
+reference families; [x] wrong-namespace diagnostics identify both source and target
+namespaces; [x] no candidate is accepted when a reference remains unbound.
 
 ### Phase 2 — Bound IR and semantic-pass migration
 
