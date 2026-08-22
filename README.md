@@ -25,6 +25,7 @@ Just a living story that meets you where you are.
 - Follow different paths to an ending. A failed approach can change the story
   without ending it prematurely.
 - Build and review new stories before they become playable.
+- Test a whole library of stories for coherence before anyone promotes them.
 - Fix broken story connections without losing the good work around them.
 - Check story logic before it reaches players, with clear guidance when a
   connection points at the wrong thing.
