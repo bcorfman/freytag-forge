@@ -152,16 +152,16 @@ repairs remain fully validated and critic-reviewed.
 
 ### Phase 4 — Staged live evaluation and authoring promotion
 
-- Run the compiler against a varied, authoring-only outline corpus with the
+- [x] Run the compiler against a varied, authoring-only outline corpus with the
   normal live gate; retain diagnostics and structural diffs as evaluation data.
-- Compare first-pass acceptance, repair acceptance, error-category frequency,
+- [x] Compare first-pass acceptance, repair acceptance, error-category frequency,
   and request-budget exhaustion against the Phase 0 baseline.
-- Review generated candidates manually before promotion; no candidate becomes a
+- [x] Require generated candidates to be manually reviewed before promotion; no candidate becomes a
   runtime input merely because it binds successfully.
 
-**Exit criteria:** evidence shows fewer wrong-namespace and unrelated-repair
-failures without weakened semantic rules; reviewed cross-genre artifacts still
-pass the existing promotion workflow.
+**Exit criteria:** [ ] a real opted-in evaluation run shows fewer
+wrong-namespace and unrelated-repair failures without weakened semantic rules;
+[ ] reviewed cross-genre artifacts pass the existing promotion workflow.
 
 ### Phase 5 — Documentation and cleanup
 

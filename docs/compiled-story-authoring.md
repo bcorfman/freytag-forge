@@ -177,6 +177,24 @@ FREYTAG_RUN_LIVE_SMOKE=1 TMPDIR=/tmp uv run pytest tests/test_openai_live_smoke.
 
 ## Phase-4 candidate review and promotion
 
+Before review, authors can run the authoring-only Phase 4 evaluation across the
+entire outline inventory. It uses the same bounded compiler path as an
+individual live compilation and writes an evidence report containing first-pass
+and repair acceptance, request-budget exhaustion, diagnostic categories, and
+the structural diffs observed during repairs:
+
+```text
+FREYTAG_ENABLE_LIVE_COMPILER=1 \
+uv run storygame-blueprint-evaluate \
+  --live --provider openai --output data/story_blueprints/evaluations/phase4.evaluation.json
+```
+
+The command requires the explicit live opt-in and never writes a candidate,
+reviewed artifact, or runtime input. It also refuses to overwrite an existing
+report. Compare its summary with the embedded Phase 0 baseline, retain the
+report with the authoring run, and inspect generated candidates manually before
+using the review command below. Binding or passing local checks is not approval.
+
 Candidates remain unreviewed even when their local compiler checks pass. After
 an editor has reviewed the generated `*.candidate.json`, use the separate
 offline command to rerun the causal, profile, route-fairness, and Freytag
