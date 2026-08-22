@@ -95,15 +95,15 @@ The symbol registry exposes explicit namespaces and field domains. Examples:
 
 ### Phase 0 — Characterization and diagnostic baseline
 
-- Capture invalid fixtures for each reference namespace, including known,
+- [x] Capture invalid fixtures for each reference namespace, including known,
   wrong-namespace, ambiguous, and multiple-error candidates.
-- Record current compiler diagnostics and repair request count for cross-genre
+- [x] Record current compiler diagnostics and repair request count for cross-genre
   fixtures without fixing candidate content in test code.
-- Define deterministic diagnostic ordering and error-code compatibility rules.
+- [x] Define deterministic diagnostic ordering and error-code compatibility rules.
 
-**Exit criteria:** tests prove a single candidate can report multiple reference
-problems in stable order; the baseline contains mystery, fantasy, sci-fi, and
-relationship coverage.
+**Exit criteria:** [x] tests prove a single candidate can report multiple
+reference problems in stable order; [x] the baseline contains mystery,
+fantasy, sci-fi, and relationship coverage.
 
 ### Phase 1 — Symbol registry and reference binding
 

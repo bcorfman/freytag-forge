@@ -1,0 +1,22 @@
+{
+  "schema_version": "story-blueprint-phase0-baseline-v1",
+  "scope": "offline causal compiler characterization",
+  "genres": ["mystery", "fantasy", "sci-fi", "relationship"],
+  "diagnostic_compatibility": {
+    "unknown_reference": "UNKNOWN_REFERENCE",
+    "ambiguous_reference": "AMBIGUOUS_REFERENCE",
+    "ordering": "source collection order, then field declaration order",
+    "aggregation": "independent bindable reference failures are retained in one detail",
+    "syntax_precedes_binding": true
+  },
+  "cases": {
+    "known": {"diagnostics": [], "request_count": 1},
+    "wrong_namespace": {"diagnostics": ["UNKNOWN_REFERENCE"], "request_count": 2},
+    "ambiguous": {"diagnostics": ["AMBIGUOUS_REFERENCE"], "request_count": 2},
+    "multiple_errors": {"diagnostics": ["UNKNOWN_REFERENCE"], "request_count": 2}
+  },
+  "notes": [
+    "This is a characterization baseline, not a promotion artifact.",
+    "Phase 0 records current behavior; Phase 1 may change details only with an explicit compatibility update."
+  ]
+}
