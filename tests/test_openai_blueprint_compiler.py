@@ -413,6 +413,10 @@ def test_blueprint_compiler_repairs_structured_causal_diagnostics() -> None:
     assert "lacks a causal evidence/route chain" in transport.prompts[1]
     assert "Diagnostics:" in transport.prompts[1]
     assert "Candidate JSON to correct" in transport.prompts[1]
+    assert "all three links" in transport.prompts[1]
+    assert "at least the profile minimum of distinct opportunity kinds" in transport.prompts[1]
+    assert "add a matching route rather than" in transport.prompts[1]
+    assert "Never use a later beat as the gate" in transport.prompts[1]
     assert '"id":"signal_crisis"' in transport.prompts[1]
 
 
@@ -494,6 +498,10 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
     assert (
         "For every required revelation, use at least the genre profile's minimum number of distinct evidence "
         "opportunity kinds across its realization routes" in prompt
+    )
+    assert (
+        "every beat that lists that revelation in prerequisite_revelation_ids must be at or after every gate beat"
+        in prompt
     )
     assert "source_hash" in prompt
     assert "Source profile ID: sci-fi" in prompt
