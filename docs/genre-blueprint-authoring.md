@@ -65,6 +65,8 @@ playable authoring input. When local validation supplies a safe diagnostic, the
 fallback request receives it and must return the complete corrected object.
 That request also receives the rejected candidate as inert JSON data, so it can
 preserve valid authored fields instead of regenerating the blueprint wholesale.
+The same preservation rule applies to critic-driven repair, including
+route-fairness and Freytag diagnostics.
 When invalid source-owned metadata masks deeper structural or timeline failures,
 the compiler performs a diagnostic-only source-normalized preflight and includes
 those latent failures in the same repair instruction; the original candidate is
