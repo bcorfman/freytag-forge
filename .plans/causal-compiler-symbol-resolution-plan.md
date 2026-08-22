@@ -136,19 +136,19 @@ cross-genre fixtures identify all independent failures in their relevant pass.
 
 ### Phase 3 — Stable repair context and change audit
 
-- Derive the repair ID ledger from the symbol registry rather than ad-hoc raw
+- [x] Derive the repair ID ledger from the symbol registry rather than ad-hoc raw
   collection scans.
-- Add a deterministic candidate-to-candidate structural diff that classifies
+- [x] Add a deterministic candidate-to-candidate structural diff that classifies
   declaration additions, removals, renames, ownership changes, and reference
   changes by namespace.
-- Present the prior valid symbols and the allowed repair scope to the model.
+- [x] Present the prior valid symbols and the allowed repair scope to the model.
   Locally reject an unrelated destructive change unless it is necessary for the
   reported diagnostic; do not silently restore or rewrite it.
-- Retain full-object repair responses and the current request budget.
+- [x] Retain full-object repair responses and the current request budget.
 
-**Exit criteria:** repairs of a reference error retain unrelated valid symbol
-definitions; diagnostics name prohibited unrelated changes; approved repairs
-remain fully validated and critic-reviewed.
+**Exit criteria:** [x] repairs of a reference error retain unrelated valid symbol
+definitions; [x] diagnostics name prohibited unrelated changes; [x] approved
+repairs remain fully validated and critic-reviewed.
 
 ### Phase 4 — Staged live evaluation and authoring promotion
 

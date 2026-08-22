@@ -98,6 +98,15 @@ revelations, outcomes, and beats. The repair prompt treats existing IDs and
 collection membership as stable unless the diagnostic directly requires a
 change, and maps each reference-bearing field to its permitted ID namespace.
 This ledger is compiler context, never fictional content.
+The ledger is derived from the shared symbol registry and includes optional
+beats and end states as well as the required collections. A deterministic
+candidate-to-candidate audit classifies additions, removals, renames, ownership
+changes, and reference changes by namespace. The compiler gives the repair
+request the prior valid ledger and rejects an unrelated destructive change with
+an explicit `UNRELATED_REPAIR_CHANGE` diagnostic; it never silently restores
+or merges the candidate. Full-object responses still use the existing single
+repair request budget, and an approved repair is validated and critic-reviewed
+again before acceptance.
 When invalid source-owned metadata masks deeper structural or timeline failures,
 the compiler performs a diagnostic-only source-normalized preflight and includes
 those latent failures in the same repair instruction; the original candidate is

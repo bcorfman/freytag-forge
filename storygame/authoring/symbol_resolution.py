@@ -104,11 +104,29 @@ class SymbolRegistry:
 
     @classmethod
     def from_story(cls, story: object) -> SymbolRegistry:
+        return cls._from_declarations(
+            (collection, tuple(getattr(story, collection, ()))) for collection, _namespace in cls._COLLECTIONS
+        )
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, object]) -> SymbolRegistry:
+        """Collect a ledger from a parseable candidate without validating it."""
+
+        return cls._from_declarations(
+            (collection, tuple(payload.get(collection, ()))) for collection, _namespace in cls._COLLECTIONS
+        )
+
+    @classmethod
+    def _from_declarations(cls, declarations: Iterable[tuple[str, Iterable[object]]]) -> SymbolRegistry:
         symbols: dict[Namespace, dict[str, Symbol]] = defaultdict(dict)
         duplicates: list[BindingDiagnostic] = []
-        for collection, namespace in cls._COLLECTIONS:
-            for index, declaration in enumerate(getattr(story, collection, ())):
-                identifier = getattr(declaration, "id", None)
+        namespaces = dict(cls._COLLECTIONS)
+        for collection, values in declarations:
+            namespace = namespaces[collection]
+            for index, declaration in enumerate(values):
+                identifier = (
+                    declaration.get("id") if isinstance(declaration, Mapping) else getattr(declaration, "id", None)
+                )
                 if not isinstance(identifier, str):
                     continue
                 if identifier in symbols[namespace]:
@@ -121,9 +139,13 @@ class SymbolRegistry:
                         )
                     )
                 else:
-                    related_identifier = (
-                        getattr(declaration, "truth_id", None) if namespace is Namespace.EVIDENCE_OPPORTUNITY else None
-                    )
+                    related_identifier = None
+                    if namespace is Namespace.EVIDENCE_OPPORTUNITY:
+                        related_identifier = (
+                            declaration.get("truth_id")
+                            if isinstance(declaration, Mapping)
+                            else getattr(declaration, "truth_id", None)
+                        )
                     symbols[namespace][identifier] = Symbol(namespace, identifier, related_identifier)
         registry = cls(symbols)
         if duplicates:
