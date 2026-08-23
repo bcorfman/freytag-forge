@@ -204,14 +204,24 @@ choice without genre branches.
 
 ### Phase 5 — Persistence, artifacts, and replay parity
 
-Version runtime snapshots and migrate older V2 snapshots. Restore integrity-
+Version runtime snapshots. Restore integrity-
 checked projections for story state, story summary, traces, and transcripts.
 Ensure projections can be regenerated from facts and accepted decisions.
 Add restart/reload tests, corruption rejection, replay signature checks, and
 artifact parity checks.
 
-Exit criteria: a session survives process restart, load, replay, and artifact
-regeneration without treating any projection as mutation authority.
+- [x] Version runtime snapshots and reject unsupported or malformed snapshot
+  payloads before rehydration.
+- [x] Emit `StoryState.json`, `STORY.md`, trace, and transcript projections
+  from facts and accepted runtime events.
+- [x] Hash every projection in an integrity manifest and reject corruption.
+- [x] Regenerate projections without reading them as runtime mutation
+  authority.
+- [x] Add restart/reload, corruption rejection, replay signature, and
+  artifact-parity regression coverage.
+
+- [x] Exit criteria: a session survives process restart, load, replay, and
+  artifact regeneration without treating any projection as mutation authority.
 
 ### Phase 6 — Adapter and release parity
 

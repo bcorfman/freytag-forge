@@ -5,26 +5,21 @@
 Freytag Forge lets you write what your character tries—not choose from a tiny
 verb menu—and turns each attempt into a grounded, persistent story beat.
 
-## Why it’s fun
+## The hook
 
-- **Write anything:** investigate, bargain, lie, help, run, refuse—or invent a
+- **Say anything.** Investigate, bargain, lie, help, run, refuse—or invent the
   move no menu anticipated.
-- **NPCs with boundaries:** question present characters; they answer from their
-  own role, relationships, scene, and earned knowledge.
-- **Consequences with a clock:** goals, clues, pressure, timed events, and
+- **Meet real NPCs.** Present characters answer from their role, relationships,
+  scene, and earned knowledge.
+- **Make consequences matter.** Goals, clues, pressure, timed events, and
   failure-forward choices keep the story moving.
-- **Real objects and clues:** inspect or take declared items; readable
-  documents reveal only what the right speaker can know.
-- **Clarification over guesswork:** ambiguous actions stay open for a clearer
-  attempt instead of silently taking the wrong branch.
-- **Fail-forward stories:** a bad approach changes the situation without
-  needlessly ending the story.
-- **Progressive scenes:** first arrivals earn texture; revisits stay brisk;
-  `LOOK` brings the full view back.
-- **Every genre, one engine:** mystery, fantasy, sci-fi, and relationship drama
-  share the same fact-backed rules.
-- **Spoiler-safe continuity:** facts—not prose, prompts, packages, or saves—
-  decide what becomes true.
+- **Touch the world.** Inspect and take declared items; documents reveal only
+  what the right speaker can know.
+- **Stay in control.** Ambiguity gets clarified, not silently misread.
+- **Remember everything important.** Restart, reload, and replay without losing
+  the facts that made your story yours.
+- **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
+  share the same spoiler-safe, fact-backed rules.
 
 **Less prompt luck. More playable story.**
 
