@@ -239,6 +239,37 @@ they do not force a player action or fabricate completion.
 The Phase 4 contract is exercised across mystery, fantasy, sci-fi, and
 relationship fixtures with the same runtime policy families and no genre branch.
 
+## V1 porting Phase 5: persistence, artifacts, and replay
+
+Runtime snapshots use the `runtime-state-v3` schema. The SQLite adapter stores
+the compiled-story identity and hash beside a canonical JSON snapshot and its
+SHA-256. The snapshot carries its own schema marker; unsupported versions,
+invalid JSON, malformed payloads, story mismatches, and hash failures are
+typed `RuntimeSaveError` failures before any state is rehydrated. A snapshot is
+therefore a restart input, never a competing authority.
+
+`storygame.persistence.story_state` provides the artifact projection boundary.
+`artifact_bundle(state)` derives `StoryState.json`, `STORY.md`, `trace.json`,
+and `transcript.json` from the current facts and accepted `RuntimeEvent`
+decisions. It does not load a projection to reconstruct state. The JSON state
+projection includes the fact set, accepted decisions, turn index, and a
+compiled-story identity; the Markdown summary is a presentation projection;
+trace and transcript data retain deterministic decision and narration evidence.
+
+Every projection is covered by a versioned `manifest.json` containing stable
+SHA-256 hashes. `verify_artifact_manifest` rejects missing or changed files,
+and `verify_replay_signature` rejects replay evidence whose accepted decisions
+have changed. `write_artifacts` uses temporary files followed by replacement,
+so an orchestrator can regenerate a complete artifact directory after a
+restart. The optional hosted-adapter `artifact_root` writes one projection
+directory per session after bootstrap and each accepted turn; runtime requests
+never consult those files for decisions.
+
+Phase 5 regression coverage proves fact and event projection parity, artifact
+corruption rejection, deterministic manifests, replay signatures, and the
+existing hosted process-restart/load path. The runtime remains the sole
+mutable authority; artifacts are integrity-checked evidence and projections.
+
 ## Goals
 - Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.

@@ -11,7 +11,7 @@ from storygame.authoring.contracts import CompiledStory
 from storygame.runtime.facts import FactStore
 from storygame.runtime.state import BeatRuntime, RuntimeEvent, RuntimeState, WorldState, runtime_state_bytes
 
-SAVE_SCHEMA_VERSION = "runtime-state-v2"
+SAVE_SCHEMA_VERSION = "runtime-state-v3"
 
 
 class RuntimeSaveError(Exception):
@@ -88,14 +88,25 @@ class RuntimeStateSqliteStore:
             raise RuntimeSaveError("compiled_story_mismatch", "The saved story does not match this session.")
         if _sha256(row["snapshot"]) != row["snapshot_hash"]:
             raise RuntimeSaveError("save_integrity_failed", "The saved runtime state failed integrity verification.")
-        return _restore(json.loads(row["snapshot"]), story)
+        try:
+            payload = json.loads(row["snapshot"])
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise RuntimeSaveError("save_integrity_failed", "The saved runtime snapshot is not valid JSON.") from exc
+        try:
+            return _restore(payload, story)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RuntimeSaveError("save_integrity_failed", "The saved runtime snapshot is malformed.") from exc
 
 
 def _snapshot(state: RuntimeState) -> dict[str, object]:
-    return json.loads(runtime_state_bytes(state))
+    payload = json.loads(runtime_state_bytes(state))
+    payload["schema_version"] = SAVE_SCHEMA_VERSION
+    return payload
 
 
 def _restore(payload: dict[str, object], story: CompiledStory) -> RuntimeState:
+    if payload.get("schema_version") != SAVE_SCHEMA_VERSION:
+        raise ValueError("unsupported runtime snapshot schema")
     world = dict(payload["world"])
     beats = dict(payload["beat_runtime"])
     events = [

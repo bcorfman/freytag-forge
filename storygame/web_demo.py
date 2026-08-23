@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from storygame.authoring.compiler import CompilationError, load_compiled_story_fixture
 from storygame.persistence.runtime_state_sqlite import RuntimeSaveError, RuntimeStateSqliteStore
+from storygame.persistence.story_state import write_artifacts
 from storygame.runtime.cloudflare import CloudflareTurnModel
 from storygame.runtime.engine import RuntimeEngine, TurnModel
 from storygame.runtime.state import RuntimeState, bootstrap_runtime_state
@@ -85,6 +86,7 @@ def _story_for(genre: str):
 def create_demo_app(
     save_db_path: str | Path | None = None,
     *,
+    artifact_root: str | Path | None = None,
     model: TurnModel | None = None,
     channel: str | None = None,
     cors_allow_origins: tuple[str, ...] | None = None,
@@ -123,6 +125,8 @@ def create_demo_app(
         session_id = uuid4().hex
         state = bootstrap_runtime_state(story)
         store.save(session_id, state)
+        if artifact_root is not None:
+            write_artifacts(Path(artifact_root) / session_id, state)
         sessions[session_id] = _Session(RuntimeEngine(state, active_model))
         return {"session_id": session_id, "state": _state_payload(state)}
 
@@ -158,6 +162,8 @@ def create_demo_app(
                 headers={"X-Runtime-Error": result.error.code if result.error else "RUNTIME_FAILURE"},
             )
         store.save(payload.session_id, session.engine.state)
+        if artifact_root is not None:
+            write_artifacts(Path(artifact_root) / payload.session_id, session.engine.state)
         return {
             "status": "ok",
             "lines": [result.narration],
