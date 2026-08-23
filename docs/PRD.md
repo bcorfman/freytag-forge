@@ -160,6 +160,37 @@ save traces, and hosted-demo response headers; exhausted failures stay
 uncommitted. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
+## V1 porting Phase 2: fact authority, inventory, clues, and documents
+
+`storygame.runtime.facts` provides the minimal canonical fact layer beneath
+`RuntimeState`. A frozen `Fact` is an assertable or retractable predicate with
+typed subject, object, and optional value; `FactStore` owns the mutable set and
+provides deterministic matching and JSON serialization. Supported policy
+families cover identity, role, location, presence, custody, possession,
+knowledge/unknown boundaries, discovered clues and leads, active goals/tasks,
+scene objectives, relationships, NPC availability, item affordances, and flags.
+
+Bootstrap derives these facts from compiled-story opening metadata, item
+definitions, and the initial world declaration. `world.items`, inventory,
+flags, location, and discovery attributes remain compatibility projections;
+they are synchronized only while a cloned candidate passes
+`validate_and_commit`.
+
+Fact writes use the typed `StateOperation` boundary with `facts: add/remove`
+operations. Custody is cardinality-one per item, and a transfer to the player
+is legal only when the current holder is in the scene. Unknown items,
+unsupported fact families, malformed facts, and unavailable items fail closed
+without changing the prior state. The same fact set is serialized in the
+versioned integrity-checked SQLite snapshot and restored on load.
+
+Readable documents are declared through `ItemDefinition` and
+`ReadableDocument`. A `DocumentDisclosure` names the document, addressed
+speaker, and one declared fact. Runtime validation requires the speaker to be
+present, permitted for that document/fact, and to know the fact; the player's
+knowledge fact is committed before the response is rendered. Already-known
+facts, wrong speakers, unavailable speakers, and non-readable items are
+rejected. No package lookup or narration text can create a clue or disclosure.
+
 ## Goals
 - Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.

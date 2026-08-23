@@ -33,11 +33,19 @@ class BeatUpdate(BaseModel):
     evidence: str = Field(default="", max_length=800)
 
 
+class DocumentDisclosure(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    item_id: str = Field(min_length=1, max_length=80)
+    speaker_id: str = Field(min_length=1, max_length=80)
+    fact_id: str = Field(min_length=1, max_length=120)
+
+
 class TurnResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     narration: str = Field(min_length=1, max_length=4000)
     operations: tuple[StateOperation, ...] = Field(default=(), max_length=32)
     beat_updates: tuple[BeatUpdate, ...] = Field(default=(), max_length=16)
+    disclosures: tuple[DocumentDisclosure, ...] = Field(default=(), max_length=16)
     summary_delta: str | None = Field(default=None, max_length=1200)
     material_progress: bool = False
 

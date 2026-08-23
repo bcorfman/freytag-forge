@@ -118,6 +118,20 @@ truth is disclosed.
 Introduce a minimal typed fact layer beneath `RuntimeState` for generic
 assertable/retractable facts:
 
+- [x] Add a typed, serializable fact store for identity, role, location,
+  presence, custody, possession, knowledge boundaries, discoveries, goals,
+  tasks, scene objectives, relationships, and NPC availability.
+- [x] Seed opening and package-declared item state into facts before the first
+  turn, while retaining synchronized compatibility views.
+- [x] Add explicit fact-family validation and atomic compatibility-view
+  synchronization for accepted writes.
+- [x] Port generic item affordances and readable-document disclosure routes
+  into typed authoring/runtime contracts.
+- [x] Reject duplicate custody, unavailable items, wrong-speaker disclosures,
+  unavailable speakers, and knowledge leaks without mutating state.
+- [x] Persist and restore the complete fact set through the integrity-checked
+  V2 SQLite snapshot.
+
 - identity, role, location, presence, custody, possession;
 - knows/unknown knowledge boundaries;
 - discovered clues and leads;
@@ -129,9 +143,9 @@ All writes must pass explicit policy families and update compatibility views in
 one commit. Add tests for custody uniqueness, unavailable items, wrong-speaker
 disclosures, knowledge leaks, and save/load round trips.
 
-Exit criteria: V1 case-file, ledger-page, inventory, clue discovery, and
-document disclosure flows work through V2 contracts without package lookups at
-runtime.
+- [x] Exit criteria: V1 case-file, ledger-page, inventory, clue discovery,
+  and document disclosure flows work through V2 contracts without package
+  lookups at runtime.
 
 ### Phase 3 — NPC dialogue and freeform action parity
 

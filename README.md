@@ -40,6 +40,21 @@ Just a living story that meets you where you are.
 
 **Less prompt luck. More playable story.**
 
+## Every clue has a home
+
+Phase 2 gives the world a memory you can trust. Items have real custody. Your
+inventory is never a prose guess. Clues become discoveries only when you earn
+them, and readable documents disclose only what the right person can actually
+know.
+
+- Take the case file, find the ledger page, and carry the consequences forward.
+- Ask for a document disclosure and get a grounded fact—not a lucky hallucination.
+- Move, save, reload, and keep the same evidence, goals, relationships, and
+  knowledge boundaries.
+
+The result: a story that remembers not just what was said, but what became
+true.
+
 ## Drop into the story, not a loading screen
 
 Phase 1 makes the first moment count. The hosted experience now serves a
