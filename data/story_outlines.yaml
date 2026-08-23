@@ -171415,6 +171415,12 @@ stories:
   opening_public_boundary: >-
     The death, gathered household, and accessible foyer, study, library, and grounds
     are public; the solution, private motives, and protected evidence are not.
+  opening_setup:
+    scene: "The grand foyer of Vale Mansion, with snow falling beyond the doors and unease settling over the household."
+    player_context: "You are the investigator called to determine what happened before the snowbound estate can be safely opened again."
+    companions: ["The gathered household is nearby and can be questioned."]
+    situation: "Emma Vale has been found dead in the west gallery, and the circumstances demand an immediate investigation."
+    next_steps: ["Inspect the foyer and accessible rooms.", "Speak with members of the household.", "Begin at the west gallery or follow the first lead."]
   terminal_constraints:
     - A reviewed causal artifact must provide a fair, evidence-backed resolution.
     - Every material opportunity must be reachable; prose-only locations are invalid.

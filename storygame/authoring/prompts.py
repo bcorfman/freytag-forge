@@ -58,7 +58,7 @@ def build_blueprint_compiler_prompt(
     return (
         "Return one JSON object only for the STORY_BLUEPRINT_V2_JSON contract. "
         "Do not wrap it in a STORY_BLUEPRINT_V2_JSON key. Its top-level keys must be "
-        "schema_version, id, version, provenance, genre, profile, title, premise, opening_truth_ids, "
+        "schema_version, id, version, provenance, genre, profile, title, premise, opening_truth_ids, opening, "
         "truths, participants, locations, connected_routes, causal_events, timeline_constraints, "
         "evidence_opportunities, party_knowledge, knowledge_protections, revelations, realization_routes, "
         "required_outcomes, required_beats, optional_beats, suspect_hypotheses, and end_states. "
@@ -67,6 +67,8 @@ def build_blueprint_compiler_prompt(
         'schema_version must be the exact JSON string "story-blueprint-v2". '
         "profile must be the exact Source profile ID JSON string, never an object. "
         "Every ID is lowercase snake_case. Required nested collection shapes (fields with ? are optional): "
+        "opening: {scene,player_context,companions,situation,next_steps}; derive it from source opening_setup and "
+        "keep it spoiler-safe. "
         'truths: [{"id":"lowercase_id","summary":"non-empty summary","roles":["profile_role"]?}]; '
         "participants: [{id,role}]; locations: [{id,role,initial_access}]; "
         "connected_routes: [{id,from_location_id,to_location_id,aliases,prerequisite_truths?}]; "

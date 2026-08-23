@@ -90,6 +90,7 @@ async function runCommand(command) {
     throw new Error("No session available.");
   }
 
+  appendEntry(command, "input");
   setBusy(true);
   setStatus("Awaiting reply...");
   try {
@@ -99,6 +100,10 @@ async function runCommand(command) {
     });
     const lines = Array.isArray(payload.lines) ? payload.lines : [];
     appendEntry(lines.join("\n"), "output");
+    const destinations = payload.state.available_destinations;
+    if (Array.isArray(destinations) && destinations.length > 0) {
+      appendEntry(`Accessible from here: ${destinations.join(", ")}.`, "system");
+    }
     setStatus(`${payload.state.room_name} • turn ${payload.state.turn_index}`);
   } catch (error) {
     appendEntry(error instanceof Error ? error.message : "Command failed.", "system");

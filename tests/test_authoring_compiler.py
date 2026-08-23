@@ -129,6 +129,8 @@ def test_mystery_runtime_fixture_loads_the_approved_causal_artifact():
     assert story.id == "vale_mansion_rebuild"
     assert story.title == "Death in the West Gallery"
     assert story.initial_world_state["location"] == "foyer"
+    assert story.initial_world_state["navigation"]["names"]["study"] == "Study"
+    assert story.initial_world_state["navigation"]["routes"][0]["to"] == "study"
     assert story.protected_revelations
     assert story.beats[-1].answers_central_question is True
 

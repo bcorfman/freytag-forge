@@ -52,6 +52,7 @@ class StoryOutline(_SourceContract):
     variant: str | None = Field(default=None, min_length=1, max_length=80)
     authoring_only: bool = False
     opening_public_boundary: str = Field(default="", max_length=4000)
+    opening_setup: dict[str, Any] = Field(default_factory=dict)
     terminal_constraints: tuple[str, ...] = Field(default=(), max_length=64)
 
 
@@ -68,6 +69,7 @@ class NormalizedStorySource(_SourceContract):
     authoring_only: bool = False
     premise: str = Field(min_length=1)
     opening_public_boundary: str = ""
+    opening_setup: dict[str, Any] = Field(default_factory=dict)
     hard_constraints: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     creative_direction: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     extensions: dict[str, Any] = Field(default_factory=dict)
@@ -152,6 +154,7 @@ class StorySourceLoader:
             authoring_only=outline.authoring_only,
             premise=outline.outline,
             opening_public_boundary=outline.opening_public_boundary,
+            opening_setup=outline.opening_setup,
             hard_constraints={"terminal_constraints": outline.terminal_constraints},
             creative_direction={
                 key: (value,) for key, value in {"tone": outline.tone, "variant": outline.variant}.items() if value

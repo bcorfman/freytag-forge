@@ -200,3 +200,16 @@ def test_runtime_context_exposes_declared_beat_tags_not_beat_metadata_as_output(
     assert context.payload["turn_result_contract"]["completion_tag_rule"] == (
         "copy only the exact completion_tags listed for the matching active beat; otherwise use []"
     )
+
+
+def test_runtime_context_exposes_a_public_opening_with_a_first_direction_for_every_genre() -> None:
+    for genre in ("mystery", "fantasy", "sci-fi", "relationship"):
+        state = bootstrap_runtime_state(load_compiled_story_fixture(genre))
+        opening = RuntimeEngine(state, StubModel([])).context_builder.build(state, "look").payload["opening"]
+
+        assert opening["premise"] == state.compiled_story.premise
+        assert opening["public_facts"]
+        assert opening["current_location"] == state.world.location
+        assert opening["available_destinations"] or opening["first_beat"]
+        public_opening = {key: value for key, value in opening.items() if key != "protected_boundaries"}
+        assert all(protection["summary"] not in str(public_opening) for protection in opening["protected_boundaries"])

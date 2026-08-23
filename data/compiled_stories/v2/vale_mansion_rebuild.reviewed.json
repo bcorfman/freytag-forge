@@ -40,6 +40,13 @@
     "profile": "mystery",
     "title": "Death in the West Gallery",
     "premise": "During a snowbound winter gathering at Vale Mansion, host Emma Vale is found dead in the west gallery. The household must determine which guest had the motive, means, opportunity, and nerve to kill her before the estate can be safely opened again.",
+    "opening": {
+      "scene": "The grand foyer of Vale Mansion, with snow falling beyond the doors and unease settling over the household.",
+      "player_context": "You are the investigator called to determine what happened before the snowbound estate can be safely opened again.",
+      "companions": ["The gathered household is nearby and can be questioned."],
+      "situation": "Emma Vale has been found dead in the west gallery, and the circumstances demand an immediate investigation.",
+      "next_steps": ["Inspect the foyer and accessible rooms.", "Speak with members of the household.", "Begin at the west gallery or follow the first lead."]
+    },
     "opening_truth_ids": [
       "emma_dead",
       "household_snowbound",
