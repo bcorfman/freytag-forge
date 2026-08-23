@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from typing import Protocol
 
 from storygame.runtime.context import RuntimeContext, RuntimeContextBuilder
-from storygame.runtime.contracts import RuntimeFailure, TurnResult
+from storygame.runtime.contracts import RuntimeFailure, StateOperation, TurnResult
 from storygame.runtime.pacing import PacingController
 from storygame.runtime.state import RuntimeEvent, RuntimeState
 from storygame.runtime.validation import validate_and_commit
@@ -43,11 +43,25 @@ class RuntimeEngine:
 
     def turn(self, player_input: str) -> TurnResponse:
         context = self.context_builder.build(self.state, player_input)
+        movement = _movement_affordance(self.state, player_input)
+        if movement is not None:
+            context.payload["normalized_affordance"] = {
+                "kind": "movement",
+                "destination": movement,
+                "instruction": f"Move the player to the declared destination '{movement}'.",
+            }
         last_error: RuntimeFailure | None = None
         for model_calls, json_object in enumerate((True, False), start=1):
             try:
                 raw = self.model.play_turn(context, json_object=json_object)
                 result = TurnResult.from_provider(raw)
+                if movement is not None and not any(item.path == "world.location" for item in result.operations):
+                    result = result.model_copy(
+                        update={
+                            "operations": result.operations
+                            + (StateOperation(kind="set", path="world.location", value=movement),)
+                        }
+                    )
                 candidate = validate_and_commit(self.state, result)
                 self._finalize(candidate, player_input, result, context)
                 self.state = candidate
@@ -108,3 +122,34 @@ def _repair_context(context: RuntimeContext, failure: RuntimeFailure) -> Runtime
         f"{failure.message[:800]}. Return a corrected complete TurnResult object only."
     )
     return replace(context, payload=payload)
+
+
+def _movement_affordance(state: RuntimeState, player_input: str) -> str | None:
+    """Resolve only an unambiguous declared destination into the shared commit contract."""
+
+    navigation = state.world.attributes.get("navigation", {})
+    if not isinstance(navigation, dict):
+        return None
+    routes = navigation.get("routes", [])
+    names = navigation.get("names", {})
+    if not isinstance(routes, list) or not isinstance(names, dict):
+        return None
+    request = player_input.casefold().strip()
+    candidates: list[str] = []
+    for route in routes:
+        if not isinstance(route, dict) or route.get("from") != state.world.location:
+            continue
+        destination = route.get("to")
+        if not isinstance(destination, str):
+            continue
+        labels = [destination, str(names.get(destination, "")), *route.get("aliases", [])]
+        if any(_mentions_destination(request, label) for label in labels if label):
+            candidates.append(destination)
+    return candidates[0] if len(set(candidates)) == 1 else None
+
+
+def _mentions_destination(request: str, label: str) -> bool:
+    normalized = label.casefold().replace("_", " ").strip()
+    if request in {normalized, f"go {normalized}", f"go to {normalized}", f"walk to {normalized}"}:
+        return True
+    return request.startswith("go ") and normalized in request[3:]

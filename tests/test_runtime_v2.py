@@ -213,3 +213,12 @@ def test_runtime_context_exposes_a_public_opening_with_a_first_direction_for_eve
         assert opening["available_destinations"] or opening["first_beat"]
         public_opening = {key: value for key, value in opening.items() if key != "protected_boundaries"}
         assert all(protection["summary"] not in str(public_opening) for protection in opening["protected_boundaries"])
+
+
+def test_declared_destination_aliases_commit_unambiguous_movement() -> None:
+    engine = RuntimeEngine(_state(), StubModel([_turn(operations=[])]))
+
+    response = engine.turn("go to the west gallery")
+
+    assert response.ok
+    assert engine.state.world.location == "west_gallery"
