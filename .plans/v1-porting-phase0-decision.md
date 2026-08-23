@@ -39,8 +39,9 @@ The canonical ledger is
 - Across every outline, conversation and purposeful exploration are the default
   progression modes. Objects and puzzles may support a story when authored, but
   they must not define a universal scavenger-hunt or lock-and-key loop.
-- The old CLI and local-web adapters remain retired unless a later product
-  decision authorizes them as thin, separately configured adapters.
+- The hosted `storygame.web_demo` adapter is the sole player-facing application
+  surface. The authoring CLI remains an offline compiler/review tool, not a
+  second gameplay runtime.
 
 ## Non-goals for Phase 0
 

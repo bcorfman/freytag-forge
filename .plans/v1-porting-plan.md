@@ -41,7 +41,6 @@ typed V2 contracts, injected adapters, and declarative story-package metadata.
 | Map movement and deterministic affordances | Movement aliases recently restored | Expand to inventory, visible items, routes, and unambiguous aliases | Shared affordance normalizer |
 | Freeform actions and bounded effects | Present in minimal form | Expand proposal schema and policy families; retain player agency | Turn proposal/commit contracts |
 | Save/load and artifacts | SQLite runtime snapshots exist; restart rehydration recently restored | Add versioned integrity-checked projections and migration coverage | Persistence adapters |
-| CLI and local web adapter | Removed intentionally | Do not restore by default; add only if a current product need is approved | Separate adapter, if authorized |
 | Story-package realization | Replaced by blueprint projection | Restore needed package declarations through compiler output, not legacy runtime packages | Offline compiler and fixtures |
 | Evaluation/replay traces | Partial runtime event support | Restore parity metrics and deterministic replay evidence after core contracts | Evaluation and persistence |
 
@@ -59,7 +58,6 @@ typed V2 contracts, injected adapters, and declarative story-package metadata.
   cross-genre cases, and intentional V2 differences for every target.
 - [x] Use the pinned release, historical tests, retained package data, and docs
   only as product-intent and retirement evidence.
-- [x] Record the retirement decision for the legacy CLI and local-web adapters.
 - [x] Add a schema regression test for the machine-readable ledger.
 - [x] Add the Phase 0 decision record and update product/technical docs.
 
@@ -223,15 +221,30 @@ artifact parity checks.
 - [x] Exit criteria: a session survives process restart, load, replay, and
   artifact regeneration without treating any projection as mutation authority.
 
-### Phase 6 — Adapter and release parity
+### Phase 6 — Hosted adapter and release parity
 
-Keep the hosted adapter as the public surface. Evaluate whether CLI or local web
-is still needed; restore either only as a separately approved adapter sharing
-contracts below the adapter boundary. Update frontend behavior, API contracts,
-deployment smoke tests, staging evaluation, and production promotion records.
+Keep `storygame.web_demo` as the public application surface and keep the
+authoring CLI offline-only. Update frontend behavior, API contracts, deployment
+smoke tests, staging evaluation, and production promotion records.
 
-Exit criteria: hosted staging demonstrates the approved parity ledger, V1
-rollback remains available, and no root/`/dev/` channel contract regresses.
+- [x] Keep `storygame.web_demo` as the sole hosted application surface and
+  preserve the offline-only authoring CLI boundary.
+- [x] Expose typed `/api/v1/health` and `/api/v1/version` identity contracts
+  containing API version, runtime version, channel, and immutable SHA.
+- [x] Make the frontend verify the deployed V2/channel identity before opening
+  a session and render the staging badge only for non-production bundles.
+- [x] Add hosted API smoke coverage for session creation, freeform turns,
+  restart/load, fail-closed provider errors, and channel identity.
+- [x] Gate staging on API and Pages identity matching the tested SHA, then run
+  the cross-genre staging evaluation before recording `staging-deployment`.
+- [x] Restrict production to manual promotion of a successful staged SHA with
+  a protected environment, independent channel state, and post-promotion E2E.
+- [x] Retire V1 rollback routes and runtime fallbacks; retain only historical
+  release evidence and deployment recovery records.
+
+- [x] Exit criteria: hosted staging demonstrates the approved parity ledger,
+  *no* V1 rollback remains available, and no root/`/dev/` channel contract
+  regresses.
 
 ## Testing strategy
 
@@ -257,7 +270,6 @@ rollback remains available, and no root/`/dev/` channel contract regresses.
 | Opening prose leaks protected facts | Compile public opening fields separately and validate before rendering |
 | Feature parity expands ordinary-turn latency | Keep one normal provider call and one bounded recovery; normalize only deterministic affordances |
 | Old saves become unreadable | Version snapshots and test explicit migrations before deployment |
-| Restoring retired adapters expands scope | Require a product decision in Phase 6 and keep adapters thin |
 
 ## Immediate next actions
 

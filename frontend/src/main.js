@@ -67,10 +67,27 @@ async function apiRequest(path, payload) {
   return data;
 }
 
+async function apiGet(path) {
+  if (!API_BASE_URL) {
+    throw new Error("VITE_API_BASE_URL is not configured.");
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(typeof data.detail === "string" ? data.detail : "Service identity check failed.");
+  }
+  return data;
+}
+
 async function createSession() {
   setBusy(true);
   setStatus("Creating session...");
   try {
+    const identity = await apiGet("/api/v1/version");
+    if (identity.api !== "v1" || identity.runtime !== "v2" || identity.channel !== DEPLOYMENT_CHANNEL) {
+      throw new Error("The story service is on a different deployment channel. Refresh and try again.");
+    }
     const payload = await apiRequest("/api/v1/session", DEFAULT_SESSION_PAYLOAD);
     sessionId = payload.session_id;
     setStatus(`Session ${sessionId.slice(0, 8)} ready`);

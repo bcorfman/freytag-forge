@@ -3,21 +3,21 @@
 > Interactive fiction with freedom, memory, and consequences.
 
 Freytag Forge lets you write what your character tries—not choose from a tiny
-verb menu—and turns each attempt into a grounded, persistent story beat.
+verb menu—and turns every attempt into a grounded, persistent story beat.
 
 ## The hook
 
-- **Say anything.** Investigate, bargain, lie, help, run, refuse—or invent the
+- **Freeform play.** Investigate, bargain, lie, help, run, refuse—or invent the
   move no menu anticipated.
-- **Meet real NPCs.** Present characters answer from their role, relationships,
-  scene, and earned knowledge.
-- **Make consequences matter.** Goals, clues, pressure, timed events, and
+- **Living characters.** NPCs respond from their role, relationships, scene, and
+  earned knowledge.
+- **Consequences with teeth.** Goals, clues, pressure, timed events, and
   failure-forward choices keep the story moving.
-- **Touch the world.** Inspect and take declared items; documents reveal only
-  what the right speaker can know.
-- **Stay in control.** Ambiguity gets clarified, not silently misread.
-- **Remember everything important.** Restart, reload, and replay without losing
-  the facts that made your story yours.
+- **A world you can touch.** Inspect items, follow routes, uncover documents,
+  and change what becomes possible.
+- **No silent guesses.** Ambiguity gets clarified; unsafe proposals fail closed.
+- **Persistent story memory.** Restart, reload, and replay without losing the
+  facts that made your story yours.
 - **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
   share the same spoiler-safe, fact-backed rules.
 

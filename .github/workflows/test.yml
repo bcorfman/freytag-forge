@@ -147,6 +147,7 @@ jobs:
           railway variable set "FREYTAG_DEPLOYMENT_SHA=$GITHUB_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
           timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$GITHUB_SHA"
           health=''
+          version=''
           health_channel=''
           health_sha=''
           for attempt in $(seq 1 60); do
@@ -154,12 +155,17 @@ jobs:
             deployment_status="$(jq -r --arg sha "$GITHUB_SHA" 'map(select(.message? == ("github-sha=" + $sha) or .meta.message? == ("github-sha=" + $sha))) | sort_by(.createdAt) | last | .status // "not-found"' <<<"$deployments")"
             echo "Railway deployment status: $deployment_status (attempt $attempt/60)"
             health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
+            version="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/version" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
-            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA" && break
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = v2 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = staging && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$GITHUB_SHA" && break
             sleep 10
           done
           test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA"
+          test "$(jq -r '.api // empty' <<<"$version")" = v1
+          test "$(jq -r '.runtime // empty' <<<"$version")" = v2
+          test "$(jq -r '.channel // empty' <<<"$version")" = staging
+          test "$(jq -r '.sha // empty' <<<"$version")" = "$GITHUB_SHA"
           {
             echo "api_base_url=${RAILWAY_PUBLIC_API_URL%/}"
             echo "sha=$GITHUB_SHA"

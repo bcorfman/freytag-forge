@@ -401,23 +401,3 @@ entries:
       writes its own typed versioned projections.
     evidence:
       current_contract: docs/PRD.md:Persistence + Canonical Artifacts
-
-intentional_retirements:
-  - id: legacy_cli
-    capability: V1 standalone CLI adapter
-    status: retired
-    decision: >-
-      Do not restore by default. Reconsider only after a product decision in
-      Phase 6, as a thin adapter over shared contracts.
-    reason: >-
-      The hosted web experience is the current public surface; restoring an
-      adapter before core parity would create scope and authority ambiguity.
-  - id: legacy_local_web
-    capability: V1 local-web adapter
-    status: retired
-    decision: >-
-      Do not restore by default. Reconsider only for a current product need,
-      with independent deployment/configuration contracts.
-    reason: >-
-      Hosted and local surfaces previously risked divergent behavior; V2 keeps
-      storygame.web and storygame.web_demo separate and the hosted adapter public.

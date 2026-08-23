@@ -35,12 +35,7 @@ def test_phase_zero_ledger_describes_v2_targets_not_v1_behavior() -> None:
         assert entry["proposal_validation_contract"]
 
 
-def test_phase_zero_ledger_records_retired_adapters_as_decisions() -> None:
+def test_phase_zero_ledger_has_no_retired_adapter_inventory() -> None:
     ledger = yaml.safe_load(LEDGER_PATH.read_text(encoding="utf-8"))
 
-    decisions = ledger["intentional_retirements"]
-    assert {decision["id"] for decision in decisions} == {
-        "legacy_cli",
-        "legacy_local_web",
-    }
-    assert all(decision["status"] == "retired" for decision in decisions)
+    assert "intentional_retirements" not in ledger

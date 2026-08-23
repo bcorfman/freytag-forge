@@ -1,10 +1,11 @@
 # Freytag Forge V2 product reference
 
-> V2 cutover complete. The hosted `storygame.web_demo` adapter is the sole public application surface and `RuntimeState` is the only mutable runtime authority. V1 engine, fact-store, deterministic-policy, package-realization, CLI, and local-web code have been removed. The retained `data/` directory is immutable authored input, not runtime state. Historical content below is retained only until its full documentation consolidation.
+> V2 cutover complete. The hosted `storygame.web_demo` adapter is the sole
+> player-facing application surface and `RuntimeState` is the only mutable
+> runtime authority. The retained `data/` directory is immutable authored
+> input, not runtime state.
 
-> Migration note: this document describes the current V1 product and
-> the completed standalone V2 runtime boundary.
-> The LLM-first runtime migration has a pinned V1 rollback target, a testable
+> The LLM-first runtime has a pinned rollback target, a testable
 > root/`/dev/` channel contract, and isolated delivery channels. Successful
 > trusted `main` CI deploys only to `/dev/` and Railway staging; production is a
 > manual promotion of a previously staged immutable SHA. Phases 2–3 add
@@ -270,6 +271,32 @@ corruption rejection, deterministic manifests, replay signatures, and the
 existing hosted process-restart/load path. The runtime remains the sole
 mutable authority; artifacts are integrity-checked evidence and projections.
 
+## V1 porting Phase 6: hosted adapter and release parity
+
+`storygame.web_demo` is the only player-facing application surface. The
+authoring CLI remains offline-only, and no V1 runtime or rollback route is
+reachable from the hosted adapter. The hosted contract is deliberately small:
+`GET /api/v1/health` reports `status`, `runtime`, `channel`, and immutable
+`sha`; `GET /api/v1/version` reports `api: v1` plus the same runtime/channel/SHA
+identity; `POST /api/v1/session`, `POST /api/v1/session/load`, and
+`POST /api/v1/turn` carry the typed session, state, narration, and fail-closed
+runtime responses.
+
+The static Pages client checks the version contract before opening a session,
+uses the channel-specific API origin, and shows a non-production badge only for
+staging/development bundles. The API and Pages bundles are independently
+stamped with the same tested SHA; staging rejects identity mismatches before
+publishing its deployment status. Production is a manual, protected-environment
+promotion of a successful staged SHA, with isolated Railway namespaces and a
+post-promotion hosted smoke test. The root Pages channel is production and
+`/dev/` is staging; deployment assembly preserves the opposite channel rather
+than replacing it.
+
+Phase 6 release evidence is operational rather than a new runtime authority:
+the staging evaluation artifact, deployment status, Pages `deployment.json`,
+health/version responses, and production promotion record document the release
+without becoming inputs to gameplay.
+
 ## Goals
 - Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.
@@ -522,6 +549,7 @@ flowchart LR
 ### Web Surfaces
 - `storygame.web_demo` is the sole application surface:
   - `GET /api/v1/health`
+  - `GET /api/v1/version`
   - `POST /api/v1/session`
   - `POST /api/v1/turn`
 - Hosted demo is a separate deployment surface with different narrator/backend assumptions:

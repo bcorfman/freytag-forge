@@ -52,6 +52,10 @@ def _default_model() -> TurnModel:
         return _UnavailableModel()
 
 
+def _deployment_sha() -> str:
+    return getenv("FREYTAG_DEPLOYMENT_SHA", "").strip() or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip() or "unknown"
+
+
 def _state_payload(state: RuntimeState) -> dict[str, object]:
     navigation = state.world.attributes.get("navigation", {})
     routes = navigation.get("routes", []) if isinstance(navigation, dict) else []
@@ -111,12 +115,18 @@ def create_demo_app(
     def health() -> dict[str, str]:
         return {
             "status": "ok",
+            "runtime": "v2",
             "channel": resolved_channel,
-            "sha": (
-                getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
-                or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
-                or "unknown"
-            ),
+            "sha": _deployment_sha(),
+        }
+
+    @app.get("/api/v1/version")
+    def version() -> dict[str, str]:
+        return {
+            "api": "v1",
+            "runtime": "v2",
+            "channel": resolved_channel,
+            "sha": _deployment_sha(),
         }
 
     @app.post("/api/v1/session")

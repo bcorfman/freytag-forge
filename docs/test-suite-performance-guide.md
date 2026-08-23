@@ -1,6 +1,6 @@
 # Test-suite performance guide
 
-> V2 cutover update: the suite covers compiled-story authoring, the standalone runtime, V2 persistence, the Cloudflare turn-model transport, hosted adapter behavior, and deployment-channel isolation. V1 parser, fact-policy, CLI, local-web, package-realization, and deterministic-replay tests were retired with their code; retained `data/` remains available to V2 fixtures.
+> V2 cutover update: the suite covers compiled-story authoring, the standalone runtime, V2 persistence, the Cloudflare turn-model transport, hosted adapter behavior, and deployment-channel isolation. Retained `data/` remains available to V2 fixtures.
 
 The live implementation checklist, measured results, and phase status are
 maintained in the [test-suite performance implementation plan](../.plans/test-suite-performance-plan.md).
@@ -54,7 +54,7 @@ Serializer/deserializer contract tests use the injected `state_factory` seam in
 `deserialize_state`; SQLite tests retain the real persistence boundary.
 Adapter tests that do not exercise SQLite persistence inject a fresh
 `InMemorySaveStore` per app. This preserves isolation while keeping the real
-SQLite boundary in the save/load, artifact, CLI, evaluation, and parity proofs.
+SQLite boundary in the save/load, artifact, authoring-CLI, evaluation, and parity proofs.
 The few component tests that call `run_turn()` do so deliberately to verify
 room-transition rendering and follower continuity; the bootstrap save/load
 case in `test_turn_runtime.py` is explicitly marked integration.
@@ -67,9 +67,9 @@ output contract, persistence, and evaluation. Wording and alias matrices belong
 in direct policy tests; branches sharing one setup should clone the setup state
 instead of repeating a warning, bootstrap, or replay turn.
 
-Shared web request/response projection behavior is tested below the adapter
-boundary in `test_web_runtime.py`. Local and hosted adapter tests retain one
-representative lifecycle/parity path plus credential, backend, CORS, quota,
+Shared web request/response projection behavior is tested below the hosted
+adapter boundary. Hosted adapter tests retain one representative lifecycle/
+parity path plus credential, backend, CORS, quota,
 rate-limit, and fail-closed coverage. The current full-suite runtime report
 tracks `TestClient` and SQLite-store constructions; collection totals are
 informational and intentionally not pinned.

@@ -41,6 +41,27 @@ def test_hosted_demo_uses_v2_runtime_and_persists_accepted_turns(tmp_path) -> No
         assert loaded.json()["state"]["turn_index"] == 1
 
 
+def test_hosted_demo_exposes_a_sha_bound_v1_api_identity(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_SHA", "a" * 40)
+    app = create_demo_app(save_db_path=tmp_path / "runtime.sqlite", model=StubTurnModel(), channel="staging")
+    with TestClient(app) as client:
+        health = client.get("/api/v1/health")
+        version = client.get("/api/v1/version")
+
+    assert health.json() == {
+        "status": "ok",
+        "runtime": "v2",
+        "channel": "staging",
+        "sha": "a" * 40,
+    }
+    assert version.json() == {
+        "api": "v1",
+        "runtime": "v2",
+        "channel": "staging",
+        "sha": "a" * 40,
+    }
+
+
 def test_hosted_demo_fails_closed_without_a_v2_model(tmp_path) -> None:
     app = create_demo_app(save_db_path=tmp_path / "runtime.sqlite", model=None, channel="production")
     with TestClient(app) as client:
