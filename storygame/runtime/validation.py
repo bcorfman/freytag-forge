@@ -28,6 +28,7 @@ def validate_and_commit(
         for operation in result.dialogue.effects:
             _apply_operation(candidate, operation.kind, operation.path, operation.value)
     _apply_beat_updates(candidate, result)
+    _apply_timed_events(candidate, candidate.turn_index + 1)
     return candidate
 
 
@@ -96,12 +97,18 @@ _FACT_FAMILIES = {
     "discovered_clue",
     "discovered_lead",
     "active_goal",
+    "goal",
     "task",
+    "clue",
     "scene_objective",
+    "current_scene",
+    "scene_pressure",
+    "dramatic_question",
     "relationship",
     "npc_available",
     "item_affordance",
     "flag",
+    "event_fired",
 }
 
 
@@ -235,6 +242,34 @@ def _apply_beat_updates(state: RuntimeState, result: TurnResult) -> None:
         state.beat_runtime[beat.id].completed_tags.update(update.completion_tags)
         if update.completion_tags:
             completed.add(beat.id)
+
+
+def _apply_timed_events(state: RuntimeState, turn_index: int) -> None:
+    """Commit each due declaration once, before the turn can be rendered."""
+
+    for event in state.compiled_story.timed_events:
+        if event.after_turn > turn_index or state.facts.matching("event_fired", event.id):
+            continue
+        for declaration in event.consequence_facts:
+            _apply_fact_operation(state, "add", declaration.model_dump(mode="json"))
+        _apply_fact_operation(
+            state,
+            "add",
+            Fact(predicate="event_fired", subject=event.id, value=str(turn_index)).model_dump(mode="json"),
+        )
+        if event.pressure_change:
+            current = next(
+                (int(fact.value) for fact in state.facts.matching("scene_pressure", "scene") if fact.value),
+                0,
+            )
+            updated = max(0, min(100, current + event.pressure_change))
+            for fact in state.facts.matching("scene_pressure", "scene"):
+                state.facts.retract_fact(fact)
+            _apply_fact_operation(
+                state,
+                "add",
+                Fact(predicate="scene_pressure", subject="scene", value=str(updated)).model_dump(mode="json"),
+            )
 
 
 def _reject_protected_leaks(state: RuntimeState, result: TurnResult) -> None:

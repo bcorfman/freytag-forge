@@ -5,14 +5,14 @@
 Freytag Forge lets you write what your character tries—not choose from a tiny
 verb menu—and turns each attempt into a grounded, persistent story beat.
 
-## The feature list
+## Why it’s fun
 
-- **Freeform play:** investigate, bargain, lie, help, run, refuse, or invent
-  your own move.
+- **Write anything:** investigate, bargain, lie, help, run, refuse—or invent a
+  move no menu anticipated.
 - **NPCs with boundaries:** question present characters; they answer from their
   own role, relationships, scene, and earned knowledge.
-- **Consequences that stick:** movement, inventory, discoveries, goals,
-  relationships, and setbacks survive the next turn.
+- **Consequences with a clock:** goals, clues, pressure, timed events, and
+  failure-forward choices keep the story moving.
 - **Real objects and clues:** inspect or take declared items; readable
   documents reveal only what the right speaker can know.
 - **Clarification over guesswork:** ambiguous actions stay open for a clearer
@@ -21,10 +21,8 @@ verb menu—and turns each attempt into a grounded, persistent story beat.
   needlessly ending the story.
 - **Progressive scenes:** first arrivals earn texture; revisits stay brisk;
   `LOOK` brings the full view back.
-- **Genre-agnostic foundations:** mystery, fantasy, sci-fi, relationship drama,
-  and future worlds use the same engine.
-- **Authoring with guardrails:** compile, review, audit, and test stories before
-  they reach players.
+- **Every genre, one engine:** mystery, fantasy, sci-fi, and relationship drama
+  share the same fact-backed rules.
 - **Spoiler-safe continuity:** facts—not prose, prompts, packages, or saves—
   decide what becomes true.
 

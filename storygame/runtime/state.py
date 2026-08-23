@@ -110,6 +110,26 @@ def _bootstrap_facts(
 ) -> FactStore:
     facts = FactStore()
     facts.assert_fact(Fact(predicate="at", subject="player", object=location))
+    if compiled_story.scene_purpose:
+        facts.assert_fact(Fact(predicate="scene_objective", subject="scene", value=compiled_story.scene_purpose))
+    if compiled_story.dramatic_question:
+        facts.assert_fact(Fact(predicate="dramatic_question", subject="scene", value=compiled_story.dramatic_question))
+    facts.assert_fact(Fact(predicate="scene_pressure", subject="scene", value=str(compiled_story.initial_pressure)))
+    for goal in compiled_story.goals:
+        facts.assert_fact(Fact(predicate="goal", subject="player", object=goal.id, value=goal.summary))
+    for task in compiled_story.tasks:
+        facts.assert_fact(Fact(predicate="task", subject="player", object=task.id, value=task.initial_status))
+    for clue in compiled_story.clues:
+        facts.assert_fact(Fact(predicate="clue", subject=clue.id, value=clue.summary))
+    for relationship in compiled_story.relationships:
+        facts.assert_fact(
+            Fact(
+                predicate="relationship",
+                subject=relationship.subject_id,
+                object=relationship.target_id,
+                value=relationship.relationship,
+            )
+        )
     for raw_fact in attributes.get("facts", ()):
         try:
             facts.assert_fact(Fact.model_validate(raw_fact))

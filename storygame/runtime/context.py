@@ -45,6 +45,17 @@ class RuntimeContextBuilder:
             },
             "facts": [fact.model_dump(mode="json") for fact in sorted(state.facts.asserted, key=lambda item: item.key)],
             "summary": state.story_summary,
+            "progression": {
+                "scene_purpose": state.compiled_story.scene_purpose,
+                "dramatic_question": state.compiled_story.dramatic_question,
+                "pressure": _fact_value(state, "scene_pressure", "scene"),
+                "goals": [item.model_dump(mode="json") for item in state.compiled_story.goals],
+                "tasks": [item.model_dump(mode="json") for item in state.compiled_story.tasks],
+                "clues": [item.model_dump(mode="json") for item in state.compiled_story.clues],
+                "relationships": [item.model_dump(mode="json") for item in state.compiled_story.relationships],
+                "timed_events": [item.model_dump(mode="json") for item in state.compiled_story.timed_events],
+                "endings": [item.model_dump(mode="json") for item in state.compiled_story.endings],
+            },
             "recent_events": [event.__dict__ for event in state.recent_events[-self.event_limit :]],
             "active_beats": [
                 {"id": beat.id, "completion_tags": [tag.id for tag in beat.completion_tags]} for beat in active
@@ -81,6 +92,11 @@ class RuntimeContextBuilder:
         }
         encoded = json.dumps(payload, default=list, separators=(",", ":"))
         return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)
+
+
+def _fact_value(state: RuntimeState, predicate: str, subject: str) -> str | None:
+    matches = state.facts.matching(predicate, subject)
+    return matches[0].value if matches else None
 
 
 def _opening_context(state: RuntimeState) -> dict[str, Any]:
