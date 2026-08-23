@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from storygame.authoring.contracts import Beat, CompiledStory
+from storygame.runtime.facts import Fact, FactStore
 
 
 @dataclass
@@ -44,6 +45,7 @@ class RuntimeState:
     turn_index: int = 0
     recent_events: list[RuntimeEvent] = field(default_factory=list)
     story_summary: str = ""
+    facts: FactStore = field(default_factory=FactStore)
 
     @property
     def active_beats(self) -> tuple[Beat, ...]:
@@ -75,11 +77,110 @@ def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
     flags = {value for value in initial.get("flags", []) if isinstance(value, str)}
     raw_items = initial.get("items", {})
     items = {key: dict(value) for key, value in raw_items.items() if isinstance(key, str) and isinstance(value, dict)}
+    for definition in compiled_story.item_definitions:
+        item = items.setdefault(definition.id, {})
+        item.setdefault("name", definition.name)
+        item.setdefault("kind", definition.kind)
+        item.setdefault("description", definition.description)
+        item.setdefault("affordances", list(definition.affordances))
+        item.setdefault("portable", definition.portable)
+        item.setdefault("holder", definition.initial_holder)
+        if definition.readable is not None:
+            item.setdefault("readable", definition.readable.model_dump(mode="json"))
+    for document in compiled_story.readable_documents:
+        item = items.get(document.item_id)
+        if item is not None:
+            item.setdefault("readable", document.model_dump(mode="json"))
+    facts = _bootstrap_facts(compiled_story, location, attributes, items)
+    for flag in flags:
+        facts.assert_fact(Fact(predicate="flag", subject="world", object=flag))
     return RuntimeState(
         compiled_story=compiled_story,
         world=WorldState(location=location, flags=flags, attributes=attributes, items=items),
         beat_runtime={beat.id: BeatRuntime(beat_id=beat.id) for beat in compiled_story.beats},
+        facts=facts,
     )
+
+
+def _bootstrap_facts(
+    compiled_story: CompiledStory,
+    location: str,
+    attributes: dict[str, Any],
+    items: dict[str, dict[str, Any]],
+) -> FactStore:
+    facts = FactStore()
+    facts.assert_fact(Fact(predicate="at", subject="player", object=location))
+    for raw_fact in attributes.get("facts", ()):
+        try:
+            facts.assert_fact(Fact.model_validate(raw_fact))
+        except (TypeError, ValueError) as exc:
+            raise TypeError(f"compiled story contains an invalid initial fact: {exc}") from exc
+    active_goal = attributes.get("active_goal")
+    if isinstance(active_goal, str):
+        facts.assert_fact(Fact(predicate="active_goal", subject="player", object=active_goal))
+    scene_objective = attributes.get("scene_objective")
+    if isinstance(scene_objective, str):
+        facts.assert_fact(Fact(predicate="scene_objective", subject="scene", value=scene_objective))
+    protagonist = attributes.get("protagonist")
+    if isinstance(protagonist, dict):
+        protagonist_id = protagonist.get("id")
+        if isinstance(protagonist_id, str):
+            facts.assert_fact(Fact(predicate="identity", subject="player", object=protagonist_id))
+        role = protagonist.get("role")
+        if isinstance(role, str):
+            facts.assert_fact(Fact(predicate="role", subject="player", object=role))
+    opening = compiled_story.opening
+    if opening is not None:
+        for contact in opening.contacts:
+            if contact.location == location:
+                facts.assert_fact(Fact(predicate="at", subject=contact.id, object=contact.location))
+                facts.assert_fact(Fact(predicate="present", subject=contact.id, object=location))
+                facts.assert_fact(Fact(predicate="role", subject=contact.id, object=contact.role))
+                facts.assert_fact(
+                    Fact(predicate="relationship", subject="player", object=f"{contact.id}:{contact.relationship}")
+                )
+                for knowledge in contact.public_knowledge:
+                    facts.assert_fact(Fact(predicate="knows", subject=contact.id, object=knowledge))
+                    facts.assert_fact(Fact(predicate="knows", subject="player", object=knowledge))
+    opening_contact = attributes.get("opening_contact")
+    if opening is not None and opening.contacts or not isinstance(opening_contact, dict):
+        opening_contact = None
+    if isinstance(opening_contact, dict):
+        contact_id = opening_contact.get("id")
+        if isinstance(contact_id, str):
+            facts.assert_fact(Fact(predicate="at", subject=contact_id, object=location))
+            facts.assert_fact(Fact(predicate="present", subject=contact_id, object=location))
+            role = opening_contact.get("role")
+            if isinstance(role, str):
+                facts.assert_fact(Fact(predicate="role", subject=contact_id, object=role))
+            relationship = opening_contact.get("relationship")
+            if isinstance(relationship, str):
+                facts.assert_fact(
+                    Fact(predicate="relationship", subject="player", object=f"{contact_id}:{relationship}")
+                )
+            facts.assert_fact(Fact(predicate="npc_available", subject=contact_id, object=location))
+    for item_id, item in items.items():
+        holder = item.get("holder")
+        if isinstance(holder, str) and holder:
+            facts.assert_fact(Fact(predicate="custody", subject=item_id, object=holder))
+            if holder == "player":
+                facts.assert_fact(Fact(predicate="possession", subject="player", object=item_id))
+        for affordance in item.get("affordances", ()):
+            if isinstance(affordance, str):
+                facts.assert_fact(Fact(predicate="item_affordance", subject=item_id, object=affordance))
+        readable = item.get("readable")
+        if isinstance(readable, dict):
+            for key in readable.get("knowledge", ()):
+                if isinstance(key, str):
+                    facts.assert_fact(Fact(predicate="unknown", subject="player", object=key))
+            disclosures = readable.get("npc_disclosures", {})
+            if isinstance(disclosures, dict):
+                for speaker, keys in disclosures.items():
+                    if isinstance(speaker, str) and isinstance(keys, list | tuple):
+                        for key in keys:
+                            if isinstance(key, str):
+                                facts.assert_fact(Fact(predicate="knows", subject=speaker, object=key))
+    return facts
 
 
 def runtime_state_bytes(state: RuntimeState) -> bytes:
@@ -103,5 +204,6 @@ def runtime_state_bytes(state: RuntimeState) -> bytes:
         "turn_index": state.turn_index,
         "recent_events": [event.__dict__ for event in state.recent_events],
         "story_summary": state.story_summary,
+        "facts": state.facts.as_json(),
     }
     return json.dumps(payload, sort_keys=True).encode()

@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from storygame.authoring.contracts import CompiledStory
+from storygame.runtime.facts import FactStore
 from storygame.runtime.state import BeatRuntime, RuntimeEvent, RuntimeState, WorldState, runtime_state_bytes
 
 SAVE_SCHEMA_VERSION = "runtime-state-v2"
@@ -126,6 +127,7 @@ def _restore(payload: dict[str, object], story: CompiledStory) -> RuntimeState:
         turn_index=int(payload["turn_index"]),
         recent_events=events,
         story_summary=str(payload.get("story_summary", "")),
+        facts=FactStore.from_json(payload.get("facts", [])),
     )
 
 

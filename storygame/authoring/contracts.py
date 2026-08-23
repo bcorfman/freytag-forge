@@ -74,6 +74,29 @@ class Beat(_Contract):
     answers_central_question: bool = False
 
 
+class ReadableDocument(_Contract):
+    """Package-declared disclosure routes for a readable item."""
+
+    item_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    discovery_key: str = Field(pattern=_ID_PATTERN, max_length=80)
+    knowledge: tuple[str, ...] = Field(default=(), max_length=32)
+    npc_disclosures: dict[str, tuple[str, ...]] = Field(default_factory=dict, max_length=32)
+    leads: tuple[str, ...] = Field(default=(), max_length=16)
+
+
+class ItemDefinition(_Contract):
+    """Generic item affordances and initial custody."""
+
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+    kind: str = Field(min_length=1, max_length=80)
+    description: str = Field(min_length=1, max_length=1200)
+    affordances: tuple[str, ...] = Field(default=("examine", "take", "use"), max_length=16)
+    portable: bool = True
+    initial_holder: str = Field(min_length=1, max_length=120)
+    readable: ReadableDocument | None = None
+
+
 class CompiledStory(_Contract):
     schema_version: Literal["compiled-story-v1"]
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
@@ -87,3 +110,5 @@ class CompiledStory(_Contract):
     characters: tuple[Character, ...] = Field(min_length=1, max_length=32)
     beats: tuple[Beat, ...] = Field(max_length=32)
     protected_revelations: tuple[ProtectedRevelation, ...] = Field(default=(), max_length=32)
+    item_definitions: tuple[ItemDefinition, ...] = Field(default=(), max_length=64)
+    readable_documents: tuple[ReadableDocument, ...] = Field(default=(), max_length=64)

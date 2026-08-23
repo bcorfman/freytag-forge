@@ -43,6 +43,7 @@ class RuntimeContextBuilder:
                 "attributes": state.world.attributes,
                 "items": state.world.items,
             },
+            "facts": [fact.model_dump(mode="json") for fact in sorted(state.facts.asserted, key=lambda item: item.key)],
             "summary": state.story_summary,
             "recent_events": [event.__dict__ for event in state.recent_events[-self.event_limit :]],
             "active_beats": [
@@ -62,6 +63,7 @@ class RuntimeContextBuilder:
                     "world.flags (add/remove string)",
                     "world.attributes.<name> (set)",
                     "world.items.<item_id>.holder (set string)",
+                    "facts (add/remove typed assertable fact)",
                 ],
                 "beat_updates": "array of {beat_id,completion_tags,evidence}; use [] when no beat completes",
                 "completion_tag_rule": (
