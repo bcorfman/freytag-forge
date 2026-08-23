@@ -98,6 +98,7 @@ async function runCommand(command, echoInput = true) {
   try {
     const payload = await apiRequest("/api/v1/turn", {
       session_id: sessionId,
+      genre: DEFAULT_SESSION_PAYLOAD.genre,
       command,
     });
     const lines = Array.isArray(payload.lines) ? payload.lines : [];
