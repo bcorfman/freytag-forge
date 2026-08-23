@@ -95,6 +95,19 @@ def test_staging_promotion_automatically_verifies_pages_and_api_identity() -> No
     assert 'test "$pages_channel" = staging' in staging
     assert 'test "$pages_sha" = "$GITHUB_SHA"' in staging
     assert 'test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA"' in staging
+    assert "/api/v1/version" in staging
+    assert "runtime // empty" in staging
+    assert "-m live_e2e" in staging
+
+
+def test_production_promotion_verifies_v2_identity_and_live_targets() -> None:
+    root = Path(__file__).resolve().parents[1]
+    promotion = (root / ".github/workflows/promote-production.yml").read_text(encoding="utf-8")
+
+    assert "/api/v1/version" in promotion
+    assert "runtime // empty" in promotion
+    assert "HOSTED_DEMO_PAGES_URL" in promotion
+    assert "-m live_e2e" in promotion
 
 
 def test_non_production_badge_stays_hidden_until_the_staging_bundle_enables_it() -> None:

@@ -101,6 +101,7 @@ jobs:
           echo "- Railway known-good deployment before promotion: \`$known_good_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
           railway variable set "FREYTAG_DEPLOYMENT_SHA=$DEPLOYED_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
           timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA"
+          version=''
           health_channel=''
           health_sha=''
           for attempt in $(seq 1 60); do
@@ -108,12 +109,18 @@ jobs:
             deployment_status="$(jq -r --arg sha "$DEPLOYED_SHA" 'map(select(.message? == ("github-sha=" + $sha) or .meta.message? == ("github-sha=" + $sha))) | sort_by(.createdAt) | last | .status // "not-found"' <<<"$deployments")"
             echo "Railway deployment status: $deployment_status (attempt $attempt/60)"
             health="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/health" || true)"
+            version="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/version" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
-            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA" && break
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$(jq -r '.runtime // empty' <<<"$health" 2>/dev/null || true)" = v2 && test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = v2 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = production && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$DEPLOYED_SHA" && break
             sleep 10
           done
           test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA"
+          test "$(jq -r '.runtime // empty' <<<"$health")" = v2
+          test "$(jq -r '.api // empty' <<<"$version")" = v1
+          test "$(jq -r '.runtime // empty' <<<"$version")" = v2
+          test "$(jq -r '.channel // empty' <<<"$version")" = production
+          test "$(jq -r '.sha // empty' <<<"$version")" = "$DEPLOYED_SHA"
           {
             echo "api_base_url=${RAILWAY_PUBLIC_API_URL%/}"
             echo "sha=$DEPLOYED_SHA"
@@ -148,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-production.outputs.api_base_url }}
-      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+      HOSTED_DEMO_PAGES_URL: https://bcorfman.github.io/freytag-forge
       HOSTED_DEMO_CHANNEL: production
       DEPLOYED_SHA: ${{ needs.deploy-production.outputs.sha }}
     steps:
@@ -161,7 +168,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Verify browser flow at the production root
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py
+        run: TMPDIR=/tmp uv run pytest -q --no-cov -m live_e2e tests/test_hosted_demo_live.py
 
   record-production-promotion:
     name: Record production promotion
