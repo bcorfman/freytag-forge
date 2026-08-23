@@ -25,7 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOSTED_DEMO_API_BASE_URL: ${{ inputs.api_base_url || vars.VITE_API_BASE_URL }}
-      HOSTED_DEMO_ORIGIN: https://bcorfman.github.io
+      HOSTED_DEMO_PAGES_URL: https://bcorfman.github.io/freytag-forge
+      HOSTED_DEMO_CHANNEL: production
+      DEPLOYED_SHA: ${{ inputs.ref || github.sha }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -38,4 +40,4 @@ jobs:
       - name: Require a deployed API target
         run: test -n "$HOSTED_DEMO_API_BASE_URL"
       - name: Exercise the deployed browser session flow
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py
+        run: TMPDIR=/tmp uv run pytest -q --no-cov -m live_e2e tests/test_hosted_demo_live.py

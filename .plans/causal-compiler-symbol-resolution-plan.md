@@ -159,9 +159,9 @@ repairs remain fully validated and critic-reviewed.
 - [x] Require generated candidates to be manually reviewed before promotion; no candidate becomes a
   runtime input merely because it binds successfully.
 
-**Exit criteria:** [ ] a real opted-in evaluation run shows fewer
+**Exit criteria:** [x] a real opted-in evaluation run shows fewer
 wrong-namespace and unrelated-repair failures without weakened semantic rules;
-[ ] reviewed cross-genre artifacts pass the existing promotion workflow.
+[x] reviewed cross-genre artifacts pass the existing promotion workflow.
 
 ### Phase 5 — Documentation and cleanup
 
