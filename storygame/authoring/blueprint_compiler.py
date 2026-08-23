@@ -383,6 +383,7 @@ class BlueprintCompiler:
             source_profile=source.profile,
             source_authoring_context={
                 "opening_public_boundary": source.opening_public_boundary,
+                "opening_setup": source.opening_setup,
                 "hard_constraints": source.hard_constraints,
                 "creative_direction": source.creative_direction,
                 "extensions": source.extensions,

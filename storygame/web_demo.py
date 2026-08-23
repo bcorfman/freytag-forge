@@ -51,7 +51,24 @@ def _default_model() -> TurnModel:
 
 
 def _state_payload(state: RuntimeState) -> dict[str, object]:
-    return {"location": state.world.location, "room_name": state.world.location, "turn_index": state.turn_index}
+    navigation = state.world.attributes.get("navigation", {})
+    routes = navigation.get("routes", []) if isinstance(navigation, dict) else []
+    names = navigation.get("names", {}) if isinstance(navigation, dict) else {}
+    destinations = [
+        names[route["to"]]
+        for route in routes
+        if isinstance(route, dict)
+        and route.get("from") == state.world.location
+        and isinstance(route.get("to"), str)
+        and isinstance(names, dict)
+        and isinstance(names.get(route["to"]), str)
+    ]
+    return {
+        "location": state.world.location,
+        "room_name": state.world.location,
+        "turn_index": state.turn_index,
+        "available_destinations": list(dict.fromkeys(destinations)),
+    }
 
 
 def _story_for(genre: str):

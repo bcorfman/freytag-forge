@@ -255,6 +255,8 @@ def _causal_story_as_compiled_story(story: object) -> CompiledStory:
     if any(not revelation.reveal_after for revelation in protected):
         raise CompilationError("FIXTURE_INVALID", "approved fixture has a protected truth without a runtime release")
     location = next((item.id for item in story.locations if item.initial_access), "opening")
+    opening_locations = {item.id: item for item in story.locations if item.initial_access}
+    routes_from_opening = [route for route in story.connected_routes if route.from_location_id == location]
     projected = CompiledStory(
         schema_version="compiled-story-v1",
         id=story.id,
@@ -268,6 +270,35 @@ def _causal_story_as_compiled_story(story: object) -> CompiledStory:
             "flags": list(story.opening_truth_ids),
             "premise": story.premise,
             "opening_truth_ids": list(story.opening_truth_ids),
+            "opening_context": {
+                "premise": story.premise,
+                "public_facts": [truths[truth_id].summary for truth_id in story.opening_truth_ids],
+                "current_location": location,
+                "location_purpose": (
+                    opening_locations[location].role if location in opening_locations else "opening scene"
+                ),
+                "figures": [participant.id.replace("_", " ").title() for participant in story.participants],
+                "available_destinations": [
+                    route.aliases[0] if route.aliases else route.to_location_id.replace("_", " ")
+                    for route in routes_from_opening
+                ],
+                "first_beat": (
+                    "Investigate the opening situation, speak with relevant people, and choose an available lead."
+                ),
+                **(story.opening.model_dump(mode="json") if story.opening is not None else {}),
+            },
+            "navigation": {
+                "names": {item.id: item.id.replace("_", " ").title() for item in story.locations},
+                "routes": [
+                    {
+                        "from": route.from_location_id,
+                        "to": route.to_location_id,
+                        "aliases": list(route.aliases),
+                        "prerequisite_truths": list(route.prerequisite_truths),
+                    }
+                    for route in story.connected_routes
+                ],
+            },
         },
         characters=participants,
         beats=tuple(beats),

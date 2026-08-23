@@ -36,6 +36,7 @@ class RuntimeContextBuilder:
         ]
         payload = {
             "player_input": player_input,
+            "opening": _opening_context(state),
             "world": {
                 "location": state.world.location,
                 "flags": sorted(state.world.flags),
@@ -71,3 +72,56 @@ class RuntimeContextBuilder:
         }
         encoded = json.dumps(payload, default=list, separators=(",", ":"))
         return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)
+
+
+def _opening_context(state: RuntimeState) -> dict[str, Any]:
+    """Expose only package-declared public orientation for the opening turn."""
+
+    declared = state.world.attributes.get("opening_context", {})
+    if isinstance(declared, dict):
+        public_facts = declared.get("public_facts", [])
+        if not public_facts:
+            public_facts = _legacy_public_facts(state.world.attributes)
+        if not public_facts:
+            public_facts = [state.compiled_story.premise]
+        navigation = state.world.attributes.get("navigation", {})
+        routes = navigation.get("routes", []) if isinstance(navigation, dict) else []
+        destinations = [
+            route.get("to", "").replace("_", " ")
+            for route in routes
+            if isinstance(route, dict) and route.get("from") == state.world.location
+        ]
+        return {
+            "premise": state.compiled_story.premise,
+            "public_facts": public_facts,
+            "current_location": state.world.location,
+            "available_destinations": declared.get("available_destinations") or destinations,
+            "first_beat": "Investigate the opening situation and choose a lead.",
+            **declared,
+            "protected_boundaries": [
+                {"id": item.id, "summary": item.summary, "reveal_after": item.reveal_after}
+                for item in state.compiled_story.protected_revelations
+            ],
+        }
+    return {
+        "premise": state.compiled_story.premise,
+        "public_facts": [],
+        "current_location": state.world.location,
+        "available_destinations": [],
+        "first_beat": "Investigate the opening situation and choose a lead.",
+        "protected_boundaries": [
+            {"id": item.id, "summary": item.summary, "reveal_after": item.reveal_after}
+            for item in state.compiled_story.protected_revelations
+        ],
+    }
+
+
+def _legacy_public_facts(attributes: dict[str, Any]) -> list[str]:
+    facts: list[str] = []
+    situation = attributes.get("opening_situation")
+    if isinstance(situation, str) and situation:
+        facts.append(situation)
+    briefing = attributes.get("public_briefing")
+    if isinstance(briefing, dict):
+        facts.extend(value for value in briefing.values() if isinstance(value, str) and value)
+    return facts

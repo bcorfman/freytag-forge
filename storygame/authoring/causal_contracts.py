@@ -68,6 +68,16 @@ class ConnectedRoute(_Contract):
     prerequisite_truths: tuple[str, ...] = Field(default=(), max_length=16)
 
 
+class OpeningMetadata(_Contract):
+    """Author/compiler output used to orient the player before ordinary turns."""
+
+    scene: str = Field(min_length=1, max_length=1200)
+    player_context: str = Field(min_length=1, max_length=1200)
+    companions: tuple[str, ...] = Field(default=(), max_length=16)
+    situation: str = Field(min_length=1, max_length=1600)
+    next_steps: tuple[str, ...] = Field(min_length=1, max_length=16)
+
+
 class CausalEvent(_Contract):
     id: str = Field(pattern=_ID, max_length=80)
     actor_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
@@ -167,6 +177,7 @@ class CausalCompiledStory(_Contract):
     title: str = Field(min_length=1, max_length=160)
     premise: str = Field(min_length=1, max_length=1200)
     opening_truth_ids: tuple[str, ...] = Field(default=(), max_length=64)
+    opening: OpeningMetadata | None = None
     truths: tuple[Truth, ...] = Field(min_length=1, max_length=128)
     participants: tuple[Participant, ...] = Field(min_length=1, max_length=64)
     locations: tuple[Location, ...] = Field(min_length=1, max_length=64)
