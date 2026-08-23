@@ -25,12 +25,15 @@ def test_hosted_demo_uses_v2_runtime_and_persists_accepted_turns(tmp_path) -> No
         turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "I investigate."})
         assert turn.status_code == 200
         assert turn.json()["lines"] == ["The next choice is yours."]
-        assert turn.json()["state"] == {
+        assert {
+            key: turn.json()["state"][key] for key in ("location", "room_name", "turn_index", "available_destinations")
+        } == {
             "location": "foyer",
             "room_name": "foyer",
             "turn_index": 1,
             "available_destinations": ["Study", "Library", "West Gallery", "Grounds"],
         }
+        assert turn.json()["state"]["opening"]["first_available_actions"]
         assert turn.json()["model_calls"] == 1
 
         loaded = client.post("/api/v1/session/load", json={"session_id": session_id, "genre": "mystery"})

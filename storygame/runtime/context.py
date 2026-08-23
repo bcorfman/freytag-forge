@@ -91,6 +91,8 @@ def _opening_context(state: RuntimeState) -> dict[str, Any]:
             for route in routes
             if isinstance(route, dict) and route.get("from") == state.world.location
         ]
+        opening = state.compiled_story.opening
+        typed = opening.model_dump(mode="json") if opening is not None else {}
         return {
             "premise": state.compiled_story.premise,
             "public_facts": public_facts,
@@ -98,6 +100,7 @@ def _opening_context(state: RuntimeState) -> dict[str, Any]:
             "available_destinations": declared.get("available_destinations") or destinations,
             "first_beat": "Investigate the opening situation and choose a lead.",
             **declared,
+            **typed,
             "protected_boundaries": [
                 {"id": item.id, "summary": item.summary, "reveal_after": item.reveal_after}
                 for item in state.compiled_story.protected_revelations

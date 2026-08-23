@@ -33,8 +33,20 @@ Just a living story that meets you where you are.
   authored work when a repair is needed.
 - Shape stories around causes, discoveries, alternate approaches, and endings
   that can actually be reached.
+- Start every new story already oriented: who you are, why you arrived, who is
+  with you, what is public, and what you can try next.
+- Meet opening contacts as real continuity anchors, with declared roles,
+  relationships, knowledge, locations, and anything they are carrying.
 
 **Less prompt luck. More playable story.**
+
+## Drop into the story, not a loading screen
+
+Phase 1 makes the first moment count. The hosted experience now serves a
+spoiler-safe opening scene directly from the reviewed story package—no fake
+automatic `look`, no wasted turn, no mystery about what to do next. Every
+genre gets the same crisp launch: a grounded arrival, a public briefing, a
+present cast, and meaningful first moves.
 
 ## The world remembers what you’ve already seen
 

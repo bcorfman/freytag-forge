@@ -76,6 +76,11 @@ class OpeningMetadata(_Contract):
     companions: tuple[str, ...] = Field(default=(), max_length=16)
     situation: str = Field(min_length=1, max_length=1600)
     next_steps: tuple[str, ...] = Field(min_length=1, max_length=16)
+    protagonist_context: str | None = Field(default=None, max_length=1200)
+    arrival_context: str | None = Field(default=None, max_length=1200)
+    public_briefing: tuple[str, ...] = Field(default=(), max_length=32)
+    scene_purpose: str | None = Field(default=None, max_length=1200)
+    first_available_actions: tuple[str, ...] = Field(default=(), max_length=16)
 
 
 class CausalEvent(_Contract):

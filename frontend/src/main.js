@@ -75,13 +75,29 @@ async function createSession() {
     sessionId = payload.session_id;
     setStatus(`Session ${sessionId.slice(0, 8)} ready`);
     resetTranscript();
-    await runCommand("look", false);
+    renderOpening(payload.state.opening);
   } catch (error) {
     sessionId = "";
     setStatus(error instanceof Error ? error.message : "Session creation failed.", "error");
   } finally {
     setBusy(false);
     commandInputElement.focus();
+  }
+}
+
+function renderOpening(opening) {
+  if (!opening || typeof opening !== "object") {
+    return;
+  }
+  appendEntry(opening.scene, "output");
+  appendEntry(
+    [opening.protagonist_context, opening.arrival_context, ...opening.public_briefing]
+      .filter((line) => typeof line === "string" && line.length > 0)
+      .join("\n\n"),
+    "output",
+  );
+  if (Array.isArray(opening.first_available_actions) && opening.first_available_actions.length > 0) {
+    appendEntry(`Try: ${opening.first_available_actions.join(" • ")}`, "system");
   }
 }
 

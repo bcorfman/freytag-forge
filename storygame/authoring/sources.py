@@ -44,6 +44,16 @@ class StoryBrief(_SourceContract):
         return self
 
 
+class _OpeningCompanionSource(_SourceContract):
+    id: str = Field(pattern=r"^[a-z][a-z0-9_]*$", max_length=80)
+    name: str | None = Field(default=None, max_length=120)
+    role: str = Field(min_length=1, max_length=80)
+    relationship: str | None = Field(default=None, max_length=160)
+    location: str | None = Field(default=None, max_length=80)
+    public_knowledge: tuple[str, ...] = Field(default=(), max_length=32)
+    item_custody: tuple[str, ...] = Field(default=(), max_length=32)
+
+
 class StoryOutline(_SourceContract):
     id: str | int
     genre: str = Field(min_length=1, max_length=80)
@@ -53,6 +63,12 @@ class StoryOutline(_SourceContract):
     authoring_only: bool = False
     opening_public_boundary: str = Field(default="", max_length=4000)
     opening_setup: dict[str, Any] = Field(default_factory=dict)
+    protagonist_context: str | None = Field(default=None, max_length=1200)
+    opening_companions: tuple[_OpeningCompanionSource, ...] = Field(default=(), max_length=16)
+    public_briefing: tuple[str, ...] = Field(default=(), max_length=32)
+    arrival_context: str | None = Field(default=None, max_length=1200)
+    scene_purpose: str | None = Field(default=None, max_length=1200)
+    first_available_actions: tuple[str, ...] = Field(default=(), max_length=16)
     terminal_constraints: tuple[str, ...] = Field(default=(), max_length=64)
 
 
@@ -154,7 +170,23 @@ class StorySourceLoader:
             authoring_only=outline.authoring_only,
             premise=outline.outline,
             opening_public_boundary=outline.opening_public_boundary,
-            opening_setup=outline.opening_setup,
+            opening_setup={
+                **outline.opening_setup,
+                **{
+                    key: value
+                    for key, value in {
+                        "protagonist_context": outline.protagonist_context,
+                        "opening_companions": tuple(
+                            companion.model_dump(mode="json") for companion in outline.opening_companions
+                        ),
+                        "public_briefing": outline.public_briefing,
+                        "arrival_context": outline.arrival_context,
+                        "scene_purpose": outline.scene_purpose,
+                        "first_available_actions": outline.first_available_actions,
+                    }.items()
+                    if value
+                },
+            },
             hard_constraints={"terminal_constraints": outline.terminal_constraints},
             creative_direction={
                 key: (value,) for key, value in {"tone": outline.tone, "variant": outline.variant}.items() if value

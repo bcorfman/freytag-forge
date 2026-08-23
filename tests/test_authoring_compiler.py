@@ -13,6 +13,7 @@ from storygame.authoring.compiler import (
     validate_compiled_story,
 )
 from storygame.authoring.contracts import CompiledStory
+from storygame.runtime.state import bootstrap_runtime_state
 
 
 def _story_payload() -> dict[str, object]:
@@ -72,6 +73,35 @@ def test_compiled_story_contract_and_local_validation_accept_valid_story():
     assert isinstance(story, CompiledStory)
     assert story.id == "harbor_signal"
     assert story.beats[-1].answers_central_question is True
+
+
+def test_typed_opening_contact_is_validated_and_survives_runtime_bootstrap():
+    payload = _story_payload()
+    payload["initial_world_state"] = {"location": "dock"}
+    payload["opening"] = {
+        "scene": "The storm-lashed dock.",
+        "protagonist_context": "You are the station pilot sent to restore the beacon.",
+        "arrival_context": "Your shuttle has just reached the dock.",
+        "public_briefing": ["The beacon is failing."],
+        "scene_purpose": "Establish the failing beacon and the available help.",
+        "contacts": [
+            {
+                "id": "pilot",
+                "name": "Ira",
+                "role": "pilot",
+                "relationship": "You are responsible for the crew together.",
+                "location": "dock",
+                "public_knowledge": ["The beacon is failing."],
+                "item_custody": [],
+            }
+        ],
+        "first_available_actions": ["Question Ira", "Inspect the beacon"],
+    }
+
+    story = validate_compiled_story(payload)
+    state = bootstrap_runtime_state(story)
+
+    assert state.world.attributes["opening_facts"]["contacts"][0]["id"] == "pilot"
 
 
 @pytest.mark.parametrize(

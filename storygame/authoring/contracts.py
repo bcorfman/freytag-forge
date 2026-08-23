@@ -20,6 +20,30 @@ class Character(_Contract):
     description: str = Field(min_length=1, max_length=500)
 
 
+class OpeningContact(_Contract):
+    """A declared person who is present and addressable at session start."""
+
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+    role: str = Field(min_length=1, max_length=80)
+    relationship: str = Field(min_length=1, max_length=160)
+    location: str = Field(pattern=_ID_PATTERN, max_length=80)
+    public_knowledge: tuple[str, ...] = Field(default=(), max_length=32)
+    item_custody: tuple[str, ...] = Field(default=(), max_length=32)
+
+
+class OpeningMetadata(_Contract):
+    """Spoiler-safe orientation data emitted by the authoring compiler."""
+
+    scene: str = Field(min_length=1, max_length=1200)
+    protagonist_context: str = Field(min_length=1, max_length=1200)
+    arrival_context: str = Field(min_length=1, max_length=1200)
+    public_briefing: tuple[str, ...] = Field(min_length=1, max_length=32)
+    scene_purpose: str = Field(min_length=1, max_length=1200)
+    contacts: tuple[OpeningContact, ...] = Field(default=(), max_length=16)
+    first_available_actions: tuple[str, ...] = Field(min_length=1, max_length=16)
+
+
 class CompletionTag(_Contract):
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
     description: str = Field(min_length=1, max_length=300)
@@ -57,6 +81,7 @@ class CompiledStory(_Contract):
     genre: str = Field(min_length=1, max_length=80)
     title: str = Field(min_length=1, max_length=160)
     premise: str = Field(min_length=1, max_length=1200)
+    opening: OpeningMetadata | None = None
     central_question: str = Field(min_length=1, max_length=500)
     initial_world_state: dict[str, Any] = Field(default_factory=dict)
     characters: tuple[Character, ...] = Field(min_length=1, max_length=32)

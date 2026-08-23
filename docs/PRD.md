@@ -20,6 +20,25 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
+## V1 porting Phase 1: opening and cast continuity
+
+Opening orientation is a typed authoring projection, not freeform runtime
+truth. `StoryOutline` normalizes protagonist context, opening companions,
+public briefing, arrival context, scene purpose, and first available actions.
+The compiler emits `CompiledStory.opening` as `OpeningMetadata`; each
+`OpeningContact` carries identity, role, relationship, opening location,
+public knowledge, and item custody. Local validation requires contacts to be
+declared in the cast and present at the initial location, and rejects protected
+revelation summaries in public opening text.
+
+Bootstrap copies the accepted opening declarations into the runtime's opening
+fact projection before any player-facing output. The hosted session response
+projects the same typed metadata, and the frontend renders it without issuing
+an automatic `look` turn. Ordinary turns remain proposal-first and the
+opening projection cannot mutate state or bypass commit validation. Existing
+reviewed causal artifacts remain loadable: the compiler supplies safe generic
+defaults when legacy opening metadata is absent.
+
 ## V1 porting Phase 0: V2 capability ledger
 
 Phase 0 does not certify the historical V1 implementation. The machine-readable
