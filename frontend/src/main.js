@@ -75,7 +75,7 @@ async function createSession() {
     sessionId = payload.session_id;
     setStatus(`Session ${sessionId.slice(0, 8)} ready`);
     resetTranscript();
-    await runCommand("look");
+    await runCommand("look", false);
   } catch (error) {
     sessionId = "";
     setStatus(error instanceof Error ? error.message : "Session creation failed.", "error");
@@ -85,12 +85,14 @@ async function createSession() {
   }
 }
 
-async function runCommand(command) {
+async function runCommand(command, echoInput = true) {
   if (!sessionId) {
     throw new Error("No session available.");
   }
 
-  appendEntry(command, "input");
+  if (echoInput) {
+    appendEntry(command, "input");
+  }
   setBusy(true);
   setStatus("Awaiting reply...");
   try {
