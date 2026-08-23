@@ -191,6 +191,30 @@ knowledge fact is committed before the response is rendered. Already-known
 facts, wrong speakers, unavailable speakers, and non-readable items are
 rejected. No package lookup or narration text can create a clue or disclosure.
 
+## V1 porting Phase 3: dialogue and freeform action parity
+
+`DialogueProposal` is the typed runtime boundary for NPC speech. It carries an
+addressed `target_id`, matching `speaker_id`, a bounded list of permitted fact
+ids, player-visible dialogue, and bounded `StateOperation` effects. Validation
+requires the target to be present in the current scene and explicitly named or
+otherwise unambiguously addressed by the player. The speaker must match the
+target and possess every permitted fact. Prompt parroting and narrator-style
+speaker substitution are rejected with typed fail-closed errors.
+
+Dialogue effects are applied to a cloned candidate through the same atomic
+fact/compatibility-view commit path as ordinary turns. Only after that commit
+does the engine project the NPC's dialogue as the response. Protected
+revelations are checked against both narration and dialogue, so spoken prose
+cannot become an alternate knowledge authority.
+
+Ordinary freeform play remains model-interpreted. The runtime only normalizes
+unambiguous declared movement and visible-item affordances such as inspect and
+take; those normalized intents still become bounded state operations and pass
+local validation. It does not replace story interpretation with a fixed action
+table. Ambiguous or unavailable targets/items remain model proposals and are
+validated or rejected at the same boundary. The normal turn still permits one
+provider request plus one bounded recovery request.
+
 ## Goals
 - Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.

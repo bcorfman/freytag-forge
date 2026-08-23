@@ -33,6 +33,17 @@ class BeatUpdate(BaseModel):
     evidence: str = Field(default="", max_length=800)
 
 
+class DialogueProposal(BaseModel):
+    """A validated addressed-NPC response with bounded state effects."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    target_id: str = Field(min_length=1, max_length=80)
+    speaker_id: str = Field(min_length=1, max_length=80)
+    permitted_context: tuple[str, ...] = Field(default=(), max_length=32)
+    dialogue: str = Field(min_length=1, max_length=2000)
+    effects: tuple[StateOperation, ...] = Field(default=(), max_length=16)
+
+
 class DocumentDisclosure(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     item_id: str = Field(min_length=1, max_length=80)
@@ -46,6 +57,7 @@ class TurnResult(BaseModel):
     operations: tuple[StateOperation, ...] = Field(default=(), max_length=32)
     beat_updates: tuple[BeatUpdate, ...] = Field(default=(), max_length=16)
     disclosures: tuple[DocumentDisclosure, ...] = Field(default=(), max_length=16)
+    dialogue: DialogueProposal | None = None
     summary_delta: str | None = Field(default=None, max_length=1200)
     material_progress: bool = False
 
