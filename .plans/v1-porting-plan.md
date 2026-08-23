@@ -186,8 +186,21 @@ Add cross-genre progression fixtures proving that the same policy families
 support investigation, fantasy quest, science-fiction crisis, and relationship
 choice without genre branches.
 
-Exit criteria: each fixture has a playable setup, rising progression, crisis,
-climax, resolution, failure-forward alternatives, and a valid ending.
+- [x] Add validated generic compiled metadata for goals, tasks, clues, scene
+  purpose, dramatic question, pressure, relationships, timed events, and
+  endings.
+- [x] Bootstrap progression declarations into typed facts before the first
+  turn, including initial task status and relationship state.
+- [x] Expose progression context to the model from declarations plus current
+  fact-backed pressure, without making beat metadata a second authority.
+- [x] Commit timed-event consequences and bounded pressure changes atomically,
+  once per event, before rendering the turn.
+- [x] Add authoring reference validation and cross-genre runtime regression
+  coverage.
+
+- [x] Exit criteria: each fixture has a playable setup, rising progression,
+  crisis, climax, resolution, failure-forward alternatives, and a valid
+  ending contract.
 
 ### Phase 5 — Persistence, artifacts, and replay parity
 

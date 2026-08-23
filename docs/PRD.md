@@ -215,6 +215,30 @@ table. Ambiguous or unavailable targets/items remain model proposals and are
 validated or rejected at the same boundary. The normal turn still permits one
 provider request plus one bounded recovery request.
 
+## V1 porting Phase 4: goals, dramatic state, and progression
+
+`CompiledStory` carries generic progression metadata: `goals`, `tasks`,
+`clues`, `scene_purpose`, `dramatic_question`, `initial_pressure`,
+`relationships`, `timed_events`, and `endings`. These are immutable reviewed
+authoring inputs. Cross-reference validation rejects tasks without a declared
+goal, endings with unknown beats, and duplicate timed-event IDs.
+
+Bootstrap realizes the declarations into `RuntimeState.facts`: goals and task
+status, clue declarations, relationship assertions, scene purpose, dramatic
+question, and scene pressure. The context builder projects declarations beside
+current fact-backed pressure so the model can frame choices without gaining a
+mutation authority. Beat order and pacing remain advisory projections over
+facts, not a competing progression store.
+
+At the atomic commit boundary, due timed events assert their declared facts,
+record an `event_fired` fact, and apply bounded pressure changes. Each event
+fires once, and all event effects are discarded with the candidate if the turn
+is rejected. Ending declarations describe valid and failure-forward outcomes;
+they do not force a player action or fabricate completion.
+
+The Phase 4 contract is exercised across mystery, fantasy, sci-fi, and
+relationship fixtures with the same runtime policy families and no genre branch.
+
 ## Goals
 - Deliver a playable hosted web IF experience.
 - Keep world-state progression deterministic and replayable.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _ID_PATTERN = r"^[a-z][a-z0-9_]*$"
 
@@ -97,6 +97,55 @@ class ItemDefinition(_Contract):
     readable: ReadableDocument | None = None
 
 
+class FactDeclaration(_Contract):
+    """A package-declared fact that can be seeded by the runtime."""
+
+    predicate: str = Field(pattern=_ID_PATTERN, max_length=64)
+    subject: str = Field(min_length=1, max_length=120)
+    object: str | None = Field(default=None, max_length=120)
+    value: str | None = Field(default=None, max_length=1200)
+
+
+class GoalDeclaration(_Contract):
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    summary: str = Field(min_length=1, max_length=600)
+    required: bool = True
+
+
+class TaskDeclaration(_Contract):
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    goal_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    summary: str = Field(min_length=1, max_length=600)
+    initial_status: Literal["available", "active", "blocked"] = "available"
+
+
+class ClueDeclaration(_Contract):
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    summary: str = Field(min_length=1, max_length=600)
+    fact_ids: tuple[str, ...] = Field(default=(), max_length=16)
+
+
+class RelationshipDeclaration(_Contract):
+    subject_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    target_id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    relationship: str = Field(min_length=1, max_length=120)
+
+
+class TimedEventDeclaration(_Contract):
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    after_turn: int = Field(ge=1, le=100000)
+    consequence_facts: tuple[FactDeclaration, ...] = Field(default=(), max_length=16)
+    pressure_change: int = Field(ge=-100, le=100, default=0)
+
+
+class EndingDeclaration(_Contract):
+    id: str = Field(pattern=_ID_PATTERN, max_length=80)
+    summary: str = Field(min_length=1, max_length=600)
+    required_fact_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    required_beat_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    failure_forward: bool = False
+
+
 class CompiledStory(_Contract):
     schema_version: Literal["compiled-story-v1"]
     id: str = Field(pattern=_ID_PATTERN, max_length=80)
@@ -112,3 +161,25 @@ class CompiledStory(_Contract):
     protected_revelations: tuple[ProtectedRevelation, ...] = Field(default=(), max_length=32)
     item_definitions: tuple[ItemDefinition, ...] = Field(default=(), max_length=64)
     readable_documents: tuple[ReadableDocument, ...] = Field(default=(), max_length=64)
+    scene_purpose: str | None = Field(default=None, max_length=1200)
+    dramatic_question: str | None = Field(default=None, max_length=500)
+    initial_pressure: int = Field(default=0, ge=0, le=100)
+    goals: tuple[GoalDeclaration, ...] = Field(default=(), max_length=32)
+    tasks: tuple[TaskDeclaration, ...] = Field(default=(), max_length=64)
+    clues: tuple[ClueDeclaration, ...] = Field(default=(), max_length=64)
+    relationships: tuple[RelationshipDeclaration, ...] = Field(default=(), max_length=64)
+    timed_events: tuple[TimedEventDeclaration, ...] = Field(default=(), max_length=64)
+    endings: tuple[EndingDeclaration, ...] = Field(default=(), max_length=16)
+
+    @model_validator(mode="after")
+    def validate_progression_references(self) -> CompiledStory:
+        goal_ids = {goal.id for goal in self.goals}
+        if any(task.goal_id not in goal_ids for task in self.tasks):
+            raise ValueError("every progression task must reference a declared goal")
+        beat_ids = {beat.id for beat in self.beats}
+        if any(beat_id not in beat_ids for ending in self.endings for beat_id in ending.required_beat_ids):
+            raise ValueError("every ending beat requirement must reference a declared beat")
+        event_ids = [event.id for event in self.timed_events]
+        if len(event_ids) != len(set(event_ids)):
+            raise ValueError("timed event IDs must be unique")
+        return self
