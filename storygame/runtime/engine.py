@@ -44,12 +44,10 @@ class RuntimeEngine:
     def turn(self, player_input: str) -> TurnResponse:
         context = self.context_builder.build(self.state, player_input)
         movement = _movement_affordance(self.state, player_input)
-        if movement is not None:
-            context.payload["normalized_affordance"] = {
-                "kind": "movement",
-                "destination": movement,
-                "instruction": f"Move the player to the declared destination '{movement}'.",
-            }
+        item_affordance = _item_affordance(self.state, player_input)
+        normalized = movement or item_affordance
+        if normalized is not None:
+            context.payload["normalized_affordance"] = normalized
         last_error: RuntimeFailure | None = None
         for model_calls, json_object in enumerate((True, False), start=1):
             try:
@@ -62,10 +60,13 @@ class RuntimeEngine:
                             + (StateOperation(kind="set", path="world.location", value=movement),)
                         }
                     )
-                candidate = validate_and_commit(self.state, result)
+                if item_affordance is not None:
+                    result = _apply_item_affordance(result, item_affordance)
+                candidate = validate_and_commit(self.state, result, player_input=player_input)
                 self._finalize(candidate, player_input, result, context)
                 self.state = candidate
-                return TurnResponse(True, result.narration, candidate.turn_index, model_calls=model_calls)
+                narration = result.dialogue.dialogue if result.dialogue is not None else result.narration
+                return TurnResponse(True, narration, candidate.turn_index, model_calls=model_calls)
             except JsonModeRejected as exc:
                 last_error = RuntimeFailure("JSON_MODE_REJECTED", str(exc) or "provider rejected JSON-object mode")
             except RuntimeFailure as exc:
@@ -112,6 +113,64 @@ class RuntimeEngine:
         state.recent_events[:] = state.recent_events[-24:]
         if result.summary_delta:
             state.story_summary = (state.story_summary + " " + result.summary_delta).strip()[-4000:]
+
+
+def _item_affordance(state: RuntimeState, player_input: str) -> dict[str, object] | None:
+    request = player_input.casefold().strip()
+    verbs = ("take ", "pick up ", "get ", "inspect ", "examine ", "look at ")
+    verb = next((candidate for candidate in verbs if request.startswith(candidate)), None)
+    if verb is None:
+        return None
+    item_text = request.removeprefix(verb).strip()
+    item_text = item_text.removeprefix("the ").removeprefix("a ").removeprefix("an ")
+    candidates: list[str] = []
+    for item_id, item in state.world.items.items():
+        holder = item.get("holder")
+        visible = (
+            holder == "player"
+            or holder == f"location:{state.world.location}"
+            or (
+                isinstance(holder, str)
+                and holder.startswith("npc:")
+                and _holder_is_present(state, holder.removeprefix("npc:"))
+            )
+        )
+        if not visible:
+            continue
+        labels = (item_id.replace("_", " "), str(item.get("name", "")).casefold())
+        if any(label and (item_text == label or item_text in label) for label in labels):
+            candidates.append(item_id)
+    if len(candidates) != 1:
+        return None
+    item_id = candidates[0]
+    if verb in {"take ", "pick up ", "get "}:
+        affordances = state.world.items[item_id].get("affordances", ("take",))
+        if not isinstance(affordances, (list, tuple, set)) or "take" not in affordances:
+            return None
+        return {"kind": "take", "item_id": item_id, "instruction": f"Set world.items.{item_id}.holder to player."}
+    return {
+        "kind": "inspect",
+        "item_id": item_id,
+        "instruction": f"Describe declared item {item_id} without changing state.",
+    }
+
+
+def _holder_is_present(state: RuntimeState, npc_id: str) -> bool:
+    return state.facts.has("at", npc_id, state.world.location) or state.facts.has(
+        "present", npc_id, state.world.location
+    )
+
+
+def _apply_item_affordance(result: TurnResult, affordance: dict[str, object]) -> TurnResult:
+    if affordance.get("kind") != "take":
+        return result
+    item_id = affordance.get("item_id")
+    if not isinstance(item_id, str) or any(
+        operation.path == f"world.items.{item_id}.holder" for operation in result.operations
+    ):
+        return result
+    operation = StateOperation(kind="set", path=f"world.items.{item_id}.holder", value="player")
+    return result.model_copy(update={"operations": result.operations + (operation,)})
 
 
 def _repair_context(context: RuntimeContext, failure: RuntimeFailure) -> RuntimeContext:

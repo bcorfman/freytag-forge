@@ -70,6 +70,13 @@ class RuntimeContextBuilder:
                     "copy only the exact completion_tags listed for the matching active beat; otherwise use []"
                 ),
                 "material_progress": "boolean",
+                "dialogue": {
+                    "target_id": "the declared visible NPC addressed by the player",
+                    "speaker_id": "must equal target_id",
+                    "permitted_context": "fact ids the speaker is allowed to use",
+                    "dialogue": "spoken NPC response, not a narrator substitution",
+                    "effects": "bounded StateOperation objects committed before rendering",
+                },
             },
         }
         encoded = json.dumps(payload, default=list, separators=(",", ":"))

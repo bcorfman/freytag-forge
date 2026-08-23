@@ -6,17 +6,27 @@ import copy
 import json
 from typing import Any
 
-from storygame.runtime.contracts import DocumentDisclosure, RuntimeFailure, TurnResult
+from storygame.runtime.contracts import DialogueProposal, DocumentDisclosure, RuntimeFailure, TurnResult
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 
 
-def validate_and_commit(state: RuntimeState, result: TurnResult) -> RuntimeState:
+def validate_and_commit(
+    state: RuntimeState,
+    result: TurnResult,
+    *,
+    player_input: str = "",
+) -> RuntimeState:
     candidate = copy.deepcopy(state)
+    if result.dialogue is not None:
+        _validate_dialogue(candidate, result.dialogue, player_input)
     _reject_protected_leaks(candidate, result)
     _apply_disclosures(candidate, result.disclosures)
     for operation in result.operations:
         _apply_operation(candidate, operation.kind, operation.path, operation.value)
+    if result.dialogue is not None:
+        for operation in result.dialogue.effects:
+            _apply_operation(candidate, operation.kind, operation.path, operation.value)
     _apply_beat_updates(candidate, result)
     return candidate
 
@@ -115,6 +125,46 @@ def _apply_fact_operation(state: RuntimeState, kind: str, value: Any) -> None:
     _sync_fact_view(state, fact, kind)
 
 
+def _validate_dialogue(state: RuntimeState, dialogue: object, player_input: str) -> None:
+    if not isinstance(dialogue, DialogueProposal):
+        raise RuntimeFailure("INVALID_DIALOGUE", "dialogue proposal is not typed")
+    target_present = state.facts.has("at", dialogue.target_id, state.world.location) or state.facts.has(
+        "present", dialogue.target_id, state.world.location
+    )
+    if not target_present:
+        raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"target '{dialogue.target_id}' is not on scene")
+    if dialogue.speaker_id != dialogue.target_id:
+        raise RuntimeFailure("WRONG_SPEAKER", "dialogue speaker must match the addressed target")
+    if not _mentions_dialogue_target(state, dialogue.target_id, player_input):
+        raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{dialogue.target_id}'")
+    for fact_id in dialogue.permitted_context:
+        if not state.facts.has("knows", dialogue.speaker_id, fact_id):
+            raise RuntimeFailure(
+                "SPEAKER_LACKS_KNOWLEDGE",
+                f"speaker '{dialogue.speaker_id}' lacks permitted fact '{fact_id}'",
+            )
+    normalized_dialogue = " ".join(dialogue.dialogue.casefold().split()).strip(" .!?")
+    normalized_input = " ".join(player_input.casefold().split()).strip(" .!?")
+    if normalized_dialogue == normalized_input:
+        raise RuntimeFailure("DIALOGUE_PROMPT_PARROTING", "dialogue repeats the player's prompt")
+    names = {part for part in dialogue.speaker_id.casefold().split("_") if len(part) > 2}
+    opening = state.compiled_story.opening
+    if opening is not None:
+        names.update(contact.name.casefold() for contact in opening.contacts if contact.id == dialogue.speaker_id)
+    if any(normalized_dialogue.startswith(f"{name} says") for name in names):
+        raise RuntimeFailure("DIALOGUE_NARRATOR_SUBSTITUTION", "dialogue must be spoken by the addressed NPC")
+
+
+def _mentions_dialogue_target(state: RuntimeState, target_id: str, player_input: str) -> bool:
+    request = player_input.casefold()
+    aliases = {target_id.casefold().replace("_", " ")}
+    aliases.update(part for part in target_id.casefold().split("_") if len(part) > 2)
+    opening = state.compiled_story.opening
+    if opening is not None:
+        aliases.update(contact.name.casefold() for contact in opening.contacts if contact.id == target_id)
+    return any(alias and alias in request for alias in aliases)
+
+
 def _apply_disclosures(state: RuntimeState, disclosures: tuple[DocumentDisclosure, ...]) -> None:
     for disclosure in disclosures:
         item = state.world.items.get(disclosure.item_id)
@@ -191,7 +241,8 @@ def _reject_protected_leaks(state: RuntimeState, result: TurnResult) -> None:
     completed_tags = {tag for runtime in state.beat_runtime.values() for tag in runtime.completed_tags}
     newly_completed = {tag for update in result.beat_updates for tag in update.completion_tags}
     operation_text = json.dumps([item.model_dump() for item in result.operations])
-    visible = " ".join([result.narration, result.summary_delta or "", operation_text]).casefold()
+    dialogue_text = result.dialogue.dialogue if result.dialogue is not None else ""
+    visible = " ".join([result.narration, dialogue_text, result.summary_delta or "", operation_text]).casefold()
     for revelation in state.compiled_story.protected_revelations:
         released = set(revelation.reveal_after) <= completed_tags | newly_completed
         if not released and revelation.summary.casefold() in visible:

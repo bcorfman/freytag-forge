@@ -152,19 +152,28 @@ disclosures, knowledge leaks, and save/load round trips.
 Add a typed dialogue proposal containing addressed target, speaker, permitted
 context, dialogue, and bounded effects. Validate:
 
-- target is visible and addressed;
-- speaker matches the target;
-- speaker knows only permitted facts;
-- response is not prompt parroting or narrator substitution;
-- effects commit before dialogue is rendered.
+- [x] Add a typed dialogue proposal containing the addressed target, speaker,
+  permitted fact context, spoken response, and bounded effects.
+- [x] Validate that the target is visible and explicitly addressed by the
+  player.
+- [x] Require the speaker to match the addressed target and know every fact in
+  the permitted context.
+- [x] Reject prompt parroting and narrator-style speaker substitution.
+- [x] Commit dialogue effects atomically before rendering the spoken response.
 
 Expand ordinary freeform proposals to support V1 action families while keeping
 the model as the interpreter. Deterministic normalization may handle only
 unambiguous movement, inventory, visible-item, and control-plane affordances.
 
-Exit criteria: players can question a present declared NPC, inspect or take declared items,
-attempt arbitrary in-scope actions, receive clarification for ambiguity, and
-get typed fail-closed responses for invalid or unsafe proposals.
+- [x] Normalize unambiguous visible-item inspection and taking through the
+  shared proposal/commit contract.
+- [x] Preserve arbitrary freeform actions as model proposals; do not introduce
+  a fixed action command table.
+
+- [x] Exit criteria: players can question a present declared NPC, inspect or
+  take declared items, attempt arbitrary in-scope actions, receive
+  clarification for ambiguity, and get typed fail-closed responses for invalid
+  or unsafe proposals.
 
 ### Phase 4 — Goals, dramatic state, and progression parity
 
