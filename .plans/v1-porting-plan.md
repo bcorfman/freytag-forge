@@ -94,19 +94,24 @@ the completed checklist and the contracts subsequent phases must preserve.
 
 Complete the opening metadata port:
 
-1. Extend the outline source contract with protagonist context, opening
+- [x] Extend the outline source contract with protagonist context, opening
    companions, public briefing, arrival context, scene purpose, and first
    available actions.
-2. Require the causal compiler to emit typed, spoiler-safe opening metadata.
-3. Declare an opening contact in the selected story package, including
+- [x] Require the causal compiler to emit typed, spoiler-safe opening metadata.
+- [x] Declare an opening contact in the selected story package, including
    location, relationship, public knowledge, and any item custody.
-4. Bootstrap those declarations into facts before the first rendering.
-5. Render the opening orientation without echoing the automatic `look` command.
-6. Add opening and continuity tests for all supported genres.
+- [x] Bootstrap those declarations into facts before the first rendering.
+- [x] Render the opening orientation without echoing the automatic `look` command.
+- [x] Add opening and continuity tests for all supported genres.
 
 Exit criteria: a new session explains who the player is, why they are present,
 what is happening, who is present, and at least one legal next step; no protected
 truth is disclosed.
+
+- [x] Exit criteria: a new hosted session exposes typed orientation, present
+  contacts, public briefing, and legal first actions without spending a turn.
+- [x] Exit criteria: opening validation rejects off-scene contacts and
+  protected-revelation disclosure.
 
 ### Phase 2 — Facts, inventory, clues, and documents
 

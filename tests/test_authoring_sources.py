@@ -83,6 +83,34 @@ def test_inventory_sources_have_deterministic_provenance_and_authoring_only_sele
     }
 
 
+def test_outline_normalizes_typed_opening_orientation_fields(tmp_path: Path):
+    inventory = tmp_path / "outlines.yaml"
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    (profiles / "fantasy.yaml").write_text("genre: fantasy\n", encoding="utf-8")
+    inventory.write_text(
+        "stories:\n"
+        "  - id: courier\n"
+        "    genre: fantasy\n"
+        "    outline: A courier crosses a broken kingdom.\n"
+        "    protagonist_context: You are a courier carrying an urgent seal.\n"
+        "    opening_companions:\n"
+        "      - id: guide\n"
+        "        role: guide\n"
+        "    public_briefing: [The western bridge has fallen.]\n"
+        "    arrival_context: You reached the gate at dawn.\n"
+        "    scene_purpose: Establish the crossing and its stakes.\n"
+        "    first_available_actions: [Question the guide, Inspect the bridge]\n",
+        encoding="utf-8",
+    )
+
+    source = StorySourceLoader(inventory, profiles).select_outline("courier")
+
+    assert source.opening_setup["protagonist_context"].startswith("You are a courier")
+    assert source.opening_setup["public_briefing"] == ("The western bridge has fallen.",)
+    assert source.opening_setup["first_available_actions"] == ("Question the guide", "Inspect the bridge")
+
+
 def test_inventory_normalization_is_shared_across_loaders_for_unchanged_bytes(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):

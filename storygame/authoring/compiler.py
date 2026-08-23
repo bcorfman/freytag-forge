@@ -10,7 +10,15 @@ from typing import Protocol
 
 from pydantic import ValidationError
 
-from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
+from storygame.authoring.contracts import (
+    Beat,
+    BeatPacing,
+    Character,
+    CompiledStory,
+    CompletionTag,
+    OpeningMetadata,
+    ProtectedRevelation,
+)
 from storygame.authoring.prompts import build_compiler_prompt
 
 
@@ -124,7 +132,36 @@ def validate_compiled_story(payload: Mapping[str, object] | CompiledStory) -> Co
     _validate_structure(story)
     _validate_tags_and_protections(story)
     _validate_pacing(story)
+    _validate_opening(story)
     return story
+
+
+def _validate_opening(story: CompiledStory) -> None:
+    if story.opening is None:
+        return
+    character_ids = {character.id for character in story.characters}
+    for contact in story.opening.contacts:
+        if contact.id not in character_ids:
+            raise CompilationError("OPENING_CONTACT_UNKNOWN", f"opening contact '{contact.id}' is not in the cast")
+        if contact.location != story.initial_world_state.get("location"):
+            raise CompilationError(
+                "OPENING_CONTACT_OFF_SCENE", f"opening contact '{contact.id}' is not at the opening location"
+            )
+    protected_text = " ".join(revelation.summary for revelation in story.protected_revelations).casefold()
+    opening_text = " ".join(
+        (
+            story.opening.scene,
+            story.opening.protagonist_context,
+            story.opening.arrival_context,
+            *story.opening.public_briefing,
+            story.opening.scene_purpose,
+            *story.opening.first_available_actions,
+        )
+    ).casefold()
+    if protected_text and any(
+        summary.casefold() in opening_text for summary in (r.summary for r in story.protected_revelations)
+    ):
+        raise CompilationError("OPENING_PROTECTED_FACT", "opening metadata discloses a protected revelation")
 
 
 class CompiledStoryCompiler:
@@ -265,6 +302,34 @@ def _causal_story_as_compiled_story(story: object) -> CompiledStory:
         title=story.title,
         premise=story.premise,
         central_question=f"How does the story resolve its central situation? {story.premise}"[:500],
+        opening=OpeningMetadata(
+            scene=story.opening.scene if story.opening is not None else "The opening scene.",
+            protagonist_context=(
+                story.opening.protagonist_context or story.opening.player_context
+                if story.opening is not None
+                else "You have just arrived to begin the story."
+            ),
+            arrival_context=(
+                story.opening.arrival_context or story.opening.player_context
+                if story.opening is not None
+                else "You have just arrived at the opening location."
+            ),
+            public_briefing=(
+                story.opening.public_briefing or (story.opening.situation,)
+                if story.opening is not None
+                else (story.premise,)
+            ),
+            scene_purpose=(
+                story.opening.scene_purpose or story.opening.situation
+                if story.opening is not None
+                else "Establish the situation and its first choice."
+            ),
+            first_available_actions=(
+                story.opening.first_available_actions or story.opening.next_steps
+                if story.opening is not None
+                else ("Investigate the opening situation.",)
+            ),
+        ),
         initial_world_state={
             "location": location,
             "flags": list(story.opening_truth_ids),

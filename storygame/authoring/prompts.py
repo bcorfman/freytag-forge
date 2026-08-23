@@ -67,7 +67,8 @@ def build_blueprint_compiler_prompt(
         'schema_version must be the exact JSON string "story-blueprint-v2". '
         "profile must be the exact Source profile ID JSON string, never an object. "
         "Every ID is lowercase snake_case. Required nested collection shapes (fields with ? are optional): "
-        "opening: {scene,player_context,companions,situation,next_steps}; derive it from source opening_setup and "
+        "opening: {scene,player_context,companions,situation,next_steps,protagonist_context,arrival_context,"
+        "public_briefing,scene_purpose,first_available_actions}; derive it from source opening_setup and "
         "keep it spoiler-safe. "
         'truths: [{"id":"lowercase_id","summary":"non-empty summary","roles":["profile_role"]?}]; '
         "participants: [{id,role}]; locations: [{id,role,initial_access}]; "

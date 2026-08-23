@@ -69,6 +69,9 @@ def _state_payload(state: RuntimeState) -> dict[str, object]:
         "room_name": state.world.location,
         "turn_index": state.turn_index,
         "available_destinations": list(dict.fromkeys(destinations)),
+        "opening": (
+            state.compiled_story.opening.model_dump(mode="json") if state.compiled_story.opening is not None else None
+        ),
     }
 
 

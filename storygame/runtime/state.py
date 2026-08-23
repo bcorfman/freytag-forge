@@ -65,6 +65,13 @@ def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
     if not isinstance(location, str) or not location:
         location = "opening"
     attributes = {key: value for key, value in initial.items() if key not in {"location", "flags", "items"}}
+    if compiled_story.opening is not None:
+        attributes["opening_facts"] = {
+            "location": location,
+            "contacts": [contact.model_dump(mode="json") for contact in compiled_story.opening.contacts],
+            "public_briefing": list(compiled_story.opening.public_briefing),
+            "scene_purpose": compiled_story.opening.scene_purpose,
+        }
     flags = {value for value in initial.get("flags", []) if isinstance(value, str)}
     raw_items = initial.get("items", {})
     items = {key: dict(value) for key, value in raw_items.items() if isinstance(key, str) and isinstance(value, dict)}
