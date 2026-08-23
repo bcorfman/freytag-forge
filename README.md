@@ -36,6 +36,27 @@ Just a living story that meets you where you are.
 
 **Less prompt luck. More playable story.**
 
+## The world remembers what you’ve already seen
+
+Freytag Forge is being sharpened around the details that make interactive
+fiction feel alive:
+
+- First arrival earns the full scene. Coming back keeps the pace moving with a
+  concise update; type `LOOK` when you want the complete view again.
+- Rooms and items can be rich, visual, and useful without repeating the same
+  paragraph every time you cross a doorway.
+- NPCs are people in the scene—not wallpaper. They have a place, a point of
+  view, knowledge they can share, and reactions that change when you keep
+  pressing the same question.
+- The story moves through people and places. Ask sharper questions, earn trust,
+  catch contradictions, and explore with intent; objects and puzzles can enrich
+  the journey, but the game is not a scavenger hunt or a lock-and-key checklist.
+- Every discovery and relationship turn is grounded in the story’s facts, so
+  the prose can surprise you without quietly rewriting the world.
+
+The [Phase 0 parity ledger](.plans/v1-parity-ledger.yaml) captures these
+capabilities as the V2 target: more texture, more continuity, less repetition.
+
 ## Play online
 
 Freytag Forge is delivered as a hosted web experience. [Open the live

@@ -26,6 +26,7 @@ class SessionCreateRequest(BaseModel):
 class TurnRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=128)
     command: str = Field(min_length=1, max_length=4000)
+    genre: str = Field(default="mystery", min_length=1, max_length=80)
 
 
 class SessionLoadRequest(BaseModel):
@@ -136,7 +137,15 @@ def create_demo_app(
     def submit_turn(payload: TurnRequest) -> dict[str, object]:
         session = sessions.get(payload.session_id)
         if session is None:
-            raise HTTPException(status_code=404, detail="Unknown session. Load a V2 session before continuing.")
+            story = _story_for(payload.genre)
+            try:
+                state = store.load(payload.session_id, story)
+            except RuntimeSaveError as exc:
+                raise HTTPException(
+                    status_code=404, detail="Unknown session. Start or load a V2 session first."
+                ) from exc
+            session = _Session(RuntimeEngine(state, active_model))
+            sessions[payload.session_id] = session
         result = session.engine.turn(payload.command)
         if not result.ok:
             detail = result.error.message if result.error is not None else "V2 runtime failed."

@@ -20,6 +20,45 @@
 Freytag Forge is a deterministic narrative-engine platform for interactive fiction. It aims to blend strong IF usability with modern, testable narration controls and reproducible evaluation.
 Current runtime generation is package-driven.
 
+## V1 porting Phase 0: V2 capability ledger
+
+Phase 0 does not certify the historical V1 implementation. The machine-readable
+[parity ledger](../.plans/v1-parity-ledger.yaml) records intended V2 player
+capabilities, while the [decision record](../.plans/v1-porting-phase0-decision.md)
+explains which historical surfaces are evidence only or intentionally retired.
+
+The presentation target is progressive description. A newly entered room or
+newly encountered item may receive a full authored description with atmosphere,
+layout, visible details, and actionable context. Ordinary movement back into a
+known room should be concise and should mention only changed or newly relevant
+details. An explicit `LOOK` request may expand the room description again. Item
+inspection follows the same rule. Observation/discovery markers are fact-backed
+state; prose is a projection and may not create facts.
+
+The NPC target is continuity, not decorative text. A declared NPC must remain
+addressable only when present, answer as that NPC from permitted knowledge, and
+retain interaction history, relationship state, and bounded stance changes.
+Repeated questions may make an NPC impatient or less helpful, like a person,
+but this is a generic validated interaction policy rather than a named-character
+branch. Historical examples such as Daria inform the interaction shape only;
+they are not V2 content. Current story packages provide their own NPCs.
+
+Progression should be conversation-led and exploration-rich for every outline.
+A question, earned trust, contradiction, follow-up, or purposeful investigation
+of a place can unlock a declared lead or change the active objective. Searching
+rooms and inspecting items remain valid player choices, but the experience must
+not collapse into collecting interchangeable object text or solving detached
+puzzles by rote. Objects and puzzles are optional authored supports;
+conversation disclosures, exploration consequences, and relationship effects
+are proposal-first, locally validated, and committed as facts before the
+resulting lead or prose is shown.
+
+These capabilities apply across mystery, fantasy, sci-fi, and relationship
+stories. Opening metadata, room/item declarations, NPC roles, knowledge, and
+presentation detail are authored inputs; accepted visibility, discovery,
+dialogue effects, and relationship changes are committed to `RuntimeState`
+facts before rendering.
+
 ## Causal compiler Phase 0: symbol-resolution baseline
 
 The offline causal compiler now carries a checked-in Phase 0 characterization

@@ -1,0 +1,423 @@
+schema_version: v1-parity-ledger-v2-targets
+phase: 0
+baseline_scope: intended_v2_capability
+purpose: >-
+  Record the player-facing capabilities that V2 should deliver. This is a
+  target contract, not a claim that the historical V1 implementation was
+  complete, reliable, or correct.
+historical_evidence_policy: >-
+  The pinned V1 release, historical tests, and retained package data are
+  consulted only to recover useful product intent and identify retired or
+  unsafe assumptions. They are not accepted behavior, runtime authorities, or
+  parity evidence.
+authoring_sources:
+  - data/story_packages.yaml
+  - data/opening_setup.yaml
+  - data/compiled_stories/v1/fantasy.json
+  - data/compiled_stories/v1/mystery.json
+  - data/compiled_stories/v1/relationship.json
+  - data/compiled_stories/v1/sci-fi.json
+  - data/story_outlines.yaml
+  - .plans/v1-porting-plan.md
+historical_sources:
+  pinned_release_commit: 1968f119793a11f38f22f6c80b9ad5e0a20e0862
+  role: product-intent-and-retirement-evidence-only
+entries:
+  - id: opening_orientation
+    capability: Rich opening orientation
+    player_visible_example: >-
+      A new session explains who the protagonist is, why they arrived, what
+      situation is active, who is present, and one plausible next step.
+    authoring_declarations:
+      - protagonist identity and background
+      - arrival context and order
+      - public briefing and scene purpose
+      - opening companions with role, relationship, location, and public knowledge
+      - first available actions
+    canonical_v2_fact_state:
+      - player_identity
+      - player_context
+      - scene_location
+      - scene_participant
+      - npc_role
+      - npc_relationship
+      - knows(player, public_fact)
+    proposal_validation_contract: >-
+      Validate opening metadata as a typed, spoiler-safe package; bootstrap
+      accepted declarations into facts before prose is rendered; reject
+      contradictory role, location, custody, or knowledge claims.
+    persistence_artifact_impact: >-
+      Save the committed opening facts and accepted opening decision. Rendered
+      opening prose is an integrity-checked projection and can be regenerated.
+    cross_genre_test_cases:
+      mystery: Detective arrives with a declared first contact and public case brief.
+      fantasy: Traveler arrives with a guide and a public quest brief.
+      sci-fi: Specialist arrives at a station with a declared technical contact.
+      relationship: Protagonist arrives at a social scene with a declared companion.
+    intentional_v2_difference: >-
+      Opening truth comes from validated package declarations and committed
+      facts, never from freeform prose or a story-specific runtime branch.
+    evidence:
+      current_contract: storygame/authoring/causal_contracts.py:OpeningMetadata
+      retained_data: data/story_packages.yaml:opening_setup
+
+  - id: rich_room_presentation
+    capability: Full room descriptions with meaningful detail
+    player_visible_example: >-
+      Entering a room presents its authored atmosphere, layout, notable
+      features, routes, present people, and visible objects in enough detail
+      to support an intentional action.
+    authoring_declarations:
+      - room title and full description
+      - environment and sensory details
+      - exits and route labels
+      - room-specific NPC and item placement
+    canonical_v2_fact_state:
+      - scene_location
+      - room_exposure
+      - path
+      - scene_participant
+      - item_location
+      - visible_item
+    proposal_validation_contract: >-
+      Build presentation context from the current committed facts and package
+      projection; do not invent entities, routes, or material details in prose.
+      A move commits location before the new room is described.
+    persistence_artifact_impact: >-
+      Persist location, discovery/seen markers, and accepted transitions. Room
+      prose remains regenerable authored projection data.
+    cross_genre_test_cases:
+      mystery: Mansion threshold and foyer expose different routes and evidence.
+      fantasy: Gate and enchanted wood expose travel hazards and landmarks.
+      sci-fi: Dock hub and command core expose different systems and access points.
+      relationship: Courtyard and river walk expose distinct social opportunities.
+    intentional_v2_difference: >-
+      Room descriptions are authored package input plus committed visibility;
+      they are not a mutable transcript or a narration-derived fact source.
+    evidence:
+      retained_data: data/story_packages.yaml:map.room_presentation
+      target_gap: .plans/v1-porting-plan.md:Phase 1
+
+  - id: progressive_room_description
+    capability: Progressive descriptions without repetitive movement narration
+    player_visible_example: >-
+      The first arrival gets the full room description. Returning or walking
+      through the room gets a concise transition and only changed or newly
+      relevant details; an explicit LOOK command requests the full description
+      again.
+    authoring_declarations:
+      - full room presentation
+      - concise revisit/transition presentation
+      - stable detail identifiers or discovery keys
+      - explicit look affordance
+    canonical_v2_fact_state:
+      - scene_location
+      - observed(player, detail)
+      - discovered(player, detail)
+      - recent_event
+      - look_requested
+    proposal_validation_contract: >-
+      Classify explicit LOOK as a presentation request, not a world mutation.
+      For ordinary movement, render from committed location plus observation
+      history and recent changes; never repeat the full room description solely
+      because the player entered it again.
+    persistence_artifact_impact: >-
+      Persist observation/discovery markers and transition history so restart
+      does not reset description memory. Prose remains a projection.
+    cross_genre_test_cases:
+      mystery: Re-entering the foyer is brief; LOOK restores its full details.
+      fantasy: Returning to the gate does not repeat the entire arrival scene.
+      sci-fi: Passing through the dock hub surfaces only changed system status.
+      relationship: Returning to the courtyard avoids replaying the same atmosphere.
+    intentional_v2_difference: >-
+      Repetition policy is shared and data-driven; it must not depend on genre,
+      room name, or a fixed command table beyond the explicit control-plane LOOK.
+    evidence:
+      product_request: user clarification on first-seen and LOOK behavior
+      target_gap: .plans/v1-porting-plan.md:Phase 1 and Phase 3
+
+  - id: item_presentation
+    capability: Rich item descriptions with progressive discovery
+    player_visible_example: >-
+      An item is first introduced with its authored description and relevant
+      visual/contextual detail; subsequent mentions are concise unless the
+      player explicitly asks to inspect or look at it.
+    authoring_declarations:
+      - item name, description, and aliases
+      - item custody and portability
+      - affordances and discovery key
+      - readable-document disclosures where applicable
+    canonical_v2_fact_state:
+      - item_location
+      - holding
+      - item_affordance
+      - observed(player, item)
+      - discovered_clue
+      - knows(player, disclosed_fact)
+    proposal_validation_contract: >-
+      Resolve only visible, declared, unambiguous item aliases; validate
+      inspect, take, use, and read proposals against custody, availability,
+      portability, and knowledge policy before committing effects.
+    persistence_artifact_impact: >-
+      Persist custody, discovery, and knowledge facts. Item prose and expanded
+      or abbreviated presentation are projections regenerated from those facts.
+    cross_genre_test_cases:
+      mystery: Case file and ledger page reveal separate declared leads.
+      fantasy: Warded scroll exposes a route only through an authorized holder.
+      sci-fi: Data key provides a declared diagnostic lead.
+      relationship: Letter or keepsake can be inspected without inventing facts.
+    intentional_v2_difference: >-
+      Item descriptions cannot create discoveries merely by being rendered;
+      disclosures require a valid proposal and committed fact update.
+    evidence:
+      retained_data: data/story_packages.yaml:item_details
+      target_gap: .plans/v1-porting-plan.md:Phase 2
+
+  - id: npc_presence_continuity
+    capability: Present, addressable NPCs with continuity
+    player_visible_example: >-
+      A room makes its declared NPCs visible and addressable, and a character
+      remains in the committed location with the same identity, role, and
+      relationship until a valid state change moves or changes them.
+    authoring_declarations:
+      - NPC identity, role, traits, and appearance
+      - initial location and relationship
+      - scene purpose and public knowledge
+      - permitted/protected knowledge
+    canonical_v2_fact_state:
+      - npc_location
+      - presence
+      - npc_role
+      - npc_relationship
+      - npc_trait
+      - knows(npc, fact)
+      - conceals(npc, fact)
+    proposal_validation_contract: >-
+      Expose only on-scene NPCs in addressable context; require dialogue speaker
+      and target agreement; reject off-scene, wrong-speaker, role-violating, or
+      protected-knowledge responses.
+    persistence_artifact_impact: >-
+      Persist NPC location, relationship, epistemic facts, and accepted
+      interaction events. Dialogue remains a projection of committed results.
+    cross_genre_test_cases:
+      mystery: A package-declared investigator's contact is present at the opening location.
+      fantasy: The guide remains available until a declared transition.
+      sci-fi: The technical contact is present only in the declared scene.
+      relationship: A companion's availability follows committed movement.
+    intentional_v2_difference: >-
+      Historical NPC examples such as Daria are not V2 content or runtime
+      fixtures; every genre uses the same machinery for its own declared NPCs.
+    evidence:
+      retained_data: data/story_packages.yaml:characters.opening_contact
+      target_gap: .plans/v1-porting-plan.md:Phase 1 and Phase 3
+
+  - id: npc_dialogue_memory
+    capability: NPC interaction with personality, memory, and relationship pressure
+    player_visible_example: >-
+      Asking a present NPC about a relevant topic produces that NPC's own
+      in-world reply, grounded in permitted knowledge and prior interaction;
+      repeated questions can change tone, patience, trust, or willingness to
+      help instead of returning the same line forever.
+    authoring_declarations:
+      - NPC voice and stable traits
+      - relationship and trust bounds
+      - knowledge, concealment, and disclosure permissions
+      - conversation topics or interaction affordances
+      - bounded reaction/effect families
+    canonical_v2_fact_state:
+      - npc_relationship
+      - npc_trust
+      - conversation_event
+      - question_history
+      - npc_patience_or_stance
+      - knows(npc, fact)
+    proposal_validation_contract: >-
+      The model proposes addressed target, matching speaker, reply, and bounded
+      effects. Local policy checks visibility, permitted knowledge, parroting,
+      role, and effect bounds; accepted effects commit before dialogue renders.
+      Repeated-topic reactions are bounded state changes, not arbitrary mood
+      mutation or a story-specific NPC branch.
+    persistence_artifact_impact: >-
+      Persist interaction history and accepted relationship/stance changes so
+      NPC continuity survives save/load and restart. Transcript text is a
+      projection with integrity metadata.
+    cross_genre_test_cases:
+      mystery: A declared contact can brief the player, withhold protected case details, and react to repetition.
+      fantasy: A guide can become impatient with repeated route questions.
+      sci-fi: A technical contact can redirect repeated questions toward useful diagnostics.
+      relationship: A companion's tone and trust respond to repeated or considerate questions.
+    intentional_v2_difference: >-
+      NPC dialogue must be LLM-authored from the addressed NPC's permitted
+      context; unavailable-model or wrong-speaker fallbacks fail closed instead
+      of fabricating a generic reply.
+    evidence:
+      product_request: user clarification on historical NPC interaction quality and annoyed repeated questions
+      current_contract: docs/PRD.md:Design Delta and NPC dialogue guardrails
+
+  - id: conversation_led_exploration
+    capability: Conversation-led exploration across every story genre
+    player_visible_example: >-
+      Asking the right person the right question, earning trust, challenging a
+      contradiction, following a lead, or exploring a place with intent changes
+      what becomes knowable and what the story can do next. Wandering around to
+      collect generic object text or solve detached puzzles is not the default
+      progression loop.
+    authoring_declarations:
+      - NPC goals, roles, and permitted knowledge
+      - conversation topics and disclosure routes
+      - relationship/trust prerequisites
+      - contradictions, leads, and follow-up questions
+      - meaningful locations and exploration opportunities
+      - optional object or puzzle routes where intentionally authored
+    canonical_v2_fact_state:
+      - conversation_event
+      - question_history
+      - knows(observer, fact)
+      - npc_relationship
+      - npc_trust
+      - discovered_lead
+      - active_goal
+      - scene_objective
+    proposal_validation_contract: >-
+      Validate addressed NPC presence, speaker identity, permitted knowledge,
+      topic eligibility, relationship prerequisites, and bounded disclosure or
+      relationship effects before committing. A conversation may unlock a lead
+      only through a declared route and committed fact change; narration alone
+      cannot award a clue.
+    persistence_artifact_impact: >-
+      Persist question history, relationship/knowledge changes, discovered
+      leads, and accepted conversation events so the investigation remembers
+      what was asked, answered, avoided, or exhausted.
+    cross_genre_test_cases:
+      mystery: Questioning a witness advances the case through testimony, contradiction, or a new lead.
+      fantasy: A guide's trust and intentional exploration unlock lore or a safe route.
+      sci-fi: A technician's conversation and purposeful investigation reveal the next repair step.
+      relationship: Honest or evasive conversation and shared exploration change the available social paths.
+    intentional_v2_difference: >-
+      Conversation and meaningful exploration are the default progression
+      modes for every outline. Objects and puzzles are optional authored
+      supports, not a universal command loop or genre-specific branch.
+    evidence:
+      product_request: user clarification on conversation-focused exploration across all outlines
+      target_gap: .plans/v1-porting-plan.md:Phase 3 and Phase 4
+
+  - id: freeform_fact_backed_play
+    capability: Arbitrary player attempts with bounded consequences
+    player_visible_example: >-
+      The player can ask, inspect, negotiate, refuse, move, or attempt an
+      unusual in-scope action in ordinary language; the engine interprets it,
+      clarifies ambiguity, and commits only bounded valid consequences.
+    authoring_declarations:
+      - legal affordances and aliases
+      - route and custody facts
+      - bounded effect families
+      - goal-breaking confirmation policy
+    canonical_v2_fact_state:
+      - facts_changed_by_accepted_proposal
+      - recent_event
+      - active_goal
+      - scene_state
+    proposal_validation_contract: >-
+      Keep the LLM proposal-first path for ordinary play. Normalize only
+      unambiguous movement, inventory, visible-item, and control-plane
+      affordances; parse save/load/quit/help as control-plane commands only.
+      Validate and commit atomically, with at most one bounded recovery request.
+    persistence_artifact_impact: >-
+      Persist accepted deltas and typed rejection/recovery evidence; failed
+      proposals leave canonical state and artifacts unchanged.
+    cross_genre_test_cases:
+      mystery: Investigate, question, or pursue a lead without a verb menu.
+      fantasy: Attempt a risky route or bargain and receive bounded consequences.
+      sci-fi: Try an unlisted repair approach and receive clarification if ambiguous.
+      relationship: Refuse or reframe a conversation without losing agency.
+    intentional_v2_difference: >-
+      A fixed legacy command table is not restored; deterministic affordances
+      use the same proposal/commit boundary as freeform actions.
+    evidence:
+      current_contract: docs/PRD.md:Core Engine and Design Delta
+
+  - id: fact_authority_and_disclosure
+    capability: Spoiler-safe canonical truth
+    player_visible_example: >-
+      A player sees only facts they can observe or know; a protected clue is
+      disclosed only through a declared route and is committed before it is
+      mentioned in prose.
+    authoring_declarations:
+      - protected facts and release order
+      - observer/speaker knowledge boundaries
+      - evidence and revelation routes
+    canonical_v2_fact_state:
+      - assertable_retractable_facts
+      - knows(observer, fact)
+      - discovered_clue
+      - protected_revelation
+      - custody_and_location
+    proposal_validation_contract: >-
+      Treat provider output as untrusted; normalize supported envelopes, parse
+      locally, validate typed semantics, then commit. Reject knowledge leaks,
+      invalid custody, and narration-only mutations fail-closed.
+    persistence_artifact_impact: >-
+      Facts and accepted decisions are authoritative; StoryState.json,
+      STORY.md, traces, and transcripts are integrity-checked projections.
+    cross_genre_test_cases:
+      mystery: Case-file contents remain protected until a legal disclosure.
+      fantasy: Warded knowledge requires the declared route or holder.
+      sci-fi: Restricted diagnostics stay hidden from an unauthorized observer.
+      relationship: Private information is not exposed by generic narration.
+    intentional_v2_difference: >-
+      Packages, prose, and artifacts never become competing mutable authorities.
+    evidence:
+      current_contract: docs/fact-authority.md
+
+  - id: persistence_and_replay
+    capability: Restartable sessions and reproducible accepted decisions
+    player_visible_example: >-
+      Save/load and process restart preserve the committed world, description
+      memory, NPC continuity, discoveries, and accepted consequences.
+    authoring_declarations:
+      - snapshot schema/version
+      - integrity metadata
+      - projection regeneration rules
+      - replay-relevant event data
+    canonical_v2_fact_state:
+      - complete_runtime_facts
+      - accepted_decision_trace
+      - turn_index
+      - recent_events
+    proposal_validation_contract: >-
+      Serialize only canonical state and accepted decisions; reject corrupted
+      or incompatible inputs before replacement; never load a projection as a
+      mutation authority.
+    persistence_artifact_impact: >-
+      Versioned snapshots, integrity-checked state/summary/traces/transcripts,
+      and deterministic replay signatures are required projections.
+    cross_genre_test_cases:
+      mystery: Reload after a case-file disclosure and NPC exchange.
+      fantasy: Reload after movement and a discovered route clue.
+      sci-fi: Reload after a bounded repair consequence.
+      relationship: Reload after a relationship stance change.
+    intentional_v2_difference: >-
+      Legacy save formats and artifact shapes are migration inputs only; V2
+      writes its own typed versioned projections.
+    evidence:
+      current_contract: docs/PRD.md:Persistence + Canonical Artifacts
+
+intentional_retirements:
+  - id: legacy_cli
+    capability: V1 standalone CLI adapter
+    status: retired
+    decision: >-
+      Do not restore by default. Reconsider only after a product decision in
+      Phase 6, as a thin adapter over shared contracts.
+    reason: >-
+      The hosted web experience is the current public surface; restoring an
+      adapter before core parity would create scope and authority ambiguity.
+  - id: legacy_local_web
+    capability: V1 local-web adapter
+    status: retired
+    decision: >-
+      Do not restore by default. Reconsider only for a current product need,
+      with independent deployment/configuration contracts.
+    reason: >-
+      Hosted and local surfaces previously risked divergent behavior; V2 keeps
+      storygame.web and storygame.web_demo separate and the hosted adapter public.

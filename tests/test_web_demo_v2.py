@@ -46,3 +46,19 @@ def test_hosted_demo_fails_closed_without_a_v2_model(tmp_path) -> None:
 
     assert response.status_code == 503
     assert response.json()["status"] == "runtime_failure"
+
+
+def test_hosted_demo_rehydrates_a_persisted_session_after_process_restart(tmp_path) -> None:
+    database = tmp_path / "runtime.sqlite"
+    first_app = create_demo_app(save_db_path=database, model=StubTurnModel(), channel="staging")
+    with TestClient(first_app) as client:
+        session_id = client.post("/api/v1/session", json={"genre": "mystery"}).json()["session_id"]
+
+    restarted_app = create_demo_app(save_db_path=database, model=StubTurnModel(), channel="staging")
+    with TestClient(restarted_app) as client:
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "genre": "mystery", "command": "go to the west gallery"},
+        )
+
+    assert response.status_code == 200
