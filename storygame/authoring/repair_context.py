@@ -30,6 +30,8 @@ class StructuralChange(BaseModel):
     identifier: str
     previous_identifier: str | None = None
     target_namespace: Namespace | None = None
+    values: tuple[str, ...] | None = None
+    previous_values: tuple[str, ...] | None = None
 
 
 class StructuralDiff(BaseModel):
@@ -137,6 +139,61 @@ def structural_diff(previous: object, current: object) -> StructuralDiff:
     return StructuralDiff(changes=tuple(changes))
 
 
+def is_additive_reference_change(
+    change: StructuralChange,
+    previous: object,
+    current: object,
+    diagnostic_details: tuple[str, ...] = (),
+) -> bool:
+    """Allow only ordered additions of symbols newly declared by the repair."""
+
+    if (
+        change.kind is not ChangeKind.REFERENCE
+        or change.target_namespace is None
+        or not diagnostic_details
+        or not change.path.endswith((".output_truths", ".result_truth_ids", ".opportunity_ids"))
+    ):
+        return False
+    before = change.previous_values
+    after = change.values
+    if before is None or after is None or not _is_subsequence(before, after):
+        return False
+    previous_ledger = repair_ledger(previous)
+    current_ledger = repair_ledger(current)
+    if previous_ledger is None or current_ledger is None:
+        return False
+    ledger_key = {
+        Namespace.TRUTH: "truth_ids",
+        Namespace.PARTICIPANT: "participant_ids",
+        Namespace.LOCATION: "location_ids",
+        Namespace.CONNECTED_ROUTE: "connected_route_ids",
+        Namespace.CAUSAL_EVENT: "causal_event_ids",
+        Namespace.EVIDENCE_OPPORTUNITY: "evidence_opportunity_ids",
+        Namespace.REALIZATION_ROUTE: "realization_route_ids",
+        Namespace.REVELATION: "revelation_ids",
+        Namespace.REQUIRED_OUTCOME: "required_outcome_ids",
+        Namespace.REQUIRED_BEAT: "required_beat_ids",
+        Namespace.OPTIONAL_BEAT: "optional_beat_ids",
+        Namespace.END_STATE: "end_state_ids",
+    }[change.target_namespace]
+    previous_ids = set(previous_ledger[ledger_key])
+    introduced_ids = set(current_ledger[ledger_key]) - previous_ids
+    added_references = set(after) - set(before)
+    if not added_references or not added_references <= introduced_ids:
+        return False
+    details = " ".join(diagnostic_details).casefold()
+    if change.target_namespace is Namespace.EVIDENCE_OPPORTUNITY:
+        payload = _payload(current) or {}
+        opportunities = _by_id(payload.get("evidence_opportunities"))
+        related_truths = {
+            str(opportunities[identifier].get("truth_id"))
+            for identifier in added_references
+            if identifier in opportunities
+        }
+        return any(value.casefold() in details for value in added_references | related_truths)
+    return any(identifier.casefold() in details for identifier in added_references)
+
+
 def _payload(candidate: object) -> Mapping[str, object] | None:
     if isinstance(candidate, Mapping):
         return candidate
@@ -151,6 +208,14 @@ def _payload(candidate: object) -> Mapping[str, object] | None:
             return None
         return dumped if isinstance(dumped, Mapping) else None
     return None
+
+
+def _is_subsequence(before: tuple[str, ...], after: tuple[str, ...]) -> bool:
+    position = 0
+    for value in after:
+        if position < len(before) and value == before[position]:
+            position += 1
+    return position == len(before)
 
 
 def _by_id(value: object) -> dict[str, Mapping[str, object]]:
@@ -180,6 +245,8 @@ def _reference_changes(
             continue
         target_namespace = _target_namespace(key)
         kind = ChangeKind.OWNERSHIP if key in {"route_id", "holder_id", "owner_id"} else ChangeKind.REFERENCE
+        previous_values = _reference_sequence(before)
+        values = _reference_sequence(after)
         changes.append(
             StructuralChange(
                 kind=kind,
@@ -188,14 +255,24 @@ def _reference_changes(
                 identifier=str(after),
                 previous_identifier=str(before),
                 target_namespace=target_namespace,
+                values=values,
+                previous_values=previous_values,
             )
         )
+
+
+def _reference_sequence(value: object) -> tuple[str, ...] | None:
+    if not isinstance(value, (list, tuple)) or not all(isinstance(item, str) for item in value):
+        return None
+    return tuple(value)
 
 
 def _target_namespace(key: str) -> Namespace | None:
     stem = key.removesuffix("_ids").removesuffix("_id")
     aliases = {
         "truth": Namespace.TRUTH,
+        "output": Namespace.TRUTH,
+        "result": Namespace.TRUTH,
         "participant": Namespace.PARTICIPANT,
         "location": Namespace.LOCATION,
         "route": Namespace.REALIZATION_ROUTE,

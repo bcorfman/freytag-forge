@@ -1,0 +1,6 @@
+{
+  "schema_version": "runtime-fixture-map-v1",
+  "fixtures": {
+    "mystery": "vale_mansion_rebuild.reviewed.json"
+  }
+}

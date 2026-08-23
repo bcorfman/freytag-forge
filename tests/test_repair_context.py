@@ -1,4 +1,4 @@
-from storygame.authoring.repair_context import ChangeKind, repair_ledger, structural_diff
+from storygame.authoring.repair_context import ChangeKind, is_additive_reference_change, repair_ledger, structural_diff
 
 
 def _candidate() -> dict[str, object]:
@@ -53,3 +53,43 @@ def test_structural_diff_reports_unrelated_declaration_removal() -> None:
 
     assert diff.changes[0].kind is ChangeKind.REMOVAL
     assert diff.changes[0].namespace.value == "participant"
+
+
+def test_additive_reference_change_allows_new_declaration_without_rewriting_old_references() -> None:
+    previous = _candidate()
+    current = _candidate()
+    current["evidence_opportunities"] = [
+        *current["evidence_opportunities"],
+        {"id": "opportunity_b", "truth_id": "truth_a", "route_id": "route_a"},
+    ]
+    current["realization_routes"][0]["opportunity_ids"] = ["opportunity_a", "opportunity_b"]
+
+    reference_change = structural_diff(previous, current).changes[-1]
+
+    assert reference_change.kind is ChangeKind.REFERENCE
+    assert is_additive_reference_change(
+        reference_change,
+        previous,
+        current,
+        ("terminal truth 'truth_a' lacks a causal evidence/route chain",),
+    )
+
+
+def test_additive_reference_change_rejects_replacement_of_existing_references() -> None:
+    previous = _candidate()
+    current = _candidate()
+    current["evidence_opportunities"] = [
+        *current["evidence_opportunities"],
+        {"id": "opportunity_b", "truth_id": "truth_a", "route_id": "route_a"},
+    ]
+    current["realization_routes"][0]["opportunity_ids"] = ["opportunity_b"]
+
+    reference_change = structural_diff(previous, current).changes[-1]
+
+    assert reference_change.kind is ChangeKind.REFERENCE
+    assert not is_additive_reference_change(
+        reference_change,
+        previous,
+        current,
+        ("terminal truth 'truth_a' lacks a causal evidence/route chain",),
+    )

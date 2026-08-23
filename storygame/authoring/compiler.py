@@ -10,7 +10,7 @@ from typing import Protocol
 
 from pydantic import ValidationError
 
-from storygame.authoring.contracts import CompiledStory
+from storygame.authoring.contracts import Beat, BeatPacing, Character, CompiledStory, CompletionTag, ProtectedRevelation
 from storygame.authoring.prompts import build_compiler_prompt
 
 
@@ -155,6 +155,10 @@ class CompiledStoryCompiler:
 
 def load_compiled_story_fixture(genre: str, root: Path | None = None) -> CompiledStory:
     fixture_root = root or Path("data/compiled_stories/v1")
+    if root is None:
+        approved = _approved_fixture_path(genre)
+        if approved is not None:
+            return _load_reviewed_blueprint(approved)
     path = fixture_root / f"{genre}.json"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -163,3 +167,110 @@ def load_compiled_story_fixture(genre: str, root: Path | None = None) -> Compile
     except json.JSONDecodeError as exc:
         raise CompilationError("FIXTURE_INVALID", f"compiled fixture '{genre}' is not JSON") from exc
     return validate_compiled_story(payload)
+
+
+def _approved_fixture_path(genre: str) -> Path | None:
+    manifest_path = Path("data/compiled_stories/v2/runtime-fixtures.json")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    except json.JSONDecodeError as exc:
+        raise CompilationError("FIXTURE_MAP_INVALID", "approved runtime fixture map is not JSON") from exc
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != "runtime-fixture-map-v1":
+        raise CompilationError("FIXTURE_MAP_INVALID", "approved runtime fixture map has an unsupported schema")
+    fixtures = manifest.get("fixtures")
+    filename = fixtures.get(genre) if isinstance(fixtures, dict) else None
+    if filename is None:
+        return None
+    if not isinstance(filename, str) or Path(filename).name != filename or not filename.endswith(".reviewed.json"):
+        raise CompilationError("FIXTURE_MAP_INVALID", f"approved fixture mapping for '{genre}' is invalid")
+    return manifest_path.parent / filename
+
+
+def _load_reviewed_blueprint(path: Path) -> CompiledStory:
+    from storygame.authoring.candidate_review import ReviewedCausalStory
+    from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
+    from storygame.authoring.causal_profiles import CausalProfileRegistry
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        reviewed = ReviewedCausalStory.model_validate(payload)
+    except FileNotFoundError as exc:
+        raise CompilationError("FIXTURE_NOT_FOUND", f"approved fixture '{path.name}' does not exist") from exc
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise CompilationError("FIXTURE_INVALID", f"approved fixture '{path.name}' is invalid") from exc
+    if not reviewed.review.approved:
+        raise CompilationError("FIXTURE_NOT_APPROVED", f"approved fixture '{path.name}' lacks approval")
+    try:
+        story = validate_causal_compiled_story(reviewed.story)
+        CausalProfileRegistry.from_directory(Path("data/genre_profiles")).validate(story)
+    except CausalValidationError as exc:
+        raise CompilationError("FIXTURE_INVALID", f"approved fixture '{path.name}' failed causal validation") from exc
+    return _causal_story_as_compiled_story(story)
+
+
+def _causal_story_as_compiled_story(story: object) -> CompiledStory:
+    truths = {truth.id: truth for truth in story.truths}
+    participants = tuple(
+        Character(
+            id=participant.id,
+            name=participant.id.replace("_", " ").title(),
+            role=participant.role,
+            description=f"Story participant with role: {participant.role}.",
+        )
+        for participant in story.participants
+    )
+    beats: list[Beat] = []
+    for index, declaration in enumerate(story.required_beats):
+        prerequisites = (story.required_beats[index - 1].id,) if index else ()
+        tag_id = f"{declaration.id}_completed"
+        beats.append(
+            Beat(
+                id=declaration.id,
+                phase=declaration.phase,
+                summary=f"Advance the declared {declaration.phase.replace('_', ' ')} beat.",
+                prerequisites=prerequisites,
+                completion_tags=(CompletionTag(id=tag_id, description=f"The '{declaration.id}' beat is complete."),),
+                pacing=BeatPacing(nudge_after=2, advance_after=4, escalate_after=6, force_consequence_after=8),
+                answers_central_question=declaration.phase == "resolution",
+            )
+        )
+    beat_tags = {beat.id: beat.completion_tags[0].id for beat in beats}
+    protected = tuple(
+        ProtectedRevelation(
+            id=f"protected_{protection.truth_id}",
+            summary=truths[protection.truth_id].summary,
+            reveal_after=tuple(
+                beat_tags[beat_id]
+                for revelation_id in protection.release_after_revelation_ids
+                for revelation in story.revelations
+                if revelation.id == revelation_id
+                for beat_id in revelation.gate_beat_ids
+                if beat_id in beat_tags
+            ),
+        )
+        for protection in story.knowledge_protections
+    )
+    if any(not revelation.reveal_after for revelation in protected):
+        raise CompilationError("FIXTURE_INVALID", "approved fixture has a protected truth without a runtime release")
+    location = next((item.id for item in story.locations if item.initial_access), "opening")
+    projected = CompiledStory(
+        schema_version="compiled-story-v1",
+        id=story.id,
+        version=story.version,
+        genre=story.genre,
+        title=story.title,
+        premise=story.premise,
+        central_question=f"How does the story resolve its central situation? {story.premise}"[:500],
+        initial_world_state={
+            "location": location,
+            "flags": list(story.opening_truth_ids),
+            "premise": story.premise,
+            "opening_truth_ids": list(story.opening_truth_ids),
+        },
+        characters=participants,
+        beats=tuple(beats),
+        protected_revelations=protected,
+    )
+    return validate_compiled_story(projected)

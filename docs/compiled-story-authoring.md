@@ -63,11 +63,13 @@ are rejected. Open-ended metadata belongs only under `extensions`, whose keys
 must be namespaced, such as `author.palette`.
 
 `vale_mansion_rebuild` is an `authoring_only` raw inventory entry. It may be
-selected by the offline source selector, but hosted bootstrap still loads only
-reviewed `data/compiled_stories/v1/` fixtures. Candidate artifacts will live
-under `data/story_blueprints/candidates/` as new versioned
-`*.candidate.json` files; they never overwrite reviewed artifacts in
-`data/compiled_stories/v1/`.
+selected by the offline source selector. Its approved causal artifact is
+registered in `data/compiled_stories/v2/runtime-fixtures.json`; the normal
+mystery runtime fixture loader validates that reviewed artifact and realizes a
+read-only projection into the runtime's existing `CompiledStory` contract.
+Other genres continue to load their reviewed `data/compiled_stories/v1/`
+fixtures. Candidate artifacts live under `data/story_blueprints/candidates/`
+as versioned `*.candidate.json` files and never become runtime input directly.
 
 The existing Vale artifact is deliberately not source authority. Its absent west
 gallery, prose-only upper gallery and long hall, unreachable evidence locations,
@@ -246,3 +248,45 @@ The command rejects an unaccepted or malformed candidate, incomplete approval,
 failed revalidation, and any attempt to overwrite an existing reviewed file.
 It is an authoring-only promotion record; Phase 5 remains responsible for any
 runtime loader or hosted bootstrap.
+
+## Repeatable candidate audit
+
+Before human approval, run the read-only audit command against any candidate:
+
+```text
+uv run storygame-blueprint-audit \
+  --candidate data/story_blueprints/candidates/vale_mansion_rebuild.candidate.json \
+  --output data/story_blueprints/audits/vale_mansion_rebuild.audit.md
+```
+
+The default output is a human-readable Markdown review packet. Use
+`--format json` when another tool needs the machine-readable report:
+
+```text
+uv run storygame-blueprint-audit \
+  --candidate data/story_blueprints/candidates/vale_mansion_rebuild.candidate.json \
+  --format json \
+  --output data/story_blueprints/audits/vale_mansion_rebuild.audit.json
+```
+
+The command makes no provider requests and never modifies the candidate. It
+writes a hash-bound `story-blueprint-audit-v1` report and exits zero only when
+all automated checks pass:
+
+- `compiler_validation`: contract, symbol binding, profile, causal, timeline,
+  completeness, fairness, and Freytag validation;
+- `terminal_roles`: every ending outcome resolves to a truth required by that
+  ending;
+- `knowledge_boundaries`: protected truths are absent from the opening and
+  have declared release revelations;
+- `route_diversity`: required revelations have the profile-defined number of
+  independent opportunity kinds;
+- `failure_forward`: each route has a bounded consequence or alternate route,
+  and no route points to itself;
+- `map_and_custody`: every evidence opportunity is held by a declared
+  participant and located in the reachable map.
+
+The report is diagnostic evidence, not a reviewed artifact and cannot be used
+as runtime input. A malformed or locally rejected candidate reports the
+compiler check as failed and marks dependent checks as skipped. Human review
+and `storygame-blueprint-review` promotion remain required.

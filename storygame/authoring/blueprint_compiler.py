@@ -23,7 +23,12 @@ from storygame.authoring.causal_critics import (
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.prompts import build_blueprint_compiler_prompt
-from storygame.authoring.repair_context import StructuralChange, repair_ledger, structural_diff
+from storygame.authoring.repair_context import (
+    StructuralChange,
+    is_additive_reference_change,
+    repair_ledger,
+    structural_diff,
+)
 from storygame.authoring.sources import NormalizedStorySource
 
 _AUTHORING_METADATA_MARKERS = (
@@ -181,7 +186,9 @@ class BlueprintCompiler:
         prohibited = tuple(
             change
             for change in audit.changes
-            if change.kind.value != "declaration_addition" and not _change_is_named(change, diagnostics)
+            if change.kind.value != "declaration_addition"
+            and not _change_is_named(change, diagnostics)
+            and not is_additive_reference_change(change, story, repaired, tuple(item.detail for item in diagnostics))
         )
         if prohibited:
             detail = "repair changed unrelated prior content: " + "; ".join(
@@ -279,6 +286,9 @@ class BlueprintCompiler:
             "location fields use location_ids; realization-route fields use "
             "realization_route_ids; and party_knowledge truth references use truth_ids or the "
             "mapped evidence opportunity truth ID. "
+            "Preserve every existing reference list and its order. When a reported proof-chain repair needs a new "
+            "declaration, append only the newly declared ID to the affected reference list; never remove, replace, "
+            "or reorder existing event actors, route opportunities, or other unrelated references. "
             f"Candidate JSON: {serialized}\nReference inventory: {inventory_text}\n"
             f"Prior valid symbol ledger: {prior_inventory_text}"
         )

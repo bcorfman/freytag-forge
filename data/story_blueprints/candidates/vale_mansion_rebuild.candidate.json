@@ -1,0 +1,1072 @@
+{
+  "accepted": true,
+  "diagnostics": [],
+  "request_count": 2,
+  "story": {
+    "causal_events": [
+      {
+        "actor_ids": [
+          "emma_vale",
+          "beatrice_harrow",
+          "thomas_reed",
+          "clara_vale",
+          "martha_quill"
+        ],
+        "earliest": 1260,
+        "id": "winter_gathering",
+        "input_truths": [],
+        "latest": 1369,
+        "location_id": "foyer",
+        "output_truths": [
+          "household_snowbound",
+          "public_rooms_accessible"
+        ],
+        "prerequisite_event_ids": []
+      },
+      {
+        "actor_ids": [
+          "emma_vale",
+          "beatrice_harrow"
+        ],
+        "earliest": 1370,
+        "id": "emma_discovers_diversion",
+        "input_truths": [],
+        "latest": 1390,
+        "location_id": "study",
+        "output_truths": [
+          "diverted_restoration_payments"
+        ],
+        "prerequisite_event_ids": [
+          "winter_gathering"
+        ]
+      },
+      {
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "earliest": 1400,
+        "id": "beatrice_takes_letter_opener",
+        "input_truths": [
+          "diverted_restoration_payments"
+        ],
+        "latest": 1415,
+        "location_id": "study",
+        "output_truths": [
+          "brass_letter_opener_used"
+        ],
+        "prerequisite_event_ids": [
+          "emma_discovers_diversion"
+        ]
+      },
+      {
+        "actor_ids": [
+          "thomas_reed",
+          "clara_vale",
+          "martha_quill"
+        ],
+        "earliest": 1405,
+        "id": "household_suspicions_form",
+        "input_truths": [],
+        "latest": 1414,
+        "location_id": "foyer",
+        "output_truths": [
+          "groundskeeper_near_gallery",
+          "groundskeeper_bootprints",
+          "groundskeeper_master_key",
+          "clara_debt",
+          "clara_argument",
+          "clara_missing_minutes"
+        ],
+        "prerequisite_event_ids": []
+      },
+      {
+        "actor_ids": [
+          "thomas_reed"
+        ],
+        "earliest": 1415,
+        "id": "groundskeeper_repairs_clock",
+        "input_truths": [],
+        "latest": 1425,
+        "location_id": "east_gate",
+        "output_truths": [
+          "groundskeeper_clock_testimony",
+          "groundskeeper_prints_old"
+        ],
+        "prerequisite_event_ids": [
+          "household_suspicions_form"
+        ]
+      },
+      {
+        "actor_ids": [
+          "clara_vale",
+          "martha_quill"
+        ],
+        "earliest": 1418,
+        "id": "clara_enters_library",
+        "input_truths": [],
+        "latest": 1419,
+        "location_id": "library",
+        "output_truths": [
+          "clara_receipt_alibi",
+          "clara_witnessed_elsewhere"
+        ],
+        "prerequisite_event_ids": [
+          "household_suspicions_form"
+        ]
+      },
+      {
+        "actor_ids": [
+          "beatrice_harrow",
+          "emma_vale"
+        ],
+        "earliest": 1422,
+        "id": "emma_killed",
+        "input_truths": [
+          "brass_letter_opener_used",
+          "diverted_restoration_payments"
+        ],
+        "latest": 1430,
+        "location_id": "west_gallery",
+        "output_truths": [
+          "emma_dead",
+          "beatrice_culprit",
+          "gallery_access_window",
+          "letter_opener_stabbing",
+          "death_between_2342_and_2350"
+        ],
+        "prerequisite_event_ids": [
+          "beatrice_takes_letter_opener"
+        ]
+      },
+      {
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "earliest": 1430,
+        "id": "beatrice_hides_body",
+        "input_truths": [
+          "emma_dead"
+        ],
+        "latest": 1440,
+        "location_id": "west_gallery",
+        "output_truths": [
+          "gallery_screen_concealment"
+        ],
+        "prerequisite_event_ids": [
+          "emma_killed"
+        ]
+      },
+      {
+        "actor_ids": [
+          "clara_vale"
+        ],
+        "earliest": 1420,
+        "id": "clara_receipt_written",
+        "input_truths": [],
+        "latest": 1438,
+        "location_id": "library",
+        "output_truths": [
+          "clara_receipt_alibi"
+        ],
+        "prerequisite_event_ids": [
+          "clara_enters_library"
+        ]
+      }
+    ],
+    "connected_routes": [
+      {
+        "aliases": [
+          "study door"
+        ],
+        "from_location_id": "foyer",
+        "id": "foyer_to_study",
+        "prerequisite_truths": [],
+        "to_location_id": "study"
+      },
+      {
+        "aliases": [
+          "library entrance"
+        ],
+        "from_location_id": "foyer",
+        "id": "foyer_to_library",
+        "prerequisite_truths": [],
+        "to_location_id": "library"
+      },
+      {
+        "aliases": [
+          "gallery archway"
+        ],
+        "from_location_id": "foyer",
+        "id": "foyer_to_west_gallery",
+        "prerequisite_truths": [],
+        "to_location_id": "west_gallery"
+      },
+      {
+        "aliases": [
+          "front doors"
+        ],
+        "from_location_id": "foyer",
+        "id": "foyer_to_grounds",
+        "prerequisite_truths": [],
+        "to_location_id": "grounds"
+      },
+      {
+        "aliases": [
+          "servants passage"
+        ],
+        "from_location_id": "library",
+        "id": "library_to_service_corridor",
+        "prerequisite_truths": [],
+        "to_location_id": "service_corridor"
+      },
+      {
+        "aliases": [
+          "gallery service door"
+        ],
+        "from_location_id": "service_corridor",
+        "id": "service_corridor_to_west_gallery",
+        "prerequisite_truths": [],
+        "to_location_id": "west_gallery"
+      },
+      {
+        "aliases": [
+          "snow path",
+          "east drive"
+        ],
+        "from_location_id": "grounds",
+        "id": "grounds_to_east_gate",
+        "prerequisite_truths": [],
+        "to_location_id": "east_gate"
+      }
+    ],
+    "end_states": [
+      {
+        "id": "truth_revealed_and_estate_cleared",
+        "required_outcome_ids": [
+          "identify_beatrice",
+          "establish_motive",
+          "establish_means",
+          "establish_opportunity",
+          "establish_method",
+          "establish_time",
+          "establish_concealment"
+        ],
+        "required_truth_ids": [
+          "beatrice_culprit",
+          "diverted_restoration_payments",
+          "brass_letter_opener_used",
+          "gallery_access_window",
+          "letter_opener_stabbing",
+          "death_between_2342_and_2350",
+          "gallery_screen_concealment"
+        ]
+      }
+    ],
+    "evidence_opportunities": [
+      {
+        "holder_id": "martha_quill",
+        "id": "blood_on_letter_opener",
+        "kind": "physical_evidence",
+        "location_id": "study",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "brass_letter_opener_used"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "wound_matches_opener",
+        "kind": "physical_evidence",
+        "location_id": "west_gallery",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "letter_opener_stabbing"
+      },
+      {
+        "holder_id": "thomas_reed",
+        "id": "gallery_snow_gap",
+        "kind": "physical_evidence",
+        "location_id": "west_gallery",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "gallery_access_window"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "payment_ledger",
+        "kind": "document",
+        "location_id": "study",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "diverted_restoration_payments"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "screen_fibers",
+        "kind": "physical_evidence",
+        "location_id": "west_gallery",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "gallery_screen_concealment"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "beatrice_statement",
+        "kind": "testimony",
+        "location_id": "foyer",
+        "route_id": "terminal_proof_route_b",
+        "supports": true,
+        "truth_id": "beatrice_culprit"
+      },
+      {
+        "holder_id": "beatrice_harrow",
+        "id": "ledger_signature",
+        "kind": "document",
+        "location_id": "library",
+        "route_id": "terminal_proof_route_b",
+        "supports": true,
+        "truth_id": "diverted_restoration_payments"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "clock_and_guest_testimony",
+        "kind": "testimony",
+        "location_id": "foyer",
+        "route_id": "terminal_proof_route_b",
+        "supports": true,
+        "truth_id": "death_between_2342_and_2350"
+      },
+      {
+        "holder_id": "clara_vale",
+        "id": "beatrice_gallery_testimony",
+        "kind": "testimony",
+        "location_id": "library",
+        "route_id": "terminal_proof_route_b",
+        "supports": true,
+        "truth_id": "gallery_access_window"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "concealment_account",
+        "kind": "testimony",
+        "location_id": "west_gallery",
+        "route_id": "terminal_proof_route_b",
+        "supports": true,
+        "truth_id": "gallery_screen_concealment"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "death_window_medical_note",
+        "kind": "document",
+        "location_id": "library",
+        "route_id": "terminal_proof_route_a",
+        "supports": true,
+        "truth_id": "death_between_2342_and_2350"
+      },
+      {
+        "holder_id": "thomas_reed",
+        "id": "tom_muddy_boots",
+        "kind": "physical_evidence",
+        "location_id": "grounds",
+        "route_id": "tom_false_solution_route",
+        "supports": true,
+        "truth_id": "groundskeeper_bootprints"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "tom_gallery_sighting",
+        "kind": "testimony",
+        "location_id": "foyer",
+        "route_id": "tom_false_solution_route",
+        "supports": true,
+        "truth_id": "groundskeeper_near_gallery"
+      },
+      {
+        "holder_id": "thomas_reed",
+        "id": "tom_master_key",
+        "kind": "physical_evidence",
+        "location_id": "grounds",
+        "route_id": "tom_false_solution_route",
+        "supports": true,
+        "truth_id": "groundskeeper_master_key"
+      },
+      {
+        "holder_id": "thomas_reed",
+        "id": "tom_clock_log",
+        "kind": "document",
+        "location_id": "east_gate",
+        "route_id": "tom_exoneration_route",
+        "supports": true,
+        "truth_id": "groundskeeper_clock_testimony"
+      },
+      {
+        "holder_id": "thomas_reed",
+        "id": "old_bootprint_layer",
+        "kind": "physical_evidence",
+        "location_id": "west_gallery",
+        "route_id": "tom_exoneration_route",
+        "supports": true,
+        "truth_id": "groundskeeper_prints_old"
+      },
+      {
+        "holder_id": "clara_vale",
+        "id": "clara_debt_letter",
+        "kind": "document",
+        "location_id": "library",
+        "route_id": "clara_false_solution_route",
+        "supports": true,
+        "truth_id": "clara_debt"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "clara_argument_testimony",
+        "kind": "testimony",
+        "location_id": "foyer",
+        "route_id": "clara_false_solution_route",
+        "supports": true,
+        "truth_id": "clara_argument"
+      },
+      {
+        "holder_id": "clara_vale",
+        "id": "clara_gallery_gap",
+        "kind": "testimony",
+        "location_id": "west_gallery",
+        "route_id": "clara_false_solution_route",
+        "supports": true,
+        "truth_id": "clara_missing_minutes"
+      },
+      {
+        "holder_id": "clara_vale",
+        "id": "clara_library_receipt",
+        "kind": "document",
+        "location_id": "library",
+        "route_id": "clara_exoneration_route",
+        "supports": true,
+        "truth_id": "clara_receipt_alibi"
+      },
+      {
+        "holder_id": "martha_quill",
+        "id": "clara_library_witness",
+        "kind": "testimony",
+        "location_id": "library",
+        "route_id": "clara_exoneration_route",
+        "supports": true,
+        "truth_id": "clara_witnessed_elsewhere"
+      }
+    ],
+    "genre": "mystery",
+    "id": "vale_mansion_rebuild",
+    "knowledge_protections": [
+      {
+        "release_after_revelation_ids": [
+          "terminal_solution"
+        ],
+        "truth_id": "diverted_restoration_payments"
+      },
+      {
+        "release_after_revelation_ids": [
+          "terminal_solution"
+        ],
+        "truth_id": "beatrice_culprit"
+      },
+      {
+        "release_after_revelation_ids": [
+          "terminal_solution"
+        ],
+        "truth_id": "gallery_screen_concealment"
+      }
+    ],
+    "locations": [
+      {
+        "id": "foyer",
+        "initial_access": true,
+        "role": "central public entrance"
+      },
+      {
+        "id": "study",
+        "initial_access": true,
+        "role": "private office and weapon source"
+      },
+      {
+        "id": "library",
+        "initial_access": true,
+        "role": "public reading room and records area"
+      },
+      {
+        "id": "west_gallery",
+        "initial_access": false,
+        "role": "crime scene"
+      },
+      {
+        "id": "grounds",
+        "initial_access": true,
+        "role": "snowbound estate grounds and gate approach"
+      },
+      {
+        "id": "east_gate",
+        "initial_access": false,
+        "role": "estate gate and clock"
+      },
+      {
+        "id": "service_corridor",
+        "initial_access": false,
+        "role": "household passage linking private rooms to the gallery"
+      }
+    ],
+    "opening_truth_ids": [
+      "emma_dead",
+      "household_snowbound",
+      "public_rooms_accessible"
+    ],
+    "optional_beats": [
+      {
+        "id": "tom_false_solution",
+        "phase": "rising_action",
+        "prerequisite_revelation_ids": [
+          "tom_hypothesis"
+        ],
+        "pressure": 55,
+        "purpose": "complication",
+        "required_outcome_id": null
+      },
+      {
+        "id": "clara_false_solution",
+        "phase": "rising_action",
+        "prerequisite_revelation_ids": [
+          "clara_hypothesis"
+        ],
+        "pressure": 58,
+        "purpose": "complication",
+        "required_outcome_id": null
+      },
+      {
+        "id": "tom_clearance",
+        "phase": "resolution",
+        "prerequisite_revelation_ids": [
+          "tom_exonerated"
+        ],
+        "pressure": 25,
+        "purpose": "relationship_development",
+        "required_outcome_id": null
+      },
+      {
+        "id": "clara_clearance",
+        "phase": "resolution",
+        "prerequisite_revelation_ids": [
+          "clara_exonerated"
+        ],
+        "pressure": 22,
+        "purpose": "relationship_development",
+        "required_outcome_id": null
+      }
+    ],
+    "participants": [
+      {
+        "id": "emma_vale",
+        "role": "victim and host"
+      },
+      {
+        "id": "beatrice_harrow",
+        "role": "estate solicitor and perpetrator"
+      },
+      {
+        "id": "thomas_reed",
+        "role": "groundskeeper and alternative suspect"
+      },
+      {
+        "id": "clara_vale",
+        "role": "niece and alternative suspect"
+      },
+      {
+        "id": "martha_quill",
+        "role": "housekeeper and witness"
+      }
+    ],
+    "party_knowledge": [
+      {
+        "participant_id": "martha_quill",
+        "truth_ids": [
+          "emma_dead",
+          "household_snowbound",
+          "public_rooms_accessible"
+        ]
+      },
+      {
+        "participant_id": "thomas_reed",
+        "truth_ids": [
+          "household_snowbound",
+          "public_rooms_accessible"
+        ]
+      },
+      {
+        "participant_id": "clara_vale",
+        "truth_ids": [
+          "household_snowbound",
+          "public_rooms_accessible"
+        ]
+      },
+      {
+        "participant_id": "beatrice_harrow",
+        "truth_ids": [
+          "household_snowbound",
+          "public_rooms_accessible",
+          "diverted_restoration_payments"
+        ]
+      }
+    ],
+    "premise": "During a snowbound winter gathering at Vale Mansion, host Emma Vale is found dead in the west gallery. The household must determine which guest had the motive, means, opportunity, and nerve to kill her before the estate can be safely opened again.",
+    "profile": "mystery",
+    "provenance": {
+      "model": "gpt-5.6-luna",
+      "prompt_version": "story-blueprint-v2",
+      "provider": "openai",
+      "response_id": "resp_0b69aebced41b0da006a8a30fab53087d181e24a37845836c6",
+      "source_format": "story-outline-inventory-v1",
+      "source_hash": "b0f55763ce3aba2e05b9a96aa0a81a7ea30c66637c29b07d9079843a03b9fe52",
+      "source_id": "vale_mansion_rebuild",
+      "source_path": "story_outlines.yaml#vale_mansion_rebuild",
+      "source_schema_version": "story-outline-inventory-v1",
+      "validation_results": [
+        "local_contract_valid",
+        "profile_valid",
+        "source_verified",
+        "critics_valid",
+        "repair_valid"
+      ]
+    },
+    "realization_routes": [
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "terminal_proof_route_b"
+          ],
+          "consequence_truth_ids": [
+            "brass_letter_opener_used"
+          ]
+        },
+        "id": "terminal_proof_route_a",
+        "opportunity_ids": [
+          "blood_on_letter_opener",
+          "wound_matches_opener",
+          "gallery_snow_gap",
+          "payment_ledger",
+          "screen_fibers",
+          "death_window_medical_note"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "beatrice_culprit",
+          "diverted_restoration_payments",
+          "brass_letter_opener_used",
+          "gallery_access_window",
+          "letter_opener_stabbing",
+          "death_between_2342_and_2350",
+          "gallery_screen_concealment"
+        ],
+        "revelation_id": "terminal_solution"
+      },
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "terminal_proof_route_a"
+          ],
+          "consequence_truth_ids": [
+            "death_between_2342_and_2350"
+          ]
+        },
+        "id": "terminal_proof_route_b",
+        "opportunity_ids": [
+          "beatrice_statement",
+          "ledger_signature",
+          "clock_and_guest_testimony",
+          "beatrice_gallery_testimony",
+          "concealment_account"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "beatrice_culprit",
+          "diverted_restoration_payments",
+          "brass_letter_opener_used",
+          "gallery_access_window",
+          "letter_opener_stabbing",
+          "death_between_2342_and_2350",
+          "gallery_screen_concealment"
+        ],
+        "revelation_id": "terminal_solution"
+      },
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "tom_exoneration_route"
+          ],
+          "consequence_truth_ids": [
+            "groundskeeper_near_gallery"
+          ]
+        },
+        "id": "tom_false_solution_route",
+        "opportunity_ids": [
+          "tom_muddy_boots",
+          "tom_gallery_sighting",
+          "tom_master_key"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "groundskeeper_bootprints",
+          "groundskeeper_near_gallery",
+          "groundskeeper_master_key"
+        ],
+        "revelation_id": "tom_hypothesis"
+      },
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "terminal_proof_route_a"
+          ],
+          "consequence_truth_ids": [
+            "groundskeeper_clock_testimony"
+          ]
+        },
+        "id": "tom_exoneration_route",
+        "opportunity_ids": [
+          "tom_clock_log",
+          "old_bootprint_layer"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "groundskeeper_clock_testimony",
+          "groundskeeper_prints_old"
+        ],
+        "revelation_id": "tom_exonerated"
+      },
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "clara_exoneration_route"
+          ],
+          "consequence_truth_ids": [
+            "clara_debt"
+          ]
+        },
+        "id": "clara_false_solution_route",
+        "opportunity_ids": [
+          "clara_debt_letter",
+          "clara_argument_testimony",
+          "clara_gallery_gap"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "clara_debt",
+          "clara_argument",
+          "clara_missing_minutes"
+        ],
+        "revelation_id": "clara_hypothesis"
+      },
+      {
+        "failure_forward": {
+          "alternative_route_ids": [
+            "terminal_proof_route_b"
+          ],
+          "consequence_truth_ids": [
+            "clara_receipt_alibi"
+          ]
+        },
+        "id": "clara_exoneration_route",
+        "opportunity_ids": [
+          "clara_library_receipt",
+          "clara_library_witness"
+        ],
+        "prerequisite_revelation_ids": [],
+        "prerequisite_truths": [],
+        "result_truth_ids": [
+          "clara_receipt_alibi",
+          "clara_witnessed_elsewhere"
+        ],
+        "revelation_id": "clara_exonerated"
+      }
+    ],
+    "required_beats": [
+      {
+        "id": "setup_discovery",
+        "phase": "setup",
+        "prerequisite_revelation_ids": [],
+        "pressure": 20,
+        "required_outcome_id": null
+      },
+      {
+        "id": "rising_suspicions",
+        "phase": "rising_action",
+        "prerequisite_revelation_ids": [],
+        "pressure": 45,
+        "required_outcome_id": null
+      },
+      {
+        "id": "crisis_locked_estate",
+        "phase": "crisis",
+        "prerequisite_revelation_ids": [],
+        "pressure": 70,
+        "required_outcome_id": null
+      },
+      {
+        "id": "climax_accusation",
+        "phase": "climax",
+        "prerequisite_revelation_ids": [],
+        "pressure": 92,
+        "required_outcome_id": null
+      },
+      {
+        "id": "resolution_clearance",
+        "phase": "resolution",
+        "prerequisite_revelation_ids": [
+          "terminal_solution"
+        ],
+        "pressure": 35,
+        "required_outcome_id": null
+      }
+    ],
+    "required_outcomes": [
+      {
+        "id": "identify_beatrice",
+        "truth_id": "beatrice_culprit"
+      },
+      {
+        "id": "establish_motive",
+        "truth_id": "diverted_restoration_payments"
+      },
+      {
+        "id": "establish_means",
+        "truth_id": "brass_letter_opener_used"
+      },
+      {
+        "id": "establish_opportunity",
+        "truth_id": "gallery_access_window"
+      },
+      {
+        "id": "establish_method",
+        "truth_id": "letter_opener_stabbing"
+      },
+      {
+        "id": "establish_time",
+        "truth_id": "death_between_2342_and_2350"
+      },
+      {
+        "id": "establish_concealment",
+        "truth_id": "gallery_screen_concealment"
+      }
+    ],
+    "revelations": [
+      {
+        "gate_beat_ids": [
+          "climax_accusation"
+        ],
+        "id": "terminal_solution",
+        "required": true,
+        "truth_id": "beatrice_culprit"
+      },
+      {
+        "gate_beat_ids": [
+          "rising_suspicions"
+        ],
+        "id": "tom_hypothesis",
+        "required": false,
+        "truth_id": "groundskeeper_near_gallery"
+      },
+      {
+        "gate_beat_ids": [
+          "resolution_clearance"
+        ],
+        "id": "tom_exonerated",
+        "required": false,
+        "truth_id": "groundskeeper_clock_testimony"
+      },
+      {
+        "gate_beat_ids": [
+          "rising_suspicions"
+        ],
+        "id": "clara_hypothesis",
+        "required": false,
+        "truth_id": "clara_debt"
+      },
+      {
+        "gate_beat_ids": [
+          "resolution_clearance"
+        ],
+        "id": "clara_exonerated",
+        "required": false,
+        "truth_id": "clara_receipt_alibi"
+      }
+    ],
+    "schema_version": "story-blueprint-v2",
+    "suspect_hypotheses": [
+      {
+        "exonerating_truth_ids": [
+          "groundskeeper_clock_testimony",
+          "groundskeeper_prints_old"
+        ],
+        "participant_id": "thomas_reed",
+        "supporting_truth_ids": [
+          "groundskeeper_near_gallery",
+          "groundskeeper_bootprints",
+          "groundskeeper_master_key"
+        ]
+      },
+      {
+        "exonerating_truth_ids": [
+          "clara_receipt_alibi",
+          "clara_witnessed_elsewhere"
+        ],
+        "participant_id": "clara_vale",
+        "supporting_truth_ids": [
+          "clara_debt",
+          "clara_argument",
+          "clara_missing_minutes"
+        ]
+      }
+    ],
+    "timeline_constraints": [
+      {
+        "after_event_id": "beatrice_takes_letter_opener",
+        "before_event_id": "emma_discovers_diversion"
+      },
+      {
+        "after_event_id": "emma_killed",
+        "before_event_id": "beatrice_takes_letter_opener"
+      },
+      {
+        "after_event_id": "beatrice_hides_body",
+        "before_event_id": "emma_killed"
+      }
+    ],
+    "title": "Death in the West Gallery",
+    "truths": [
+      {
+        "id": "emma_dead",
+        "roles": [
+          "victim"
+        ],
+        "summary": "Emma Vale has been killed in the west gallery."
+      },
+      {
+        "id": "household_snowbound",
+        "roles": [],
+        "summary": "A severe winter storm has isolated Vale Mansion and its estate."
+      },
+      {
+        "id": "public_rooms_accessible",
+        "roles": [],
+        "summary": "The foyer, study, library, and grounds are accessible to the gathered household."
+      },
+      {
+        "id": "beatrice_culprit",
+        "roles": [
+          "perpetrator",
+          "crime_solution"
+        ],
+        "summary": "Estate solicitor Beatrice Harrow killed Emma Vale."
+      },
+      {
+        "id": "diverted_restoration_payments",
+        "roles": [
+          "motive"
+        ],
+        "summary": "Beatrice Harrow diverted restoration payments from the Vale estate for her own benefit."
+      },
+      {
+        "id": "brass_letter_opener_used",
+        "roles": [
+          "means"
+        ],
+        "summary": "Beatrice used the study's brass letter opener as the weapon."
+      },
+      {
+        "id": "gallery_access_window",
+        "roles": [
+          "opportunity"
+        ],
+        "summary": "Beatrice had unobserved access to the west gallery during the killing window."
+      },
+      {
+        "id": "letter_opener_stabbing",
+        "roles": [
+          "method"
+        ],
+        "summary": "Emma died from a stabbing with the brass letter opener."
+      },
+      {
+        "id": "death_between_2342_and_2350",
+        "roles": [
+          "time_window"
+        ],
+        "summary": "Emma was killed between 23:42 and 23:50."
+      },
+      {
+        "id": "gallery_screen_concealment",
+        "roles": [
+          "concealment"
+        ],
+        "summary": "Beatrice concealed the body behind the west gallery's folding screen and disturbed the scene to delay discovery."
+      },
+      {
+        "id": "groundskeeper_near_gallery",
+        "roles": [],
+        "summary": "Groundskeeper Thomas Reed was seen near the west gallery shortly before the death."
+      },
+      {
+        "id": "groundskeeper_bootprints",
+        "roles": [],
+        "summary": "Thomas Reed's muddy bootprints appear on the gallery approach."
+      },
+      {
+        "id": "groundskeeper_master_key",
+        "roles": [],
+        "summary": "Thomas Reed possessed a master key that could open the gallery service door."
+      },
+      {
+        "id": "groundskeeper_clock_testimony",
+        "roles": [],
+        "summary": "Thomas Reed was repairing the east gate clock during the killing window."
+      },
+      {
+        "id": "groundskeeper_prints_old",
+        "roles": [],
+        "summary": "Thomas Reed's bootprints on the gallery approach predate the storm's last snowfall."
+      },
+      {
+        "id": "clara_debt",
+        "roles": [],
+        "summary": "Emma's niece Clara Vale was under pressure from substantial personal debts."
+      },
+      {
+        "id": "clara_argument",
+        "roles": [],
+        "summary": "Clara argued with Emma about money on the evening of the death."
+      },
+      {
+        "id": "clara_missing_minutes",
+        "roles": [],
+        "summary": "Clara cannot account for several minutes near the gallery before the body was found."
+      },
+      {
+        "id": "clara_receipt_alibi",
+        "roles": [],
+        "summary": "A dated receipt places Clara in the library reading room during the killing window."
+      },
+      {
+        "id": "clara_witnessed_elsewhere",
+        "roles": [],
+        "summary": "A housemaid saw Clara in the library during the latter part of the killing window."
+      }
+    ],
+    "version": 1
+  },
+  "validation_results": [
+    "local_contract_valid",
+    "profile_valid",
+    "source_verified",
+    "critics_valid",
+    "repair_valid"
+  ]
+}

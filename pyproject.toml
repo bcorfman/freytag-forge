@@ -18,6 +18,7 @@ dependencies = [
 storygame-blueprint = "storygame.authoring.cli:main"
 storygame-blueprint-review = "storygame.authoring.review_cli:main"
 storygame-blueprint-evaluate = "storygame.authoring.evaluation_cli:main"
+storygame-blueprint-audit = "storygame.authoring.audit_cli:main"
 
 [tool.uv]
 

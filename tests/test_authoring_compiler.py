@@ -123,6 +123,16 @@ def test_checked_in_cross_genre_fixtures_are_versioned_and_valid(genre: str):
     assert story.genre == genre
 
 
+def test_mystery_runtime_fixture_loads_the_approved_causal_artifact():
+    story = load_compiled_story_fixture("mystery")
+
+    assert story.id == "vale_mansion_rebuild"
+    assert story.title == "Death in the West Gallery"
+    assert story.initial_world_state["location"] == "foyer"
+    assert story.protected_revelations
+    assert story.beats[-1].answers_central_question is True
+
+
 def test_compiler_uses_only_transport_protocol_and_parses_local_contract():
     class StubCompilerModel:
         def generate(self, prompt: str) -> str:
@@ -160,6 +170,22 @@ def test_compiler_failures_are_typed_at_transport_and_fixture_boundaries(tmp_pat
     malformed.write_text("{", encoding="utf-8")
     with pytest.raises(CompilationError, match="FIXTURE_INVALID"):
         load_compiled_story_fixture("fantasy", tmp_path)
+
+
+def test_runtime_fixture_map_failures_are_typed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "data/compiled_stories/v2").mkdir(parents=True)
+    manifest = tmp_path / "data/compiled_stories/v2/runtime-fixtures.json"
+    manifest.write_text("{", encoding="utf-8")
+    with pytest.raises(CompilationError, match="FIXTURE_MAP_INVALID"):
+        load_compiled_story_fixture("mystery")
+
+    manifest.write_text(
+        json.dumps({"schema_version": "runtime-fixture-map-v1", "fixtures": {"mystery": "missing.reviewed.json"}}),
+        encoding="utf-8",
+    )
+    with pytest.raises(CompilationError, match="FIXTURE_NOT_FOUND"):
+        load_compiled_story_fixture("mystery")
 
 
 def test_unlocks_and_duplicate_beat_ids_are_locally_validated():
