@@ -191,6 +191,32 @@ existing causal review checklist. Generated storylets remain non-playable until
 the whole artifact validates and an editor promotes it; this phase makes no
 runtime change.
 
+## Offline storylet compiler Phase 3: runtime narrative package and selector
+
+An approved `reviewed-story-blueprint-v2` enters runtime through an immutable
+`RuntimeNarrativeProjection`. The compatibility projection still carries the
+existing `CompiledStory` for legacy consumers, while its read-only
+`RuntimeNarrativePackage` preserves the reviewed candidate SHA-256 and source
+ID/hash alongside the dramatic spine, storylets, consequence templates, and
+protected-truth set.
+`RuntimeState` holds that package only as authored input; facts remain the sole
+mutable session authority and snapshots bind only the compiled-story identity.
+
+`StoryletSelector` is constructor-injected with the package and `FactStore`.
+It makes no provider request and no writes. It returns at most three eligible
+opportunities, deterministically ranking active-beat compatibility, required
+and absent known truths, present participants, current location, pressure band,
+failure-forward urgency, recent-use facts, priority, then stable ID. Bootstrap
+seeds explicit false-valued storylet active/completed/aborted/discovered and
+recent-use facts; later phases may change those facts only through validated
+commit policies.
+
+The prompt context includes the active dramatic situation and only the small
+eligible set's ID, purpose, question, realization modes, and consequence IDs.
+It filters non-player knowledge and protected facts. An empty eligible set is
+ordinary freeform play: it supplies no invented objective and forces no
+transition.
+
 Phase 3 adds the offline-only blueprint compilation and review workflow.
 `BlueprintCompiler` requests provider JSON-object mode through an explicit
 transport option, retries at most once without that option, locally validates

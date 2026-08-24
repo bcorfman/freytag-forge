@@ -23,8 +23,10 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
 - **Drama with momentum.** Reusable dramatic situations create twists,
   trade-offs, alternate paths, and failures that open the next door—never a
   command menu.
-- **Stories built to play.** Every adventure balances a sturdy dramatic spine
-  with surprising, replayable moments that react to the facts you earn.
+- **Stories built to play.** A reviewed dramatic spine surfaces the right
+  opportunities for the moment, then gets out of your way when you go off-map.
+- **Replayable by design.** Fact-backed momentum remembers what you used,
+  protects what you have not learned, and keeps fresh paths on the table.
 
 **Less prompt luck. More playable story.**
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from storygame.authoring.contracts import CompiledStory
 from storygame.runtime.facts import FactStore
+from storygame.runtime.narrative import RuntimeNarrativeProjection
 from storygame.runtime.state import BeatRuntime, RuntimeEvent, RuntimeState, WorldState, runtime_state_bytes
 
 SAVE_SCHEMA_VERSION = "runtime-state-v3"
@@ -59,7 +60,8 @@ class RuntimeStateSqliteStore:
                 ),
             )
 
-    def load(self, session_id: str, story: CompiledStory) -> RuntimeState:
+    def load(self, session_id: str, story: CompiledStory | RuntimeNarrativeProjection) -> RuntimeState:
+        compiled_story = story.compiled_story if isinstance(story, RuntimeNarrativeProjection) else story
         row = self.conn.execute(
             "SELECT * FROM runtime_sessions WHERE namespace = ? AND session_id = ?", (self.namespace, session_id)
         ).fetchone()
@@ -82,8 +84,8 @@ class RuntimeStateSqliteStore:
             raise RuntimeSaveError(
                 "unsupported_save_version", "This save was created by an unsupported runtime version."
             )
-        if row["compiled_story_id"] != story.id or row["compiled_story_hash"] != _hash_json(
-            story.model_dump(mode="json")
+        if row["compiled_story_id"] != compiled_story.id or row["compiled_story_hash"] != _hash_json(
+            compiled_story.model_dump(mode="json")
         ):
             raise RuntimeSaveError("compiled_story_mismatch", "The saved story does not match this session.")
         if _sha256(row["snapshot"]) != row["snapshot_hash"]:
@@ -104,7 +106,7 @@ def _snapshot(state: RuntimeState) -> dict[str, object]:
     return payload
 
 
-def _restore(payload: dict[str, object], story: CompiledStory) -> RuntimeState:
+def _restore(payload: dict[str, object], story: CompiledStory | RuntimeNarrativeProjection) -> RuntimeState:
     if payload.get("schema_version") != SAVE_SCHEMA_VERSION:
         raise ValueError("unsupported runtime snapshot schema")
     world = dict(payload["world"])
@@ -122,7 +124,7 @@ def _restore(payload: dict[str, object], story: CompiledStory) -> RuntimeState:
         for event in payload.get("recent_events", [])
     ]
     return RuntimeState(
-        compiled_story=story,
+        compiled_story=story.compiled_story if isinstance(story, RuntimeNarrativeProjection) else story,
         world=WorldState(
             str(world["location"]),
             set(world.get("flags", [])),
@@ -139,6 +141,7 @@ def _restore(payload: dict[str, object], story: CompiledStory) -> RuntimeState:
         recent_events=events,
         story_summary=str(payload.get("story_summary", "")),
         facts=FactStore.from_json(payload.get("facts", [])),
+        narrative_package=story.narrative_package if isinstance(story, RuntimeNarrativeProjection) else None,
     )
 
 

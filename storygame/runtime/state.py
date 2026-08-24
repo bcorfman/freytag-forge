@@ -8,6 +8,7 @@ from typing import Any
 
 from storygame.authoring.contracts import Beat, CompiledStory
 from storygame.runtime.facts import Fact, FactStore
+from storygame.runtime.narrative import RuntimeNarrativePackage, RuntimeNarrativeProjection, seed_storylet_facts
 
 
 @dataclass
@@ -42,6 +43,7 @@ class RuntimeState:
     compiled_story: CompiledStory
     world: WorldState
     beat_runtime: dict[str, BeatRuntime]
+    narrative_package: RuntimeNarrativePackage | None = None
     turn_index: int = 0
     recent_events: list[RuntimeEvent] = field(default_factory=list)
     story_summary: str = ""
@@ -57,9 +59,13 @@ class RuntimeState:
         )
 
 
-def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
+def bootstrap_runtime_state(compiled_story: CompiledStory | RuntimeNarrativeProjection) -> RuntimeState:
     """Realize a reviewed immutable story into the only mutable V2 state object."""
 
+    narrative_package = None
+    if isinstance(compiled_story, RuntimeNarrativeProjection):
+        narrative_package = compiled_story.narrative_package
+        compiled_story = compiled_story.compiled_story
     if not isinstance(compiled_story, CompiledStory):
         raise TypeError("runtime bootstrap requires a reviewed CompiledStory fixture")
     initial = compiled_story.initial_world_state
@@ -94,10 +100,13 @@ def bootstrap_runtime_state(compiled_story: CompiledStory) -> RuntimeState:
     facts = _bootstrap_facts(compiled_story, location, attributes, items)
     for flag in flags:
         facts.assert_fact(Fact(predicate="flag", subject="world", object=flag))
+    if narrative_package is not None:
+        _bootstrap_narrative_facts(narrative_package, facts)
     return RuntimeState(
         compiled_story=compiled_story,
         world=WorldState(location=location, flags=flags, attributes=attributes, items=items),
         beat_runtime={beat.id: BeatRuntime(beat_id=beat.id) for beat in compiled_story.beats},
+        narrative_package=narrative_package,
         facts=facts,
     )
 
@@ -201,6 +210,13 @@ def _bootstrap_facts(
                             if isinstance(key, str):
                                 facts.assert_fact(Fact(predicate="knows", subject=speaker, object=key))
     return facts
+
+
+def _bootstrap_narrative_facts(package: RuntimeNarrativePackage, facts: FactStore) -> None:
+    for truth_id in package.opening_truth_ids:
+        if truth_id not in package.protected_truth_ids:
+            facts.assert_fact(Fact(predicate="knows", subject="player", object=truth_id))
+    seed_storylet_facts(package, facts)
 
 
 def runtime_state_bytes(state: RuntimeState) -> bytes:
