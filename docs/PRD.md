@@ -104,6 +104,34 @@ a promotion artifact and cannot become runtime input. Future diagnostic-code
 changes must update the compatibility record and the characterization tests in
 the same change.
 
+## Offline storylet compiler Phase 0: dramatic characterization baseline
+
+The offline storylet compiler has a separate, non-runtime Phase 0 corpus at
+`tests/fixtures/storylet_compiler_phase0.json`, a measured baseline at
+`data/story_blueprints/diagnostics/storylet-compiler-phase0-baseline.json`, and
+an author-owned Vale Mansion source Brief at
+`data/story_briefs/vale_mansion_storylet.yaml`. The Brief is selected only for
+future offline authoring work; the existing reviewed `vale_mansion_rebuild`
+fixture remains immutable runtime input.
+
+The corpus establishes the Phase 1 vocabulary across mystery, fantasy, sci-fi,
+and relationship stories: multiple eligible dramatic situations, a free-form
+action outside those situations, protected knowledge, a failure-forward
+alternative, and a fact-shaped completion marker that will later prevent
+repetition. It also records measurable acceptance criteria: applicable required
+beats need two distinct advancement paths; completion must support distinct
+route families; protected facts must stay out of player-visible context; a
+completed storylet must become ineligible; and normal turns must retain the
+one-request path with at most one bounded recovery request.
+
+The baseline exercises the current reviewed fixtures and records deterministic
+runtime-context token estimates, one provider request for each successful normal
+turn, a two-turn material-progress rate, active-beat persistence without a
+declared completion tag, and short narrative observations. The observations are
+diagnostics, not golden prose assertions. This phase adds no Storylet contract,
+selector, provider call, mutable quality store, or runtime authority; facts
+remain the sole canonical mutable truth.
+
 Genre-blueprint authoring has completed its offline-only Phases 1–2 contract
 and profile-validation layer.
 Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the
