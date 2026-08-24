@@ -189,16 +189,16 @@ before spending tokens on Terra or Sol.
 
 ### Phase 2 — Offline OpenAI candidate generation and review
 
-- [ ] Extend the blueprint compiler prompt to request a coherent dramatic spine and bounded storylet pool only after it has planned causal truths, locations, revelations, and endings. Include the source's creative direction and hard constraints explicitly.
-- [ ] Require complete JSON contracts, not prose fragments or provider-specific schemas. Local contracts remain authoritative.
-- [ ] Extend repair context, symbol ledger, and structural-diff policy so a repair may add declarations needed by a diagnostic but cannot rewrite unrelated accepted causal content.
-- [ ] Add deterministic storylet critics: coverage/diversity, dramatic escalation, participant continuity, protected-knowledge safety, and failure-forward viability. Critics report all independent diagnostics in stable order within the existing repair budget.
-- [ ] Preserve candidate/review/provenance workflow. Generated storylets remain unplayable until the full artifact has passed validation and editor review.
-- [ ] Update the review checklist to require human inspection of dramatic questions, participant agency, repeated-content risk, consequence quality, and distinct paths, not merely valid JSON and causal reachability.
+- [x] Extend the blueprint compiler prompt to request a coherent dramatic spine and bounded storylet pool only after it has planned causal truths, locations, revelations, and endings. Include the source's creative direction and hard constraints explicitly.
+- [x] Require complete JSON contracts, not prose fragments or provider-specific schemas. Local contracts remain authoritative.
+- [x] Extend repair context, symbol ledger, and structural-diff policy so a repair may add declarations needed by a diagnostic but cannot rewrite unrelated accepted causal content.
+- [x] Add deterministic storylet critics: coverage/diversity, dramatic escalation, participant continuity, protected-knowledge safety, and failure-forward viability. Critics report all independent diagnostics in stable order within the existing repair budget.
+- [x] Preserve candidate/review/provenance workflow. Generated storylets remain unplayable until the full artifact has passed validation and editor review.
+- [x] Update the review checklist to require human inspection of dramatic questions, participant agency, repeated-content risk, consequence quality, and distinct paths, not merely valid JSON and causal reachability.
 
-**Tests:** prompts include hard constraints and creative direction; provider-envelope failures retain current recovery bounds; model candidates with invalid storylets receive deterministic diagnostics; repair scope rejects unrelated rewrites; review rejects a causal-but-storylet-incomplete candidate.
+**Tests:** [x] prompts include hard constraints and creative direction; [x] provider-envelope failures retain current recovery bounds; [x] model candidates with invalid storylets receive deterministic diagnostics; [x] repair scope rejects unrelated rewrites; [x] review rejects a causal-but-storylet-incomplete candidate.
 
-**Exit criteria:** a paid, explicitly gated run can produce one reviewable vertical-slice candidate containing a validated dramatic spine and storylet pool, with no runtime change yet.
+**Exit criteria:** [x] a paid, explicitly gated run can produce one reviewable vertical-slice candidate containing a validated dramatic spine and storylet pool, with no runtime change yet.
 
 ### Phase 3 — Runtime narrative-package projection and selector
 

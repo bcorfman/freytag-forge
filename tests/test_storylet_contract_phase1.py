@@ -11,6 +11,13 @@ from storygame.authoring.candidate_audit import _storylet_coverage
 from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.sources import StoryBrief, StorySourceLoader
+from storygame.authoring.storylet_critics import (
+    DramaticEscalationCritic,
+    FailureForwardViabilityCritic,
+    ParticipantContinuityCritic,
+    ProtectedKnowledgeSafetyCritic,
+    StoryletCoverageCritic,
+)
 from storygame.authoring.symbol_resolution import Namespace, SymbolRegistry
 from tests.test_causal_story_contract import _story
 
@@ -86,6 +93,27 @@ def test_storylet_contract_binds_immutable_declarations_and_profile_rules() -> N
     assert coverage.by_purpose == {"moral_choice": 1, "relationship": 1}
     assert coverage.by_realization_mode == {"dialogue": 1, "direct_action": 1, "negotiation": 1}
     assert coverage.by_route_family == {"crew_deliberation": 1, "repair_commitment": 1}
+
+
+def test_storylet_critics_accept_a_coherent_pool_and_report_missing_coverage() -> None:
+    story = validate_causal_compiled_story(_storylet_story())
+    critics = (
+        StoryletCoverageCritic(CausalProfileRegistry.from_directory(Path("data/genre_profiles"))),
+        DramaticEscalationCritic(),
+        ParticipantContinuityCritic(),
+        ProtectedKnowledgeSafetyCritic(),
+        FailureForwardViabilityCritic(),
+    )
+
+    assert (
+        StoryletCoverageCritic(CausalProfileRegistry.from_directory(Path("data/genre_profiles")))
+        .critique(story)
+        .diagnostics
+    )
+    assert all(not critic.critique(story).diagnostics for critic in critics[1:])
+    assert StoryletCoverageCritic(CausalProfileRegistry.from_directory(Path("data/genre_profiles"))).critique(
+        story.model_copy(update={"storylets": ()})
+    ).diagnostics == ("dramatic spine has no storylets",)
 
 
 def test_storylet_reference_diagnostics_cover_every_new_namespace() -> None:

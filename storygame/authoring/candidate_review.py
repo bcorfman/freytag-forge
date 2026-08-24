@@ -18,9 +18,31 @@ from storygame.authoring.causal_contracts import (
 from storygame.authoring.causal_critics import CausalCompletenessCritic, FreytagProgressionCritic, RouteFairnessCritic
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
+from storygame.authoring.storylet_critics import (
+    DramaticEscalationCritic,
+    FailureForwardViabilityCritic,
+    ParticipantContinuityCritic,
+    ProtectedKnowledgeSafetyCritic,
+    StoryletCoverageCritic,
+)
 
-_REQUIRED_CHECKLIST = frozenset(
-    {"terminal_roles", "knowledge_boundaries", "route_diversity", "failure_forward", "map_and_custody"}
+_BASE_REVIEW_CHECKLIST = frozenset(
+    {
+        "terminal_roles",
+        "knowledge_boundaries",
+        "route_diversity",
+        "failure_forward",
+        "map_and_custody",
+    }
+)
+_STORYLET_REVIEW_CHECKLIST = frozenset(
+    {
+        "dramatic_questions",
+        "participant_agency",
+        "repeated_content_risk",
+        "consequence_quality",
+        "distinct_progression_paths",
+    }
 )
 
 
@@ -36,8 +58,8 @@ class CandidateReview(BaseModel):
 
     @model_validator(mode="after")
     def _complete_approval(self) -> CandidateReview:
-        if self.approved and not set(self.checklist) >= _REQUIRED_CHECKLIST:
-            missing = ", ".join(sorted(_REQUIRED_CHECKLIST - set(self.checklist)))
+        if self.approved and not set(self.checklist) >= _BASE_REVIEW_CHECKLIST:
+            missing = ", ".join(sorted(_BASE_REVIEW_CHECKLIST - set(self.checklist)))
             raise ValueError(f"approved review is missing checklist items: {missing}")
         return self
 
@@ -71,6 +93,7 @@ def promote_candidate(
         raise CompilationError("CANDIDATE_NOT_ACCEPTED", "locally rejected candidates cannot be promoted")
     if compilation.story.provenance.generation_mode == "debug":
         raise CompilationError("DEBUG_CANDIDATE_NOT_PROMOTABLE", "debug compilation candidates cannot be promoted")
+    _require_storylet_review(review, compilation.story)
     story = _revalidate(compilation.story, profiles)
     artifact = ReviewedCausalStory(
         schema_version="reviewed-story-blueprint-v2",
@@ -91,7 +114,16 @@ def promote_candidate(
 def required_review_checklist() -> tuple[str, ...]:
     """Return stable checklist IDs for the review CLI and operator documentation."""
 
-    return tuple(sorted(_REQUIRED_CHECKLIST))
+    return tuple(sorted(_BASE_REVIEW_CHECKLIST | _STORYLET_REVIEW_CHECKLIST))
+
+
+def _require_storylet_review(review: CandidateReview, story: CausalCompiledStory) -> None:
+    if story.dramatic_spine is None and not story.storylets:
+        return
+    missing = _STORYLET_REVIEW_CHECKLIST - set(review.checklist)
+    if missing:
+        detail = "approved review is missing checklist items: " + ", ".join(sorted(missing))
+        raise CompilationError("REVIEW_NOT_APPROVED", detail)
 
 
 def _load_candidate(path: Path) -> tuple[BlueprintCompilation, bytes]:
@@ -114,7 +146,16 @@ def _revalidate(story: CausalCompiledStory, profiles: CausalProfileRegistry) -> 
         raise CompilationError("CANDIDATE_REVIEW_INVALID", str(exc)) from exc
     diagnostics = tuple(
         detail
-        for critic in (CausalCompletenessCritic(), RouteFairnessCritic(profiles), FreytagProgressionCritic(profiles))
+        for critic in (
+            CausalCompletenessCritic(),
+            RouteFairnessCritic(profiles),
+            FreytagProgressionCritic(profiles),
+            StoryletCoverageCritic(profiles),
+            DramaticEscalationCritic(),
+            ParticipantContinuityCritic(),
+            ProtectedKnowledgeSafetyCritic(),
+            FailureForwardViabilityCritic(),
+        )
         for detail in critic.critique(validated).diagnostics
     )
     if diagnostics:

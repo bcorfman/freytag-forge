@@ -20,8 +20,11 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   facts that made your story yours.
 - **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
   share the same spoiler-safe, fact-backed rules.
-- **Drama with momentum.** Reviewed storylets frame reusable dramatic situations,
-  alternate routes, and failures that open the next door—never a command menu.
+- **Drama with momentum.** Reusable dramatic situations create twists,
+  trade-offs, alternate paths, and failures that open the next door—never a
+  command menu.
+- **Stories built to play.** Every adventure balances a sturdy dramatic spine
+  with surprising, replayable moments that react to the facts you earn.
 
 **Less prompt luck. More playable story.**
 
