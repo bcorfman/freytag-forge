@@ -40,12 +40,11 @@ opening projection cannot mutate state or bypass commit validation. Existing
 reviewed causal artifacts remain loadable: the compiler supplies safe generic
 defaults when legacy opening metadata is absent.
 
-## V1 porting Phase 0: V2 capability ledger
+## V2 capability baseline
 
-Phase 0 does not certify the historical V1 implementation. The machine-readable
-[parity ledger](../.plans/v1-parity-ledger.yaml) records intended V2 player
-capabilities, while the [decision record](../.plans/v1-porting-phase0-decision.md)
-explains which historical surfaces are evidence only or intentionally retired.
+The engine is V2-only. The following behavioral requirements define the
+cross-genre runtime baseline; they do not depend on a retained V1 migration
+ledger or historical implementation artifacts.
 
 The presentation target is progressive description. A newly entered room or
 newly encountered item may receive a full authored description with atmosphere,
