@@ -107,10 +107,17 @@ function renderOpening(opening) {
     return;
   }
   appendEntry(opening.scene, "output");
+  const orientation = [
+    opening.protagonist_context || opening.player_context,
+    opening.arrival_context,
+    ...(Array.isArray(opening.companions) ? opening.companions : []),
+    ...(Array.isArray(opening.public_briefing) && opening.public_briefing.length > 0
+      ? opening.public_briefing
+      : [opening.situation]),
+    opening.scene_purpose,
+  ].filter((line, index, lines) => typeof line === "string" && line.length > 0 && lines.indexOf(line) === index);
   appendEntry(
-    [opening.protagonist_context, opening.arrival_context, ...opening.public_briefing]
-      .filter((line) => typeof line === "string" && line.length > 0)
-      .join("\n\n"),
+    orientation.join("\n\n"),
     "output",
   );
   if (Array.isArray(opening.first_available_actions) && opening.first_available_actions.length > 0) {

@@ -53,10 +53,10 @@ class RuntimeEngine:
             try:
                 raw = self.model.play_turn(context, json_object=json_object)
                 result = TurnResult.from_provider(raw)
-                if movement is not None and not any(item.path == "world.location" for item in result.operations):
+                if movement is not None:
                     result = result.model_copy(
                         update={
-                            "operations": result.operations
+                            "operations": tuple(item for item in result.operations if item.path != "world.location")
                             + (StateOperation(kind="set", path="world.location", value=movement),)
                         }
                     )
@@ -209,6 +209,12 @@ def _movement_affordance(state: RuntimeState, player_input: str) -> str | None:
 
 def _mentions_destination(request: str, label: str) -> bool:
     normalized = label.casefold().replace("_", " ").strip()
-    if request in {normalized, f"go {normalized}", f"go to {normalized}", f"walk to {normalized}"}:
+    if request in {
+        normalized,
+        f"go {normalized}",
+        f"go to {normalized}",
+        f"walk to {normalized}",
+        f"enter {normalized}",
+    }:
         return True
     return request.startswith("go ") and normalized in request[3:]
