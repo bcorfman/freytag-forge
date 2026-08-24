@@ -109,7 +109,7 @@ compiler provenance rather than overwriting a checked-in reviewed fixture.
 
 The first-party `OpenAIBlueprintTransport` uses the OpenAI Responses API at the
 offline authoring boundary. It receives an explicit `OpenAICompilerConfig`
-(API key, model, optional base URL, finite timeout) and implements the
+(API key, quality-tier-selected model, optional base URL, finite timeout) and implements the
 `BlueprintCompilerTransport.generate(prompt, *, json_object)` protocol. It
 normalizes plain text, fenced JSON, structured output, nested `result.response`,
 and chat-choice envelopes before local parsing. Refusals, empty output,
@@ -119,19 +119,38 @@ Run a paid compilation only when both the environment gate and the command
 acknowledgement are present:
 
 ```text
-OPENAI_API_KEY=... FREYTAG_COMPILER_MODEL=gpt-5.6 FREYTAG_ENABLE_LIVE_COMPILER=1 \
-  uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live
+OPENAI_API_KEY=... FREYTAG_ENABLE_LIVE_COMPILER=1 \
+  uv run storygame-blueprint --outline-id vale_mansion_rebuild \
+  --quality-tier preferred --live
 ```
 
-`--model` overrides `FREYTAG_COMPILER_MODEL`. `OPENAI_BASE_URL` optionally
-selects a compatible Responses endpoint. `--timeout-seconds` sets a finite
-per-request timeout (default: 30 seconds); use a larger value for a deliberate,
-offline long-form compilation. `--background` creates and polls an OpenAI
-background Response, avoiding one long-lived HTTP connection. It requires a
-project without Zero Data Retention because OpenAI retains that request briefly
-for polling. `--transport-factory module.path:factory`
-is a mutually exclusive test/custom seam and still requires `--model` and the
-same live gate. The normal non-live command remains a source inspection tool.
+`--quality-tier` is required for every promotable live compiler run: `preferred` resolves
+to `gpt-5.6-sol` and `minimum` resolves to `gpt-5.6-terra`. Both use high
+reasoning effort for the complete candidate and any bounded repair request.
+There is deliberately no `--model` override or compiler-model environment
+variable, so every inference-capable stage in one run uses the same reviewed
+tier policy. `OPENAI_BASE_URL` optionally selects a compatible Responses
+endpoint. `--timeout-seconds` sets a finite per-request timeout (default: 600
+seconds). The compiler creates and polls an OpenAI background Response by
+default, avoiding one long-lived HTTP connection. It requires a project without
+Zero Data Retention because OpenAI retains that request briefly for polling.
+Pass `--no-background` only for a compatible direct-response endpoint, or
+`--background` to state the default explicitly. `--transport-factory module.path:factory`
+is a mutually exclusive test/custom seam and still requires a model selection
+(`--quality-tier` or `--debug`) and the same live gate. The normal non-live
+command remains a source inspection tool.
+
+For a low-cost end-to-end compiler smoke, pass `--debug` instead of
+`--quality-tier`. Debug resolves every provider request in that run to
+`gpt-5.6-luna` with low reasoning effort. Its candidates and exhausted
+diagnostics are marked as debug and cannot be reviewed, promoted, or used as
+runtime input:
+
+```text
+OPENAI_API_KEY=... FREYTAG_ENABLE_LIVE_COMPILER=1 \
+  uv run storygame-blueprint --outline-id vale_mansion_rebuild \
+  --debug --live --output data/story_blueprints/candidates/vale_debug.candidate.json
+```
 
 The compiler owns one shared recovery budget: it requests JSON-object mode,
 then at most once retries without it. It locally validates the result and writes
@@ -172,8 +191,7 @@ When a paid compilation exhausts, an operator may explicitly retain its raw
 model attempts and typed local errors as a non-playable diagnostic artifact:
 
 ```text
-uv run storygame-blueprint --outline-id vale_mansion_rebuild --provider openai --live \
-  --background --timeout-seconds 600 \
+uv run storygame-blueprint --outline-id vale_mansion_rebuild --live \
   --diagnostic-output data/story_blueprints/diagnostics/vale_mansion.diagnostic.json
 ```
 
@@ -214,7 +232,8 @@ the structural diffs observed during repairs:
 ```text
 FREYTAG_ENABLE_LIVE_COMPILER=1 \
 uv run storygame-blueprint-evaluate \
-  --live --provider openai --output data/story_blueprints/evaluations/phase4.evaluation.json
+  --live --quality-tier minimum \
+  --output data/story_blueprints/evaluations/phase4.evaluation.json
 ```
 
 The command requires the explicit live opt-in and never writes a candidate,

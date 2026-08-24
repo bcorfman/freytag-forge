@@ -70,6 +70,7 @@ def test_openai_transport_requests_responses_json_object_and_normalizes_output()
         {
             "model": "gpt-5.6",
             "input": "prompt",
+            "reasoning": {"effort": "high"},
             "text": {"format": {"type": "json_object"}},
             "timeout_seconds": 12,
         }
@@ -112,23 +113,39 @@ def test_openai_transport_surfaces_refusal_empty_json_mode_and_timeout_without_s
         assert "sk-super-secret" not in str(error.value)
 
 
-def test_openai_configuration_requires_key_and_explicit_model(monkeypatch: pytest.MonkeyPatch):
+def test_openai_configuration_requires_key_and_resolves_the_selected_quality_tier(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("FREYTAG_COMPILER_MODEL", raising=False)
     with pytest.raises(CompilationError, match="OPENAI_API_KEY_REQUIRED"):
-        OpenAICompilerConfig.from_environment()
+        OpenAICompilerConfig.from_environment(quality_tier="preferred")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
-    with pytest.raises(CompilationError, match="OPENAI_MODEL_REQUIRED"):
-        OpenAICompilerConfig.from_environment()
+    preferred = OpenAICompilerConfig.from_environment(quality_tier="preferred")
+    minimum = OpenAICompilerConfig.from_environment(quality_tier="minimum")
+
+    assert (preferred.model, preferred.reasoning_effort) == ("gpt-5.6-sol", "high")
+    assert (minimum.model, minimum.reasoning_effort) == ("gpt-5.6-terra", "high")
+    debug = OpenAICompilerConfig.from_environment(debug=True)
+    assert (debug.model, debug.reasoning_effort) == ("gpt-5.6-luna", "low")
+    with pytest.raises(CompilationError, match="COMPILER_QUALITY_TIER_INVALID"):
+        OpenAICompilerConfig.from_environment(quality_tier="luna")
 
 
 def test_openai_configuration_accepts_an_explicit_finite_timeout(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
-    monkeypatch.setenv("FREYTAG_COMPILER_MODEL", "gpt-5.5")
 
-    config = OpenAICompilerConfig.from_environment(timeout_seconds=120)
+    config = OpenAICompilerConfig.from_environment(quality_tier="minimum", timeout_seconds=120)
 
     assert config.timeout_seconds == 120
+
+
+def test_openai_configuration_defaults_to_background_polling_with_a_ten_minute_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+
+    config = OpenAICompilerConfig.from_environment(quality_tier="minimum")
+
+    assert config.timeout_seconds == 600
+    assert config.background is True
 
 
 def test_openai_configuration_rejects_a_nonpositive_timeout_from_the_cli():

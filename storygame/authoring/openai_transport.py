@@ -11,6 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from storygame.authoring.compiler import CompilationError
+from storygame.authoring.model_tiers import resolve_compiler_model
 
 _SAFE_RATE_LIMIT_HEADERS = (
     ("x-request-id", "request_id"),
@@ -40,8 +41,9 @@ class OpenAICompilerConfig:
         *,
         api_key: str,
         model: str,
+        reasoning_effort: str = "high",
         base_url: str = "https://api.openai.com/v1",
-        timeout_seconds: float = 30,
+        timeout_seconds: float = 600,
         background: bool = False,
     ) -> None:
         if not api_key.strip():
@@ -52,6 +54,7 @@ class OpenAICompilerConfig:
             raise CompilationError("OPENAI_TIMEOUT_INVALID", "request timeout must be positive")
         self.api_key = api_key
         self.model = model
+        self.reasoning_effort = reasoning_effort
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.background = background
@@ -60,20 +63,22 @@ class OpenAICompilerConfig:
     def from_environment(
         cls,
         *,
-        model: str | None = None,
+        quality_tier: str | None = None,
+        debug: bool = False,
         base_url: str | None = None,
         timeout_seconds: float | None = None,
-        background: bool = False,
+        background: bool | None = None,
     ) -> OpenAICompilerConfig:
         api_key = os.getenv("OPENAI_API_KEY", "")
-        selected_model = model or os.getenv("FREYTAG_COMPILER_MODEL", "")
+        selected_model, reasoning_effort = resolve_compiler_model(quality_tier, debug=debug)
         selected_base_url = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         return cls(
             api_key=api_key,
             model=selected_model,
+            reasoning_effort=reasoning_effort,
             base_url=selected_base_url,
-            timeout_seconds=timeout_seconds if timeout_seconds is not None else 30,
-            background=background,
+            timeout_seconds=timeout_seconds if timeout_seconds is not None else 600,
+            background=background if background is not None else True,
         )
 
 
@@ -170,6 +175,7 @@ class OpenAIBlueprintTransport:
         request: dict[str, object] = {
             "model": self._config.model,
             "input": prompt,
+            "reasoning": {"effort": self._config.reasoning_effort},
             "timeout_seconds": self._config.timeout_seconds,
         }
         if json_object:

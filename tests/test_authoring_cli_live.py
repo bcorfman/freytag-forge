@@ -64,8 +64,8 @@ def test_live_custom_transport_writes_a_fresh_candidate(monkeypatch: pytest.Monk
                 str(inventory),
                 "--transport-factory",
                 "test.fake:transport",
-                "--model",
-                "test-model",
+                "--quality-tier",
+                "minimum",
                 "--live",
                 "--output",
                 str(output),
@@ -85,8 +85,8 @@ def test_live_custom_transport_writes_a_fresh_candidate(monkeypatch: pytest.Monk
                 str(inventory),
                 "--transport-factory",
                 "test.fake:transport",
-                "--model",
-                "test-model",
+                "--quality-tier",
+                "minimum",
                 "--live",
                 "--output",
                 str(output),
@@ -94,7 +94,7 @@ def test_live_custom_transport_writes_a_fresh_candidate(monkeypatch: pytest.Monk
         )
 
 
-def test_live_command_requires_gate_provider_and_candidate_suffix(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_live_command_requires_gate_and_model_selection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     inventory = tmp_path / "outlines.yaml"
     _inventory(inventory)
     arguments = ["--outline-id", "signal", "--inventory", str(inventory), "--live"]
@@ -102,10 +102,52 @@ def test_live_command_requires_gate_provider_and_candidate_suffix(tmp_path: Path
         cli.main(arguments)
 
     monkeypatch.setenv("FREYTAG_ENABLE_LIVE_COMPILER", "1")
-    with pytest.raises(SystemExit, match="COMPILER_PROVIDER_REQUIRED"):
+    with pytest.raises(SystemExit, match="COMPILER_QUALITY_TIER_REQUIRED"):
         cli.main(arguments)
     with pytest.raises(SystemExit, match="LIVE_COMPILATION_ACK_REQUIRED"):
-        cli.main(["--outline-id", "signal", "--inventory", str(inventory), "--provider", "openai"])
+        cli.main(["--outline-id", "signal", "--inventory", str(inventory), "--quality-tier", "minimum"])
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(["--outline-id", "signal", "--provider", "openai"])
+
+
+def test_cli_leaves_background_mode_to_the_compiler_default_and_allows_an_opt_out():
+    default_args = cli.build_parser().parse_args(["--outline-id", "signal"])
+    direct_args = cli.build_parser().parse_args(["--outline-id", "signal", "--no-background"])
+
+    assert default_args.background is None
+    assert direct_args.background is False
+
+
+def test_debug_mode_uses_a_nonpromotable_luna_candidate(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys):
+    inventory = tmp_path / "outlines.yaml"
+    output = tmp_path / "signal.candidate.json"
+    _inventory(inventory)
+    monkeypatch.setenv("FREYTAG_ENABLE_LIVE_COMPILER", "1")
+    source_hash = StorySourceLoader(inventory, Path("data/genre_profiles")).select_outline("signal").source_hash
+    monkeypatch.setattr(cli, "_load_transport_factory", lambda path: _Transport(source_hash))
+
+    assert (
+        cli.main(
+            [
+                "--outline-id",
+                "signal",
+                "--inventory",
+                str(inventory),
+                "--transport-factory",
+                "test.fake:transport",
+                "--debug",
+                "--live",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out) == {"candidate": str(output)}
+    provenance = json.loads(output.read_text(encoding="utf-8"))["story"]["provenance"]
+    assert provenance["model"] == "gpt-5.6-luna"
+    assert provenance["generation_mode"] == "debug"
+    assert provenance["quality_tier"] is None
 
 
 def test_transport_factory_is_a_validated_custom_seam(monkeypatch: pytest.MonkeyPatch):
@@ -136,8 +178,8 @@ def test_live_command_writes_an_explicit_nonplayable_diagnostic_on_exhaustion(
             [
                 "--outline-id",
                 "vale_mansion_rebuild",
-                "--provider",
-                "openai",
+                "--quality-tier",
+                "minimum",
                 "--live",
                 "--diagnostic-output",
                 str(output),

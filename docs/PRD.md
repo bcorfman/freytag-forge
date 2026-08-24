@@ -766,7 +766,15 @@ receive their deployment configuration through GitHub Pages and Railway.
 ### Offline authoring/compiler
 - `OPENAI_API_KEY` is required only for live offline blueprint compilation.
 - `FREYTAG_ENABLE_LIVE_COMPILER=1` is required to opt into paid compiler calls.
-- `FREYTAG_COMPILER_MODEL` selects the explicitly configured compiler model.
+- Live compiler commands require `--quality-tier preferred|minimum`; the tier
+  deterministically selects the reviewed OpenAI compiler model for the full
+  request and its bounded repair. `FREYTAG_COMPILER_MODEL` is not used.
+- `--debug` is the low-cost compiler smoke path: it selects GPT-5.6 Luna with
+  low reasoning for both allowed compiler requests and produces a
+  non-promotable debug artifact.
+- Live compiler requests default to OpenAI background polling with a finite
+  600-second deadline. `--timeout-seconds` overrides the deadline and
+  `--no-background` opts out for a compatible direct-response endpoint.
 
 ### Cloudflare Workers AI adapter
 - `CLOUDFLARE_WORKER_URL`

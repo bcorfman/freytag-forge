@@ -106,6 +106,17 @@ def test_promotion_revalidates_the_candidate_and_never_overwrites(tmp_path: Path
         promote_candidate(candidate, output, _review(), _profiles())
 
 
+def test_promotion_rejects_a_debug_compilation_candidate(tmp_path: Path) -> None:
+    candidate = tmp_path / "signal.candidate.json"
+    _candidate(candidate)
+    payload = json.loads(candidate.read_text(encoding="utf-8"))
+    payload["story"]["provenance"]["generation_mode"] = "debug"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(CompilationError, match="DEBUG_CANDIDATE_NOT_PROMOTABLE"):
+        promote_candidate(candidate, tmp_path / "signal.reviewed.json", _review(), _profiles())
+
+
 def test_review_command_requires_every_explicit_check_and_writes_the_promotion(tmp_path: Path, capsys) -> None:
     candidate = tmp_path / "signal.candidate.json"
     output = tmp_path / "signal.reviewed.json"
