@@ -228,11 +228,11 @@ before spending tokens on Terra or Sol.
 
 ### Phase 5 — Simulation, vertical slice, and promotion
 
-- [ ] Build an authoring-only simulation harness that drives the deterministic selector and validation policy with goal-focused, exploratory, social, avoidant, aggressive, and chaotic-but-legal policies. It must not require paid or runtime LLM calls.
-- [ ] Measure ending reachability, dead ends, revelation order, storylet reuse, selection diversity, pressure trajectory, blocked-action rate, and distinct paths to climax. Emit versioned, non-runtime evaluation reports.
+- [x] Build an authoring-only simulation harness that drives the deterministic selector and validation policy with goal-focused, exploratory, social, avoidant, aggressive, and chaotic-but-legal policies. It must not require paid or runtime LLM calls.
+- [x] Measure ending reachability, dead ends, revelation order, storylet reuse, selection diversity, pressure trajectory, blocked-action rate, and distinct paths to climax. Emit versioned, non-runtime evaluation reports.
 - [ ] Compile and review the vertical-slice Story Brief. Run simulation and manual narrative playthroughs before promotion; correct the source Brief or compiler/contracts, never generated candidate/reviewed artifacts directly.
-- [ ] Add parallel cross-genre fixtures and regression cases. Only after all profiles pass the generic contract can this become the default authoring and runtime path.
-- [ ] Update authoring, operational, and runtime documentation. Then run TMPDIR=/tmp uv run pytest -q, uv run ruff check --fix ., uv run ruff format ., and focused tests affected by formatting.
+- [x] Add parallel cross-genre fixtures and regression cases. Only after all profiles pass the generic contract can this become the default authoring and runtime path.
+- [x] Update authoring, operational, and runtime documentation. Then run TMPDIR=/tmp uv run pytest -q, uv run ruff check --fix ., uv run ruff format ., and focused tests affected by formatting.
 
 **Exit criteria:** the vertical slice demonstrates materially richer, non-repetitive narrative with fact-backed continuity; simulation and manual review show multiple viable paths; full cross-genre regression coverage and project coverage remain at least 90%.
 

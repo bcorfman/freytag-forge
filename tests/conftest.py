@@ -19,6 +19,7 @@ _AUTHORING_QUALITY_FILES = {
     "test_authoring_sources.py",
     "test_blueprint_contracts.py",
     "test_causal_story_contract.py",
+    "test_storylet_simulation_phase5.py",
 }
 _HEALTH: dict[str, dict[str, Any]] = {}
 _SESSION_WALL = 0.0

@@ -279,6 +279,24 @@ not a model-supplied dramatic tag. The shared save projection persists these
 facts with its usual integrity check, and `storygame.web_demo` remains a thin
 consumer of the unchanged runtime response.
 
+## Offline storylet compiler Phase 5: deterministic simulation
+
+`storygame.authoring.storylet_simulation` is an authoring-only harness for a
+reviewed `RuntimeNarrativeProjection`. It invokes the existing read-only
+`StoryletSelector` and clone-first `validate_and_commit` policy directly; it
+does not call a provider, render prose, or gain an alternate mutation path.
+Six generic legal play styles—goal-focused, exploratory, social, avoidant,
+aggressive, and chaotic—start from independent runtime states.
+
+The versioned `storylet-simulation-v1` report records ending reachability, dead
+ends, revelation order, storylet reuse, selection diversity, pressure
+trajectories, blocked-action rate, distinct climax paths, and protected-
+revelation violations. Reports must end in `.simulation.json`, are immutable
+once written, and are non-runtime evidence: they can inform source Brief,
+compiler-contract, and editorial changes but can never become a playable
+package or state authority. The cross-genre regression exercises the same
+generic harness for mystery, fantasy, sci-fi, and relationship profile labels.
+
 ## V1 porting Phase 2: fact authority, inventory, clues, and documents
 
 `storygame.runtime.facts` provides the minimal canonical fact layer beneath
