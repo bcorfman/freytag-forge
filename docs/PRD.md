@@ -258,6 +258,27 @@ save traces, and hosted-demo response headers; exhausted failures stay
 uncommitted. See the
 [grounded turn-contract baseline](grounded-turn-contract-baseline.md).
 
+## Offline storylet compiler Phase 4: proposal, validation, and commit
+
+`TurnResult` may carry one optional, typed `storylet_realization`: a reviewed
+storylet ID, one of its declared realization modes, authorized consequence IDs,
+and declared completion or abort evidence. The field is strict at the untrusted
+JSON boundary and cannot carry runtime paths or arbitrary fact mutations.
+
+The clone-first runtime policy rechecks the selector's current fact snapshot,
+participant/location availability, mode, consequence authorization, outcome
+evidence, and failure-forward declaration before it writes anything. Accepted
+consequence templates become `knows(player, truth)` fact operations, while
+selection, completion, abort, discovery, and recent-use markers are canonical
+facts. An aborted storylet records its declared alternatives as discovered;
+the renderer receives narration only after that atomic candidate succeeds.
+
+Unselected freeform turns retain the ordinary proposal/commit contract. The
+engine's pacing update recognizes committed storylet completion or abort facts,
+not a model-supplied dramatic tag. The shared save projection persists these
+facts with its usual integrity check, and `storygame.web_demo` remains a thin
+consumer of the unchanged runtime response.
+
 ## V1 porting Phase 2: fact authority, inventory, clues, and documents
 
 `storygame.runtime.facts` provides the minimal canonical fact layer beneath

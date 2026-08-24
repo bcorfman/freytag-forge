@@ -98,6 +98,15 @@ class RuntimeContextBuilder:
                 "completion_tag_rule": (
                     "copy only the exact completion_tags listed for the matching active beat; otherwise use []"
                 ),
+                "storylet_realization": {
+                    "storylet_id": "optional selected eligible narrative_opportunities.storylets id",
+                    "realization_mode": "one declared realization_modes value",
+                    "consequence_ids": "subset of that storylet's declared consequence_ids",
+                    "completion_evidence": "use the storylet completion truth only after its consequence commits it",
+                    "abort_evidence": (
+                        "use only declared abort truth ids; this opens declared failure-forward opportunities"
+                    ),
+                },
                 "material_progress": "boolean",
                 "dialogue": {
                     "target_id": "the declared visible NPC addressed by the player",

@@ -215,16 +215,16 @@ before spending tokens on Terra or Sol.
 
 ### Phase 4 — Proposal, validation, and commit integration
 
-- [ ] Extend the ordinary turn-result contract with an optional storylet realization containing a selected storylet ID, realization mode, declared consequence IDs, and evidence for claimed completion/abort. Do not allow raw runtime paths or undeclared facts through this field.
-- [ ] Add a generic validation policy that verifies selection eligibility at the current fact snapshot, realization mode, participant presence, consequence authorization, completion/abort rules, required revelation gates, and failure-forward conditions before committing.
-- [ ] Translate accepted consequence templates into typed fact operations and commit atomically with ordinary validated operations. The renderer receives only post-commit state.
-- [ ] Let freeform LLM proposals remain valid when they do not select a storylet. They cannot assert a storylet's protected truth or mark it complete without passing the new policy.
-- [ ] Update pacing and beat progression to consume committed fact outcomes, not model-declared beat tags alone. Preserve existing save/load, trace, and integrity-projection guarantees.
-- [ ] Keep storygame.web_demo thin; it should consume the shared runtime response and require no storylet-specific deployment branch.
+- [x] Extend the ordinary turn-result contract with an optional storylet realization containing a selected storylet ID, realization mode, declared consequence IDs, and evidence for claimed completion/abort. Do not allow raw runtime paths or undeclared facts through this field.
+- [x] Add a generic validation policy that verifies selection eligibility at the current fact snapshot, realization mode, participant presence, consequence authorization, completion/abort rules, required revelation gates, and failure-forward conditions before committing.
+- [x] Translate accepted consequence templates into typed fact operations and commit atomically with ordinary validated operations. The renderer receives only post-commit state.
+- [x] Let freeform LLM proposals remain valid when they do not select a storylet. They cannot assert a storylet's protected truth or mark it complete without passing the new policy.
+- [x] Update pacing and beat progression to consume committed fact outcomes, not model-declared beat tags alone. Preserve existing save/load, trace, and integrity-projection guarantees.
+- [x] Keep storygame.web_demo thin; it should consume the shared runtime response and require no storylet-specific deployment branch.
 
 **Tests:** valid realization commits every fact before narration; stale or ineligible selection fails closed; unknown storylet/mode/consequence fails closed; no protected leakage through prose or dialogue; failure forward opens the declared alternative; freeform turns remain proposal-first; recovery stays at two provider calls; save/load preserves selection facts; all tests span the four supported genres.
 
-**Exit criteria:** a reviewed storylet can influence progression safely during ordinary play without changing the free-form player contract or fact authority.
+**Exit criteria:** [x] a reviewed storylet can influence progression safely during ordinary play without changing the free-form player contract or fact authority.
 
 ### Phase 5 — Simulation, vertical slice, and promotion
 

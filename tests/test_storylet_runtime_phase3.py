@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import pytest
+
 from storygame.authoring.causal_contracts import validate_causal_compiled_story
 from storygame.authoring.compiler import _causal_story_as_compiled_story, load_runtime_narrative_fixture
+from storygame.persistence.runtime_state_sqlite import RuntimeStateSqliteStore
 from storygame.runtime.context import RuntimeContextBuilder
+from storygame.runtime.contracts import RuntimeFailure, StoryletRealization, TurnResult
 from storygame.runtime.facts import Fact
 from storygame.runtime.narrative import RuntimeNarrativeProjection, StoryletSelector, narrative_package_from_story
 from storygame.runtime.state import bootstrap_runtime_state, runtime_state_bytes
+from storygame.runtime.validation import validate_and_commit
 from tests.test_storylet_contract_phase1 import _storylet_story
 
 
@@ -94,3 +99,100 @@ def test_runtime_bootstrap_remains_cross_genre_compatible() -> None:
     mystery = bootstrap_runtime_state(load_runtime_narrative_fixture("mystery"))
     assert mystery.narrative_package is not None
     assert len(mystery.narrative_package.reviewed_candidate_sha256 or "") == 64
+
+
+def _realization(**changes: object) -> StoryletRealization:
+    values: dict[str, object] = {
+        "storylet_id": "engineer_faces_cost",
+        "realization_mode": "negotiation",
+        "consequence_ids": ("commit_repair",),
+        "completion_evidence": ("tradeoff",),
+    }
+    values.update(changes)
+    return StoryletRealization(**values)
+
+
+def test_storylet_realization_commits_declared_consequences_and_completion_atomically() -> None:
+    state = _eligible_state()
+
+    committed = validate_and_commit(
+        state,
+        TurnResult(narration="The engineer accepts the costly repair.", storylet_realization=_realization()),
+    )
+
+    assert committed.facts.has("knows", "player", "tradeoff")
+    assert committed.facts.has("storylet_completed", "engineer_faces_cost", value="true")
+    assert committed.facts.has("storylet_recently_used", "engineer_faces_cost", value="true")
+    assert not state.facts.has("knows", "player", "tradeoff")
+
+
+@pytest.mark.parametrize(
+    "changes, code",
+    [
+        ({"storylet_id": "unknown"}, "UNKNOWN_STORYLET"),
+        ({"realization_mode": "travel"}, "INVALID_STORYLET_MODE"),
+        ({"consequence_ids": ("unknown",)}, "UNKNOWN_STORYLET_CONSEQUENCE"),
+        ({"completion_evidence": ("failure",)}, "INVALID_STORYLET_COMPLETION"),
+    ],
+)
+def test_storylet_realization_rejects_unknown_or_unauthorized_declarations(
+    changes: dict[str, object], code: str
+) -> None:
+    state = _eligible_state()
+    before = runtime_state_bytes(state)
+
+    with pytest.raises(RuntimeFailure) as error:
+        validate_and_commit(
+            state,
+            TurnResult(narration="An invalid dramatic claim.", storylet_realization=_realization(**changes)),
+        )
+
+    assert error.value.code == code
+    assert runtime_state_bytes(state) == before
+
+
+def test_ineligible_storylet_and_freeform_turn_preserve_fact_authority() -> None:
+    state = _eligible_state()
+    state.facts.retract_fact(Fact(predicate="present", subject="engineer", object="relay"))
+    before = runtime_state_bytes(state)
+
+    with pytest.raises(RuntimeFailure, match="ineligible"):
+        validate_and_commit(
+            state,
+            TurnResult(narration="The absent engineer decides.", storylet_realization=_realization()),
+        )
+
+    assert runtime_state_bytes(state) == before
+    freeform = validate_and_commit(state, TurnResult(narration="You wait and watch the empty relay."))
+    assert runtime_state_bytes(freeform) == before
+
+
+def test_aborted_storylet_opens_declared_failure_forward_opportunity() -> None:
+    state = _eligible_state()
+
+    committed = validate_and_commit(
+        state,
+        TurnResult(
+            narration="The engineer refuses, forcing the crew to talk it through.",
+            storylet_realization=_realization(consequence_ids=(), completion_evidence=(), abort_evidence=("failure",)),
+        ),
+    )
+
+    assert committed.facts.has("storylet_aborted", "engineer_faces_cost", value="true")
+    assert committed.facts.has("storylet_discovered", "crew_debates_cost", value="true")
+
+
+def test_storylet_selection_facts_survive_integrity_checked_save_load(tmp_path) -> None:
+    state = validate_and_commit(
+        _eligible_state(),
+        TurnResult(narration="The engineer accepts the costly repair.", storylet_realization=_realization()),
+    )
+    store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite", namespace="test")
+    try:
+        store.save("session", state)
+        restored = store.load("session", _projection())
+    finally:
+        store.close()
+
+    assert restored.facts.has("storylet_completed", "engineer_faces_cost", value="true")
+    assert restored.facts.has("storylet_recently_used", "engineer_faces_cost", value="true")

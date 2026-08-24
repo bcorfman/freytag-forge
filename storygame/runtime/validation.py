@@ -6,8 +6,16 @@ import copy
 import json
 from typing import Any
 
-from storygame.runtime.contracts import DialogueProposal, DocumentDisclosure, RuntimeFailure, TurnResult
+from storygame.authoring.causal_contracts import Consequence
+from storygame.runtime.contracts import (
+    DialogueProposal,
+    DocumentDisclosure,
+    RuntimeFailure,
+    StoryletRealization,
+    TurnResult,
+)
 from storygame.runtime.facts import Fact
+from storygame.runtime.narrative import StoryletSelector
 from storygame.runtime.state import RuntimeState
 
 
@@ -21,6 +29,8 @@ def validate_and_commit(
     if result.dialogue is not None:
         _validate_dialogue(candidate, result.dialogue, player_input)
     _reject_protected_leaks(candidate, result)
+    if result.storylet_realization is not None:
+        _apply_storylet_realization(candidate, result.storylet_realization)
     _apply_disclosures(candidate, result.disclosures)
     for operation in result.operations:
         _apply_operation(candidate, operation.kind, operation.path, operation.value)
@@ -30,6 +40,71 @@ def validate_and_commit(
     _apply_beat_updates(candidate, result)
     _apply_timed_events(candidate, candidate.turn_index + 1)
     return candidate
+
+
+def _apply_storylet_realization(state: RuntimeState, realization: StoryletRealization) -> None:
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("STORYLET_PACKAGE_UNAVAILABLE", "this session has no reviewed storylet package")
+    storylet = next((item for item in package.storylets if item.id == realization.storylet_id), None)
+    if storylet is None:
+        raise RuntimeFailure("UNKNOWN_STORYLET", f"unknown storylet '{realization.storylet_id}'")
+    eligible = StoryletSelector(package, state.facts).select(
+        active_beat_ids=tuple(beat.id for beat in state.active_beats),
+        location_id=state.world.location,
+        limit=len(package.storylets),
+    )
+    if storylet not in eligible:
+        raise RuntimeFailure("INELIGIBLE_STORYLET", f"storylet '{storylet.id}' is ineligible at this fact snapshot")
+    if realization.realization_mode not in storylet.realization_modes:
+        raise RuntimeFailure(
+            "INVALID_STORYLET_MODE", f"storylet '{storylet.id}' does not allow '{realization.realization_mode}'"
+        )
+    duplicate_consequences = len(set(realization.consequence_ids)) != len(realization.consequence_ids)
+    if duplicate_consequences or not set(realization.consequence_ids) <= set(storylet.consequence_ids):
+        raise RuntimeFailure(
+            "UNKNOWN_STORYLET_CONSEQUENCE", f"storylet '{storylet.id}' received an undeclared consequence"
+        )
+    if realization.completion_evidence and realization.abort_evidence:
+        raise RuntimeFailure(
+            "STORYLET_OUTCOME_CONFLICT", "a storylet cannot complete and abort in the same realization"
+        )
+    _apply_storylet_consequences(state, package.consequences, realization.consequence_ids)
+    _mark_storylet(state, "storylet_active", storylet.id)
+    _mark_storylet(state, "storylet_discovered", storylet.id)
+    _mark_storylet(state, "storylet_recently_used", storylet.id)
+    if realization.completion_evidence:
+        if set(realization.completion_evidence) != {storylet.completion_truth_id} or not state.facts.has(
+            "knows", "player", storylet.completion_truth_id
+        ):
+            raise RuntimeFailure(
+                "INVALID_STORYLET_COMPLETION", f"storylet '{storylet.id}' lacks declared completion evidence"
+            )
+        _mark_storylet(state, "storylet_completed", storylet.id)
+    if realization.abort_evidence:
+        if not set(realization.abort_evidence) <= set(storylet.abort_truth_ids):
+            raise RuntimeFailure("INVALID_STORYLET_ABORT", f"storylet '{storylet.id}' lacks declared abort evidence")
+        _mark_storylet(state, "storylet_aborted", storylet.id)
+        for target_id in storylet.failure_forward_storylet_ids:
+            _mark_storylet(state, "storylet_discovered", target_id)
+
+
+def _apply_storylet_consequences(
+    state: RuntimeState, consequences: tuple[Consequence, ...], ids: tuple[str, ...]
+) -> None:
+    templates = {item.id: item for item in consequences}
+    for consequence_id in ids:
+        template = templates.get(consequence_id)
+        if template is None:
+            raise RuntimeFailure("UNKNOWN_STORYLET_CONSEQUENCE", f"unknown consequence '{consequence_id}'")
+        for truth_id in template.assert_truth_ids:
+            state.facts.assert_fact(Fact(predicate="knows", subject="player", object=truth_id))
+        for truth_id in template.retract_truth_ids:
+            state.facts.retract_fact(Fact(predicate="knows", subject="player", object=truth_id))
+
+
+def _mark_storylet(state: RuntimeState, predicate: str, storylet_id: str) -> None:
+    state.facts.assert_fact(Fact(predicate=predicate, subject=storylet_id, value="true"))
 
 
 def _apply_operation(state: RuntimeState, kind: str, path: str, value: Any) -> None:

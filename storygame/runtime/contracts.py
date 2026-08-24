@@ -33,6 +33,17 @@ class BeatUpdate(BaseModel):
     evidence: str = Field(default="", max_length=800)
 
 
+class StoryletRealization(BaseModel):
+    """A bounded claim to realize one eligible reviewed storylet."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    storylet_id: str = Field(min_length=1, max_length=80)
+    realization_mode: str = Field(min_length=1, max_length=80)
+    consequence_ids: tuple[str, ...] = Field(default=(), max_length=16)
+    completion_evidence: tuple[str, ...] = Field(default=(), max_length=16)
+    abort_evidence: tuple[str, ...] = Field(default=(), max_length=16)
+
+
 class DialogueProposal(BaseModel):
     """A validated addressed-NPC response with bounded state effects."""
 
@@ -58,6 +69,7 @@ class TurnResult(BaseModel):
     beat_updates: tuple[BeatUpdate, ...] = Field(default=(), max_length=16)
     disclosures: tuple[DocumentDisclosure, ...] = Field(default=(), max_length=16)
     dialogue: DialogueProposal | None = None
+    storylet_realization: StoryletRealization | None = None
     summary_delta: str | None = Field(default=None, max_length=1200)
     material_progress: bool = False
 
