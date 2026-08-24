@@ -573,6 +573,11 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
         "an alternative realization route" in prompt
     )
     assert "mystery" not in prompt
+    assert "dramatic_spine, consequences, storylets" in prompt
+    assert (
+        "Plan causal truths, locations, revelations, and endings before the dramatic spine and storylet pool" in prompt
+    )
+    assert "storylets: [{id,beat_id,purpose,route_family,availability,priority,dramatic_question" in prompt
 
 
 def test_blueprint_parser_and_source_validation_reject_untrusted_shapes():

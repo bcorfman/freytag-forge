@@ -14,6 +14,8 @@ def _candidate() -> dict[str, object]:
         "required_outcomes": [{"id": "outcome_a"}],
         "required_beats": [{"id": "beat_a"}],
         "optional_beats": [{"id": "optional_a"}],
+        "consequences": [{"id": "consequence_a"}],
+        "storylets": [{"id": "storylet_a"}],
         "end_states": [{"id": "ending_a"}],
     }
 
@@ -23,6 +25,8 @@ def test_repair_ledger_uses_all_declared_namespaces_and_maps_opportunity_truth()
 
     assert ledger is not None
     assert ledger["optional_beat_ids"] == ["optional_a"]
+    assert ledger["consequence_ids"] == ["consequence_a"]
+    assert ledger["storylet_ids"] == ["storylet_a"]
     assert ledger["end_state_ids"] == ["ending_a"]
     assert ledger["evidence_opportunity_truth_ids"] == {"opportunity_a": "truth_a"}
 

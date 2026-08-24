@@ -30,6 +30,13 @@ from storygame.authoring.repair_context import (
     structural_diff,
 )
 from storygame.authoring.sources import NormalizedStorySource
+from storygame.authoring.storylet_critics import (
+    DramaticEscalationCritic,
+    FailureForwardViabilityCritic,
+    ParticipantContinuityCritic,
+    ProtectedKnowledgeSafetyCritic,
+    StoryletCoverageCritic,
+)
 
 _AUTHORING_METADATA_MARKERS = (
     "authoring artifact",
@@ -302,6 +309,10 @@ class BlueprintCompiler:
             "protocol: every retained end state must declare at least one required_outcome_id "
             "and one required_truth_id. Remove a nonviable empty end state instead of leaving "
             "empty arrays. Reference inventory for repair follows; it is a local ID ledger, "
+            "STORYLET_COVERAGE repair protocol: add a new bounded storylet for each named uncovered beat; "
+            "do not rewrite an existing storylet's dramatic question, participants, route family, or consequences. "
+            "STORYLET_FAILURE_FORWARD repair protocol: point a failed storylet only to an existing or newly declared "
+            "storylet with a different route_family that does not require the failed storylet's completion truth. "
             "never fictional content. Use a value only in its matching namespace: "
             "truth-reference fields use truth_ids; participant fields use participant_ids; "
             "location fields use location_ids; realization-route fields use "
@@ -418,6 +429,11 @@ class BlueprintCompiler:
             CausalCompletenessCritic().critique(bound),
             RouteFairnessCritic(self._profiles).critique(bound),
             FreytagProgressionCritic(self._profiles).critique(bound),
+            StoryletCoverageCritic(self._profiles).critique(story),
+            DramaticEscalationCritic().critique(story),
+            ParticipantContinuityCritic().critique(story),
+            ProtectedKnowledgeSafetyCritic().critique(story),
+            FailureForwardViabilityCritic().critique(story),
         )
         return tuple(
             CompilationDiagnostic(critic=result.critic, code="LOCAL_INVARIANT", detail=detail)

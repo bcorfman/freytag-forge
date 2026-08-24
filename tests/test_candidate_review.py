@@ -39,6 +39,11 @@ def _review() -> CandidateReview:
             "route_diversity",
             "failure_forward",
             "map_and_custody",
+            "dramatic_questions",
+            "participant_agency",
+            "repeated_content_risk",
+            "consequence_quality",
+            "distinct_progression_paths",
         ),
         notes="Verified against the source constraints and local review reports.",
     )

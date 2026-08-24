@@ -164,6 +164,33 @@ bootstrap or gameplay. A one-way reduced
 projection keeps the public `CompiledStory` fixture API available while future
 consumers migrate. See [genre-blueprint authoring](genre-blueprint-authoring.md).
 
+## Offline storylet compiler Phase 2: candidate generation and review
+
+The explicitly gated offline compiler requests one complete
+`story-blueprint-v2` JSON object: it first plans causal truths, locations,
+revelations, and viable endings, then produces the dramatic spine, named
+consequence templates, and bounded storylet pool. Source creative direction
+and hard constraints are included verbatim as authoring context, while local
+typed validation remains the authority; provider JSON-object mode is syntax
+assistance, not a provider-side schema.
+
+The existing one-request-plus-one-recovery limit applies to malformed envelopes,
+JSON-mode fallback, validation repair, and transient transport errors together.
+Repair receives the candidate and a namespace ledger including storylets and
+consequences. It may add declarations called for by diagnostics, but the
+structural-diff policy rejects unrelated rewrites of accepted causal content.
+
+Before a candidate can be accepted, deterministic critics report stable,
+independent diagnostics for storylet coverage and diversity, pressure-envelope
+fit, participant continuity, protected-knowledge safety, and failure-forward
+viability, alongside causal completeness, route fairness, and Freytag
+progression. Candidate audit and promotion rerun these checks. Human approval
+now explicitly covers dramatic questions, participant agency, repeated-content
+risk, consequence quality, and distinct progression paths, in addition to the
+existing causal review checklist. Generated storylets remain non-playable until
+the whole artifact validates and an editor promotes it; this phase makes no
+runtime change.
+
 Phase 3 adds the offline-only blueprint compilation and review workflow.
 `BlueprintCompiler` requests provider JSON-object mode through an explicit
 transport option, retries at most once without that option, locally validates

@@ -15,6 +15,13 @@ from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
 from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
 from storygame.authoring.causal_critics import CausalCompletenessCritic, FreytagProgressionCritic, RouteFairnessCritic
 from storygame.authoring.causal_profiles import CausalProfileRegistry
+from storygame.authoring.storylet_critics import (
+    DramaticEscalationCritic,
+    FailureForwardViabilityCritic,
+    ParticipantContinuityCritic,
+    ProtectedKnowledgeSafetyCritic,
+    StoryletCoverageCritic,
+)
 
 CHECK_IDS = (
     "compiler_validation",
@@ -91,6 +98,11 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
                 CausalCompletenessCritic(),
                 RouteFairnessCritic(profiles),
                 FreytagProgressionCritic(profiles),
+                StoryletCoverageCritic(profiles),
+                DramaticEscalationCritic(),
+                ParticipantContinuityCritic(),
+                ProtectedKnowledgeSafetyCritic(),
+                FailureForwardViabilityCritic(),
             )
             for detail in critic.critique(bound).diagnostics
         )

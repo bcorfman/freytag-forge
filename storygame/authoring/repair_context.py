@@ -69,6 +69,8 @@ def repair_ledger(candidate: object) -> dict[str, object] | None:
         Namespace.REQUIRED_OUTCOME: "required_outcome_ids",
         Namespace.REQUIRED_BEAT: "required_beat_ids",
         Namespace.OPTIONAL_BEAT: "optional_beat_ids",
+        Namespace.CONSEQUENCE: "consequence_ids",
+        Namespace.STORYLET: "storylet_ids",
         Namespace.END_STATE: "end_state_ids",
     }
     ledger = {key: list(registry.ids(namespace)) for namespace, key in names.items()}
@@ -174,6 +176,8 @@ def is_additive_reference_change(
         Namespace.REQUIRED_OUTCOME: "required_outcome_ids",
         Namespace.REQUIRED_BEAT: "required_beat_ids",
         Namespace.OPTIONAL_BEAT: "optional_beat_ids",
+        Namespace.CONSEQUENCE: "consequence_ids",
+        Namespace.STORYLET: "storylet_ids",
         Namespace.END_STATE: "end_state_ids",
     }[change.target_namespace]
     previous_ids = set(previous_ledger[ledger_key])
@@ -281,5 +285,7 @@ def _target_namespace(key: str) -> Namespace | None:
         "beat": Namespace.REQUIRED_BEAT,
         "event": Namespace.CAUSAL_EVENT,
         "opportunity": Namespace.EVIDENCE_OPPORTUNITY,
+        "consequence": Namespace.CONSEQUENCE,
+        "storylet": Namespace.STORYLET,
     }
     return aliases.get(stem)
