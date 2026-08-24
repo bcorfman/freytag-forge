@@ -76,7 +76,7 @@ def test_live_custom_transport_writes_a_fresh_candidate(monkeypatch: pytest.Monk
     assert json.loads(capsys.readouterr().out) == {"candidate": str(output)}
     assert json.loads(output.read_text(encoding="utf-8"))["story"]["id"] == "signal_crisis"
 
-    with pytest.raises(SystemExit, match="CANDIDATE_OUTPUT_EXISTS"):
+    assert (
         cli.main(
             [
                 "--outline-id",
@@ -92,6 +92,53 @@ def test_live_custom_transport_writes_a_fresh_candidate(monkeypatch: pytest.Monk
                 str(output),
             ]
         )
+        == 0
+    )
+    second_output = Path(json.loads(capsys.readouterr().out)["candidate"])
+    assert second_output != output
+    assert second_output.name.startswith("signal.")
+    assert second_output.name.endswith(".candidate.json")
+
+
+def test_autopromote_registers_an_accepted_candidate_as_the_runtime_fixture(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+):
+    inventory = tmp_path / "outlines.yaml"
+    candidate = tmp_path / "signal.candidate.json"
+    fixture_root = tmp_path / "compiled"
+    _inventory(inventory)
+    monkeypatch.setenv("FREYTAG_ENABLE_LIVE_COMPILER", "1")
+    source_hash = StorySourceLoader(inventory, Path("data/genre_profiles")).select_outline("signal").source_hash
+    monkeypatch.setattr(cli, "_load_transport_factory", lambda path: _Transport(source_hash))
+
+    assert (
+        cli.main(
+            [
+                "--outline-id",
+                "signal",
+                "--inventory",
+                str(inventory),
+                "--transport-factory",
+                "test.fake:transport",
+                "--quality-tier",
+                "minimum",
+                "--live",
+                "--output",
+                str(candidate),
+                "--autopromote",
+                "--runtime-fixture-root",
+                str(fixture_root),
+            ]
+        )
+        == 0
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    reviewed = Path(result["reviewed_artifact"])
+    manifest = json.loads((fixture_root / "runtime-fixtures.json").read_text(encoding="utf-8"))
+    assert result["candidate"] == str(candidate)
+    assert reviewed.parent == fixture_root
+    assert manifest["fixtures"] == {"sci-fi": reviewed.name}
 
 
 def test_live_command_requires_gate_and_model_selection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -213,8 +260,10 @@ def test_diagnostic_artifacts_replay_without_a_provider_and_reject_bad_paths(tmp
     with pytest.raises(CompilationError, match="DIAGNOSTIC_OUTPUT_INVALID"):
         cli._write_diagnostic(tmp_path / "wrong.json", {})
     cli._write_diagnostic(tmp_path / "saved.diagnostic.json", {})
-    with pytest.raises(CompilationError, match="DIAGNOSTIC_OUTPUT_EXISTS"):
-        cli._write_diagnostic(tmp_path / "saved.diagnostic.json", {})
+    timestamped = cli._write_diagnostic(tmp_path / "saved.diagnostic.json", {"attempt": 2})
+    assert timestamped.name.startswith("saved.")
+    assert timestamped.name.endswith(".diagnostic.json")
+    assert json.loads(timestamped.read_text(encoding="utf-8")) == {"attempt": 2}
     with pytest.raises(CompilationError, match="DIAGNOSTIC_NOT_FOUND"):
         cli._replay_diagnostic(tmp_path / "missing.diagnostic.json", Path("data/genre_profiles"))
 

@@ -10,7 +10,6 @@ import pytest
 from storygame.authoring.candidate_review import CandidateReview, promote_candidate
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
-from storygame.authoring.review_cli import main as review_main
 from tests.test_causal_story_contract import _story
 
 
@@ -120,27 +119,3 @@ def test_promotion_rejects_a_debug_compilation_candidate(tmp_path: Path) -> None
 
     with pytest.raises(CompilationError, match="DEBUG_CANDIDATE_NOT_PROMOTABLE"):
         promote_candidate(candidate, tmp_path / "signal.reviewed.json", _review(), _profiles())
-
-
-def test_review_command_requires_every_explicit_check_and_writes_the_promotion(tmp_path: Path, capsys) -> None:
-    candidate = tmp_path / "signal.candidate.json"
-    output = tmp_path / "signal.reviewed.json"
-    _candidate(candidate)
-    arguments = [
-        "--candidate",
-        str(candidate),
-        "--output",
-        str(output),
-        "--reviewer",
-        "editor@example.test",
-        "--notes",
-        "Verified manually.",
-        "--approve",
-    ]
-    with pytest.raises(SystemExit, match="approved review is missing checklist items"):
-        review_main(arguments)
-
-    for item in _review().checklist:
-        arguments.extend(("--check", item))
-    assert review_main(arguments) == 0
-    assert json.loads(capsys.readouterr().out)["reviewed_artifact"] == str(output)

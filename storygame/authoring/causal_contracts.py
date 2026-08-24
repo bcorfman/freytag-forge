@@ -418,7 +418,9 @@ def _validate_storylets(story: CausalCompiledStory) -> None:
             )
         if storylet.activation_truth_id not in set(availability.required_truth_ids):
             raise CausalValidationError(
-                "STORYLET_MARKER_INVALID", f"storylet '{storylet.id}' activation marker is not required"
+                "STORYLET_MARKER_INVALID",
+                f"storylet '{storylet.id}' activation marker is not required; add "
+                f"'{storylet.activation_truth_id}' to availability.required_truth_ids",
             )
     _acyclic(
         {storylet.id for storylet in story.storylets},

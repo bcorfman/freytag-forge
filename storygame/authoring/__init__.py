@@ -2,7 +2,7 @@
 
 from storygame.authoring.blueprint_compiler import BlueprintCompilation, BlueprintCompiler, BlueprintCompilerTransport
 from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
-from storygame.authoring.candidate_review import CandidateReview, ReviewedCausalStory, promote_candidate
+from storygame.authoring.candidate_review import ReviewedCausalStory, autopromote_candidate
 from storygame.authoring.causal_contracts import (
     CausalCompiledStory,
     CausalValidationError,
@@ -22,7 +22,6 @@ __all__ = [
     "BlueprintCompiler",
     "BlueprintCompilerTransport",
     "BoundBlueprint",
-    "CandidateReview",
     "Character",
     "CausalCompiledStory",
     "CausalCompletenessCritic",
@@ -41,7 +40,7 @@ __all__ = [
     "FreytagProgressionCritic",
     "RouteFairnessCritic",
     "ReviewedCausalStory",
-    "promote_candidate",
+    "autopromote_candidate",
     "bind_blueprint",
     "validate_causal_compiled_story",
     "validate_compiled_story",

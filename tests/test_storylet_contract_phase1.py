@@ -162,6 +162,14 @@ def test_storylet_semantics_fail_locally(mutate: object, code: str) -> None:
         validate_causal_compiled_story(candidate)
 
 
+def test_storylet_activation_marker_diagnostic_names_the_required_availability_repair() -> None:
+    candidate = _storylet_story()
+    candidate["storylets"][0]["activation_truth_id"] = "tradeoff"
+
+    with pytest.raises(CausalValidationError, match="add 'tradeoff' to availability.required_truth_ids"):
+        validate_causal_compiled_story(candidate)
+
+
 def test_story_brief_normalizes_explicit_creative_direction_and_keeps_unknown_fields_closed(tmp_path: Path) -> None:
     payload = {
         "schema_version": "freytag-story-brief-v1",

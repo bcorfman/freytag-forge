@@ -238,39 +238,29 @@ uv run storygame-blueprint-evaluate \
 
 The command requires the explicit live opt-in and never writes a candidate,
 reviewed artifact, or runtime input. It also refuses to overwrite an existing
-report. Compare its summary with the embedded Phase 0 baseline, retain the
-report with the authoring run, and inspect generated candidates manually before
-using the review command below. Binding or passing local checks is not approval.
+report. Compare its summary with the embedded Phase 0 baseline and retain the
+report with the authoring run.
 
-Candidates remain unreviewed even when their local compiler checks pass. After
-an editor has reviewed the generated `*.candidate.json`, use the separate
-offline command to rerun the causal, profile, route-fairness, and Freytag
-checks and write a new, immutable `reviewed-story-blueprint-v2` artifact. The
-record binds the exact candidate bytes with SHA-256 and includes the named
-reviewer, notes, and every required review acknowledgement:
+Pass `--autopromote` to the live compiler to promote only an accepted,
+non-debug candidate. The compiler revalidates it, writes an immutable
+`reviewed-story-blueprint-v2` artifact bound to the candidate SHA-256, and
+updates the matching genre entry in `data/compiled_stories/v2/runtime-fixtures.json`:
 
 ```text
-uv run storygame-blueprint-review \
-  --candidate data/story_blueprints/candidates/vale_mansion_case.candidate.json \
-  --output data/compiled_stories/v2/vale_mansion_case.reviewed.json \
-  --reviewer 'editor@example.com' \
-  --notes 'Verified map, custody, solution timeline, protections, and two proof paths.' \
-  --approve \
-  --check terminal_roles \
-  --check knowledge_boundaries \
-  --check route_diversity \
-  --check failure_forward \
-  --check map_and_custody
+FREYTAG_ENABLE_LIVE_COMPILER=1 \
+uv run storygame-blueprint --outline-id vale_mansion_rebuild \
+  --quality-tier preferred --live --autopromote
 ```
 
-The command rejects an unaccepted or malformed candidate, incomplete approval,
-failed revalidation, and any attempt to overwrite an existing reviewed file.
-It is an authoring-only promotion record; Phase 5 remains responsible for any
-runtime loader or hosted bootstrap.
+Autopromotion rejects an unaccepted, malformed, or debug candidate and failed
+revalidation. Existing candidate and reviewed artifacts receive timestamped
+filenames rather than being overwritten. The runtime fixture map is the sole
+runtime link; Phase 5 remains responsible for hosted staging evaluation.
 
 ## Repeatable candidate audit
 
-Before human approval, run the read-only audit command against any candidate:
+Run the read-only audit command against any candidate when additional evidence
+is useful:
 
 ```text
 uv run storygame-blueprint-audit \
@@ -307,5 +297,4 @@ all automated checks pass:
 
 The report is diagnostic evidence, not a reviewed artifact and cannot be used
 as runtime input. A malformed or locally rejected candidate reports the
-compiler check as failed and marks dependent checks as skipped. Human review
-and `storygame-blueprint-review` promotion remain required.
+compiler check as failed and marks dependent checks as skipped.
