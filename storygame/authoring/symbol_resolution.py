@@ -26,6 +26,8 @@ class Namespace(StrEnum):
     REQUIRED_OUTCOME = "required_outcome"
     REQUIRED_BEAT = "required_beat"
     OPTIONAL_BEAT = "optional_beat"
+    CONSEQUENCE = "consequence"
+    STORYLET = "storylet"
     END_STATE = "end_state"
 
 
@@ -96,6 +98,8 @@ class SymbolRegistry:
         ("required_outcomes", Namespace.REQUIRED_OUTCOME),
         ("required_beats", Namespace.REQUIRED_BEAT),
         ("optional_beats", Namespace.OPTIONAL_BEAT),
+        ("consequences", Namespace.CONSEQUENCE),
+        ("storylets", Namespace.STORYLET),
         ("end_states", Namespace.END_STATE),
     )
 
@@ -287,6 +291,38 @@ class SymbolRegistry:
                         Namespace.REQUIRED_OUTCOME,
                         beat.required_outcome_id,
                     )
+        if getattr(story, "dramatic_spine", None) is not None:
+            add("dramatic_spine.completion_truth_ids", Namespace.TRUTH, story.dramatic_spine.completion_truth_ids)
+        for index, consequence in enumerate(getattr(story, "consequences", ())):
+            add(f"consequences[{index}].assert_truth_ids", Namespace.TRUTH, consequence.assert_truth_ids)
+            add(f"consequences[{index}].retract_truth_ids", Namespace.TRUTH, consequence.retract_truth_ids)
+        for index, storylet in enumerate(getattr(story, "storylets", ())):
+            add_one(f"storylets[{index}].beat_id", Namespace.REQUIRED_BEAT, storylet.beat_id)
+            add(
+                f"storylets[{index}].availability.required_truth_ids",
+                Namespace.TRUTH,
+                storylet.availability.required_truth_ids,
+            )
+            add(
+                f"storylets[{index}].availability.absent_truth_ids",
+                Namespace.TRUTH,
+                storylet.availability.absent_truth_ids,
+            )
+            add(
+                f"storylets[{index}].availability.participant_ids",
+                Namespace.PARTICIPANT,
+                storylet.availability.participant_ids,
+            )
+            add(f"storylets[{index}].availability.location_ids", Namespace.LOCATION, storylet.availability.location_ids)
+            add(f"storylets[{index}].consequence_ids", Namespace.CONSEQUENCE, storylet.consequence_ids)
+            add_one(f"storylets[{index}].activation_truth_id", Namespace.TRUTH, storylet.activation_truth_id)
+            add_one(f"storylets[{index}].completion_truth_id", Namespace.TRUTH, storylet.completion_truth_id)
+            add(f"storylets[{index}].abort_truth_ids", Namespace.TRUTH, storylet.abort_truth_ids)
+            add(
+                f"storylets[{index}].failure_forward_storylet_ids",
+                Namespace.STORYLET,
+                storylet.failure_forward_storylet_ids,
+            )
         for index, hypothesis in enumerate(story.suspect_hypotheses):
             add_one(f"suspect_hypotheses[{index}].participant_id", Namespace.PARTICIPANT, hypothesis.participant_id)
             add(f"suspect_hypotheses[{index}].supporting_truth_ids", Namespace.TRUTH, hypothesis.supporting_truth_ids)

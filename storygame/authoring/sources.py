@@ -35,6 +35,12 @@ class StoryBrief(_SourceContract):
     dramatic_beats: tuple[str, ...] = Field(default=(), max_length=64)
     possibility_library: tuple[str, ...] = Field(default=(), max_length=64)
     author_notes: tuple[str, ...] = Field(default=(), max_length=64)
+    character_arcs: tuple[str, ...] = Field(default=(), max_length=64)
+    conflict_direction: tuple[str, ...] = Field(default=(), max_length=64)
+    dramatic_spine_direction: tuple[str, ...] = Field(default=(), max_length=64)
+    world_direction: tuple[str, ...] = Field(default=(), max_length=64)
+    possibility_direction: tuple[str, ...] = Field(default=(), max_length=64)
+    presentation_direction: tuple[str, ...] = Field(default=(), max_length=64)
     extensions: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -223,6 +229,12 @@ class StorySourceLoader:
                 "dramatic_beats": brief.dramatic_beats,
                 "possibility_library": brief.possibility_library,
                 "author_notes": brief.author_notes,
+                "character_arcs": brief.character_arcs,
+                "conflict_direction": brief.conflict_direction,
+                "dramatic_spine_direction": brief.dramatic_spine_direction,
+                "world_direction": brief.world_direction,
+                "possibility_direction": brief.possibility_direction,
+                "presentation_direction": brief.presentation_direction,
             },
             extensions=brief.extensions,
         )

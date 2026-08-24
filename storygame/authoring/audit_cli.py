@@ -52,6 +52,19 @@ def _render(report: CandidateAuditReport, report_format: str, story: object | No
     for check in report.checks:
         findings = "<br>".join(check.diagnostics) if check.diagnostics else "—"
         lines.append(f"| `{check.id}` | **{check.status.upper()}** | {findings} |")
+    coverage = report.storylet_coverage
+    lines.extend(
+        [
+            "",
+            "## Storylet coverage",
+            "",
+            f"- By beat: {coverage.by_beat or '—'}",
+            f"- By purpose: {coverage.by_purpose or '—'}",
+            f"- By realization mode: {coverage.by_realization_mode or '—'}",
+            f"- By route family: {coverage.by_route_family or '—'}",
+            f"- Failure-forward chains: {coverage.failure_forward_chains or '—'}",
+        ]
+    )
     if story is not None:
         lines[5:5] = _story_summary(story)
     lines.extend(

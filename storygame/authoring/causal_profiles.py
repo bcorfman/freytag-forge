@@ -32,6 +32,9 @@ class CausalProfile(_Profile):
     minimum_alternative_suspects: int = Field(default=0, ge=0, le=16)
     allowed_opportunity_types: tuple[str, ...] = Field(min_length=1, max_length=64)
     required_freytag_phases: tuple[str, ...] = Field(min_length=1, max_length=16)
+    minimum_storylet_variety: int = Field(default=0, ge=0, le=16)
+    maximum_unbroken_pressure_span: int = Field(default=100, ge=1, le=100)
+    minimum_alternate_progression_paths: int = Field(default=0, ge=0, le=16)
 
 
 class CausalProfileRegistry:
@@ -79,5 +82,18 @@ class CausalProfileRegistry:
             raise CausalValidationError(
                 "ALTERNATIVE_SUSPECTS_REQUIRED",
                 f"requires {profile.minimum_alternative_suspects} plausible alternative suspects",
+            )
+        storylets = candidate.storylets
+        if storylets and len({item.purpose for item in storylets}) < profile.minimum_storylet_variety:
+            raise CausalValidationError("STORYLET_VARIETY_REQUIRED", "storylet purposes do not meet profile minimum")
+        pressure_span = max(
+            (item.availability.pressure.maximum - item.availability.pressure.minimum for item in storylets), default=0
+        )
+        if storylets and pressure_span > profile.maximum_unbroken_pressure_span:
+            raise CausalValidationError("STORYLET_PRESSURE_SPAN", "storylet pressure span exceeds profile maximum")
+        alternate_paths = sum(bool(item.failure_forward_storylet_ids) for item in storylets)
+        if storylets and alternate_paths < profile.minimum_alternate_progression_paths:
+            raise CausalValidationError(
+                "STORYLET_ALTERNATES_REQUIRED", "storylets do not meet alternate progression minimum"
             )
         return candidate

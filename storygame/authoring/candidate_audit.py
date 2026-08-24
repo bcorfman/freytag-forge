@@ -37,6 +37,18 @@ class AuditCheck(BaseModel):
     diagnostics: tuple[str, ...] = ()
 
 
+class StoryletCoverage(BaseModel):
+    """Stable coverage counts for immutable storylet authoring data."""
+
+    model_config = ConfigDict(frozen=True)
+
+    by_beat: dict[str, int] = Field(default_factory=dict)
+    by_purpose: dict[str, int] = Field(default_factory=dict)
+    by_realization_mode: dict[str, int] = Field(default_factory=dict)
+    by_route_family: dict[str, int] = Field(default_factory=dict)
+    failure_forward_chains: tuple[tuple[str, ...], ...] = ()
+
+
 class CandidateAuditReport(BaseModel):
     """JSON-safe audit projection; it is not a promotion or runtime artifact."""
 
@@ -46,6 +58,7 @@ class CandidateAuditReport(BaseModel):
     candidate_filename: str = Field(min_length=1)
     candidate_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     checks: tuple[AuditCheck, ...]
+    storylet_coverage: StoryletCoverage = Field(default_factory=StoryletCoverage)
 
     @property
     def passed(self) -> bool:
@@ -98,6 +111,7 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
         candidate_filename=candidate_path.name,
         candidate_sha256=candidate_sha,
         checks=checks,
+        storylet_coverage=_storylet_coverage(story),
     )
 
 
@@ -108,6 +122,31 @@ def _failed_report(path: Path, candidate_sha: str | None, diagnostic: str) -> Ca
         candidate_sha256=candidate_sha,
         checks=(AuditCheck(id="compiler_validation", status="fail", diagnostics=(diagnostic,)),)
         + tuple(AuditCheck(id=check_id, status="skipped") for check_id in CHECK_IDS[1:]),
+    )
+
+
+def _storylet_coverage(story: object) -> StoryletCoverage:
+    """Project reviewed storylet inventory without deriving runtime state."""
+
+    by_beat: dict[str, int] = {}
+    by_purpose: dict[str, int] = {}
+    by_mode: dict[str, int] = {}
+    by_route_family: dict[str, int] = {}
+    chains: list[tuple[str, ...]] = []
+    for storylet in getattr(story, "storylets", ()):
+        by_beat[storylet.beat_id] = by_beat.get(storylet.beat_id, 0) + 1
+        by_purpose[storylet.purpose] = by_purpose.get(storylet.purpose, 0) + 1
+        by_route_family[storylet.route_family] = by_route_family.get(storylet.route_family, 0) + 1
+        for mode in storylet.realization_modes:
+            by_mode[mode] = by_mode.get(mode, 0) + 1
+        if storylet.failure_forward_storylet_ids:
+            chains.append((storylet.id, *storylet.failure_forward_storylet_ids))
+    return StoryletCoverage(
+        by_beat=dict(sorted(by_beat.items())),
+        by_purpose=dict(sorted(by_purpose.items())),
+        by_realization_mode=dict(sorted(by_mode.items())),
+        by_route_family=dict(sorted(by_route_family.items())),
+        failure_forward_chains=tuple(sorted(chains)),
     )
 
 

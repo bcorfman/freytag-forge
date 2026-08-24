@@ -176,16 +176,16 @@ before spending tokens on Terra or Sol.
 
 ### Phase 1 — Source and immutable contracts
 
-- [ ] Extend the Story Brief schema and normalizer with the typed creative direction above, preserving strict unknown-field rejection outside extensions and preserving source provenance/hash behavior.
-- [ ] Add DramaticSpine, Storylet, availability predicates, consequence declarations, and fact-backed activation/completion markers to the causal contracts and bound IR.
-- [ ] Add symbol namespaces and binding diagnostics for every new reference: beat, storylet, consequence, participant, location, truth, and failure-forward target.
-- [ ] Introduce generic profile requirements such as minimum storylet variety, maximum unbroken pressure span, and required alternate progression paths. Store them in versioned profile data rather than genre checks.
-- [ ] Add local semantic validation: satisfiable availability, participant and location compatibility, declared fact effects only, protected-fact safety, no failure-forward cycles without an exit, idempotence of completion markers, and viable routes to each required end state.
-- [ ] Update the candidate review/audit report to show storylet coverage by beat, purpose, realization mode, route family, and failure-forward chain.
+- [x] Extend the Story Brief schema and normalizer with the typed creative direction above, preserving strict unknown-field rejection outside extensions and preserving source provenance/hash behavior.
+- [x] Add DramaticSpine, Storylet, availability predicates, consequence declarations, and fact-backed activation/completion markers to the causal contracts and bound IR.
+- [x] Add symbol namespaces and binding diagnostics for every new reference: beat, storylet, consequence, participant, location, truth, and failure-forward target.
+- [x] Introduce generic profile requirements such as minimum storylet variety, maximum unbroken pressure span, and required alternate progression paths. Store them in versioned profile data rather than genre checks.
+- [x] Add local semantic validation: satisfiable availability, participant and location compatibility, declared fact effects only, protected-fact safety, no failure-forward cycles without an exit, idempotence of completion markers, and viable routes to each required end state.
+- [x] Update the candidate review/audit report to show storylet coverage by beat, purpose, realization mode, route family, and failure-forward chain.
 
 **Tests:** source validation; complete binding diagnostics; unknown and wrong-namespace references; unsatisfiable predicates; invalid consequence template; protected leak; cyclic failure forward; route-less required beat; and every profile's minimum variety rules.
 
-**Exit criteria:** a valid reviewed candidate can represent rich storylets without any new runtime authority, and invalid content fails locally before review or bootstrap.
+**Exit criteria:** [x] A valid reviewed candidate can represent rich storylets without any new runtime authority, and invalid content fails locally before review or bootstrap.
 
 ### Phase 2 — Offline OpenAI candidate generation and review
 

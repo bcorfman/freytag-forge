@@ -1,8 +1,11 @@
 schema_version: causal-profile-v2
-profile_version: 1
+profile_version: 2
 genre: relationship
 terminal_roles: [{role: choice}, {role: outcome}]
 causal_roles: [{role: wound}, {role: need}, {role: choice}, {role: outcome}]
 minimum_independent_proof_routes: 2
 allowed_opportunity_types: [conversation, letter, observation]
 required_freytag_phases: [setup, rising_action, crisis, climax, resolution]
+minimum_storylet_variety: 2
+maximum_unbroken_pressure_span: 70
+minimum_alternate_progression_paths: 1
