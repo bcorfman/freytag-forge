@@ -7,28 +7,18 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
 
 ## The hook
 
-- **Freeform play.** Investigate, bargain, lie, help, run, refuse—or invent the
-  move no menu anticipated.
-- **Living characters.** NPCs respond from their role, relationships, scene, and
-  earned knowledge.
-- **Consequences with teeth.** Goals, clues, pressure, timed events, and
-  failure-forward choices keep the story moving.
-- **A world you can touch.** Inspect items, follow routes, uncover documents,
-  and change what becomes possible.
-- **No silent guesses.** Ambiguity gets clarified; unsafe proposals fail closed.
-- **Persistent story memory.** Restart, reload, and replay without losing the
-  facts that made your story yours.
-- **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
-  share the same spoiler-safe, fact-backed rules.
-- **Drama with momentum.** Reusable dramatic situations create twists,
-  trade-offs, alternate paths, and failures that open the next door—never a
-  command menu.
-- **Stories built to play.** A reviewed dramatic spine surfaces the right
-  opportunities for the moment, then gets out of your way when you go off-map.
-- **Replayable by design.** Fact-backed momentum remembers what you used,
-  protects what you have not learned, and keeps fresh paths on the table.
-- **Every turn earns its consequences.** Chosen dramatic opportunities validate
-  against the live world, commit atomically, and keep freeform play wide open.
+- **Write anything.** Investigate, flirt, bluff, flee, bargain, or try the move
+  nobody put on a menu.
+- **Meet characters who remember.** NPCs speak from their role, relationships,
+  scene, and earned knowledge—not a generic chat window.
+- **Make trouble that matters.** Clues, pressure, relationships, timed events,
+  and failure-forward turns keep every choice alive.
+- **Find the drama, keep the freedom.** Fresh story moments deliver twists,
+  trade-offs, and alternate routes without prescribing your next command.
+- **Keep your story yours.** Spoilers stay protected; every accepted consequence
+  persists across saves, reloads, and replays.
+- **Play any kind of tale.** One engine powers mystery, fantasy, sci-fi, and
+  relationship drama with fact-backed continuity.
 
 **Less prompt luck. More playable story.**
 
