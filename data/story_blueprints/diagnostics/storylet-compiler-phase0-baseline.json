@@ -3,7 +3,7 @@
   "scope": "offline storylet compiler characterization",
   "genres": {
     "mystery": {
-      "runtime_context_tokens": 1987,
+      "runtime_context_tokens": 2009,
       "normal_turn_json_modes": [true, true],
       "normal_turn_provider_calls": [1, 1],
       "successful_turn_rate": 1.0,
@@ -12,7 +12,7 @@
       "narrative_samples": [{"action": "Question a witness.", "narration": "A witness weighs what to reveal."}]
     },
     "fantasy": {
-      "runtime_context_tokens": 497,
+      "runtime_context_tokens": 520,
       "normal_turn_json_modes": [true, true],
       "normal_turn_provider_calls": [1, 1],
       "successful_turn_rate": 1.0,
@@ -21,7 +21,7 @@
       "narrative_samples": [{"action": "Offer the river spirit a song.", "narration": "The current answers in a different key."}]
     },
     "sci-fi": {
-      "runtime_context_tokens": 501,
+      "runtime_context_tokens": 524,
       "normal_turn_json_modes": [true, true],
       "normal_turn_provider_calls": [1, 1],
       "successful_turn_rate": 1.0,
@@ -30,7 +30,7 @@
       "narrative_samples": [{"action": "Broadcast an apology.", "narration": "Static gives way to a single listening voice."}]
     },
     "relationship": {
-      "runtime_context_tokens": 510,
+      "runtime_context_tokens": 533,
       "normal_turn_json_modes": [true, true],
       "normal_turn_provider_calls": [1, 1],
       "successful_turn_rate": 1.0,

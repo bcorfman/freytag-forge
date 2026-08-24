@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from storygame.authoring.compiler import CompilationError, load_compiled_story_fixture
+from storygame.authoring.compiler import CompilationError, load_runtime_narrative_fixture
 from storygame.persistence.runtime_state_sqlite import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.persistence.story_state import write_artifacts
 from storygame.runtime.cloudflare import CloudflareTurnModel
@@ -82,7 +82,7 @@ def _state_payload(state: RuntimeState) -> dict[str, object]:
 
 def _story_for(genre: str):
     try:
-        return load_compiled_story_fixture(genre)
+        return load_runtime_narrative_fixture(genre)
     except CompilationError as exc:
         raise HTTPException(status_code=422, detail=exc.message) from exc
 

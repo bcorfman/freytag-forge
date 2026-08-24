@@ -202,16 +202,16 @@ before spending tokens on Terra or Sol.
 
 ### Phase 3 — Runtime narrative-package projection and selector
 
-- [ ] Replace the lossy reviewed-blueprint-to-CompiledStory projection with a backward-compatible immutable runtime narrative projection that retains the reviewed spine, storylets, consequence templates, and provenance binding. CompiledStory remains supported while consumers migrate.
-- [ ] Bootstrap immutable storylet definitions into RuntimeState only as a read-only package reference. Seed all mutable selection state—active, completed, aborted, discovered, relationship, and pressure markers—as facts.
-- [ ] Add a constructor-injected StoryletSelector that receives the immutable projection and FactStore, deterministically returns a small ranked eligible set, and never mutates state or invokes a provider.
-- [ ] Rank by active beat, availability predicates, participant/location validity, declared pressure range, priority, recent-use facts, and failure-forward urgency. Define stable ID tie-breaking for replayability.
-- [ ] Make the selector degrade safely: when no storylet is eligible, provide ordinary freeform context without inventing an objective or forcing a transition.
-- [ ] Extend runtime context with active beat situation, top eligible storylets, their allowed realization modes/consequences, and only player-visible facts. Do not send protected or unavailable storylet content to the model.
+- [x] Replace the lossy reviewed-blueprint-to-CompiledStory projection with a backward-compatible immutable runtime narrative projection that retains the reviewed spine, storylets, consequence templates, and provenance binding. CompiledStory remains supported while consumers migrate.
+- [x] Bootstrap immutable storylet definitions into RuntimeState only as a read-only package reference. Seed all mutable selection state—active, completed, aborted, discovered, relationship, and pressure markers—as facts.
+- [x] Add a constructor-injected StoryletSelector that receives the immutable projection and FactStore, deterministically returns a small ranked eligible set, and never mutates state or invokes a provider.
+- [x] Rank by active beat, availability predicates, participant/location validity, declared pressure range, priority, recent-use facts, and failure-forward urgency. Define stable ID tie-breaking for replayability.
+- [x] Make the selector degrade safely: when no storylet is eligible, provide ordinary freeform context without inventing an objective or forcing a transition.
+- [x] Extend runtime context with active beat situation, top eligible storylets, their allowed realization modes/consequences, and only player-visible facts. Do not send protected or unavailable storylet content to the model.
 
-**Tests:** deterministic selection; no mutation during selection; location and presence filtering; stable ties; completion/non-repetition facts; protected storylets absent from model context; empty-pool freeform behavior; and cross-genre bootstrap.
+**Tests:** [x] deterministic selection; [x] no mutation during selection; [x] location and presence filtering; [x] stable ties; [x] completion/non-repetition facts; [x] protected storylets absent from model context; [x] empty-pool freeform behavior; and [x] cross-genre bootstrap.
 
-**Exit criteria:** an immutable reviewed narrative package survives bootstrap, and runtime exposes relevant dramatic opportunities without changing state.
+**Exit criteria:** [x] an immutable reviewed narrative package survives bootstrap, and runtime exposes relevant dramatic opportunities without changing state.
 
 ### Phase 4 — Proposal, validation, and commit integration
 

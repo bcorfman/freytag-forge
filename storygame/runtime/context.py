@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from storygame.runtime.narrative import StoryletSelector
 from storygame.runtime.pacing import PaceDirective, PacingController
 from storygame.runtime.state import RuntimeState
 
@@ -26,6 +27,9 @@ class RuntimeContextBuilder:
 
     def build(self, state: RuntimeState, player_input: str) -> RuntimeContext:
         active = state.active_beats
+        storylets = StoryletSelector(state.narrative_package, state.facts).select(
+            active_beat_ids=tuple(beat.id for beat in active), location_id=state.world.location
+        )
         directives: list[PaceDirective] = [
             self.pacing.directive(
                 beat,
@@ -43,7 +47,7 @@ class RuntimeContextBuilder:
                 "attributes": state.world.attributes,
                 "items": state.world.items,
             },
-            "facts": [fact.model_dump(mode="json") for fact in sorted(state.facts.asserted, key=lambda item: item.key)],
+            "facts": _player_visible_facts(state),
             "summary": state.story_summary,
             "progression": {
                 "scene_purpose": state.compiled_story.scene_purpose,
@@ -60,6 +64,20 @@ class RuntimeContextBuilder:
             "active_beats": [
                 {"id": beat.id, "completion_tags": [tag.id for tag in beat.completion_tags]} for beat in active
             ],
+            "narrative_opportunities": {
+                "active_situation": _active_situation(state),
+                "storylets": [
+                    {
+                        "id": storylet.id,
+                        "purpose": storylet.purpose,
+                        "dramatic_question": storylet.dramatic_question,
+                        "realization_modes": list(storylet.realization_modes),
+                        "consequence_ids": list(storylet.consequence_ids),
+                    }
+                    for storylet in storylets
+                ],
+                "freeform_allowed": True,
+            },
             "protections": [
                 {"id": item.id, "reveal_after": item.reveal_after}
                 for item in state.compiled_story.protected_revelations
@@ -92,6 +110,27 @@ class RuntimeContextBuilder:
         }
         encoded = json.dumps(payload, default=list, separators=(",", ":"))
         return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)
+
+
+def _active_situation(state: RuntimeState) -> dict[str, object] | None:
+    spine = state.narrative_package.dramatic_spine if state.narrative_package is not None else None
+    if spine is None:
+        return None
+    return {
+        "conflict": spine.active_conflict,
+        "question": spine.central_question,
+        "pressure": spine.target_pressure.model_dump(),
+    }
+
+
+def _player_visible_facts(state: RuntimeState) -> list[dict[str, object]]:
+    protected = state.narrative_package.protected_truth_ids if state.narrative_package is not None else frozenset()
+    return [
+        fact.model_dump(mode="json")
+        for fact in sorted(state.facts.asserted, key=lambda item: item.key)
+        if not (fact.predicate == "knows" and fact.subject != "player")
+        and not (fact.object in protected and fact.subject != "player")
+    ]
 
 
 def _fact_value(state: RuntimeState, predicate: str, subject: str) -> str | None:

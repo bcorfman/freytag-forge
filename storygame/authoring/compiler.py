@@ -6,7 +6,7 @@ import json
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from pydantic import ValidationError
 
@@ -20,6 +20,9 @@ from storygame.authoring.contracts import (
     ProtectedRevelation,
 )
 from storygame.authoring.prompts import build_compiler_prompt
+
+if TYPE_CHECKING:
+    from storygame.runtime.narrative import RuntimeNarrativeProjection
 
 
 class CompilationError(ValueError):
@@ -206,6 +209,16 @@ def load_compiled_story_fixture(genre: str, root: Path | None = None) -> Compile
     return validate_compiled_story(payload)
 
 
+def load_runtime_narrative_fixture(genre: str, root: Path | None = None) -> CompiledStory | RuntimeNarrativeProjection:
+    """Load a legacy fixture or a reviewed package without discarding storylets."""
+
+    if root is None:
+        approved = _approved_fixture_path(genre)
+        if approved is not None:
+            return _load_reviewed_narrative_projection(approved)
+    return load_compiled_story_fixture(genre, root)
+
+
 def _approved_fixture_path(genre: str) -> Path | None:
     manifest_path = Path("data/compiled_stories/v2/runtime-fixtures.json")
     try:
@@ -226,9 +239,14 @@ def _approved_fixture_path(genre: str) -> Path | None:
 
 
 def _load_reviewed_blueprint(path: Path) -> CompiledStory:
+    return _load_reviewed_narrative_projection(path).compiled_story
+
+
+def _load_reviewed_narrative_projection(path: Path) -> RuntimeNarrativeProjection:
     from storygame.authoring.candidate_review import ReviewedCausalStory
     from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
     from storygame.authoring.causal_profiles import CausalProfileRegistry
+    from storygame.runtime.narrative import RuntimeNarrativeProjection, narrative_package_from_story
 
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -244,7 +262,10 @@ def _load_reviewed_blueprint(path: Path) -> CompiledStory:
         CausalProfileRegistry.from_directory(Path("data/genre_profiles")).validate(story)
     except CausalValidationError as exc:
         raise CompilationError("FIXTURE_INVALID", f"approved fixture '{path.name}' failed causal validation") from exc
-    return _causal_story_as_compiled_story(story)
+    return RuntimeNarrativeProjection(
+        compiled_story=_causal_story_as_compiled_story(story),
+        narrative_package=narrative_package_from_story(story, reviewed_candidate_sha256=reviewed.candidate_sha256),
+    )
 
 
 def _causal_story_as_compiled_story(story: object) -> CompiledStory:
