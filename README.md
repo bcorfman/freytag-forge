@@ -27,6 +27,8 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   opportunities for the moment, then gets out of your way when you go off-map.
 - **Replayable by design.** Fact-backed momentum remembers what you used,
   protects what you have not learned, and keeps fresh paths on the table.
+- **Every turn earns its consequences.** Chosen dramatic opportunities validate
+  against the live world, commit atomically, and keep freeform play wide open.
 
 **Less prompt luck. More playable story.**
 

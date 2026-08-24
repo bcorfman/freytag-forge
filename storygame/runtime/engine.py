@@ -90,13 +90,17 @@ class RuntimeEngine:
         result: TurnResult,
         context: RuntimeContext,
     ) -> None:
+        storylet_progress = result.storylet_realization is not None and (
+            state.facts.has("storylet_completed", result.storylet_realization.storylet_id, value="true")
+            or state.facts.has("storylet_aborted", result.storylet_realization.storylet_id, value="true")
+        )
         for beat in state.active_beats:
             current = state.beat_runtime[beat.id]
             state.beat_runtime[beat.id] = self.pacing.after_turn(
                 beat,
                 turns_active=current.turns_active,
                 stagnant_turns=current.stagnant_turns,
-                material_progress=result.material_progress,
+                material_progress=result.material_progress or storylet_progress,
             )
         state.turn_index += 1
         state.recent_events.append(

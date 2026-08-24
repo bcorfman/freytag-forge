@@ -56,6 +56,7 @@ def _storylet_story() -> dict[str, object]:
             "consequence_ids": ["commit_repair"],
             "activation_truth_id": "failure",
             "completion_truth_id": "tradeoff",
+            "abort_truth_ids": ["failure"],
             "failure_forward_storylet_ids": ["crew_debates_cost"],
         },
         {
