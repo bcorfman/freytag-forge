@@ -163,6 +163,11 @@ def test_mystery_runtime_fixture_loads_the_approved_causal_artifact():
     assert story.initial_world_state["navigation"]["routes"][0]["to"] == "study"
     assert story.protected_revelations
     assert story.beats[-1].answers_central_question is True
+    assert story.opening is not None
+    assert story.opening.situation == (
+        "Emma Vale has been found dead in the west gallery, and the circumstances demand an immediate investigation."
+    )
+    assert story.opening.companions == ("The gathered household is nearby and can be questioned.",)
 
 
 def test_compiler_uses_only_transport_protocol_and_parses_local_contract():

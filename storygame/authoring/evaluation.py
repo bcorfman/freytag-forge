@@ -88,13 +88,24 @@ def evaluate_corpus(
     *,
     provider: str,
     model: str,
+    quality_tier: str | None = None,
+    generation_mode: str = "standard",
     baseline_path: Path = Path("data/story_blueprints/diagnostics/phase0-baseline.json"),
 ) -> Phase4Evaluation:
     """Compile every source through the normal bounded provider path."""
 
     baseline = _load_baseline(baseline_path)
     cases = tuple(
-        _evaluate_source(source, transport_factory, profiles, provider=provider, model=model) for source in sources
+        _evaluate_source(
+            source,
+            transport_factory,
+            profiles,
+            provider=provider,
+            model=model,
+            quality_tier=quality_tier,
+            generation_mode=generation_mode,
+        )
+        for source in sources
     )
     return Phase4Evaluation(
         schema_version="causal-compiler-phase4-evaluation-v1",
@@ -125,10 +136,19 @@ def _evaluate_source(
     *,
     provider: str,
     model: str,
+    quality_tier: str | None,
+    generation_mode: str,
 ) -> Phase4Case:
     transport = transport_factory()
     responses: list[object] = []
-    compiler = BlueprintCompiler(_RecordingTransport(transport, responses), profiles, provider=provider, model=model)
+    compiler = BlueprintCompiler(
+        _RecordingTransport(transport, responses),
+        profiles,
+        provider=provider,
+        model=model,
+        quality_tier=quality_tier,
+        generation_mode=generation_mode,
+    )
     try:
         compilation = compiler.compile(source)
     except BlueprintCompilationExhausted as exc:

@@ -329,6 +329,10 @@ def _causal_story_as_compiled_story(story: object) -> CompiledStory:
                 if story.opening is not None
                 else ("Investigate the opening situation.",)
             ),
+            player_context=story.opening.player_context if story.opening is not None else None,
+            companions=story.opening.companions if story.opening is not None else (),
+            situation=story.opening.situation if story.opening is not None else None,
+            next_steps=story.opening.next_steps if story.opening is not None else (),
         ),
         initial_world_state={
             "location": location,

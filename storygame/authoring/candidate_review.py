@@ -69,6 +69,8 @@ def promote_candidate(
     compilation, raw_candidate = _load_candidate(candidate_path)
     if not compilation.accepted:
         raise CompilationError("CANDIDATE_NOT_ACCEPTED", "locally rejected candidates cannot be promoted")
+    if compilation.story.provenance.generation_mode == "debug":
+        raise CompilationError("DEBUG_CANDIDATE_NOT_PROMOTABLE", "debug compilation candidates cannot be promoted")
     story = _revalidate(compilation.story, profiles)
     artifact = ReviewedCausalStory(
         schema_version="reviewed-story-blueprint-v2",

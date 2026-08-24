@@ -13,10 +13,10 @@ from storygame.authoring.openai_transport import OpenAIBlueprintTransport, OpenA
 def test_openai_responses_json_object_smoke():
     if os.getenv("FREYTAG_RUN_LIVE_SMOKE") != "1":
         pytest.skip("set FREYTAG_RUN_LIVE_SMOKE=1 for an operator-owned paid smoke")
-    if not os.getenv("OPENAI_API_KEY") or not os.getenv("FREYTAG_COMPILER_MODEL"):
-        pytest.skip("OpenAI credentials and an explicit compiler model are required")
+    if not os.getenv("OPENAI_API_KEY"):
+        pytest.skip("OpenAI credentials are required")
 
-    output = OpenAIBlueprintTransport(OpenAICompilerConfig.from_environment()).generate(
+    output = OpenAIBlueprintTransport(OpenAICompilerConfig.from_environment(quality_tier="minimum")).generate(
         "Return one empty JSON object.", json_object=True
     )
 

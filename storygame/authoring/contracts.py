@@ -42,6 +42,10 @@ class OpeningMetadata(_Contract):
     scene_purpose: str = Field(min_length=1, max_length=1200)
     contacts: tuple[OpeningContact, ...] = Field(default=(), max_length=16)
     first_available_actions: tuple[str, ...] = Field(min_length=1, max_length=16)
+    player_context: str | None = Field(default=None, max_length=1200)
+    companions: tuple[str, ...] = Field(default=(), max_length=16)
+    situation: str | None = Field(default=None, max_length=1600)
+    next_steps: tuple[str, ...] = Field(default=(), max_length=16)
 
 
 class CompletionTag(_Contract):

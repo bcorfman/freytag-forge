@@ -75,11 +75,15 @@ class BlueprintCompilationExhausted(CompilationError):
         *,
         provider: str,
         model: str,
+        quality_tier: str | None = None,
+        generation_mode: str = "standard",
         source: NormalizedStorySource,
     ) -> None:
         self.attempts = attempts
         self.provider = provider
         self.model = model
+        self.quality_tier = quality_tier
+        self.generation_mode = generation_mode
         self._source = source
         super().__init__("BLUEPRINT_COMPILATION_EXHAUSTED", detail)
 
@@ -89,6 +93,8 @@ class BlueprintCompilationExhausted(CompilationError):
             "source": self._source.model_dump(mode="json"),
             "provider": self.provider,
             "model": self.model,
+            "quality_tier": self.quality_tier,
+            "generation_mode": self.generation_mode,
             "attempts": list(self.attempts),
             "final_error": {"code": self.code, "detail": self.detail},
         }
@@ -151,12 +157,16 @@ class BlueprintCompiler:
         *,
         provider: str,
         model: str,
+        quality_tier: str | None = None,
+        generation_mode: str = "standard",
         prompt_version: str = "story-blueprint-v2",
     ) -> None:
         self._transport = transport
         self._profiles = profiles
         self._provider = provider
         self._model = model
+        self._quality_tier = quality_tier
+        self._generation_mode = generation_mode
         self._prompt_version = prompt_version
 
     def compile(self, source: NormalizedStorySource) -> BlueprintCompilation:
@@ -226,7 +236,13 @@ class BlueprintCompiler:
             story = self._generate_and_validate(retry_prompt, json_object=json_object, source=source, attempts=attempts)
         except CompilationError as exc:
             raise BlueprintCompilationExhausted(
-                exc.detail, tuple(attempts), provider=self._provider, model=self._model, source=source
+                exc.detail,
+                tuple(attempts),
+                provider=self._provider,
+                model=self._model,
+                quality_tier=self._quality_tier,
+                generation_mode=self._generation_mode,
+                source=source,
             ) from exc
         diagnostics = self._critique(story)
         if diagnostics:
@@ -436,6 +452,8 @@ class BlueprintCompiler:
             update={
                 "provider": self._provider,
                 "model": self._model,
+                "quality_tier": self._quality_tier,
+                "generation_mode": self._generation_mode,
                 "response_id": getattr(self._transport, "last_request_id", None),
                 "prompt_version": self._prompt_version,
                 "validation_results": results,

@@ -40,12 +40,11 @@ opening projection cannot mutate state or bypass commit validation. Existing
 reviewed causal artifacts remain loadable: the compiler supplies safe generic
 defaults when legacy opening metadata is absent.
 
-## V1 porting Phase 0: V2 capability ledger
+## V2 capability baseline
 
-Phase 0 does not certify the historical V1 implementation. The machine-readable
-[parity ledger](../.plans/v1-parity-ledger.yaml) records intended V2 player
-capabilities, while the [decision record](../.plans/v1-porting-phase0-decision.md)
-explains which historical surfaces are evidence only or intentionally retired.
+The engine is V2-only. The following behavioral requirements define the
+cross-genre runtime baseline; they do not depend on a retained V1 migration
+ledger or historical implementation artifacts.
 
 The presentation target is progressive description. A newly entered room or
 newly encountered item may receive a full authored description with atmosphere,
@@ -766,7 +765,15 @@ receive their deployment configuration through GitHub Pages and Railway.
 ### Offline authoring/compiler
 - `OPENAI_API_KEY` is required only for live offline blueprint compilation.
 - `FREYTAG_ENABLE_LIVE_COMPILER=1` is required to opt into paid compiler calls.
-- `FREYTAG_COMPILER_MODEL` selects the explicitly configured compiler model.
+- Live compiler commands require `--quality-tier preferred|minimum`; the tier
+  deterministically selects the reviewed OpenAI compiler model for the full
+  request and its bounded repair. `FREYTAG_COMPILER_MODEL` is not used.
+- `--debug` is the low-cost compiler smoke path: it selects GPT-5.6 Luna with
+  low reasoning for both allowed compiler requests and produces a
+  non-promotable debug artifact.
+- Live compiler requests default to OpenAI background polling with a finite
+  600-second deadline. `--timeout-seconds` overrides the deadline and
+  `--no-background` opts out for a compatible direct-response endpoint.
 
 ### Cloudflare Workers AI adapter
 - `CLOUDFLARE_WORKER_URL`

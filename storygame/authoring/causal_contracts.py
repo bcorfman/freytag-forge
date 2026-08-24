@@ -38,6 +38,8 @@ class SourceProvenance(_Contract):
     source_schema_version: str | None = Field(default=None, min_length=1, max_length=80)
     provider: str | None = Field(default=None, min_length=1, max_length=80)
     model: str | None = Field(default=None, min_length=1, max_length=160)
+    quality_tier: str | None = Field(default=None, min_length=1, max_length=32)
+    generation_mode: Literal["standard", "debug"] | None = None
     response_id: str | None = Field(default=None, min_length=1, max_length=200)
     prompt_version: str | None = Field(default=None, min_length=1, max_length=80)
     validation_results: tuple[str, ...] = Field(default=(), max_length=64)

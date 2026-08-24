@@ -15,6 +15,7 @@ from storygame.authoring.blueprint_compiler import (
 )
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
+from storygame.authoring.model_tiers import resolve_compiler_model
 from storygame.authoring.openai_transport import OpenAIBlueprintTransport, OpenAICompilerConfig
 from storygame.authoring.sources import NormalizedStorySource, StorySourceLoader
 
@@ -28,12 +29,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--inventory", type=Path, default=Path("data/story_outlines.yaml"))
     parser.add_argument("--profile-root", type=Path, default=Path("data/genre_profiles"))
     parser.add_argument("--live", action="store_true", help="acknowledge an offline paid provider request")
-    provider = parser.add_mutually_exclusive_group()
-    provider.add_argument("--provider", choices=("openai",))
-    provider.add_argument("--transport-factory")
-    parser.add_argument("--model")
-    parser.add_argument("--timeout-seconds", type=float, help="finite timeout for each OpenAI request")
-    parser.add_argument("--background", action="store_true", help="poll a long-running OpenAI Responses request")
+    parser.add_argument("--transport-factory", help="custom blueprint transport for tests or compatible endpoints")
+    model_selection = parser.add_mutually_exclusive_group()
+    model_selection.add_argument("--quality-tier", choices=("preferred", "minimum"))
+    model_selection.add_argument("--debug", action="store_true", help="use the non-promotable Luna low-reasoning path")
+    parser.add_argument("--timeout-seconds", type=float, help="finite timeout for each OpenAI request (default: 600)")
+    background = parser.add_mutually_exclusive_group()
+    background.add_argument(
+        "--background", dest="background", action="store_true", help="poll the OpenAI Responses request"
+    )
+    background.add_argument(
+        "--no-background", dest="background", action="store_false", help="do not poll a background Response"
+    )
+    parser.set_defaults(background=None)
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--diagnostic-output", type=Path, help="write raw exhausted attempts as a non-playable diagnostic artifact"
@@ -66,23 +74,31 @@ def _compile_candidate(args: argparse.Namespace) -> dict[str, object]:
         raise CompilationError("LIVE_COMPILATION_ACK_REQUIRED", "pass --live to make an offline provider request")
     if os.getenv("FREYTAG_ENABLE_LIVE_COMPILER") != "1":
         raise CompilationError("LIVE_COMPILATION_DISABLED", "set FREYTAG_ENABLE_LIVE_COMPILER=1 to compile")
+    if args.quality_tier is None and not args.debug:
+        raise CompilationError(
+            "COMPILER_QUALITY_TIER_REQUIRED", "pass --quality-tier preferred or --quality-tier minimum"
+        )
     loader = StorySourceLoader(args.inventory, args.profile_root)
     source = loader.select_outline(args.outline_id) if args.outline_id else loader.load_brief(args.story)
-    if args.provider == "openai":
+    if args.transport_factory:
+        transport = _load_transport_factory(args.transport_factory)
+        provider, model = "custom", resolve_compiler_model(args.quality_tier, debug=args.debug)[0]
+    else:
         config = OpenAICompilerConfig.from_environment(
-            model=args.model, timeout_seconds=args.timeout_seconds, background=args.background
+            quality_tier=args.quality_tier,
+            debug=args.debug,
+            timeout_seconds=args.timeout_seconds,
+            background=args.background,
         )
         transport: BlueprintCompilerTransport = OpenAIBlueprintTransport(config)
         provider, model = "openai", config.model
-    elif args.transport_factory:
-        if not args.model:
-            raise CompilationError("OPENAI_MODEL_REQUIRED", "--model is required with --transport-factory")
-        transport = _load_transport_factory(args.transport_factory)
-        provider, model = "custom", args.model
-    else:
-        raise CompilationError("COMPILER_PROVIDER_REQUIRED", "select --provider openai or --transport-factory")
     compiler = BlueprintCompiler(
-        transport, CausalProfileRegistry.from_directory(args.profile_root), provider=provider, model=model
+        transport,
+        CausalProfileRegistry.from_directory(args.profile_root),
+        provider=provider,
+        model=model,
+        quality_tier=args.quality_tier,
+        generation_mode="debug" if args.debug else "standard",
     )
     compilation = compiler.compile(source)
     return compilation.model_dump(mode="json")
@@ -132,6 +148,8 @@ def _replay_diagnostic(path: Path, profile_root: Path) -> dict[str, object]:
     attempts = artifact.get("attempts")
     provider = artifact.get("provider")
     model = artifact.get("model")
+    quality_tier = artifact.get("quality_tier")
+    generation_mode = artifact.get("generation_mode")
     if not isinstance(source_payload, dict) or not isinstance(attempts, list):
         raise CompilationError("DIAGNOSTIC_INVALID", "diagnostic is missing source or attempts")
     if not isinstance(provider, str) or not isinstance(model, str):
@@ -145,6 +163,8 @@ def _replay_diagnostic(path: Path, profile_root: Path) -> dict[str, object]:
         CausalProfileRegistry.from_directory(profile_root),
         provider=provider,
         model=model,
+        quality_tier=quality_tier if isinstance(quality_tier, str) else None,
+        generation_mode=generation_mode if isinstance(generation_mode, str) else "standard",
     ).compile(source)
     return compilation.model_dump(mode="json")
 
@@ -158,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
                 json.dumps({"replay": "accepted", "validation_results": replay["validation_results"]}, sort_keys=True)
             )
             return 0
-        if args.provider or args.transport_factory or args.live:
+        if args.transport_factory or args.live or args.quality_tier is not None or args.debug:
             candidate = _compile_candidate(args)
             story = candidate.get("story")
             if not isinstance(story, dict) or not isinstance(story.get("id"), str):

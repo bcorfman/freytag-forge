@@ -221,7 +221,7 @@ def test_declared_destination_aliases_commit_unambiguous_movement() -> None:
         StubModel([_turn(operations=[{"kind": "set", "path": "world.location", "value": "foyer"}])]),
     )
 
-    response = engine.turn("go to the west gallery")
+    response = engine.turn("go west gallery")
 
     assert response.ok
     assert engine.state.world.location == "west_gallery"
