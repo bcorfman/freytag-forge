@@ -132,6 +132,23 @@ diagnostics, not golden prose assertions. This phase adds no Storylet contract,
 selector, provider call, mutable quality store, or runtime authority; facts
 remain the sole canonical mutable truth.
 
+## Offline storylet compiler Phase 1: immutable contracts
+
+`story-blueprint-v2` now optionally carries a `dramatic_spine`, named
+fact-template `consequences`, and immutable `storylets`. A storylet binds to a
+required beat, truth/participant/location/pressure availability, route family,
+bounded realization modes, declared consequences, fact-backed
+activation/completion/abort markers, and explicit failure-forward targets.
+These are reviewed authoring data—not runtime authority or executable effects.
+
+The shared symbol registry binds every new reference and rejects wrong
+namespaces. Local validation rejects unsatisfiable availability, undeclared or
+conflicting fact effects, protected availability facts, invalid completion
+markers, and failure-forward cycles. Versioned genre profiles hold generic
+storylet variety, pressure-span, and alternate-progression minima; shared code
+does not inspect genre names. Candidate audits now project coverage by beat,
+purpose, realization mode, route family, and failure-forward chain.
+
 Genre-blueprint authoring has completed its offline-only Phases 1–2 contract
 and profile-validation layer.
 Raw outlines, `WorldPackage`, legacy `StoryPackage`, `CompiledStory`, and the

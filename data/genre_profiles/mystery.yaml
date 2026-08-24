@@ -1,5 +1,5 @@
 schema_version: causal-profile-v2
-profile_version: 2
+profile_version: 3
 genre: mystery
 terminal_roles: [{role: crime_solution}]
 causal_roles:
@@ -16,3 +16,6 @@ minimum_independent_proof_routes: 2
 minimum_alternative_suspects: 2
 allowed_opportunity_types: [physical_evidence, document, testimony]
 required_freytag_phases: [setup, rising_action, crisis, climax, resolution]
+minimum_storylet_variety: 2
+maximum_unbroken_pressure_span: 70
+minimum_alternate_progression_paths: 1

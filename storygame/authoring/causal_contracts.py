@@ -160,6 +160,57 @@ class OptionalBeat(Beat):
     purpose: Literal["alternative_satisfier", "complication", "relationship_development", "world_development"]
 
 
+class PressureBand(_Contract):
+    minimum: int = Field(ge=0, le=100)
+    maximum: int = Field(ge=0, le=100)
+
+
+class DramaticSpine(_Contract):
+    active_conflict: str = Field(min_length=1, max_length=1200)
+    central_question: str = Field(min_length=1, max_length=600)
+    participant_role_requirements: tuple[str, ...] = Field(default=(), max_length=32)
+    target_pressure: PressureBand
+    completion_truth_ids: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+
+class StoryletAvailability(_Contract):
+    required_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    absent_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    participant_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    location_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    pressure: PressureBand
+
+
+class Consequence(_Contract):
+    """An immutable, named template for later fact-policy realization."""
+
+    id: str = Field(pattern=_ID, max_length=80)
+    assert_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    retract_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+
+
+class Storylet(_Contract):
+    """A bounded dramatic situation, never a runtime command or mutable state."""
+
+    id: str = Field(pattern=_ID, max_length=80)
+    beat_id: str = Field(pattern=_ID, max_length=80)
+    purpose: Literal[
+        "investigation", "social_complication", "relationship", "conflict", "moral_choice", "transition", "reversal"
+    ]
+    route_family: str = Field(pattern=_ID, max_length=80)
+    availability: StoryletAvailability
+    priority: int = Field(ge=0, le=100)
+    dramatic_question: str = Field(min_length=1, max_length=600)
+    realization_modes: tuple[
+        Literal["direct_action", "investigation", "negotiation", "dialogue", "observation", "travel", "conflict"], ...
+    ] = Field(min_length=1, max_length=16)
+    consequence_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+    activation_truth_id: str = Field(pattern=_ID, max_length=80)
+    completion_truth_id: str = Field(pattern=_ID, max_length=80)
+    abort_truth_ids: tuple[str, ...] = Field(default=(), max_length=16)
+    failure_forward_storylet_ids: tuple[str, ...] = Field(default=(), max_length=16)
+
+
 class SuspectHypothesis(_Contract):
     participant_id: str = Field(pattern=_ID, max_length=80)
     supporting_truth_ids: tuple[str, ...] = Field(min_length=2, max_length=16)
@@ -199,6 +250,9 @@ class CausalCompiledStory(_Contract):
     required_outcomes: tuple[RequiredOutcome, ...] = Field(min_length=1, max_length=64)
     required_beats: tuple[Beat, ...] = Field(min_length=1, max_length=64)
     optional_beats: tuple[OptionalBeat, ...] = Field(default=(), max_length=64)
+    dramatic_spine: DramaticSpine | None = None
+    consequences: tuple[Consequence, ...] = Field(default=(), max_length=128)
+    storylets: tuple[Storylet, ...] = Field(default=(), max_length=256)
     suspect_hypotheses: tuple[SuspectHypothesis, ...] = Field(default=(), max_length=32)
     end_states: tuple[EndState, ...] = Field(min_length=1, max_length=16)
 
@@ -327,6 +381,52 @@ def _validate_authoring_graph(bound: BoundBlueprint) -> None:
     _validate_endings(bound, outcome_ids)
 
 
+def _validate_storylets(story: CausalCompiledStory) -> None:
+    """Prove storylet declarations are safe authoring data before review."""
+
+    if story.dramatic_spine is None and (story.consequences or story.storylets):
+        raise CausalValidationError("DRAMATIC_SPINE_REQUIRED", "storylets require a dramatic spine")
+    if story.dramatic_spine is None:
+        return
+    if story.dramatic_spine.target_pressure.minimum > story.dramatic_spine.target_pressure.maximum:
+        raise CausalValidationError("PRESSURE_BAND_INVALID", "dramatic spine pressure range is inverted")
+    protected = {item.truth_id for item in story.knowledge_protections}
+    consequences = {item.id: item for item in story.consequences}
+    for consequence in story.consequences:
+        if set(consequence.assert_truth_ids) & set(consequence.retract_truth_ids):
+            raise CausalValidationError(
+                "CONSEQUENCE_INVALID", f"consequence '{consequence.id}' both asserts and retracts a truth"
+            )
+    for storylet in story.storylets:
+        availability = storylet.availability
+        if availability.pressure.minimum > availability.pressure.maximum:
+            raise CausalValidationError("PRESSURE_BAND_INVALID", f"storylet '{storylet.id}' pressure range is inverted")
+        if set(availability.required_truth_ids) & set(availability.absent_truth_ids):
+            raise CausalValidationError("STORYLET_UNSATISFIABLE", f"storylet '{storylet.id}' requires an absent truth")
+        if protected & set((*availability.required_truth_ids, *availability.absent_truth_ids)):
+            raise CausalValidationError(
+                "STORYLET_PROTECTED", f"storylet '{storylet.id}' exposes a protected availability truth"
+            )
+        asserted = {
+            truth_id
+            for consequence_id in storylet.consequence_ids
+            for truth_id in consequences[consequence_id].assert_truth_ids
+        }
+        if storylet.completion_truth_id not in asserted:
+            raise CausalValidationError(
+                "STORYLET_MARKER_INVALID", f"storylet '{storylet.id}' completion marker is not an asserted consequence"
+            )
+        if storylet.activation_truth_id not in set(availability.required_truth_ids):
+            raise CausalValidationError(
+                "STORYLET_MARKER_INVALID", f"storylet '{storylet.id}' activation marker is not required"
+            )
+    _acyclic(
+        {storylet.id for storylet in story.storylets},
+        {storylet.id: storylet.failure_forward_storylet_ids for storylet in story.storylets},
+        "STORYLET_FAILURE_CYCLE",
+    )
+
+
 def _validate_endings(bound: BoundBlueprint, outcome_ids: set[str]) -> None:
     for end_state in bound.end_states:
         if set(outcome_ids) - {outcome.id for outcome in end_state.outcomes}:
@@ -370,6 +470,7 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
     _validate_topology(bound)
     _validate_events(bound)
     _validate_authoring_graph(bound)
+    _validate_storylets(story)
     reachable = _reachable_locations(bound)
     blocked = [item.id for item in bound.evidence_opportunities if item.location.id not in reachable]
     if blocked:

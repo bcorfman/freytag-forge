@@ -182,6 +182,8 @@ class BoundBlueprint:
     optional_beats: tuple[BoundBeat, ...]
     hypotheses: tuple[BoundHypothesis, ...]
     end_states: tuple[BoundEndState, ...]
+    consequences: tuple[BoundSymbol[object], ...] = ()
+    storylets: tuple[BoundSymbol[object], ...] = ()
 
     def ids(self, namespace: Namespace) -> tuple[str, ...]:
         return tuple(sorted(item.id for item in self.symbols if item.symbol.namespace is namespace))
@@ -333,4 +335,6 @@ def bind_blueprint(story: object) -> BoundBlueprint:
             )
             for item in story.end_states
         ),
+        tuple(declaration(Namespace.CONSEQUENCE, item.id) for item in story.consequences),
+        tuple(declaration(Namespace.STORYLET, item.id) for item in story.storylets),
     )
