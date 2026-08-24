@@ -455,6 +455,9 @@ def test_blueprint_compiler_repair_prompt_requires_unknown_truth_references_to_m
     assert "unknown connected-route prerequisite" in prompt
     assert "TIMELINE_INVALID repair protocol" in prompt
     assert "preserve causal event prerequisite ordering" in prompt
+    assert "FAILURE_FORWARD_DEAD_END repair protocol" in prompt
+    assert "one of that route's own result_truth_ids" in prompt
+    assert "alternative_route_ids" in prompt
     assert "Preserve every existing reference list and its order" in prompt
     assert "CAUSAL_COMPLETENESS repair protocol" in prompt
     assert "ROUTE_FAIRNESS repair protocol" in prompt
