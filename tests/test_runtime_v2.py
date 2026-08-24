@@ -216,9 +216,21 @@ def test_runtime_context_exposes_a_public_opening_with_a_first_direction_for_eve
 
 
 def test_declared_destination_aliases_commit_unambiguous_movement() -> None:
-    engine = RuntimeEngine(_state(), StubModel([_turn(operations=[])]))
+    engine = RuntimeEngine(
+        _state(),
+        StubModel([_turn(operations=[{"kind": "set", "path": "world.location", "value": "foyer"}])]),
+    )
 
     response = engine.turn("go to the west gallery")
+
+    assert response.ok
+    assert engine.state.world.location == "west_gallery"
+
+
+def test_enter_destination_alias_is_a_deterministic_movement_affordance() -> None:
+    engine = RuntimeEngine(_state(), StubModel([_turn(operations=[])]))
+
+    response = engine.turn("enter west gallery")
 
     assert response.ok
     assert engine.state.world.location == "west_gallery"
