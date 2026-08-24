@@ -167,12 +167,12 @@ before spending tokens on Terra or Sol.
 
 ### Phase 0 — Characterization and acceptance vocabulary
 
-- [ ] Write tests first for desired behavior using mystery, fantasy, sci-fi, and relationship fixtures: multiple eligible situations, free-form actions outside a storylet, protected knowledge, failure-forward, and non-repetition.
-- [ ] Record current runtime context size, normal-turn model-call count, material-progress rate, active-beat behavior, and baseline narrative samples as diagnostics, not golden prose assertions.
-- [ ] Define measurable acceptance criteria: every required beat has two or more distinct advancement paths where appropriate; a player can finish via distinct route families; no protected fact leaks; a repeated storylet is not selected after its completion fact; and normal turns retain the provider-call budget.
-- [ ] Select one authoring-only vertical-slice outline and one reviewed fixture for migration. Do not alter generated candidates or reviewed artifacts by hand; improve their source Brief or compiler output instead.
+- [x] Write tests first for desired behavior using mystery, fantasy, sci-fi, and relationship fixtures: multiple eligible situations, free-form actions outside a storylet, protected knowledge, failure-forward, and non-repetition.
+- [x] Record current runtime context size, normal-turn model-call count, material-progress rate, active-beat behavior, and baseline narrative samples as diagnostics, not golden prose assertions.
+- [x] Define measurable acceptance criteria: every required beat has two or more distinct advancement paths where appropriate; a player can finish via distinct route families; no protected fact leaks; a repeated storylet is not selected after its completion fact; and normal turns retain the provider-call budget.
+- [x] Select one authoring-only vertical-slice outline and one reviewed fixture for migration. Do not alter generated candidates or reviewed artifacts by hand; improve their source Brief or compiler output instead.
 
-**Exit criteria:** a cross-genre test vocabulary exists before contract changes, and the chosen vertical slice has explicit author-approved dramatic direction.
+**Exit criteria:** [x] A cross-genre test vocabulary exists before contract changes, and the chosen vertical slice has explicit author-approved dramatic direction.
 
 ### Phase 1 — Source and immutable contracts
 

@@ -1,0 +1,54 @@
+{
+  "schema_version": "offline-storylet-compiler-phase0-baseline-v1",
+  "scope": "offline storylet compiler characterization",
+  "genres": {
+    "mystery": {
+      "runtime_context_tokens": 1987,
+      "normal_turn_json_modes": [true, true],
+      "normal_turn_provider_calls": [1, 1],
+      "successful_turn_rate": 1.0,
+      "material_progress_rate": 0.5,
+      "active_beat_behavior": {"initial_count": 1, "after_freeform_turns_count": 1, "requires_declared_completion_tag": true},
+      "narrative_samples": [{"action": "Question a witness.", "narration": "A witness weighs what to reveal."}]
+    },
+    "fantasy": {
+      "runtime_context_tokens": 497,
+      "normal_turn_json_modes": [true, true],
+      "normal_turn_provider_calls": [1, 1],
+      "successful_turn_rate": 1.0,
+      "material_progress_rate": 0.5,
+      "active_beat_behavior": {"initial_count": 1, "after_freeform_turns_count": 1, "requires_declared_completion_tag": true},
+      "narrative_samples": [{"action": "Offer the river spirit a song.", "narration": "The current answers in a different key."}]
+    },
+    "sci-fi": {
+      "runtime_context_tokens": 501,
+      "normal_turn_json_modes": [true, true],
+      "normal_turn_provider_calls": [1, 1],
+      "successful_turn_rate": 1.0,
+      "material_progress_rate": 0.5,
+      "active_beat_behavior": {"initial_count": 1, "after_freeform_turns_count": 1, "requires_declared_completion_tag": true},
+      "narrative_samples": [{"action": "Broadcast an apology.", "narration": "Static gives way to a single listening voice."}]
+    },
+    "relationship": {
+      "runtime_context_tokens": 510,
+      "normal_turn_json_modes": [true, true],
+      "normal_turn_provider_calls": [1, 1],
+      "successful_turn_rate": 1.0,
+      "material_progress_rate": 0.5,
+      "active_beat_behavior": {"initial_count": 1, "after_freeform_turns_count": 1, "requires_declared_completion_tag": true},
+      "narrative_samples": [{"action": "Leave an apology at the studio.", "narration": "A light appears behind the paint-streaked glass."}]
+    }
+  },
+  "acceptance_criteria": {
+    "required_beat_paths": "Each applicable required beat must offer at least two distinct advancement paths.",
+    "distinct_route_families": "A player must be able to finish through distinct route families.",
+    "protected_knowledge": "No protected fact may enter player-visible context before its release condition.",
+    "non_repetition": "A completed storylet must be ineligible when its completion fact is asserted.",
+    "provider_budget": "A normal turn makes one provider request; bounded recovery permits at most two."
+  },
+  "notes": [
+    "Context sizes are deterministic token estimates for the current reviewed fixtures.",
+    "Narrative samples are diagnostic observations, not golden prose assertions.",
+    "This baseline adds no storylet runtime authority and is not a promotion artifact."
+  ]
+}

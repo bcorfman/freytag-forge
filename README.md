@@ -20,6 +20,8 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   facts that made your story yours.
 - **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
   share the same spoiler-safe, fact-backed rules.
+- **Drama that keeps moving.** Author-approved story directions are being readied
+  for reusable situations, alternate paths, and failure that opens a new door.
 
 **Less prompt luck. More playable story.**
 
