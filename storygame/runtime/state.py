@@ -36,6 +36,7 @@ class RuntimeEvent:
     beat_updates: tuple[dict[str, Any], ...]
     prompt_version: str
     prompt_token_estimate: int
+    segments: tuple[dict[str, Any], ...] = ()
 
 
 @dataclass

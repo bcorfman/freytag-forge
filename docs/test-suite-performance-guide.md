@@ -27,6 +27,7 @@ TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality
 TMPDIR=/tmp uv run pytest -q --no-cov -m "unit or component"
 TMPDIR=/tmp uv run pytest -q --no-cov --collect-only
 TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=/tmp/test-suite-health.json
+cd frontend && npm test && npm run build
 ```
 
 Use `--durations=50` only for diagnosis. Benchmark records should retain the

@@ -120,6 +120,7 @@ def _restore(payload: dict[str, object], story: CompiledStory | RuntimeNarrative
             beat_updates=tuple(dict(value) for value in event.get("beat_updates", [])),
             prompt_version=str(event["prompt_version"]),
             prompt_token_estimate=int(event["prompt_token_estimate"]),
+            segments=tuple(dict(value) for value in event.get("segments", [])),
         )
         for event in payload.get("recent_events", [])
     ]

@@ -1,25 +1,21 @@
 # Freytag Forge
 
-> Interactive fiction with freedom, memory, and consequences.
+> Write anything. Make it matter.
 
-Freytag Forge lets you write what your character tries—not choose from a tiny
-verb menu—and turns every attempt into a grounded, persistent story beat.
+Freytag Forge turns freeform play into grounded, persistent drama.
 
 ## Why it plays differently
 
-- **Write the move nobody put on a menu.** Investigate, flirt, bluff, flee,
-  bargain—or try something stranger.
-- **Make it count.** Clues, promises, possessions, relationships, and movement
-  become durable story truth—not convenient prose.
-- **Meet a living scene.** Named people, groups, evidence, and inspectable
-  subjects are where the story says they are.
-- **Talk to characters, not chatbots.** Distinct voices answer from the current
-  scene and earned knowledge; conversations can begin, redirect, refuse,
-  interrupt, or fail forward without taking your agency.
-- **Earn every reveal.** Secrets stay protected until your choices unlock them.
-- **Trust the continuity.** Save, reload, and replay without the world quietly
-  changing behind your back—across mystery, fantasy, sci-fi, and relationship
-  drama.
+- **Try the unlisted move.** Investigate, flirt, bluff, bargain, flee—or make
+  your own play.
+- **Change a real world.** Clues, custody, promises, movement, and
+  relationships persist as story truth.
+- **Meet the scene in front of you.** Named people, groups, evidence, and
+  inspectable subjects are present where the story places them.
+- **Hear the drama land.** Distinct characters speak in attributed voices and
+  act in the scene; you can redirect, refuse, interrupt, or walk away.
+- **Keep the continuity.** Secrets stay earned, and saves, replays, mystery,
+  fantasy, sci-fi, and relationship drama all share one fact-backed engine.
 
 **Less prompt luck. More character, consequence, and playable drama.**
 

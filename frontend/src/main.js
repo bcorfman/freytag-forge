@@ -1,4 +1,5 @@
 import "./styles.css";
+import { turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
@@ -42,6 +43,43 @@ function appendEntry(text, kind = "output") {
   entry.textContent = text;
   transcriptElement.append(entry);
   transcriptElement.scrollTop = transcriptElement.scrollHeight;
+}
+
+function appendSegment(segment) {
+  if (!segment || typeof segment !== "object" || typeof segment.text !== "string") {
+    return;
+  }
+  const entry = document.createElement("article");
+  entry.className = `entry entry-${segment.kind}`;
+
+  if (segment.kind === "speech" && segment.speaker && typeof segment.speaker.name === "string") {
+    const attribution = document.createElement("p");
+    attribution.className = "segment-attribution";
+    attribution.textContent = segment.speaker.name;
+    const quote = document.createElement("blockquote");
+    quote.className = "segment-speech";
+    quote.textContent = segment.text;
+    entry.append(attribution, quote);
+  } else if (segment.kind === "action" && segment.actor && typeof segment.actor.name === "string") {
+    entry.classList.add(`entry-action-${segment.grounding || "expressive"}`);
+    entry.setAttribute("aria-label", `Stage direction by ${segment.actor.name}`);
+    entry.textContent = `${segment.actor.name} — ${segment.text}`;
+  } else {
+    return;
+  }
+
+  transcriptElement.append(entry);
+  transcriptElement.scrollTop = transcriptElement.scrollHeight;
+}
+
+function renderTurn(payload) {
+  turnBlocks(payload).forEach((block) => {
+    if (block.kind === "narration") {
+      appendEntry(block.text, "output");
+    } else {
+      appendSegment(block);
+    }
+  });
 }
 
 function resetTranscript() {
@@ -136,8 +174,7 @@ async function runCommand(command, echoInput = true) {
       genre: DEFAULT_SESSION_PAYLOAD.genre,
       command,
     });
-    const lines = Array.isArray(payload.lines) ? payload.lines : [];
-    appendEntry(lines.join("\n"), "output");
+    renderTurn(payload);
     const destinations = payload.state.available_destinations;
     if (Array.isArray(destinations) && destinations.length > 0) {
       appendEntry(`Accessible from here: ${destinations.join(", ")}.`, "system");

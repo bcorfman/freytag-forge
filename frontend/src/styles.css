@@ -129,6 +129,33 @@ body {
   color: var(--text);
 }
 
+.entry-speech {
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+}
+
+.segment-attribution {
+  margin: 0 0 4px;
+  color: var(--accent-strong);
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.segment-speech {
+  margin: 0;
+}
+
+.entry-action {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.entry-action-material {
+  color: var(--text);
+}
+
 .entry-system {
   color: var(--danger);
 }

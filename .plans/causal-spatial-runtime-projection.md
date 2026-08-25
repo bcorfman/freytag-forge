@@ -429,24 +429,24 @@ interaction model as individual dialogue.
 
 ### Phase 7 — Structured rendering, hosted API, and frontend
 
-- [ ] Return ordered interaction segments from runtime while retaining
+- [x] Return ordered interaction segments from runtime while retaining
   `lines` only as a temporary compatibility projection.
-- [ ] Preserve public speaker name, quoted speech, addressees, and separate
+- [x] Preserve public speaker name, quoted speech, addressees, and separate
   expressive/material action blocks in the hosted response.
-- [ ] Render speech and stage directions as distinct accessible frontend
+- [x] Render speech and stage directions as distinct accessible frontend
   components without making styling a truth authority.
-- [ ] Preserve segment structure in transcripts, traces, artifacts, and
+- [x] Preserve segment structure in transcripts, traces, artifacts, and
   save/load continuation.
-- [ ] Render committed state, not provider JSON, and never drop narration merely
+- [x] Render committed state, not provider JSON, and never drop narration merely
   because dialogue exists.
-- [ ] Keep non-dialogue turns compatible with the existing minimal response.
+- [x] Keep non-dialogue turns compatible with the existing minimal response.
 
-**Tests:** individual and group segment order; full-name-first then unambiguous
+**Tests: [x]** individual and group segment order; full-name-first then unambiguous
 short-name rendering; action beat retained beside speech; API/frontend parity;
 artifact round-trip; protected text absent from every segment; compatibility
 line derived deterministically from accepted segments.
 
-**Exit:** the hosted experience can visibly present attributed dialogue and
+**Exit: [x]** the hosted experience can visibly present attributed dialogue and
 embodied action in the transcript form the runtime validated.
 
 ### Phase 8 — Conversation-quality evaluation and simulation
