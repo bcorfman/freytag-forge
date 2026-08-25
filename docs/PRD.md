@@ -35,12 +35,10 @@ one fact-backed runtime—never through story- or genre-specific branches.
 
 ## Authoring and reviewed packages
 
-The offline compiler produces a validated `story-blueprint-v2`: truths,
-participants, map locations/routes, causal events, evidence opportunities,
-revelation routes, beats, outcomes, storylets, and endings. Optional
-causal-spatial declarations add public participant presentation and placement,
-NPC performance profiles, movement plans, scene subjects, evidence
-realizations, group encounters, party knowledge, and interaction frames.
+The offline compiler produces a validated `story-blueprint-v2`: causal truth,
+space, cast, evidence, dramatic progression, and optional social interaction
+declarations. Those declarations include public placement, NPC performance,
+movement, scene subjects, group/party context, and interaction frames.
 
 The compiler plans causal and spatial continuity before dramatic opportunities.
 Local contracts and critics reject unknown references, impossible routes,
@@ -48,14 +46,18 @@ incompatible custody, absent group members, protected-public leaks,
 unsatisfiable storylets, invalid interaction frames, and failure-forward
 cycles. Genre profiles inject generic minima; shared runtime code does not
 inspect genre names. Candidate generation allows one request plus one shared
-repair/recovery request, then requires review and promotion before a package is
-playable.
+repair/recovery request, then requires review and promotion before play.
 
-`RuntimeNarrativeProjection` carries the legacy-compatible `CompiledStory`
-beside a frozen `RuntimeNarrativePackage`. The package retains reviewed
-provenance plus map, cast, performance, movement, subject, evidence, group,
-knowledge, storylet, consequence, and interaction declarations. It is never a
-mutation authority.
+`RuntimeNarrativeProjection` keeps the legacy-compatible `CompiledStory` beside
+a frozen reviewed package. Both are inputs; neither is a mutation authority.
+
+Offline conversation evaluation drives semantic player policies through
+isolated real engine sessions. An independent model judges each accepted,
+structured transcript against its authored performance context and returns a
+typed rubric with turn/segment citations. Local checks validate citations,
+grounding, and thresholds; they do not score prose by keywords. This evidence
+and human review gate promotion only—the ordinary runtime never calls an
+evaluation critic or accepts an evaluator-directed route.
 
 ## Facts, bootstrap, and context
 

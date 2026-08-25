@@ -339,6 +339,7 @@ def _interaction_segments(state: RuntimeState, result: TurnResult) -> tuple[dict
                     "kind": "action",
                     "actor": {"id": actor_id, "name": actor_name},
                     "grounding": segment.grounding,
+                    "effect_refs": list(segment.effect_refs),
                     "text": segment.text,
                 }
             )

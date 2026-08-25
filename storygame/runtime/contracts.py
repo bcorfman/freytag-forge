@@ -154,12 +154,12 @@ class TurnResult(BaseModel):
     @classmethod
     def from_provider(cls, response: object) -> TurnResult:
         try:
-            return cls.model_validate(_json_payload(response))
+            return cls.model_validate(provider_json_payload(response))
         except (ValidationError, ValueError, TypeError, json.JSONDecodeError) as exc:
             raise RuntimeFailure("INVALID_TURN", f"provider response failed local turn validation: {exc}") from exc
 
 
-def _json_payload(response: object) -> object:
+def provider_json_payload(response: object) -> object:
     value = _unwrap(response)
     if isinstance(value, str):
         fenced = re.fullmatch(r"\s*```(?:json)?\s*(.*?)\s*```\s*", value, re.DOTALL | re.IGNORECASE)

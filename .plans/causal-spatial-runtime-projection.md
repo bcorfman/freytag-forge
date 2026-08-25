@@ -451,25 +451,25 @@ embodied action in the transcript form the runtime validated.
 
 ### Phase 8 — Conversation-quality evaluation and simulation
 
-- [ ] Extend deterministic storylet simulation with social, distrustful,
+- [x] Extend deterministic storylet simulation with social, distrustful,
   avoidant, adversarial, and interruption-heavy interaction policies.
-- [ ] Record initiation rate, continuation rate, refusal handling, repeated
+- [x] Record initiation rate, continuation rate, refusal handling, repeated
   tactic/phrase rate, speaker-substitution failures, ungrounded material-action
   rate, protected leaks, and conversational dead ends.
-- [ ] Add a cross-genre transcript rubric for directness, voice specificity,
+- [x] Add a cross-genre transcript rubric for directness, voice specificity,
   emotional legibility, embodied behavior, continuity, and player
   responsiveness.
-- [ ] Use structural assertions and rubric thresholds rather than golden prose.
-- [ ] Require at least two NPC profiles in a fixture to remain distinguishable
+- [x] Use structural assertions and rubric thresholds rather than golden prose.
+- [x] Require at least two NPC profiles in a fixture to remain distinguishable
   under the same player question.
-- [ ] Verify that active conversational storylets do not crowd out unrelated
+- [x] Verify that active conversational storylets do not crowd out unrelated
   freeform action or force their completion.
-- [ ] Verify successful normal interactions use one provider request and no
+- [x] Verify successful normal interactions use one provider request and no
   evaluation critic on the fast path.
-- [ ] Add manual review of representative individual, group, refusal, movement,
+- [x] Add manual review of representative individual, group, refusal, movement,
   and follow-up transcripts before promotion.
 
-**Exit:** mystery, fantasy, sci-fi, and relationship fixtures each demonstrate
+**Exit: [ ]** mystery, fantasy, sci-fi, and relationship fixtures each demonstrate
 one NPC-initiated exchange, one player-initiated exchange, one direct multi-turn
 follow-up, one expressive action beat, and one fact-backed material action
 without leaks or continuity failures.
