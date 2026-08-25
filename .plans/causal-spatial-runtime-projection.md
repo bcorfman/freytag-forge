@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phases 0–3 complete; Phases 4–9 proposed.** This plan closes two connected
+**Phases 0–5 complete; Phases 6–9 proposed.** This plan closes two connected
 gaps between an approved causal blueprint and a playable runtime:
 
 1. reviewed people, subjects, evidence, and groups must survive compilation as a
@@ -380,22 +380,22 @@ knows.
 
 ### Phase 5 — Individual interaction proposal and atomic commit
 
-- [ ] Add typed speech and expressive/material action segment contracts.
-- [ ] Add `InteractionProposal` with initiation mode, frame ID, participants,
+- [x] Add typed speech and expressive/material action segment contracts.
+- [x] Add `InteractionProposal` with initiation mode, frame ID, participants,
   ordered segments, effects, and optional storylet realization.
-- [ ] Preserve player-addressed target validation for responsive dialogue.
-- [ ] Permit NPC initiation only for an eligible opening interaction or selected
+- [x] Preserve player-addressed target validation for responsive dialogue.
+- [x] Permit NPC initiation only for an eligible opening interaction or selected
   storylet frame with a present and available initiator.
-- [ ] Validate every segment for identity, presence, addressee, permitted
+- [x] Validate every segment for identity, presence, addressee, permitted
   knowledge, protected leakage, prompt parroting, narrator substitution, and
   frame membership.
-- [ ] Require each material action segment to reference effects that commit on
+- [x] Require each material action segment to reference effects that commit on
   the same cloned candidate before rendering.
-- [ ] Commit activation and continuation facts without forcing completion on the
+- [x] Commit activation and continuation facts without forcing completion on the
   opening line.
-- [ ] Support refusal, interruption, redirection, departure, completion, and
+- [x] Support refusal, interruption, redirection, departure, completion, and
   failure-forward abort through the same proposal boundary.
-- [ ] Preserve the one-request normal path and shared single recovery request.
+- [x] Preserve the one-request normal path and shared single recovery request.
 
 **Tests:** NPC initiates an eligible interaction; ineligible initiation fails;
 player follow-up stays in the same interaction; reply addresses the actual
@@ -403,7 +403,7 @@ concern; expressive gesture needs no durable fact; claimed relocation without
 effects fails; movement commits before its action segment; refusal opens the
 declared alternative; malformed interaction fails closed.
 
-**Exit:** one present NPC can initiate and sustain a grounded, responsive,
+**Exit: [x]** one present NPC can initiate and sustain a grounded, responsive,
 multi-turn exchange below the hosted adapter boundary.
 
 ### Phase 6 — Group encounters and scene-subject interaction

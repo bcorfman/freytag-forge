@@ -6,16 +6,19 @@ import copy
 import json
 from typing import Any
 
-from storygame.authoring.causal_contracts import Consequence
+from storygame.authoring.causal_contracts import Consequence, InteractionFrame
 from storygame.runtime.contracts import (
+    ActionSegment,
     DialogueProposal,
     DocumentDisclosure,
+    InteractionProposal,
     RuntimeFailure,
+    SpeechSegment,
     StoryletRealization,
     TurnResult,
 )
 from storygame.runtime.facts import Fact
-from storygame.runtime.narrative import StoryletSelector
+from storygame.runtime.narrative import RuntimeNarrativePackage, StoryletSelector
 from storygame.runtime.state import RuntimeState
 
 
@@ -26,17 +29,26 @@ def validate_and_commit(
     player_input: str = "",
 ) -> RuntimeState:
     candidate = copy.deepcopy(state)
+    if result.interaction is not None:
+        _validate_interaction(candidate, result.interaction, player_input)
     if result.dialogue is not None:
         _validate_dialogue(candidate, result.dialogue, player_input)
     _reject_protected_leaks(candidate, result)
     if result.storylet_realization is not None:
         _apply_storylet_realization(candidate, result.storylet_realization)
+    if result.interaction is not None and result.interaction.storylet_realization is not None:
+        _apply_storylet_realization(candidate, result.interaction.storylet_realization)
     _apply_disclosures(candidate, result.disclosures)
     for operation in result.operations:
         _apply_operation(candidate, operation.kind, operation.path, operation.value)
     if result.dialogue is not None:
         for operation in result.dialogue.effects:
             _apply_operation(candidate, operation.kind, operation.path, operation.value)
+    if result.interaction is not None:
+        for effect in result.interaction.effects:
+            operation = effect.operation
+            _apply_operation(candidate, operation.kind, operation.path, operation.value)
+        _apply_interaction_lifecycle(candidate, result.interaction)
     _apply_beat_updates(candidate, result)
     _apply_timed_events(candidate, candidate.turn_index + 1)
     return candidate
@@ -207,6 +219,158 @@ def _apply_fact_operation(state: RuntimeState, kind: str, value: Any) -> None:
     _sync_fact_view(state, fact, kind)
 
 
+def _validate_interaction(state: RuntimeState, interaction: InteractionProposal, player_input: str) -> None:
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
+    frame = next((item for item in package.interaction_frames if item.id == interaction.interaction_frame_id), None)
+    if frame is None:
+        raise RuntimeFailure(
+            "UNKNOWN_INTERACTION_FRAME", f"unknown interaction frame '{interaction.interaction_frame_id}'"
+        )
+    _validate_interaction_participants(state, frame, interaction)
+    _validate_interaction_initiation(state, package, frame, interaction, player_input)
+    _validate_interaction_segments(state, frame, interaction, player_input)
+    if (
+        interaction.storylet_realization is not None
+        and interaction.storylet_realization.storylet_id != frame.storylet_id
+    ):
+        raise RuntimeFailure("INTERACTION_STORYLET_MISMATCH", "interaction realization does not belong to its frame")
+    if interaction.agency_mode is not None and interaction.agency_mode not in frame.agency_modes:
+        raise RuntimeFailure("UNDECLARED_INTERACTION_AGENCY", "interaction uses an undeclared player response mode")
+    if interaction.outcome == "complete" and (
+        interaction.storylet_realization is None or not interaction.storylet_realization.completion_evidence
+    ):
+        raise RuntimeFailure("INTERACTION_COMPLETION_UNGROUNDED", "completion requires a reviewed storylet realization")
+
+
+def _validate_interaction_participants(
+    state: RuntimeState, frame: InteractionFrame, interaction: InteractionProposal
+) -> None:
+    expected = set(frame.participant_ids) | {"player"}
+    proposed = set(interaction.participant_ids)
+    if len(proposed) != len(interaction.participant_ids) or proposed != expected:
+        raise RuntimeFailure("INTERACTION_PARTICIPANTS", "interaction participants do not match the reviewed frame")
+    responder_ids = expected - {"player"}
+    if len(responder_ids) != 1:
+        raise RuntimeFailure("GROUP_INTERACTION_UNSUPPORTED", "Phase 5 accepts one NPC responder per interaction")
+    for participant_id in responder_ids:
+        if not state.facts.has("present", participant_id, state.world.location):
+            raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is not on scene")
+        if not state.facts.has("npc_availability", participant_id, value="present"):
+            raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is unavailable")
+    if state.world.location not in frame.location_ids:
+        raise RuntimeFailure("INTERACTION_LOCATION", "interaction frame is not valid in the current location")
+
+
+def _validate_interaction_initiation(
+    state: RuntimeState,
+    package: RuntimeNarrativePackage,
+    frame: InteractionFrame,
+    interaction: InteractionProposal,
+    player_input: str,
+) -> None:
+    active = state.facts.has("interaction_active", frame.id, value="true")
+    if interaction.initiation == "continuation":
+        if not active:
+            raise RuntimeFailure("INACTIVE_INTERACTION", "interaction continuation requires an active frame")
+        if not _mentions_dialogue_target(state, frame.initiator_id, player_input):
+            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{frame.initiator_id}'")
+        return
+    if active:
+        raise RuntimeFailure("INVALID_INTERACTION_INITIATION", "an active interaction must continue through its frame")
+    if interaction.initiation == "npc_initiated" and frame.initiation not in {"npc_initiated", "either"}:
+        raise RuntimeFailure("INVALID_INTERACTION_INITIATION", "frame does not permit NPC initiation")
+    if interaction.initiation == "player_initiated":
+        if frame.initiation not in {"player_initiated", "either"}:
+            raise RuntimeFailure("INVALID_INTERACTION_INITIATION", "frame does not permit player initiation")
+        if not _mentions_dialogue_target(state, frame.initiator_id, player_input):
+            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{frame.initiator_id}'")
+    eligible = StoryletSelector(package, state.facts).select(
+        active_beat_ids=tuple(beat.id for beat in state.active_beats),
+        location_id=state.world.location,
+        limit=len(package.storylets),
+    )
+    if not any(storylet.id == frame.storylet_id for storylet in eligible):
+        raise RuntimeFailure("INELIGIBLE_INTERACTION", "interaction frame has no eligible reviewed storylet")
+
+
+def _validate_interaction_segments(
+    state: RuntimeState,
+    frame: InteractionFrame,
+    interaction: InteractionProposal,
+    player_input: str,
+) -> None:
+    for segment in interaction.segments:
+        if isinstance(segment, SpeechSegment):
+            _validate_speech_segment(state, frame, interaction, segment, player_input)
+        elif isinstance(segment, ActionSegment):
+            _validate_action_segment(state, frame, interaction, segment)
+        else:
+            raise RuntimeFailure("INVALID_INTERACTION_SEGMENT", "interaction segment is not typed")
+
+
+def _validate_speech_segment(
+    state: RuntimeState,
+    frame: InteractionFrame,
+    interaction: InteractionProposal,
+    segment: SpeechSegment,
+    player_input: str,
+) -> None:
+    if segment.speaker_id != frame.initiator_id or segment.speaker_id not in interaction.participant_ids:
+        raise RuntimeFailure("WRONG_SPEAKER", "speech must be attributed to the frame's present NPC initiator")
+    if not set(segment.addressee_ids) <= set(interaction.participant_ids) or "player" not in segment.addressee_ids:
+        raise RuntimeFailure("INVALID_ADDRESSEE", "speech must address a declared player participant")
+    for fact_id in segment.used_fact_ids:
+        if not state.facts.has("knows", segment.speaker_id, fact_id):
+            raise RuntimeFailure("SPEAKER_LACKS_KNOWLEDGE", f"speaker lacks permitted fact '{fact_id}'")
+    _reject_parroting_or_narrator_substitution(state, segment.speaker_id, segment.text, player_input)
+
+
+def _validate_action_segment(
+    state: RuntimeState,
+    frame: InteractionFrame,
+    interaction: InteractionProposal,
+    segment: ActionSegment,
+) -> None:
+    if segment.actor_id != frame.initiator_id or segment.actor_id not in interaction.participant_ids:
+        raise RuntimeFailure("WRONG_ACTOR", "action must be attributed to the frame's present NPC initiator")
+    if not state.facts.has("present", segment.actor_id, state.world.location):
+        raise RuntimeFailure("UNAVAILABLE_SPEAKER", "action actor is not on scene")
+    if segment.grounding == "material" and not segment.effect_refs:
+        raise RuntimeFailure("UNGROUNDED_MATERIAL_ACTION", "material action requires committed effects")
+
+
+def _apply_interaction_lifecycle(state: RuntimeState, interaction: InteractionProposal) -> None:
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
+    frame = next(item for item in package.interaction_frames if item.id == interaction.interaction_frame_id)
+    state.facts.assert_fact(Fact(predicate="interaction_active", subject=frame.id, value="true"))
+    state.facts.assert_fact(Fact(predicate="interaction_recently_used", subject=frame.id, value="true"))
+    if interaction.outcome == "complete":
+        state.facts.assert_fact(Fact(predicate="interaction_completed", subject=frame.id, value="true"))
+    if interaction.outcome == "abort":
+        state.facts.assert_fact(Fact(predicate="interaction_aborted", subject=frame.id, value="true"))
+        for next_frame_id in frame.failure_forward_frame_ids:
+            state.facts.assert_fact(Fact(predicate="interaction_active", subject=next_frame_id, value="true"))
+
+
+def _reject_parroting_or_narrator_substitution(
+    state: RuntimeState, speaker_id: str, text: str, player_input: str
+) -> None:
+    normalized_text = " ".join(text.casefold().split()).strip(" .!?")
+    normalized_input = " ".join(player_input.casefold().split()).strip(" .!?")
+    if normalized_input and normalized_text == normalized_input:
+        raise RuntimeFailure("DIALOGUE_PROMPT_PARROTING", "dialogue repeats the player's prompt")
+    names = {part for part in speaker_id.casefold().split("_") if len(part) > 2}
+    opening = state.compiled_story.opening
+    if opening is not None:
+        names.update(contact.name.casefold() for contact in opening.contacts if contact.id == speaker_id)
+    if any(normalized_text.startswith(f"{name} says") for name in names):
+        raise RuntimeFailure("DIALOGUE_NARRATOR_SUBSTITUTION", "dialogue must be spoken by the addressed NPC")
+
+
 def _validate_dialogue(state: RuntimeState, dialogue: object, player_input: str) -> None:
     if not isinstance(dialogue, DialogueProposal):
         raise RuntimeFailure("INVALID_DIALOGUE", "dialogue proposal is not typed")
@@ -225,16 +389,7 @@ def _validate_dialogue(state: RuntimeState, dialogue: object, player_input: str)
                 "SPEAKER_LACKS_KNOWLEDGE",
                 f"speaker '{dialogue.speaker_id}' lacks permitted fact '{fact_id}'",
             )
-    normalized_dialogue = " ".join(dialogue.dialogue.casefold().split()).strip(" .!?")
-    normalized_input = " ".join(player_input.casefold().split()).strip(" .!?")
-    if normalized_dialogue == normalized_input:
-        raise RuntimeFailure("DIALOGUE_PROMPT_PARROTING", "dialogue repeats the player's prompt")
-    names = {part for part in dialogue.speaker_id.casefold().split("_") if len(part) > 2}
-    opening = state.compiled_story.opening
-    if opening is not None:
-        names.update(contact.name.casefold() for contact in opening.contacts if contact.id == dialogue.speaker_id)
-    if any(normalized_dialogue.startswith(f"{name} says") for name in names):
-        raise RuntimeFailure("DIALOGUE_NARRATOR_SUBSTITUTION", "dialogue must be spoken by the addressed NPC")
+    _reject_parroting_or_narrator_substitution(state, dialogue.speaker_id, dialogue.dialogue, player_input)
 
 
 def _mentions_dialogue_target(state: RuntimeState, target_id: str, player_input: str) -> bool:
@@ -352,7 +507,21 @@ def _reject_protected_leaks(state: RuntimeState, result: TurnResult) -> None:
     newly_completed = {tag for update in result.beat_updates for tag in update.completion_tags}
     operation_text = json.dumps([item.model_dump() for item in result.operations])
     dialogue_text = result.dialogue.dialogue if result.dialogue is not None else ""
-    visible = " ".join([result.narration, dialogue_text, result.summary_delta or "", operation_text]).casefold()
+    interaction_text = ""
+    interaction_effects = ""
+    if result.interaction is not None:
+        interaction_text = " ".join(segment.text for segment in result.interaction.segments)
+        interaction_effects = json.dumps([item.model_dump() for item in result.interaction.effects])
+    visible = " ".join(
+        [
+            result.narration,
+            dialogue_text,
+            interaction_text,
+            result.summary_delta or "",
+            operation_text,
+            interaction_effects,
+        ]
+    ).casefold()
     for revelation in state.compiled_story.protected_revelations:
         released = set(revelation.reveal_after) <= completed_tags | newly_completed
         if not released and revelation.summary.casefold() in visible:

@@ -67,7 +67,7 @@ class RuntimeEngine:
                 candidate = validate_and_commit(self.state, result, player_input=player_input)
                 self._finalize(candidate, player_input, result, context)
                 self.state = candidate
-                narration = result.dialogue.dialogue if result.dialogue is not None else result.narration
+                narration = _response_text(result)
                 return TurnResponse(True, narration, candidate.turn_index, model_calls=model_calls)
             except JsonModeRejected as exc:
                 last_error = RuntimeFailure("JSON_MODE_REJECTED", str(exc) or "provider rejected JSON-object mode")
@@ -92,9 +92,12 @@ class RuntimeEngine:
         result: TurnResult,
         context: RuntimeContext,
     ) -> None:
-        storylet_progress = result.storylet_realization is not None and (
-            state.facts.has("storylet_completed", result.storylet_realization.storylet_id, value="true")
-            or state.facts.has("storylet_aborted", result.storylet_realization.storylet_id, value="true")
+        realization = result.storylet_realization
+        if result.interaction is not None:
+            realization = result.interaction.storylet_realization
+        storylet_progress = realization is not None and (
+            state.facts.has("storylet_completed", realization.storylet_id, value="true")
+            or state.facts.has("storylet_aborted", realization.storylet_id, value="true")
         )
         for beat in state.active_beats:
             current = state.beat_runtime[beat.id]
@@ -238,3 +241,13 @@ def _mentions_destination(request: str, label: str) -> bool:
     }:
         return True
     return request.startswith("go ") and normalized in request[3:]
+
+
+def _response_text(result: TurnResult) -> str:
+    if result.dialogue is not None:
+        return result.dialogue.dialogue
+    if result.interaction is not None:
+        speech = [segment.text for segment in result.interaction.segments if segment.kind == "speech"]
+        if speech:
+            return "\n".join(speech)
+    return result.narration

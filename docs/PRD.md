@@ -93,12 +93,15 @@ Timed events and storylet effects commit on the cloned candidate before
 narration renders. Facts, not narration or provider JSON, determine the next
 turn.
 
-`DialogueProposal` is the current NPC-speech boundary: the player must
-unambiguously address a present target; speaker identity and permitted facts
-are checked; prompt parroting and narrator substitution fail closed. Its effects
-use the same atomic commit path. Interaction frames provide current context and
-continuity guidance; structured multi-segment interaction proposals are the
-next runtime phase.
+`InteractionProposal` is the NPC-interaction boundary: an eligible reviewed
+frame binds named participants to ordered speech and expressive or material
+action segments. The player must address a present target; identity, addressee,
+knowledge, frame membership, protected text, prompt parroting, and narrator
+substitution all fail closed. Material actions name bounded effects, and every
+effect plus lifecycle marker commits on the cloned candidate before response.
+An interaction may continue, complete with declared evidence, or abort into a
+declared failure-forward frame. `DialogueProposal` remains a compatibility path
+for legacy packages.
 
 Goals, tasks, clues, relationships, scene purpose, pressure, timed events, and
 endings are reviewed declarations projected into facts. Pacing advises urgency
