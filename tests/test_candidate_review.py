@@ -10,14 +10,14 @@ import pytest
 from storygame.authoring.candidate_review import CandidateReview, promote_candidate
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
-from tests.test_causal_story_contract import _story
+from tests.test_causal_spatial_projection_phase3 import _phase3_story
 
 
 def _candidate(path: Path, *, accepted: bool = True) -> None:
     path.write_text(
         json.dumps(
             {
-                "story": _story(),
+                "story": _phase3_story(),
                 "request_count": 1,
                 "validation_results": ["local_contract_valid", "profile_valid", "source_verified"],
                 "accepted": accepted,
@@ -43,6 +43,8 @@ def _review() -> CandidateReview:
             "repeated_content_risk",
             "consequence_quality",
             "distinct_progression_paths",
+            "character_voice_distinction",
+            "catchphrase_and_stereotype_safety",
         ),
         notes="Verified against the source constraints and local review reports.",
     )

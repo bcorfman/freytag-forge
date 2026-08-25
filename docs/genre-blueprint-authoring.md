@@ -92,6 +92,10 @@ That request also receives the rejected candidate as inert JSON data, so it can
 preserve valid authored fields instead of regenerating the blueprint wholesale.
 The same preservation rule applies to critic-driven repair, including
 route-fairness and Freytag diagnostics.
+Spatial-continuity and interaction-viability diagnostics use the same repair
+request. They require playable actor, means, evidence, witness, and opening
+paths plus profiled, responsive, knowledge-safe dialogue frames; neither critic
+adds a provider call or changes runtime truth.
 Every parseable repair candidate also receives a compact local ID ledger for
 truths, participants, locations, events, opportunities, realization routes,
 revelations, outcomes, and beats. The repair prompt treats existing IDs and

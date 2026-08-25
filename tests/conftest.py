@@ -20,6 +20,7 @@ _AUTHORING_QUALITY_FILES = {
     "test_blueprint_contracts.py",
     "test_causal_spatial_projection_phase0.py",
     "test_causal_spatial_projection_phase2.py",
+    "test_causal_spatial_projection_phase3.py",
     "test_causal_story_contract.py",
     "test_storylet_simulation_phase5.py",
 }

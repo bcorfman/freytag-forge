@@ -23,6 +23,11 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
 - **Worlds with a pulse.** Authors can declare who is where, what can be
   examined, and which evidence is genuinely available—so future scenes have
   solid ground beneath the drama.
+- **Every lead has a path.** Before a story ships, Freytag Forge checks that its
+  actors, evidence, witnesses, and opening conversations can actually meet in
+  the same playable world.
+- **Talk that goes somewhere.** Character goals, tactics, obligations, movement,
+  and clean exits turn conversation into drama—not a chatbot detour.
 - **Drama that finds you.** Pressure, timed events, alternate routes, and
   failure-forward turns keep the story moving without stealing agency.
 - **Secrets worth uncovering.** Protected revelations stay hidden until your

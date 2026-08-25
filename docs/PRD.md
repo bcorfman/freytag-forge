@@ -181,6 +181,38 @@ profiles, unknown references, incompatible locations, non-dialogue frames,
 unreachable movement, protected public leaks, collapsed lifecycle markers,
 failure-forward cycles, unavailable initiators, and player-agency minima.
 
+## Causal-spatial compiler planning Phase 3
+
+The offline `BlueprintCompiler` now requests the complete spatial and
+conversational schema instead of the older reduced blueprint shape. Its prompt
+plans terminal truths and the spatial timeline first: event actors, means,
+evidence, custody, witnesses, concrete locations, participant placement, and
+movement. Revelation routes and Freytag gates follow that fixed geography;
+dramatic spine, storylets, performance profiles, and interaction frames come
+last. Public identity and performance guidance are explicitly separated from
+protected motive, knowledge, deception, and the frame's current scene goal.
+
+`SpatialContinuityCritic` deterministically rejects candidates without a
+playable spatial realization. It walks declared connected routes and NPC
+movement plans to verify causal actors, input means, evidence realizations,
+holders/witnesses, and typed opening social targets. `InteractionViabilityCritic`
+requires a frame for every dialogue storylet and checks response obligations,
+distinct non-repeated tactics, initiator voice-profile coverage, fact-backed
+movement options, and protected-truth safety. Both critics are story- and
+genre-agnostic and operate only on immutable authoring declarations.
+
+The same critics run at initial compilation, candidate audit, and promotion
+revalidation. Compiler failures carry typed `SPATIAL_CONTINUITY` or
+`INTERACTION_VIABILITY` diagnostics into the existing single recovery request;
+they do not add a third provider call. A candidate missing either playable
+space or viable dialogue therefore cannot become a reviewed artifact.
+
+Human approval adds `character_voice_distinction` and
+`catchphrase_and_stereotype_safety`. Reviewers must confirm that profiles make
+characters recognizable without using canned lines, repeated verbal gimmicks,
+or stereotypes. Cross-genre coverage lives in
+`tests/test_causal_spatial_projection_phase3.py`.
+
 ## Causal compiler Phase 0: symbol-resolution baseline
 
 The offline causal compiler now carries a checked-in Phase 0 characterization
