@@ -13,7 +13,16 @@ from storygame.runtime.narrative import RuntimeNarrativeProjection, StoryletSele
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import validate_and_commit
 
-SIMULATION_POLICIES = ("goal_focused", "exploratory", "social", "avoidant", "aggressive", "chaotic_legal")
+SIMULATION_POLICIES = (
+    "goal_focused",
+    "exploratory",
+    "social",
+    "distrustful",
+    "avoidant",
+    "adversarial",
+    "interruption_heavy",
+)
+CONVERSATION_POLICIES = SIMULATION_POLICIES
 _StateFactory = Callable[[], RuntimeState]
 
 
@@ -62,7 +71,7 @@ def simulate_storylets(
     *,
     max_turns: int = 12,
 ) -> StoryletSimulationReport:
-    """Exercise selection and commit policies locally for each generic play style."""
+    """Exercise storylet and declared-conversation paths without runtime inference."""
 
     if max_turns < 1:
         raise ValueError("max_turns must be positive")
@@ -130,13 +139,13 @@ def _choose(eligible: tuple, policy: str):
         return None
     if policy == "social":
         return min(eligible, key=lambda item: (item.purpose != "relationship", item.id))
-    if policy == "aggressive":
+    if policy == "adversarial":
         return min(eligible, key=lambda item: (item.purpose != "conflict", item.id))
     if policy == "exploratory":
         return min(eligible, key=lambda item: (item.purpose != "investigation", item.id))
     if policy == "chaotic_legal":
         return eligible[-1]
-    if policy == "avoidant":
+    if policy in {"avoidant", "distrustful"}:
         return next((item for item in eligible if item.abort_truth_ids), eligible[-1])
     return eligible[0]
 

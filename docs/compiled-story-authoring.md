@@ -84,3 +84,11 @@ uv run storygame-blueprint-evaluate --live --quality-tier minimum \
 
 It writes evidence only; it cannot create a runtime fixture. Run full tests and
 the staging promotion process after any reviewed-package change.
+
+Conversation-quality evidence is another offline-only promotion input. A
+semantic policy driver runs isolated real-engine sessions; an independent critic
+receives the accepted segments, authored profiles, and reviewed context, then
+returns typed rubric scores with turn/segment citations. Write each immutable
+result as `*.conversation.json`; never feed it into runtime state. Review the
+individual, group, refusal, movement, and follow-up transcripts alongside the
+fixture's audit before promotion.

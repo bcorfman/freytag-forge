@@ -7,17 +7,18 @@ automates deployment identity, hosted E2E, and its named V2 test slice; it does
 not emit this complete matrix. Production evidence is valid only for a SHA that
 first passed staging.
 
-| Fixture | Opening | Freeform turn | Malformed model | Save/load | Protected revelation | Session isolation |
-| --- | --- | --- | --- | --- | --- | --- |
-| Mystery investigation | Required | Required | Required | Required | Required | Required |
-| Fantasy journey | Required | Required | Required | Required | Required | Required |
-| Sci-fi technical crisis | Required | Required | Required | Required | Required | Required |
-| Relationship social scene | Required | Required | Required | Required | Required | Required |
+| Fixture | Opening | Freeform turn | Conversation audit | Malformed model | Save/load | Protected revelation | Session isolation |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Mystery investigation | Required | Required | Required | Required | Required | Required | Required |
+| Fantasy journey | Required | Required | Required | Required | Required | Required | Required |
+| Sci-fi technical crisis | Required | Required | Required | Required | Required | Required | Required |
+| Relationship social scene | Required | Required | Required | Required | Required | Required | Required |
 
 | Check | Passing evidence |
 | --- | --- |
 | Opening | New session returns public opening prose and initial state. |
 | Freeform turn | An unconstrained move succeeds and commits only valid state. |
+| Conversation audit | Policy-driven individual, group, refusal, movement, and follow-up transcripts meet the cited model rubric; a human verifies they remain engaging and unforced. |
 | Malformed model | Typed fail-closed error leaves state and persistence unchanged. |
 | Save/load | Loading restores the saved V2 snapshot. |
 | Protected revelation | Protected content is absent from output and rejected from updates. |
