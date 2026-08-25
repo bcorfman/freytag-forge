@@ -17,6 +17,10 @@ successful run publishes the `staging-deployment` status required by production
 promotion. The [acceptance matrix](v2-acceptance-matrix.md) is the broader
 manual evidence checklist; the [scorecard](v2-acceptance-scorecard.md) defines
 metrics for an expanded evaluator rather than fields in the current artifact.
+The hosted E2E retries one uncommitted `/turn` request only when the runtime has
+already exhausted its bounded model recovery and returns `503 runtime_failure`;
+identity errors, client errors, and a repeated runtime failure still fail the
+gate.
 
 ## Human approval
 
