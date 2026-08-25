@@ -157,7 +157,7 @@ def test_mystery_runtime_fixture_loads_the_approved_causal_artifact():
     story = load_compiled_story_fixture("mystery")
 
     assert story.id == "vale_mansion_rebuild"
-    assert story.title == "Death in the West Gallery"
+    assert story.title == "The West Gallery"
     location = story.initial_world_state["location"]
     navigation = story.initial_world_state["navigation"]
     assert location in navigation["names"]

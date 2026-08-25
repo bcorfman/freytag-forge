@@ -69,10 +69,10 @@ def test_vale_blueprint_locations_and_holders_are_lost_before_runtime_facts() ->
     )
     state = bootstrap_runtime_state(compiled)
 
-    assert len(reviewed.story.evidence_opportunities) == 21
+    assert len(reviewed.story.evidence_opportunities) == 23
     assert report.participant_placements.declared_count == 7
-    assert report.participant_placements.fact_backed_count == 0
-    assert report.evidence_realization.declared_count == 21
+    assert report.participant_placements.fact_backed_count == 1
+    assert report.evidence_realization.declared_count == 23
     assert report.evidence_realization.fact_backed_count == 0
     assert report.evidence_custody.missing_ids == report.evidence_realization.declared_ids
     assert report.scene_subjects.declared_count == 0

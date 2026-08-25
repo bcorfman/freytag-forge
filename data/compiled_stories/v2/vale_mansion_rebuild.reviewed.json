@@ -1,0 +1,3613 @@
+{
+  "schema_version": "reviewed-story-blueprint-v2",
+  "candidate_filename": "vale_mansion_rebuild.candidate.json",
+  "candidate_sha256": "5997585be73b3584dc6551419e1358ac8febd09ed72583ff70e61d43b87bac79",
+  "review": {
+    "reviewer": "compiler",
+    "approved": true,
+    "checklist": [
+      "catchphrase_and_stereotype_safety",
+      "character_voice_distinction",
+      "consequence_quality",
+      "distinct_progression_paths",
+      "dramatic_questions",
+      "failure_forward",
+      "knowledge_boundaries",
+      "map_and_custody",
+      "participant_agency",
+      "repeated_content_risk",
+      "route_diversity",
+      "terminal_roles"
+    ],
+    "notes": "Automatically promoted after deterministic compiler validation and critic checks."
+  },
+  "story": {
+    "schema_version": "story-blueprint-v2",
+    "id": "vale_mansion_rebuild",
+    "version": 1,
+    "provenance": {
+      "source_format": "story-outline-inventory-v1",
+      "source_id": "vale_mansion_rebuild",
+      "source_hash": "92149bb5d9e499651c2a21f44062ae1cf7ed36b1012b55ac34330be3f33cc5c7",
+      "source_path": "story_outlines.yaml#vale_mansion_rebuild",
+      "source_schema_version": "story-outline-inventory-v1",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "quality_tier": "preferred",
+      "generation_mode": "standard",
+      "response_id": "resp_0f69e69b7b9fc878006a8e0a12b85487d295f6701e91659522",
+      "prompt_version": "story-blueprint-v2",
+      "validation_results": [
+        "local_contract_valid",
+        "profile_valid",
+        "source_verified",
+        "critics_valid",
+        "repair_valid"
+      ]
+    },
+    "genre": "mystery",
+    "profile": "mystery",
+    "title": "The West Gallery",
+    "premise": "During a snowbound winter gathering at Vale Mansion, host Emma Vale is found dead in the west gallery, leaving an investigator to test the conflicting accounts of the trapped household.",
+    "opening_truth_ids": [
+      "estate_snowbound",
+      "emma_dead",
+      "household_gathered",
+      "body_undisturbed"
+    ],
+    "opening": {
+      "scene": "The grand foyer of Vale Mansion rises around you in dark wood and shuttered portraits. Snow presses against the glass doors, muting the drive beyond them, while the household gathers beneath the staircase and watches you arrive.",
+      "player_context": "You are the investigator summoned to establish what happened before the snowbound estate can be opened again. You have the authority to ask questions, inspect the public rooms, and decide which account deserves to be tested first.",
+      "companions": [
+        "The gathered household waits nearby: frightened, defensive, and each carrying a different version of the night's events."
+      ],
+      "situation": "Emma Vale has been found dead in the west gallery. The body has not been moved, the storm has sealed the estate, and the first hour of an investigation is already slipping away.",
+      "next_steps": [
+        "Survey the foyer for the household's immediate reactions and any disturbance in the arrival scene.",
+        "Speak with the people who were last known to be near Emma.",
+        "Enter the west gallery, inspect the scene, or follow a lead into the study, library, or grounds."
+      ],
+      "protagonist_context": "The investigator has authority within the estate but must build an evidence-backed account before making an accusation.",
+      "arrival_context": "The household assembled in the foyer after Clara Mere found Emma, and the storm prevents anyone from leaving the estate.",
+      "public_briefing": [
+        "Emma Vale is dead in the west gallery.",
+        "The body has not been moved.",
+        "The household is gathered in the grand foyer.",
+        "The foyer, west gallery, study, library, and estate grounds are accessible."
+      ],
+      "scene_purpose": "Introduce the closed household, preserve the crime scene, and offer immediate social and investigative routes without exposing protected evidence.",
+      "first_available_actions": [
+        "Question the gathered household in the foyer.",
+        "Question Clara Mere about finding Emma Vale.",
+        "Inspect Emma Vale's remains in the west gallery."
+      ],
+      "first_action_suggestions": [
+        {
+          "text": "Question the gathered household in the foyer.",
+          "target_kind": "group_encounter",
+          "target_id": "foyer_assembly"
+        },
+        {
+          "text": "Question Clara Mere about finding Emma Vale.",
+          "target_kind": "participant",
+          "target_id": "clara_mere"
+        },
+        {
+          "text": "Inspect Emma Vale's remains in the west gallery.",
+          "target_kind": "scene_subject",
+          "target_id": "emma_vale_remains"
+        }
+      ]
+    },
+    "truths": [
+      {
+        "id": "estate_snowbound",
+        "summary": "Heavy snow has sealed Vale Mansion and its estate.",
+        "roles": []
+      },
+      {
+        "id": "household_gathered",
+        "summary": "The named household members are gathered in the grand foyer.",
+        "roles": []
+      },
+      {
+        "id": "household_awaits_account",
+        "summary": "The household is waiting for an authoritative account of Emma's death.",
+        "roles": []
+      },
+      {
+        "id": "emma_dead",
+        "summary": "Emma Vale died in the west gallery.",
+        "roles": [
+          "victim"
+        ]
+      },
+      {
+        "id": "body_undisturbed",
+        "summary": "Emma's remains have not been moved since Clara found them.",
+        "roles": []
+      },
+      {
+        "id": "gallery_scene_preserved",
+        "summary": "The west-gallery scene remains available for examination.",
+        "roles": []
+      },
+      {
+        "id": "study_records_present",
+        "summary": "Estate financial records remain in the study.",
+        "roles": []
+      },
+      {
+        "id": "study_inventory_present",
+        "summary": "The study retains an inventory of its brass letter opener.",
+        "roles": []
+      },
+      {
+        "id": "boiler_records_present",
+        "summary": "The boiler-house log remains at the estate.",
+        "roles": []
+      },
+      {
+        "id": "diverted_restoration_payments",
+        "summary": "Restoration payments were diverted through accounts controlled by Beatrice.",
+        "roles": []
+      },
+      {
+        "id": "emma_uncovered_diversion",
+        "summary": "Emma discovered the diverted restoration payments before her death.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_motive_diverted_payments",
+        "summary": "Beatrice faced exposure and ruin because Emma uncovered the diverted payments.",
+        "roles": [
+          "motive"
+        ]
+      },
+      {
+        "id": "brass_letter_opener_is_means",
+        "summary": "The study's brass letter opener was the weapon used against Emma.",
+        "roles": [
+          "means"
+        ]
+      },
+      {
+        "id": "single_thrust_method",
+        "summary": "Emma was killed by a single deliberate thrust delivered at close range.",
+        "roles": [
+          "method"
+        ]
+      },
+      {
+        "id": "murder_time_window",
+        "summary": "Emma was killed between 23:42 and 23:50.",
+        "roles": [
+          "time_window"
+        ]
+      },
+      {
+        "id": "beatrice_gallery_opportunity",
+        "summary": "Beatrice could move from the study to the west gallery during the murder window.",
+        "roles": [
+          "opportunity"
+        ]
+      },
+      {
+        "id": "beatrice_cleaned_and_returned_opener",
+        "summary": "Beatrice cleaned the brass letter opener, returned it to the study, and amended its inventory entry.",
+        "roles": [
+          "concealment"
+        ]
+      },
+      {
+        "id": "beatrice_is_perpetrator",
+        "summary": "Beatrice Harrow killed Emma Vale.",
+        "roles": [
+          "perpetrator"
+        ]
+      },
+      {
+        "id": "crime_solution_beatrice_killed_emma",
+        "summary": "Beatrice Harrow killed Emma Vale in the west gallery between 23:42 and 23:50 with the study's brass letter opener to prevent exposure of diverted restoration payments, then cleaned and returned the weapon.",
+        "roles": [
+          "crime_solution"
+        ]
+      },
+      {
+        "id": "thomas_exonerated",
+        "summary": "Independent estate records and witness testimony place Thomas Pike in the boiler house during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "restoration_ledger_discrepancy",
+        "summary": "The restoration ledger contains payment discrepancies tied to Beatrice's administration.",
+        "roles": []
+      },
+      {
+        "id": "wound_matches_letter_opener",
+        "summary": "The dimensions and profile of Emma's wound match the study's brass letter opener.",
+        "roles": []
+      },
+      {
+        "id": "gallery_brass_polish_trace",
+        "summary": "A trace of distinctive brass polish at the gallery scene links the study implement to the attack.",
+        "roles": []
+      },
+      {
+        "id": "cleaning_residue_on_opener",
+        "summary": "Fresh cleaning residue remains in the letter opener's engraved recesses.",
+        "roles": []
+      },
+      {
+        "id": "inventory_entry_amended",
+        "summary": "The letter-opener inventory entry was amended after Emma confronted Beatrice.",
+        "roles": []
+      },
+      {
+        "id": "clara_found_body",
+        "summary": "Clara Mere found Emma in the west gallery and preserved the scene.",
+        "roles": []
+      },
+      {
+        "id": "clara_saw_beatrice_near_gallery",
+        "summary": "Clara saw Beatrice moving from the study side of the foyer toward the west gallery during the relevant interval.",
+        "roles": []
+      },
+      {
+        "id": "julian_heard_financial_confrontation",
+        "summary": "Julian heard Emma confront Beatrice about missing restoration money.",
+        "roles": []
+      },
+      {
+        "id": "thomas_boiler_log_authentic",
+        "summary": "Thomas's boiler log contains contemporaneous entries that span the murder window.",
+        "roles": []
+      },
+      {
+        "id": "lydia_saw_thomas_in_boiler_house",
+        "summary": "Lydia saw Thomas working in the boiler house during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "thomas_argued_with_emma",
+        "summary": "Thomas argued with Emma about neglected estate repairs earlier that night.",
+        "roles": []
+      },
+      {
+        "id": "thomas_muddy_boots_match_grounds",
+        "summary": "Mud and snow on Thomas's boots match the estate grounds.",
+        "roles": []
+      },
+      {
+        "id": "julian_inherits_estate",
+        "summary": "Julian is named as Emma's principal heir.",
+        "roles": []
+      },
+      {
+        "id": "julian_argued_with_emma",
+        "summary": "Julian argued with Emma in the library before the murder.",
+        "roles": []
+      },
+      {
+        "id": "julian_library_log_timestamp",
+        "summary": "A timed library register entry places Julian there during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "clara_saw_julian_in_library",
+        "summary": "Clara saw Julian in the library during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "julian_exonerated_by_library",
+        "summary": "The library register and Clara's account independently place Julian away from the gallery during the murder.",
+        "roles": []
+      },
+      {
+        "id": "investigation_remains_open",
+        "summary": "An inconclusive lead leaves another evidentiary route available.",
+        "roles": []
+      },
+      {
+        "id": "arrival_accounts_recorded",
+        "summary": "The household's initial accounts have been separated and recorded.",
+        "roles": []
+      },
+      {
+        "id": "motive_inquiry_completed",
+        "summary": "The financial motive inquiry has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "means_exam_completed",
+        "summary": "The examination of the suspected weapon and wound has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "method_reconstruction_completed",
+        "summary": "The reconstruction of the attack has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "opportunity_inquiry_completed",
+        "summary": "The inquiry into access to the west gallery has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "alibi_inquiry_completed",
+        "summary": "The groundskeeper's alibi inquiry has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "concealment_inquiry_completed",
+        "summary": "The inquiry into the weapon's cleaning and return has reached a bounded conclusion.",
+        "roles": []
+      },
+      {
+        "id": "solution_presented",
+        "summary": "The evidence-backed solution has been presented to the household.",
+        "roles": []
+      },
+      {
+        "id": "household_briefed",
+        "summary": "The household has received the final account and its immediate implications.",
+        "roles": []
+      },
+      {
+        "id": "arrival_interrupted",
+        "summary": "The initial foyer exchange ends before focused questioning is complete.",
+        "roles": []
+      },
+      {
+        "id": "study_inquiry_deferred",
+        "summary": "The focused study inquiry is deferred.",
+        "roles": []
+      },
+      {
+        "id": "gallery_exam_deferred",
+        "summary": "The gallery examination is deferred.",
+        "roles": []
+      },
+      {
+        "id": "method_review_deferred",
+        "summary": "The attack reconstruction is deferred.",
+        "roles": []
+      },
+      {
+        "id": "opportunity_interview_deferred",
+        "summary": "The opportunity interview is deferred.",
+        "roles": []
+      },
+      {
+        "id": "alibi_followup_deferred",
+        "summary": "The boiler-house alibi follow-up is deferred.",
+        "roles": []
+      },
+      {
+        "id": "concealment_review_deferred",
+        "summary": "The concealment review is deferred.",
+        "roles": []
+      },
+      {
+        "id": "solution_confrontation_deferred",
+        "summary": "The final confrontation is deferred.",
+        "roles": []
+      },
+      {
+        "id": "resolution_conversation_ended",
+        "summary": "The closing conversation ends without further discussion.",
+        "roles": []
+      },
+      {
+        "id": "clara_foyer_exchange_continues",
+        "summary": "Clara remains engaged in the opening exchange.",
+        "roles": []
+      },
+      {
+        "id": "clara_foyer_exchange_recent",
+        "summary": "Clara has recently led an opening exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_motive_exchange_continues",
+        "summary": "Beatrice remains engaged in the financial-record exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_motive_exchange_recent",
+        "summary": "Beatrice has recently participated in the financial-record exchange.",
+        "roles": []
+      },
+      {
+        "id": "clara_opportunity_exchange_continues",
+        "summary": "Clara remains engaged in the gallery-access exchange.",
+        "roles": []
+      },
+      {
+        "id": "clara_opportunity_exchange_recent",
+        "summary": "Clara has recently participated in the gallery-access exchange.",
+        "roles": []
+      },
+      {
+        "id": "thomas_log_exchange_continues",
+        "summary": "Thomas remains engaged in the boiler-log exchange.",
+        "roles": []
+      },
+      {
+        "id": "thomas_log_exchange_recent",
+        "summary": "Thomas has recently participated in the boiler-log exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_concealment_exchange_continues",
+        "summary": "Beatrice remains engaged in the inventory exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_concealment_exchange_recent",
+        "summary": "Beatrice has recently participated in the inventory exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_solution_exchange_continues",
+        "summary": "Beatrice remains engaged in the final evidentiary exchange.",
+        "roles": []
+      },
+      {
+        "id": "beatrice_solution_exchange_recent",
+        "summary": "Beatrice has recently participated in the final evidentiary exchange.",
+        "roles": []
+      },
+      {
+        "id": "clara_resolution_exchange_continues",
+        "summary": "Clara remains engaged in the closing exchange.",
+        "roles": []
+      },
+      {
+        "id": "clara_resolution_exchange_recent",
+        "summary": "Clara has recently participated in the closing exchange.",
+        "roles": []
+      }
+    ],
+    "participants": [
+      {
+        "id": "player",
+        "role": "investigator",
+        "public_name": "The Investigator",
+        "public_role": "appointed investigator",
+        "public_description": "The investigator empowered to question the household and inspect the estate.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "player_investigator_profile",
+        "movement_plan_ids": []
+      },
+      {
+        "id": "beatrice_harrow",
+        "role": "perpetrator",
+        "public_name": "Beatrice Harrow",
+        "public_role": "estate solicitor",
+        "public_description": "Immaculately composed, with a watchful stillness that makes every pause feel chosen.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "beatrice_public_manner",
+        "movement_plan_ids": [
+          "beatrice_to_study",
+          "beatrice_to_west_gallery",
+          "beatrice_to_foyer"
+        ]
+      },
+      {
+        "id": "thomas_pike",
+        "role": "alternative_suspect",
+        "public_name": "Thomas Pike",
+        "public_role": "groundskeeper",
+        "public_description": "Weather-beaten and practical, still carrying the cold of the boiler house.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "thomas_public_manner",
+        "movement_plan_ids": [
+          "thomas_to_boiler_house",
+          "thomas_to_estate_grounds",
+          "thomas_to_foyer"
+        ]
+      },
+      {
+        "id": "julian_vale",
+        "role": "alternative_suspect",
+        "public_name": "Julian Vale",
+        "public_role": "Emma's heir",
+        "public_description": "Elegantly disheveled, quick to turn anger into a joke before it can settle.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "julian_public_manner",
+        "movement_plan_ids": [
+          "julian_to_library",
+          "julian_to_study",
+          "julian_to_foyer"
+        ]
+      },
+      {
+        "id": "clara_mere",
+        "role": "witness",
+        "public_name": "Clara Mere",
+        "public_role": "housekeeper",
+        "public_description": "Precise and exhausted, keeping the household moving by sheer discipline.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "clara_public_manner",
+        "movement_plan_ids": [
+          "clara_to_west_gallery",
+          "clara_to_library",
+          "clara_library_to_west_gallery",
+          "clara_to_foyer"
+        ]
+      },
+      {
+        "id": "lydia_fenn",
+        "role": "witness",
+        "public_name": "Lydia Fenn",
+        "public_role": "kitchen maid",
+        "public_description": "Alert to every raised voice, with flour still caught beneath one thumbnail.",
+        "initial_location_id": "grand_foyer",
+        "initial_availability": "present",
+        "performance_profile_id": "lydia_public_manner",
+        "movement_plan_ids": [
+          "lydia_to_boiler_house",
+          "lydia_to_library",
+          "lydia_to_foyer"
+        ]
+      },
+      {
+        "id": "emma_vale",
+        "role": "victim",
+        "public_name": "Emma Vale",
+        "public_role": "host of Vale Mansion",
+        "public_description": "The formidable owner of Vale Mansion, now lying undisturbed in the west gallery.",
+        "initial_location_id": "west_gallery",
+        "initial_availability": "unavailable",
+        "performance_profile_id": "emma_public_profile",
+        "movement_plan_ids": [
+          "emma_library_to_study",
+          "emma_study_to_west_gallery"
+        ]
+      }
+    ],
+    "npc_performance_profiles": [
+      {
+        "id": "player_investigator_profile",
+        "participant_id": "player",
+        "public_manner": "Player-defined and responsive, with no prescribed emotional performance.",
+        "voice": {
+          "register": "player_defined",
+          "cadence": "player_defined",
+          "diction": "player_defined",
+          "avoidances": [
+            "prescribing the player's conclusions",
+            "prescribing the player's emotions"
+          ]
+        },
+        "behavioral_cues": [
+          "leave investigative priorities to the player",
+          "do not supply unearned conclusions"
+        ]
+      },
+      {
+        "id": "beatrice_public_manner",
+        "participant_id": "beatrice_harrow",
+        "public_manner": "Measured, legalistic, and unflappable until a practical detail threatens her control.",
+        "voice": {
+          "register": "formal",
+          "cadence": "carefully qualified",
+          "diction": "exact",
+          "avoidances": [
+            "casual slang",
+            "unqualified claims"
+          ]
+        },
+        "behavioral_cues": [
+          "straightens documents before answering",
+          "redirects emotion toward procedure"
+        ]
+      },
+      {
+        "id": "thomas_public_manner",
+        "participant_id": "thomas_pike",
+        "public_manner": "Blunt, protective of the estate, and angered by being treated as convenient blame.",
+        "voice": {
+          "register": "plainspoken",
+          "cadence": "clipped under pressure",
+          "diction": "practical",
+          "avoidances": [
+            "legal abstraction",
+            "ornamental phrasing"
+          ]
+        },
+        "behavioral_cues": [
+          "checks the weather before leaving",
+          "answers with work details rather than excuses"
+        ]
+      },
+      {
+        "id": "julian_public_manner",
+        "participant_id": "julian_vale",
+        "public_manner": "Restless, polished, and inclined to use brittle humor when attention settles on him.",
+        "voice": {
+          "register": "educated",
+          "cadence": "quick and deflective",
+          "diction": "wry",
+          "avoidances": [
+            "sustained solemnity",
+            "technical estate terminology"
+          ]
+        },
+        "behavioral_cues": [
+          "turns a glass or book in his hands",
+          "lets humor fade when confronted with a precise time"
+        ]
+      },
+      {
+        "id": "clara_public_manner",
+        "participant_id": "clara_mere",
+        "public_manner": "Controlled and observant, offering concrete help while protecting a shaken household.",
+        "voice": {
+          "register": "professional",
+          "cadence": "orderly",
+          "diction": "domestic and precise",
+          "avoidances": [
+            "speculation presented as fact",
+            "melodramatic language"
+          ]
+        },
+        "behavioral_cues": [
+          "counts tasks aloud",
+          "steadies herself before naming what she saw"
+        ]
+      },
+      {
+        "id": "lydia_public_manner",
+        "participant_id": "lydia_fenn",
+        "public_manner": "Watchful and plainly spoken, hesitant before authority but firm about concrete observations.",
+        "voice": {
+          "register": "informal",
+          "cadence": "brief with careful pauses",
+          "diction": "concrete",
+          "avoidances": [
+            "legal conclusions",
+            "claims about events she did not witness"
+          ]
+        },
+        "behavioral_cues": [
+          "checks who is listening before answering",
+          "becomes steadier when asked about routine tasks"
+        ]
+      },
+      {
+        "id": "emma_public_profile",
+        "participant_id": "emma_vale",
+        "public_manner": "Remembered publicly as exacting, decisive, and attentive to the estate's accounts.",
+        "voice": {
+          "register": "formal",
+          "cadence": "decisive",
+          "diction": "direct",
+          "avoidances": [
+            "sentimentality",
+            "vague commitments"
+          ]
+        },
+        "behavioral_cues": [
+          "represented through documents and witness recollections only",
+          "avoid posthumous dialogue"
+        ]
+      }
+    ],
+    "locations": [
+      {
+        "id": "grand_foyer",
+        "role": "opening_hub",
+        "initial_access": true
+      },
+      {
+        "id": "west_gallery",
+        "role": "crime_scene",
+        "initial_access": true
+      },
+      {
+        "id": "study",
+        "role": "records_room",
+        "initial_access": true
+      },
+      {
+        "id": "library",
+        "role": "interview_room",
+        "initial_access": true
+      },
+      {
+        "id": "service_corridor",
+        "role": "interior_transition",
+        "initial_access": false
+      },
+      {
+        "id": "kitchen",
+        "role": "service_interior",
+        "initial_access": false
+      },
+      {
+        "id": "courtyard",
+        "role": "local_surroundings",
+        "initial_access": false
+      },
+      {
+        "id": "estate_grounds",
+        "role": "estate_surroundings",
+        "initial_access": true
+      },
+      {
+        "id": "boiler_house",
+        "role": "utility_outbuilding",
+        "initial_access": false
+      }
+    ],
+    "connected_routes": [
+      {
+        "id": "foyer_to_west_gallery",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "west_gallery",
+        "aliases": [
+          "west gallery passage"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "west_gallery_to_foyer",
+        "from_location_id": "west_gallery",
+        "to_location_id": "grand_foyer",
+        "aliases": [
+          "gallery return passage"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "foyer_to_study",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "study",
+        "aliases": [
+          "study corridor"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "study_to_foyer",
+        "from_location_id": "study",
+        "to_location_id": "grand_foyer",
+        "aliases": [
+          "solicitor corridor return"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "foyer_to_library",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "library",
+        "aliases": [
+          "library arch"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "library_to_foyer",
+        "from_location_id": "library",
+        "to_location_id": "grand_foyer",
+        "aliases": [
+          "library return arch"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "foyer_to_service_corridor",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "service_corridor",
+        "aliases": [
+          "green baize door"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "service_corridor_to_foyer",
+        "from_location_id": "service_corridor",
+        "to_location_id": "grand_foyer",
+        "aliases": [
+          "foyer service door"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "service_corridor_to_kitchen",
+        "from_location_id": "service_corridor",
+        "to_location_id": "kitchen",
+        "aliases": [
+          "kitchen service passage"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "kitchen_to_service_corridor",
+        "from_location_id": "kitchen",
+        "to_location_id": "service_corridor",
+        "aliases": [
+          "pantry passage"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "kitchen_to_courtyard",
+        "from_location_id": "kitchen",
+        "to_location_id": "courtyard",
+        "aliases": [
+          "service yard door"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "courtyard_to_kitchen",
+        "from_location_id": "courtyard",
+        "to_location_id": "kitchen",
+        "aliases": [
+          "kitchen yard entrance"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "courtyard_to_estate_grounds",
+        "from_location_id": "courtyard",
+        "to_location_id": "estate_grounds",
+        "aliases": [
+          "snowbound garden path"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "estate_grounds_to_courtyard",
+        "from_location_id": "estate_grounds",
+        "to_location_id": "courtyard",
+        "aliases": [
+          "courtyard garden return"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "estate_grounds_to_boiler_house",
+        "from_location_id": "estate_grounds",
+        "to_location_id": "boiler_house",
+        "aliases": [
+          "boiler house track"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "boiler_house_to_estate_grounds",
+        "from_location_id": "boiler_house",
+        "to_location_id": "estate_grounds",
+        "aliases": [
+          "furnace track return"
+        ],
+        "prerequisite_truths": []
+      }
+    ],
+    "causal_events": [
+      {
+        "id": "event_diverted_restoration_payments",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [],
+        "output_truths": [
+          "diverted_restoration_payments",
+          "restoration_ledger_discrepancy",
+          "study_records_present"
+        ],
+        "earliest": 1200,
+        "latest": 1205,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_inheritance_notice_retained",
+        "actor_ids": [
+          "emma_vale"
+        ],
+        "location_id": "study",
+        "input_truths": [],
+        "output_truths": [
+          "julian_inherits_estate"
+        ],
+        "earliest": 1280,
+        "latest": 1285,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_emma_discovers_diversion",
+        "actor_ids": [
+          "emma_vale"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "restoration_ledger_discrepancy"
+        ],
+        "output_truths": [
+          "emma_uncovered_diversion"
+        ],
+        "earliest": 1320,
+        "latest": 1330,
+        "prerequisite_event_ids": [
+          "event_diverted_restoration_payments"
+        ]
+      },
+      {
+        "id": "event_thomas_disputes_repairs",
+        "actor_ids": [
+          "thomas_pike",
+          "emma_vale"
+        ],
+        "location_id": "estate_grounds",
+        "input_truths": [],
+        "output_truths": [
+          "thomas_argued_with_emma",
+          "thomas_muddy_boots_match_grounds"
+        ],
+        "earliest": 1340,
+        "latest": 1345,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_julian_argues_with_emma",
+        "actor_ids": [
+          "julian_vale",
+          "emma_vale"
+        ],
+        "location_id": "library",
+        "input_truths": [],
+        "output_truths": [
+          "julian_argued_with_emma"
+        ],
+        "earliest": 1360,
+        "latest": 1365,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_emma_confronts_beatrice",
+        "actor_ids": [
+          "emma_vale",
+          "beatrice_harrow",
+          "julian_vale"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "emma_uncovered_diversion"
+        ],
+        "output_truths": [
+          "beatrice_motive_diverted_payments",
+          "julian_heard_financial_confrontation"
+        ],
+        "earliest": 1390,
+        "latest": 1395,
+        "prerequisite_event_ids": [
+          "event_emma_discovers_diversion"
+        ]
+      },
+      {
+        "id": "event_beatrice_takes_letter_opener",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "beatrice_motive_diverted_payments"
+        ],
+        "output_truths": [
+          "study_inventory_present"
+        ],
+        "earliest": 1415,
+        "latest": 1420,
+        "prerequisite_event_ids": [
+          "event_emma_confronts_beatrice"
+        ]
+      },
+      {
+        "id": "event_beatrice_kills_emma",
+        "actor_ids": [
+          "beatrice_harrow",
+          "emma_vale"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [
+          "beatrice_motive_diverted_payments"
+        ],
+        "output_truths": [
+          "emma_dead",
+          "murder_time_window",
+          "brass_letter_opener_is_means",
+          "single_thrust_method",
+          "beatrice_gallery_opportunity",
+          "beatrice_is_perpetrator",
+          "wound_matches_letter_opener",
+          "gallery_brass_polish_trace",
+          "crime_solution_beatrice_killed_emma"
+        ],
+        "earliest": 1422,
+        "latest": 1430,
+        "prerequisite_event_ids": [
+          "event_beatrice_takes_letter_opener"
+        ]
+      },
+      {
+        "id": "event_thomas_boiler_alibi",
+        "actor_ids": [
+          "thomas_pike",
+          "lydia_fenn"
+        ],
+        "location_id": "boiler_house",
+        "input_truths": [],
+        "output_truths": [
+          "thomas_boiler_log_authentic",
+          "lydia_saw_thomas_in_boiler_house",
+          "thomas_exonerated",
+          "boiler_records_present"
+        ],
+        "earliest": 1423,
+        "latest": 1427,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_julian_library_alibi",
+        "actor_ids": [
+          "julian_vale",
+          "clara_mere"
+        ],
+        "location_id": "library",
+        "input_truths": [],
+        "output_truths": [
+          "julian_library_log_timestamp",
+          "clara_saw_julian_in_library",
+          "julian_exonerated_by_library"
+        ],
+        "earliest": 1424,
+        "latest": 1428,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_beatrice_conceals_weapon",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "crime_solution_beatrice_killed_emma"
+        ],
+        "output_truths": [
+          "beatrice_cleaned_and_returned_opener",
+          "cleaning_residue_on_opener",
+          "inventory_entry_amended"
+        ],
+        "earliest": 1431,
+        "latest": 1438,
+        "prerequisite_event_ids": [
+          "event_beatrice_kills_emma"
+        ]
+      },
+      {
+        "id": "event_clara_finds_emma",
+        "actor_ids": [
+          "clara_mere"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [
+          "emma_dead"
+        ],
+        "output_truths": [
+          "clara_found_body",
+          "body_undisturbed",
+          "gallery_scene_preserved"
+        ],
+        "earliest": 1445,
+        "latest": 1450,
+        "prerequisite_event_ids": [
+          "event_beatrice_conceals_weapon"
+        ]
+      },
+      {
+        "id": "event_household_assembles",
+        "actor_ids": [
+          "beatrice_harrow",
+          "thomas_pike",
+          "julian_vale",
+          "clara_mere",
+          "lydia_fenn"
+        ],
+        "location_id": "grand_foyer",
+        "input_truths": [
+          "clara_found_body"
+        ],
+        "output_truths": [
+          "estate_snowbound",
+          "household_gathered",
+          "household_awaits_account"
+        ],
+        "earliest": 1455,
+        "latest": 1465,
+        "prerequisite_event_ids": [
+          "event_clara_finds_emma"
+        ]
+      }
+    ],
+    "timeline_constraints": [
+      {
+        "before_event_id": "event_diverted_restoration_payments",
+        "after_event_id": "event_emma_discovers_diversion"
+      },
+      {
+        "before_event_id": "event_emma_discovers_diversion",
+        "after_event_id": "event_emma_confronts_beatrice"
+      },
+      {
+        "before_event_id": "event_emma_confronts_beatrice",
+        "after_event_id": "event_beatrice_takes_letter_opener"
+      },
+      {
+        "before_event_id": "event_beatrice_takes_letter_opener",
+        "after_event_id": "event_beatrice_kills_emma"
+      },
+      {
+        "before_event_id": "event_beatrice_kills_emma",
+        "after_event_id": "event_beatrice_conceals_weapon"
+      },
+      {
+        "before_event_id": "event_beatrice_conceals_weapon",
+        "after_event_id": "event_clara_finds_emma"
+      },
+      {
+        "before_event_id": "event_clara_finds_emma",
+        "after_event_id": "event_household_assembles"
+      }
+    ],
+    "evidence_opportunities": [
+      {
+        "id": "opportunity_time_body",
+        "truth_id": "murder_time_window",
+        "kind": "physical_evidence",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_time_body"
+      },
+      {
+        "id": "opportunity_time_clara",
+        "truth_id": "murder_time_window",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "grand_foyer",
+        "supports": true,
+        "route_id": "route_time_clara"
+      },
+      {
+        "id": "opportunity_motive_ledger",
+        "truth_id": "beatrice_motive_diverted_payments",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_motive_ledger"
+      },
+      {
+        "id": "opportunity_motive_julian",
+        "truth_id": "beatrice_motive_diverted_payments",
+        "kind": "testimony",
+        "holder_id": "julian_vale",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_motive_julian"
+      },
+      {
+        "id": "opportunity_means_wound",
+        "truth_id": "brass_letter_opener_is_means",
+        "kind": "physical_evidence",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_means_wound"
+      },
+      {
+        "id": "opportunity_means_inventory",
+        "truth_id": "brass_letter_opener_is_means",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_means_inventory"
+      },
+      {
+        "id": "opportunity_method_wound",
+        "truth_id": "single_thrust_method",
+        "kind": "physical_evidence",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_method_wound"
+      },
+      {
+        "id": "opportunity_method_clara",
+        "truth_id": "single_thrust_method",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_method_clara"
+      },
+      {
+        "id": "opportunity_access_trace",
+        "truth_id": "beatrice_gallery_opportunity",
+        "kind": "physical_evidence",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_access_trace"
+      },
+      {
+        "id": "opportunity_access_clara",
+        "truth_id": "beatrice_gallery_opportunity",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "grand_foyer",
+        "supports": true,
+        "route_id": "route_access_clara"
+      },
+      {
+        "id": "opportunity_boiler_log",
+        "truth_id": "thomas_boiler_log_authentic",
+        "kind": "document",
+        "holder_id": "thomas_pike",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "route_thomas_boiler_log"
+      },
+      {
+        "id": "opportunity_lydia_boiler_testimony",
+        "truth_id": "lydia_saw_thomas_in_boiler_house",
+        "kind": "testimony",
+        "holder_id": "lydia_fenn",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "route_thomas_lydia"
+      },
+      {
+        "id": "opportunity_cleaned_opener",
+        "truth_id": "beatrice_cleaned_and_returned_opener",
+        "kind": "physical_evidence",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_concealment_opener"
+      },
+      {
+        "id": "opportunity_amended_inventory",
+        "truth_id": "beatrice_cleaned_and_returned_opener",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_concealment_inventory"
+      },
+      {
+        "id": "opportunity_solution_physical_chain",
+        "truth_id": "crime_solution_beatrice_killed_emma",
+        "kind": "physical_evidence",
+        "holder_id": "clara_mere",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "route_solution_physical_chain"
+      },
+      {
+        "id": "opportunity_solution_document_chain",
+        "truth_id": "crime_solution_beatrice_killed_emma",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "route_solution_document_chain"
+      },
+      {
+        "id": "opportunity_thomas_argument",
+        "truth_id": "thomas_argued_with_emma",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "grand_foyer",
+        "supports": true,
+        "route_id": "route_thomas_argument"
+      },
+      {
+        "id": "opportunity_thomas_muddy_boots",
+        "truth_id": "thomas_muddy_boots_match_grounds",
+        "kind": "physical_evidence",
+        "holder_id": "thomas_pike",
+        "location_id": "estate_grounds",
+        "supports": true,
+        "route_id": "route_thomas_muddy_boots"
+      },
+      {
+        "id": "opportunity_julian_inheritance",
+        "truth_id": "julian_inherits_estate",
+        "kind": "document",
+        "holder_id": "julian_vale",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "route_julian_inheritance"
+      },
+      {
+        "id": "opportunity_julian_argument",
+        "truth_id": "julian_argued_with_emma",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "route_julian_argument"
+      },
+      {
+        "id": "opportunity_julian_library_log",
+        "truth_id": "julian_library_log_timestamp",
+        "kind": "document",
+        "holder_id": "julian_vale",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "route_julian_library_log"
+      },
+      {
+        "id": "opportunity_julian_library_witness",
+        "truth_id": "clara_saw_julian_in_library",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "route_julian_library_witness"
+      },
+      {
+        "id": "opportunity_thomas_exoneration_log",
+        "truth_id": "thomas_exonerated",
+        "kind": "document",
+        "holder_id": "thomas_pike",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "route_thomas_boiler_log"
+      }
+    ],
+    "movement_plans": [
+      {
+        "id": "beatrice_to_study",
+        "participant_id": "beatrice_harrow",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "study",
+        "activation_truth_ids": [
+          "study_records_present"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "beatrice_to_west_gallery",
+        "participant_id": "beatrice_harrow",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "west_gallery",
+        "activation_truth_ids": [
+          "gallery_scene_preserved"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "beatrice_to_foyer",
+        "participant_id": "beatrice_harrow",
+        "source_location_id": "study",
+        "destination_location_id": "grand_foyer",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "thomas_to_boiler_house",
+        "participant_id": "thomas_pike",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "boiler_house",
+        "activation_truth_ids": [
+          "boiler_records_present"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "thomas_to_estate_grounds",
+        "participant_id": "thomas_pike",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "estate_grounds",
+        "activation_truth_ids": [
+          "estate_snowbound"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "thomas_to_foyer",
+        "participant_id": "thomas_pike",
+        "source_location_id": "boiler_house",
+        "destination_location_id": "grand_foyer",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "julian_to_library",
+        "participant_id": "julian_vale",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "library",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "julian_to_study",
+        "participant_id": "julian_vale",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "study",
+        "activation_truth_ids": [
+          "study_records_present"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "julian_to_foyer",
+        "participant_id": "julian_vale",
+        "source_location_id": "library",
+        "destination_location_id": "grand_foyer",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "clara_to_west_gallery",
+        "participant_id": "clara_mere",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "west_gallery",
+        "activation_truth_ids": [
+          "clara_found_body"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "clara_to_library",
+        "participant_id": "clara_mere",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "library",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "clara_library_to_west_gallery",
+        "participant_id": "clara_mere",
+        "source_location_id": "library",
+        "destination_location_id": "west_gallery",
+        "activation_truth_ids": [
+          "emma_dead"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": false
+      },
+      {
+        "id": "clara_to_foyer",
+        "participant_id": "clara_mere",
+        "source_location_id": "west_gallery",
+        "destination_location_id": "grand_foyer",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "lydia_to_boiler_house",
+        "participant_id": "lydia_fenn",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "boiler_house",
+        "activation_truth_ids": [
+          "boiler_records_present"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "lydia_to_library",
+        "participant_id": "lydia_fenn",
+        "source_location_id": "grand_foyer",
+        "destination_location_id": "library",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "lydia_to_foyer",
+        "participant_id": "lydia_fenn",
+        "source_location_id": "boiler_house",
+        "destination_location_id": "grand_foyer",
+        "activation_truth_ids": [
+          "household_gathered"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": true
+      },
+      {
+        "id": "emma_library_to_study",
+        "participant_id": "emma_vale",
+        "source_location_id": "library",
+        "destination_location_id": "study",
+        "activation_truth_ids": [
+          "study_records_present"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": false
+      },
+      {
+        "id": "emma_study_to_west_gallery",
+        "participant_id": "emma_vale",
+        "source_location_id": "study",
+        "destination_location_id": "west_gallery",
+        "activation_truth_ids": [
+          "emma_uncovered_diversion"
+        ],
+        "abort_truth_ids": [],
+        "player_may_accompany": false
+      }
+    ],
+    "scene_subjects": [
+      {
+        "id": "emma_vale_remains",
+        "kind": "person",
+        "location_id": "west_gallery",
+        "inspectable": true,
+        "public_description": "Emma Vale remains on the west-gallery floor, undisturbed since the household found her.",
+        "evidence_opportunity_ids": [
+          "opportunity_time_body",
+          "opportunity_means_wound",
+          "opportunity_method_wound"
+        ]
+      },
+      {
+        "id": "west_gallery_floor",
+        "kind": "crime_scene",
+        "location_id": "west_gallery",
+        "inspectable": true,
+        "public_description": "The polished gallery floor retains scuffs and minute traces around the place where Emma fell.",
+        "evidence_opportunity_ids": [
+          "opportunity_access_trace",
+          "opportunity_solution_physical_chain"
+        ]
+      },
+      {
+        "id": "restoration_ledger",
+        "kind": "document",
+        "location_id": "study",
+        "inspectable": true,
+        "public_description": "A bound restoration ledger rests among the estate accounts.",
+        "evidence_opportunity_ids": [
+          "opportunity_motive_ledger",
+          "opportunity_solution_document_chain"
+        ]
+      },
+      {
+        "id": "brass_letter_opener",
+        "kind": "item",
+        "location_id": "study",
+        "inspectable": true,
+        "public_description": "A brass letter opener lies in its fitted place on the study desk.",
+        "evidence_opportunity_ids": [
+          "opportunity_cleaned_opener"
+        ]
+      },
+      {
+        "id": "letter_opener_inventory",
+        "kind": "document",
+        "location_id": "study",
+        "inspectable": true,
+        "public_description": "A study inventory lists the desk implements and recent checks.",
+        "evidence_opportunity_ids": [
+          "opportunity_means_inventory",
+          "opportunity_amended_inventory"
+        ]
+      },
+      {
+        "id": "boiler_house_log",
+        "kind": "document",
+        "location_id": "boiler_house",
+        "inspectable": true,
+        "public_description": "A soot-marked boiler log records fuel, pressure, and maintenance times.",
+        "evidence_opportunity_ids": [
+          "opportunity_boiler_log",
+          "opportunity_thomas_exoneration_log"
+        ]
+      },
+      {
+        "id": "thomas_work_boots",
+        "kind": "item",
+        "location_id": "estate_grounds",
+        "inspectable": true,
+        "public_description": "Thomas's work boots carry fresh mud and packed snow.",
+        "evidence_opportunity_ids": [
+          "opportunity_thomas_muddy_boots"
+        ]
+      },
+      {
+        "id": "inheritance_notice",
+        "kind": "document",
+        "location_id": "library",
+        "inspectable": true,
+        "public_description": "A retained estate notice names Emma's principal heir.",
+        "evidence_opportunity_ids": [
+          "opportunity_julian_inheritance"
+        ]
+      },
+      {
+        "id": "library_register",
+        "kind": "document",
+        "location_id": "library",
+        "inspectable": true,
+        "public_description": "A timed register records the use of restricted volumes and the library telephone.",
+        "evidence_opportunity_ids": [
+          "opportunity_julian_library_log"
+        ]
+      }
+    ],
+    "evidence_realizations": [
+      {
+        "id": "realization_time_body",
+        "evidence_opportunity_id": "opportunity_time_body",
+        "kind": "scene_evidence",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": "emma_vale_remains",
+        "public_description": "The body's condition and the cooling room permit a bounded estimate of the time of death."
+      },
+      {
+        "id": "realization_time_clara",
+        "evidence_opportunity_id": "opportunity_time_clara",
+        "kind": "testimony",
+        "location_id": "grand_foyer",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara can account for when she last passed the gallery and when she found Emma."
+      },
+      {
+        "id": "realization_motive_ledger",
+        "evidence_opportunity_id": "opportunity_motive_ledger",
+        "kind": "document",
+        "location_id": "study",
+        "custody_holder_id": "beatrice_harrow",
+        "scene_subject_id": "restoration_ledger",
+        "public_description": "Cross-referenced restoration entries expose diverted payments and the administrator responsible for them."
+      },
+      {
+        "id": "realization_motive_julian",
+        "evidence_opportunity_id": "opportunity_motive_julian",
+        "kind": "testimony",
+        "location_id": "study",
+        "custody_holder_id": "julian_vale",
+        "scene_subject_id": null,
+        "public_description": "Julian can describe the financial accusation he overheard in the study."
+      },
+      {
+        "id": "realization_means_wound",
+        "evidence_opportunity_id": "opportunity_means_wound",
+        "kind": "scene_evidence",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": "emma_vale_remains",
+        "public_description": "The wound profile can be compared with the dimensions of the study's brass letter opener."
+      },
+      {
+        "id": "realization_means_inventory",
+        "evidence_opportunity_id": "opportunity_means_inventory",
+        "kind": "document",
+        "location_id": "study",
+        "custody_holder_id": "beatrice_harrow",
+        "scene_subject_id": "letter_opener_inventory",
+        "public_description": "The desk inventory identifies the brass implement and its normal position."
+      },
+      {
+        "id": "realization_method_wound",
+        "evidence_opportunity_id": "opportunity_method_wound",
+        "kind": "scene_evidence",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": "emma_vale_remains",
+        "public_description": "The wound angle and lack of repeated injuries support a single close-range thrust."
+      },
+      {
+        "id": "realization_method_clara",
+        "evidence_opportunity_id": "opportunity_method_clara",
+        "kind": "testimony",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara's exact description of the undisturbed body confirms how Emma was positioned when found."
+      },
+      {
+        "id": "realization_access_trace",
+        "evidence_opportunity_id": "opportunity_access_trace",
+        "kind": "scene_evidence",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": "west_gallery_floor",
+        "public_description": "A brass-polish trace and directional scuff connect the gallery approach with the study side of the house."
+      },
+      {
+        "id": "realization_access_clara",
+        "evidence_opportunity_id": "opportunity_access_clara",
+        "kind": "testimony",
+        "location_id": "grand_foyer",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara can place Beatrice moving toward the west gallery during the relevant interval."
+      },
+      {
+        "id": "realization_boiler_log",
+        "evidence_opportunity_id": "opportunity_boiler_log",
+        "kind": "document",
+        "location_id": "boiler_house",
+        "custody_holder_id": "thomas_pike",
+        "scene_subject_id": "boiler_house_log",
+        "public_description": "Pressure and fuel entries written across the murder window preserve Thomas's work sequence."
+      },
+      {
+        "id": "realization_lydia_boiler_testimony",
+        "evidence_opportunity_id": "opportunity_lydia_boiler_testimony",
+        "kind": "testimony",
+        "location_id": "boiler_house",
+        "custody_holder_id": "lydia_fenn",
+        "scene_subject_id": null,
+        "public_description": "Lydia can independently place Thomas at the boiler during the murder window."
+      },
+      {
+        "id": "realization_cleaned_opener",
+        "evidence_opportunity_id": "opportunity_cleaned_opener",
+        "kind": "item",
+        "location_id": "study",
+        "custody_holder_id": "beatrice_harrow",
+        "scene_subject_id": "brass_letter_opener",
+        "public_description": "Fresh cleaning residue remains where a hurried wiping could not reach."
+      },
+      {
+        "id": "realization_amended_inventory",
+        "evidence_opportunity_id": "opportunity_amended_inventory",
+        "kind": "document",
+        "location_id": "study",
+        "custody_holder_id": "beatrice_harrow",
+        "scene_subject_id": "letter_opener_inventory",
+        "public_description": "A changed inventory notation attempts to normalize the letter opener's removal and return."
+      },
+      {
+        "id": "realization_solution_physical_chain",
+        "evidence_opportunity_id": "opportunity_solution_physical_chain",
+        "kind": "scene_evidence",
+        "location_id": "west_gallery",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": "west_gallery_floor",
+        "public_description": "The wound match, brass-polish trace, and gallery approach form an independent physical chain identifying Beatrice's act."
+      },
+      {
+        "id": "realization_solution_document_chain",
+        "evidence_opportunity_id": "opportunity_solution_document_chain",
+        "kind": "document",
+        "location_id": "study",
+        "custody_holder_id": "beatrice_harrow",
+        "scene_subject_id": "restoration_ledger",
+        "public_description": "The ledger, inventory amendment, and confrontation timing form an independent documentary chain identifying Beatrice's motive and concealment."
+      },
+      {
+        "id": "realization_thomas_argument",
+        "evidence_opportunity_id": "opportunity_thomas_argument",
+        "kind": "testimony",
+        "location_id": "grand_foyer",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara can confirm that Thomas and Emma argued over estate repairs."
+      },
+      {
+        "id": "realization_thomas_muddy_boots",
+        "evidence_opportunity_id": "opportunity_thomas_muddy_boots",
+        "kind": "item",
+        "location_id": "estate_grounds",
+        "custody_holder_id": "thomas_pike",
+        "scene_subject_id": "thomas_work_boots",
+        "public_description": "Thomas's boots bear fresh estate mud and snow, initially making his movements look suspicious."
+      },
+      {
+        "id": "realization_julian_inheritance",
+        "evidence_opportunity_id": "opportunity_julian_inheritance",
+        "kind": "document",
+        "location_id": "library",
+        "custody_holder_id": "julian_vale",
+        "scene_subject_id": "inheritance_notice",
+        "public_description": "The retained notice establishes Julian's financial interest in Emma's estate."
+      },
+      {
+        "id": "realization_julian_argument",
+        "evidence_opportunity_id": "opportunity_julian_argument",
+        "kind": "testimony",
+        "location_id": "library",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara can confirm the raised voices from Julian's earlier argument with Emma."
+      },
+      {
+        "id": "realization_julian_library_log",
+        "evidence_opportunity_id": "opportunity_julian_library_log",
+        "kind": "document",
+        "location_id": "library",
+        "custody_holder_id": "julian_vale",
+        "scene_subject_id": "library_register",
+        "public_description": "The timed register places Julian in the library during the murder window."
+      },
+      {
+        "id": "realization_julian_library_witness",
+        "evidence_opportunity_id": "opportunity_julian_library_witness",
+        "kind": "testimony",
+        "location_id": "library",
+        "custody_holder_id": "clara_mere",
+        "scene_subject_id": null,
+        "public_description": "Clara can independently confirm seeing Julian in the library during the murder window."
+      },
+      {
+        "id": "realization_thomas_exoneration_log",
+        "evidence_opportunity_id": "opportunity_thomas_exoneration_log",
+        "kind": "document",
+        "location_id": "boiler_house",
+        "custody_holder_id": "thomas_pike",
+        "scene_subject_id": "boiler_house_log",
+        "public_description": "The continuous boiler entries align with the murder window and establish that Thomas could not have reached the gallery in time."
+      }
+    ],
+    "group_encounters": [
+      {
+        "id": "foyer_assembly",
+        "location_id": "grand_foyer",
+        "label": "gathered household",
+        "participant_ids": [
+          "beatrice_harrow",
+          "thomas_pike",
+          "julian_vale",
+          "clara_mere",
+          "lydia_fenn"
+        ],
+        "introduction_truth_ids": [
+          "household_gathered"
+        ]
+      }
+    ],
+    "party_knowledge": [
+      {
+        "participant_id": "player",
+        "truth_ids": [
+          "estate_snowbound",
+          "emma_dead",
+          "household_gathered",
+          "body_undisturbed"
+        ]
+      },
+      {
+        "participant_id": "beatrice_harrow",
+        "truth_ids": [
+          "diverted_restoration_payments",
+          "emma_uncovered_diversion",
+          "beatrice_motive_diverted_payments",
+          "brass_letter_opener_is_means",
+          "single_thrust_method",
+          "murder_time_window",
+          "beatrice_gallery_opportunity",
+          "beatrice_cleaned_and_returned_opener",
+          "beatrice_is_perpetrator",
+          "crime_solution_beatrice_killed_emma"
+        ]
+      },
+      {
+        "participant_id": "thomas_pike",
+        "truth_ids": [
+          "thomas_argued_with_emma",
+          "thomas_muddy_boots_match_grounds",
+          "thomas_boiler_log_authentic",
+          "lydia_saw_thomas_in_boiler_house",
+          "thomas_exonerated"
+        ]
+      },
+      {
+        "participant_id": "julian_vale",
+        "truth_ids": [
+          "julian_inherits_estate",
+          "julian_argued_with_emma",
+          "julian_heard_financial_confrontation",
+          "julian_library_log_timestamp",
+          "clara_saw_julian_in_library",
+          "julian_exonerated_by_library"
+        ]
+      },
+      {
+        "participant_id": "clara_mere",
+        "truth_ids": [
+          "clara_found_body",
+          "body_undisturbed",
+          "clara_saw_beatrice_near_gallery",
+          "clara_saw_julian_in_library",
+          "thomas_argued_with_emma",
+          "julian_argued_with_emma"
+        ]
+      },
+      {
+        "participant_id": "lydia_fenn",
+        "truth_ids": [
+          "lydia_saw_thomas_in_boiler_house"
+        ]
+      },
+      {
+        "participant_id": "emma_vale",
+        "truth_ids": [
+          "diverted_restoration_payments",
+          "emma_uncovered_diversion",
+          "beatrice_motive_diverted_payments"
+        ]
+      }
+    ],
+    "knowledge_protections": [
+      {
+        "truth_id": "beatrice_motive_diverted_payments",
+        "release_after_revelation_ids": [
+          "revelation_motive"
+        ]
+      },
+      {
+        "truth_id": "brass_letter_opener_is_means",
+        "release_after_revelation_ids": [
+          "revelation_means"
+        ]
+      },
+      {
+        "truth_id": "single_thrust_method",
+        "release_after_revelation_ids": [
+          "revelation_method"
+        ]
+      },
+      {
+        "truth_id": "beatrice_gallery_opportunity",
+        "release_after_revelation_ids": [
+          "revelation_opportunity"
+        ]
+      },
+      {
+        "truth_id": "beatrice_cleaned_and_returned_opener",
+        "release_after_revelation_ids": [
+          "revelation_concealment"
+        ]
+      },
+      {
+        "truth_id": "beatrice_is_perpetrator",
+        "release_after_revelation_ids": [
+          "revelation_solution"
+        ]
+      },
+      {
+        "truth_id": "crime_solution_beatrice_killed_emma",
+        "release_after_revelation_ids": [
+          "revelation_solution"
+        ]
+      }
+    ],
+    "revelations": [
+      {
+        "id": "revelation_time_window",
+        "truth_id": "murder_time_window",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_setup_arrival"
+        ]
+      },
+      {
+        "id": "revelation_motive",
+        "truth_id": "beatrice_motive_diverted_payments",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_motive"
+        ]
+      },
+      {
+        "id": "revelation_means",
+        "truth_id": "brass_letter_opener_is_means",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_means"
+        ]
+      },
+      {
+        "id": "revelation_method",
+        "truth_id": "single_thrust_method",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_method"
+        ]
+      },
+      {
+        "id": "revelation_opportunity",
+        "truth_id": "beatrice_gallery_opportunity",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_crisis_opportunity"
+        ]
+      },
+      {
+        "id": "revelation_thomas_exoneration",
+        "truth_id": "thomas_exonerated",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_crisis_exoneration"
+        ]
+      },
+      {
+        "id": "revelation_concealment",
+        "truth_id": "beatrice_cleaned_and_returned_opener",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_climax_concealment"
+        ]
+      },
+      {
+        "id": "revelation_solution",
+        "truth_id": "crime_solution_beatrice_killed_emma",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_climax_solution"
+        ]
+      },
+      {
+        "id": "revelation_thomas_argument",
+        "truth_id": "thomas_argued_with_emma",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_motive"
+        ]
+      },
+      {
+        "id": "revelation_thomas_muddy_boots",
+        "truth_id": "thomas_muddy_boots_match_grounds",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_means"
+        ]
+      },
+      {
+        "id": "revelation_julian_inheritance",
+        "truth_id": "julian_inherits_estate",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_motive"
+        ]
+      },
+      {
+        "id": "revelation_julian_argument",
+        "truth_id": "julian_argued_with_emma",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_motive"
+        ]
+      },
+      {
+        "id": "revelation_julian_exoneration",
+        "truth_id": "julian_exonerated_by_library",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_crisis_exoneration"
+        ]
+      }
+    ],
+    "realization_routes": [
+      {
+        "id": "route_time_body",
+        "revelation_id": "revelation_time_window",
+        "opportunity_ids": [
+          "opportunity_time_body"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "murder_time_window"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_time_clara"
+          ]
+        }
+      },
+      {
+        "id": "route_time_clara",
+        "revelation_id": "revelation_time_window",
+        "opportunity_ids": [
+          "opportunity_time_clara"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "murder_time_window"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "murder_time_window"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_motive_ledger",
+        "revelation_id": "revelation_motive",
+        "opportunity_ids": [
+          "opportunity_motive_ledger"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_motive_diverted_payments",
+          "restoration_ledger_discrepancy"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_motive_julian"
+          ]
+        }
+      },
+      {
+        "id": "route_motive_julian",
+        "revelation_id": "revelation_motive",
+        "opportunity_ids": [
+          "opportunity_motive_julian"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_motive_diverted_payments",
+          "julian_heard_financial_confrontation"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "beatrice_motive_diverted_payments"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_means_wound",
+        "revelation_id": "revelation_means",
+        "opportunity_ids": [
+          "opportunity_means_wound"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "brass_letter_opener_is_means",
+          "wound_matches_letter_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_means_inventory"
+          ]
+        }
+      },
+      {
+        "id": "route_means_inventory",
+        "revelation_id": "revelation_means",
+        "opportunity_ids": [
+          "opportunity_means_inventory"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "brass_letter_opener_is_means"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "brass_letter_opener_is_means"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_method_wound",
+        "revelation_id": "revelation_method",
+        "opportunity_ids": [
+          "opportunity_method_wound"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "single_thrust_method"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_method_clara"
+          ]
+        }
+      },
+      {
+        "id": "route_method_clara",
+        "revelation_id": "revelation_method",
+        "opportunity_ids": [
+          "opportunity_method_clara"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "single_thrust_method"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "single_thrust_method"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_access_trace",
+        "revelation_id": "revelation_opportunity",
+        "opportunity_ids": [
+          "opportunity_access_trace"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_gallery_opportunity",
+          "gallery_brass_polish_trace"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_access_clara"
+          ]
+        }
+      },
+      {
+        "id": "route_access_clara",
+        "revelation_id": "revelation_opportunity",
+        "opportunity_ids": [
+          "opportunity_access_clara"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_gallery_opportunity",
+          "clara_saw_beatrice_near_gallery"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "beatrice_gallery_opportunity"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_thomas_boiler_log",
+        "revelation_id": "revelation_thomas_exoneration",
+        "opportunity_ids": [
+          "opportunity_boiler_log",
+          "opportunity_thomas_exoneration_log"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "thomas_exonerated",
+          "thomas_boiler_log_authentic"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_thomas_lydia"
+          ]
+        }
+      },
+      {
+        "id": "route_thomas_lydia",
+        "revelation_id": "revelation_thomas_exoneration",
+        "opportunity_ids": [
+          "opportunity_lydia_boiler_testimony"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "thomas_exonerated",
+          "lydia_saw_thomas_in_boiler_house"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "thomas_exonerated"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_concealment_opener",
+        "revelation_id": "revelation_concealment",
+        "opportunity_ids": [
+          "opportunity_cleaned_opener"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_cleaned_and_returned_opener",
+          "cleaning_residue_on_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_concealment_inventory"
+          ]
+        }
+      },
+      {
+        "id": "route_concealment_inventory",
+        "revelation_id": "revelation_concealment",
+        "opportunity_ids": [
+          "opportunity_amended_inventory"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_cleaned_and_returned_opener",
+          "inventory_entry_amended"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "beatrice_cleaned_and_returned_opener"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_solution_physical_chain",
+        "revelation_id": "revelation_solution",
+        "opportunity_ids": [
+          "opportunity_solution_physical_chain"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "crime_solution_beatrice_killed_emma",
+          "beatrice_is_perpetrator"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_solution_document_chain"
+          ]
+        }
+      },
+      {
+        "id": "route_solution_document_chain",
+        "revelation_id": "revelation_solution",
+        "opportunity_ids": [
+          "opportunity_solution_document_chain"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "crime_solution_beatrice_killed_emma",
+          "beatrice_is_perpetrator"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "crime_solution_beatrice_killed_emma"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_thomas_argument",
+        "revelation_id": "revelation_thomas_argument",
+        "opportunity_ids": [
+          "opportunity_thomas_argument"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "thomas_argued_with_emma"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "thomas_argued_with_emma"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_thomas_muddy_boots",
+        "revelation_id": "revelation_thomas_muddy_boots",
+        "opportunity_ids": [
+          "opportunity_thomas_muddy_boots"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "thomas_muddy_boots_match_grounds"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "thomas_muddy_boots_match_grounds"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_julian_inheritance",
+        "revelation_id": "revelation_julian_inheritance",
+        "opportunity_ids": [
+          "opportunity_julian_inheritance"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_inherits_estate"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "julian_inherits_estate"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_julian_argument",
+        "revelation_id": "revelation_julian_argument",
+        "opportunity_ids": [
+          "opportunity_julian_argument"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_argued_with_emma"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "julian_argued_with_emma"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "route_julian_library_log",
+        "revelation_id": "revelation_julian_exoneration",
+        "opportunity_ids": [
+          "opportunity_julian_library_log"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_exonerated_by_library",
+          "julian_library_log_timestamp"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "investigation_remains_open"
+          ],
+          "alternative_route_ids": [
+            "route_julian_library_witness"
+          ]
+        }
+      },
+      {
+        "id": "route_julian_library_witness",
+        "revelation_id": "revelation_julian_exoneration",
+        "opportunity_ids": [
+          "opportunity_julian_library_witness"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_exonerated_by_library",
+          "clara_saw_julian_in_library"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "julian_exonerated_by_library"
+          ],
+          "alternative_route_ids": []
+        }
+      }
+    ],
+    "required_outcomes": [
+      {
+        "id": "outcome_time_window",
+        "truth_id": "murder_time_window"
+      },
+      {
+        "id": "outcome_motive",
+        "truth_id": "beatrice_motive_diverted_payments"
+      },
+      {
+        "id": "outcome_means",
+        "truth_id": "brass_letter_opener_is_means"
+      },
+      {
+        "id": "outcome_method",
+        "truth_id": "single_thrust_method"
+      },
+      {
+        "id": "outcome_opportunity",
+        "truth_id": "beatrice_gallery_opportunity"
+      },
+      {
+        "id": "outcome_concealment",
+        "truth_id": "beatrice_cleaned_and_returned_opener"
+      },
+      {
+        "id": "outcome_groundskeeper_exoneration",
+        "truth_id": "thomas_exonerated"
+      },
+      {
+        "id": "outcome_crime_solution",
+        "truth_id": "crime_solution_beatrice_killed_emma"
+      }
+    ],
+    "required_beats": [
+      {
+        "id": "beat_setup_arrival",
+        "phase": "setup",
+        "required_outcome_id": "outcome_time_window",
+        "prerequisite_revelation_ids": [],
+        "pressure": 20
+      },
+      {
+        "id": "beat_rising_motive",
+        "phase": "rising_action",
+        "required_outcome_id": "outcome_motive",
+        "prerequisite_revelation_ids": [
+          "revelation_time_window"
+        ],
+        "pressure": 40
+      },
+      {
+        "id": "beat_rising_means",
+        "phase": "rising_action",
+        "required_outcome_id": "outcome_means",
+        "prerequisite_revelation_ids": [
+          "revelation_time_window"
+        ],
+        "pressure": 45
+      },
+      {
+        "id": "beat_rising_method",
+        "phase": "rising_action",
+        "required_outcome_id": "outcome_method",
+        "prerequisite_revelation_ids": [
+          "revelation_means"
+        ],
+        "pressure": 50
+      },
+      {
+        "id": "beat_crisis_opportunity",
+        "phase": "crisis",
+        "required_outcome_id": "outcome_opportunity",
+        "prerequisite_revelation_ids": [
+          "revelation_time_window",
+          "revelation_method"
+        ],
+        "pressure": 65
+      },
+      {
+        "id": "beat_crisis_exoneration",
+        "phase": "crisis",
+        "required_outcome_id": "outcome_groundskeeper_exoneration",
+        "prerequisite_revelation_ids": [
+          "revelation_time_window"
+        ],
+        "pressure": 70
+      },
+      {
+        "id": "beat_climax_concealment",
+        "phase": "climax",
+        "required_outcome_id": "outcome_concealment",
+        "prerequisite_revelation_ids": [
+          "revelation_motive",
+          "revelation_means"
+        ],
+        "pressure": 78
+      },
+      {
+        "id": "beat_climax_solution",
+        "phase": "climax",
+        "required_outcome_id": "outcome_crime_solution",
+        "prerequisite_revelation_ids": [
+          "revelation_motive",
+          "revelation_means",
+          "revelation_method",
+          "revelation_opportunity",
+          "revelation_thomas_exoneration",
+          "revelation_concealment"
+        ],
+        "pressure": 85
+      },
+      {
+        "id": "beat_resolution_account",
+        "phase": "resolution",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [
+          "revelation_solution"
+        ],
+        "pressure": 30
+      }
+    ],
+    "optional_beats": [
+      {
+        "id": "optional_thomas_suspicion",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [
+          "revelation_time_window"
+        ],
+        "pressure": 48,
+        "purpose": "complication"
+      },
+      {
+        "id": "optional_julian_suspicion",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [
+          "revelation_time_window"
+        ],
+        "pressure": 52,
+        "purpose": "complication"
+      },
+      {
+        "id": "optional_household_trust",
+        "phase": "crisis",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [
+          "revelation_thomas_exoneration"
+        ],
+        "pressure": 58,
+        "purpose": "relationship_development"
+      }
+    ],
+    "dramatic_spine": {
+      "active_conflict": "The household's fear and competing accusations threaten to harden into a convenient false solution while the physical and documentary record points elsewhere.",
+      "central_question": "Can the investigator prove who killed Emma, why, how, and when while independently clearing the groundskeeper?",
+      "participant_role_requirements": [
+        "investigator",
+        "witness",
+        "alternative_suspect",
+        "perpetrator"
+      ],
+      "target_pressure": {
+        "minimum": 15,
+        "maximum": 85
+      },
+      "completion_truth_ids": [
+        "murder_time_window",
+        "beatrice_motive_diverted_payments",
+        "brass_letter_opener_is_means",
+        "single_thrust_method",
+        "beatrice_gallery_opportunity",
+        "beatrice_cleaned_and_returned_opener",
+        "thomas_exonerated",
+        "crime_solution_beatrice_killed_emma"
+      ]
+    },
+    "consequences": [
+      {
+        "id": "consequence_arrival_accounts",
+        "assert_truth_ids": [
+          "arrival_accounts_recorded",
+          "murder_time_window"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_motive_inquiry",
+        "assert_truth_ids": [
+          "motive_inquiry_completed",
+          "beatrice_motive_diverted_payments"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_means_exam",
+        "assert_truth_ids": [
+          "means_exam_completed",
+          "brass_letter_opener_is_means"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_method_reconstruction",
+        "assert_truth_ids": [
+          "method_reconstruction_completed",
+          "single_thrust_method"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_opportunity_inquiry",
+        "assert_truth_ids": [
+          "opportunity_inquiry_completed",
+          "beatrice_gallery_opportunity"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_alibi_inquiry",
+        "assert_truth_ids": [
+          "alibi_inquiry_completed",
+          "thomas_exonerated"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_concealment_inquiry",
+        "assert_truth_ids": [
+          "concealment_inquiry_completed",
+          "beatrice_cleaned_and_returned_opener"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_solution_presented",
+        "assert_truth_ids": [
+          "solution_presented",
+          "crime_solution_beatrice_killed_emma"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_household_briefed",
+        "assert_truth_ids": [
+          "household_briefed"
+        ],
+        "retract_truth_ids": []
+      }
+    ],
+    "storylets": [
+      {
+        "id": "storylet_foyer_orientation",
+        "beat_id": "beat_setup_arrival",
+        "purpose": "investigation",
+        "route_family": "opening_social_route",
+        "availability": {
+          "required_truth_ids": [
+            "household_gathered"
+          ],
+          "absent_truth_ids": [
+            "arrival_interrupted"
+          ],
+          "participant_ids": [
+            "player",
+            "clara_mere",
+            "beatrice_harrow",
+            "thomas_pike",
+            "julian_vale",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 15,
+            "maximum": 30
+          }
+        },
+        "priority": 100,
+        "dramatic_question": "Can the investigator separate immediate observations from the household's first accusations?",
+        "realization_modes": [
+          "dialogue",
+          "observation",
+          "travel"
+        ],
+        "consequence_ids": [
+          "consequence_arrival_accounts"
+        ],
+        "activation_truth_id": "household_gathered",
+        "completion_truth_id": "arrival_accounts_recorded",
+        "abort_truth_ids": [
+          "arrival_interrupted"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_gallery_means_exam"
+        ],
+        "interaction_frame_ids": [
+          "clara_foyer_opening"
+        ]
+      },
+      {
+        "id": "storylet_study_motive_inquiry",
+        "beat_id": "beat_rising_motive",
+        "purpose": "investigation",
+        "route_family": "financial_record_route",
+        "availability": {
+          "required_truth_ids": [
+            "study_records_present"
+          ],
+          "absent_truth_ids": [
+            "study_inquiry_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "beatrice_harrow",
+            "julian_vale"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 30,
+            "maximum": 50
+          }
+        },
+        "priority": 82,
+        "dramatic_question": "Will the estate records and witnessed confrontation establish a motive stronger than inheritance or anger?",
+        "realization_modes": [
+          "investigation",
+          "dialogue",
+          "negotiation"
+        ],
+        "consequence_ids": [
+          "consequence_motive_inquiry"
+        ],
+        "activation_truth_id": "study_records_present",
+        "completion_truth_id": "motive_inquiry_completed",
+        "abort_truth_ids": [
+          "study_inquiry_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_gallery_opportunity_inquiry"
+        ],
+        "interaction_frame_ids": [
+          "beatrice_motive_follow_up"
+        ]
+      },
+      {
+        "id": "storylet_gallery_means_exam",
+        "beat_id": "beat_rising_means",
+        "purpose": "investigation",
+        "route_family": "physical_weapon_route",
+        "availability": {
+          "required_truth_ids": [
+            "body_undisturbed"
+          ],
+          "absent_truth_ids": [
+            "gallery_exam_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "west_gallery",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 30,
+            "maximum": 55
+          }
+        },
+        "priority": 90,
+        "dramatic_question": "Does the wound identify a weapon that can be traced to a room and custodian?",
+        "realization_modes": [
+          "investigation",
+          "observation",
+          "direct_action"
+        ],
+        "consequence_ids": [
+          "consequence_means_exam"
+        ],
+        "activation_truth_id": "body_undisturbed",
+        "completion_truth_id": "means_exam_completed",
+        "abort_truth_ids": [
+          "gallery_exam_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_attack_reconstruction"
+        ],
+        "interaction_frame_ids": []
+      },
+      {
+        "id": "storylet_attack_reconstruction",
+        "beat_id": "beat_rising_method",
+        "purpose": "investigation",
+        "route_family": "scene_reconstruction_route",
+        "availability": {
+          "required_truth_ids": [
+            "gallery_scene_preserved"
+          ],
+          "absent_truth_ids": [
+            "method_review_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 40,
+            "maximum": 60
+          }
+        },
+        "priority": 78,
+        "dramatic_question": "What does Emma's position reveal about the attacker's distance, control, and method?",
+        "realization_modes": [
+          "investigation",
+          "observation",
+          "direct_action"
+        ],
+        "consequence_ids": [
+          "consequence_method_reconstruction"
+        ],
+        "activation_truth_id": "gallery_scene_preserved",
+        "completion_truth_id": "method_reconstruction_completed",
+        "abort_truth_ids": [
+          "method_review_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_gallery_opportunity_inquiry"
+        ],
+        "interaction_frame_ids": []
+      },
+      {
+        "id": "storylet_gallery_opportunity_inquiry",
+        "beat_id": "beat_crisis_opportunity",
+        "purpose": "social_complication",
+        "route_family": "access_witness_route",
+        "availability": {
+          "required_truth_ids": [
+            "gallery_scene_preserved"
+          ],
+          "absent_truth_ids": [
+            "opportunity_interview_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "clara_mere",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 55,
+            "maximum": 70
+          }
+        },
+        "priority": 84,
+        "dramatic_question": "Can movement through the foyer and gallery be reconstructed before suspicion fixes on the wrong person?",
+        "realization_modes": [
+          "dialogue",
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_opportunity_inquiry"
+        ],
+        "activation_truth_id": "gallery_scene_preserved",
+        "completion_truth_id": "opportunity_inquiry_completed",
+        "abort_truth_ids": [
+          "opportunity_interview_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_boiler_alibi_follow_up"
+        ],
+        "interaction_frame_ids": [
+          "clara_gallery_access_follow_up"
+        ]
+      },
+      {
+        "id": "storylet_boiler_alibi_follow_up",
+        "beat_id": "beat_crisis_exoneration",
+        "purpose": "reversal",
+        "route_family": "groundskeeper_alibi_route",
+        "availability": {
+          "required_truth_ids": [
+            "boiler_records_present"
+          ],
+          "absent_truth_ids": [
+            "alibi_followup_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "thomas_pike",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "boiler_house"
+          ],
+          "pressure": {
+            "minimum": 60,
+            "maximum": 75
+          }
+        },
+        "priority": 88,
+        "dramatic_question": "Will the boiler log and Lydia's independent account overturn the convenient case against Thomas?",
+        "realization_modes": [
+          "dialogue",
+          "travel",
+          "investigation"
+        ],
+        "consequence_ids": [
+          "consequence_alibi_inquiry"
+        ],
+        "activation_truth_id": "boiler_records_present",
+        "completion_truth_id": "alibi_inquiry_completed",
+        "abort_truth_ids": [
+          "alibi_followup_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_study_concealment_inquiry"
+        ],
+        "interaction_frame_ids": [
+          "thomas_boiler_log_follow_up"
+        ]
+      },
+      {
+        "id": "storylet_study_concealment_inquiry",
+        "beat_id": "beat_climax_concealment",
+        "purpose": "conflict",
+        "route_family": "concealment_record_route",
+        "availability": {
+          "required_truth_ids": [
+            "study_inventory_present"
+          ],
+          "absent_truth_ids": [
+            "concealment_review_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 65,
+            "maximum": 80
+          }
+        },
+        "priority": 92,
+        "dramatic_question": "Can the cleaned weapon and amended inventory expose an attempt to erase the physical chain?",
+        "realization_modes": [
+          "investigation",
+          "dialogue",
+          "negotiation"
+        ],
+        "consequence_ids": [
+          "consequence_concealment_inquiry"
+        ],
+        "activation_truth_id": "study_inventory_present",
+        "completion_truth_id": "concealment_inquiry_completed",
+        "abort_truth_ids": [
+          "concealment_review_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_solution_synthesis"
+        ],
+        "interaction_frame_ids": [
+          "beatrice_inventory_confrontation"
+        ]
+      },
+      {
+        "id": "storylet_solution_synthesis",
+        "beat_id": "beat_climax_solution",
+        "purpose": "conflict",
+        "route_family": "terminal_solution_route",
+        "availability": {
+          "required_truth_ids": [
+            "household_awaits_account"
+          ],
+          "absent_truth_ids": [
+            "solution_confrontation_deferred"
+          ],
+          "participant_ids": [
+            "player",
+            "beatrice_harrow",
+            "clara_mere",
+            "thomas_pike",
+            "julian_vale",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "west_gallery",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 75,
+            "maximum": 85
+          }
+        },
+        "priority": 100,
+        "dramatic_question": "Do the independent physical and documentary chains prove Beatrice's motive, means, method, opportunity, concealment, and responsibility?",
+        "realization_modes": [
+          "conflict",
+          "dialogue",
+          "investigation"
+        ],
+        "consequence_ids": [
+          "consequence_solution_presented"
+        ],
+        "activation_truth_id": "household_awaits_account",
+        "completion_truth_id": "solution_presented",
+        "abort_truth_ids": [
+          "solution_confrontation_deferred"
+        ],
+        "failure_forward_storylet_ids": [
+          "storylet_resolution_account"
+        ],
+        "interaction_frame_ids": [
+          "beatrice_solution_confrontation"
+        ]
+      },
+      {
+        "id": "storylet_resolution_account",
+        "beat_id": "beat_resolution_account",
+        "purpose": "relationship",
+        "route_family": "closing_household_route",
+        "availability": {
+          "required_truth_ids": [
+            "household_awaits_account"
+          ],
+          "absent_truth_ids": [
+            "resolution_conversation_ended"
+          ],
+          "participant_ids": [
+            "player",
+            "clara_mere",
+            "thomas_pike",
+            "julian_vale",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 20,
+            "maximum": 40
+          }
+        },
+        "priority": 70,
+        "dramatic_question": "How does the household receive the final account after the false accusations have been separated from proof?",
+        "realization_modes": [
+          "dialogue",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_household_briefed"
+        ],
+        "activation_truth_id": "household_awaits_account",
+        "completion_truth_id": "household_briefed",
+        "abort_truth_ids": [
+          "resolution_conversation_ended"
+        ],
+        "failure_forward_storylet_ids": [],
+        "interaction_frame_ids": [
+          "clara_resolution_follow_up"
+        ]
+      }
+    ],
+    "interaction_frames": [
+      {
+        "id": "clara_foyer_opening",
+        "storylet_id": "storylet_foyer_orientation",
+        "initiator_id": "clara_mere",
+        "participant_ids": [
+          "clara_mere",
+          "player"
+        ],
+        "initiation": "npc_initiated",
+        "location_ids": [
+          "grand_foyer",
+          "west_gallery"
+        ],
+        "dramatic_objective": "Stop the household from turning suspicion into an irreversible accusation and orient the investigator to the body.",
+        "opening_move": "Name the immediate danger, answer one practical question, and offer to lead the investigator to the gallery.",
+        "response_obligations": [
+          "Answer the player's concern about preserving the scene",
+          "Remain controlled without becoming evasive"
+        ],
+        "allowed_tactics": [
+          "warn",
+          "reassure",
+          "invite",
+          "deflect"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "clara_to_west_gallery"
+        ],
+        "activation_truth_id": "household_gathered",
+        "continuation_truth_id": "clara_foyer_exchange_continues",
+        "completion_truth_id": "arrival_accounts_recorded",
+        "abort_truth_ids": [
+          "arrival_interrupted"
+        ],
+        "recent_use_truth_id": "clara_foyer_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "beatrice_motive_follow_up",
+        "storylet_id": "storylet_study_motive_inquiry",
+        "initiator_id": "beatrice_harrow",
+        "participant_ids": [
+          "beatrice_harrow",
+          "player",
+          "julian_vale"
+        ],
+        "initiation": "player_initiated",
+        "location_ids": [
+          "grand_foyer",
+          "study"
+        ],
+        "dramatic_objective": "Keep the exchange focused on document interpretation while allowing inconsistencies in the restoration accounts to become testable.",
+        "opening_move": "Offer a procedural account of the records and ask which entry the investigator wants explained first.",
+        "response_obligations": [
+          "Address the cited ledger entry",
+          "Distinguish personal recollection from written procedure"
+        ],
+        "allowed_tactics": [
+          "qualify",
+          "redirect",
+          "explain",
+          "challenge"
+        ],
+        "agency_modes": [
+          "engage",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "beatrice_to_study"
+        ],
+        "activation_truth_id": "study_records_present",
+        "continuation_truth_id": "beatrice_motive_exchange_continues",
+        "completion_truth_id": "motive_inquiry_completed",
+        "abort_truth_ids": [
+          "study_inquiry_deferred"
+        ],
+        "recent_use_truth_id": "beatrice_motive_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "clara_gallery_access_follow_up",
+        "storylet_id": "storylet_gallery_opportunity_inquiry",
+        "initiator_id": "clara_mere",
+        "participant_ids": [
+          "clara_mere",
+          "player",
+          "beatrice_harrow"
+        ],
+        "initiation": "either",
+        "location_ids": [
+          "grand_foyer",
+          "west_gallery"
+        ],
+        "dramatic_objective": "Turn Clara's household movements into a precise account of who could approach the gallery.",
+        "opening_move": "Anchor the account to a household task and identify the last movement Clara personally observed.",
+        "response_obligations": [
+          "Separate direct observation from inference",
+          "Answer challenges about timing and sight lines"
+        ],
+        "allowed_tactics": [
+          "sequence",
+          "clarify",
+          "correct",
+          "invite"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "clara_to_west_gallery"
+        ],
+        "activation_truth_id": "gallery_scene_preserved",
+        "continuation_truth_id": "clara_opportunity_exchange_continues",
+        "completion_truth_id": "opportunity_inquiry_completed",
+        "abort_truth_ids": [
+          "opportunity_interview_deferred"
+        ],
+        "recent_use_truth_id": "clara_opportunity_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "thomas_boiler_log_follow_up",
+        "storylet_id": "storylet_boiler_alibi_follow_up",
+        "initiator_id": "thomas_pike",
+        "participant_ids": [
+          "thomas_pike",
+          "player",
+          "lydia_fenn"
+        ],
+        "initiation": "player_initiated",
+        "location_ids": [
+          "grand_foyer",
+          "boiler_house"
+        ],
+        "dramatic_objective": "Let Thomas answer suspicion with a concrete offer to retrieve and explain the boiler log.",
+        "opening_move": "Respond directly to an accusation or question, then offer the player a choice to accompany him to the boiler house.",
+        "response_obligations": [
+          "Address the player's actual accusation",
+          "Preserve Thomas's practical voice",
+          "Accept refusal without ending the investigation"
+        ],
+        "allowed_tactics": [
+          "answer",
+          "challenge",
+          "invite",
+          "withdraw"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "thomas_to_boiler_house"
+        ],
+        "activation_truth_id": "boiler_records_present",
+        "continuation_truth_id": "thomas_log_exchange_continues",
+        "completion_truth_id": "alibi_inquiry_completed",
+        "abort_truth_ids": [
+          "alibi_followup_deferred"
+        ],
+        "recent_use_truth_id": "thomas_log_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "beatrice_inventory_confrontation",
+        "storylet_id": "storylet_study_concealment_inquiry",
+        "initiator_id": "beatrice_harrow",
+        "participant_ids": [
+          "beatrice_harrow",
+          "player"
+        ],
+        "initiation": "either",
+        "location_ids": [
+          "grand_foyer",
+          "study"
+        ],
+        "dramatic_objective": "Force a precise account of the cleaned opener and amended inventory without requiring a confession.",
+        "opening_move": "Treat the inventory discrepancy as a procedural misunderstanding and request the exact basis for concern.",
+        "response_obligations": [
+          "Respond to the physical residue and written amendment separately",
+          "Permit the investigator to end or redirect the exchange"
+        ],
+        "allowed_tactics": [
+          "explain",
+          "minimize",
+          "challenge",
+          "withdraw"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "beatrice_to_study"
+        ],
+        "activation_truth_id": "study_inventory_present",
+        "continuation_truth_id": "beatrice_concealment_exchange_continues",
+        "completion_truth_id": "concealment_inquiry_completed",
+        "abort_truth_ids": [
+          "concealment_review_deferred"
+        ],
+        "recent_use_truth_id": "beatrice_concealment_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "beatrice_solution_confrontation",
+        "storylet_id": "storylet_solution_synthesis",
+        "initiator_id": "beatrice_harrow",
+        "participant_ids": [
+          "beatrice_harrow",
+          "player",
+          "clara_mere",
+          "thomas_pike",
+          "julian_vale",
+          "lydia_fenn"
+        ],
+        "initiation": "either",
+        "location_ids": [
+          "grand_foyer",
+          "west_gallery",
+          "study"
+        ],
+        "dramatic_objective": "Test whether the complete evidence chain withstands Beatrice's procedural objections and the household's competing suspicions.",
+        "opening_move": "Demand that each claimed link be distinguished from inference and invite the investigator to state the chain in full.",
+        "response_obligations": [
+          "Answer evidence about motive, means, opportunity, and concealment",
+          "Avoid substituting emotional pressure for evidentiary response",
+          "Allow refusal, interruption, or departure to defer rather than erase the solution route"
+        ],
+        "allowed_tactics": [
+          "challenge",
+          "qualify",
+          "reframe",
+          "withdraw"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "beatrice_to_west_gallery",
+          "beatrice_to_study"
+        ],
+        "activation_truth_id": "household_awaits_account",
+        "continuation_truth_id": "beatrice_solution_exchange_continues",
+        "completion_truth_id": "solution_presented",
+        "abort_truth_ids": [
+          "solution_confrontation_deferred"
+        ],
+        "recent_use_truth_id": "beatrice_solution_exchange_recent",
+        "failure_forward_frame_ids": []
+      },
+      {
+        "id": "clara_resolution_follow_up",
+        "storylet_id": "storylet_resolution_account",
+        "initiator_id": "clara_mere",
+        "participant_ids": [
+          "clara_mere",
+          "player",
+          "thomas_pike",
+          "julian_vale",
+          "lydia_fenn"
+        ],
+        "initiation": "either",
+        "location_ids": [
+          "grand_foyer",
+          "west_gallery"
+        ],
+        "dramatic_objective": "Give the household a bounded closing exchange that acknowledges the proven account and the damage caused by false suspicion.",
+        "opening_move": "Ask what practical steps follow now that the night's events have been established.",
+        "response_obligations": [
+          "Recognize Thomas's exoneration",
+          "Keep the closing account grounded in established evidence"
+        ],
+        "allowed_tactics": [
+          "summarize",
+          "acknowledge",
+          "invite",
+          "close"
+        ],
+        "agency_modes": [
+          "engage",
+          "refuse",
+          "redirect",
+          "interrupt",
+          "depart"
+        ],
+        "permitted_movement_plan_ids": [
+          "clara_to_foyer"
+        ],
+        "activation_truth_id": "household_awaits_account",
+        "continuation_truth_id": "clara_resolution_exchange_continues",
+        "completion_truth_id": "household_briefed",
+        "abort_truth_ids": [
+          "resolution_conversation_ended"
+        ],
+        "recent_use_truth_id": "clara_resolution_exchange_recent",
+        "failure_forward_frame_ids": []
+      }
+    ],
+    "suspect_hypotheses": [
+      {
+        "participant_id": "thomas_pike",
+        "supporting_truth_ids": [
+          "thomas_argued_with_emma",
+          "thomas_muddy_boots_match_grounds"
+        ],
+        "exonerating_truth_ids": [
+          "thomas_boiler_log_authentic",
+          "lydia_saw_thomas_in_boiler_house"
+        ]
+      },
+      {
+        "participant_id": "julian_vale",
+        "supporting_truth_ids": [
+          "julian_inherits_estate",
+          "julian_argued_with_emma"
+        ],
+        "exonerating_truth_ids": [
+          "julian_library_log_timestamp",
+          "clara_saw_julian_in_library"
+        ]
+      }
+    ],
+    "end_states": [
+      {
+        "id": "end_state_evidence_backed_resolution",
+        "required_outcome_ids": [
+          "outcome_time_window",
+          "outcome_motive",
+          "outcome_means",
+          "outcome_method",
+          "outcome_opportunity",
+          "outcome_concealment",
+          "outcome_groundskeeper_exoneration",
+          "outcome_crime_solution"
+        ],
+        "required_truth_ids": [
+          "murder_time_window",
+          "beatrice_motive_diverted_payments",
+          "brass_letter_opener_is_means",
+          "single_thrust_method",
+          "beatrice_gallery_opportunity",
+          "beatrice_cleaned_and_returned_opener",
+          "thomas_exonerated",
+          "crime_solution_beatrice_killed_emma"
+        ]
+      }
+    ]
+  }
+}
