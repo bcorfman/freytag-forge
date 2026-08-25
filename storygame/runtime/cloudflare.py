@@ -77,7 +77,10 @@ def _json_mode_rejected(detail: str) -> bool:
 
 _SYSTEM_PROMPT = (
     "Return one JSON object only, with no markdown. Author an open-ended interactive-fiction turn from the supplied "
-    "state. On the first look/opening turn, orient the player in the current place, establish the supplied premise and "
+    "state. Follow turn_guidance exactly: every turn must address the player's input, and do not repeat the opening "
+    "orientation unless the player explicitly asks to look. When post_commit.kind is movement, narrate the supplied "
+    "destination as the current place after the committed movement, never the origin. On the first look/opening turn, "
+    "orient the player in the current place, establish the supplied premise and "
     "public_facts, mention relevant figures when supplied, and offer the first_beat plus available destinations as "
     "possible next steps. Do not dictate the player's action or reveal protected information before its release tags. "
     "The exact "

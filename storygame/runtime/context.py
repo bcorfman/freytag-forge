@@ -40,7 +40,6 @@ class RuntimeContextBuilder:
         ]
         payload = {
             "player_input": player_input,
-            "opening": _opening_context(state),
             "world": {
                 "location": state.world.location,
                 "flags": sorted(state.world.flags),
@@ -117,6 +116,9 @@ class RuntimeContextBuilder:
                 },
             },
         }
+        if state.turn_index == 0:
+            payload["opening"] = _opening_context(state)
+        payload["turn_guidance"] = _turn_guidance(state)
         encoded = json.dumps(payload, default=list, separators=(",", ":"))
         return RuntimeContext(PROMPT_VERSION, max(1, len(encoded) // 4), payload)
 
@@ -145,6 +147,23 @@ def _player_visible_facts(state: RuntimeState) -> list[dict[str, object]]:
 def _fact_value(state: RuntimeState, predicate: str, subject: str) -> str | None:
     matches = state.facts.matching(predicate, subject)
     return matches[0].value if matches else None
+
+
+def _turn_guidance(state: RuntimeState) -> dict[str, object]:
+    if state.turn_index == 0:
+        return {
+            "opening_turn": True,
+            "narration_requirement": (
+                "Establish the current place and public situation, then address the player's action."
+            ),
+        }
+    return {
+        "opening_turn": False,
+        "narration_requirement": (
+            "Address the player's current action from the current state; do not repeat the opening orientation "
+            "unless the player explicitly asks to look."
+        ),
+    }
 
 
 def _opening_context(state: RuntimeState) -> dict[str, Any]:

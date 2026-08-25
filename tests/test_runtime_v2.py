@@ -26,6 +26,16 @@ class StubModel:
         return response
 
 
+class ContextCapturingModel(StubModel):
+    def __init__(self, responses: list[object]) -> None:
+        super().__init__(responses)
+        self.contexts: list[object] = []
+
+    def play_turn(self, context: object, *, json_object: bool) -> object:
+        self.contexts.append(context)
+        return super().play_turn(context, json_object=json_object)
+
+
 def _state():
     return bootstrap_runtime_state(load_compiled_story_fixture("mystery"))
 
@@ -230,6 +240,43 @@ def test_declared_destination_aliases_commit_unambiguous_movement() -> None:
 
     assert response.ok
     assert engine.state.world.location == route["to"]
+
+
+def test_movement_prompt_requires_narration_from_the_committed_destination() -> None:
+    state = _state()
+    route = next(
+        route for route in state.world.attributes["navigation"]["routes"] if route["from"] == state.world.location
+    )
+    model = ContextCapturingModel([_turn(operations=[])])
+
+    assert RuntimeEngine(state, model).turn(f"go to {route['to'].replace('_', ' ')}").ok
+
+    context = model.contexts[0].payload
+    assert context["turn_guidance"]["opening_turn"] is True
+    assert context["post_commit"] == {
+        "kind": "movement",
+        "location": route["to"],
+        "location_name": route["to"].replace("_", " ").title(),
+        "narration_requirement": (
+            "Describe the destination after movement; do not describe the origin as the current room."
+        ),
+    }
+
+
+def test_follow_up_question_context_does_not_repeat_opening_orientation() -> None:
+    state = _state()
+    state.turn_index = 1
+
+    context = RuntimeEngine(state, StubModel([])).context_builder.build(state, "question the household").payload
+
+    assert "opening" not in context
+    assert context["turn_guidance"] == {
+        "opening_turn": False,
+        "narration_requirement": (
+            "Address the player's current action from the current state; do not repeat the opening orientation "
+            "unless the player explicitly asks to look."
+        ),
+    }
 
 
 def test_enter_destination_alias_is_a_deterministic_movement_affordance() -> None:
