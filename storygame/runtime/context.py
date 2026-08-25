@@ -108,6 +108,14 @@ class RuntimeContextBuilder:
                     ),
                 },
                 "material_progress": "boolean",
+                "interaction": {
+                    "frame": "name interaction_frame_id for reviewed NPC or group conversation",
+                    "group": "name group_encounter_id only when every declared group member responds",
+                    "inspection": "name inspection_target_id for a normalized visible item or scene subject",
+                    "participants": "include player and every named responder; inspections include only player",
+                    "segments": "ordered attributed speech or expressive/material actions",
+                    "effects": "material actions and declared subject discoveries commit before narration",
+                },
                 "dialogue": {
                     "target_id": "the declared visible NPC addressed by the player",
                     "speaker_id": "must equal target_id",

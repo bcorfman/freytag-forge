@@ -27,10 +27,11 @@ one fact-backed runtime—never through story- or genre-specific branches.
 - Opening orientation is typed public metadata, rendered once without an
   automatic model turn. It contains the scene, player context, public briefing,
   contacts, and first available actions—not protected authoring material.
-- NPCs are addressable only when present, respond only from permitted knowledge,
-  and retain committed relationship, stance, and interaction continuity.
-- Conversation, exploration, and consequence can unlock leads and objectives;
-  they are opportunities, never a fixed action menu or forced path.
+- Present NPCs, declared groups, visible items, and inspectable scene subjects
+  are the only current social or investigative targets. NPCs retain permitted
+  knowledge, voice, relationship, stance, and interaction continuity.
+- Conversation, inspection, and consequence unlock opportunities; they never
+  become a fixed action menu or forced path.
 
 ## Authoring and reviewed packages
 
@@ -93,15 +94,16 @@ Timed events and storylet effects commit on the cloned candidate before
 narration renders. Facts, not narration or provider JSON, determine the next
 turn.
 
-`InteractionProposal` is the NPC-interaction boundary: an eligible reviewed
-frame binds named participants to ordered speech and expressive or material
-action segments. The player must address a present target; identity, addressee,
-knowledge, frame membership, protected text, prompt parroting, and narrator
-substitution all fail closed. Material actions name bounded effects, and every
-effect plus lifecycle marker commits on the cloned candidate before response.
-An interaction may continue, complete with declared evidence, or abort into a
-declared failure-forward frame. `DialogueProposal` remains a compatibility path
-for legacy packages.
+`InteractionProposal` is the single interaction boundary. A reviewed frame can
+bind one or more named, co-present responders; a declared current group commits
+its introductions before its members speak. Player follow-ups name one present
+responder. Visible-item and scene-subject inspection use the same ordered
+speech/action and atomic-effect contract; only declared subject evidence can be
+discovered. Identity, addressee, voice profile, knowledge, membership,
+protected text, prompt parroting, narrator substitution, and opening-orientation
+reuse fail closed. Material effects and lifecycle facts commit on the cloned
+candidate before response. `DialogueProposal` remains a legacy compatibility
+path.
 
 Goals, tasks, clues, relationships, scene purpose, pressure, timed events, and
 endings are reviewed declarations projected into facts. Pacing advises urgency

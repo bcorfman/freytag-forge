@@ -75,12 +75,15 @@ class InteractionEffect(BaseModel):
 
 
 class InteractionProposal(BaseModel):
-    """An ordered, frame-bound interaction accepted only as one atomic decision."""
+    """One atomic frame-bound conversation or fact-backed inspection."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    interaction_frame_id: str = Field(min_length=1, max_length=80)
+    interaction_frame_id: str | None = Field(default=None, min_length=1, max_length=80)
+    group_encounter_id: str | None = Field(default=None, min_length=1, max_length=80)
+    inspection_target_id: str | None = Field(default=None, min_length=1, max_length=80)
     initiation: Literal["npc_initiated", "player_initiated", "continuation"]
-    participant_ids: tuple[str, ...] = Field(min_length=2, max_length=16)
+    participant_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+    addressed_participant_id: str | None = Field(default=None, min_length=1, max_length=80)
     segments: tuple[SpeechSegment | ActionSegment, ...] = Field(min_length=1, max_length=32)
     effects: tuple[InteractionEffect, ...] = Field(default=(), max_length=16)
     storylet_realization: StoryletRealization | None = None
@@ -88,7 +91,13 @@ class InteractionProposal(BaseModel):
     outcome: Literal["continue", "complete", "abort"] = "continue"
 
     @model_validator(mode="after")
-    def _validate_effect_references(self) -> InteractionProposal:
+    def _validate_shape_and_effect_references(self) -> InteractionProposal:
+        has_frame = self.interaction_frame_id is not None
+        has_inspection = self.inspection_target_id is not None
+        if has_frame == has_inspection:
+            raise ValueError("an interaction must name exactly one frame or inspection target")
+        if self.group_encounter_id is not None and not has_frame:
+            raise ValueError("a group encounter requires an interaction frame")
         effect_ids = [effect.id for effect in self.effects]
         if len(effect_ids) != len(set(effect_ids)):
             raise ValueError("interaction effect IDs must be unique")

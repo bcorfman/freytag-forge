@@ -64,6 +64,13 @@ class RuntimeEngine:
                     )
                 if item_affordance is not None:
                     result = _apply_item_affordance(result, item_affordance)
+                    if item_affordance.get("kind") == "inspect":
+                        target_id = item_affordance.get("target_id")
+                        if result.interaction is None or result.interaction.inspection_target_id != target_id:
+                            raise RuntimeFailure(
+                                "INSPECTION_TARGET_MISMATCH",
+                                "an unambiguous inspection must use its declared target in the interaction proposal",
+                            )
                 candidate = validate_and_commit(self.state, result, player_input=player_input)
                 self._finalize(candidate, player_input, result, context)
                 self.state = candidate
@@ -130,8 +137,32 @@ def _item_affordance(state: RuntimeState, player_input: str) -> dict[str, object
     verb = next((candidate for candidate in verbs if request.startswith(candidate)), None)
     if verb is None:
         return None
-    item_text = request.removeprefix(verb).strip()
-    item_text = item_text.removeprefix("the ").removeprefix("a ").removeprefix("an ")
+    target_text = request.removeprefix(verb).strip()
+    target_text = target_text.removeprefix("the ").removeprefix("a ").removeprefix("an ")
+    item_ids = _matching_visible_items(state, target_text)
+    if verb in {"take ", "pick up ", "get "}:
+        if len(item_ids) != 1:
+            return None
+        item_id = item_ids[0]
+        affordances = state.world.items[item_id].get("affordances", ("take",))
+        if not isinstance(affordances, (list, tuple, set)) or "take" not in affordances:
+            return None
+        return {"kind": "take", "item_id": item_id, "instruction": f"Set world.items.{item_id}.holder to player."}
+    subject_ids = _matching_scene_subjects(state, target_text)
+    target_ids = item_ids + subject_ids
+    if len(target_ids) != 1:
+        return None
+    target_id = target_ids[0]
+    target_kind = "item" if target_id in item_ids else "scene_subject"
+    return {
+        "kind": "inspect",
+        "target_id": target_id,
+        "target_kind": target_kind,
+        "instruction": f"Use an inspection InteractionProposal for declared visible {target_kind} {target_id}.",
+    }
+
+
+def _matching_visible_items(state: RuntimeState, target_text: str) -> list[str]:
     candidates: list[str] = []
     for item_id, item in state.world.items.items():
         holder = item.get("holder")
@@ -147,21 +178,26 @@ def _item_affordance(state: RuntimeState, player_input: str) -> dict[str, object
         if not visible:
             continue
         labels = (item_id.replace("_", " "), str(item.get("name", "")).casefold())
-        if any(label and (item_text == label or item_text in label) for label in labels):
+        if any(label and (target_text == label or target_text in label) for label in labels):
             candidates.append(item_id)
-    if len(candidates) != 1:
-        return None
-    item_id = candidates[0]
-    if verb in {"take ", "pick up ", "get "}:
-        affordances = state.world.items[item_id].get("affordances", ("take",))
-        if not isinstance(affordances, (list, tuple, set)) or "take" not in affordances:
-            return None
-        return {"kind": "take", "item_id": item_id, "instruction": f"Set world.items.{item_id}.holder to player."}
-    return {
-        "kind": "inspect",
-        "item_id": item_id,
-        "instruction": f"Describe declared item {item_id} without changing state.",
-    }
+    return candidates
+
+
+def _matching_scene_subjects(state: RuntimeState, target_text: str) -> list[str]:
+    package = state.narrative_package
+    if package is None:
+        return []
+    return [
+        subject.id
+        for subject in package.scene_subjects
+        if subject.inspectable
+        and state.facts.has("at", subject.id, state.world.location)
+        and (
+            target_text == subject.id.replace("_", " ")
+            or target_text in subject.id.replace("_", " ")
+            or target_text in subject.public_description.casefold()
+        )
+    ]
 
 
 def _holder_is_present(state: RuntimeState, npc_id: str) -> bool:

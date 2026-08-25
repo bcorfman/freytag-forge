@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phases 0–5 complete; Phases 6–9 proposed.** This plan closes two connected
+**Phases 0–6 complete; Phases 7–9 proposed.** This plan closes two connected
 gaps between an approved causal blueprint and a playable runtime:
 
 1. reviewed people, subjects, evidence, and groups must survive compilation as a
@@ -408,23 +408,23 @@ multi-turn exchange below the hosted adapter boundary.
 
 ### Phase 6 — Group encounters and scene-subject interaction
 
-- [ ] Generalize `InteractionProposal` to multiple named responders without a
+- [x] Generalize `InteractionProposal` to multiple named responders without a
   parallel dialogue authority.
-- [ ] Validate group membership, co-presence, individual voice profile,
+- [x] Validate group membership, co-presence, individual voice profile,
   addressee, knowledge, and effects for every segment.
-- [ ] Commit group introductions before rendering names and make focused
+- [x] Commit group introductions before rendering names and make focused
   individual follow-ups possible.
-- [ ] Generalize inspection to visible items and declared scene subjects through
+- [x] Generalize inspection to visible items and declared scene subjects through
   ordered action/speech segments and the shared commit contract.
-- [ ] Prevent a group or inspection response from reusing opening orientation or
+- [x] Prevent a group or inspection response from reusing opening orientation or
   fabricating absent evidence.
 
-**Tests:** group question introduces named people; two responders remain
+**Tests: [x]** group question introduces named people; two responders remain
 individually attributed; wrong or absent member fails; individual follow-up
 uses the correct profile and knowledge; subject inspection commits declared
 discoveries; malformed group/inspection proposals fail closed.
 
-**Exit:** group conversation and inspection use the same fact-backed
+**Exit: [x]** group conversation and inspection use the same fact-backed
 interaction model as individual dialogue.
 
 ### Phase 7 — Structured rendering, hosted API, and frontend

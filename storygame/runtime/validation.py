@@ -33,6 +33,7 @@ def validate_and_commit(
         _validate_interaction(candidate, result.interaction, player_input)
     if result.dialogue is not None:
         _validate_dialogue(candidate, result.dialogue, player_input)
+    _reject_opening_orientation_reuse(candidate, result)
     _reject_protected_leaks(candidate, result)
     if result.storylet_realization is not None:
         _apply_storylet_realization(candidate, result.storylet_realization)
@@ -52,6 +53,26 @@ def validate_and_commit(
     _apply_beat_updates(candidate, result)
     _apply_timed_events(candidate, candidate.turn_index + 1)
     return candidate
+
+
+def _reject_opening_orientation_reuse(state: RuntimeState, result: TurnResult) -> None:
+    interaction = result.interaction
+    if interaction is None or (interaction.group_encounter_id is None and interaction.inspection_target_id is None):
+        return
+    opening = state.compiled_story.opening
+    if opening is None:
+        return
+    orientation = {
+        text.casefold().strip().rstrip(".!?")
+        for text in (opening.scene, opening.player_context, opening.situation)
+        if text
+    }
+    visible = [result.narration, *(segment.text for segment in interaction.segments)]
+    if any(text.casefold().strip().rstrip(".!?") in orientation for text in visible):
+        raise RuntimeFailure(
+            "OPENING_ORIENTATION_REUSED",
+            "group and inspection responses must advance the current fact-backed scene",
+        )
 
 
 def _apply_storylet_realization(state: RuntimeState, realization: StoryletRealization) -> None:
@@ -194,6 +215,10 @@ _FACT_FAMILIES = {
     "relationship",
     "npc_available",
     "item_affordance",
+    "subject_discovered",
+    "evidence_discovered",
+    "group_introduced",
+    "met",
     "flag",
     "event_fired",
 }
@@ -220,6 +245,9 @@ def _apply_fact_operation(state: RuntimeState, kind: str, value: Any) -> None:
 
 
 def _validate_interaction(state: RuntimeState, interaction: InteractionProposal, player_input: str) -> None:
+    if interaction.inspection_target_id is not None:
+        _validate_inspection(state, interaction)
+        return
     package = state.narrative_package
     if package is None:
         raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
@@ -252,15 +280,55 @@ def _validate_interaction_participants(
     if len(proposed) != len(interaction.participant_ids) or proposed != expected:
         raise RuntimeFailure("INTERACTION_PARTICIPANTS", "interaction participants do not match the reviewed frame")
     responder_ids = expected - {"player"}
-    if len(responder_ids) != 1:
-        raise RuntimeFailure("GROUP_INTERACTION_UNSUPPORTED", "Phase 5 accepts one NPC responder per interaction")
     for participant_id in responder_ids:
-        if not state.facts.has("present", participant_id, state.world.location):
-            raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is not on scene")
-        if not state.facts.has("npc_availability", participant_id, value="present"):
-            raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is unavailable")
+        _validate_present_responder(state, participant_id)
     if state.world.location not in frame.location_ids:
         raise RuntimeFailure("INTERACTION_LOCATION", "interaction frame is not valid in the current location")
+    _validate_group_encounter(state, interaction, responder_ids)
+    _validate_responder_profiles(state, responder_ids)
+
+
+def _validate_present_responder(state: RuntimeState, participant_id: str) -> None:
+    if not state.facts.has("present", participant_id, state.world.location):
+        raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is not on scene")
+    if not state.facts.has("npc_availability", participant_id, value="present"):
+        raise RuntimeFailure("UNAVAILABLE_SPEAKER", f"participant '{participant_id}' is unavailable")
+
+
+def _validate_group_encounter(state: RuntimeState, interaction: InteractionProposal, responder_ids: set[str]) -> None:
+    if len(responder_ids) == 1 and interaction.group_encounter_id is None:
+        return
+    if len(responder_ids) > 1 and interaction.group_encounter_id is None:
+        raise RuntimeFailure(
+            "GROUP_ENCOUNTER_REQUIRED", "multiple responders require a declared current group encounter"
+        )
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
+    encounter = next((item for item in package.group_encounters if item.id == interaction.group_encounter_id), None)
+    if encounter is None:
+        raise RuntimeFailure("UNKNOWN_GROUP_ENCOUNTER", "interaction names no declared group encounter")
+    if not state.facts.has("group_at", encounter.id, state.world.location):
+        raise RuntimeFailure("GROUP_NOT_PRESENT", "the declared group is not in the current scene")
+    if set(encounter.participant_ids) != responder_ids:
+        raise RuntimeFailure("GROUP_MEMBERSHIP_MISMATCH", "interaction responders do not match the declared group")
+    if set(encounter.introduction_truth_ids) & package.protected_truth_ids:
+        raise RuntimeFailure("PROTECTED_GROUP_INTRODUCTION", "group introduction cannot disclose protected truth")
+    for participant_id in encounter.participant_ids:
+        if not state.facts.has("group_member", encounter.id, participant_id):
+            raise RuntimeFailure("GROUP_MEMBERSHIP_MISMATCH", "group membership lacks a canonical fact")
+
+
+def _validate_responder_profiles(state: RuntimeState, responder_ids: set[str]) -> None:
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
+    profiled = {profile.participant_id for profile in package.npc_performance_profiles}
+    for participant_id in responder_ids:
+        if participant_id not in profiled:
+            raise RuntimeFailure(
+                "NPC_PROFILE_UNAVAILABLE", f"participant '{participant_id}' has no performance profile"
+            )
 
 
 def _validate_interaction_initiation(
@@ -271,11 +339,21 @@ def _validate_interaction_initiation(
     player_input: str,
 ) -> None:
     active = state.facts.has("interaction_active", frame.id, value="true")
+    addressed = interaction.addressed_participant_id or frame.initiator_id
+    responders = set(frame.participant_ids)
+    if addressed not in responders:
+        raise RuntimeFailure("INVALID_INTERACTION_TARGET", "the addressed participant is not a declared responder")
+    if (
+        interaction.initiation in {"continuation", "player_initiated"}
+        and len(responders) > 1
+        and interaction.addressed_participant_id is None
+    ):
+        raise RuntimeFailure("GROUP_TARGET_REQUIRED", "a player addressing a group must name one responder")
     if interaction.initiation == "continuation":
         if not active:
             raise RuntimeFailure("INACTIVE_INTERACTION", "interaction continuation requires an active frame")
-        if not _mentions_dialogue_target(state, frame.initiator_id, player_input):
-            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{frame.initiator_id}'")
+        if not _mentions_dialogue_target(state, addressed, player_input):
+            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{addressed}'")
         return
     if active:
         raise RuntimeFailure("INVALID_INTERACTION_INITIATION", "an active interaction must continue through its frame")
@@ -284,8 +362,8 @@ def _validate_interaction_initiation(
     if interaction.initiation == "player_initiated":
         if frame.initiation not in {"player_initiated", "either"}:
             raise RuntimeFailure("INVALID_INTERACTION_INITIATION", "frame does not permit player initiation")
-        if not _mentions_dialogue_target(state, frame.initiator_id, player_input):
-            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{frame.initiator_id}'")
+        if not _mentions_dialogue_target(state, addressed, player_input):
+            raise RuntimeFailure("TARGET_NOT_ADDRESSED", f"player did not address '{addressed}'")
     eligible = StoryletSelector(package, state.facts).select(
         active_beat_ids=tuple(beat.id for beat in state.active_beats),
         location_id=state.world.location,
@@ -301,13 +379,19 @@ def _validate_interaction_segments(
     interaction: InteractionProposal,
     player_input: str,
 ) -> None:
+    speakers: set[str] = set()
     for segment in interaction.segments:
         if isinstance(segment, SpeechSegment):
             _validate_speech_segment(state, frame, interaction, segment, player_input)
+            speakers.add(segment.speaker_id)
         elif isinstance(segment, ActionSegment):
             _validate_action_segment(state, frame, interaction, segment)
         else:
             raise RuntimeFailure("INVALID_INTERACTION_SEGMENT", "interaction segment is not typed")
+    if interaction.addressed_participant_id is not None and interaction.addressed_participant_id not in speakers:
+        raise RuntimeFailure(
+            "ADDRESSED_PARTICIPANT_SILENT", "the addressed participant must supply an attributed reply"
+        )
 
 
 def _validate_speech_segment(
@@ -317,8 +401,9 @@ def _validate_speech_segment(
     segment: SpeechSegment,
     player_input: str,
 ) -> None:
-    if segment.speaker_id != frame.initiator_id or segment.speaker_id not in interaction.participant_ids:
-        raise RuntimeFailure("WRONG_SPEAKER", "speech must be attributed to the frame's present NPC initiator")
+    responder_ids = set(frame.participant_ids)
+    if segment.speaker_id not in responder_ids or segment.speaker_id not in interaction.participant_ids:
+        raise RuntimeFailure("WRONG_SPEAKER", "speech must be attributed to a declared present responder")
     if not set(segment.addressee_ids) <= set(interaction.participant_ids) or "player" not in segment.addressee_ids:
         raise RuntimeFailure("INVALID_ADDRESSEE", "speech must address a declared player participant")
     for fact_id in segment.used_fact_ids:
@@ -333,21 +418,124 @@ def _validate_action_segment(
     interaction: InteractionProposal,
     segment: ActionSegment,
 ) -> None:
-    if segment.actor_id != frame.initiator_id or segment.actor_id not in interaction.participant_ids:
-        raise RuntimeFailure("WRONG_ACTOR", "action must be attributed to the frame's present NPC initiator")
-    if not state.facts.has("present", segment.actor_id, state.world.location):
-        raise RuntimeFailure("UNAVAILABLE_SPEAKER", "action actor is not on scene")
+    responder_ids = set(frame.participant_ids)
+    if segment.actor_id not in responder_ids or segment.actor_id not in interaction.participant_ids:
+        raise RuntimeFailure("WRONG_ACTOR", "action must be attributed to a declared present responder")
+    _validate_present_responder(state, segment.actor_id)
     if segment.grounding == "material" and not segment.effect_refs:
         raise RuntimeFailure("UNGROUNDED_MATERIAL_ACTION", "material action requires committed effects")
 
 
+def _validate_inspection(state: RuntimeState, interaction: InteractionProposal) -> None:
+    target_id = interaction.inspection_target_id
+    if target_id is None:
+        raise RuntimeFailure("UNKNOWN_INSPECTION_TARGET", "inspection lacks a declared target")
+    subject = _visible_scene_subject(state, target_id)
+    item_visible = _visible_item(state, target_id)
+    if subject is None and not item_visible:
+        raise RuntimeFailure("UNKNOWN_INSPECTION_TARGET", "inspection target is not currently visible")
+    if interaction.participant_ids != ("player",):
+        raise RuntimeFailure("INSPECTION_PARTICIPANTS", "inspection may name only the player as a participant")
+    _validate_inspection_segments(state, interaction, target_id)
+    _validate_inspection_effects(state, interaction, target_id, subject is not None)
+
+
+def _visible_scene_subject(state: RuntimeState, target_id: str) -> object | None:
+    package = state.narrative_package
+    if package is None:
+        return None
+    subject = next((item for item in package.scene_subjects if item.id == target_id), None)
+    if subject is None or not subject.inspectable:
+        return None
+    if not state.facts.has("at", subject.id, state.world.location):
+        return None
+    return subject
+
+
+def _visible_item(state: RuntimeState, target_id: str) -> bool:
+    item = state.world.items.get(target_id)
+    if item is None:
+        return False
+    holder = item.get("holder")
+    return (
+        holder == "player"
+        or holder == f"location:{state.world.location}"
+        or (isinstance(holder, str) and holder.startswith("npc:") and _holder_is_available(state, holder))
+    )
+
+
+def _validate_inspection_segments(state: RuntimeState, interaction: InteractionProposal, target_id: str) -> None:
+    for segment in interaction.segments:
+        if isinstance(segment, ActionSegment):
+            if segment.actor_id != "player":
+                raise RuntimeFailure("WRONG_INSPECTION_ACTOR", "inspection actions must be attributed to the player")
+        elif isinstance(segment, SpeechSegment):
+            if segment.speaker_id != "player" or set(segment.addressee_ids) != {target_id}:
+                raise RuntimeFailure("INVALID_INSPECTION_SPEECH", "inspection speech must address the declared target")
+            for fact_id in segment.used_fact_ids:
+                if not state.facts.has("knows", "player", fact_id):
+                    raise RuntimeFailure("PLAYER_LACKS_KNOWLEDGE", f"player lacks fact '{fact_id}'")
+        else:
+            raise RuntimeFailure("INVALID_INTERACTION_SEGMENT", "inspection segment is not typed")
+
+
+def _validate_inspection_effects(
+    state: RuntimeState, interaction: InteractionProposal, target_id: str, is_scene_subject: bool
+) -> None:
+    referenced_effect_ids = {
+        effect_id
+        for segment in interaction.segments
+        if isinstance(segment, ActionSegment)
+        for effect_id in segment.effect_refs
+    }
+    if referenced_effect_ids != {effect.id for effect in interaction.effects}:
+        raise RuntimeFailure("UNDECLARED_INSPECTION_EFFECT", "inspection effects must ground one material action")
+    if not interaction.effects:
+        return
+    if not is_scene_subject:
+        raise RuntimeFailure("UNDECLARED_INSPECTION_EFFECT", "only declared scene subjects can reveal evidence")
+    package = state.narrative_package
+    if package is None:
+        raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
+    evidence_by_id = {item.id: item for item in package.evidence_realizations}
+    for effect in interaction.effects:
+        operation = effect.operation
+        if operation.kind != "add" or operation.path != "facts":
+            raise RuntimeFailure("UNDECLARED_INSPECTION_EFFECT", "inspection may commit only declared discovery facts")
+        try:
+            fact = Fact.model_validate(operation.value)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeFailure("INVALID_INSPECTION_DISCOVERY", "inspection discovery is not a typed fact") from exc
+        if fact.value != "true":
+            raise RuntimeFailure("INVALID_INSPECTION_DISCOVERY", "inspection discoveries must assert true")
+        if fact.predicate == "subject_discovered" and fact.subject == target_id:
+            continue
+        evidence = evidence_by_id.get(fact.subject)
+        if (
+            fact.predicate != "evidence_discovered"
+            or evidence is None
+            or evidence.location_id != state.world.location
+            or evidence.scene_subject_id != target_id
+        ):
+            raise RuntimeFailure("INVALID_INSPECTION_DISCOVERY", "inspection cannot discover absent evidence")
+
+
 def _apply_interaction_lifecycle(state: RuntimeState, interaction: InteractionProposal) -> None:
+    if interaction.inspection_target_id is not None:
+        return
     package = state.narrative_package
     if package is None:
         raise RuntimeFailure("INTERACTION_PACKAGE_UNAVAILABLE", "this session has no reviewed interaction package")
     frame = next(item for item in package.interaction_frames if item.id == interaction.interaction_frame_id)
     state.facts.assert_fact(Fact(predicate="interaction_active", subject=frame.id, value="true"))
     state.facts.assert_fact(Fact(predicate="interaction_recently_used", subject=frame.id, value="true"))
+    if interaction.group_encounter_id is not None:
+        encounter = next(item for item in package.group_encounters if item.id == interaction.group_encounter_id)
+        state.facts.assert_fact(Fact(predicate="group_introduced", subject=encounter.id, value="true"))
+        for participant_id in encounter.participant_ids:
+            state.facts.assert_fact(Fact(predicate="met", subject="player", object=participant_id))
+        for truth_id in encounter.introduction_truth_ids:
+            state.facts.assert_fact(Fact(predicate="knows", subject="player", object=truth_id))
     if interaction.outcome == "complete":
         state.facts.assert_fact(Fact(predicate="interaction_completed", subject=frame.id, value="true"))
     if interaction.outcome == "abort":

@@ -264,6 +264,7 @@ def _bootstrap_narrative_facts(package: RuntimeNarrativePackage, facts: FactStor
             )
     for encounter in package.group_encounters:
         facts.assert_fact(Fact(predicate="group_at", subject=encounter.id, object=encounter.location_id))
+        facts.assert_fact(Fact(predicate="group_introduced", subject=encounter.id, value="false"))
         for participant_id in encounter.participant_ids:
             facts.assert_fact(Fact(predicate="group_member", subject=encounter.id, object=participant_id))
     seed_storylet_facts(package, facts)
