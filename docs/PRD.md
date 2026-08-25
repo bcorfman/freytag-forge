@@ -94,16 +94,16 @@ Timed events and storylet effects commit on the cloned candidate before
 narration renders. Facts, not narration or provider JSON, determine the next
 turn.
 
-`InteractionProposal` is the single interaction boundary. A reviewed frame can
-bind one or more named, co-present responders; a declared current group commits
-its introductions before its members speak. Player follow-ups name one present
-responder. Visible-item and scene-subject inspection use the same ordered
-speech/action and atomic-effect contract; only declared subject evidence can be
-discovered. Identity, addressee, voice profile, knowledge, membership,
-protected text, prompt parroting, narrator substitution, and opening-orientation
-reuse fail closed. Material effects and lifecycle facts commit on the cloned
-candidate before response. `DialogueProposal` remains a legacy compatibility
-path.
+`InteractionProposal` is the sole interaction boundary for named co-present
+responders, groups, visible items, and scene subjects. It validates identity,
+addressees, voice, knowledge, membership, protected text, and declared
+discoveries before its atomic effects and lifecycle facts commit. The accepted
+turn then projects ordered speech and expressive/material action segments with
+public names and addressees. `TurnResponse.segments` is the hosted rendering
+contract; `lines` is its deterministic compatibility projection. Narration is
+retained beside interaction segments, and transcripts, traces, artifacts, and
+saves preserve the same accepted structure. `DialogueProposal` remains a
+legacy compatibility path.
 
 Goals, tasks, clues, relationships, scene purpose, pressure, timed events, and
 endings are reviewed declarations projected into facts. Pacing advises urgency

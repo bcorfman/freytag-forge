@@ -113,6 +113,7 @@ def _event_payload(event: object, *, include_narration: bool = True) -> dict[str
         "player_input": event.player_input,
         "operations": list(event.operations),
         "beat_updates": list(event.beat_updates),
+        "segments": list(event.segments),
         "prompt_version": event.prompt_version,
         "prompt_token_estimate": event.prompt_token_estimate,
     }
@@ -137,6 +138,13 @@ def _story_markdown(state: RuntimeState, signature: str) -> str:
     ]
     for event in state.recent_events:
         lines.extend((f"### Turn {event.turn_index}", "", f"**Player:** {event.player_input}", "", event.narration, ""))
+        for segment in event.segments:
+            if segment["kind"] == "speech":
+                speaker = segment["speaker"]
+                lines.extend((f"**{speaker['name']}:** “{segment['text']}”", ""))
+            else:
+                actor = segment["actor"]
+                lines.extend((f"*{actor['name']} — {segment['text']}*", ""))
     return "\n".join(lines)
 
 

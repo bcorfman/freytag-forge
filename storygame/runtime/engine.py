@@ -27,6 +27,8 @@ class TurnResponse:
     turn_index: int = 0
     error: RuntimeFailure | None = None
     model_calls: int = 0
+    segments: tuple[dict[str, object], ...] = ()
+    lines: tuple[str, ...] = ()
 
 
 class RuntimeEngine:
@@ -72,10 +74,18 @@ class RuntimeEngine:
                                 "an unambiguous inspection must use its declared target in the interaction proposal",
                             )
                 candidate = validate_and_commit(self.state, result, player_input=player_input)
-                self._finalize(candidate, player_input, result, context)
+                segments = _interaction_segments(candidate, result)
+                self._finalize(candidate, player_input, result, context, segments)
                 self.state = candidate
                 narration = _response_text(result)
-                return TurnResponse(True, narration, candidate.turn_index, model_calls=model_calls)
+                return TurnResponse(
+                    True,
+                    narration,
+                    candidate.turn_index,
+                    model_calls=model_calls,
+                    segments=segments,
+                    lines=_response_lines(result, segments),
+                )
             except JsonModeRejected as exc:
                 last_error = RuntimeFailure("JSON_MODE_REJECTED", str(exc) or "provider rejected JSON-object mode")
             except RuntimeFailure as exc:
@@ -98,6 +108,7 @@ class RuntimeEngine:
         player_input: str,
         result: TurnResult,
         context: RuntimeContext,
+        segments: tuple[dict[str, object], ...],
     ) -> None:
         realization = result.storylet_realization
         if result.interaction is not None:
@@ -124,6 +135,7 @@ class RuntimeEngine:
                 tuple(item.model_dump() for item in result.beat_updates),
                 context.prompt_version,
                 context.token_estimate,
+                segments,
             )
         )
         state.recent_events[:] = state.recent_events[-24:]
@@ -287,3 +299,96 @@ def _response_text(result: TurnResult) -> str:
         if speech:
             return "\n".join(speech)
     return result.narration
+
+
+def _interaction_segments(state: RuntimeState, result: TurnResult) -> tuple[dict[str, object], ...]:
+    """Project committed interaction content with public identities only."""
+
+    interaction = result.interaction
+    if interaction is None:
+        return ()
+    public_names = {
+        participant_id: _public_name(state, participant_id) for participant_id in interaction.participant_ids
+    }
+    short_names = _unambiguous_short_names(public_names)
+    seen: set[str] = set()
+    rendered: list[dict[str, object]] = []
+    for segment in interaction.segments:
+        if segment.kind == "speech":
+            speaker_id = segment.speaker_id
+            speaker_name = _attributed_name(speaker_id, public_names, short_names, seen)
+            rendered.append(
+                {
+                    "kind": "speech",
+                    "speaker": {"id": speaker_id, "name": speaker_name},
+                    "addressees": [
+                        {
+                            "id": addressee_id,
+                            "name": public_names.get(addressee_id, _public_name(state, addressee_id)),
+                        }
+                        for addressee_id in segment.addressee_ids
+                    ],
+                    "text": segment.text,
+                }
+            )
+        else:
+            actor_id = segment.actor_id
+            actor_name = _attributed_name(actor_id, public_names, short_names, seen)
+            rendered.append(
+                {
+                    "kind": "action",
+                    "actor": {"id": actor_id, "name": actor_name},
+                    "grounding": segment.grounding,
+                    "text": segment.text,
+                }
+            )
+    return tuple(rendered)
+
+
+def _public_name(state: RuntimeState, participant_id: str) -> str:
+    if participant_id == "player":
+        return "You"
+    facts = state.facts.matching("public_name", participant_id)
+    if facts and facts[0].value:
+        return facts[0].value
+    return participant_id.replace("_", " ").title()
+
+
+def _unambiguous_short_names(public_names: dict[str, str]) -> dict[str, str]:
+    short_names = {participant_id: name.split(maxsplit=1)[0] for participant_id, name in public_names.items()}
+    return {
+        participant_id: short_name
+        for participant_id, short_name in short_names.items()
+        if sum(candidate.casefold() == short_name.casefold() for candidate in short_names.values()) == 1
+    }
+
+
+def _attributed_name(
+    participant_id: str,
+    public_names: dict[str, str],
+    short_names: dict[str, str],
+    seen: set[str],
+) -> str:
+    name = public_names.get(participant_id) or participant_id.replace("_", " ").title()
+    if participant_id in seen:
+        return short_names.get(participant_id, name)
+    seen.add(participant_id)
+    return name
+
+
+def _response_lines(result: TurnResult, segments: tuple[dict[str, object], ...]) -> tuple[str, ...]:
+    lines = [result.narration]
+    if result.dialogue is not None:
+        lines.append(result.dialogue.dialogue)
+    for segment in segments:
+        if segment["kind"] == "speech":
+            speaker = segment["speaker"]
+            if not isinstance(speaker, dict) or not isinstance(speaker.get("name"), str):
+                continue
+            lines.append(f"{speaker['name']}: “{segment['text']}”")
+        else:
+            actor = segment["actor"]
+            if not isinstance(actor, dict) or not isinstance(actor.get("name"), str):
+                continue
+            lines.append(f"{actor['name']} — {segment['text']}")
+    return tuple(lines)

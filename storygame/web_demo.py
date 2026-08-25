@@ -176,7 +176,8 @@ def create_demo_app(
             write_artifacts(Path(artifact_root) / payload.session_id, session.engine.state)
         return {
             "status": "ok",
-            "lines": [result.narration],
+            "lines": list(result.lines),
+            "segments": list(result.segments),
             "state": _state_payload(session.engine.state),
             "model_calls": result.model_calls,
         }
