@@ -14,4 +14,7 @@ Phase 0 establishes these measures for comparison; it does not turn V1 determini
 | Completion rate | Sessions reaching a valid ending / started evaluation sessions. | V1 package playability evaluates endings; no aggregate rate is captured. | completed sessions / started sessions |
 | User-facing session failures | Client-visible session creation, turn, load, or isolation failures / sessions. | V1 hosted-demo E2E covers the paths; no aggregate rate is captured. | failures / sessions |
 
-Existing V1 evidence is retained in [the evaluation baseline](evaluation-baseline.md) and is comparison-only. A future credentialed measurement must state its request budget; the normal test suite continues to use deterministic fixtures.
+Historical V1 deployment evidence is retained in the
+[release baseline](release-baseline.md) and is comparison-only. A future
+credentialed measurement must state its request budget; the normal test suite
+continues to use deterministic fixtures.

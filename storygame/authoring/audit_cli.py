@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from storygame.authoring.blueprint_compiler import BlueprintCompilation
 from storygame.authoring.candidate_audit import CandidateAuditReport, audit_candidate
 from storygame.authoring.causal_profiles import CausalProfileRegistry
+from storygame.authoring.spatial_audit import RuntimeProjectionAudit
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -65,6 +66,8 @@ def _render(report: CandidateAuditReport, report_format: str, story: object | No
             f"- Failure-forward chains: {coverage.failure_forward_chains or '—'}",
         ]
     )
+    if report.runtime_projection is not None:
+        lines.extend(_runtime_projection_lines(report.runtime_projection))
     if story is not None:
         lines[5:5] = _story_summary(story)
     lines.extend(
@@ -152,6 +155,34 @@ def _story_summary(story: object) -> list[str]:
         lines.append(f"  - Outcomes: {', '.join(f'`{item}`' for item in ending.required_outcome_ids)}")
         lines.append(f"  - Truths: {', '.join(f'`{item}`' for item in ending.required_truth_ids)}")
     lines.append("")
+    return lines
+
+
+def _runtime_projection_lines(projection: RuntimeProjectionAudit) -> list[str]:
+    status = "COMPLETE" if projection.complete else "INCOMPLETE"
+    coverages = (
+        ("Participant placements", projection.participant_placements),
+        ("Scene subjects", projection.scene_subjects),
+        ("Evidence realization", projection.evidence_realization),
+        ("Evidence custody", projection.evidence_custody),
+        ("Group encounters", projection.group_encounters),
+    )
+    lines = ["", "## Phase 0 runtime projection", "", f"**Projection readiness:** {status}", ""]
+    for label, coverage in coverages:
+        lines.append(f"- {label}: **{coverage.fact_backed_count} / {coverage.declared_count}** fact-backed")
+        if coverage.missing_ids:
+            lines.append(f"  - Missing: {', '.join(f'`{identifier}`' for identifier in coverage.missing_ids)}")
+    lines.extend(["", "### Unsupported opening suggestions", ""])
+    lines.extend(f"- {action}" for action in projection.unsupported_suggested_actions)
+    if not projection.unsupported_suggested_actions:
+        lines.append("- None")
+    lines.extend(
+        [
+            "",
+            "This is a non-gating loss characterization. It does not synthesize runtime targets or facts.",
+            "",
+        ]
+    )
     return lines
 
 
