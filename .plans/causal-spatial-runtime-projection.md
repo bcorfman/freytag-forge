@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 0 complete; Phases 1–9 proposed.** This plan closes two connected
+**Phases 0–1 complete; Phases 2–9 proposed.** This plan closes two connected
 gaps between an approved causal blueprint and a playable runtime:
 
 1. reviewed people, subjects, evidence, and groups must survive compilation as a
@@ -290,23 +290,23 @@ fact-backed social or inspectable target.
 
 ### Phase 1 — Spatial identity, target, and movement contracts
 
-- [ ] Add participant public identity/presentation, placement, availability, and
+- [x] Add participant public identity/presentation, placement, availability, and
   movement-plan contracts.
-- [ ] Add scene-subject, evidence-realization, and group-encounter contracts.
-- [ ] Add all corresponding symbol namespaces and immutable bound-IR links.
-- [ ] Validate exactly one initial placement for each active participant,
+- [x] Add scene-subject, evidence-realization, and group-encounter contracts.
+- [x] Add all corresponding symbol namespaces and immutable bound-IR links.
+- [x] Validate exactly one initial placement for each active participant,
   reachability, compatible custody/location, group-member co-presence, unique
   public names in a scene, and protected-public boundary safety.
-- [ ] Reject any first-action suggestion without an initially eligible
+- [x] Reject any first-action suggestion without an initially eligible
   fact-backed target.
-- [ ] Add generic profile minima for initial social contact and evidence-route
+- [x] Add generic profile minima for initial social contact and evidence-route
   diversity without genre runtime branches.
 
 **Tests:** bad references, duplicate public names, two placements, missing
 placement, unreachable movement, absent group member, missing subject,
 incompatible custody, protected public leak, and unsupported suggestion.
 
-**Exit:** every advertised opening target has a valid immutable spatial
+**Exit: [x]** every advertised opening target has a valid immutable spatial
 declaration; no runtime projection changes yet.
 
 ### Phase 2 — NPC performance and storylet interaction contracts
@@ -513,4 +513,3 @@ The compiler's backward chain—outcome, event, means, evidence, custody, witnes
 route, scene, participant objective, interaction, consequence, and
 failure-forward exit—is validated and playable without story-specific runtime
 code, canned dialogue, or prose-derived truth.
-

@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from storygame.authoring.bound_ir import bind_blueprint
 from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
 from storygame.authoring.causal_critics import (
     CausalCompletenessCritic,
@@ -16,6 +17,7 @@ from storygame.authoring.causal_critics import (
     RouteFairnessCritic,
 )
 from storygame.authoring.causal_profiles import CausalProfileRegistry
+from storygame.authoring.symbol_resolution import Namespace, SymbolRegistry
 
 
 def _story() -> dict[str, object]:
@@ -153,6 +155,108 @@ def _story() -> dict[str, object]:
         ],
         "end_states": [{"id": "ending", "required_outcome_ids": ["survive"], "required_truth_ids": ["tradeoff"]}],
     }
+
+
+def _spatial_story() -> dict[str, object]:
+    """A fully declared spatial projection without changing runtime fixtures."""
+
+    payload = _story()
+    payload["participants"] = [
+        {
+            "id": "engineer",
+            "role": "crew",
+            "public_name": "Iris Vale",
+            "public_role": "systems engineer",
+            "public_description": "A focused engineer monitoring the failing beacon.",
+            "initial_location_id": "dock",
+            "initial_availability": "present",
+        },
+        {
+            "id": "navigator",
+            "role": "crew",
+            "public_name": "Tomas Reed",
+            "public_role": "navigation officer",
+            "public_description": "A watchful navigator keeping one eye on the clock.",
+            "initial_location_id": "dock",
+            "initial_availability": "present",
+        },
+    ]
+    payload["movement_plans"] = [
+        {
+            "id": "engineer_to_relay",
+            "participant_id": "engineer",
+            "source_location_id": "dock",
+            "destination_location_id": "relay",
+            "activation_truth_ids": ["opening"],
+            "player_may_accompany": True,
+        }
+    ]
+    payload["scene_subjects"] = [
+        {
+            "id": "dock_console",
+            "kind": "structure",
+            "location_id": "dock",
+            "inspectable": True,
+            "public_description": "A diagnostic console flashes a steady warning.",
+            "evidence_opportunity_ids": ["scan"],
+        }
+    ]
+    payload["evidence_realizations"] = [
+        {
+            "id": "scan_console",
+            "evidence_opportunity_id": "scan",
+            "kind": "scene_evidence",
+            "location_id": "dock",
+            "custody_holder_id": "engineer",
+            "scene_subject_id": "dock_console",
+            "public_description": "The console holds a fresh diagnostic scan.",
+        },
+        {
+            "id": "relay_log",
+            "evidence_opportunity_id": "log",
+            "kind": "document",
+            "location_id": "relay",
+            "custody_holder_id": "engineer",
+            "public_description": "A relay log is available to inspect.",
+        },
+        {
+            "id": "repair_record",
+            "evidence_opportunity_id": "repair_log",
+            "kind": "document",
+            "location_id": "relay",
+            "custody_holder_id": "engineer",
+            "public_description": "A repair record is available to inspect.",
+        },
+        {
+            "id": "crew_testimony_realization",
+            "evidence_opportunity_id": "crew_testimony",
+            "kind": "testimony",
+            "location_id": "relay",
+            "custody_holder_id": "engineer",
+            "public_description": "The engineer can discuss the crew's decision.",
+        },
+    ]
+    payload["group_encounters"] = [
+        {
+            "id": "dock_watch",
+            "location_id": "dock",
+            "label": "the bridge crew",
+            "participant_ids": ["engineer", "navigator"],
+            "introduction_truth_ids": ["opening"],
+        }
+    ]
+    payload["opening"] = {
+        "scene": "The evacuation dock hums around the failing beacon.",
+        "player_context": "You are part of the emergency crew.",
+        "situation": "The beacon is failing before the evacuation window closes.",
+        "next_steps": ["Choose a lead."],
+        "first_available_actions": ["Speak with Iris Vale.", "Inspect the diagnostic console."],
+        "first_action_suggestions": [
+            {"text": "Speak with Iris Vale.", "target_kind": "participant", "target_id": "engineer"},
+            {"text": "Inspect the diagnostic console.", "target_kind": "scene_subject", "target_id": "dock_console"},
+        ],
+    }
+    return payload
 
 
 def _profiles() -> CausalProfileRegistry:
@@ -364,3 +468,92 @@ def test_critics_reject_single_route_proof_and_missing_terminal_chain() -> None:
 
     assert not RouteFairnessCritic(_profiles()).critique(story).accepted
     assert not CausalCompletenessCritic().critique(story).accepted
+
+
+@pytest.mark.parametrize("genre", ("mystery", "fantasy", "sci-fi", "relationship"))
+def test_spatial_contracts_bind_immutable_cross_genre_declarations(genre: str) -> None:
+    payload = _spatial_story()
+    payload["genre"] = genre
+    story = validate_causal_compiled_story(payload)
+    bound = bind_blueprint(story)
+
+    assert SymbolRegistry.from_story(story).ids(Namespace.MOVEMENT_PLAN) == ("engineer_to_relay",)
+    assert {item.id for item in bound.scene_subjects} == {"dock_console"}
+    assert {item.id for item in bound.evidence_realizations} == {
+        "crew_testimony_realization",
+        "relay_log",
+        "repair_record",
+        "scan_console",
+    }
+    assert bound.group_encounters[0].participants[0].id == "engineer"
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code"),
+    (
+        (
+            lambda story: story["participants"].__setitem__(
+                1, {**story["participants"][1], "public_name": "Iris Vale"}
+            ),
+            "DUPLICATE_PUBLIC_NAME",
+        ),
+        (
+            lambda story: story["participants"][0].__setitem__("initial_location_id", ["dock", "relay"]),
+            "CONTRACT_INVALID",
+        ),
+        (lambda story: story["participants"][0].__setitem__("initial_location_id", None), "SPATIAL_PLACEMENT_REQUIRED"),
+        (
+            lambda story: (
+                story["locations"].append({"id": "sealed", "role": "sealed"}),
+                story["movement_plans"][0].__setitem__("destination_location_id", "sealed"),
+            ),
+            "MOVEMENT_UNREACHABLE",
+        ),
+        (lambda story: story["participants"][1].__setitem__("initial_availability", "away"), "GROUP_MEMBER_ABSENT"),
+        (
+            lambda story: story["evidence_realizations"][0].__setitem__("scene_subject_id", "missing_subject"),
+            "UNKNOWN_REFERENCE",
+        ),
+        (lambda story: story["evidence_realizations"][0].__setitem__("location_id", "relay"), "CUSTODY_INCOMPATIBLE"),
+        (
+            lambda story: story["participants"][0].__setitem__(
+                "public_description", "The trade-off is accepted, though nobody says why."
+            ),
+            "PROTECTED_PUBLIC_LEAK",
+        ),
+        (
+            lambda story: story["opening"]["first_action_suggestions"][0].update(
+                {"target_kind": "evidence_realization", "target_id": "relay_log"}
+            ),
+            "OPENING_SUGGESTION_UNSUPPORTED",
+        ),
+    ),
+)
+def test_spatial_contract_rejects_invalid_authoring_declarations(mutate: object, code: str) -> None:
+    payload = deepcopy(_spatial_story())
+    mutate(payload)
+
+    with pytest.raises(CausalValidationError, match=code):
+        validate_causal_compiled_story(payload)
+
+
+def test_spatial_profile_minima_require_opening_contact_and_evidence_diversity() -> None:
+    story = validate_causal_compiled_story(_spatial_story())
+    profiles = CausalProfileRegistry.from_directory(Path("data/genre_profiles"))
+
+    assert profiles.validate(story) is story
+
+    too_few_contacts = _spatial_story()
+    too_few_contacts["group_encounters"] = []
+    too_few_contacts["participants"][0]["initial_availability"] = "away"
+    too_few_contacts["participants"][1]["initial_availability"] = "away"
+    too_few_contacts["opening"]["first_available_actions"] = []
+    too_few_contacts["opening"]["first_action_suggestions"] = []
+    with pytest.raises(CausalValidationError, match="INITIAL_SOCIAL_CONTACTS_REQUIRED"):
+        profiles.validate(validate_causal_compiled_story(too_few_contacts))
+
+    too_little_evidence_variety = _spatial_story()
+    for realization in too_little_evidence_variety["evidence_realizations"]:
+        realization["kind"] = "document"
+    with pytest.raises(CausalValidationError, match="EVIDENCE_ROUTE_DIVERSITY_REQUIRED"):
+        profiles.validate(validate_causal_compiled_story(too_little_evidence_variety))

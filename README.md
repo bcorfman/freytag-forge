@@ -13,6 +13,9 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   relationship shift becomes durable story truth.
 - **Characters with boundaries.** NPC replies stay tied to the right speaker,
   current scene, and knowledge they have actually earned.
+- **Worlds with a pulse.** Authors can declare who is where, what can be
+  examined, and which evidence is genuinely available—so future scenes have
+  solid ground beneath the drama.
 - **Drama that finds you.** Pressure, timed events, alternate routes, and
   failure-forward turns keep the story moving without stealing agency.
 - **Secrets worth uncovering.** Protected revelations stay hidden until your

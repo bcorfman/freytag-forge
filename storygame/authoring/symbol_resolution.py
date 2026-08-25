@@ -21,6 +21,10 @@ class Namespace(StrEnum):
     CONNECTED_ROUTE = "connected_route"
     CAUSAL_EVENT = "causal_event"
     EVIDENCE_OPPORTUNITY = "evidence_opportunity"
+    MOVEMENT_PLAN = "movement_plan"
+    SCENE_SUBJECT = "scene_subject"
+    EVIDENCE_REALIZATION = "evidence_realization"
+    GROUP_ENCOUNTER = "group_encounter"
     REALIZATION_ROUTE = "realization_route"
     REVELATION = "revelation"
     REQUIRED_OUTCOME = "required_outcome"
@@ -93,6 +97,10 @@ class SymbolRegistry:
         ("connected_routes", Namespace.CONNECTED_ROUTE),
         ("causal_events", Namespace.CAUSAL_EVENT),
         ("evidence_opportunities", Namespace.EVIDENCE_OPPORTUNITY),
+        ("movement_plans", Namespace.MOVEMENT_PLAN),
+        ("scene_subjects", Namespace.SCENE_SUBJECT),
+        ("evidence_realizations", Namespace.EVIDENCE_REALIZATION),
+        ("group_encounters", Namespace.GROUP_ENCOUNTER),
         ("realization_routes", Namespace.REALIZATION_ROUTE),
         ("revelations", Namespace.REVELATION),
         ("required_outcomes", Namespace.REQUIRED_OUTCOME),
@@ -240,6 +248,59 @@ class SymbolRegistry:
             add_one(f"evidence_opportunities[{index}].holder_id", Namespace.PARTICIPANT, opportunity.holder_id)
             add_one(f"evidence_opportunities[{index}].location_id", Namespace.LOCATION, opportunity.location_id)
             add_one(f"evidence_opportunities[{index}].route_id", Namespace.REALIZATION_ROUTE, opportunity.route_id)
+        for index, plan in enumerate(story.movement_plans):
+            add_one(f"movement_plans[{index}].participant_id", Namespace.PARTICIPANT, plan.participant_id)
+            add_one(f"movement_plans[{index}].source_location_id", Namespace.LOCATION, plan.source_location_id)
+            add_one(
+                f"movement_plans[{index}].destination_location_id",
+                Namespace.LOCATION,
+                plan.destination_location_id,
+            )
+            add(f"movement_plans[{index}].activation_truth_ids", Namespace.TRUTH, plan.activation_truth_ids)
+            add(f"movement_plans[{index}].abort_truth_ids", Namespace.TRUTH, plan.abort_truth_ids)
+        for index, subject in enumerate(story.scene_subjects):
+            add_one(f"scene_subjects[{index}].location_id", Namespace.LOCATION, subject.location_id)
+            add(
+                f"scene_subjects[{index}].evidence_opportunity_ids",
+                Namespace.EVIDENCE_OPPORTUNITY,
+                subject.evidence_opportunity_ids,
+            )
+        for index, realization in enumerate(story.evidence_realizations):
+            add_one(
+                f"evidence_realizations[{index}].evidence_opportunity_id",
+                Namespace.EVIDENCE_OPPORTUNITY,
+                realization.evidence_opportunity_id,
+            )
+            add_one(f"evidence_realizations[{index}].location_id", Namespace.LOCATION, realization.location_id)
+            if realization.custody_holder_id is not None:
+                add_one(
+                    f"evidence_realizations[{index}].custody_holder_id",
+                    Namespace.PARTICIPANT,
+                    realization.custody_holder_id,
+                )
+            if realization.scene_subject_id is not None:
+                add_one(
+                    f"evidence_realizations[{index}].scene_subject_id",
+                    Namespace.SCENE_SUBJECT,
+                    realization.scene_subject_id,
+                )
+        for index, encounter in enumerate(story.group_encounters):
+            add_one(f"group_encounters[{index}].location_id", Namespace.LOCATION, encounter.location_id)
+            add(f"group_encounters[{index}].participant_ids", Namespace.PARTICIPANT, encounter.participant_ids)
+            add(f"group_encounters[{index}].introduction_truth_ids", Namespace.TRUTH, encounter.introduction_truth_ids)
+        if story.opening is not None:
+            for index, suggestion in enumerate(story.opening.first_action_suggestions):
+                namespaces = {
+                    "participant": Namespace.PARTICIPANT,
+                    "scene_subject": Namespace.SCENE_SUBJECT,
+                    "evidence_realization": Namespace.EVIDENCE_REALIZATION,
+                    "group_encounter": Namespace.GROUP_ENCOUNTER,
+                }
+                add_one(
+                    f"opening.first_action_suggestions[{index}].target_id",
+                    namespaces[suggestion.target_kind],
+                    suggestion.target_id,
+                )
         for index, knowledge in enumerate(story.party_knowledge):
             add_one(f"party_knowledge[{index}].participant_id", Namespace.PARTICIPANT, knowledge.participant_id)
             add(f"party_knowledge[{index}].truth_ids", Namespace.TRUTH, knowledge.truth_ids)
