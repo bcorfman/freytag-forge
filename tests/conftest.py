@@ -18,6 +18,7 @@ _AUTHORING_QUALITY_FILES = {
     "test_authoring_quality_baseline.py",
     "test_authoring_sources.py",
     "test_blueprint_contracts.py",
+    "test_causal_spatial_projection_phase0.py",
     "test_causal_story_contract.py",
     "test_storylet_simulation_phase5.py",
 }

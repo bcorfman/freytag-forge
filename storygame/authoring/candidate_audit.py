@@ -15,6 +15,8 @@ from storygame.authoring.bound_ir import BoundBlueprint, bind_blueprint
 from storygame.authoring.causal_contracts import CausalValidationError, validate_causal_compiled_story
 from storygame.authoring.causal_critics import CausalCompletenessCritic, FreytagProgressionCritic, RouteFairnessCritic
 from storygame.authoring.causal_profiles import CausalProfileRegistry
+from storygame.authoring.compiler import CompilationError, _causal_story_as_compiled_story
+from storygame.authoring.spatial_audit import RuntimeProjectionAudit, audit_runtime_projection
 from storygame.authoring.storylet_critics import (
     DramaticEscalationCritic,
     FailureForwardViabilityCritic,
@@ -66,6 +68,7 @@ class CandidateAuditReport(BaseModel):
     candidate_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     checks: tuple[AuditCheck, ...]
     storylet_coverage: StoryletCoverage = Field(default_factory=StoryletCoverage)
+    runtime_projection: RuntimeProjectionAudit | None = None
 
     @property
     def passed(self) -> bool:
@@ -106,7 +109,12 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
             )
             for detail in critic.critique(bound).diagnostics
         )
-    except CausalValidationError as exc:
+        runtime_projection = audit_runtime_projection(
+            _causal_story_as_compiled_story(story),
+            participant_ids=tuple(participant.id for participant in story.participants),
+            evidence_opportunity_ids=tuple(opportunity.id for opportunity in story.evidence_opportunities),
+        )
+    except (CausalValidationError, CompilationError) as exc:
         return _failed_report(candidate_path, candidate_sha, str(exc))
 
     compiler_diagnostics = tuple(compilation.diagnostics) + critic_diagnostics
@@ -124,6 +132,7 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
         candidate_sha256=candidate_sha,
         checks=checks,
         storylet_coverage=_storylet_coverage(story),
+        runtime_projection=runtime_projection,
     )
 
 

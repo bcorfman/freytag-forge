@@ -267,13 +267,12 @@ Harrow's means, motive, and opportunity; then a supported case decision.
 
 Every pivotal revelation has two different declared routes, a valid location
 class, availability requirements, custody via evidence placement, and a
-failure-forward outcome. `tests/test_vale_mansion_blueprint.py` exercises a
-physical route and a document/testimony route, early groundskeeper accusation,
-an unrelated action, and failed/contaminated-clue progression. These are
-authoring acceptance contracts: they prove the immutable graph is fair.
-`tests/test_blueprint_runtime.py` additionally proves its Phase-5 fact
-realization, protected player context, evidence-backed route validation,
-atomic rejection, and failure-forward commit behavior.
+failure-forward outcome. The generic causal-contract, compiler, runtime, and
+storylet suites exercise the same immutable route and protected-knowledge
+policies without a Vale-specific runtime branch. The reviewed runtime fixture
+is selected through `data/compiled_stories/v2/runtime-fixtures.json` and covered
+by `tests/test_authoring_compiler.py`, `tests/test_storylet_runtime_phase3.py`,
+and the Phase 0 causal-spatial regression.
 
 ## Phase-5 runtime realization
 

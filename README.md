@@ -5,20 +5,22 @@
 Freytag Forge lets you write what your character tries—not choose from a tiny
 verb menu—and turns every attempt into a grounded, persistent story beat.
 
-## The hook
+## Why it plays differently
 
-- **Write anything.** Investigate, flirt, bluff, flee, bargain, or try the move
-  nobody put on a menu.
-- **Meet characters who remember.** NPCs speak from their role, relationships,
-  scene, and earned knowledge—not a generic chat window.
-- **Make trouble that matters.** Clues, pressure, relationships, timed events,
-  and failure-forward turns keep every choice alive.
-- **Find the drama, keep the freedom.** Fresh story moments deliver twists,
-  trade-offs, and alternate routes without prescribing your next command.
-- **Keep your story yours.** Spoilers stay protected; every accepted consequence
-  persists across saves, reloads, and replays.
-- **Play any kind of tale.** One engine powers mystery, fantasy, sci-fi, and
-  relationship drama with fact-backed continuity.
+- **Say it your way.** Investigate, flirt, bluff, flee, bargain—or try the move
+  nobody thought to put on a menu.
+- **Consequences with receipts.** Every accepted clue, promise, wound, item, and
+  relationship shift becomes durable story truth.
+- **Characters with boundaries.** NPC replies stay tied to the right speaker,
+  current scene, and knowledge they have actually earned.
+- **Drama that finds you.** Pressure, timed events, alternate routes, and
+  failure-forward turns keep the story moving without stealing agency.
+- **Secrets worth uncovering.** Protected revelations stay hidden until your
+  actions actually earn them.
+- **Continuity you can trust.** Save, reload, and replay without prose quietly
+  rewriting the world behind your back.
+- **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
+  share the same fact-backed rules—no one-story tricks.
 
 **Less prompt luck. More playable story.**
 

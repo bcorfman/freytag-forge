@@ -310,3 +310,11 @@ all automated checks pass:
 The report is diagnostic evidence, not a reviewed artifact and cannot be used
 as runtime input. A malformed or locally rejected candidate reports the
 compiler check as failed and marks dependent checks as skipped.
+
+The same report now carries a non-gating Phase 0 `runtime_projection`
+characterization. It compares declared participants and evidence opportunities
+with the reduced projection's actual placement, realization, and custody facts;
+records the currently absent scene-subject and group-encounter declarations;
+and marks each opening suggestion supported only when it names a current
+fact-backed NPC or visible item. `complete: false` documents projection loss
+without inventing runtime state or changing the compiler checks' exit status.
