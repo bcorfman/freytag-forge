@@ -1,6 +1,6 @@
 {
-  "schema_version": "runtime-fixture-map-v1",
   "fixtures": {
-    "mystery": "vale_mansion_rebuild.20260824T235256Z.reviewed.json"
-  }
+    "mystery": "vale_mansion_rebuild.reviewed.json"
+  },
+  "schema_version": "runtime-fixture-map-v1"
 }
