@@ -21,7 +21,7 @@ from storygame.authoring.compiler import CompilationError
 from storygame.authoring.openai_transport import OpenAIBlueprintTransport, OpenAICompilerConfig
 from storygame.authoring.prompts import build_blueprint_compiler_prompt
 from storygame.authoring.sources import NormalizedStorySource
-from tests.test_causal_story_contract import _story
+from tests.test_causal_spatial_projection_phase3 import _phase3_story
 
 
 @dataclass
@@ -52,7 +52,7 @@ def _source() -> NormalizedStorySource:
 
 
 def _candidate() -> dict[str, object]:
-    return _story()
+    return _phase3_story()
 
 
 def _profiles() -> CausalProfileRegistry:
@@ -475,7 +475,10 @@ def test_blueprint_compiler_repair_prompt_requires_unknown_truth_references_to_m
     assert "Prior valid symbol ledger" in prompt
     assert "UNRELATED_REPAIR_CHANGE" not in prompt
     assert '"evidence_opportunity_truth_ids":{"crew_testimony":"tradeoff"' in prompt
-    assert '"truth_ids":["constraint","failure","opening","remedy","tradeoff"]' in prompt
+    assert (
+        '"truth_ids":["constraint","failure","interaction_aborted","interaction_continuing",'
+        '"interaction_recent","opening","remedy","tradeoff"]' in prompt
+    )
     assert "missing_truth" in prompt
 
 

@@ -9,7 +9,7 @@ from storygame.authoring import cli
 from storygame.authoring.blueprint_compiler import BlueprintCompilationExhausted
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.sources import NormalizedStorySource, StorySourceLoader
-from tests.test_causal_story_contract import _story
+from tests.test_causal_spatial_projection_phase3 import _phase3_story
 
 
 class _Transport:
@@ -17,7 +17,7 @@ class _Transport:
         self._source_hash = source_hash
 
     def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
-        candidate = _story()
+        candidate = _phase3_story()
         candidate["provenance"] = {
             "source_format": "story-outline-inventory-v1",
             "source_id": "signal",
@@ -289,7 +289,7 @@ def test_live_command_writes_an_explicit_nonplayable_diagnostic_on_exhaustion(
 
 def test_diagnostic_artifacts_replay_without_a_provider_and_reject_bad_paths(tmp_path: Path):
     source = _source()
-    story = _story()
+    story = _phase3_story()
     story["provenance"] = source.provenance()
     diagnostic = tmp_path / "valid.diagnostic.json"
     diagnostic.write_text(

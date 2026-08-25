@@ -8,11 +8,11 @@ from pathlib import Path
 from storygame.authoring.audit_cli import main as audit_main
 from storygame.authoring.candidate_audit import audit_candidate
 from storygame.authoring.causal_profiles import CausalProfileRegistry
-from tests.test_causal_story_contract import _story
+from tests.test_causal_spatial_projection_phase3 import _phase3_story
 
 
 def _candidate(path: Path, *, mutate=None) -> None:
-    story = _story()
+    story = _phase3_story()
     if mutate:
         story = mutate(story)
     path.write_text(
@@ -41,7 +41,7 @@ def test_audit_passes_without_story_specific_ids(tmp_path: Path) -> None:
         "map_and_custody",
     ]
     assert report.runtime_projection is not None
-    assert report.runtime_projection.participant_placements.declared_count == 1
+    assert report.runtime_projection.participant_placements.declared_count == 2
     assert report.runtime_projection.participant_placements.fact_backed_count == 0
     assert report.runtime_projection.evidence_realization.declared_count == 4
     assert not report.runtime_projection.complete
@@ -92,7 +92,7 @@ def test_audit_cli_defaults_to_human_readable_markdown(tmp_path: Path, capsys) -
     assert "### Evidence routes" in output
     assert "| `terminal_roles` | **PASS** |" in output
     assert "## Phase 0 runtime projection" in output
-    assert "Participant placements: **0 / 1**" in output
+    assert "Participant placements: **0 / 2**" in output
     assert "Evidence realization: **0 / 4**" in output
     assert "## Human review" in output
 

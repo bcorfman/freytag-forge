@@ -17,6 +17,7 @@ from storygame.authoring.causal_critics import CausalCompletenessCritic, Freytag
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError, _causal_story_as_compiled_story
 from storygame.authoring.spatial_audit import RuntimeProjectionAudit, audit_runtime_projection
+from storygame.authoring.spatial_interaction_critics import InteractionViabilityCritic, SpatialContinuityCritic
 from storygame.authoring.storylet_critics import (
     DramaticEscalationCritic,
     FailureForwardViabilityCritic,
@@ -106,6 +107,8 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
                 ParticipantContinuityCritic(),
                 ProtectedKnowledgeSafetyCritic(),
                 FailureForwardViabilityCritic(),
+                SpatialContinuityCritic(),
+                InteractionViabilityCritic(),
             )
             for detail in critic.critique(bound).diagnostics
         )

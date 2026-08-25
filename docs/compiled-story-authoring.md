@@ -104,6 +104,9 @@ the raw-outline ID/hash and all generic/profile semantics locally, runs
 injected full-blueprint critics plus route-fairness review, and permits only one
 repair/revalidation pass. It records a non-playable candidate envelope with
 compiler provenance rather than overwriting a checked-in reviewed fixture.
+The full compiler plans actor/evidence/witness geography before revelation
+routes and interaction frames, then runs spatial-continuity and conversation-
+viability critics at compilation, audit, and promotion boundaries.
 
 ## Phase-2 OpenAI candidate command
 

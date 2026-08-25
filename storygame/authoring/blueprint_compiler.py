@@ -30,6 +30,7 @@ from storygame.authoring.repair_context import (
     structural_diff,
 )
 from storygame.authoring.sources import NormalizedStorySource
+from storygame.authoring.spatial_interaction_critics import InteractionViabilityCritic, SpatialContinuityCritic
 from storygame.authoring.storylet_critics import (
     DramaticEscalationCritic,
     FailureForwardViabilityCritic,
@@ -454,9 +455,19 @@ class BlueprintCompiler:
             ParticipantContinuityCritic().critique(story),
             ProtectedKnowledgeSafetyCritic().critique(story),
             FailureForwardViabilityCritic().critique(story),
+            SpatialContinuityCritic().critique(bound),
+            InteractionViabilityCritic().critique(bound),
         )
         return tuple(
-            CompilationDiagnostic(critic=result.critic, code="LOCAL_INVARIANT", detail=detail)
+            CompilationDiagnostic(
+                critic=result.critic,
+                code=(
+                    result.critic.upper()
+                    if result.critic in {"spatial_continuity", "interaction_viability"}
+                    else "LOCAL_INVARIANT"
+                ),
+                detail=detail,
+            )
             for result in results
             for detail in result.diagnostics
         )

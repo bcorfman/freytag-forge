@@ -30,6 +30,10 @@ It validates immutable performance profiles, interaction frames, namespace
 binding, lifecycle markers, movement eligibility, and agency minima across all
 supported genres without invoking runtime or a provider.
 
+The Phase 3 authoring-quality suite covers compiler planning, deterministic
+spatial and interaction critics, typed bounded-repair guidance, and the
+expanded human-review checklist across all supported genres.
+
 ## Local commands
 
 Always keep pytest temporary files on the Linux filesystem in WSL:

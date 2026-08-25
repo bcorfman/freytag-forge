@@ -18,6 +18,7 @@ from storygame.authoring.causal_contracts import (
 from storygame.authoring.causal_critics import CausalCompletenessCritic, FreytagProgressionCritic, RouteFairnessCritic
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
+from storygame.authoring.spatial_interaction_critics import InteractionViabilityCritic, SpatialContinuityCritic
 from storygame.authoring.storylet_critics import (
     DramaticEscalationCritic,
     FailureForwardViabilityCritic,
@@ -42,6 +43,8 @@ _STORYLET_REVIEW_CHECKLIST = frozenset(
         "repeated_content_risk",
         "consequence_quality",
         "distinct_progression_paths",
+        "character_voice_distinction",
+        "catchphrase_and_stereotype_safety",
     }
 )
 
@@ -173,6 +176,8 @@ def _revalidate(story: CausalCompiledStory, profiles: CausalProfileRegistry) -> 
             ParticipantContinuityCritic(),
             ProtectedKnowledgeSafetyCritic(),
             FailureForwardViabilityCritic(),
+            SpatialContinuityCritic(),
+            InteractionViabilityCritic(),
         )
         for detail in critic.critique(validated).diagnostics
     )

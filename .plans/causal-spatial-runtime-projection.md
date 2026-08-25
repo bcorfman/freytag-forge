@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phases 0–2 complete; Phases 3–9 proposed.** This plan closes two connected
+**Phases 0–3 complete; Phases 4–9 proposed.** This plan closes two connected
 gaps between an approved causal blueprint and a playable runtime:
 
 1. reviewed people, subjects, evidence, and groups must survive compilation as a
@@ -334,23 +334,23 @@ situation, not only a destination fact or dialogue-mode label.
 
 ### Phase 3 — Compiler planning and conversation critics
 
-- [ ] Amend the compiler prompt to plan the spatial timeline before routes,
+- [x] Amend the compiler prompt to plan the spatial timeline before routes,
   revelations, storylets, and interaction frames.
-- [ ] Require public presentation separately from private motive, knowledge,
+- [x] Require public presentation separately from private motive, knowledge,
   deception, and scene goal.
-- [ ] Generate dialogue-capable storylet pools with initiators, objectives,
+- [x] Generate dialogue-capable storylet pools with initiators, objectives,
   multiple tactics, response obligations, movement options, and bounded exits.
-- [ ] Add deterministic spatial-continuity critics for actor/means/evidence/
+- [x] Add deterministic spatial-continuity critics for actor/means/evidence/
   witness paths and supported opening interactions.
-- [ ] Add interaction critics for participant agency, conversational dead ends,
+- [x] Add interaction critics for participant agency, conversational dead ends,
   repeated tactics, voice-profile completeness, unsupported material actions,
   and protected-knowledge safety.
-- [ ] Include typed repair diagnostics within the existing one-request plus one
+- [x] Include typed repair diagnostics within the existing one-request plus one
   recovery budget.
-- [ ] Extend human review to judge whether profiles distinguish characters
+- [x] Extend human review to judge whether profiles distinguish characters
   without reducing them to catchphrases or stereotypes.
 
-**Exit:** a candidate missing playable spatial realization or a viable
+**Exit: [x]** a candidate missing playable spatial realization or a viable
 dialogue-capable interaction cannot be reviewed.
 
 ### Phase 4 — Runtime projection, bootstrap, and context
