@@ -279,8 +279,9 @@ candidate before any segment is rendered.
   visible item, or scene subject.
 - [x] Add a Vale regression showing that reviewed holder/location opportunities
   do not survive into runtime facts.
-- [x] Add a compiler audit report for participant placements, scene subjects,
-  evidence realization/custody, groups, and unsupported suggestions.
+- [x] Add a compiler audit report that bootstraps the full runtime narrative
+  projection and verifies participant placements, scene subjects, evidence
+  realization/custody, groups, and declared opening suggestions.
 - [x] Confirm that no runtime fallback invents missing state.
 
 **Measured exit:** Vale currently has 7 declared participants and 21 evidence
@@ -476,11 +477,11 @@ without leaks or continuity failures.
 
 ### Phase 9 — Vale regeneration, evaluation, and promotion
 
-- [ ] Enrich the Vale source outline/Brief with foyer ensemble, public
+- [x] Enrich the Vale source outline/Brief with foyer ensemble, public
   identities/roles/descriptions, performance profiles, body/scene subject,
   initial placements, movement intent, evidence realization, and interaction
   frames.
-- [ ] Include at least one NPC-initiated opening or early social storylet, one
+- [x] Include at least one NPC-initiated opening or early social storylet, one
   responsive individual follow-up, one group introduction, and one
   movement-capable interaction with a refusal path.
 - [ ] Compile a fresh candidate through the explicit live-compiler gate; never

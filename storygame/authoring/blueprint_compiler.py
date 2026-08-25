@@ -120,6 +120,26 @@ def _parse_payload(response: str | Mapping[str, object]) -> Mapping[str, object]
     return payload
 
 
+def _apply_source_opening_suggestions(
+    payload: Mapping[str, object], source: NormalizedStorySource
+) -> Mapping[str, object]:
+    """Project an explicit immutable opening-target map from source authoring data."""
+    actions = source.opening_setup.get("first_available_actions")
+    suggestions = source.opening_setup.get("first_action_suggestions")
+    opening = payload.get("opening")
+    if not isinstance(actions, (list, tuple)) or not isinstance(suggestions, (list, tuple)):
+        return payload
+    if not isinstance(opening, Mapping):
+        return payload
+    projected = dict(payload)
+    projected["opening"] = {
+        **opening,
+        "first_available_actions": tuple(actions),
+        "first_action_suggestions": tuple(suggestions),
+    }
+    return projected
+
+
 def _reference_inventory(candidate: str | Mapping[str, object]) -> Mapping[str, object] | None:
     return repair_ledger(candidate)
 
@@ -188,7 +208,11 @@ class BlueprintCompiler:
         except CompilationError as exc:
             if exc.code != "OPENAI_JSON_MODE_REJECTED":
                 return self._retry_unparseable(
-                    source, prompt, attempts=attempts, json_object=True, diagnostic=exc.detail
+                    source,
+                    prompt,
+                    attempts=attempts,
+                    json_object=True,
+                    diagnostic=f"{exc.code}: {exc.detail}",
                 )
             return self._retry_unparseable(source, prompt, attempts=attempts, json_object=False)
         diagnostics = self._critique(story)
@@ -308,7 +332,8 @@ class BlueprintCompiler:
             "distinct evidence opportunity kinds across its realization routes; multiple "
             "routes of the same kind do not count as independent kinds. END_STATE repair "
             "protocol: every retained end state must list every declared required_outcomes[].id, not merely one "
-            "outcome, and at least one required_truth_id. Add omitted existing outcome IDs to every end state; "
+            "outcome, and every outcome's truth_id must also appear in that end state's required_truth_ids. "
+            "Add omitted existing outcome IDs and their existing truth IDs to every end state; "
             "do not remove an outcome or weaken an ending. Reference inventory for repair follows; it is a local "
             "ID ledger, "
             "STORYLET_COVERAGE repair protocol: add a new bounded storylet for each named uncovered beat; "
@@ -334,6 +359,21 @@ class BlueprintCompiler:
             "dramatic_spine.participant_role_requirements must be represented by at least one storylet participant. "
             "Remove a non-participating role from the spine or add an appropriate declared participant to a compatible "
             "storylet; do not invent a participant. "
+            "OPENING_SUGGESTION repair protocol: opening.first_action_suggestions must contain exactly one "
+            "{text,target_kind,target_id} object for every opening.first_available_actions text. Use only participant, "
+            "scene_subject, evidence_realization, or group_encounter as target_kind, and bind target_id to a declared "
+            "target available from an initially accessible location. "
+            "INTERACTION_LOCATION repair protocol: every interaction frame location must also appear in its linked "
+            "storylet's availability locations; interaction_frames[].location_ids must be a subset of the linked "
+            "storylets[].availability.location_ids. For every permitted movement plan, participant_id must equal the "
+            "frame initiator_id and destination_location_id must appear in that frame's location_ids. Add the declared "
+            "destination to both location lists when the frame materially offers that movement. "
+            "INTERACTION_MARKER repair protocol: activation, continuation, completion, recent-use, and abort truth "
+            "IDs must be pairwise distinct. The frame activation and completion IDs must equal its linked storylet's "
+            "corresponding IDs, while every frame abort ID must appear in the storylet abort_truth_ids and must never "
+            "reuse its completion ID. A frame whose initiation is npc_initiated or either must declare at least one "
+            "abort_truth_id and allow refuse, interrupt, or depart; add a distinct declared abort truth to both frame "
+            "and storylet instead of reusing a completion marker. "
             "never fictional content. Use a value only in its matching namespace: "
             "truth-reference fields use truth_ids; participant fields use participant_ids; "
             "location fields use location_ids; realization-route fields use "
@@ -380,7 +420,7 @@ class BlueprintCompiler:
     def _parse_and_validate(
         self, response: str | Mapping[str, object], source: NormalizedStorySource
     ) -> CausalCompiledStory:
-        payload = _parse_payload(response)
+        payload = _apply_source_opening_suggestions(_parse_payload(response), source)
         try:
             story = validate_causal_compiled_story(payload)
         except CausalValidationError as exc:

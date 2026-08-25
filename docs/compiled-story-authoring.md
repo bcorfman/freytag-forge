@@ -27,6 +27,13 @@ truth. Candidates are `*.candidate.json`; reviewed fixtures are selected only
 through `data/compiled_stories/v2/runtime-fixtures.json`. Neither raw sources
 nor candidates are runtime inputs.
 
+Outline entries may add namespaced `extensions` for explicit authoring
+direction that does not belong in the shared schema. The compiler forwards that
+data unchanged; a source-declared `opening_setup.first_action_suggestions` map
+is projected into the candidate before local validation so advertised opening
+actions remain bound to declared targets. This is an authoring constraint, not
+a runtime mutation path.
+
 ## Live compilation
 
 Live compilation requires both `OPENAI_API_KEY` and
@@ -59,9 +66,12 @@ Run a read-only audit when a candidate needs review evidence:
 uv run storygame-blueprint-audit --candidate path/to/story.candidate.json
 ```
 
-Use `--format json` for machine-readable output. Audits check compiler
-validation, terminal outcomes, protected knowledge, route diversity,
-failure-forward behavior, map reachability, and custody; they do not call a
+Use `--format json` for machine-readable output. Audits bootstrap the same full
+runtime narrative projection used by play and require its participants, scene
+subjects, evidence realizations/custody, groups, and declared opening targets
+to be fact-backed. They also check compiler validation, terminal outcomes
+(including every outcome's required truth), protected knowledge, route
+diversity, failure-forward behavior, and map reachability; they do not call a
 provider or alter the candidate.
 
 An exhausted paid run may write a new `.diagnostic.json` with

@@ -43,13 +43,15 @@ movement, scene subjects, group/party context, and interaction frames.
 The compiler plans causal and spatial continuity before dramatic opportunities.
 Local contracts and critics reject unknown references, impossible routes,
 incompatible custody, absent group members, protected-public leaks,
-unsatisfiable storylets, invalid interaction frames, and failure-forward
-cycles. Genre profiles inject generic minima; shared runtime code does not
+unsatisfiable storylets, invalid interaction frames, end states that omit an
+outcome's required truth, and failure-forward cycles. Audits bootstrap the full
+runtime narrative projection and require all declared spatial targets to be
+fact-backed. Genre profiles inject generic minima; shared runtime code does not
 inspect genre names. Candidate generation allows one request plus one shared
 repair/recovery request, then requires review and promotion before play.
 
-`RuntimeNarrativeProjection` keeps the legacy-compatible `CompiledStory` beside
-a frozen reviewed package. Both are inputs; neither is a mutation authority.
+Reviewed packages and their compatibility bridge are immutable runtime inputs;
+facts are the only session mutation authority.
 
 Offline conversation evaluation drives semantic player policies through
 isolated real engine sessions. An independent model judges each accepted,
@@ -96,16 +98,12 @@ Timed events and storylet effects commit on the cloned candidate before
 narration renders. Facts, not narration or provider JSON, determine the next
 turn.
 
-`InteractionProposal` is the sole interaction boundary for named co-present
-responders, groups, visible items, and scene subjects. It validates identity,
-addressees, voice, knowledge, membership, protected text, and declared
-discoveries before its atomic effects and lifecycle facts commit. The accepted
-turn then projects ordered speech and expressive/material action segments with
-public names and addressees. `TurnResponse.segments` is the hosted rendering
-contract; `lines` is its deterministic compatibility projection. Narration is
-retained beside interaction segments, and transcripts, traces, artifacts, and
-saves preserve the same accepted structure. `DialogueProposal` remains a
-legacy compatibility path.
+One validated interaction contract covers named co-present responders, groups,
+visible items, and scene subjects. It atomically commits allowed effects before
+rendering ordered, attributed speech and expressive/material actions.
+`TurnResponse.segments` is the hosted contract; `lines` is its compatibility
+projection. Narration, saves, artifacts, traces, and transcripts retain that
+same accepted structure.
 
 Goals, tasks, clues, relationships, scene purpose, pressure, timed events, and
 endings are reviewed declarations projected into facts. Pacing advises urgency

@@ -4,18 +4,16 @@
 
 Freytag Forge turns freeform play into grounded, persistent drama.
 
-## Why it plays differently
+## Features
 
-- **Try the move nobody listed.** Bluff, flirt, investigate, bargain, leave—or
-  invent your own play.
-- **Make the world answer.** Clues, promises, custody, movement, and
-  relationships become lasting story truth.
-- **Find a living scene.** The people, groups, evidence, and subjects in front
-  of you are where the story says they are.
-- **Talk like it matters.** Characters answer in their own voices, act in the
-  moment, and make room for a redirect, refusal, interruption, or exit.
-- **Carry the drama forward.** Earned secrets and consequences survive saves,
-  replays, and every genre on one fact-backed engine.
+- **Write the move nobody listed.** Bluff, flirt, investigate, bargain, leave—
+  the story accepts freeform intent.
+- **Meet a world that remembers.** People, clues, custody, movement, and
+  relationships stay grounded in the scene and persist across saves.
+- **Have conversations with consequence.** Distinct characters can initiate,
+  respond, redirect, refuse, and act—without forcing a script.
+- **Play every genre on one engine.** Mystery, fantasy, sci-fi, and relationship
+  drama share fact-backed continuity instead of genre-specific rules.
 
 **Less prompt luck. More character, consequence, and playable drama.**
 

@@ -76,6 +76,13 @@ class StoryOutline(_SourceContract):
     scene_purpose: str | None = Field(default=None, max_length=1200)
     first_available_actions: tuple[str, ...] = Field(default=(), max_length=16)
     terminal_constraints: tuple[str, ...] = Field(default=(), max_length=64)
+    extensions: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _namespaced_extensions(self) -> StoryOutline:
+        if any("." not in key for key in self.extensions):
+            raise ValueError("extensions keys must be namespaced (for example, 'author.theme')")
+        return self
 
 
 class NormalizedStorySource(_SourceContract):
@@ -197,6 +204,7 @@ class StorySourceLoader:
             creative_direction={
                 key: (value,) for key, value in {"tone": outline.tone, "variant": outline.variant}.items() if value
             },
+            extensions=outline.extensions,
         )
 
     def load_brief(self, path: Path) -> NormalizedStorySource:

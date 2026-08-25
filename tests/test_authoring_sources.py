@@ -150,6 +150,47 @@ def test_checked_in_outline_inventory_is_complete_and_vale_is_offline_only():
     )
 
 
+def test_checked_in_vale_source_declares_causal_spatial_playability() -> None:
+    sources = StorySourceLoader(Path("data/story_outlines.yaml"), Path("data/genre_profiles")).list_outlines()
+    vale = next(source for source in sources if source.source_id == "vale_mansion_rebuild")
+
+    projection = vale.extensions["author.causal_spatial_projection"]
+    assert projection["foyer_ensemble"] == [
+        "beatrice_harrow",
+        "thomas_pike",
+        "julian_vale",
+        "clara_mere",
+        "lydia_fenn",
+    ]
+    assert projection["scene_subjects"][0]["id"] == "emma_vale_remains"
+    assert len(projection["performance_profiles"]) >= 2
+    assert any(frame["initiation"] == "npc_initiated" for frame in projection["interaction_frames"])
+    assert any(frame["refusal_path"] for frame in projection["interaction_frames"])
+    assert all(
+        realization["kind"] in {"scene_evidence", "document", "testimony", "item"}
+        for realization in projection["evidence_realizations"]
+    )
+    assert all(
+        frame["agency_modes"] == ["engage", "refuse", "redirect", "interrupt", "depart"]
+        for frame in projection["interaction_frames"]
+    )
+    clara_opening = next(frame for frame in projection["interaction_frames"] if frame["id"] == "clara_foyer_opening")
+    assert set(clara_opening["location_ids"]) == {"grand_foyer", "west_gallery"}
+    assert clara_opening["movement_intent_id"] == "clara_to_west_gallery"
+    thomas_follow_up = next(
+        frame for frame in projection["interaction_frames"] if frame["id"] == "thomas_boiler_log_follow_up"
+    )
+    assert set(thomas_follow_up["location_ids"]) == {"grand_foyer", "boiler_house"}
+    assert thomas_follow_up["movement_intent_id"] == "thomas_to_boiler_house"
+    suggestions = vale.opening_setup["first_action_suggestions"]
+    assert {suggestion["text"] for suggestion in suggestions} == set(vale.opening_setup["first_available_actions"])
+    assert {suggestion["target_kind"] for suggestion in suggestions} == {
+        "group_encounter",
+        "participant",
+        "scene_subject",
+    }
+
+
 def test_minimal_and_expanded_briefs_keep_constraints_separate_from_creative_direction(tmp_path: Path):
     profiles = tmp_path / "profiles"
     _profiles(profiles)
@@ -226,6 +267,21 @@ def test_source_loader_rejects_malformed_yaml_missing_path_profile_mismatch_and_
     )
     with pytest.raises(CompilationError, match="PROFILE_MISMATCH"):
         loader.load_brief(mismatch)
+
+
+def test_inventory_loader_rejects_unnamespaced_extensions(tmp_path: Path):
+    inventory = tmp_path / "invalid.yaml"
+    inventory.write_text(
+        "stories:\n"
+        "  - id: invalid\n"
+        "    genre: mystery\n"
+        "    outline: A constrained story.\n"
+        "    extensions: {projection: {}}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CompilationError, match="SOURCE_INVALID"):
+        StorySourceLoader(inventory, tmp_path / "profiles").list_outlines()
 
 
 @pytest.mark.parametrize(
