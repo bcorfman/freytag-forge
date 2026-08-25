@@ -142,6 +142,45 @@ names, malformed/missing placements, unreachable movement, absent group
 members, missing subjects, incompatible custody, protected leaks, unsupported
 suggestions, and profile minima.
 
+## Causal-spatial runtime projection Phase 2
+
+Phase 2 adds immutable NPC-performance and multi-turn interaction declarations
+at the offline authoring boundary; runtime projection remains reserved for a
+later phase. `NpcPerformanceProfile` binds one participant to public manner,
+voice register, cadence, diction, avoidances, and behavioral cues. A
+participant opts in through `performance_profile_id`. These fields are public
+performance guidance only: local validation rejects protected truth summaries
+in them, while motives and private knowledge stay in their existing protected
+fact declarations.
+
+`InteractionFrame` binds a dialogue-capable storylet to its initiator,
+participants, eligible locations, dramatic objective, opening move, response
+obligations, bounded tactics, player-agency modes, and permitted movement
+plans. It separately references activation, continuation, completion, abort,
+and recent-use truths. The validator rejects immediate-completion marker
+collapse, mismatched storylet/frame links, missing profiles, absent or
+unmovable NPC initiators, off-storylet locations or participants, movement
+plans that cannot deliver the initiator, response dead ends, and cyclic
+failure-forward frames. An NPC-initiated frame must provide a bounded refusal,
+interruption, or departure path as well as its completion route.
+
+The symbol registry exposes dedicated `npc_performance_profile` and
+`interaction_frame` namespaces. The short-lived bound IR resolves profiles,
+storylets, participants, locations, truth markers, movement plans, and
+failure-forward links once before semantic validation; compiler repair ledgers
+carry the same namespaces. Versioned genre profiles inject minimum tactic
+diversity and minimum player-agency modes without branching shared code on a
+genre. Legacy reviewed artifacts that declare neither profiles nor frames
+remain loadable, but once a candidate opts into Phase 2, every dialogue
+storylet in that candidate must have coherent frame links.
+
+Cross-genre coverage in
+`tests/test_causal_spatial_projection_phase2.py` exercises the same contract
+for mystery, fantasy, sci-fi, and relationship packages, including missing
+profiles, unknown references, incompatible locations, non-dialogue frames,
+unreachable movement, protected public leaks, collapsed lifecycle markers,
+failure-forward cycles, unavailable initiators, and player-agency minima.
+
 ## Causal compiler Phase 0: symbol-resolution baseline
 
 The offline causal compiler now carries a checked-in Phase 0 characterization

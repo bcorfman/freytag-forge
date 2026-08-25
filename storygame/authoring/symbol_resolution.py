@@ -17,6 +17,7 @@ class Namespace(StrEnum):
 
     TRUTH = "truth"
     PARTICIPANT = "participant"
+    NPC_PERFORMANCE_PROFILE = "npc_performance_profile"
     LOCATION = "location"
     CONNECTED_ROUTE = "connected_route"
     CAUSAL_EVENT = "causal_event"
@@ -32,6 +33,7 @@ class Namespace(StrEnum):
     OPTIONAL_BEAT = "optional_beat"
     CONSEQUENCE = "consequence"
     STORYLET = "storylet"
+    INTERACTION_FRAME = "interaction_frame"
     END_STATE = "end_state"
 
 
@@ -93,6 +95,7 @@ class SymbolRegistry:
     _COLLECTIONS: tuple[tuple[str, Namespace], ...] = (
         ("truths", Namespace.TRUTH),
         ("participants", Namespace.PARTICIPANT),
+        ("npc_performance_profiles", Namespace.NPC_PERFORMANCE_PROFILE),
         ("locations", Namespace.LOCATION),
         ("connected_routes", Namespace.CONNECTED_ROUTE),
         ("causal_events", Namespace.CAUSAL_EVENT),
@@ -108,6 +111,7 @@ class SymbolRegistry:
         ("optional_beats", Namespace.OPTIONAL_BEAT),
         ("consequences", Namespace.CONSEQUENCE),
         ("storylets", Namespace.STORYLET),
+        ("interaction_frames", Namespace.INTERACTION_FRAME),
         ("end_states", Namespace.END_STATE),
     )
 
@@ -226,6 +230,20 @@ class SymbolRegistry:
             sites.append(ReferenceSite(path, namespace, value))
 
         add("opening_truth_ids", Namespace.TRUTH, story.opening_truth_ids)
+        for index, participant in enumerate(story.participants):
+            if participant.performance_profile_id is not None:
+                add_one(
+                    f"participants[{index}].performance_profile_id",
+                    Namespace.NPC_PERFORMANCE_PROFILE,
+                    participant.performance_profile_id,
+                )
+            add(f"participants[{index}].movement_plan_ids", Namespace.MOVEMENT_PLAN, participant.movement_plan_ids)
+        for index, profile in enumerate(story.npc_performance_profiles):
+            add_one(
+                f"npc_performance_profiles[{index}].participant_id",
+                Namespace.PARTICIPANT,
+                profile.participant_id,
+            )
         for index, route in enumerate(story.connected_routes):
             add_one(f"connected_routes[{index}].from_location_id", Namespace.LOCATION, route.from_location_id)
             add_one(f"connected_routes[{index}].to_location_id", Namespace.LOCATION, route.to_location_id)
@@ -383,6 +401,34 @@ class SymbolRegistry:
                 f"storylets[{index}].failure_forward_storylet_ids",
                 Namespace.STORYLET,
                 storylet.failure_forward_storylet_ids,
+            )
+            add(
+                f"storylets[{index}].interaction_frame_ids",
+                Namespace.INTERACTION_FRAME,
+                storylet.interaction_frame_ids,
+            )
+        for index, frame in enumerate(story.interaction_frames):
+            add_one(f"interaction_frames[{index}].storylet_id", Namespace.STORYLET, frame.storylet_id)
+            add_one(f"interaction_frames[{index}].initiator_id", Namespace.PARTICIPANT, frame.initiator_id)
+            add(f"interaction_frames[{index}].participant_ids", Namespace.PARTICIPANT, frame.participant_ids)
+            add(f"interaction_frames[{index}].location_ids", Namespace.LOCATION, frame.location_ids)
+            add(
+                f"interaction_frames[{index}].permitted_movement_plan_ids",
+                Namespace.MOVEMENT_PLAN,
+                frame.permitted_movement_plan_ids,
+            )
+            for field in (
+                "activation_truth_id",
+                "continuation_truth_id",
+                "completion_truth_id",
+                "recent_use_truth_id",
+            ):
+                add_one(f"interaction_frames[{index}].{field}", Namespace.TRUTH, getattr(frame, field))
+            add(f"interaction_frames[{index}].abort_truth_ids", Namespace.TRUTH, frame.abort_truth_ids)
+            add(
+                f"interaction_frames[{index}].failure_forward_frame_ids",
+                Namespace.INTERACTION_FRAME,
+                frame.failure_forward_frame_ids,
             )
         for index, hypothesis in enumerate(story.suspect_hypotheses):
             add_one(f"suspect_hypotheses[{index}].participant_id", Namespace.PARTICIPANT, hypothesis.participant_id)

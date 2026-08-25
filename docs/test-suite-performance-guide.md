@@ -25,6 +25,11 @@ The causal-spatial Phase 0 characterization is authoring-quality coverage. It
 uses small immutable fixture projections and does not call a provider, write a
 candidate, or mutate a reviewed artifact.
 
+The causal-spatial Phase 2 contract suite is also authoring-quality coverage.
+It validates immutable performance profiles, interaction frames, namespace
+binding, lifecycle markers, movement eligibility, and agency minima across all
+supported genres without invoking runtime or a provider.
+
 ## Local commands
 
 Always keep pytest temporary files on the Linux filesystem in WSL:

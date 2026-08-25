@@ -19,3 +19,5 @@ required_freytag_phases: [setup, rising_action, crisis, climax, resolution]
 minimum_storylet_variety: 2
 maximum_unbroken_pressure_span: 70
 minimum_alternate_progression_paths: 1
+minimum_conversational_route_diversity: 2
+minimum_interaction_agency_modes: 2

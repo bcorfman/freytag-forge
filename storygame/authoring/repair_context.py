@@ -60,6 +60,7 @@ def repair_ledger(candidate: object) -> dict[str, object] | None:
     names = {
         Namespace.TRUTH: "truth_ids",
         Namespace.PARTICIPANT: "participant_ids",
+        Namespace.NPC_PERFORMANCE_PROFILE: "npc_performance_profile_ids",
         Namespace.LOCATION: "location_ids",
         Namespace.CONNECTED_ROUTE: "connected_route_ids",
         Namespace.CAUSAL_EVENT: "causal_event_ids",
@@ -71,6 +72,7 @@ def repair_ledger(candidate: object) -> dict[str, object] | None:
         Namespace.OPTIONAL_BEAT: "optional_beat_ids",
         Namespace.CONSEQUENCE: "consequence_ids",
         Namespace.STORYLET: "storylet_ids",
+        Namespace.INTERACTION_FRAME: "interaction_frame_ids",
         Namespace.END_STATE: "end_state_ids",
     }
     ledger = {key: list(registry.ids(namespace)) for namespace, key in names.items()}
@@ -167,6 +169,7 @@ def is_additive_reference_change(
     ledger_key = {
         Namespace.TRUTH: "truth_ids",
         Namespace.PARTICIPANT: "participant_ids",
+        Namespace.NPC_PERFORMANCE_PROFILE: "npc_performance_profile_ids",
         Namespace.LOCATION: "location_ids",
         Namespace.CONNECTED_ROUTE: "connected_route_ids",
         Namespace.CAUSAL_EVENT: "causal_event_ids",
@@ -178,6 +181,7 @@ def is_additive_reference_change(
         Namespace.OPTIONAL_BEAT: "optional_beat_ids",
         Namespace.CONSEQUENCE: "consequence_ids",
         Namespace.STORYLET: "storylet_ids",
+        Namespace.INTERACTION_FRAME: "interaction_frame_ids",
         Namespace.END_STATE: "end_state_ids",
     }[change.target_namespace]
     previous_ids = set(previous_ledger[ledger_key])
@@ -278,6 +282,7 @@ def _target_namespace(key: str) -> Namespace | None:
         "output": Namespace.TRUTH,
         "result": Namespace.TRUTH,
         "participant": Namespace.PARTICIPANT,
+        "performance_profile": Namespace.NPC_PERFORMANCE_PROFILE,
         "location": Namespace.LOCATION,
         "route": Namespace.REALIZATION_ROUTE,
         "revelation": Namespace.REVELATION,
@@ -287,5 +292,6 @@ def _target_namespace(key: str) -> Namespace | None:
         "opportunity": Namespace.EVIDENCE_OPPORTUNITY,
         "consequence": Namespace.CONSEQUENCE,
         "storylet": Namespace.STORYLET,
+        "interaction_frame": Namespace.INTERACTION_FRAME,
     }
     return aliases.get(stem)
