@@ -171421,6 +171421,20 @@ stories:
     companions: ["The gathered household waits nearby: frightened, defensive, and each carrying a different version of the night's events."]
     situation: "Emma Vale has been found dead in the west gallery. The body has not been moved, the storm has sealed the estate, and the first hour of an investigation is already slipping away."
     next_steps: ["Survey the foyer for the household's immediate reactions and any disturbance in the arrival scene.", "Speak with the people who were last known to be near Emma.", "Enter the west gallery, inspect the scene, or follow a lead into the study, library, or grounds."]
+    first_available_actions:
+      - Question the gathered household in the foyer.
+      - Question Clara Mere about finding Emma Vale.
+      - Inspect Emma Vale's remains in the west gallery.
+    first_action_suggestions:
+      - text: Question the gathered household in the foyer.
+        target_kind: group_encounter
+        target_id: foyer_assembly
+      - text: Question Clara Mere about finding Emma Vale.
+        target_kind: participant
+        target_id: clara_mere
+      - text: Inspect Emma Vale's remains in the west gallery.
+        target_kind: scene_subject
+        target_id: emma_vale_remains
   terminal_constraints:
     - A reviewed causal artifact must provide a fair, evidence-backed resolution.
     - Every material opportunity must be reachable; prose-only locations are invalid.
@@ -171430,3 +171444,127 @@ stories:
     - All player-discoverable evidence must be diegetic; authoring, review, and compiler artifacts must never appear as in-world clues.
     - The investigation remains within Vale Mansion and its estate while snowbound; no player route may leave for an external civic location.
     - External records may appear only as documents already present at the estate.
+  extensions:
+    author.causal_spatial_projection:
+      foyer_ensemble: [beatrice_harrow, thomas_pike, julian_vale, clara_mere, lydia_fenn]
+      public_participants:
+        - id: beatrice_harrow
+          public_name: Beatrice Harrow
+          public_role: estate solicitor
+          public_description: Immaculately composed, with a watchful stillness that makes every pause feel chosen.
+        - id: thomas_pike
+          public_name: Thomas Pike
+          public_role: groundskeeper
+          public_description: Weather-beaten and practical, still carrying the cold of the boiler house.
+        - id: julian_vale
+          public_name: Julian Vale
+          public_role: Emma's heir
+          public_description: Elegantly disheveled, quick to turn anger into a joke before it can settle.
+        - id: clara_mere
+          public_name: Clara Mere
+          public_role: housekeeper
+          public_description: Precise and exhausted, keeping the household moving by sheer discipline.
+        - id: lydia_fenn
+          public_name: Lydia Fenn
+          public_role: kitchen maid
+          public_description: Alert to every raised voice, with flour still caught beneath one thumbnail.
+      initial_placements:
+        - participant_id: beatrice_harrow
+          location_id: grand_foyer
+          availability: present
+        - participant_id: thomas_pike
+          location_id: grand_foyer
+          availability: present
+        - participant_id: julian_vale
+          location_id: grand_foyer
+          availability: present
+        - participant_id: clara_mere
+          location_id: grand_foyer
+          availability: present
+        - participant_id: lydia_fenn
+          location_id: grand_foyer
+          availability: present
+      performance_profiles:
+        - id: beatrice_public_manner
+          participant_id: beatrice_harrow
+          public_manner: Measured, legalistic, and unflappable until a practical detail threatens her control.
+          voice: {register: formal, cadence: carefully qualified, diction: exact}
+          behavioral_cues: [straightens documents before answering, redirects emotion toward procedure]
+        - id: thomas_public_manner
+          participant_id: thomas_pike
+          public_manner: Blunt, protective of the estate, and angered by being treated as convenient blame.
+          voice: {register: plainspoken, cadence: clipped under pressure, diction: practical}
+          behavioral_cues: [checks the weather before leaving, answers with work details rather than excuses]
+        - id: clara_public_manner
+          participant_id: clara_mere
+          public_manner: Controlled and observant, offering concrete help while protecting a shaken household.
+          voice: {register: professional, cadence: orderly, diction: domestic and precise}
+          behavioral_cues: [counts tasks aloud, steadies herself before naming what she saw]
+      scene_subjects:
+        - id: emma_vale_remains
+          kind: person
+          location_id: west_gallery
+          inspectable: true
+          public_description: Emma Vale remains on the west-gallery floor, undisturbed since the household found her.
+          purpose: Examination may establish physical facts without exposing the killer or solution before supported discoveries.
+      evidence_realizations:
+        - kind: scene_evidence
+          location_id: west_gallery
+          custody: scene
+          purpose: The wound, gallery trace, and body examination are inspectable, evidence-backed routes to means and opportunity.
+        - kind: document
+          location_id: study
+          custody: beatrice_harrow
+          purpose: The restoration ledger and letter-opener inventory provide a documentary motive-and-means route.
+        - kind: testimony
+          location_id: grand_foyer
+          custody: clara_mere
+          purpose: Early witness testimony can redirect the first accusation without resolving the case.
+        - kind: testimony
+          location_id: boiler_house
+          custody: lydia_fenn
+          purpose: A witness route and boiler log independently preserve Thomas Pike's alibi.
+      group_encounters:
+        - id: foyer_assembly
+          location_id: grand_foyer
+          label: gathered household
+          participant_ids: [beatrice_harrow, thomas_pike, julian_vale, clara_mere, lydia_fenn]
+          purpose: Introduce each named household member before focused follow-up without presenting the group as a single speaker.
+      movement_intents:
+        - id: clara_to_west_gallery
+          participant_id: clara_mere
+          source_location_id: grand_foyer
+          destination_location_id: west_gallery
+          activation: Clara offers to show the investigator exactly how she found Emma.
+          player_may_accompany: true
+        - id: thomas_to_boiler_house
+          participant_id: thomas_pike
+          source_location_id: grand_foyer
+          destination_location_id: boiler_house
+          activation: Thomas offers to produce the boiler log when challenged about his whereabouts.
+          player_may_accompany: true
+      interaction_frames:
+        - id: clara_foyer_opening
+          initiator_id: clara_mere
+          participant_ids: [clara_mere, player]
+          initiation: npc_initiated
+          location_ids: [grand_foyer, west_gallery]
+          dramatic_objective: Stop the household from turning suspicion into an irreversible accusation and orient the investigator to the body.
+          opening_move: Name the immediate danger, answer one practical question, and offer to lead the investigator to the gallery.
+          response_obligations: [Answer the player's concern about preserving the scene, remain controlled without becoming evasive]
+          allowed_tactics: [warn, reassure, invite, deflect]
+          agency_modes: [engage, refuse, redirect, interrupt, depart]
+          movement_intent_id: clara_to_west_gallery
+          refusal_path: If the player refuses the gallery route, Clara remains available for a focused foyer follow-up and the investigation stays freeform.
+        - id: thomas_boiler_log_follow_up
+          initiator_id: thomas_pike
+          participant_ids: [thomas_pike, player]
+          initiation: player_initiated
+          location_ids: [grand_foyer, boiler_house]
+          dramatic_objective: Let Thomas answer suspicion with a concrete offer to retrieve and explain the boiler log.
+          opening_move: Respond directly to an accusation or question, then offer the player a choice to accompany him to the boiler house.
+          response_obligations: [Address the player's actual accusation, preserve Thomas's practical voice, accept refusal without ending the investigation]
+          allowed_tactics: [answer, challenge, invite, withdraw]
+          agency_modes: [engage, refuse, redirect, interrupt, depart]
+          movement_intent_id: thomas_to_boiler_house
+          refusal_path: A refusal leaves the log and Lydia's testimony reachable through independent routes.

@@ -25,6 +25,7 @@ from storygame.authoring.storylet_critics import (
     ProtectedKnowledgeSafetyCritic,
     StoryletCoverageCritic,
 )
+from storygame.runtime.narrative import RuntimeNarrativeProjection, narrative_package_from_story
 
 CHECK_IDS = (
     "compiler_validation",
@@ -73,7 +74,11 @@ class CandidateAuditReport(BaseModel):
 
     @property
     def passed(self) -> bool:
-        return all(check.status == "pass" for check in self.checks)
+        return (
+            all(check.status == "pass" for check in self.checks)
+            and self.runtime_projection is not None
+            and self.runtime_projection.complete
+        )
 
 
 def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> CandidateAuditReport:
@@ -113,9 +118,20 @@ def audit_candidate(candidate_path: Path, profiles: CausalProfileRegistry) -> Ca
             for detail in critic.critique(bound).diagnostics
         )
         runtime_projection = audit_runtime_projection(
-            _causal_story_as_compiled_story(story),
+            RuntimeNarrativeProjection(
+                compiled_story=_causal_story_as_compiled_story(story),
+                narrative_package=narrative_package_from_story(story),
+            ),
             participant_ids=tuple(participant.id for participant in story.participants),
             evidence_opportunity_ids=tuple(opportunity.id for opportunity in story.evidence_opportunities),
+            scene_subject_ids=tuple(subject.id for subject in story.scene_subjects),
+            group_encounter_ids=tuple(encounter.id for encounter in story.group_encounters),
+            opening_suggestions=tuple(
+                (suggestion.text, suggestion.target_kind, suggestion.target_id)
+                for suggestion in story.opening.first_action_suggestions
+            )
+            if story.opening is not None
+            else (),
         )
     except (CausalValidationError, CompilationError) as exc:
         return _failed_report(candidate_path, candidate_sha, str(exc))

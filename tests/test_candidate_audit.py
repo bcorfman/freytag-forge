@@ -42,9 +42,13 @@ def test_audit_passes_without_story_specific_ids(tmp_path: Path) -> None:
     ]
     assert report.runtime_projection is not None
     assert report.runtime_projection.participant_placements.declared_count == 2
-    assert report.runtime_projection.participant_placements.fact_backed_count == 0
+    assert report.runtime_projection.participant_placements.fact_backed_count == 2
     assert report.runtime_projection.evidence_realization.declared_count == 4
-    assert not report.runtime_projection.complete
+    assert report.runtime_projection.evidence_realization.fact_backed_count == 4
+    assert report.runtime_projection.evidence_custody.fact_backed_count == 4
+    assert report.runtime_projection.scene_subjects.fact_backed_count == 1
+    assert report.runtime_projection.group_encounters.fact_backed_count == 1
+    assert report.runtime_projection.complete
 
 
 def test_audit_reports_route_and_failure_forward_defects(tmp_path: Path) -> None:
@@ -76,8 +80,8 @@ def test_audit_cli_writes_report_and_returns_failure_status(tmp_path: Path) -> N
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["schema_version"] == "story-blueprint-audit-v1"
     assert report["candidate_filename"] == candidate.name
-    assert report["runtime_projection"]["complete"] is False
-    assert report["runtime_projection"]["suggested_actions"][0]["supported"] is False
+    assert report["runtime_projection"]["complete"] is True
+    assert report["runtime_projection"]["suggested_actions"][0]["supported"] is True
 
 
 def test_audit_cli_defaults_to_human_readable_markdown(tmp_path: Path, capsys) -> None:
@@ -92,8 +96,8 @@ def test_audit_cli_defaults_to_human_readable_markdown(tmp_path: Path, capsys) -
     assert "### Evidence routes" in output
     assert "| `terminal_roles` | **PASS** |" in output
     assert "## Phase 0 runtime projection" in output
-    assert "Participant placements: **0 / 2**" in output
-    assert "Evidence realization: **0 / 4**" in output
+    assert "Participant placements: **2 / 2**" in output
+    assert "Evidence realization: **4 / 4**" in output
     assert "## Human review" in output
 
 

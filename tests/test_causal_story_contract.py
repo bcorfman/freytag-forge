@@ -383,6 +383,14 @@ def test_every_end_state_must_cover_every_declared_required_outcome() -> None:
         validate_causal_compiled_story(payload)
 
 
+def test_every_end_state_must_require_the_truth_for_each_outcome() -> None:
+    payload = _story()
+    payload["end_states"][0]["required_truth_ids"] = ["remedy"]
+
+    with pytest.raises(CausalValidationError, match="ENDING_TRUTH_MISMATCH"):
+        validate_causal_compiled_story(payload)
+
+
 def test_phase_one_contract_batches_every_infeasible_timeline_constraint() -> None:
     payload = _story()
     payload["causal_events"][0]["latest"] = 4

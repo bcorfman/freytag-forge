@@ -13,6 +13,7 @@ from storygame.authoring.blueprint_compiler import (
     BlueprintCompilationExhausted,
     BlueprintCompiler,
     BlueprintCompilerTransport,
+    _apply_source_opening_suggestions,
     _parse_payload,
 )
 from storygame.authoring.causal_contracts import validate_causal_compiled_story
@@ -92,6 +93,29 @@ def test_openai_transport_normalizes_supported_envelopes(response: object, expec
     )
 
     assert transport.generate("prompt", json_object=False) == expected
+
+
+def test_compiler_projects_explicit_source_opening_targets() -> None:
+    source = _source().model_copy(
+        update={
+            "opening_setup": {
+                "first_available_actions": ("Question the guide.",),
+                "first_action_suggestions": (
+                    {"text": "Question the guide.", "target_kind": "participant", "target_id": "guide"},
+                ),
+            }
+        }
+    )
+    payload = {"opening": {"first_available_actions": ["Inspect the sea."], "first_action_suggestions": []}}
+
+    projected = _apply_source_opening_suggestions(payload, source)
+
+    assert projected["opening"] == {
+        "first_available_actions": ("Question the guide.",),
+        "first_action_suggestions": (
+            {"text": "Question the guide.", "target_kind": "participant", "target_id": "guide"},
+        ),
+    }
 
 
 def test_openai_transport_surfaces_refusal_empty_json_mode_and_timeout_without_secrets():
@@ -359,6 +383,77 @@ def test_blueprint_compiler_retries_invalid_contracts_with_the_local_diagnostic(
     assert transport.calls == [True, True]
 
 
+def test_blueprint_compiler_repair_names_interaction_cross_field_failure() -> None:
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    invalid["interaction_frames"][0]["location_ids"] = ["dock"]
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+
+    compilation = BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source())
+
+    assert compilation.accepted
+    assert "INTERACTION_LOCATION_INCOMPATIBLE: engineer_warning" in transport.prompts[1]
+    assert "interaction_frames[].location_ids must be a subset" in transport.prompts[1]
+    assert "destination_location_id must appear in that frame's location_ids" in transport.prompts[1]
+
+
+def test_blueprint_compiler_repair_explains_interaction_marker_and_exit_rules() -> None:
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    invalid["interaction_frames"][0]["abort_truth_ids"] = ["tradeoff"]
+    invalid["storylets"][1]["abort_truth_ids"] = ["tradeoff"]
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+
+    assert BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source()).accepted
+    assert "INTERACTION_MARKER_INVALID" in transport.prompts[1]
+    assert "must be pairwise distinct" in transport.prompts[1]
+    assert "npc_initiated or either must declare at least one abort_truth_id" in transport.prompts[1]
+
+
+def test_blueprint_compiler_repair_requires_end_state_outcome_truths() -> None:
+    invalid = _candidate()
+    invalid["provenance"] = _source().provenance()
+    invalid["end_states"][0]["required_truth_ids"] = ["remedy"]
+    candidate = _candidate()
+    candidate["provenance"] = _source().provenance()
+
+    class FakeTransport(BlueprintCompilerTransport):
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def generate(self, prompt: str, *, json_object: bool) -> dict[str, object]:
+            self.prompts.append(prompt)
+            return invalid if len(self.prompts) == 1 else candidate
+
+    transport = FakeTransport()
+
+    assert BlueprintCompiler(transport, _profiles(), provider="openai", model="gpt-5.6").compile(_source()).accepted
+    assert "ENDING_TRUTH_MISMATCH" in transport.prompts[1]
+    assert "every outcome's truth_id must also appear" in transport.prompts[1]
+
+
 def test_blueprint_compiler_reports_latent_errors_behind_invalid_source_metadata():
     invalid = _candidate()
     invalid["provenance"] = _source().provenance()
@@ -587,6 +682,17 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
     assert "is mandatory on every optional beat whose purpose is alternative_satisfier" in prompt
     assert "A plausible alternative suspect is not automatically an alternative_satisfier" in prompt
     assert "profile must be the exact Source profile ID JSON string, never an object" in prompt
+    assert 'initial_availability must be exactly one of "present", "away", or "unavailable"' in prompt
+    assert "initial_access must be the JSON boolean true or false" in prompt
+    assert 'kind must be exactly one of "scene_evidence", "document", "testimony", or "item"' in prompt
+    assert 'initiation must be exactly one of "npc_initiated", "player_initiated", or "either"' in prompt
+    assert "agency_modes items may only be engage, refuse, redirect, interrupt, or depart" in prompt
+    assert "priority must be an integer from 0 through 100" in prompt
+    assert "first_action_suggestions" in prompt
+    assert "interaction_frames[].location_ids must be a subset" in prompt
+    assert "destination_location_id must appear in that frame's location_ids" in prompt
+    assert "activation, continuation, completion, recent-use, and abort truth IDs must be pairwise distinct" in prompt
+    assert "npc_initiated or either must declare at least one abort_truth_id" in prompt
     assert "Every failure_forward.consequence_truth_ids array must contain at least one declared truth ID" in prompt
     assert (
         "A required outcome may be assigned to an alternative_satisfier optional beat only when at least one "

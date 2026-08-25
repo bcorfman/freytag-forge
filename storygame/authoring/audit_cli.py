@@ -181,7 +181,7 @@ def _runtime_projection_lines(projection: RuntimeProjectionAudit) -> list[str]:
     lines.extend(
         [
             "",
-            "This is a non-gating loss characterization. It does not synthesize runtime targets or facts.",
+            "This verifies the candidate's full fact-backed runtime projection without synthesizing targets or facts.",
             "",
         ]
     )

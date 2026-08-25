@@ -738,15 +738,31 @@ def _validate_interactions(bound: BoundBlueprint) -> None:
         }
         expected_marker_count = 4 + len(frame.abort_truths)
         if len(markers) != expected_marker_count:
-            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+            raise CausalValidationError(
+                "INTERACTION_MARKER_INVALID",
+                f"interaction frame '{frame.id}' activation, continuation, completion, recent-use, and abort "
+                "truth IDs must be pairwise distinct",
+            )
         if frame.activation_truth.id != storylet.activation_truth_id:
-            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+            raise CausalValidationError(
+                "INTERACTION_MARKER_INVALID",
+                f"interaction frame '{frame.id}' activation marker must equal its storylet activation marker",
+            )
         if frame.completion_truth.id != storylet.completion_truth_id:
-            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+            raise CausalValidationError(
+                "INTERACTION_MARKER_INVALID",
+                f"interaction frame '{frame.id}' completion marker must equal its storylet completion marker",
+            )
         if not {item.id for item in frame.abort_truths} <= set(storylet.abort_truth_ids):
-            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+            raise CausalValidationError(
+                "INTERACTION_MARKER_INVALID",
+                f"interaction frame '{frame.id}' abort markers must be a subset of its storylet abort markers",
+            )
         if len(declaration.agency_modes) < 2 or not declaration.response_obligations:
-            raise CausalValidationError("INTERACTION_AGENCY_REQUIRED", frame.id)
+            raise CausalValidationError(
+                "INTERACTION_AGENCY_REQUIRED",
+                f"interaction frame '{frame.id}' needs at least two agency modes and one response obligation",
+            )
         if declaration.initiation in {"npc_initiated", "either"}:
             initiator = participants[frame.initiator.id].declaration
             present = initiator.initial_availability == "present" and initiator.initial_location_id in {
@@ -761,7 +777,11 @@ def _validate_interactions(bound: BoundBlueprint) -> None:
             if not present and not movable:
                 raise CausalValidationError("INTERACTION_INITIATOR_UNAVAILABLE", frame.id)
             if not frame.abort_truths or not {"refuse", "interrupt", "depart"} & set(declaration.agency_modes):
-                raise CausalValidationError("INTERACTION_AGENCY_REQUIRED", frame.id)
+                raise CausalValidationError(
+                    "INTERACTION_AGENCY_REQUIRED",
+                    f"interaction frame '{frame.id}' with initiation npc_initiated or either must declare at least "
+                    "one abort_truth_id and allow refuse, interrupt, or depart",
+                )
 
     for storylet in story.storylets:
         linked = {frame.id for frame in bound.interaction_frames if frame.storylet.id == storylet.id}
@@ -796,6 +816,13 @@ def _validate_endings(bound: BoundBlueprint, outcome_ids: set[str]) -> None:
     for end_state in bound.end_states:
         if set(outcome_ids) - {outcome.id for outcome in end_state.outcomes}:
             raise CausalValidationError("ENDING_NOT_VIABLE", f"end state '{end_state.id}' omits an outcome")
+        outcome_truth_ids = {outcome.truth.id for outcome in end_state.outcomes}
+        required_truth_ids = {truth.id for truth in end_state.truths}
+        if not outcome_truth_ids <= required_truth_ids:
+            raise CausalValidationError(
+                "ENDING_TRUTH_MISMATCH",
+                f"end state '{end_state.id}' must require the truth for every required outcome",
+            )
 
 
 def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompiledStory) -> CausalCompiledStory:
