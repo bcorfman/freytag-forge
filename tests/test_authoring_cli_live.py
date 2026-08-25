@@ -141,6 +141,55 @@ def test_autopromote_registers_an_accepted_candidate_as_the_runtime_fixture(
     assert manifest["fixtures"] == {"sci-fi": reviewed.name}
 
 
+def test_autopromote_candidate_promotes_an_existing_accepted_candidate_without_a_provider(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+):
+    candidate = tmp_path / "signal.candidate.json"
+    fixture_root = tmp_path / "compiled"
+    source_hash = _source().source_hash
+    candidate.write_text(
+        json.dumps(
+            {
+                "accepted": True,
+                "diagnostics": [],
+                "request_count": 1,
+                "story": _Transport(source_hash).generate("", json_object=True),
+                "validation_results": ["contract_valid", "critic_valid"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        cli.main(
+            [
+                "--autopromote-candidate",
+                str(candidate),
+                "--runtime-fixture-root",
+                str(fixture_root),
+            ]
+        )
+        == 0
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    reviewed = Path(result["reviewed_artifact"])
+    manifest = json.loads((fixture_root / "runtime-fixtures.json").read_text(encoding="utf-8"))
+    assert result["candidate"] == str(candidate)
+    assert json.loads(reviewed.read_text(encoding="utf-8"))["schema_version"] == "reviewed-story-blueprint-v2"
+    assert manifest["fixtures"] == {"sci-fi": reviewed.name}
+
+
+def test_autopromote_candidate_rejects_a_missing_or_malformed_file(tmp_path: Path):
+    with pytest.raises(SystemExit, match="CANDIDATE_NOT_FOUND"):
+        cli.main(["--autopromote-candidate", str(tmp_path / "missing.candidate.json")])
+
+    malformed = tmp_path / "malformed.candidate.json"
+    malformed.write_text("{", encoding="utf-8")
+    with pytest.raises(SystemExit, match="CANDIDATE_OUTPUT_INVALID"):
+        cli.main(["--autopromote-candidate", str(malformed)])
+
+
 def test_live_command_requires_gate_and_model_selection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     inventory = tmp_path / "outlines.yaml"
     _inventory(inventory)

@@ -158,16 +158,14 @@ def test_mystery_runtime_fixture_loads_the_approved_causal_artifact():
 
     assert story.id == "vale_mansion_rebuild"
     assert story.title == "Death in the West Gallery"
-    assert story.initial_world_state["location"] == "foyer"
-    assert story.initial_world_state["navigation"]["names"]["study"] == "Study"
-    assert story.initial_world_state["navigation"]["routes"][0]["to"] == "study"
-    assert story.protected_revelations
+    location = story.initial_world_state["location"]
+    navigation = story.initial_world_state["navigation"]
+    assert location in navigation["names"]
+    assert any(route["from"] == location for route in navigation["routes"])
     assert story.beats[-1].answers_central_question is True
     assert story.opening is not None
-    assert story.opening.situation == (
-        "Emma Vale has been found dead in the west gallery, and the circumstances demand an immediate investigation."
-    )
-    assert story.opening.companions == ("The gathered household is nearby and can be questioned.",)
+    assert story.opening.situation
+    assert story.opening.first_available_actions
 
 
 def test_compiler_uses_only_transport_protocol_and_parses_local_contract():

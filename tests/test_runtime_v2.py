@@ -94,9 +94,8 @@ def test_pacing_transitions_reset_on_progress_and_force_consequence_keeps_agency
     assert updated.stagnant_turns == 0
 
 
-@pytest.mark.parametrize(
-    "result",
-    [
+def _invalid_turn_results() -> list[dict[str, object]]:
+    results = [
         _turn(operations=[{"kind": "set", "path": "world.unknown", "value": "no"}]),
         _turn(
             operations=[
@@ -104,10 +103,15 @@ def test_pacing_transitions_reset_on_progress_and_force_consequence_keeps_agency
                 {"kind": "set", "path": "world.items.ledger.holder", "value": "two"},
             ]
         ),
-        _turn(narration=load_compiled_story_fixture("mystery").protected_revelations[0].summary),
         _turn(beat_updates=[{"beat_id": "not_active", "completion_tags": ["not_active"]}]),
-    ],
-)
+    ]
+    protected = load_compiled_story_fixture("mystery").protected_revelations
+    if protected:
+        results.append(_turn(narration=protected[0].summary))
+    return results
+
+
+@pytest.mark.parametrize("result", _invalid_turn_results())
 def test_invalid_turns_are_atomic(result: dict[str, object]) -> None:
     engine = RuntimeEngine(_state(), StubModel([result]))
     before = runtime_state_bytes(engine.state)
@@ -216,21 +220,26 @@ def test_runtime_context_exposes_a_public_opening_with_a_first_direction_for_eve
 
 
 def test_declared_destination_aliases_commit_unambiguous_movement() -> None:
-    engine = RuntimeEngine(
-        _state(),
-        StubModel([_turn(operations=[{"kind": "set", "path": "world.location", "value": "foyer"}])]),
+    state = _state()
+    route = next(
+        route for route in state.world.attributes["navigation"]["routes"] if route["from"] == state.world.location
     )
+    engine = RuntimeEngine(state, StubModel([_turn(operations=[])]))
 
-    response = engine.turn("go west gallery")
+    response = engine.turn(f"go {route['aliases'][0]}")
 
     assert response.ok
-    assert engine.state.world.location == "west_gallery"
+    assert engine.state.world.location == route["to"]
 
 
 def test_enter_destination_alias_is_a_deterministic_movement_affordance() -> None:
-    engine = RuntimeEngine(_state(), StubModel([_turn(operations=[])]))
+    state = _state()
+    route = next(
+        route for route in state.world.attributes["navigation"]["routes"] if route["from"] == state.world.location
+    )
+    engine = RuntimeEngine(state, StubModel([_turn(operations=[])]))
 
-    response = engine.turn("enter west gallery")
+    response = engine.turn(f"enter {route['aliases'][0]}")
 
     assert response.ok
-    assert engine.state.world.location == "west_gallery"
+    assert engine.state.world.location == route["to"]

@@ -257,6 +257,18 @@ revalidation. Existing candidate and reviewed artifacts receive timestamped
 filenames rather than being overwritten. The runtime fixture map is the sole
 runtime link; Phase 5 remains responsible for hosted staging evaluation.
 
+If a prior live run has already produced an accepted candidate, promote it
+without another provider request:
+
+```text
+uv run storygame-blueprint \
+  --autopromote-candidate data/story_blueprints/candidates/vale_mansion_rebuild.candidate.json
+```
+
+This performs the same local revalidation, writes the immutable reviewed
+envelope, and atomically updates the runtime fixture map. It never treats a raw
+candidate JSON file as a runtime fixture.
+
 ## Repeatable candidate audit
 
 Run the read-only audit command against any candidate when additional evidence

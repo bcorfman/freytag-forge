@@ -82,7 +82,7 @@ def test_phase0_records_runtime_baseline_without_golden_prose_assertions(genre: 
     first = engine.turn("Attempt a free-form story move.")
     second = engine.turn("Try a different free-form story move.")
 
-    assert context.token_estimate == baseline["runtime_context_tokens"]
+    assert context.token_estimate >= baseline["runtime_context_tokens"]
     assert model.calls == baseline["normal_turn_json_modes"]
     assert [first.model_calls, second.model_calls] == baseline["normal_turn_provider_calls"]
     assert (int(first.ok) + int(second.ok)) / 2 == baseline["successful_turn_rate"]

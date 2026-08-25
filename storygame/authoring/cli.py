@@ -28,6 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
     selection.add_argument("--outline-id")
     selection.add_argument("--story", type=Path)
     selection.add_argument("--replay-diagnostic", type=Path, help="replay one diagnostic artifact without a provider")
+    selection.add_argument(
+        "--autopromote-candidate",
+        type=Path,
+        help="promote an already accepted candidate without a provider request",
+    )
     parser.add_argument("--inventory", type=Path, default=Path("data/story_outlines.yaml"))
     parser.add_argument("--profile-root", type=Path, default=Path("data/genre_profiles"))
     parser.add_argument("--live", action="store_true", help="acknowledge an offline paid provider request")
@@ -238,6 +243,20 @@ def _replay_diagnostic(path: Path, profile_root: Path) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.autopromote_candidate:
+            candidate_path = args.autopromote_candidate
+            try:
+                candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+            except FileNotFoundError as exc:
+                raise CompilationError("CANDIDATE_NOT_FOUND", f"candidate '{candidate_path}' does not exist") from exc
+            except json.JSONDecodeError as exc:
+                raise CompilationError("CANDIDATE_OUTPUT_INVALID", "candidate is not JSON") from exc
+            story = candidate.get("story") if isinstance(candidate, dict) else None
+            if not isinstance(story, dict) or not isinstance(story.get("id"), str):
+                raise CompilationError("CANDIDATE_OUTPUT_INVALID", "candidate does not have a stable story ID")
+            reviewed = _autopromote(candidate_path, story, args.runtime_fixture_root, args.profile_root)
+            print(json.dumps({"candidate": str(candidate_path), "reviewed_artifact": str(reviewed)}, sort_keys=True))
+            return 0
         if args.replay_diagnostic:
             replay = _replay_diagnostic(args.replay_diagnostic, args.profile_root)
             print(
