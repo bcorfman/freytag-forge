@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -22,6 +23,40 @@ def _request(base_url: str, path: str, *, payload: dict[str, object] | None = No
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         raise AssertionError(f"{request.full_url} returned HTTP {exc.code}: {detail}") from exc
+
+
+def _retry_transient_turn(request_turn: Callable[[], object]) -> object:
+    """Allow one fresh, uncommitted E2E attempt after exhausted model recovery."""
+    for attempt in range(2):
+        try:
+            return request_turn()
+        except AssertionError as exc:
+            transient = "HTTP 503:" in str(exc) and '"status":"runtime_failure"' in str(exc)
+            if not transient or attempt == 1:
+                raise
+    raise AssertionError("unreachable")
+
+
+def test_transient_runtime_failure_retries_one_uncommitted_turn() -> None:
+    calls = 0
+
+    def request_turn() -> object:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise AssertionError('https://demo/api/v1/turn returned HTTP 503: {"status":"runtime_failure"}')
+        return {"status": "ok"}
+
+    assert _retry_transient_turn(request_turn) == {"status": "ok"}
+    assert calls == 2
+
+
+def test_non_transient_or_repeated_turn_failures_are_not_hidden() -> None:
+    def request_turn() -> object:
+        raise AssertionError("https://demo/api/v1/turn returned HTTP 400: invalid request")
+
+    with pytest.raises(AssertionError, match="HTTP 400"):
+        _retry_transient_turn(request_turn)
 
 
 @pytest.mark.live_e2e
@@ -56,10 +91,12 @@ def test_deployed_hosted_demo_identity_pages_and_session_flow() -> None:
     session = _request(api_base_url, "/api/v1/session", payload={"genre": "mystery"})
     session_id = session["session_id"]
     assert session["state"]["opening"]
-    turn = _request(
-        api_base_url,
-        "/api/v1/turn",
-        payload={"session_id": session_id, "genre": "mystery", "command": "I investigate the foyer."},
+    turn = _retry_transient_turn(
+        lambda: _request(
+            api_base_url,
+            "/api/v1/turn",
+            payload={"session_id": session_id, "genre": "mystery", "command": "I investigate the foyer."},
+        )
     )
     assert turn["status"] == "ok"
     assert turn["state"]["turn_index"] == 1
