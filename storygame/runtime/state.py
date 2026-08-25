@@ -213,9 +213,59 @@ def _bootstrap_facts(
 
 
 def _bootstrap_narrative_facts(package: RuntimeNarrativePackage, facts: FactStore) -> None:
+    """Project reviewed declarations into canonical facts without mutating the package."""
+
     for truth_id in package.opening_truth_ids:
         if truth_id not in package.protected_truth_ids:
             facts.assert_fact(Fact(predicate="knows", subject="player", object=truth_id))
+    for knowledge in package.party_knowledge:
+        for truth_id in knowledge.truth_ids:
+            facts.assert_fact(Fact(predicate="knows", subject=knowledge.participant_id, object=truth_id))
+    for participant in package.participants:
+        if participant.initial_location_id is not None:
+            facts.assert_fact(Fact(predicate="at", subject=participant.id, object=participant.initial_location_id))
+        if participant.public_name is not None:
+            facts.assert_fact(Fact(predicate="public_name", subject=participant.id, value=participant.public_name))
+        if participant.public_role is not None:
+            facts.assert_fact(Fact(predicate="public_role", subject=participant.id, value=participant.public_role))
+        if participant.public_description is not None:
+            facts.assert_fact(
+                Fact(predicate="public_description", subject=participant.id, value=participant.public_description)
+            )
+        if participant.initial_availability is not None:
+            facts.assert_fact(
+                Fact(predicate="npc_availability", subject=participant.id, value=participant.initial_availability)
+            )
+            if participant.initial_availability == "present" and participant.initial_location_id is not None:
+                facts.assert_fact(
+                    Fact(predicate="present", subject=participant.id, object=participant.initial_location_id)
+                )
+                facts.assert_fact(
+                    Fact(predicate="npc_available", subject=participant.id, object=participant.initial_location_id)
+                )
+    for subject in package.scene_subjects:
+        facts.assert_fact(Fact(predicate="at", subject=subject.id, object=subject.location_id))
+        facts.assert_fact(Fact(predicate="scene_subject", subject=subject.id, value=subject.kind))
+        facts.assert_fact(Fact(predicate="inspectable", subject=subject.id, value=str(subject.inspectable).lower()))
+        facts.assert_fact(Fact(predicate="public_description", subject=subject.id, value=subject.public_description))
+        facts.assert_fact(Fact(predicate="subject_discovered", subject=subject.id, value="false"))
+    for realization in package.evidence_realizations:
+        facts.assert_fact(Fact(predicate="at", subject=realization.id, object=realization.location_id))
+        facts.assert_fact(Fact(predicate="evidence_kind", subject=realization.id, value=realization.kind))
+        facts.assert_fact(
+            Fact(predicate="public_description", subject=realization.id, value=realization.public_description)
+        )
+        facts.assert_fact(Fact(predicate="evidence_discovered", subject=realization.id, value="false"))
+        if realization.custody_holder_id is not None:
+            facts.assert_fact(Fact(predicate="custody", subject=realization.id, object=realization.custody_holder_id))
+        if realization.scene_subject_id is not None:
+            facts.assert_fact(
+                Fact(predicate="evidence_subject", subject=realization.id, object=realization.scene_subject_id)
+            )
+    for encounter in package.group_encounters:
+        facts.assert_fact(Fact(predicate="group_at", subject=encounter.id, object=encounter.location_id))
+        for participant_id in encounter.participant_ids:
+            facts.assert_fact(Fact(predicate="group_member", subject=encounter.id, object=participant_id))
     seed_storylet_facts(package, facts)
 
 

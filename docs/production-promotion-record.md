@@ -1,8 +1,9 @@
 # Production promotion record
 
-Complete this record immediately after the SHA-pinned production workflow
-succeeds. This repository cannot populate it automatically because deployment
-IDs, production model revisions, and the human approval are operator-owned.
+Complete this operator-owned record immediately after a SHA-pinned production
+workflow succeeds. Deployment IDs, model revisions, approval, and the
+observation outcome cannot be populated by repository automation. See
+[Railway staging and production promotion](railway-production-promotion.md).
 
 | Field | Value |
 | --- | --- |

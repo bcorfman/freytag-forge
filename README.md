@@ -20,9 +20,9 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   disposable reply.
 - **Your move stays yours.** Engage, refuse, redirect, interrupt, or walk away;
   story pressure creates opportunity without turning dialogue into a menu.
-- **Worlds with a pulse.** Authors can declare who is where, what can be
-  examined, and which evidence is genuinely available—so future scenes have
-  solid ground beneath the drama.
+- **Worlds with a pulse.** Present characters, inspectable scenes, available
+  evidence, and evolving encounters stay grounded in the world—not guessed
+  from a line of prose.
 - **Every lead has a path.** Before a story ships, Freytag Forge checks that its
   actors, evidence, witnesses, and opening conversations can actually meet in
   the same playable world.

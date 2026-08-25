@@ -1,6 +1,13 @@
 # Freytag Forge contributor rules
 
-- Read `/docs` before implementation. The contributor rules in this file are the authoritative migration and architecture guardrails.
+- Read `/docs` before implementation. Start with `docs/PRD.md`, then use the
+  focused authoring, test, transport, or deployment runbook for the task. The
+  contributor rules in this file are the authoritative migration and
+  architecture guardrails.
+- Treat documentation as a concise map, not an executable authority. Before
+  changing a CLI, environment variable, test/CI behavior, hosted endpoint, or
+  deployment flow, verify its current behavior in command help, configuration,
+  source, or workflow YAML; update the focused runbook in the same change.
 - Build one story-agnostic interactive-fiction engine. Every engine behavior, rule, contract, validator, and test added for one outline or genre must generalize to every outline in `data/story_outlines.yaml`; do not add mystery- or story-specific runtime branches unless they are declarative, validated story-package data.
 - Preserve the distinct authoring, runtime, and artifact boundaries: facts are the sole canonical mutable runtime truth; packages and prose are inputs or projections, never competing authorities.
 - Keep ordinary gameplay LLM-proposal-first. Restrict parser handling to control-plane commands (`save`, `load`, `quit`, `help`); normalize deterministic affordances such as direction, inventory, and unambiguous visible-item aliases through the shared proposal/commit contract.
@@ -25,6 +32,10 @@
 - Do not pin CI, benchmark, documentation, or local pytest commands to a fixed
   collected-test count. The collection guard must enforce test quality through
   tiers and duplicate detection, while collection totals remain informational.
+- Keep documentation current and non-duplicative: put product/runtime contracts
+  in `docs/PRD.md`; keep authoring, Cloudflare, test, staging, and promotion
+  details in their focused documents; link rather than restating them. Preserve
+  historical release records as records, not current operating guidance.
 - In this WSL environment, pytest's temporary capture files can be created under
   the Windows-mounted `TMPDIR` and cause collection/capture-cleanup failures.
   Always use `TMPDIR=/tmp` when running pytest, for example:
