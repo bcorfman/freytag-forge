@@ -4,21 +4,52 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from storygame.authoring.causal_contracts import CausalCompiledStory, Consequence, DramaticSpine, Storylet
+from storygame.authoring.causal_contracts import (
+    CausalCompiledStory,
+    ConnectedRoute,
+    Consequence,
+    DramaticSpine,
+    EvidenceOpportunity,
+    EvidenceRealization,
+    GroupEncounter,
+    InteractionFrame,
+    KnowledgeProtection,
+    Location,
+    NpcMovementPlan,
+    NpcPerformanceProfile,
+    Participant,
+    PartyKnowledge,
+    SceneSubject,
+    Storylet,
+    Truth,
+)
 from storygame.authoring.contracts import CompiledStory
 from storygame.runtime.facts import Fact, FactStore
 
 
 @dataclass(frozen=True)
 class RuntimeNarrativePackage:
-    """Read-only reviewed dramatic data; facts remain the session authority."""
+    """Read-only reviewed declarations; facts remain the session authority."""
 
     source_id: str
     source_hash: str
     reviewed_candidate_sha256: str | None
     dramatic_spine: DramaticSpine | None
+    truths: tuple[Truth, ...]
+    participants: tuple[Participant, ...]
+    npc_performance_profiles: tuple[NpcPerformanceProfile, ...]
+    locations: tuple[Location, ...]
+    connected_routes: tuple[ConnectedRoute, ...]
+    movement_plans: tuple[NpcMovementPlan, ...]
+    scene_subjects: tuple[SceneSubject, ...]
+    evidence_opportunities: tuple[EvidenceOpportunity, ...]
+    evidence_realizations: tuple[EvidenceRealization, ...]
+    group_encounters: tuple[GroupEncounter, ...]
+    party_knowledge: tuple[PartyKnowledge, ...]
+    knowledge_protections: tuple[KnowledgeProtection, ...]
     storylets: tuple[Storylet, ...]
     consequences: tuple[Consequence, ...]
+    interaction_frames: tuple[InteractionFrame, ...]
     protected_truth_ids: frozenset[str]
     opening_truth_ids: tuple[str, ...]
 
@@ -34,13 +65,28 @@ class RuntimeNarrativeProjection:
 def narrative_package_from_story(
     story: CausalCompiledStory, *, reviewed_candidate_sha256: str | None = None
 ) -> RuntimeNarrativePackage:
+    """Keep reviewed declarations immutable beside the mutable fact state."""
+
     return RuntimeNarrativePackage(
         source_id=story.provenance.source_id,
         source_hash=story.provenance.source_hash,
         reviewed_candidate_sha256=reviewed_candidate_sha256,
         dramatic_spine=story.dramatic_spine,
+        truths=story.truths,
+        participants=story.participants,
+        npc_performance_profiles=story.npc_performance_profiles,
+        locations=story.locations,
+        connected_routes=story.connected_routes,
+        movement_plans=story.movement_plans,
+        scene_subjects=story.scene_subjects,
+        evidence_opportunities=story.evidence_opportunities,
+        evidence_realizations=story.evidence_realizations,
+        group_encounters=story.group_encounters,
+        party_knowledge=story.party_knowledge,
+        knowledge_protections=story.knowledge_protections,
         storylets=story.storylets,
         consequences=story.consequences,
+        interaction_frames=story.interaction_frames,
         protected_truth_ids=frozenset(item.truth_id for item in story.knowledge_protections),
         opening_truth_ids=story.opening_truth_ids,
     )
@@ -121,3 +167,11 @@ def seed_storylet_facts(package: RuntimeNarrativePackage, facts: FactStore) -> N
             "storylet_recently_used",
         ):
             facts.assert_fact(Fact(predicate=predicate, subject=storylet.id, value="false"))
+    for frame in package.interaction_frames:
+        for predicate in (
+            "interaction_active",
+            "interaction_completed",
+            "interaction_aborted",
+            "interaction_recently_used",
+        ):
+            facts.assert_fact(Fact(predicate=predicate, subject=frame.id, value="false"))

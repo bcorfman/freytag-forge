@@ -1,23 +1,27 @@
 # V2 staged and production acceptance matrix
 
-This is the Phase 0 acceptance matrix for the V2 migration. It defines the same six checks for each frozen genre fixture in both isolated channels. Phase 1 provisions staging; until then, production evidence is V1 comparison-only evidence and no V2 result may be inferred from it.
+This is the manual acceptance checklist for each frozen genre fixture in
+staging (`/dev/`) and production (`/`). Record the deployed SHA, channel,
+fixture, timestamp, and request/response evidence. The current workflow
+automates deployment identity, hosted E2E, and its named V2 test slice; it does
+not emit this complete matrix. Production evidence is valid only for a SHA that
+first passed staging.
 
-| Fixture | Opening | Freeform turn | Malformed-model failure | Persistence round-trip | Protected revelation | Session isolation |
+| Fixture | Opening | Freeform turn | Malformed model | Save/load | Protected revelation | Session isolation |
 | --- | --- | --- | --- | --- | --- | --- |
 | Mystery investigation | Required | Required | Required | Required | Required | Required |
 | Fantasy journey | Required | Required | Required | Required | Required | Required |
 | Sci-fi technical crisis | Required | Required | Required | Required | Required | Required |
 | Relationship social scene | Required | Required | Required | Required | Required | Required |
 
-For every cell, run the check independently against `/dev/` + the staging API and `/` + the production API. A passing check records the deployed SHA, channel, fixture ID, request/response evidence, and timestamp. A production result is valid only for a SHA that first passed the complete staging matrix.
-
 | Check | Passing evidence |
 | --- | --- |
-| Opening | A new session returns player-visible opening prose and initial state. |
-| Freeform turn | An unconstrained player move returns a typed successful turn and commits only valid state. |
-| Malformed-model failure | Invalid provider output returns the typed fail-closed error; state and persistence remain unchanged. |
-| Persistence round-trip | Save, mutate, and load restores the saved V2 runtime snapshot. |
-| Protected revelation | Protected content is absent from visible output and rejected from invalid updates. |
-| Session isolation | Two sessions, and the two channels, cannot observe or mutate one another's state. |
+| Opening | New session returns public opening prose and initial state. |
+| Freeform turn | An unconstrained move succeeds and commits only valid state. |
+| Malformed model | Typed fail-closed error leaves state and persistence unchanged. |
+| Save/load | Loading restores the saved V2 snapshot. |
+| Protected revelation | Protected content is absent from output and rejected from updates. |
+| Session isolation | Sessions and deployment channels cannot observe or mutate one another. |
 
-The checked-in channel contract is [`deployment/channel-contract.json`](../deployment/channel-contract.json); its unit tests protect the root and `/dev/` isolation invariants before a workflow or deployment can claim compliance.
+[`deployment/channel-contract.json`](../deployment/channel-contract.json) and
+its tests enforce root/`/dev/` channel isolation before deployment claims.

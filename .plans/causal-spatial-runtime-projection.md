@@ -355,26 +355,26 @@ dialogue-capable interaction cannot be reviewed.
 
 ### Phase 4 — Runtime projection, bootstrap, and context
 
-- [ ] Retain all spatial, performance, group, evidence, and interaction
+- [x] Retain all spatial, performance, group, evidence, and interaction
   declarations in `RuntimeNarrativePackage`.
-- [ ] Bootstrap `at`, `present`, public identity/role, availability,
+- [x] Bootstrap `at`, `present`, public identity/role, availability,
   subject location, evidence custody, and discovery facts.
-- [ ] Seed explicit false-valued interaction activation/completion/abort/
+- [x] Seed explicit false-valued interaction activation/completion/abort/
   recent-use facts without making package data mutable.
-- [ ] Keep movement plans immutable; change location and availability only
+- [x] Keep movement plans immutable; change location and availability only
   through validated fact operations.
-- [ ] Add observer-safe current targets and speaker-private performance,
+- [x] Add observer-safe current targets and speaker-private performance,
   knowledge, motive, relationship, stance, and recent-interaction slices.
-- [ ] Expose active interaction frame and continuation obligations before other
+- [x] Expose active interaction frame and continuation obligations before other
   eligible storylets, while preserving freeform play.
-- [ ] Keep off-scene participants, unavailable subjects, and protected
+- [x] Keep off-scene participants, unavailable subjects, and protected
   information out of player-visible context.
 
 **Tests:** save/load and artifact integrity; off-scene filtering; speaker versus
 observer knowledge; profile projection; active-interaction continuation;
 movement-plan eligibility; all genre fixtures use the same projection code.
 
-**Exit:** runtime contains enough canonical and immutable context to author a
+**Exit: [x]** runtime contains enough canonical and immutable context to author a
 grounded conversation without inventing who, where, why, or what the speaker
 knows.
 
