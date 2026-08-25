@@ -61,6 +61,10 @@ than the origin. Opening orientation is provided only on the initial turn;
 later turns must address the player's current action and cannot reuse opening
 prose unless the player explicitly asks to look.
 
+The player-facing opening renders only the scene, player context, and public
+situation; authoring metadata such as arrival context and scene purpose is not
+repeated as prose.
+
 The NPC target is continuity, not decorative text. A declared NPC must remain
 addressable only when present, answer as that NPC from permitted knowledge, and
 retain interaction history, relationship state, and bounded stance changes.
