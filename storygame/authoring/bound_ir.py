@@ -125,6 +125,36 @@ class BoundGroupEncounter:
 
 
 @dataclass(frozen=True)
+class BoundNpcPerformanceProfile:
+    declaration: object
+    participant: BoundSymbol[object]
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
+class BoundInteractionFrame:
+    declaration: object
+    storylet: BoundSymbol[object]
+    initiator: BoundSymbol[object]
+    participants: tuple[BoundSymbol[object], ...]
+    locations: tuple[BoundSymbol[object], ...]
+    permitted_movement_plans: tuple[BoundMovementPlan, ...]
+    activation_truth: BoundSymbol[object]
+    continuation_truth: BoundSymbol[object]
+    completion_truth: BoundSymbol[object]
+    abort_truths: tuple[BoundSymbol[object], ...]
+    recent_use_truth: BoundSymbol[object]
+    failure_forward_frames: tuple[BoundSymbol[object], ...]
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
 class BoundPartyKnowledge:
     declaration: object
     participant: BoundSymbol[object]
@@ -238,6 +268,8 @@ class BoundBlueprint:
     end_states: tuple[BoundEndState, ...]
     consequences: tuple[BoundSymbol[object], ...] = ()
     storylets: tuple[BoundSymbol[object], ...] = ()
+    npc_performance_profiles: tuple[BoundNpcPerformanceProfile, ...] = ()
+    interaction_frames: tuple[BoundInteractionFrame, ...] = ()
 
     def ids(self, namespace: Namespace) -> tuple[str, ...]:
         return tuple(sorted(item.id for item in self.symbols if item.symbol.namespace is namespace))
@@ -283,6 +315,7 @@ def bind_blueprint(story: object) -> BoundBlueprint:
         )
         for item in story.movement_plans
     )
+    movement_plans_by_id = {item.id: item for item in movement_plans}
     subjects = tuple(
         BoundSceneSubject(
             item,
@@ -310,6 +343,29 @@ def bind_blueprint(story: object) -> BoundBlueprint:
             refs(Namespace.TRUTH, item.introduction_truth_ids),
         )
         for item in story.group_encounters
+    )
+    profiles = tuple(
+        BoundNpcPerformanceProfile(item, declaration(Namespace.PARTICIPANT, item.participant_id))
+        for item in story.npc_performance_profiles
+    )
+    storylets = tuple(declaration(Namespace.STORYLET, item.id) for item in story.storylets)
+    storylets_by_id = {item.id: item for item in storylets}
+    frames = tuple(
+        BoundInteractionFrame(
+            item,
+            storylets_by_id[item.storylet_id],
+            declaration(Namespace.PARTICIPANT, item.initiator_id),
+            refs(Namespace.PARTICIPANT, item.participant_ids),
+            refs(Namespace.LOCATION, item.location_ids),
+            tuple(movement_plans_by_id[value] for value in item.permitted_movement_plan_ids),
+            declaration(Namespace.TRUTH, item.activation_truth_id),
+            declaration(Namespace.TRUTH, item.continuation_truth_id),
+            declaration(Namespace.TRUTH, item.completion_truth_id),
+            refs(Namespace.TRUTH, item.abort_truth_ids),
+            declaration(Namespace.TRUTH, item.recent_use_truth_id),
+            refs(Namespace.INTERACTION_FRAME, item.failure_forward_frame_ids),
+        )
+        for item in story.interaction_frames
     )
     outcomes = tuple(
         BoundOutcome(item, declaration(Namespace.TRUTH, item.truth_id)) for item in story.required_outcomes
@@ -433,5 +489,7 @@ def bind_blueprint(story: object) -> BoundBlueprint:
             for item in story.end_states
         ),
         tuple(declaration(Namespace.CONSEQUENCE, item.id) for item in story.consequences),
-        tuple(declaration(Namespace.STORYLET, item.id) for item in story.storylets),
+        storylets,
+        profiles,
+        frames,
     )

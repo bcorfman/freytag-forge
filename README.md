@@ -13,6 +13,13 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
   relationship shift becomes durable story truth.
 - **Characters with boundaries.** NPC replies stay tied to the right speaker,
   current scene, and knowledge they have actually earned.
+- **Voices built to hold up.** Authors shape distinct manners, rhythms, word
+  choices, and physical tells—without freezing characters into canned lines.
+- **Conversations with momentum.** Dramatic interactions can open, continue,
+  change course, fail forward, or end cleanly instead of collapsing into one
+  disposable reply.
+- **Your move stays yours.** Engage, refuse, redirect, interrupt, or walk away;
+  story pressure creates opportunity without turning dialogue into a menu.
 - **Worlds with a pulse.** Authors can declare who is where, what can be
   examined, and which evidence is genuinely available—so future scenes have
   solid ground beneath the drama.
@@ -25,7 +32,7 @@ verb menu—and turns every attempt into a grounded, persistent story beat.
 - **One engine, every genre.** Mystery, fantasy, sci-fi, and relationship drama
   share the same fact-backed rules—no one-story tricks.
 
-**Less prompt luck. More playable story.**
+**Less prompt luck. More character, consequence, and playable drama.**
 
 ## Play online
 

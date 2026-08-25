@@ -37,6 +37,8 @@ class CausalProfile(_Profile):
     minimum_alternate_progression_paths: int = Field(default=0, ge=0, le=16)
     minimum_initial_social_contacts: int = Field(default=1, ge=0, le=64)
     minimum_evidence_route_diversity: int = Field(default=2, ge=0, le=16)
+    minimum_conversational_route_diversity: int = Field(default=2, ge=1, le=16)
+    minimum_interaction_agency_modes: int = Field(default=2, ge=1, le=5)
 
 
 class CausalProfileRegistry:
@@ -115,5 +117,22 @@ class CausalProfileRegistry:
                 raise CausalValidationError(
                     "EVIDENCE_ROUTE_DIVERSITY_REQUIRED",
                     f"requires {profile.minimum_evidence_route_diversity} evidence realization kinds",
+                )
+        if bound.interaction_frames:
+            if any(
+                len(set(item.declaration.allowed_tactics)) < profile.minimum_conversational_route_diversity
+                for item in bound.interaction_frames
+            ):
+                raise CausalValidationError(
+                    "CONVERSATIONAL_ROUTE_DIVERSITY_REQUIRED",
+                    f"requires {profile.minimum_conversational_route_diversity} tactics per interaction",
+                )
+            if any(
+                len(set(item.declaration.agency_modes)) < profile.minimum_interaction_agency_modes
+                for item in bound.interaction_frames
+            ):
+                raise CausalValidationError(
+                    "INTERACTION_AGENCY_REQUIRED",
+                    f"requires {profile.minimum_interaction_agency_modes} player agency modes per interaction",
                 )
         return candidate

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phases 0–1 complete; Phases 2–9 proposed.** This plan closes two connected
+**Phases 0–2 complete; Phases 3–9 proposed.** This plan closes two connected
 gaps between an approved causal blueprint and a playable runtime:
 
 1. reviewed people, subjects, evidence, and groups must survive compilation as a
@@ -311,17 +311,17 @@ declaration; no runtime projection changes yet.
 
 ### Phase 2 — NPC performance and storylet interaction contracts
 
-- [ ] Add `NpcPerformanceProfile` and `InteractionFrame` contracts and
+- [x] Add `NpcPerformanceProfile` and `InteractionFrame` contracts and
   namespaces.
-- [ ] Link dialogue-capable storylets to frames and validate initiator,
+- [x] Link dialogue-capable storylets to frames and validate initiator,
   participant, location, movement-plan, completion, abort, and tactic
   references.
-- [ ] Require NPC-initiated frames to have a present-or-movable initiator and a
+- [x] Require NPC-initiated frames to have a present-or-movable initiator and a
   bounded completion or failure-forward exit.
-- [ ] Distinguish public voice/manner from protected motives and knowledge.
-- [ ] Model activation, continuation, completion, abort, and recent-use markers
+- [x] Distinguish public voice/manner from protected motives and knowledge.
+- [x] Model activation, continuation, completion, abort, and recent-use markers
   separately so a first utterance does not automatically finish an interaction.
-- [ ] Add generic profile minima for conversational route diversity and
+- [x] Add generic profile minima for conversational route diversity and
   participant agency.
 
 **Tests:** missing profile, unknown initiator, incompatible location, frame
@@ -329,7 +329,7 @@ without dialogue realization, unreachable permitted movement, protected motive
 in public profile, immediate-completion-only interaction, failure-forward
 cycle, and an NPC frame that gives the player no legal response.
 
-**Exit:** a reviewed social storylet is a coherent multi-turn dramatic
+**Exit: [x]** a reviewed social storylet is a coherent multi-turn dramatic
 situation, not only a destination fact or dialogue-mode label.
 
 ### Phase 3 — Compiler planning and conversation critics

@@ -59,6 +59,27 @@ class Participant(_Contract):
     public_description: str | None = Field(default=None, min_length=1, max_length=1200)
     initial_location_id: str | None = Field(default=None, pattern=_ID, max_length=80)
     initial_availability: Literal["present", "away", "unavailable"] | None = None
+    performance_profile_id: str | None = Field(default=None, pattern=_ID, max_length=80)
+    movement_plan_ids: tuple[str, ...] = Field(default=(), max_length=32)
+
+
+class NpcVoiceProfile(_Contract):
+    model_config = ConfigDict(extra="forbid", frozen=True, serialize_by_alias=True)
+
+    voice_register: str = Field(alias="register", serialization_alias="register", min_length=1, max_length=240)
+    cadence: str = Field(min_length=1, max_length=240)
+    diction: str = Field(min_length=1, max_length=240)
+    avoidances: tuple[str, ...] = Field(default=(), max_length=16)
+
+
+class NpcPerformanceProfile(_Contract):
+    """Public performance guidance; never private motive or knowledge."""
+
+    id: str = Field(pattern=_ID, max_length=80)
+    participant_id: str = Field(pattern=_ID, max_length=80)
+    public_manner: str = Field(min_length=1, max_length=600)
+    voice: NpcVoiceProfile
+    behavioral_cues: tuple[str, ...] = Field(min_length=1, max_length=16)
 
 
 class Location(_Contract):
@@ -260,6 +281,32 @@ class Storylet(_Contract):
     completion_truth_id: str = Field(pattern=_ID, max_length=80)
     abort_truth_ids: tuple[str, ...] = Field(default=(), max_length=16)
     failure_forward_storylet_ids: tuple[str, ...] = Field(default=(), max_length=16)
+    interaction_frame_ids: tuple[str, ...] = Field(default=(), max_length=16)
+
+
+class InteractionFrame(_Contract):
+    """Immutable dramatic guidance for a responsive, multi-turn exchange."""
+
+    id: str = Field(pattern=_ID, max_length=80)
+    storylet_id: str = Field(pattern=_ID, max_length=80)
+    initiator_id: str = Field(pattern=_ID, max_length=80)
+    participant_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+    initiation: Literal["npc_initiated", "player_initiated", "either"]
+    location_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+    dramatic_objective: str = Field(min_length=1, max_length=600)
+    opening_move: str = Field(min_length=1, max_length=600)
+    response_obligations: tuple[str, ...] = Field(default=(), max_length=16)
+    allowed_tactics: tuple[str, ...] = Field(default=(), max_length=16)
+    agency_modes: tuple[Literal["engage", "refuse", "redirect", "interrupt", "depart"], ...] = Field(
+        default=(), max_length=5
+    )
+    permitted_movement_plan_ids: tuple[str, ...] = Field(default=(), max_length=16)
+    activation_truth_id: str = Field(pattern=_ID, max_length=80)
+    continuation_truth_id: str = Field(pattern=_ID, max_length=80)
+    completion_truth_id: str = Field(pattern=_ID, max_length=80)
+    abort_truth_ids: tuple[str, ...] = Field(default=(), max_length=16)
+    recent_use_truth_id: str = Field(pattern=_ID, max_length=80)
+    failure_forward_frame_ids: tuple[str, ...] = Field(default=(), max_length=16)
 
 
 class SuspectHypothesis(_Contract):
@@ -275,7 +322,7 @@ class EndState(_Contract):
 
 
 class CausalCompiledStory(_Contract):
-    """The Phase-1 ``story-blueprint-v2`` candidate contract."""
+    """The immutable story-blueprint-v2 candidate contract."""
 
     schema_version: Literal["story-blueprint-v2"]
     id: str = Field(pattern=_ID, max_length=80)
@@ -289,6 +336,7 @@ class CausalCompiledStory(_Contract):
     opening: OpeningMetadata | None = None
     truths: tuple[Truth, ...] = Field(min_length=1, max_length=128)
     participants: tuple[Participant, ...] = Field(min_length=1, max_length=64)
+    npc_performance_profiles: tuple[NpcPerformanceProfile, ...] = Field(default=(), max_length=64)
     locations: tuple[Location, ...] = Field(min_length=1, max_length=64)
     connected_routes: tuple[ConnectedRoute, ...] = Field(default=(), max_length=128)
     causal_events: tuple[CausalEvent, ...] = Field(min_length=1, max_length=128)
@@ -308,6 +356,7 @@ class CausalCompiledStory(_Contract):
     dramatic_spine: DramaticSpine | None = None
     consequences: tuple[Consequence, ...] = Field(default=(), max_length=128)
     storylets: tuple[Storylet, ...] = Field(default=(), max_length=256)
+    interaction_frames: tuple[InteractionFrame, ...] = Field(default=(), max_length=256)
     suspect_hypotheses: tuple[SuspectHypothesis, ...] = Field(default=(), max_length=32)
     end_states: tuple[EndState, ...] = Field(min_length=1, max_length=16)
 
@@ -639,6 +688,110 @@ def _validate_storylets(story: CausalCompiledStory) -> None:
     )
 
 
+def _validate_interactions(bound: BoundBlueprint) -> None:
+    """Validate public performance and multi-turn dramatic-frame coherence."""
+
+    story = bound.story
+    if not bound.interaction_frames and not bound.npc_performance_profiles:
+        return
+    profiles = {item.id: item for item in bound.npc_performance_profiles}
+    participants = {item.id: item for item in bound.participants}
+    storylets = {item.id: item.declaration for item in bound.storylets}
+    frames_by_id = {item.id: item for item in bound.interaction_frames}
+
+    for profile in profiles.values():
+        participant = profile.participant.declaration
+        if participant.performance_profile_id is None:
+            raise CausalValidationError("NPC_PROFILE_REQUIRED", participant.id)
+        if participant.performance_profile_id != profile.id:
+            raise CausalValidationError("NPC_PROFILE_MISMATCH", profile.id)
+    for frame in bound.interaction_frames:
+        declaration = frame.declaration
+        storylet = storylets[frame.storylet.id]
+        if "dialogue" not in storylet.realization_modes:
+            raise CausalValidationError("INTERACTION_DIALOGUE_REQUIRED", frame.id)
+        if frame.id not in storylet.interaction_frame_ids:
+            raise CausalValidationError("INTERACTION_LINK_REQUIRED", frame.id)
+        if frame.initiator.id not in {item.id for item in frame.participants}:
+            raise CausalValidationError("INTERACTION_INITIATOR_INVALID", frame.id)
+        if frame.initiator.id not in storylet.availability.participant_ids:
+            raise CausalValidationError("INTERACTION_PARTICIPANT_INCOMPATIBLE", frame.id)
+        if not {item.id for item in frame.locations} <= set(storylet.availability.location_ids):
+            raise CausalValidationError("INTERACTION_LOCATION_INCOMPATIBLE", frame.id)
+        for participant in frame.participants:
+            profile_id = participant.declaration.performance_profile_id
+            if profile_id is None or profile_id not in profiles:
+                raise CausalValidationError("NPC_PROFILE_REQUIRED", participant.id)
+            if profiles[profile_id].participant.id != participant.id:
+                raise CausalValidationError("NPC_PROFILE_MISMATCH", participant.id)
+        for plan in frame.permitted_movement_plans:
+            if plan.participant.id != frame.initiator.id or plan.destination.id not in {
+                item.id for item in frame.locations
+            }:
+                raise CausalValidationError("INTERACTION_MOVEMENT_UNREACHABLE", frame.id)
+        markers = {
+            frame.activation_truth.id,
+            frame.continuation_truth.id,
+            frame.completion_truth.id,
+            frame.recent_use_truth.id,
+            *(item.id for item in frame.abort_truths),
+        }
+        expected_marker_count = 4 + len(frame.abort_truths)
+        if len(markers) != expected_marker_count:
+            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+        if frame.activation_truth.id != storylet.activation_truth_id:
+            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+        if frame.completion_truth.id != storylet.completion_truth_id:
+            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+        if not {item.id for item in frame.abort_truths} <= set(storylet.abort_truth_ids):
+            raise CausalValidationError("INTERACTION_MARKER_INVALID", frame.id)
+        if len(declaration.agency_modes) < 2 or not declaration.response_obligations:
+            raise CausalValidationError("INTERACTION_AGENCY_REQUIRED", frame.id)
+        if declaration.initiation in {"npc_initiated", "either"}:
+            initiator = participants[frame.initiator.id].declaration
+            present = initiator.initial_availability == "present" and initiator.initial_location_id in {
+                item.id for item in frame.locations
+            }
+            movable = any(
+                plan.participant.id == frame.initiator.id
+                and plan.source.id == initiator.initial_location_id
+                and plan.destination.id in {item.id for item in frame.locations}
+                for plan in frame.permitted_movement_plans
+            )
+            if not present and not movable:
+                raise CausalValidationError("INTERACTION_INITIATOR_UNAVAILABLE", frame.id)
+            if not frame.abort_truths or not {"refuse", "interrupt", "depart"} & set(declaration.agency_modes):
+                raise CausalValidationError("INTERACTION_AGENCY_REQUIRED", frame.id)
+
+    for storylet in story.storylets:
+        linked = {frame.id for frame in bound.interaction_frames if frame.storylet.id == storylet.id}
+        if set(storylet.interaction_frame_ids) != linked:
+            raise CausalValidationError("INTERACTION_LINK_REQUIRED", storylet.id)
+        if "dialogue" in storylet.realization_modes and not storylet.interaction_frame_ids:
+            raise CausalValidationError("INTERACTION_FRAME_REQUIRED", storylet.id)
+    _acyclic(
+        set(frames_by_id),
+        {frame.id: frame.declaration.failure_forward_frame_ids for frame in bound.interaction_frames},
+        "INTERACTION_FAILURE_CYCLE",
+    )
+
+    protected = {item.truth.declaration.summary.casefold().rstrip(".!?") for item in bound.protections}
+    public_profile_text = [
+        text
+        for profile in bound.npc_performance_profiles
+        for text in (
+            profile.declaration.public_manner,
+            profile.declaration.voice.voice_register,
+            profile.declaration.voice.cadence,
+            profile.declaration.voice.diction,
+            *profile.declaration.voice.avoidances,
+            *profile.declaration.behavioral_cues,
+        )
+    ]
+    if any(summary in text.casefold() for summary in protected for text in public_profile_text):
+        raise CausalValidationError("PROTECTED_PUBLIC_LEAK", "public performance profile repeats a protected truth")
+
+
 def _validate_endings(bound: BoundBlueprint, outcome_ids: set[str]) -> None:
     for end_state in bound.end_states:
         if set(outcome_ids) - {outcome.id for outcome in end_state.outcomes}:
@@ -684,6 +837,7 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
     _validate_authoring_graph(bound)
     _validate_spatial_projection(bound)
     _validate_storylets(story)
+    _validate_interactions(bound)
     reachable = _reachable_locations(bound)
     blocked = [item.id for item in bound.evidence_opportunities if item.location.id not in reachable]
     if blocked:
