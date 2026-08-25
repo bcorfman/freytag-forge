@@ -75,6 +75,56 @@ class BoundEvidenceOpportunity:
 
 
 @dataclass(frozen=True)
+class BoundMovementPlan:
+    declaration: object
+    participant: BoundSymbol[object]
+    source: BoundSymbol[object]
+    destination: BoundSymbol[object]
+    activation_truths: tuple[BoundSymbol[object], ...]
+    abort_truths: tuple[BoundSymbol[object], ...]
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
+class BoundSceneSubject:
+    declaration: object
+    location: BoundSymbol[object]
+    opportunities: tuple[BoundEvidenceOpportunity, ...]
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
+class BoundEvidenceRealization:
+    declaration: object
+    opportunity: BoundEvidenceOpportunity
+    location: BoundSymbol[object]
+    custody_holder: BoundSymbol[object] | None
+    scene_subject: BoundSceneSubject | None
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
+class BoundGroupEncounter:
+    declaration: object
+    location: BoundSymbol[object]
+    participants: tuple[BoundSymbol[object], ...]
+    introduction_truths: tuple[BoundSymbol[object], ...]
+
+    @property
+    def id(self) -> str:
+        return self.declaration.id
+
+
+@dataclass(frozen=True)
 class BoundPartyKnowledge:
     declaration: object
     participant: BoundSymbol[object]
@@ -173,6 +223,10 @@ class BoundBlueprint:
     causal_events: tuple[BoundCausalEvent, ...]
     timeline_constraints: tuple[BoundTimelineConstraint, ...]
     evidence_opportunities: tuple[BoundEvidenceOpportunity, ...]
+    movement_plans: tuple[BoundMovementPlan, ...]
+    scene_subjects: tuple[BoundSceneSubject, ...]
+    evidence_realizations: tuple[BoundEvidenceRealization, ...]
+    group_encounters: tuple[BoundGroupEncounter, ...]
     party_knowledge: tuple[BoundPartyKnowledge, ...]
     protections: tuple[BoundProtection, ...]
     revelations: tuple[BoundRevelation, ...]
@@ -218,6 +272,45 @@ def bind_blueprint(story: object) -> BoundBlueprint:
         for item in story.evidence_opportunities
     )
     opportunities_by_id = {item.id: item for item in opportunities}
+    movement_plans = tuple(
+        BoundMovementPlan(
+            item,
+            declaration(Namespace.PARTICIPANT, item.participant_id),
+            declaration(Namespace.LOCATION, item.source_location_id),
+            declaration(Namespace.LOCATION, item.destination_location_id),
+            refs(Namespace.TRUTH, item.activation_truth_ids),
+            refs(Namespace.TRUTH, item.abort_truth_ids),
+        )
+        for item in story.movement_plans
+    )
+    subjects = tuple(
+        BoundSceneSubject(
+            item,
+            declaration(Namespace.LOCATION, item.location_id),
+            tuple(opportunities_by_id[value] for value in item.evidence_opportunity_ids),
+        )
+        for item in story.scene_subjects
+    )
+    subjects_by_id = {item.id: item for item in subjects}
+    evidence_realizations = tuple(
+        BoundEvidenceRealization(
+            item,
+            opportunities_by_id[item.evidence_opportunity_id],
+            declaration(Namespace.LOCATION, item.location_id),
+            declaration(Namespace.PARTICIPANT, item.custody_holder_id) if item.custody_holder_id else None,
+            subjects_by_id[item.scene_subject_id] if item.scene_subject_id else None,
+        )
+        for item in story.evidence_realizations
+    )
+    groups = tuple(
+        BoundGroupEncounter(
+            item,
+            declaration(Namespace.LOCATION, item.location_id),
+            refs(Namespace.PARTICIPANT, item.participant_ids),
+            refs(Namespace.TRUTH, item.introduction_truth_ids),
+        )
+        for item in story.group_encounters
+    )
     outcomes = tuple(
         BoundOutcome(item, declaration(Namespace.TRUTH, item.truth_id)) for item in story.required_outcomes
     )
@@ -297,6 +390,10 @@ def bind_blueprint(story: object) -> BoundBlueprint:
             for item in story.timeline_constraints
         ),
         opportunities,
+        movement_plans,
+        subjects,
+        evidence_realizations,
+        groups,
         tuple(
             BoundPartyKnowledge(
                 item,

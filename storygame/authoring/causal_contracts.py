@@ -54,6 +54,11 @@ class Truth(_Contract):
 class Participant(_Contract):
     id: str = Field(pattern=_ID, max_length=80)
     role: str = Field(min_length=1, max_length=80)
+    public_name: str | None = Field(default=None, min_length=1, max_length=160)
+    public_role: str | None = Field(default=None, min_length=1, max_length=160)
+    public_description: str | None = Field(default=None, min_length=1, max_length=1200)
+    initial_location_id: str | None = Field(default=None, pattern=_ID, max_length=80)
+    initial_availability: Literal["present", "away", "unavailable"] | None = None
 
 
 class Location(_Contract):
@@ -83,6 +88,15 @@ class OpeningMetadata(_Contract):
     public_briefing: tuple[str, ...] = Field(default=(), max_length=32)
     scene_purpose: str | None = Field(default=None, max_length=1200)
     first_available_actions: tuple[str, ...] = Field(default=(), max_length=16)
+    first_action_suggestions: tuple[OpeningSuggestion, ...] = Field(default=(), max_length=16)
+
+
+class OpeningSuggestion(_Contract):
+    """A declared first action and the current target that makes it actionable."""
+
+    text: str = Field(min_length=1, max_length=600)
+    target_kind: Literal["participant", "scene_subject", "evidence_realization", "group_encounter"]
+    target_id: str = Field(pattern=_ID, max_length=80)
 
 
 class CausalEvent(_Contract):
@@ -109,6 +123,43 @@ class EvidenceOpportunity(_Contract):
     location_id: str = Field(pattern=_ID, max_length=80)
     supports: bool = True
     route_id: str = Field(pattern=_ID, max_length=80)
+
+
+class NpcMovementPlan(_Contract):
+    id: str = Field(pattern=_ID, max_length=80)
+    participant_id: str = Field(pattern=_ID, max_length=80)
+    source_location_id: str = Field(pattern=_ID, max_length=80)
+    destination_location_id: str = Field(pattern=_ID, max_length=80)
+    activation_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    abort_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
+    player_may_accompany: bool = False
+
+
+class SceneSubject(_Contract):
+    id: str = Field(pattern=_ID, max_length=80)
+    kind: str = Field(min_length=1, max_length=80)
+    location_id: str = Field(pattern=_ID, max_length=80)
+    inspectable: bool
+    public_description: str = Field(min_length=1, max_length=1200)
+    evidence_opportunity_ids: tuple[str, ...] = Field(default=(), max_length=32)
+
+
+class EvidenceRealization(_Contract):
+    id: str = Field(pattern=_ID, max_length=80)
+    evidence_opportunity_id: str = Field(pattern=_ID, max_length=80)
+    kind: Literal["scene_evidence", "document", "testimony", "item"]
+    location_id: str = Field(pattern=_ID, max_length=80)
+    custody_holder_id: str | None = Field(default=None, pattern=_ID, max_length=80)
+    scene_subject_id: str | None = Field(default=None, pattern=_ID, max_length=80)
+    public_description: str = Field(min_length=1, max_length=1200)
+
+
+class GroupEncounter(_Contract):
+    id: str = Field(pattern=_ID, max_length=80)
+    location_id: str = Field(pattern=_ID, max_length=80)
+    label: str = Field(min_length=1, max_length=160)
+    participant_ids: tuple[str, ...] = Field(min_length=2, max_length=32)
+    introduction_truth_ids: tuple[str, ...] = Field(default=(), max_length=32)
 
 
 class PartyKnowledge(_Contract):
@@ -243,6 +294,10 @@ class CausalCompiledStory(_Contract):
     causal_events: tuple[CausalEvent, ...] = Field(min_length=1, max_length=128)
     timeline_constraints: tuple[TimelineConstraint, ...] = Field(default=(), max_length=128)
     evidence_opportunities: tuple[EvidenceOpportunity, ...] = Field(min_length=1, max_length=128)
+    movement_plans: tuple[NpcMovementPlan, ...] = Field(default=(), max_length=128)
+    scene_subjects: tuple[SceneSubject, ...] = Field(default=(), max_length=128)
+    evidence_realizations: tuple[EvidenceRealization, ...] = Field(default=(), max_length=256)
+    group_encounters: tuple[GroupEncounter, ...] = Field(default=(), max_length=64)
     party_knowledge: tuple[PartyKnowledge, ...] = Field(default=(), max_length=64)
     knowledge_protections: tuple[KnowledgeProtection, ...] = Field(default=(), max_length=64)
     revelations: tuple[Revelation, ...] = Field(min_length=1, max_length=64)
@@ -340,6 +395,161 @@ def _reachable_locations(bound: BoundBlueprint) -> set[str]:
                 reachable.add(route.source.id)
                 changed = True
     return reachable
+
+
+def _has_spatial_projection(story: CausalCompiledStory) -> bool:
+    return any(
+        (
+            story.movement_plans,
+            story.scene_subjects,
+            story.evidence_realizations,
+            story.group_encounters,
+            story.opening is not None and story.opening.first_action_suggestions,
+            any(participant.public_name is not None for participant in story.participants),
+        )
+    )
+
+
+def _validate_participant_placements(bound: BoundBlueprint) -> None:
+    incomplete = [
+        participant.id
+        for participant in bound.participants
+        if None
+        in (
+            participant.declaration.public_name,
+            participant.declaration.public_role,
+            participant.declaration.public_description,
+            participant.declaration.initial_location_id,
+            participant.declaration.initial_availability,
+        )
+    ]
+    if incomplete:
+        raise CausalValidationError("SPATIAL_PLACEMENT_REQUIRED", ", ".join(sorted(incomplete)))
+    names_by_location: dict[str, set[str]] = {}
+    for participant in bound.participants:
+        declaration = participant.declaration
+        if declaration.initial_availability != "present":
+            continue
+        names = names_by_location.setdefault(declaration.initial_location_id, set())
+        name = declaration.public_name.casefold()
+        if name in names:
+            raise CausalValidationError("DUPLICATE_PUBLIC_NAME", declaration.initial_location_id)
+        names.add(name)
+
+
+def _validate_movement_plans(bound: BoundBlueprint) -> None:
+    reachable = _reachable_locations(bound)
+    for plan in bound.movement_plans:
+        if plan.source.id not in reachable or plan.destination.id not in reachable:
+            raise CausalValidationError("MOVEMENT_UNREACHABLE", plan.id)
+
+
+def _validate_evidence_realizations(bound: BoundBlueprint) -> None:
+    expected_ids = {item.id for item in bound.evidence_opportunities}
+    actual_ids = [item.opportunity.id for item in bound.evidence_realizations]
+    if set(actual_ids) != expected_ids or len(actual_ids) != len(expected_ids):
+        raise CausalValidationError("EVIDENCE_REALIZATION_REQUIRED", "each opportunity needs one realization")
+    for realization in bound.evidence_realizations:
+        if realization.location.id != realization.opportunity.location.id:
+            raise CausalValidationError("CUSTODY_INCOMPATIBLE", realization.id)
+        holder = realization.custody_holder
+        if holder is not None and holder.id != realization.opportunity.holder.id:
+            raise CausalValidationError("CUSTODY_INCOMPATIBLE", realization.id)
+        if realization.declaration.kind == "scene_evidence" and realization.scene_subject is None:
+            raise CausalValidationError("SCENE_SUBJECT_REQUIRED", realization.id)
+        if realization.scene_subject is not None and realization.opportunity.id not in {
+            item.id for item in realization.scene_subject.opportunities
+        }:
+            raise CausalValidationError("CUSTODY_INCOMPATIBLE", realization.id)
+
+
+def _validate_group_encounters(bound: BoundBlueprint) -> None:
+    for encounter in bound.group_encounters:
+        for participant in encounter.participants:
+            declaration = participant.declaration
+            if (
+                declaration.initial_availability != "present"
+                or declaration.initial_location_id != encounter.location.id
+            ):
+                raise CausalValidationError("GROUP_MEMBER_ABSENT", f"{encounter.id}:{participant.id}")
+
+
+def _initial_target_ids(bound: BoundBlueprint, namespace: str) -> set[str]:
+    initial_locations = {item.id for item in bound.locations if item.declaration.initial_access}
+    if namespace == "participant":
+        return {
+            item.id
+            for item in bound.participants
+            if item.declaration.initial_availability == "present"
+            and item.declaration.initial_location_id in initial_locations
+        }
+    if namespace == "scene_subject":
+        return {item.id for item in bound.scene_subjects if item.location.id in initial_locations}
+    if namespace == "evidence_realization":
+        return {item.id for item in bound.evidence_realizations if item.location.id in initial_locations}
+    return {
+        item.id
+        for item in bound.group_encounters
+        if item.location.id in initial_locations
+        and all(
+            participant.declaration.initial_availability == "present"
+            and participant.declaration.initial_location_id == item.location.id
+            for participant in item.participants
+        )
+    }
+
+
+def _validate_opening_suggestions(bound: BoundBlueprint) -> None:
+    opening = bound.story.opening
+    assert opening is not None
+    suggestions = opening.first_action_suggestions
+    if opening.first_available_actions and not suggestions:
+        raise CausalValidationError("OPENING_SUGGESTION_TARGET_REQUIRED", "first actions need declared targets")
+    if {item.text for item in suggestions} != set(opening.first_available_actions):
+        raise CausalValidationError("OPENING_SUGGESTION_TARGET_REQUIRED", "suggestions must cover first actions")
+    for suggestion in suggestions:
+        if suggestion.target_id not in _initial_target_ids(bound, suggestion.target_kind):
+            raise CausalValidationError("OPENING_SUGGESTION_UNSUPPORTED", suggestion.target_id)
+
+
+def _validate_public_boundary(bound: BoundBlueprint) -> None:
+    protected = {item.truth.declaration.summary.casefold() for item in bound.protections}
+    public_text = [
+        field
+        for participant in bound.participants
+        for field in (
+            participant.declaration.public_name,
+            participant.declaration.public_role,
+            participant.declaration.public_description,
+        )
+        if field is not None
+    ]
+    public_text.extend(item.declaration.public_description for item in bound.scene_subjects)
+    public_text.extend(item.declaration.public_description for item in bound.evidence_realizations)
+    public_text.extend(item.declaration.label for item in bound.group_encounters)
+    if bound.story.opening is not None:
+        public_text.extend(
+            (
+                bound.story.opening.scene,
+                bound.story.opening.player_context,
+                bound.story.opening.situation,
+                *bound.story.opening.public_briefing,
+                *(item.text for item in bound.story.opening.first_action_suggestions),
+            )
+        )
+    if any(summary.rstrip(".!?") in text.casefold() for summary in protected for text in public_text):
+        raise CausalValidationError("PROTECTED_PUBLIC_LEAK", "public spatial presentation repeats a protected truth")
+
+
+def _validate_spatial_projection(bound: BoundBlueprint) -> None:
+    if not _has_spatial_projection(bound.story):
+        return
+    _validate_participant_placements(bound)
+    _validate_movement_plans(bound)
+    _validate_evidence_realizations(bound)
+    _validate_group_encounters(bound)
+    _validate_opening_suggestions(bound)
+    _validate_public_boundary(bound)
 
 
 def _validate_authoring_graph(bound: BoundBlueprint) -> None:
@@ -472,6 +682,7 @@ def validate_causal_compiled_story(payload: Mapping[str, object] | CausalCompile
     _validate_topology(bound)
     _validate_events(bound)
     _validate_authoring_graph(bound)
+    _validate_spatial_projection(bound)
     _validate_storylets(story)
     reachable = _reachable_locations(bound)
     blocked = [item.id for item in bound.evidence_opportunities if item.location.id not in reachable]

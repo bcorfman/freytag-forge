@@ -35,6 +35,8 @@ class CausalProfile(_Profile):
     minimum_storylet_variety: int = Field(default=0, ge=0, le=16)
     maximum_unbroken_pressure_span: int = Field(default=100, ge=1, le=100)
     minimum_alternate_progression_paths: int = Field(default=0, ge=0, le=16)
+    minimum_initial_social_contacts: int = Field(default=1, ge=0, le=64)
+    minimum_evidence_route_diversity: int = Field(default=2, ge=0, le=16)
 
 
 class CausalProfileRegistry:
@@ -96,4 +98,22 @@ class CausalProfileRegistry:
             raise CausalValidationError(
                 "STORYLET_ALTERNATES_REQUIRED", "storylets do not meet alternate progression minimum"
             )
+        if bound.evidence_realizations:
+            initial_locations = {item.id for item in bound.locations if item.declaration.initial_access}
+            contacts = sum(
+                participant.declaration.initial_availability == "present"
+                and participant.declaration.initial_location_id in initial_locations
+                for participant in bound.participants
+            )
+            if contacts < profile.minimum_initial_social_contacts:
+                raise CausalValidationError(
+                    "INITIAL_SOCIAL_CONTACTS_REQUIRED",
+                    f"requires {profile.minimum_initial_social_contacts} present opening contacts",
+                )
+            diversity = len({item.declaration.kind for item in bound.evidence_realizations})
+            if diversity < profile.minimum_evidence_route_diversity:
+                raise CausalValidationError(
+                    "EVIDENCE_ROUTE_DIVERSITY_REQUIRED",
+                    f"requires {profile.minimum_evidence_route_diversity} evidence realization kinds",
+                )
         return candidate

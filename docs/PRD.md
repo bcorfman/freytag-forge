@@ -112,6 +112,36 @@ facts; all four advertised opening actions lack a current social or inspectable
 target. Cross-genre characterization lives in
 `tests/test_causal_spatial_projection_phase0.py`.
 
+## Causal-spatial runtime projection Phase 1
+
+Phase 1 adds immutable, authoring-only spatial declarations to
+`story-blueprint-v2`; it deliberately does not alter runtime bootstrap or
+projection. A `Participant` may declare public name, role, description, one
+initial location, and initial availability. `NpcMovementPlan`, `SceneSubject`,
+`EvidenceRealization`, `GroupEncounter`, and typed `OpeningSuggestion`
+contracts describe future playable targets without becoming mutable world
+state.
+
+The symbol registry and bound IR now resolve these declarations through
+dedicated movement-plan, scene-subject, evidence-realization, and
+group-encounter namespaces. Local validation requires a complete spatial
+presentation when any Phase 1 declaration is used; validates movement
+reachability, one realization per opportunity, matching declared location and
+custody, scene-subject grounding, present co-located group members, and unique
+public names among the currently present people. It also rejects public text
+that repeats a protected truth and opening suggestions whose typed target is
+not initially present or inspectable.
+
+`CausalProfile` gains generic, injected minima for present opening social
+contacts and distinct evidence-realization kinds. They are applied only to a
+Phase 1 spatial declaration and never branch shared behavior by genre. Legacy
+reviewed artifacts remain valid projections until a source-owned compiler pass
+produces their declarations. Cross-genre contract coverage lives in
+`tests/test_causal_story_contract.py` and exercises bad references, duplicate
+names, malformed/missing placements, unreachable movement, absent group
+members, missing subjects, incompatible custody, protected leaks, unsupported
+suggestions, and profile minima.
+
 ## Causal compiler Phase 0: symbol-resolution baseline
 
 The offline causal compiler now carries a checked-in Phase 0 characterization
