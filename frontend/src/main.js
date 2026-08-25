@@ -109,12 +109,7 @@ function renderOpening(opening) {
   appendEntry(opening.scene, "output");
   const orientation = [
     opening.protagonist_context || opening.player_context,
-    opening.arrival_context,
-    ...(Array.isArray(opening.companions) ? opening.companions : []),
-    ...(Array.isArray(opening.public_briefing) && opening.public_briefing.length > 0
-      ? opening.public_briefing
-      : [opening.situation]),
-    opening.scene_purpose,
+    opening.situation,
   ].filter((line, index, lines) => typeof line === "string" && line.length > 0 && lines.indexOf(line) === index);
   appendEntry(
     orientation.join("\n\n"),
