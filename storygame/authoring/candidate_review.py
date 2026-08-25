@@ -111,6 +111,24 @@ def promote_candidate(
     return artifact
 
 
+def autopromote_candidate(
+    candidate_path: Path, output_path: Path, profiles: CausalProfileRegistry
+) -> ReviewedCausalStory:
+    """Create the runtime artifact for an accepted non-debug compiler result."""
+
+    return promote_candidate(
+        candidate_path,
+        output_path,
+        CandidateReview(
+            reviewer="compiler",
+            approved=True,
+            checklist=required_review_checklist(),
+            notes="Automatically promoted after deterministic compiler validation and critic checks.",
+        ),
+        profiles,
+    )
+
+
 def required_review_checklist() -> tuple[str, ...]:
     """Return stable checklist IDs for the review CLI and operator documentation."""
 

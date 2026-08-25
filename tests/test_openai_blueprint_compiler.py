@@ -462,6 +462,15 @@ def test_blueprint_compiler_repair_prompt_requires_unknown_truth_references_to_m
     assert "CAUSAL_COMPLETENESS repair protocol" in prompt
     assert "ROUTE_FAIRNESS repair protocol" in prompt
     assert "END_STATE repair protocol" in prompt
+    assert "must list every declared required_outcomes[].id, not merely one outcome" in prompt
+    assert "STORYLET_ENUM repair protocol" in prompt
+    assert "STORYLET_BEAT_NAMESPACE repair protocol" in prompt
+    assert "STORYLET_MARKER repair protocol" in prompt
+    assert "DRAMATIC_ESCALATION repair protocol" in prompt
+    assert "PARTICIPANT_CONTINUITY repair protocol" in prompt
+    assert "activation_truth_id must also appear" in prompt
+    assert "social_complication, relationship, conflict, moral_choice, transition, or reversal" in prompt
+    assert "For rejected pressure fields, use minimum and maximum, never min or max" in prompt
     assert "Reference inventory for repair follows" in prompt
     assert "Prior valid symbol ledger" in prompt
     assert "UNRELATED_REPAIR_CHANGE" not in prompt
@@ -524,6 +533,14 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
         "every beat that lists that revelation in prerequisite_revelation_ids must be at or after every gate beat"
         in prompt
     )
+    assert "Never use an optional_beats[].id in revelations[].gate_beat_ids or storylets[].beat_id" in prompt
+    assert "Pre-response semantic self-audit" in prompt
+    assert "exactly one case-insensitive unique route alias" in prompt
+    assert "never assert and retract the same truth" in prompt
+    assert "keep required and absent availability truths disjoint" in prompt
+    assert "every storylet completion truth must be asserted by one of its consequence IDs" in prompt
+    assert "every storylet pressure band lies inside dramatic_spine.target_pressure" in prompt
+    assert "participant_role_requirements to roles represented by storylet participants" in prompt
     assert "source_hash" in prompt
     assert "Source profile ID: sci-fi" in prompt
     assert "Source authoring context" in prompt
@@ -536,7 +553,7 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
     )
     assert "before_event_id.latest must be less than or equal to after_event_id.earliest" in prompt
     assert "Timeline constraints must agree with causal_events[].prerequisite_event_ids" in prompt
-    assert "every end state has at least one required_outcome_id" in prompt
+    assert "every end state lists every declared required_outcomes[].id" in prompt
     assert "evidence_opportunities[].route_id must equal a realization_routes[].id" in prompt
     assert "Every connected_routes[].prerequisite_truths value must be a declared truths[].id" in prompt
     assert (
@@ -555,6 +572,14 @@ def test_blueprint_prompt_requires_backwards_planning_without_genre_branches() -
     assert "JSON booleans must be the unquoted literals true or false" in prompt
     assert 'schema_version must be the exact JSON string "story-blueprint-v2"' in prompt
     assert "pressure is an integer from 0 through 100" in prompt
+    assert "use the full names minimum and maximum, never min or max" in prompt
+    assert "direct_action, investigation, negotiation, dialogue, observation, travel, or conflict" in prompt
+    assert "Do not use synonyms such as confrontation, discovery, interrogation, persuasion, or social" in prompt
+    assert "investigation, social_complication, relationship, conflict, moral_choice, transition, or reversal" in prompt
+    assert (
+        "Do not use generic alternatives such as discovery, interrogation, persuasion, social, exploration, "
+        "or complication" in prompt
+    )
     assert "alternative_satisfier, complication, relationship_development, or world_development" in prompt
     assert "is mandatory on every optional beat whose purpose is alternative_satisfier" in prompt
     assert "A plausible alternative suspect is not automatically an alternative_satisfier" in prompt

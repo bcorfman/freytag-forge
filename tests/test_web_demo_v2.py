@@ -21,6 +21,7 @@ def test_hosted_demo_uses_v2_runtime_and_persists_accepted_turns(tmp_path) -> No
         created = client.post("/api/v1/session", json={"genre": "mystery"})
         assert created.status_code == 200
         session_id = created.json()["session_id"]
+        initial_state = created.json()["state"]
 
         turn = client.post("/api/v1/turn", json={"session_id": session_id, "command": "I investigate."})
         assert turn.status_code == 200
@@ -28,10 +29,10 @@ def test_hosted_demo_uses_v2_runtime_and_persists_accepted_turns(tmp_path) -> No
         assert {
             key: turn.json()["state"][key] for key in ("location", "room_name", "turn_index", "available_destinations")
         } == {
-            "location": "foyer",
-            "room_name": "foyer",
+            "location": initial_state["location"],
+            "room_name": initial_state["room_name"],
             "turn_index": 1,
-            "available_destinations": ["Study", "Library", "West Gallery", "Grounds"],
+            "available_destinations": initial_state["available_destinations"],
         }
         assert turn.json()["state"]["opening"]["first_available_actions"]
         assert turn.json()["model_calls"] == 1

@@ -6,6 +6,7 @@ import argparse
 import importlib
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 
 from storygame.authoring.blueprint_compiler import (
@@ -13,6 +14,7 @@ from storygame.authoring.blueprint_compiler import (
     BlueprintCompiler,
     BlueprintCompilerTransport,
 )
+from storygame.authoring.candidate_review import autopromote_candidate
 from storygame.authoring.causal_profiles import CausalProfileRegistry
 from storygame.authoring.compiler import CompilationError
 from storygame.authoring.model_tiers import resolve_compiler_model
@@ -26,6 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
     selection.add_argument("--outline-id")
     selection.add_argument("--story", type=Path)
     selection.add_argument("--replay-diagnostic", type=Path, help="replay one diagnostic artifact without a provider")
+    selection.add_argument(
+        "--autopromote-candidate",
+        type=Path,
+        help="promote an already accepted candidate without a provider request",
+    )
     parser.add_argument("--inventory", type=Path, default=Path("data/story_outlines.yaml"))
     parser.add_argument("--profile-root", type=Path, default=Path("data/genre_profiles"))
     parser.add_argument("--live", action="store_true", help="acknowledge an offline paid provider request")
@@ -43,6 +50,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.set_defaults(background=None)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--autopromote", action="store_true", help="register an accepted candidate as a runtime fixture"
+    )
+    parser.add_argument("--runtime-fixture-root", type=Path, default=Path("data/compiled_stories/v2"))
     parser.add_argument(
         "--diagnostic-output", type=Path, help="write raw exhausted attempts as a non-playable diagnostic artifact"
     )
@@ -104,13 +115,73 @@ def _compile_candidate(args: argparse.Namespace) -> dict[str, object]:
     return compilation.model_dump(mode="json")
 
 
-def _write_diagnostic(path: Path, artifact: dict[str, object]) -> None:
+def _write_diagnostic(path: Path, artifact: dict[str, object]) -> Path:
     if path.suffix != ".json" or not path.name.endswith(".diagnostic.json"):
         raise CompilationError("DIAGNOSTIC_OUTPUT_INVALID", "diagnostic output must end in .diagnostic.json")
     if path.exists():
-        raise CompilationError("DIAGNOSTIC_OUTPUT_EXISTS", "diagnostic artifacts never overwrite an existing file")
+        path = _timestamped_diagnostic_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(artifact, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def _timestamped_diagnostic_path(path: Path) -> Path:
+    return _timestamped_artifact_path(path, ".diagnostic.json")
+
+
+def _timestamped_candidate_path(path: Path) -> Path:
+    return _timestamped_artifact_path(path, ".candidate.json")
+
+
+def _timestamped_reviewed_path(path: Path) -> Path:
+    return _timestamped_artifact_path(path, ".reviewed.json")
+
+
+def _timestamped_artifact_path(path: Path, artifact_suffix: str) -> Path:
+    stem = path.name.removesuffix(artifact_suffix)
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    candidate = path.with_name(f"{stem}.{timestamp}{artifact_suffix}")
+    index = 1
+    while candidate.exists():
+        candidate = path.with_name(f"{stem}.{timestamp}.{index}{artifact_suffix}")
+        index += 1
+    return candidate
+
+
+def _autopromote(candidate_path: Path, story: dict[str, object], fixture_root: Path, profile_root: Path) -> Path:
+    story_id = story.get("id")
+    genre = story.get("genre")
+    if not isinstance(story_id, str) or not isinstance(genre, str):
+        raise CompilationError("AUTOPROMOTE_INVALID", "accepted candidate lacks a stable story ID or genre")
+    output = fixture_root / f"{story_id}.reviewed.json"
+    if output.exists():
+        output = _timestamped_reviewed_path(output)
+    autopromote_candidate(candidate_path, output, CausalProfileRegistry.from_directory(profile_root))
+    manifest_path = fixture_root / "runtime-fixtures.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise CompilationError("FIXTURE_MAP_INVALID", "runtime fixture map is not JSON") from exc
+        if not isinstance(manifest, dict) or manifest.get("schema_version") != "runtime-fixture-map-v1":
+            raise CompilationError("FIXTURE_MAP_INVALID", "runtime fixture map has an unsupported schema")
+    else:
+        manifest = {"schema_version": "runtime-fixture-map-v1", "fixtures": {}}
+    fixtures = manifest.get("fixtures")
+    fixture_values_are_strings = isinstance(fixtures, dict) and all(
+        isinstance(key, str) and isinstance(value, str) for key, value in fixtures.items()
+    )
+    if not fixture_values_are_strings:
+        raise CompilationError("FIXTURE_MAP_INVALID", "runtime fixture map has invalid fixtures")
+    fixtures[genre] = output.name
+    manifest["fixtures"] = fixtures
+    fixture_root.mkdir(parents=True, exist_ok=True)
+    temporary = manifest_path.with_suffix(".json.tmp")
+    if temporary.exists():
+        raise CompilationError("FIXTURE_MAP_TEMP_EXISTS", "remove the incomplete runtime fixture map write")
+    temporary.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(manifest_path)
+    return output
 
 
 class _DiagnosticReplayTransport:
@@ -172,6 +243,20 @@ def _replay_diagnostic(path: Path, profile_root: Path) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.autopromote_candidate:
+            candidate_path = args.autopromote_candidate
+            try:
+                candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+            except FileNotFoundError as exc:
+                raise CompilationError("CANDIDATE_NOT_FOUND", f"candidate '{candidate_path}' does not exist") from exc
+            except json.JSONDecodeError as exc:
+                raise CompilationError("CANDIDATE_OUTPUT_INVALID", "candidate is not JSON") from exc
+            story = candidate.get("story") if isinstance(candidate, dict) else None
+            if not isinstance(story, dict) or not isinstance(story.get("id"), str):
+                raise CompilationError("CANDIDATE_OUTPUT_INVALID", "candidate does not have a stable story ID")
+            reviewed = _autopromote(candidate_path, story, args.runtime_fixture_root, args.profile_root)
+            print(json.dumps({"candidate": str(candidate_path), "reviewed_artifact": str(reviewed)}, sort_keys=True))
+            return 0
         if args.replay_diagnostic:
             replay = _replay_diagnostic(args.replay_diagnostic, args.profile_root)
             print(
@@ -189,17 +274,20 @@ def main(argv: list[str] | None = None) -> int:
                 raise CompilationError("CANDIDATE_OUTPUT_INVALID", "candidate output must end in .candidate.json")
             output.parent.mkdir(parents=True, exist_ok=True)
             if output.exists():
-                raise CompilationError(
-                    "CANDIDATE_OUTPUT_EXISTS", "candidate artifacts never overwrite an existing file"
-                )
+                output = _timestamped_candidate_path(output)
             output.write_text(json.dumps(candidate, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            print(json.dumps({"candidate": str(output)}, sort_keys=True))
+            result: dict[str, str] = {"candidate": str(output)}
+            if args.autopromote:
+                result["reviewed_artifact"] = str(
+                    _autopromote(output, story, args.runtime_fixture_root, args.profile_root)
+                )
+            print(json.dumps(result, sort_keys=True))
         else:
             print(json.dumps(select_source(args), sort_keys=True))
     except BlueprintCompilationExhausted as exc:
         if args.diagnostic_output:
-            _write_diagnostic(args.diagnostic_output, exc.diagnostic_artifact())
-            raise SystemExit(f"{exc} (diagnostic saved: {args.diagnostic_output})") from exc
+            diagnostic_path = _write_diagnostic(args.diagnostic_output, exc.diagnostic_artifact())
+            raise SystemExit(f"{exc} (diagnostic saved: {diagnostic_path})") from exc
         raise SystemExit(str(exc)) from exc
     except CompilationError as exc:
         raise SystemExit(str(exc)) from exc

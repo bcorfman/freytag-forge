@@ -1,0 +1,2204 @@
+{
+  "schema_version": "reviewed-story-blueprint-v2",
+  "candidate_filename": "vale_mansion_rebuild.reviewed.json",
+  "candidate_sha256": "261d931e88606af4b4499f177c320dc5aae80d8c72866f0fbaa362c205e9f496",
+  "review": {
+    "reviewer": "compiler",
+    "approved": true,
+    "checklist": [
+      "consequence_quality",
+      "distinct_progression_paths",
+      "dramatic_questions",
+      "failure_forward",
+      "knowledge_boundaries",
+      "map_and_custody",
+      "participant_agency",
+      "repeated_content_risk",
+      "route_diversity",
+      "terminal_roles"
+    ],
+    "notes": "Automatically promoted after deterministic compiler validation and critic checks."
+  },
+  "story": {
+    "schema_version": "story-blueprint-v2",
+    "id": "vale_mansion_rebuild",
+    "version": 1,
+    "provenance": {
+      "source_format": "story-outline-inventory-v1",
+      "source_id": "vale_mansion_rebuild",
+      "source_hash": "36a89b6830abbdcc9a00424a4b7fd814dc7d98a8be7a7ad2d6e8713abc9cc5db",
+      "source_path": "story_outlines.yaml#vale_mansion_rebuild",
+      "source_schema_version": "story-outline-inventory-v1",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "quality_tier": "preferred",
+      "generation_mode": "standard",
+      "response_id": "resp_01e54132f6063d96006a8cc171f01887d28f07afda997ec1a2",
+      "prompt_version": "story-blueprint-v2",
+      "validation_results": [
+        "local_contract_valid",
+        "profile_valid",
+        "source_verified",
+        "critics_valid",
+        "repair_valid"
+      ]
+    },
+    "genre": "mystery",
+    "profile": "mystery",
+    "title": "Death in the West Gallery",
+    "premise": "During a winter gathering at snowbound Vale Mansion, host Emma Vale is found dead in the west gallery, leaving the gathered household and the evidence hidden across the estate to reveal who killed her.",
+    "opening_truth_ids": [
+      "emma_dead_in_west_gallery",
+      "estate_snowbound"
+    ],
+    "opening": {
+      "scene": "The grand foyer of Vale Mansion rises around you in dark wood and shuttered portraits. Snow presses against the glass doors, muting the drive beyond them, while the household gathers beneath the staircase and watches you arrive.",
+      "player_context": "You are the investigator summoned to establish what happened before the snowbound estate can be opened again. You have the authority to ask questions, inspect the public rooms, and decide which account deserves to be tested first.",
+      "companions": [
+        "The gathered household waits nearby: frightened, defensive, and each carrying a different version of the night's events."
+      ],
+      "situation": "Emma Vale has been found dead in the west gallery. The body has not been moved, the storm has sealed the estate, and the first hour of an investigation is already slipping away.",
+      "next_steps": [
+        "Survey the foyer for the household's immediate reactions and any disturbance in the arrival scene.",
+        "Speak with the people who were last known to be near Emma.",
+        "Enter the west gallery, inspect the scene, or follow a lead into the study, library, or grounds."
+      ],
+      "protagonist_context": "As the authorized investigator, you may inspect the accessible estate, compare testimony, and preserve material evidence while the storm keeps everyone inside.",
+      "arrival_context": "You have arrived after the household discovered Emma's body but before anyone can leave the estate or summon assistance through the blocked roads.",
+      "public_briefing": [
+        "Emma Vale is dead in the west gallery, and the body remains where it was found.",
+        "The snowstorm has confined every possible witness and suspect to Vale Mansion and its grounds."
+      ],
+      "scene_purpose": "Establish the closed-house investigation, introduce the defensive household, and present several accessible lines of inquiry without exposing private motives or the solution.",
+      "first_available_actions": [
+        "Inspect Emma and the west gallery.",
+        "Question the gathered household in the foyer.",
+        "Examine the study and library.",
+        "Inspect the estate grounds and service approaches."
+      ]
+    },
+    "truths": [
+      {
+        "id": "emma_dead_in_west_gallery",
+        "summary": "Emma Vale is dead in the west gallery.",
+        "roles": [
+          "victim"
+        ]
+      },
+      {
+        "id": "estate_snowbound",
+        "summary": "Heavy snow has sealed Vale Mansion and its estate against outside travel.",
+        "roles": []
+      },
+      {
+        "id": "single_narrow_wound",
+        "summary": "Emma suffered a single narrow penetrating wound consistent with a slim pointed implement.",
+        "roles": []
+      },
+      {
+        "id": "restoration_payments_diverted_by_harrow",
+        "summary": "Beatrice Harrow diverted money from the mansion's restoration payments.",
+        "roles": [
+          "motive"
+        ]
+      },
+      {
+        "id": "emma_discovered_diverted_payments",
+        "summary": "Emma discovered the diverted restoration payments before the gathering.",
+        "roles": []
+      },
+      {
+        "id": "harrow_feared_exposure",
+        "summary": "Harrow believed Emma was preparing to expose the diverted payments.",
+        "roles": []
+      },
+      {
+        "id": "study_brass_letter_opener_missing",
+        "summary": "The study's brass letter opener was removed from its usual place shortly before the murder.",
+        "roles": []
+      },
+      {
+        "id": "opener_inventory_incomplete",
+        "summary": "The study inventory records the brass letter opener, but the immediate room inventory cannot account for it during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "harrow_used_brass_letter_opener",
+        "summary": "Harrow used the study's brass letter opener to inflict Emma's fatal wound.",
+        "roles": [
+          "means",
+          "method"
+        ]
+      },
+      {
+        "id": "harrow_in_west_gallery_2342_2350",
+        "summary": "Harrow was in the west gallery between 23:42 and 23:50.",
+        "roles": [
+          "opportunity",
+          "time_window"
+        ]
+      },
+      {
+        "id": "beatrice_harrow_killed_emma_vale",
+        "summary": "Estate solicitor Beatrice Harrow killed Emma Vale in the west gallery between 23:42 and 23:50.",
+        "roles": [
+          "crime_solution",
+          "perpetrator",
+          "method"
+        ]
+      },
+      {
+        "id": "harrow_cleaned_and_returned_opener",
+        "summary": "After the killing, Harrow cleaned the brass letter opener and returned it to the study.",
+        "roles": [
+          "concealment"
+        ]
+      },
+      {
+        "id": "harrow_altered_restoration_ledger",
+        "summary": "Harrow altered and removed portions of the restoration ledger to obscure the diverted payments.",
+        "roles": []
+      },
+      {
+        "id": "west_gallery_washbasin_recently_drained",
+        "summary": "The west gallery washbasin was used and drained shortly after Emma was killed.",
+        "roles": []
+      },
+      {
+        "id": "harrow_blood_trace_nearly_scrubbed",
+        "summary": "A blood trace associated with Harrow was nearly scrubbed from the letter opener and study washcloth.",
+        "roles": []
+      },
+      {
+        "id": "pike_bootprint_near_gallery",
+        "summary": "A muddy boot impression near the west gallery resembles groundskeeper Thomas Pike's work boots.",
+        "roles": []
+      },
+      {
+        "id": "pike_pruning_knife_unaccounted",
+        "summary": "One of Pike's narrow pruning knives was temporarily unaccounted for.",
+        "roles": []
+      },
+      {
+        "id": "pike_appears_culpable",
+        "summary": "The boot impression and missing pruning knife make Pike appear capable of the killing.",
+        "roles": []
+      },
+      {
+        "id": "pike_boiler_log_covers_murder_window",
+        "summary": "The boiler-house pressure log records Pike's continuous work during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "lydia_saw_pike_in_boiler_house",
+        "summary": "Dr. Lydia Fenn saw Pike tending the boiler throughout the critical interval.",
+        "roles": []
+      },
+      {
+        "id": "boiler_log_smudged",
+        "summary": "Part of the boiler log is smudged, making its timing harder to read without corroboration.",
+        "roles": []
+      },
+      {
+        "id": "groundskeeper_exonerated",
+        "summary": "The boiler-house record and independent testimony establish that groundskeeper Thomas Pike could not have killed Emma.",
+        "roles": []
+      },
+      {
+        "id": "julian_argued_with_emma_over_inheritance",
+        "summary": "Julian Vale argued with Emma about his inheritance shortly before her death.",
+        "roles": []
+      },
+      {
+        "id": "julian_cufflink_in_gallery",
+        "summary": "One of Julian's cufflinks lies beneath a cabinet in the west gallery.",
+        "roles": []
+      },
+      {
+        "id": "julian_appears_culpable",
+        "summary": "Julian's argument with Emma and the cufflink in the gallery make him appear culpable.",
+        "roles": []
+      },
+      {
+        "id": "clara_saw_julian_in_conservatory",
+        "summary": "Housekeeper Clara Mere saw Julian in the conservatory during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "conservatory_checklist_places_julian",
+        "summary": "A timed conservatory checklist bearing Julian's countersignature places him there during the murder window.",
+        "roles": []
+      },
+      {
+        "id": "julian_exonerated",
+        "summary": "Independent testimony and the timed conservatory record exclude Julian from the murder window.",
+        "roles": []
+      },
+      {
+        "id": "household_accounts_conflict",
+        "summary": "Several household accounts conflict over movement through the central hall after Emma's death.",
+        "roles": []
+      }
+    ],
+    "participants": [
+      {
+        "id": "investigator",
+        "role": "investigator"
+      },
+      {
+        "id": "emma_vale",
+        "role": "victim"
+      },
+      {
+        "id": "beatrice_harrow",
+        "role": "perpetrator"
+      },
+      {
+        "id": "thomas_pike",
+        "role": "alternative_suspect"
+      },
+      {
+        "id": "julian_vale",
+        "role": "alternative_suspect"
+      },
+      {
+        "id": "clara_mere",
+        "role": "witness"
+      },
+      {
+        "id": "lydia_fenn",
+        "role": "witness"
+      }
+    ],
+    "locations": [
+      {
+        "id": "grand_foyer",
+        "role": "arrival_and_household_assembly",
+        "initial_access": true
+      },
+      {
+        "id": "central_hall",
+        "role": "interior_crossroads",
+        "initial_access": false
+      },
+      {
+        "id": "west_gallery",
+        "role": "crime_scene",
+        "initial_access": true
+      },
+      {
+        "id": "study",
+        "role": "weapon_and_financial_records_site",
+        "initial_access": true
+      },
+      {
+        "id": "library",
+        "role": "private_correspondence_archive",
+        "initial_access": true
+      },
+      {
+        "id": "service_corridor",
+        "role": "staff_transition_space",
+        "initial_access": false
+      },
+      {
+        "id": "boiler_house",
+        "role": "groundskeeper_alibi_site",
+        "initial_access": false
+      },
+      {
+        "id": "estate_grounds",
+        "role": "snowbound_local_surroundings",
+        "initial_access": true
+      },
+      {
+        "id": "conservatory",
+        "role": "heir_alibi_site",
+        "initial_access": false
+      }
+    ],
+    "connected_routes": [
+      {
+        "id": "route_foyer_to_central_hall",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "central_hall",
+        "aliases": [
+          "foyer hall arch"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_central_hall_to_west_gallery",
+        "from_location_id": "central_hall",
+        "to_location_id": "west_gallery",
+        "aliases": [
+          "west gallery doors"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_central_hall_to_study",
+        "from_location_id": "central_hall",
+        "to_location_id": "study",
+        "aliases": [
+          "study threshold"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_central_hall_to_library",
+        "from_location_id": "central_hall",
+        "to_location_id": "library",
+        "aliases": [
+          "library doors"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_central_hall_to_service_corridor",
+        "from_location_id": "central_hall",
+        "to_location_id": "service_corridor",
+        "aliases": [
+          "service passage"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_service_corridor_to_boiler_house",
+        "from_location_id": "service_corridor",
+        "to_location_id": "boiler_house",
+        "aliases": [
+          "boiler stair"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_foyer_to_estate_grounds",
+        "from_location_id": "grand_foyer",
+        "to_location_id": "estate_grounds",
+        "aliases": [
+          "snowbound garden path"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_estate_grounds_to_boiler_house",
+        "from_location_id": "estate_grounds",
+        "to_location_id": "boiler_house",
+        "aliases": [
+          "service yard door"
+        ],
+        "prerequisite_truths": []
+      },
+      {
+        "id": "route_central_hall_to_conservatory",
+        "from_location_id": "central_hall",
+        "to_location_id": "conservatory",
+        "aliases": [
+          "conservatory arcade"
+        ],
+        "prerequisite_truths": []
+      }
+    ],
+    "causal_events": [
+      {
+        "id": "event_harrow_diverts_restoration_payments",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [],
+        "output_truths": [
+          "restoration_payments_diverted_by_harrow"
+        ],
+        "earliest": 1000,
+        "latest": 1100,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_emma_discovers_diversion",
+        "actor_ids": [
+          "emma_vale"
+        ],
+        "location_id": "library",
+        "input_truths": [
+          "restoration_payments_diverted_by_harrow"
+        ],
+        "output_truths": [
+          "emma_discovered_diverted_payments",
+          "harrow_feared_exposure"
+        ],
+        "earliest": 1200,
+        "latest": 1230,
+        "prerequisite_event_ids": [
+          "event_harrow_diverts_restoration_payments"
+        ]
+      },
+      {
+        "id": "event_julian_argues_with_emma",
+        "actor_ids": [
+          "julian_vale",
+          "emma_vale"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [],
+        "output_truths": [
+          "julian_argued_with_emma_over_inheritance",
+          "julian_cufflink_in_gallery"
+        ],
+        "earliest": 1340,
+        "latest": 1360,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_pike_evening_round",
+        "actor_ids": [
+          "thomas_pike"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [],
+        "output_truths": [
+          "pike_bootprint_near_gallery",
+          "pike_pruning_knife_unaccounted"
+        ],
+        "earliest": 1370,
+        "latest": 1390,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_storm_seals_estate",
+        "actor_ids": [
+          "thomas_pike"
+        ],
+        "location_id": "estate_grounds",
+        "input_truths": [],
+        "output_truths": [
+          "estate_snowbound"
+        ],
+        "earliest": 1380,
+        "latest": 1450,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_harrow_takes_letter_opener",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "emma_discovered_diverted_payments",
+          "harrow_feared_exposure"
+        ],
+        "output_truths": [
+          "study_brass_letter_opener_missing",
+          "opener_inventory_incomplete"
+        ],
+        "earliest": 1410,
+        "latest": 1418,
+        "prerequisite_event_ids": [
+          "event_emma_discovers_diversion"
+        ]
+      },
+      {
+        "id": "event_pike_tends_boiler",
+        "actor_ids": [
+          "thomas_pike",
+          "lydia_fenn"
+        ],
+        "location_id": "boiler_house",
+        "input_truths": [],
+        "output_truths": [
+          "pike_boiler_log_covers_murder_window",
+          "lydia_saw_pike_in_boiler_house",
+          "boiler_log_smudged",
+          "groundskeeper_exonerated"
+        ],
+        "earliest": 1418,
+        "latest": 1438,
+        "prerequisite_event_ids": []
+      },
+      {
+        "id": "event_julian_remains_in_conservatory",
+        "actor_ids": [
+          "julian_vale",
+          "clara_mere"
+        ],
+        "location_id": "conservatory",
+        "input_truths": [],
+        "output_truths": [
+          "clara_saw_julian_in_conservatory",
+          "conservatory_checklist_places_julian",
+          "julian_exonerated"
+        ],
+        "earliest": 1420,
+        "latest": 1433,
+        "prerequisite_event_ids": [
+          "event_julian_argues_with_emma"
+        ]
+      },
+      {
+        "id": "event_harrow_enters_west_gallery",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [
+          "study_brass_letter_opener_missing"
+        ],
+        "output_truths": [
+          "harrow_in_west_gallery_2342_2350"
+        ],
+        "earliest": 1422,
+        "latest": 1424,
+        "prerequisite_event_ids": [
+          "event_harrow_takes_letter_opener"
+        ]
+      },
+      {
+        "id": "event_harrow_kills_emma",
+        "actor_ids": [
+          "beatrice_harrow",
+          "emma_vale"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [
+          "emma_discovered_diverted_payments",
+          "harrow_feared_exposure",
+          "study_brass_letter_opener_missing",
+          "harrow_in_west_gallery_2342_2350"
+        ],
+        "output_truths": [
+          "emma_dead_in_west_gallery",
+          "single_narrow_wound",
+          "harrow_used_brass_letter_opener",
+          "beatrice_harrow_killed_emma_vale"
+        ],
+        "earliest": 1424,
+        "latest": 1428,
+        "prerequisite_event_ids": [
+          "event_emma_discovers_diversion",
+          "event_harrow_takes_letter_opener",
+          "event_harrow_enters_west_gallery"
+        ]
+      },
+      {
+        "id": "event_harrow_conceals_crime",
+        "actor_ids": [
+          "beatrice_harrow"
+        ],
+        "location_id": "study",
+        "input_truths": [
+          "beatrice_harrow_killed_emma_vale",
+          "harrow_used_brass_letter_opener"
+        ],
+        "output_truths": [
+          "harrow_cleaned_and_returned_opener",
+          "harrow_altered_restoration_ledger",
+          "west_gallery_washbasin_recently_drained",
+          "harrow_blood_trace_nearly_scrubbed"
+        ],
+        "earliest": 1428,
+        "latest": 1438,
+        "prerequisite_event_ids": [
+          "event_harrow_kills_emma"
+        ]
+      },
+      {
+        "id": "event_clara_finds_emma",
+        "actor_ids": [
+          "clara_mere"
+        ],
+        "location_id": "west_gallery",
+        "input_truths": [
+          "emma_dead_in_west_gallery"
+        ],
+        "output_truths": [
+          "household_accounts_conflict"
+        ],
+        "earliest": 1440,
+        "latest": 1445,
+        "prerequisite_event_ids": [
+          "event_harrow_conceals_crime"
+        ]
+      }
+    ],
+    "timeline_constraints": [
+      {
+        "before_event_id": "event_harrow_diverts_restoration_payments",
+        "after_event_id": "event_emma_discovers_diversion"
+      },
+      {
+        "before_event_id": "event_emma_discovers_diversion",
+        "after_event_id": "event_harrow_takes_letter_opener"
+      },
+      {
+        "before_event_id": "event_julian_argues_with_emma",
+        "after_event_id": "event_julian_remains_in_conservatory"
+      },
+      {
+        "before_event_id": "event_pike_evening_round",
+        "after_event_id": "event_pike_tends_boiler"
+      },
+      {
+        "before_event_id": "event_harrow_takes_letter_opener",
+        "after_event_id": "event_harrow_enters_west_gallery"
+      },
+      {
+        "before_event_id": "event_harrow_enters_west_gallery",
+        "after_event_id": "event_harrow_kills_emma"
+      },
+      {
+        "before_event_id": "event_harrow_kills_emma",
+        "after_event_id": "event_harrow_conceals_crime"
+      },
+      {
+        "before_event_id": "event_harrow_conceals_crime",
+        "after_event_id": "event_clara_finds_emma"
+      }
+    ],
+    "evidence_opportunities": [
+      {
+        "id": "opportunity_motive_ledger",
+        "truth_id": "restoration_payments_diverted_by_harrow",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "realization_motive_ledger"
+      },
+      {
+        "id": "opportunity_motive_testimony",
+        "truth_id": "restoration_payments_diverted_by_harrow",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "realization_motive_testimony"
+      },
+      {
+        "id": "opportunity_means_wound_fragment",
+        "truth_id": "harrow_used_brass_letter_opener",
+        "kind": "physical_evidence",
+        "holder_id": "emma_vale",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "realization_means_physical"
+      },
+      {
+        "id": "opportunity_means_study_inventory",
+        "truth_id": "harrow_used_brass_letter_opener",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "realization_means_document"
+      },
+      {
+        "id": "opportunity_harrow_gallery_testimony",
+        "truth_id": "harrow_in_west_gallery_2342_2350",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "central_hall",
+        "supports": true,
+        "route_id": "realization_opportunity_testimony"
+      },
+      {
+        "id": "opportunity_harrow_gallery_trace",
+        "truth_id": "harrow_in_west_gallery_2342_2350",
+        "kind": "physical_evidence",
+        "holder_id": "beatrice_harrow",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "realization_opportunity_physical"
+      },
+      {
+        "id": "opportunity_concealment_washcloth",
+        "truth_id": "harrow_cleaned_and_returned_opener",
+        "kind": "physical_evidence",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "realization_concealment_physical"
+      },
+      {
+        "id": "opportunity_concealment_inventory_annotation",
+        "truth_id": "harrow_cleaned_and_returned_opener",
+        "kind": "document",
+        "holder_id": "beatrice_harrow",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "realization_concealment_document"
+      },
+      {
+        "id": "opportunity_pike_log_detail",
+        "truth_id": "pike_boiler_log_covers_murder_window",
+        "kind": "document",
+        "holder_id": "thomas_pike",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "realization_pike_exoneration_log"
+      },
+      {
+        "id": "opportunity_pike_log_conclusion",
+        "truth_id": "groundskeeper_exonerated",
+        "kind": "document",
+        "holder_id": "thomas_pike",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "realization_pike_exoneration_log"
+      },
+      {
+        "id": "opportunity_pike_witness_detail",
+        "truth_id": "lydia_saw_pike_in_boiler_house",
+        "kind": "testimony",
+        "holder_id": "lydia_fenn",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "realization_pike_exoneration_testimony"
+      },
+      {
+        "id": "opportunity_pike_witness_conclusion",
+        "truth_id": "groundskeeper_exonerated",
+        "kind": "testimony",
+        "holder_id": "lydia_fenn",
+        "location_id": "boiler_house",
+        "supports": true,
+        "route_id": "realization_pike_exoneration_testimony"
+      },
+      {
+        "id": "opportunity_solution_forensic_cluster",
+        "truth_id": "beatrice_harrow_killed_emma_vale",
+        "kind": "physical_evidence",
+        "holder_id": "emma_vale",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "realization_solution_forensic"
+      },
+      {
+        "id": "opportunity_solution_emma_memorandum",
+        "truth_id": "beatrice_harrow_killed_emma_vale",
+        "kind": "document",
+        "holder_id": "emma_vale",
+        "location_id": "library",
+        "supports": true,
+        "route_id": "realization_solution_documentary"
+      },
+      {
+        "id": "opportunity_solution_clara_sequence",
+        "truth_id": "beatrice_harrow_killed_emma_vale",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "study",
+        "supports": true,
+        "route_id": "realization_solution_documentary"
+      },
+      {
+        "id": "opportunity_pike_bootprint",
+        "truth_id": "pike_bootprint_near_gallery",
+        "kind": "physical_evidence",
+        "holder_id": "thomas_pike",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "realization_pike_suspicion"
+      },
+      {
+        "id": "opportunity_pike_knife_inventory",
+        "truth_id": "pike_pruning_knife_unaccounted",
+        "kind": "document",
+        "holder_id": "thomas_pike",
+        "location_id": "service_corridor",
+        "supports": true,
+        "route_id": "realization_pike_suspicion"
+      },
+      {
+        "id": "opportunity_julian_argument",
+        "truth_id": "julian_argued_with_emma_over_inheritance",
+        "kind": "testimony",
+        "holder_id": "julian_vale",
+        "location_id": "grand_foyer",
+        "supports": true,
+        "route_id": "realization_julian_suspicion"
+      },
+      {
+        "id": "opportunity_julian_cufflink",
+        "truth_id": "julian_cufflink_in_gallery",
+        "kind": "physical_evidence",
+        "holder_id": "julian_vale",
+        "location_id": "west_gallery",
+        "supports": true,
+        "route_id": "realization_julian_suspicion"
+      },
+      {
+        "id": "opportunity_julian_conservatory_testimony",
+        "truth_id": "clara_saw_julian_in_conservatory",
+        "kind": "testimony",
+        "holder_id": "clara_mere",
+        "location_id": "conservatory",
+        "supports": true,
+        "route_id": "realization_julian_exoneration"
+      },
+      {
+        "id": "opportunity_julian_conservatory_checklist",
+        "truth_id": "conservatory_checklist_places_julian",
+        "kind": "document",
+        "holder_id": "julian_vale",
+        "location_id": "conservatory",
+        "supports": true,
+        "route_id": "realization_julian_exoneration"
+      }
+    ],
+    "party_knowledge": [
+      {
+        "participant_id": "investigator",
+        "truth_ids": [
+          "emma_dead_in_west_gallery",
+          "estate_snowbound"
+        ]
+      },
+      {
+        "participant_id": "emma_vale",
+        "truth_ids": [
+          "restoration_payments_diverted_by_harrow",
+          "emma_discovered_diverted_payments",
+          "harrow_feared_exposure"
+        ]
+      },
+      {
+        "participant_id": "beatrice_harrow",
+        "truth_ids": [
+          "restoration_payments_diverted_by_harrow",
+          "emma_discovered_diverted_payments",
+          "harrow_feared_exposure",
+          "harrow_used_brass_letter_opener",
+          "harrow_in_west_gallery_2342_2350",
+          "beatrice_harrow_killed_emma_vale",
+          "harrow_cleaned_and_returned_opener",
+          "harrow_altered_restoration_ledger"
+        ]
+      },
+      {
+        "participant_id": "thomas_pike",
+        "truth_ids": [
+          "pike_bootprint_near_gallery",
+          "pike_pruning_knife_unaccounted",
+          "pike_boiler_log_covers_murder_window",
+          "lydia_saw_pike_in_boiler_house"
+        ]
+      },
+      {
+        "participant_id": "julian_vale",
+        "truth_ids": [
+          "julian_argued_with_emma_over_inheritance",
+          "julian_cufflink_in_gallery",
+          "clara_saw_julian_in_conservatory",
+          "conservatory_checklist_places_julian"
+        ]
+      },
+      {
+        "participant_id": "clara_mere",
+        "truth_ids": [
+          "restoration_payments_diverted_by_harrow",
+          "harrow_in_west_gallery_2342_2350",
+          "clara_saw_julian_in_conservatory",
+          "household_accounts_conflict"
+        ]
+      },
+      {
+        "participant_id": "lydia_fenn",
+        "truth_ids": [
+          "lydia_saw_pike_in_boiler_house",
+          "pike_boiler_log_covers_murder_window"
+        ]
+      }
+    ],
+    "knowledge_protections": [],
+    "revelations": [
+      {
+        "id": "revelation_harrow_motive",
+        "truth_id": "restoration_payments_diverted_by_harrow",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_evidence"
+        ]
+      },
+      {
+        "id": "revelation_harrow_means",
+        "truth_id": "harrow_used_brass_letter_opener",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_evidence"
+        ]
+      },
+      {
+        "id": "revelation_harrow_opportunity",
+        "truth_id": "harrow_in_west_gallery_2342_2350",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_rising_evidence"
+        ]
+      },
+      {
+        "id": "revelation_harrow_concealment",
+        "truth_id": "harrow_cleaned_and_returned_opener",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_crisis_choice"
+        ]
+      },
+      {
+        "id": "revelation_groundskeeper_exoneration",
+        "truth_id": "groundskeeper_exonerated",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_crisis_choice"
+        ]
+      },
+      {
+        "id": "revelation_harrow_solution",
+        "truth_id": "beatrice_harrow_killed_emma_vale",
+        "required": true,
+        "gate_beat_ids": [
+          "beat_climax_solution"
+        ]
+      },
+      {
+        "id": "revelation_pike_suspicion",
+        "truth_id": "pike_appears_culpable",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_evidence"
+        ]
+      },
+      {
+        "id": "revelation_julian_suspicion",
+        "truth_id": "julian_appears_culpable",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_rising_evidence"
+        ]
+      },
+      {
+        "id": "revelation_julian_exoneration",
+        "truth_id": "julian_exonerated",
+        "required": false,
+        "gate_beat_ids": [
+          "beat_crisis_choice"
+        ]
+      }
+    ],
+    "realization_routes": [
+      {
+        "id": "realization_motive_ledger",
+        "revelation_id": "revelation_harrow_motive",
+        "opportunity_ids": [
+          "opportunity_motive_ledger"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "restoration_payments_diverted_by_harrow"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "harrow_altered_restoration_ledger"
+          ],
+          "alternative_route_ids": [
+            "realization_motive_testimony"
+          ]
+        }
+      },
+      {
+        "id": "realization_motive_testimony",
+        "revelation_id": "revelation_harrow_motive",
+        "opportunity_ids": [
+          "opportunity_motive_testimony"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "restoration_payments_diverted_by_harrow"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "restoration_payments_diverted_by_harrow"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_means_physical",
+        "revelation_id": "revelation_harrow_means",
+        "opportunity_ids": [
+          "opportunity_means_wound_fragment"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_used_brass_letter_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "single_narrow_wound"
+          ],
+          "alternative_route_ids": [
+            "realization_means_document"
+          ]
+        }
+      },
+      {
+        "id": "realization_means_document",
+        "revelation_id": "revelation_harrow_means",
+        "opportunity_ids": [
+          "opportunity_means_study_inventory"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_used_brass_letter_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "harrow_used_brass_letter_opener"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_opportunity_testimony",
+        "revelation_id": "revelation_harrow_opportunity",
+        "opportunity_ids": [
+          "opportunity_harrow_gallery_testimony"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_in_west_gallery_2342_2350"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "household_accounts_conflict"
+          ],
+          "alternative_route_ids": [
+            "realization_opportunity_physical"
+          ]
+        }
+      },
+      {
+        "id": "realization_opportunity_physical",
+        "revelation_id": "revelation_harrow_opportunity",
+        "opportunity_ids": [
+          "opportunity_harrow_gallery_trace"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_in_west_gallery_2342_2350"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "harrow_in_west_gallery_2342_2350"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_concealment_physical",
+        "revelation_id": "revelation_harrow_concealment",
+        "opportunity_ids": [
+          "opportunity_concealment_washcloth"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_cleaned_and_returned_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "west_gallery_washbasin_recently_drained"
+          ],
+          "alternative_route_ids": [
+            "realization_concealment_document"
+          ]
+        }
+      },
+      {
+        "id": "realization_concealment_document",
+        "revelation_id": "revelation_harrow_concealment",
+        "opportunity_ids": [
+          "opportunity_concealment_inventory_annotation"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "harrow_cleaned_and_returned_opener"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "harrow_cleaned_and_returned_opener"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_pike_exoneration_log",
+        "revelation_id": "revelation_groundskeeper_exoneration",
+        "opportunity_ids": [
+          "opportunity_pike_log_detail",
+          "opportunity_pike_log_conclusion"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "groundskeeper_exonerated"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "boiler_log_smudged"
+          ],
+          "alternative_route_ids": [
+            "realization_pike_exoneration_testimony"
+          ]
+        }
+      },
+      {
+        "id": "realization_pike_exoneration_testimony",
+        "revelation_id": "revelation_groundskeeper_exoneration",
+        "opportunity_ids": [
+          "opportunity_pike_witness_detail",
+          "opportunity_pike_witness_conclusion"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "groundskeeper_exonerated"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "groundskeeper_exonerated"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_solution_forensic",
+        "revelation_id": "revelation_harrow_solution",
+        "opportunity_ids": [
+          "opportunity_solution_forensic_cluster"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_harrow_killed_emma_vale"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "harrow_blood_trace_nearly_scrubbed"
+          ],
+          "alternative_route_ids": [
+            "realization_solution_documentary"
+          ]
+        }
+      },
+      {
+        "id": "realization_solution_documentary",
+        "revelation_id": "revelation_harrow_solution",
+        "opportunity_ids": [
+          "opportunity_solution_emma_memorandum",
+          "opportunity_solution_clara_sequence"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "beatrice_harrow_killed_emma_vale"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "beatrice_harrow_killed_emma_vale"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_pike_suspicion",
+        "revelation_id": "revelation_pike_suspicion",
+        "opportunity_ids": [
+          "opportunity_pike_bootprint",
+          "opportunity_pike_knife_inventory"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "pike_appears_culpable"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "pike_appears_culpable"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_julian_suspicion",
+        "revelation_id": "revelation_julian_suspicion",
+        "opportunity_ids": [
+          "opportunity_julian_argument",
+          "opportunity_julian_cufflink"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_appears_culpable"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "julian_appears_culpable"
+          ],
+          "alternative_route_ids": []
+        }
+      },
+      {
+        "id": "realization_julian_exoneration",
+        "revelation_id": "revelation_julian_exoneration",
+        "opportunity_ids": [
+          "opportunity_julian_conservatory_testimony",
+          "opportunity_julian_conservatory_checklist"
+        ],
+        "prerequisite_truths": [],
+        "prerequisite_revelation_ids": [],
+        "result_truth_ids": [
+          "julian_exonerated"
+        ],
+        "failure_forward": {
+          "consequence_truth_ids": [
+            "julian_exonerated"
+          ],
+          "alternative_route_ids": []
+        }
+      }
+    ],
+    "required_outcomes": [
+      {
+        "id": "outcome_solve_emma_murder",
+        "truth_id": "beatrice_harrow_killed_emma_vale"
+      },
+      {
+        "id": "outcome_exonerate_groundskeeper",
+        "truth_id": "groundskeeper_exonerated"
+      }
+    ],
+    "required_beats": [
+      {
+        "id": "beat_setup_death",
+        "phase": "setup",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 25
+      },
+      {
+        "id": "beat_rising_evidence",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 48
+      },
+      {
+        "id": "beat_crisis_choice",
+        "phase": "crisis",
+        "required_outcome_id": "outcome_exonerate_groundskeeper",
+        "prerequisite_revelation_ids": [
+          "revelation_harrow_motive",
+          "revelation_harrow_means",
+          "revelation_harrow_opportunity"
+        ],
+        "pressure": 70
+      },
+      {
+        "id": "beat_climax_solution",
+        "phase": "climax",
+        "required_outcome_id": "outcome_solve_emma_murder",
+        "prerequisite_revelation_ids": [
+          "revelation_harrow_motive",
+          "revelation_harrow_means",
+          "revelation_harrow_opportunity",
+          "revelation_harrow_concealment",
+          "revelation_groundskeeper_exoneration"
+        ],
+        "pressure": 88
+      },
+      {
+        "id": "beat_resolution_account",
+        "phase": "resolution",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [
+          "revelation_harrow_solution"
+        ],
+        "pressure": 45
+      }
+    ],
+    "optional_beats": [
+      {
+        "id": "optional_pike_suspicion",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 50,
+        "purpose": "complication"
+      },
+      {
+        "id": "optional_julian_suspicion",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 52,
+        "purpose": "complication"
+      },
+      {
+        "id": "optional_julian_exoneration",
+        "phase": "crisis",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 66,
+        "purpose": "complication"
+      },
+      {
+        "id": "optional_household_sympathies",
+        "phase": "rising_action",
+        "required_outcome_id": null,
+        "prerequisite_revelation_ids": [],
+        "pressure": 42,
+        "purpose": "relationship_development"
+      }
+    ],
+    "dramatic_spine": {
+      "active_conflict": "The snowbound household protects private grievances and competing accounts while material evidence increasingly contradicts Harrow's controlled explanation.",
+      "central_question": "Can the investigator prove who killed Emma, how the murder was committed and concealed, and why the apparent case against the groundskeeper is false?",
+      "participant_role_requirements": [
+        "perpetrator",
+        "alternative_suspect",
+        "witness"
+      ],
+      "target_pressure": {
+        "minimum": 20,
+        "maximum": 90
+      },
+      "completion_truth_ids": [
+        "beatrice_harrow_killed_emma_vale",
+        "groundskeeper_exonerated"
+      ]
+    },
+    "consequences": [
+      {
+        "id": "consequence_observe_wound",
+        "assert_truth_ids": [
+          "single_narrow_wound"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_establish_motive",
+        "assert_truth_ids": [
+          "restoration_payments_diverted_by_harrow"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_establish_means",
+        "assert_truth_ids": [
+          "harrow_used_brass_letter_opener"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_establish_opportunity",
+        "assert_truth_ids": [
+          "harrow_in_west_gallery_2342_2350"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_raise_pike_suspicion",
+        "assert_truth_ids": [
+          "pike_appears_culpable"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_raise_julian_suspicion",
+        "assert_truth_ids": [
+          "julian_appears_culpable"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_exonerate_pike",
+        "assert_truth_ids": [
+          "groundskeeper_exonerated"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_establish_concealment",
+        "assert_truth_ids": [
+          "harrow_cleaned_and_returned_opener"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_exonerate_julian",
+        "assert_truth_ids": [
+          "julian_exonerated"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_expose_conflicting_accounts",
+        "assert_truth_ids": [
+          "household_accounts_conflict"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_establish_solution",
+        "assert_truth_ids": [
+          "beatrice_harrow_killed_emma_vale"
+        ],
+        "retract_truth_ids": []
+      },
+      {
+        "id": "consequence_confirm_resolution",
+        "assert_truth_ids": [
+          "beatrice_harrow_killed_emma_vale",
+          "groundskeeper_exonerated"
+        ],
+        "retract_truth_ids": []
+      }
+    ],
+    "storylets": [
+      {
+        "id": "storylet_initial_gallery_reading",
+        "beat_id": "beat_setup_death",
+        "purpose": "investigation",
+        "route_family": "crime_scene_orientation",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "emma_vale",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 20,
+            "maximum": 32
+          }
+        },
+        "priority": 100,
+        "dramatic_question": "What does the untouched body reveal before household accounts begin to distort the scene?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_observe_wound"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "single_narrow_wound",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_motive_ledger",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "investigation",
+        "route_family": "motive_ledger",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "study"
+          ],
+          "pressure": {
+            "minimum": 35,
+            "maximum": 55
+          }
+        },
+        "priority": 90,
+        "dramatic_question": "Do the restoration accounts expose a reason Harrow needed Emma silenced?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_motive"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "restoration_payments_diverted_by_harrow",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_motive_testimony"
+        ]
+      },
+      {
+        "id": "storylet_motive_testimony",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "relationship",
+        "route_family": "motive_testimony",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "library"
+          ],
+          "pressure": {
+            "minimum": 38,
+            "maximum": 58
+          }
+        },
+        "priority": 82,
+        "dramatic_question": "Will Clara disclose the accusation she heard Emma make about the restoration money?",
+        "realization_modes": [
+          "dialogue",
+          "negotiation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_motive"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "restoration_payments_diverted_by_harrow",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_means_physical",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "investigation",
+        "route_family": "means_physical",
+        "availability": {
+          "required_truth_ids": [
+            "single_narrow_wound"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "emma_vale"
+          ],
+          "location_ids": [
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 36,
+            "maximum": 56
+          }
+        },
+        "priority": 88,
+        "dramatic_question": "Can the wound and embedded trace identify the study letter opener as the weapon?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_means"
+        ],
+        "activation_truth_id": "single_narrow_wound",
+        "completion_truth_id": "harrow_used_brass_letter_opener",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_means_document"
+        ]
+      },
+      {
+        "id": "storylet_means_document",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "investigation",
+        "route_family": "means_document",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "study"
+          ],
+          "pressure": {
+            "minimum": 40,
+            "maximum": 60
+          }
+        },
+        "priority": 80,
+        "dramatic_question": "Does the study inventory connect the missing and returned opener to the fatal interval?",
+        "realization_modes": [
+          "investigation",
+          "dialogue"
+        ],
+        "consequence_ids": [
+          "consequence_establish_means"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "harrow_used_brass_letter_opener",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_opportunity_testimony",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "social_complication",
+        "route_family": "opportunity_testimony",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "clara_mere",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "central_hall"
+          ],
+          "pressure": {
+            "minimum": 42,
+            "maximum": 62
+          }
+        },
+        "priority": 86,
+        "dramatic_question": "Can Clara's recollection place Harrow at the gallery despite Harrow's controlled denial?",
+        "realization_modes": [
+          "dialogue",
+          "negotiation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_opportunity"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "harrow_in_west_gallery_2342_2350",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_opportunity_physical"
+        ]
+      },
+      {
+        "id": "storylet_opportunity_physical",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "investigation",
+        "route_family": "opportunity_physical",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 44,
+            "maximum": 64
+          }
+        },
+        "priority": 78,
+        "dramatic_question": "Does the gallery retain a physical trace that fixes Harrow's presence during the murder window?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_opportunity"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "harrow_in_west_gallery_2342_2350",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_pike_suspicion",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "reversal",
+        "route_family": "pike_false_solution",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "thomas_pike"
+          ],
+          "location_ids": [
+            "west_gallery",
+            "service_corridor"
+          ],
+          "pressure": {
+            "minimum": 45,
+            "maximum": 65
+          }
+        },
+        "priority": 65,
+        "dramatic_question": "Do Pike's boot impression and missing pruning knife make the groundskeeper the strongest immediate suspect?",
+        "realization_modes": [
+          "investigation",
+          "dialogue"
+        ],
+        "consequence_ids": [
+          "consequence_raise_pike_suspicion"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "pike_appears_culpable",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_julian_suspicion",
+        "beat_id": "beat_rising_evidence",
+        "purpose": "social_complication",
+        "route_family": "julian_false_solution",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "julian_vale"
+          ],
+          "location_ids": [
+            "grand_foyer",
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 46,
+            "maximum": 66
+          }
+        },
+        "priority": 64,
+        "dramatic_question": "Does Julian's inheritance quarrel explain why his cufflink was left near Emma?",
+        "realization_modes": [
+          "dialogue",
+          "investigation"
+        ],
+        "consequence_ids": [
+          "consequence_raise_julian_suspicion"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "julian_appears_culpable",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_pike_exoneration_log",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "moral_choice",
+        "route_family": "pike_exoneration_log",
+        "availability": {
+          "required_truth_ids": [
+            "restoration_payments_diverted_by_harrow"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "thomas_pike"
+          ],
+          "location_ids": [
+            "boiler_house"
+          ],
+          "pressure": {
+            "minimum": 58,
+            "maximum": 76
+          }
+        },
+        "priority": 92,
+        "dramatic_question": "Will the investigator trust the damaged boiler record enough to reject the convenient case against Pike?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_exonerate_pike"
+        ],
+        "activation_truth_id": "restoration_payments_diverted_by_harrow",
+        "completion_truth_id": "groundskeeper_exonerated",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_pike_exoneration_testimony"
+        ]
+      },
+      {
+        "id": "storylet_pike_exoneration_testimony",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "relationship",
+        "route_family": "pike_exoneration_testimony",
+        "availability": {
+          "required_truth_ids": [
+            "restoration_payments_diverted_by_harrow"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "thomas_pike",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "boiler_house"
+          ],
+          "pressure": {
+            "minimum": 60,
+            "maximum": 78
+          }
+        },
+        "priority": 90,
+        "dramatic_question": "Will Lydia stand by the precise timing that clears Pike when suspicion turns against him?",
+        "realization_modes": [
+          "dialogue",
+          "negotiation"
+        ],
+        "consequence_ids": [
+          "consequence_exonerate_pike"
+        ],
+        "activation_truth_id": "restoration_payments_diverted_by_harrow",
+        "completion_truth_id": "groundskeeper_exonerated",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_concealment_physical",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "investigation",
+        "route_family": "concealment_physical",
+        "availability": {
+          "required_truth_ids": [
+            "harrow_used_brass_letter_opener"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "study",
+            "west_gallery"
+          ],
+          "pressure": {
+            "minimum": 62,
+            "maximum": 80
+          }
+        },
+        "priority": 94,
+        "dramatic_question": "Do the damp washcloth and drained basin prove that the returned opener was cleaned after the killing?",
+        "realization_modes": [
+          "investigation",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_establish_concealment"
+        ],
+        "activation_truth_id": "harrow_used_brass_letter_opener",
+        "completion_truth_id": "harrow_cleaned_and_returned_opener",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_concealment_document"
+        ]
+      },
+      {
+        "id": "storylet_concealment_document",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "reversal",
+        "route_family": "concealment_document",
+        "availability": {
+          "required_truth_ids": [
+            "harrow_used_brass_letter_opener"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow"
+          ],
+          "location_ids": [
+            "study"
+          ],
+          "pressure": {
+            "minimum": 64,
+            "maximum": 82
+          }
+        },
+        "priority": 86,
+        "dramatic_question": "Does Harrow's own inventory annotation reveal that the opener was returned only after the murder?",
+        "realization_modes": [
+          "investigation",
+          "dialogue"
+        ],
+        "consequence_ids": [
+          "consequence_establish_concealment"
+        ],
+        "activation_truth_id": "harrow_used_brass_letter_opener",
+        "completion_truth_id": "harrow_cleaned_and_returned_opener",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_julian_exoneration",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "social_complication",
+        "route_family": "julian_exoneration",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "julian_vale",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "conservatory"
+          ],
+          "pressure": {
+            "minimum": 58,
+            "maximum": 74
+          }
+        },
+        "priority": 60,
+        "dramatic_question": "Can the conservatory record and Clara's memory separate Julian's real quarrel from the murder itself?",
+        "realization_modes": [
+          "investigation",
+          "dialogue"
+        ],
+        "consequence_ids": [
+          "consequence_exonerate_julian"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "julian_exonerated",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_household_account_fracture",
+        "beat_id": "beat_crisis_choice",
+        "purpose": "conflict",
+        "route_family": "household_pressure",
+        "availability": {
+          "required_truth_ids": [
+            "emma_dead_in_west_gallery"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "beatrice_harrow",
+            "thomas_pike",
+            "julian_vale",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "grand_foyer"
+          ],
+          "pressure": {
+            "minimum": 65,
+            "maximum": 82
+          }
+        },
+        "priority": 58,
+        "dramatic_question": "Which household alliance breaks when the conflicting accounts are compared in public?",
+        "realization_modes": [
+          "conflict",
+          "dialogue"
+        ],
+        "consequence_ids": [
+          "consequence_expose_conflicting_accounts"
+        ],
+        "activation_truth_id": "emma_dead_in_west_gallery",
+        "completion_truth_id": "household_accounts_conflict",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_solution_forensic",
+        "beat_id": "beat_climax_solution",
+        "purpose": "investigation",
+        "route_family": "solution_forensic",
+        "availability": {
+          "required_truth_ids": [
+            "restoration_payments_diverted_by_harrow",
+            "harrow_used_brass_letter_opener",
+            "harrow_in_west_gallery_2342_2350",
+            "harrow_cleaned_and_returned_opener",
+            "groundskeeper_exonerated"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow",
+            "emma_vale"
+          ],
+          "location_ids": [
+            "west_gallery",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 76,
+            "maximum": 90
+          }
+        },
+        "priority": 100,
+        "dramatic_question": "Can the physical sequence unite motive, weapon, timing, and concealment into proof that Harrow killed Emma?",
+        "realization_modes": [
+          "investigation",
+          "observation",
+          "conflict"
+        ],
+        "consequence_ids": [
+          "consequence_establish_solution"
+        ],
+        "activation_truth_id": "harrow_cleaned_and_returned_opener",
+        "completion_truth_id": "beatrice_harrow_killed_emma_vale",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": [
+          "storylet_solution_documentary"
+        ]
+      },
+      {
+        "id": "storylet_solution_documentary",
+        "beat_id": "beat_climax_solution",
+        "purpose": "conflict",
+        "route_family": "solution_documentary",
+        "availability": {
+          "required_truth_ids": [
+            "restoration_payments_diverted_by_harrow",
+            "harrow_used_brass_letter_opener",
+            "harrow_in_west_gallery_2342_2350",
+            "harrow_cleaned_and_returned_opener",
+            "groundskeeper_exonerated"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow",
+            "clara_mere"
+          ],
+          "location_ids": [
+            "library",
+            "study"
+          ],
+          "pressure": {
+            "minimum": 78,
+            "maximum": 90
+          }
+        },
+        "priority": 98,
+        "dramatic_question": "Will Emma's memorandum and Clara's sequence of movements withstand Harrow's final denial?",
+        "realization_modes": [
+          "dialogue",
+          "investigation",
+          "conflict"
+        ],
+        "consequence_ids": [
+          "consequence_establish_solution"
+        ],
+        "activation_truth_id": "groundskeeper_exonerated",
+        "completion_truth_id": "beatrice_harrow_killed_emma_vale",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      },
+      {
+        "id": "storylet_resolution_reconstruction",
+        "beat_id": "beat_resolution_account",
+        "purpose": "moral_choice",
+        "route_family": "final_reconstruction",
+        "availability": {
+          "required_truth_ids": [
+            "beatrice_harrow_killed_emma_vale",
+            "groundskeeper_exonerated"
+          ],
+          "absent_truth_ids": [],
+          "participant_ids": [
+            "investigator",
+            "beatrice_harrow",
+            "thomas_pike",
+            "julian_vale",
+            "clara_mere",
+            "lydia_fenn"
+          ],
+          "location_ids": [
+            "grand_foyer"
+          ],
+          "pressure": {
+            "minimum": 35,
+            "maximum": 55
+          }
+        },
+        "priority": 100,
+        "dramatic_question": "Can the final account name Harrow, explain the evidence, and clear Pike without leaving a false suspicion intact?",
+        "realization_modes": [
+          "dialogue",
+          "observation"
+        ],
+        "consequence_ids": [
+          "consequence_confirm_resolution"
+        ],
+        "activation_truth_id": "beatrice_harrow_killed_emma_vale",
+        "completion_truth_id": "beatrice_harrow_killed_emma_vale",
+        "abort_truth_ids": [],
+        "failure_forward_storylet_ids": []
+      }
+    ],
+    "suspect_hypotheses": [
+      {
+        "participant_id": "thomas_pike",
+        "supporting_truth_ids": [
+          "pike_bootprint_near_gallery",
+          "pike_pruning_knife_unaccounted"
+        ],
+        "exonerating_truth_ids": [
+          "pike_boiler_log_covers_murder_window",
+          "lydia_saw_pike_in_boiler_house"
+        ]
+      },
+      {
+        "participant_id": "julian_vale",
+        "supporting_truth_ids": [
+          "julian_argued_with_emma_over_inheritance",
+          "julian_cufflink_in_gallery"
+        ],
+        "exonerating_truth_ids": [
+          "clara_saw_julian_in_conservatory",
+          "conservatory_checklist_places_julian"
+        ]
+      }
+    ],
+    "end_states": [
+      {
+        "id": "harrow_exposed_and_pike_cleared",
+        "required_outcome_ids": [
+          "outcome_solve_emma_murder",
+          "outcome_exonerate_groundskeeper"
+        ],
+        "required_truth_ids": [
+          "beatrice_harrow_killed_emma_vale",
+          "groundskeeper_exonerated"
+        ]
+      }
+    ]
+  }
+}

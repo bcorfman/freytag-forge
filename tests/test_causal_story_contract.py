@@ -271,6 +271,14 @@ def test_phase_one_contract_rejects_invalid_causal_dependencies(mutate, code: st
         validate_causal_compiled_story(payload)
 
 
+def test_every_end_state_must_cover_every_declared_required_outcome() -> None:
+    payload = _story()
+    payload["required_outcomes"].append({"id": "stabilize", "truth_id": "remedy"})
+
+    with pytest.raises(CausalValidationError, match="ENDING_NOT_VIABLE"):
+        validate_causal_compiled_story(payload)
+
+
 def test_phase_one_contract_batches_every_infeasible_timeline_constraint() -> None:
     payload = _story()
     payload["causal_events"][0]["latest"] = 4
