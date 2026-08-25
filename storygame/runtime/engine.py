@@ -48,6 +48,8 @@ class RuntimeEngine:
         normalized = movement or item_affordance
         if normalized is not None:
             context.payload["normalized_affordance"] = normalized
+        if movement is not None:
+            context.payload["post_commit"] = _movement_render_context(self.state, movement)
         last_error: RuntimeFailure | None = None
         for model_calls, json_object in enumerate((True, False), start=1):
             try:
@@ -209,6 +211,20 @@ def _movement_affordance(state: RuntimeState, player_input: str) -> str | None:
         if any(_mentions_destination(request, label) for label in labels if label):
             candidates.append(destination)
     return candidates[0] if len(set(candidates)) == 1 else None
+
+
+def _movement_render_context(state: RuntimeState, destination: str) -> dict[str, str]:
+    navigation = state.world.attributes.get("navigation", {})
+    names = navigation.get("names", {}) if isinstance(navigation, dict) else {}
+    name = names.get(destination, destination.replace("_", " ").title()) if isinstance(names, dict) else destination
+    return {
+        "kind": "movement",
+        "location": destination,
+        "location_name": str(name),
+        "narration_requirement": (
+            "Describe the destination after movement; do not describe the origin as the current room."
+        ),
+    }
 
 
 def _mentions_destination(request: str, label: str) -> bool:

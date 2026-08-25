@@ -54,6 +54,13 @@ details. An explicit `LOOK` request may expand the room description again. Item
 inspection follows the same rule. Observation/discovery markers are fact-backed
 state; prose is a projection and may not create facts.
 
+For a normalized movement affordance, the turn prompt carries an explicit
+post-commit destination rendering context while the commit remains subject to
+the shared validation path. The narrator must describe that destination rather
+than the origin. Opening orientation is provided only on the initial turn;
+later turns must address the player's current action and cannot reuse opening
+prose unless the player explicitly asks to look.
+
 The NPC target is continuity, not decorative text. A declared NPC must remain
 addressable only when present, answer as that NPC from permitted knowledge, and
 retain interaction history, relationship state, and bounded stance changes.
