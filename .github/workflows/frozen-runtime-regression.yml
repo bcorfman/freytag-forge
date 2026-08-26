@@ -1,4 +1,4 @@
-name: frozen runtime regression
+name: frozen story-package regression
 
 on:
   schedule:
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   frozen-runtime-regression:
-    name: Frozen ordinary-runtime quality
+    name: Frozen Markdown-package quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -43,15 +43,15 @@ jobs:
           esac
           test "$MAX_PROVIDER_REQUESTS" -gt 0
           test "$MAX_PROVIDER_REQUESTS" -le 24
-      - name: Run deterministic frozen adapter comparison
+      - name: Run deterministic package-contract comparison
         run: >-
           TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_runtime_v2.py tests/test_web_demo_v2.py
-          --tier-report=artifacts/frozen-runtime-quality.json
-      - name: Upload frozen runtime-quality evidence
+          tests/test_markdown_story_package.py
+          --tier-report=artifacts/frozen-story-package-quality.json
+      - name: Upload frozen story-package evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: frozen-runtime-quality
-          path: artifacts/frozen-runtime-quality.json
+          name: frozen-story-package-quality
+          path: artifacts/frozen-story-package-quality.json
           if-no-files-found: error
