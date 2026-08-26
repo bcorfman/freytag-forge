@@ -6,9 +6,11 @@ trusted `main` deploys the tested SHA to Railway staging and Pages `/dev/`;
 `staging-deployment` status to production and root Pages.
 
 The API health and version endpoints must report the expected scene runtime,
-channel, and immutable SHA. Pages publishes matching `deployment.json` metadata.
-Workflows fail closed on an identity mismatch and serialize deployments without
-cancelling an active promotion.
+channel, and immutable SHA. The current adapter deliberately exposes only this
+deployment identity while the player surface is rebuilt; it does not revive the
+retired V2 gameplay runtime. Pages publishes matching `deployment.json`
+metadata. Workflows fail closed on an identity mismatch and serialize
+deployments without cancelling an active promotion.
 
 ## One-time setup
 
