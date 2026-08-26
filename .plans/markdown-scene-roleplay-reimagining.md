@@ -255,18 +255,18 @@ the engine's accepted facts are the only source of the next scene and context.
 
 ### 2. Replace the runtime state and proposal schema
 
-- Simplify `storygame/runtime/contracts.py`, `facts.py`, and `state.py` around
+- [x] Simplify `storygame/runtime/contracts.py`, `facts.py`, and `state.py` around
   `StoryPackage`, typed facts, `SceneTransitionProposal`, `StoryEventProposal`,
   and `GameBreakWarning`. Preserve strict Pydantic parsing and provider-envelope
   normalization.
-- Replace `RuntimeState.active_beats`, `BeatRuntime`, legacy `WorldState`, and
+- [x] Replace `RuntimeState.active_beats`, `BeatRuntime`, legacy `WorldState`, and
   the generic completion-tag machinery with `current_scene_id`, phase state,
   active/fired events, and a canonical fact store.
-- Add snapshot records to the SQLite persistence schema and version the saved
+- [x] Add snapshot records to the SQLite persistence schema and version the saved
   payload. A pending break must survive process restart and only be resolved by
   `proceed` or `return_to_scene`; normal turns must be rejected while it is
   pending.
-- Test atomicity: invalid model JSON, invalid operations, invalid transitions,
+- [x] Test atomicity: invalid model JSON, invalid operations, invalid transitions,
   failed pacing effects, and warnings must leave canonical facts unchanged.
 
 ### 3. Build scene context and reference-aware memory
@@ -351,6 +351,16 @@ the engine's accepted facts are the only source of the next scene and context.
   scene-contained pacing window/impact.
 - [x] Malformed Markdown/YAML, references, windows, cycles, and tied transition
   priorities fail closed in package-load tests.
+
+### Phase 2 exit criteria
+
+- [x] Strict provider-envelope parsing produces only valid typed proposals;
+  malformed JSON fails closed.
+- [x] Runtime state consists of package identity, current scene/phase, active
+  and fired events, canonical facts, and an optional pending game break.
+- [x] SQLite restores a versioned, integrity-checked pending warning and blocks
+  normal turns until `proceed` or exact `return_to_scene` restoration.
+- [x] Invalid transitions and warnings leave canonical facts unchanged.
 
 - The supplied Continuity Initiative Markdown package loads without any
   story-specific Python conditionals and starts Jeremiah in Scene 1A.

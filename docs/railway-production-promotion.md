@@ -5,7 +5,7 @@ trusted `main` deploys the tested SHA to Railway staging and Pages `/dev/`;
 **Promote staged SHA to production** manually deploys a SHA with a successful
 `staging-deployment` status to production and root Pages.
 
-The API health and version endpoints must report the expected V2 runtime,
+The API health and version endpoints must report the expected scene runtime,
 channel, and immutable SHA. Pages publishes matching `deployment.json` metadata.
 Workflows fail closed on an identity mismatch and serialize deployments without
 cancelling an active promotion.

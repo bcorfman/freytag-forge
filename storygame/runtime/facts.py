@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,11 +21,11 @@ class Fact(BaseModel):
         return self.predicate, self.subject, self.object, self.value
 
 
-@dataclass
-class FactStore:
+class FactStore(BaseModel):
     """Mutable fact authority for the future scene runtime."""
 
-    asserted: set[Fact] = field(default_factory=set)
+    model_config = ConfigDict(extra="forbid")
+    asserted: set[Fact] = Field(default_factory=set)
 
     def has(self, predicate: str, subject: str, object: str | None = None, value: str | None = None) -> bool:
         return Fact(predicate=predicate, subject=subject, object=object, value=value) in self.asserted
@@ -52,8 +51,13 @@ class FactStore:
     def as_json(self) -> list[dict[str, Any]]:
         return [fact.model_dump(mode="json") for fact in sorted(self.asserted, key=lambda item: item.key)]
 
+    def clone(self) -> FactStore:
+        """Return an independent candidate store for all-or-nothing turns."""
+
+        return FactStore(asserted=set(self.asserted))
+
     @classmethod
     def from_json(cls, values: object) -> FactStore:
         if not isinstance(values, list):
             raise ValueError("facts must be a list")
-        return cls({Fact.model_validate(value) for value in values})
+        return cls(asserted={Fact.model_validate(value) for value in values})
