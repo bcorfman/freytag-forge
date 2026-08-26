@@ -88,3 +88,16 @@ def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limi
     assert missing_story.status_code == 404
     assert unavailable.status_code == 503
     assert limited.status_code == 429
+
+
+def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: lambda _input: {"narration": "The lead sharpens."},
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "I listen."})
+
+    assert response.status_code == 200
+    assert response.json()["segments"] == [{"kind": "narration", "text": "The lead sharpens."}]

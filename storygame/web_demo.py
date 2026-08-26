@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.context import SceneContextBuilder
@@ -32,7 +32,20 @@ class SessionRequest(_Request):
 
 class TurnRequest(_Request):
     session_id: str = Field(min_length=1)
-    player_input: str = Field(min_length=1, max_length=12000)
+    player_input: str | None = Field(default=None, min_length=1, max_length=12000)
+    command: str | None = Field(default=None, min_length=1, max_length=12000)
+
+    @model_validator(mode="after")
+    def has_one_player_input(self) -> TurnRequest:
+        if self.player_input is None and self.command is None:
+            raise ValueError("player_input or command is required")
+        if self.player_input is not None and self.command is not None:
+            raise ValueError("provide only player_input or command")
+        return self
+
+    @property
+    def input_text(self) -> str:
+        return self.player_input or self.command or ""
 
 
 class BreakResolutionRequest(_Request):
@@ -156,7 +169,7 @@ def create_demo_app(
         require_rate_limit(request)
         state = load_state(body.session_id)
         try:
-            proposal = RuntimeEngine(state, provider_for(state)).turn(body.player_input)
+            proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text)
         except NarrationProviderError as error:
             raise HTTPException(status_code=error.status_code, detail=error.message) from error
         except RuntimeStateError as error:

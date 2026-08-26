@@ -45,11 +45,11 @@ OpenAI tests remain opt-in and skip without their credentials and flags.
 ## Manual Cloudflare browser evaluation
 
 The Chromium-only Playwright suite is intentionally **not** in CI. It drives the
-real deployed FastAPI/Cloudflare Worker path with goal-focused, exploratory,
-social, avoidant, aggressive, and chaotic-but-legal inputs. It records ending
-reachability, dead ends, scene/revelation order, fired-storylet reuse,
-selection/route diversity, pressure trajectory, and blocked-action rate in
-ignored `artifacts/policy-evaluation.{json,md}` reports.
+real deployed FastAPI/Cloudflare Worker path and emits ignored per-category
+JSON/Markdown reports for freeform narration, the main spine, storylets, NPC
+knowledge/reveals, world-state follow-up, and safety policies. Reports record
+ending reachability, dead ends, scene/revelation order, fired-storylet reuse,
+selection/route diversity, pressure trajectory, and blocked-action rate.
 
 Run it manually against the deployment you intend to assess:
 
@@ -62,3 +62,18 @@ E2E_API_BASE_URL=https://your-api.example E2E_DEPLOYMENT_CHANNEL=production npm 
 smoke check; leave the default for a full ending-reachability sample. This suite
 observes actual model behavior, so report values are evaluation evidence rather
 than deterministic CI thresholds.
+
+Playwright tags select a focused manual category:
+
+```text
+npm run test:e2e -- --grep @smoke
+npm run test:e2e -- --grep @spine
+npm run test:e2e -- --grep @storylets
+npm run test:e2e -- --grep @npc
+npm run test:e2e -- --grep @world-state
+npm run test:e2e -- --grep @safety
+```
+
+The target deployment must report `runtime: "scene-v1"` from
+`/api/v1/version`; a V2 deployment has a different request contract and is not
+a valid target for this suite.
