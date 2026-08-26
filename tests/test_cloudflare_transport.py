@@ -48,6 +48,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
 
     assert provider("I listen.") == {"narration": "A valid proposal."}
     assert captured["headers"]["Authorization"] == "Bearer secret"
+    assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     assert captured["payload"]["user"].find("scene_context") >= 0
 
@@ -123,6 +124,21 @@ def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None
         provider("I listen.")
     assert caught.value.status_code == 429
     assert caught.value.message == "narration service is at capacity"
+
+
+def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        context_builder=SceneContextBuilder(),
+        state=RuntimeState.bootstrap(PACKAGE),
+    )
+    error = HTTPError("https://worker.example/turn", 502, "failure", {}, None)
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
+
+    with pytest.raises(NarrationProviderError) as caught:
+        provider("I listen.")
+    assert caught.value.error_code == "UNKNOWN"
 
 
 @pytest.mark.parametrize(("status", "expected"), ((429, 429), (500, 502)))

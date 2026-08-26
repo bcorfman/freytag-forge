@@ -171,7 +171,11 @@ def create_demo_app(
         try:
             proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text)
         except NarrationProviderError as error:
-            headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else None
+            headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else {}
+            if error.trace_id:
+                headers["X-Trace-ID"] = error.trace_id
+            if error.worker_revision:
+                headers["X-Worker-Revision"] = error.worker_revision
             raise HTTPException(status_code=error.status_code, detail=error.message, headers=headers) from error
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error

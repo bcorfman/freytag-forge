@@ -17,6 +17,8 @@ class NarrationProviderError(RuntimeError):
     message: str
     status_code: int = 503
     error_code: str = ""
+    trace_id: str = ""
+    worker_revision: str = ""
 
 
 class CloudflareTurnProvider:
@@ -67,7 +69,14 @@ class CloudflareTurnProvider:
             raise NarrationProviderError("narration service is unavailable") from error
 
     def _request(self, payload: dict[str, object]) -> object:
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            # Cloudflare Browser Integrity Check rejects urllib's default bot-like
+            # signature before this request can reach the Worker.
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+            ),
+        }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(self.worker_url, data=json.dumps(payload).encode(), headers=headers, method="POST")
@@ -93,9 +102,19 @@ class CloudflareTurnProvider:
 
     @classmethod
     def _narration_error(cls, error: HTTPError) -> NarrationProviderError:
-        code = cls._worker_error_code(error)
+        code = cls._worker_error_code(error) or "UNKNOWN"
+        trace_id = cls._error_header(error, "X-Trace-ID")
+        worker_revision = cls._error_header(error, "X-Worker-Revision")
         if code in {"AI_QUOTA_EXCEEDED", "AI_CAPACITY_EXCEEDED"}:
-            return NarrationProviderError("narration service is at capacity", 429, code)
+            return NarrationProviderError("narration service is at capacity", 429, code, trace_id, worker_revision)
         if code and 400 <= error.code < 500:
-            return NarrationProviderError("narration service rejected the turn", error.code, code)
-        return NarrationProviderError("narration service rejected the turn", 429 if error.code == 429 else 502, code)
+            return NarrationProviderError(
+                "narration service rejected the turn", error.code, code, trace_id, worker_revision
+            )
+        return NarrationProviderError(
+            "narration service rejected the turn", 429 if error.code == 429 else 502, code, trace_id, worker_revision
+        )
+
+    @staticmethod
+    def _error_header(error: HTTPError, name: str) -> str:
+        return str(error.headers.get(name, "")).strip() if error.headers else ""

@@ -94,7 +94,9 @@ def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limi
 def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
     def rejected_provider(_state):
         def reject(_input):
-            raise NarrationProviderError("narration service rejected the turn", 502, "WORKER_CONFIGURATION_ERROR")
+            raise NarrationProviderError(
+                "narration service rejected the turn", 502, "WORKER_CONFIGURATION_ERROR", "trace-123", "worker-456"
+            )
 
         return reject
 
@@ -105,6 +107,8 @@ def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
 
     assert response.status_code == 502
     assert response.headers["X-Narration-Error-Code"] == "WORKER_CONFIGURATION_ERROR"
+    assert response.headers["X-Trace-ID"] == "trace-123"
+    assert response.headers["X-Worker-Revision"] == "worker-456"
 
 
 def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
