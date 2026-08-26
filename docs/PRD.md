@@ -1,8 +1,8 @@
 # Freytag Forge product reference
 
-Freytag Forge is a package-driven interactive-fiction engine for consequences
-that hold. Players roleplay in freeform; a story-agnostic runtime validates
-proposed changes before committing them as durable facts.
+Freytag Forge is a package-driven interactive-fiction engine for freeform
+roleplay with consequences that hold. A story-agnostic runtime validates each
+proposed change before committing it as a durable fact.
 
 ## Player experience
 
@@ -12,26 +12,23 @@ proposed changes before committing them as durable facts.
 - Markdown packages define scenes, entities, transitions, optional storylets,
   and Freytag pacing. They shape drama and urgency without turning into action
   menus or parser rules.
-- Context is limited to the current scene, relevant public facts, and safe
-  history for an unambiguous reference. Protected and speaker-private knowledge
-  never enters a player prompt.
+- Prompts contain the current scene, relevant public facts, and safe history for
+  an unambiguous reference—never protected or speaker-private knowledge.
 - A move that demonstrably removes an indispensable reachable dependency pauses
   for an explicit decision. Proceed commits the validated branch; return restores
   the exact pre-turn snapshot, including across a save/load.
 
 ## Runtime contract
 
-The provider supplies strict JSON: narration, fact effects, optional storylet or
-pacing events, and a requested transition. Provider output is untrusted. The
-runtime clones state, validates operations, trigger predicates, event eligibility,
-transitions, and remaining reachable dependencies (including declared fallbacks),
-then atomically commits accepted facts. Invalid or repaired output never mutates
-canonical state.
+The provider supplies strict JSON for narration, fact effects, optional events,
+and a requested transition. Its output is untrusted: the runtime clones state,
+validates operations, triggers, eligibility, transitions, and reachable
+dependencies (including fallbacks), then atomically commits accepted facts.
+Invalid or repaired output never mutates canonical state.
 
-Pacing is declarative and fact-backed: each accepted turn records bounded
-narrative time, and package-declared deadlines may add pressure or perform an
-authored transition. The runtime never infers gameplay from prose or selects a
-player action.
+Pacing is declarative and fact-backed: accepted turns record bounded narrative
+time, while package-declared deadlines may add pressure or perform an authored
+transition. The runtime never infers gameplay from prose or selects an action.
 
 ## Authoring and deployment
 

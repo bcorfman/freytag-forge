@@ -328,15 +328,16 @@ the engine's accepted facts are the only source of the next scene and context.
 
 ### 6. Remove superseded complexity after the replacement is proven
 
-- Delete the legacy V1/V2 fixture selection, genre profiles/predicates, causal
+- [x] Delete legacy V1 fixture selection, genre profiles/predicates, causal
   blueprint compiler, candidate review/audit/repair pipeline, spatial
   interaction compiler projections, beat/tag runtime, and tests/docs that only
-  support those paths.
-- Retain, after adapting names and contracts: fact storage, strict provider
+  support those paths. Retain `data/compiled_stories/v2/` as archived reference
+  data; it is not a supported runtime path.
+- [x] Retain, after adapting names and contracts: fact storage, strict provider
   parsing, failure taxonomy, Cloudflare HTTP transport, SQLite integrity
   checks, artifact derivation, FastAPI adapter, React renderer, and their
   focused test coverage.
-- Do this only after the Markdown package integration suite covers sessions,
+- [x] Do this only after the Markdown package integration suite covers sessions,
   saves/loads, transitions, warnings, context scoping, and structured output.
   Avoid parallel legacy and new runtime paths beyond a short, explicit migration
   window.
@@ -394,6 +395,16 @@ the engine's accepted facts are the only source of the next scene and context.
   input during a warning, and sends Proceed/Return decisions to the API.
 - [x] API/Worker documentation and adapter/frontend tests describe and verify the
   deployed scene-runtime contract.
+
+### Phase 6 exit criteria
+
+- [x] Legacy V1 source packages, fixtures, profiles, compiler inputs, and obsolete
+  test-suite classifications are absent; Markdown packages are the sole supported
+  authoring/runtime path. Archived V2 data remains outside that runtime path.
+- [x] Fact storage, strict provider parsing, Cloudflare transport, SQLite
+  integrity checks, FastAPI, and the React renderer retain focused coverage.
+- [x] The Markdown-package suite covers session creation, persistence,
+  transitions, game-break decisions, context scoping, and structured output.
 
 - The supplied Continuity Initiative Markdown package loads without any
   story-specific Python conditionals and starts Jeremiah in Scene 1A.
