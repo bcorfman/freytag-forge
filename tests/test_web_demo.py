@@ -38,6 +38,8 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "scene_id": "1A",
         "phase": "exposition",
         "pending_game_break": False,
+        "fired_storylet_ids": [],
+        "story_elapsed_seconds": 0,
     }
     assert "Sarah's phone lies facedown" in session.json()["opening"]["text"]
     assert session.json()["opening"]["text"] != "Enter 1A"

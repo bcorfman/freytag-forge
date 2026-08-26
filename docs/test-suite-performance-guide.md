@@ -41,3 +41,24 @@ component)**, and **Required coverage gate**. The coverage gate uses two
 workers, branch coverage, the project-wide 90% floor, and a health artifact.
 Coverage-context and benchmark workflows are informational. Live hosted and
 OpenAI tests remain opt-in and skip without their credentials and flags.
+
+## Manual Cloudflare browser evaluation
+
+The Chromium-only Playwright suite is intentionally **not** in CI. It drives the
+real deployed FastAPI/Cloudflare Worker path with goal-focused, exploratory,
+social, avoidant, aggressive, and chaotic-but-legal inputs. It records ending
+reachability, dead ends, scene/revelation order, fired-storylet reuse,
+selection/route diversity, pressure trajectory, and blocked-action rate in
+ignored `artifacts/policy-evaluation.{json,md}` reports.
+
+Run it manually against the deployment you intend to assess:
+
+```text
+cd frontend
+E2E_API_BASE_URL=https://your-api.example E2E_DEPLOYMENT_CHANNEL=production npm run test:e2e
+```
+
+`E2E_TURNS_PER_POLICY` defaults to 8. Reduce it only for a quick transport/UI
+smoke check; leave the default for a full ending-reachability sample. This suite
+observes actual model behavior, so report values are evaluation evidence rather
+than deterministic CI thresholds.
