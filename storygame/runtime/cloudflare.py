@@ -16,6 +16,7 @@ from storygame.runtime.state import RuntimeState
 class NarrationProviderError(RuntimeError):
     message: str
     status_code: int = 503
+    error_code: str = ""
 
 
 class CloudflareTurnProvider:
@@ -94,7 +95,7 @@ class CloudflareTurnProvider:
     def _narration_error(cls, error: HTTPError) -> NarrationProviderError:
         code = cls._worker_error_code(error)
         if code in {"AI_QUOTA_EXCEEDED", "AI_CAPACITY_EXCEEDED"}:
-            return NarrationProviderError("narration service is at capacity", 429)
-        if code == "AI_REQUEST_REJECTED" and 400 <= error.code < 500:
-            return NarrationProviderError("narration service rejected the turn", error.code)
-        return NarrationProviderError("narration service rejected the turn", 429 if error.code == 429 else 502)
+            return NarrationProviderError("narration service is at capacity", 429, code)
+        if code and 400 <= error.code < 500:
+            return NarrationProviderError("narration service rejected the turn", error.code, code)
+        return NarrationProviderError("narration service rejected the turn", 429 if error.code == 429 else 502, code)

@@ -152,6 +152,19 @@ safety.
 1. Confirm the API version reports `scene-v1`.
 2. Run all E2E tests or select one category with `--grep @<tag>`.
 
+If Playwright's automatic Vite startup stalls, start Vite separately from the
+repository root after loading `.env`; pass the corresponding public Vite
+variables explicitly, then run Playwright in a second terminal:
+
+```bash
+source .env
+cd frontend
+VITE_API_BASE_URL="$E2E_API_BASE_URL" VITE_DEPLOYMENT_CHANNEL="$E2E_DEPLOYMENT_CHANNEL" npm run dev -- --host 127.0.0.1 --port 4173
+```
+
+The Vite server must be restarted after changing these variables. A manually
+started server without them renders `VITE_API_BASE_URL is not configured.`
+
 **Verify:**
 
 ```bash
@@ -186,9 +199,18 @@ headers needed to classify the cause.
 The source adapter now retries exactly once without `response_format` when the
 Worker returns its documented `AI_JSON_MODE_REJECTED` code, while preserving
 fail-closed behavior for all other Worker errors. `TMPDIR=/tmp uv run pytest
--q` passed on 2026-08-26 (55 passed, 90.69% coverage). This change has not
-been deployed to staging; deploy the revision, then rerun `@smoke` before
-using the wider live categories.
+-q` passed on 2026-08-26 (55 passed, 90.69% coverage). The JSON-mode fallback
+was deployed to staging, but did not resolve the failure. A manually configured
+Vite server confirmed the frontend environment fix on 2026-08-26; staging then
+failed in 767 ms with the original empty turn payload.
+
+The staging revision was subsequently verified to match the JSON-mode fallback
+source SHA, yet the same 502 remained. This confirms a different typed Worker
+failure. The next source revision returns its safe Worker code in the
+`X-Narration-Error-Code` response header; after deploying it, repeat the direct
+session/turn probe and use that header to correct the Worker portal setting or
+upstream AI condition. `TMPDIR=/tmp uv run pytest -q` then passed with 56 tests
+and 90.83% coverage.
 
 ## Story Feed root page — local Playwright QA
 
