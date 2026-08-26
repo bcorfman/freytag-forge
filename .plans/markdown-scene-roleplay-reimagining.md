@@ -311,19 +311,19 @@ the engine's accepted facts are the only source of the next scene and context.
 
 ### 5. Keep and adapt hosting, worker transport, and UI
 
-- Retain `storygame/web_demo.py` as the single FastAPI product surface and
+- [x] Retain `storygame/web_demo.py` as the single FastAPI product surface and
   `storygame/runtime/cloudflare.py` as the Cloudflare Worker adapter. Change
   session creation to choose a `story_id` rather than a legacy genre fixture;
   retain health/version, CORS, rate limiting, fail-closed model behavior, and
   SQLite session restoration.
-- Extend `/api/v1/turn` responses with a typed `game_break` payload and current
+- [x] Extend `/api/v1/turn` responses with a typed `game_break` payload and current
   scene/phase summary. Preserve `segments` as the primary rendering contract;
   keep `lines` only during the migration if existing clients require it.
-- Update `frontend/src/main.js`, `turn_rendering.js`, styles, and browser tests
+- [x] Update `frontend/src/main.js`, `turn_rendering.js`, styles, and browser tests
   to show scene/phase context, render structured narration, and present a clear
   Proceed / Return-to-scene confirmation panel. Disable normal input while a
   warning is unresolved; never implement the safety decision only in the UI.
-- Update API/Cloudflare deployment docs and tests after confirming the actual
+- [x] Update API/Cloudflare deployment docs and tests after confirming the actual
   endpoint/environment behavior in source and CI.
 
 ### 6. Remove superseded complexity after the replacement is proven
@@ -382,6 +382,18 @@ the engine's accepted facts are the only source of the next scene and context.
   and proceed commits the validated candidate.
 - [x] An 18-turn representative main-spine simulation reaches resolution in the
   19–21 minute narrative-time range without requiring optional storylets.
+
+### Phase 5 exit criteria
+
+- [x] The FastAPI surface creates sessions by `story_id`, restores scene-runtime
+  state from SQLite, and preserves health/version, CORS, and fail-closed Worker
+  transport behavior.
+- [x] Turns return structured segments, migration-compatible lines, a scene/phase
+  summary, and a typed game-break payload when a warning is pending.
+- [x] The browser renders structured narration and scene context, disables normal
+  input during a warning, and sends Proceed/Return decisions to the API.
+- [x] API/Worker documentation and adapter/frontend tests describe and verify the
+  deployed scene-runtime contract.
 
 - The supplied Continuity Initiative Markdown package loads without any
   story-specific Python conditionals and starts Jeremiah in Scene 1A.

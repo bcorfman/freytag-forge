@@ -3,12 +3,7 @@ import { turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
-const DEFAULT_SESSION_PAYLOAD = {
-  seed: 123,
-  genre: "mystery",
-  session_length: "short",
-  tone: "dark",
-};
+const DEFAULT_SESSION_PAYLOAD = { story_id: "continuity_initiative" };
 
 const transcriptElement = document.querySelector("#transcript");
 const statusLineElement = document.querySelector("#status-line");
@@ -17,9 +12,14 @@ const commandInputElement = document.querySelector("#command-input");
 const sendButtonElement = document.querySelector("#send-button");
 const newGameButtonElement = document.querySelector("#new-game-button");
 const nonProductionBadgeElement = document.querySelector("#non-production-badge");
+const gameBreakPanelElement = document.querySelector("#game-break-panel");
+const gameBreakReasonElement = document.querySelector("#game-break-reason");
+const proceedButtonElement = document.querySelector("#proceed-button");
+const returnToSceneButtonElement = document.querySelector("#return-to-scene-button");
 
 let sessionId = "";
 let busy = false;
+let pendingGameBreak = null;
 
 if (DEPLOYMENT_CHANNEL !== "production") {
   nonProductionBadgeElement.hidden = false;
@@ -27,9 +27,18 @@ if (DEPLOYMENT_CHANNEL !== "production") {
 
 function setBusy(nextBusy) {
   busy = nextBusy;
-  commandInputElement.disabled = nextBusy;
+  commandInputElement.disabled = nextBusy || Boolean(pendingGameBreak);
   sendButtonElement.disabled = nextBusy || !sessionId;
   newGameButtonElement.disabled = nextBusy;
+}
+
+function setGameBreak(gameBreak) {
+  pendingGameBreak = gameBreak || null;
+  gameBreakPanelElement.hidden = !pendingGameBreak;
+  if (pendingGameBreak) {
+    gameBreakReasonElement.textContent = pendingGameBreak.reason;
+  }
+  setBusy(busy);
 }
 
 function setStatus(text, kind = "normal") {
@@ -80,6 +89,7 @@ function renderTurn(payload) {
       appendSegment(block);
     }
   });
+  setGameBreak(payload.game_break);
 }
 
 function resetTranscript() {
@@ -123,14 +133,15 @@ async function createSession() {
   setStatus("Creating session...");
   try {
     const identity = await apiGet("/api/v1/version");
-    if (identity.api !== "v1" || identity.runtime !== "v2" || identity.channel !== DEPLOYMENT_CHANNEL) {
+    if (identity.api !== "v1" || identity.runtime !== "scene-v1" || identity.channel !== DEPLOYMENT_CHANNEL) {
       throw new Error("The story service is on a different deployment channel. Refresh and try again.");
     }
     const payload = await apiRequest("/api/v1/session", DEFAULT_SESSION_PAYLOAD);
     sessionId = payload.session_id;
-    setStatus(`Session ${sessionId.slice(0, 8)} ready`);
+    setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
     resetTranscript();
-    renderOpening(payload.state.opening);
+    renderOpening(payload.opening);
+    setGameBreak(null);
   } catch (error) {
     sessionId = "";
     setStatus(error instanceof Error ? error.message : "Session creation failed.", "error");
@@ -144,18 +155,7 @@ function renderOpening(opening) {
   if (!opening || typeof opening !== "object") {
     return;
   }
-  appendEntry(opening.scene, "output");
-  const orientation = [
-    opening.protagonist_context || opening.player_context,
-    opening.situation,
-  ].filter((line, index, lines) => typeof line === "string" && line.length > 0 && lines.indexOf(line) === index);
-  appendEntry(
-    orientation.join("\n\n"),
-    "output",
-  );
-  if (Array.isArray(opening.first_available_actions) && opening.first_available_actions.length > 0) {
-    appendEntry(`Try: ${opening.first_available_actions.join(" • ")}`, "system");
-  }
+  appendEntry(opening.text, "output");
 }
 
 async function runCommand(command, echoInput = true) {
@@ -171,18 +171,34 @@ async function runCommand(command, echoInput = true) {
   try {
     const payload = await apiRequest("/api/v1/turn", {
       session_id: sessionId,
-      genre: DEFAULT_SESSION_PAYLOAD.genre,
-      command,
+      player_input: command,
     });
     renderTurn(payload);
-    const destinations = payload.state.available_destinations;
-    if (Array.isArray(destinations) && destinations.length > 0) {
-      appendEntry(`Accessible from here: ${destinations.join(", ")}.`, "system");
-    }
-    setStatus(`${payload.state.room_name} • turn ${payload.state.turn_index}`);
+    setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
   } catch (error) {
     appendEntry(error instanceof Error ? error.message : "Command failed.", "system");
     setStatus(error instanceof Error ? error.message : "Command failed.", "error");
+  } finally {
+    setBusy(false);
+    commandInputElement.focus();
+  }
+}
+
+async function resolveGameBreak(decision) {
+  if (!sessionId || !pendingGameBreak || busy) {
+    return;
+  }
+  setBusy(true);
+  try {
+    const payload = await apiRequest("/api/v1/game-break", {
+      session_id: sessionId,
+      warning_id: pendingGameBreak.warning_id,
+      decision,
+    });
+    renderTurn(payload);
+    setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : "Could not resolve the warning.", "error");
   } finally {
     setBusy(false);
     commandInputElement.focus();
@@ -210,5 +226,8 @@ newGameButtonElement.addEventListener("click", async () => {
   }
   await createSession();
 });
+
+proceedButtonElement.addEventListener("click", () => resolveGameBreak("proceed"));
+returnToSceneButtonElement.addEventListener("click", () => resolveGameBreak("return_to_scene"));
 
 createSession();

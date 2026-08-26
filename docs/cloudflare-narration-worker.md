@@ -4,6 +4,12 @@ The hosted API uses a Cloudflare Worker as its turn-model transport. The Worker
 must return structured scene-runtime responses on both success and failure; it must not
 turn every upstream failure into a generic `503`.
 
+The FastAPI adapter selects a Markdown `story_id` at session creation and sends
+the Worker only the current scene's bounded, safe context plus the player's
+unchanged input. It validates the returned `TurnProposal`, persists state in
+SQLite, and exposes typed game-break resolution separately at
+`POST /api/v1/game-break`.
+
 ## Configuration
 
 | Worker | Railway | Purpose |

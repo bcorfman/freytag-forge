@@ -6,9 +6,5 @@ export function turnBlocks(payload) {
       .filter((line) => typeof line === "string" && line.length > 0)
       .map((text) => ({ kind: "narration", text }));
   }
-  const blocks = [];
-  if (typeof lines[0] === "string" && lines[0].length > 0) {
-    blocks.push({ kind: "narration", text: lines[0] });
-  }
-  return blocks.concat(segments);
+  return segments.filter((segment) => segment && typeof segment.text === "string" && segment.text.length > 0);
 }

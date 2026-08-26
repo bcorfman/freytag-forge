@@ -22,9 +22,15 @@ test("preserves accepted narration and ordered speech and action blocks", () => 
     ],
   });
 
-  assert.deepEqual(blocks.map((block) => block.kind), ["narration", "speech", "action"]);
-  assert.equal(blocks[1].speaker.name, "Iris Vale");
-  assert.equal(blocks[2].grounding, "expressive");
+  assert.deepEqual(blocks.map((block) => block.kind), ["speech", "action"]);
+  assert.equal(blocks[0].speaker.name, "Iris Vale");
+  assert.equal(blocks[1].grounding, "expressive");
+});
+
+test("uses structured narration before compatibility lines", () => {
+  assert.deepEqual(turnBlocks({ lines: ["legacy"], segments: [{ kind: "narration", text: "accepted" }] }), [
+    { kind: "narration", text: "accepted" },
+  ]);
 });
 
 test("falls back to compatibility lines for non-interaction turns", () => {
