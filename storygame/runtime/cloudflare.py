@@ -47,9 +47,23 @@ class CloudflareTurnProvider:
     def __call__(self, player_input: str) -> object:
         context = self.context_builder.build(self.state, player_input, active_storylet_ids=self.state.active_event_ids)
         payload = {
-            "system": "Return only a valid TurnProposal JSON object matching response_schema.",
-            "user": json.dumps({"player_input": player_input, "scene_context": context.model_dump(mode="json")}),
-            "max_tokens": 1024,
+            "system": (
+                "Return only one JSON TurnProposal that conforms exactly to the response_schema in the user payload. "
+                "Do not echo the player input, scene context, schema, or any explanation."
+            ),
+            "user": json.dumps(
+                {
+                    "instructions": (
+                        "Narrate only from this player-safe scene context; never invent facts "
+                        "or reveal protected knowledge."
+                    ),
+                    "player_input": player_input,
+                    "scene": context.model_dump(mode="json", exclude={"response_schema"}),
+                    "response_schema": context.response_schema,
+                },
+                separators=(",", ":"),
+            ),
+            "max_tokens": 2048,
             "response_format": {"type": "json_object"},
         }
         try:
@@ -84,6 +98,8 @@ class CloudflareTurnProvider:
             body = json.loads(response.read())
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
+        if isinstance(body, dict) and isinstance(body.get("narration"), str):
+            return json.loads(body["narration"])
         return body
 
     @staticmethod

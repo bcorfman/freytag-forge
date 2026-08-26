@@ -375,4 +375,25 @@ initially blocked at the Cloudflare edge with HTTP 403 / error 1010 because
 Python urllib's default user agent triggered Browser Integrity Check; the same
 request passed after the adapter supplied its browser user agent.
 
+After the adapter change was deployed, two staging `@smoke` retries still
+timed out after 120 seconds in `page.waitForResponse()` for `POST
+/api/v1/turn`. The page snapshot showed `Failed to fetch` for both the session
+feed and submitted action, and no browser-observable turn response arrived.
+Restarting the local Vite server did not change that result. Treat this as a
+browser/API transport (likely CORS or deployed API reachability) failure, not
+as evidence that the Worker user-agent fix is ineffective; the direct
+authenticated full-context Worker call succeeded. Evidence is the retained
+Playwright trace and error context under
+`frontend/test-results/scene-runtime-starts-a-sce-758f8-ts-freeform-narration-smoke-chromium/`.
+
+The direct staging session/turn probe then returned Railway HTTP 500, which
+was reproduced locally: the Worker returns a successful envelope containing
+JSON text in `narration` plus metadata, but the adapter passed that outer
+envelope to strict `TurnProposal` validation. The adapter now unwraps and
+parses `narration`, keeps the metadata non-canonical, uses the Worker-supported
+2,048-token ceiling after observing a 1,024-token truncated JSON response, and
+sends an explicit schema-and-no-echo prompt. A real local Worker plus runtime
+turn then succeeded. This revision still needs Railway deployment before
+rerunning the staging smoke test.
+
 **Cleanup:** None.

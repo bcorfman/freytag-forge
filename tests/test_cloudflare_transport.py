@@ -38,7 +38,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
         captured["headers"] = dict(request.header_items())
         captured["payload"] = json.loads(request.data)
         captured["timeout"] = timeout
-        return _Response({"narration": "A valid proposal."})
+        return _Response({"narration": '{"narration":"A valid proposal."}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
@@ -49,8 +49,35 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert provider("I listen.") == {"narration": "A valid proposal."}
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
+    assert captured["payload"]["max_tokens"] == 2048
     assert captured["payload"]["response_format"] == {"type": "json_object"}
-    assert captured["payload"]["user"].find("scene_context") >= 0
+    assert captured["payload"]["user"].find("response_schema") >= 0
+
+
+def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        context_builder=SceneContextBuilder(),
+        state=RuntimeState.bootstrap(PACKAGE),
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {
+                "narration": '{"narration":"A valid proposal.","operations":[],"transition":null,"events":[]}',
+                "model": "worker-model",
+                "trace_id": "trace-123",
+            }
+        ),
+    )
+
+    assert provider("I listen.") == {
+        "narration": "A valid proposal.",
+        "operations": [],
+        "transition": None,
+        "events": [],
+    }
 
 
 def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeypatch) -> None:
@@ -95,7 +122,7 @@ def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeyp
                 {},
                 BytesIO(b'{"status":"error","code":"AI_JSON_MODE_REJECTED"}'),
             )
-        return _Response({"narration": "A recovered proposal."})
+        return _Response({"narration": '{"narration":"A recovered proposal."}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
