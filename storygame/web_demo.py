@@ -51,11 +51,14 @@ def _default_package_root() -> Path:
 
 
 def _state_summary(state: RuntimeState) -> dict[str, object]:
+    elapsed = state.facts.matching("story_elapsed_seconds", "story")
     return {
         "story_id": state.package.story_id,
         "scene_id": state.current_scene_id,
         "phase": state.phase,
         "pending_game_break": state.has_pending_break,
+        "fired_storylet_ids": sorted(event_id for event_id in state.fired_event_ids if event_id.startswith("SL-")),
+        "story_elapsed_seconds": int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0,
     }
 
 
