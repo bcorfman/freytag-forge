@@ -2,6 +2,7 @@
 
 from fastapi.testclient import TestClient
 
+from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.web_demo import create_demo_app
 
 
@@ -88,6 +89,22 @@ def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limi
     assert missing_story.status_code == 404
     assert unavailable.status_code == 503
     assert limited.status_code == 429
+
+
+def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
+    def rejected_provider(_state):
+        def reject(_input):
+            raise NarrationProviderError("narration service rejected the turn", 502, "WORKER_CONFIGURATION_ERROR")
+
+        return reject
+
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=rejected_provider)
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+
+    assert response.status_code == 502
+    assert response.headers["X-Narration-Error-Code"] == "WORKER_CONFIGURATION_ERROR"
 
 
 def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
