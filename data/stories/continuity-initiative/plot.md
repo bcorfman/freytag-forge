@@ -58,7 +58,7 @@ freytag_phase: exposition
 objective: Find evidence of Sarahs disappearance
 participant_ids: [jeremiah, sarah]
 item_ids: [memory_card, sarah_phone]
-entry_text: "Enter 1A"
+entry_text: "The house is too quiet. Sarah's phone lies facedown on the kitchen floor beside an overturned chair, while her laptop and work bag are gone."
 transition_ids: [t_1a_1b]
 ---
 
