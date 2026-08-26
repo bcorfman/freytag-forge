@@ -6,9 +6,9 @@ proposed changes before committing them as durable facts.
 
 ## Player experience
 
-- Every ordinary in-world input goes to the narration model unchanged. Save,
-  load, and resolving an already-issued game-break warning are the only control
-  actions.
+- Every ordinary in-world input goes to the narration model unchanged; only
+  save/load and a typed resolution of an already-issued game-break warning are
+  control actions.
 - Markdown packages define scenes, entities, transitions, optional storylets,
   and Freytag pacing. They shape drama and urgency without turning into action
   menus or parser rules.
@@ -28,10 +28,10 @@ transitions, and remaining reachable dependencies (including declared fallbacks)
 then atomically commits accepted facts. Invalid or repaired output never mutates
 canonical state.
 
-Pacing is declarative and fact-backed. Each accepted turn records a bounded
-narrative-time increment; package-declared deadline events can add pressure or
-perform an authored transition. The runtime never infers gameplay from prose or
-selects a player action.
+Pacing is declarative and fact-backed: each accepted turn records bounded
+narrative time, and package-declared deadlines may add pressure or perform an
+authored transition. The runtime never infers gameplay from prose or selects a
+player action.
 
 ## Authoring and deployment
 
@@ -41,9 +41,11 @@ predicates, invalid timing windows, ambiguous transitions, dependency cycles,
 and invalid pacing events. Package inputs remain immutable at runtime.
 
 FastAPI, React, Cloudflare Worker transport, and SQLite are the hosted stack.
-The web adapter owns transport concerns such as health, version, CORS, rate
-limits, deployment identity, and persistence—not gameplay policy. The stale V2
-browser-flow deployment checks are retired until the new player endpoint exists.
+`POST /api/v1/session` selects a `story_id`; `POST /api/v1/turn` returns
+structured `segments`, a compatibility `lines` field, scene/phase state, and an
+optional typed `game_break`; `POST /api/v1/game-break` is the only way to
+resolve it. The web adapter owns transport, CORS, deployment identity, and
+persistence—not gameplay policy.
 
 ## Developer workflow
 

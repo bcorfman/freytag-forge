@@ -112,13 +112,13 @@ jobs:
             version="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/version" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
-            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$(jq -r '.runtime // empty' <<<"$health" 2>/dev/null || true)" = v2 && test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = v2 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = production && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$DEPLOYED_SHA" && break
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$(jq -r '.runtime // empty' <<<"$health" 2>/dev/null || true)" = scene-v1 && test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = scene-v1 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = production && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$DEPLOYED_SHA" && break
             sleep 10
           done
           test "$health_channel" = production && test "$health_sha" = "$DEPLOYED_SHA"
-          test "$(jq -r '.runtime // empty' <<<"$health")" = v2
+          test "$(jq -r '.runtime // empty' <<<"$health")" = scene-v1
           test "$(jq -r '.api // empty' <<<"$version")" = v1
-          test "$(jq -r '.runtime // empty' <<<"$version")" = v2
+          test "$(jq -r '.runtime // empty' <<<"$version")" = scene-v1
           test "$(jq -r '.channel // empty' <<<"$version")" = production
           test "$(jq -r '.sha // empty' <<<"$version")" = "$DEPLOYED_SHA"
           {

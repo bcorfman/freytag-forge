@@ -1,0 +1,67 @@
+"""Fail-closed Cloudflare Worker transport for typed scene proposals."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from os import getenv
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+from storygame.runtime.context import SceneContextBuilder
+from storygame.runtime.state import RuntimeState
+
+
+@dataclass(frozen=True)
+class NarrationProviderError(RuntimeError):
+    message: str
+    status_code: int = 503
+
+
+class CloudflareTurnProvider:
+    """Send only bounded, scene-safe context to the configured Worker."""
+
+    def __init__(
+        self, *, worker_url: str, token: str, context_builder: SceneContextBuilder, state: RuntimeState
+    ) -> None:
+        self.worker_url = worker_url
+        self.token = token
+        self.context_builder = context_builder
+        self.state = state
+
+    @classmethod
+    def from_environment(cls, context_builder: SceneContextBuilder, state: RuntimeState) -> CloudflareTurnProvider:
+        worker_url = getenv("CLOUDFLARE_WORKER_URL", "").strip()
+        if not worker_url:
+            raise NarrationProviderError("narration service is unavailable")
+        return cls(
+            worker_url=worker_url,
+            token=getenv("CLOUDFLARE_WORKER_TOKEN", "").strip(),
+            context_builder=context_builder,
+            state=state,
+        )
+
+    def __call__(self, player_input: str) -> object:
+        context = self.context_builder.build(self.state, player_input, active_storylet_ids=self.state.active_event_ids)
+        payload = {
+            "system": "Return only a valid TurnProposal JSON object matching response_schema.",
+            "user": json.dumps({"player_input": player_input, "scene_context": context.model_dump(mode="json")}),
+            "max_tokens": 1024,
+            "response_format": {"type": "json_object"},
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        request = Request(self.worker_url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+        try:
+            with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
+                body = json.loads(response.read())
+        except HTTPError as error:
+            raise NarrationProviderError(
+                "narration service rejected the turn", 429 if error.code == 429 else 502
+            ) from error
+        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            raise NarrationProviderError("narration service is unavailable") from error
+        if isinstance(body, dict) and body.get("status") == "error":
+            raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
+        return body

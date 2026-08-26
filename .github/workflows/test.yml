@@ -156,12 +156,12 @@ jobs:
             version="$(curl --fail --silent --show-error "${RAILWAY_PUBLIC_API_URL%/}/api/v1/version" || true)"
             health_channel="$(jq -r '.channel // empty' <<<"$health" 2>/dev/null || true)"
             health_sha="$(jq -r '.sha // empty' <<<"$health" 2>/dev/null || true)"
-            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = v2 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = staging && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$GITHUB_SHA" && break
+            test "$(jq -r '.status // empty' <<<"$health" 2>/dev/null || true)" = ok && test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA" && test "$(jq -r '.api // empty' <<<"$version" 2>/dev/null || true)" = v1 && test "$(jq -r '.runtime // empty' <<<"$version" 2>/dev/null || true)" = scene-v1 && test "$(jq -r '.channel // empty' <<<"$version" 2>/dev/null || true)" = staging && test "$(jq -r '.sha // empty' <<<"$version" 2>/dev/null || true)" = "$GITHUB_SHA" && break
             sleep 10
           done
           test "$health_channel" = staging && test "$health_sha" = "$GITHUB_SHA"
           test "$(jq -r '.api // empty' <<<"$version")" = v1
-          test "$(jq -r '.runtime // empty' <<<"$version")" = v2
+          test "$(jq -r '.runtime // empty' <<<"$version")" = scene-v1
           test "$(jq -r '.channel // empty' <<<"$version")" = staging
           test "$(jq -r '.sha // empty' <<<"$version")" = "$GITHUB_SHA"
           {
@@ -204,8 +204,8 @@ jobs:
           done
           test "$pages_channel" = staging
           test "$pages_sha" = "$GITHUB_SHA"
-  v2-staging-evaluation:
-    name: V2 staging evaluation and promotion gate
+  scene-staging-evaluation:
+    name: Scene staging evaluation and promotion gate
     needs: deploy-staging
     runs-on: ubuntu-latest
     env:
@@ -221,15 +221,16 @@ jobs:
           version: latest
       - name: Install dependencies
         run: uv sync --locked
-      - name: Compare the deployed candidate with Phase 0 operational bounds
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_runtime_v2.py tests/test_web_demo_v2.py
+      - name: Verify the scene-runtime adapter contract
+        run: TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_web_demo.py tests/test_cloudflare_transport.py
       - name: Write SHA-bound staging evidence
+        if: always()
         env:
           CANDIDATE_SHA: ${{ needs.deploy-staging.outputs.sha }}
           API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
         run: >-
           mkdir -p artifacts &&
-          uv run python -c 'import json, os, pathlib; pathlib.Path(os.environ["FREYTAG_EVALUATION_REPORT"]).write_text(json.dumps({"schema_version": "v2-staging-evidence-v1", "sha": os.environ["CANDIDATE_SHA"], "api_base_url": os.environ["API_BASE_URL"], "runtime": "v2", "verification": "tests/test_runtime_v2.py tests/test_web_demo_v2.py"}, sort_keys=True) + "\n", encoding="utf-8")'
+          uv run python -c 'import json, os, pathlib; pathlib.Path(os.environ["FREYTAG_EVALUATION_REPORT"]).write_text(json.dumps({"schema_version": "scene-staging-evidence-v1", "sha": os.environ["CANDIDATE_SHA"], "api_base_url": os.environ["API_BASE_URL"], "runtime": "scene-v1", "verification": "tests/test_web_demo.py tests/test_cloudflare_transport.py"}, sort_keys=True) + "\n", encoding="utf-8")'
       - name: Upload SHA-bound staging evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -241,14 +242,14 @@ jobs:
   record-staging-deployment:
     name: Record staging deployment
     if: always() && github.ref == 'refs/heads/main'
-    needs: [deploy-staging, v2-staging-evaluation]
+    needs: [deploy-staging, scene-staging-evaluation]
     runs-on: ubuntu-latest
     steps:
       - name: Publish staged-SHA proof
         env:
           GH_TOKEN: ${{ github.token }}
           DEPLOYMENT_RESULT: ${{ needs.deploy-staging.result }}
-          EVALUATION_RESULT: ${{ needs.v2-staging-evaluation.result }}
+          EVALUATION_RESULT: ${{ needs.scene-staging-evaluation.result }}
         run: |
           set -euo pipefail
           state=failure

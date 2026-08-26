@@ -13,14 +13,14 @@
         <p class="eyebrow">Hosted Demo</p>
         <h1>Freytag Forge</h1>
         <p class="lede">
-          A deterministic mystery engine with LLM narration, playable directly in the browser.
+          Freeform roleplay with consequences that hold.
         </p>
       </section>
 
       <section class="panel">
         <header class="panel-header">
           <div>
-            <h2>Case Feed</h2>
+            <h2>Story Feed</h2>
             <p id="status-line" class="status-line">Connecting...</p>
           </div>
           <div class="panel-actions">
@@ -30,14 +30,22 @@
 
         <section id="transcript" class="transcript" aria-live="polite"></section>
 
+        <section id="game-break-panel" class="game-break-panel" hidden aria-live="assertive">
+          <p id="game-break-reason"></p>
+          <div class="panel-actions">
+            <button id="return-to-scene-button" type="button">Return to scene</button>
+            <button id="proceed-button" type="button">Proceed</button>
+          </div>
+        </section>
+
         <form id="command-form" class="command-form">
-          <label class="sr-only" for="command-input">Command</label>
+          <label class="sr-only" for="command-input">Your action</label>
           <input
             id="command-input"
             name="command"
             type="text"
             autocomplete="off"
-            placeholder='Try "look" or "Daria, what do you make of this place?"'
+            placeholder="What do you do?"
           />
           <button id="send-button" type="submit">Send</button>
         </form>

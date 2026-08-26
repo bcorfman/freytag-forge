@@ -167,6 +167,18 @@ body {
   padding: 0 20px 20px;
 }
 
+.game-break-panel {
+  margin: 0 20px 20px;
+  padding: 16px;
+  border: 1px solid var(--danger);
+  background: rgba(255, 140, 122, 0.08);
+}
+
+.game-break-panel p {
+  margin: 0 0 12px;
+  color: var(--danger);
+}
+
 input,
 button {
   border: 1px solid var(--panel-border);

@@ -6,13 +6,13 @@ Freytag Forge turns any freeform move into grounded, persistent drama.
 
 ## Features
 
-- **Write anything.** Bluff, bargain, investigate, flee—your freeform intent drives the drama.
-- **Make it count.** Validated facts carry consequences, clues, and relationships from scene to scene.
-- **Feel the pressure.** Markdown scenes, optional storylets, and Freytag pacing build urgency without menus or rails.
-- **Keep the mystery.** Scene-local memory brings forward what matters without spilling protected knowledge.
-- **Choose the risk.** When a move could break the story, you can commit to it or return to the exact moment before.
+- **Write freely.** Bluff, bargain, investigate, flee—your intent drives the drama.
+- **Make it matter.** Validated facts carry consequences, clues, and relationships across every scene.
+- **Feel the arc.** Markdown scenes, optional storylets, and Freytag pacing create pressure without menus or rails.
+- **Trust the reveal.** Scene-local memory keeps context sharp and protected knowledge private.
+- **Own the risk.** A story-breaking move gives you a real choice: proceed or return to the exact moment before.
 
-**Less prompt luck. More character, consequence, and playable drama.**
+**Less prompt luck. More character, consequence, and drama that remembers.**
 
 ## Play online
 
