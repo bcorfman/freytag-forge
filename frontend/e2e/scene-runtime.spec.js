@@ -17,6 +17,7 @@ test("starts a scene session and accepts freeform narration @smoke", async ({ pa
   await startSceneSession(page);
   const payload = await submitTurn(page, "I look carefully at Sarah's phone.");
   await writeCategoryReport("smoke", { state: payload.state, segments: payload.segments });
+  await page.screenshot({ path: "../artifacts/e2e-smoke-loaded.png", fullPage: true });
   expect(payload.segments?.some((segment) => segment.kind === "narration")).toBe(true);
   await expect(page.locator(".entry-system")).toHaveCount(0);
 });
