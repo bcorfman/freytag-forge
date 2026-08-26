@@ -1,0 +1,38 @@
+import { expect } from "@playwright/test";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+
+export async function startSceneSession(page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: "New Session" }).click();
+  await expect(page.locator("#status-line")).toContainText("Scene 1A");
+  await expect(page.locator("#transcript")).not.toBeEmpty();
+}
+
+export async function submitTurn(page, action) {
+  await page.locator("#command-input").fill(action);
+  const response = page.waitForResponse(
+    (candidate) => candidate.request().method() === "POST" && candidate.url().endsWith("/api/v1/turn"),
+  );
+  await page.getByRole("button", { name: "Send" }).click();
+  const payload = await (await response).json();
+  await expect(page.locator("#command-input")).toBeEnabled({ timeout: 90_000 });
+  return payload;
+}
+
+export async function resolveWarningIfPresent(page) {
+  const warning = page.locator("#game-break-panel");
+  if (!(await warning.isVisible())) return false;
+  await page.getByRole("button", { name: "Return to scene" }).click();
+  await expect(warning).toBeHidden();
+  return true;
+}
+
+export async function writeCategoryReport(category, evidence) {
+  const root = resolve(import.meta.dirname, "../..");
+  const json = resolve(root, `artifacts/e2e-${category}.json`);
+  const markdown = resolve(root, `artifacts/e2e-${category}.md`);
+  await mkdir(dirname(json), { recursive: true });
+  await writeFile(json, `${JSON.stringify(evidence, null, 2)}\n`);
+  await writeFile(markdown, `# ${category} E2E evaluation\n\n\`\`\`json\n${JSON.stringify(evidence, null, 2)}\n\`\`\`\n`);
+}
