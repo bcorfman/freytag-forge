@@ -49,19 +49,52 @@ class CloudflareTurnProvider:
             "max_tokens": 1024,
             "response_format": {"type": "json_object"},
         }
+        try:
+            return self._request(payload)
+        except HTTPError as error:
+            if self._worker_error_code(error) != "AI_JSON_MODE_REJECTED":
+                raise self._narration_error(error) from error
+        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            raise NarrationProviderError("narration service is unavailable") from error
+
+        fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
+        try:
+            return self._request(fallback_payload)
+        except HTTPError as error:
+            raise self._narration_error(error) from error
+        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            raise NarrationProviderError("narration service is unavailable") from error
+
+    def _request(self, payload: dict[str, object]) -> object:
         headers = {"Content-Type": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(self.worker_url, data=json.dumps(payload).encode(), headers=headers, method="POST")
-        try:
-            with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
-                body = json.loads(response.read())
-        except HTTPError as error:
-            raise NarrationProviderError(
-                "narration service rejected the turn", 429 if error.code == 429 else 502
-            ) from error
-        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
-            raise NarrationProviderError("narration service is unavailable") from error
+        with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
+            body = json.loads(response.read())
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
         return body
+
+    @staticmethod
+    def _worker_error_code(error: HTTPError) -> str:
+        cached_code = getattr(error, "_freytag_worker_error_code", None)
+        if isinstance(cached_code, str):
+            return cached_code
+        try:
+            body = json.loads(error.read())
+        except (OSError, ValueError, json.JSONDecodeError):
+            code = ""
+        else:
+            code = str(body.get("code", "")) if isinstance(body, dict) else ""
+        error._freytag_worker_error_code = code
+        return code
+
+    @classmethod
+    def _narration_error(cls, error: HTTPError) -> NarrationProviderError:
+        code = cls._worker_error_code(error)
+        if code in {"AI_QUOTA_EXCEEDED", "AI_CAPACITY_EXCEEDED"}:
+            return NarrationProviderError("narration service is at capacity", 429)
+        if code == "AI_REQUEST_REJECTED" and 400 <= error.code < 500:
+            return NarrationProviderError("narration service rejected the turn", error.code)
+        return NarrationProviderError("narration service rejected the turn", 429 if error.code == 429 else 502)

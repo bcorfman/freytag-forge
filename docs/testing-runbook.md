@@ -179,8 +179,16 @@ After sourcing it, the staging version endpoint reported `api: "v1"`,
 run failed: session creation and the opening rendered, then the submitted turn
 returned `{}` and the UI showed `narration service rejected the turn`. Evidence:
 `artifacts/e2e-smoke.json`, `artifacts/e2e-smoke-loaded.png`, and the retained
-Playwright trace. Do not use the wider live categories until this response
-contract failure is resolved.
+Playwright trace. A direct reproduction returned Railway HTTP 502 with the
+same safe detail; the deployed API does not expose the Worker error code or
+headers needed to classify the cause.
+
+The source adapter now retries exactly once without `response_format` when the
+Worker returns its documented `AI_JSON_MODE_REJECTED` code, while preserving
+fail-closed behavior for all other Worker errors. `TMPDIR=/tmp uv run pytest
+-q` passed on 2026-08-26 (55 passed, 90.69% coverage). This change has not
+been deployed to staging; deploy the revision, then rerun `@smoke` before
+using the wider live categories.
 
 ## Story Feed root page — local Playwright QA
 

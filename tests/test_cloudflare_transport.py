@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
@@ -71,6 +72,57 @@ def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeyp
     )
     with pytest.raises(NarrationProviderError, match="unavailable"):
         provider("I listen.")
+
+
+def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        context_builder=SceneContextBuilder(),
+        state=RuntimeState.bootstrap(PACKAGE),
+    )
+
+    def open_request(request, timeout):
+        payload = json.loads(request.data)
+        payloads.append(payload)
+        if len(payloads) == 1:
+            raise HTTPError(
+                "https://worker.example/turn",
+                502,
+                "json mode rejected",
+                {},
+                BytesIO(b'{"status":"error","code":"AI_JSON_MODE_REJECTED"}'),
+            )
+        return _Response({"narration": "A recovered proposal."})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("I listen.") == {"narration": "A recovered proposal."}
+    assert payloads[0]["response_format"] == {"type": "json_object"}
+    assert "response_format" not in payloads[1]
+
+
+def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        context_builder=SceneContextBuilder(),
+        state=RuntimeState.bootstrap(PACKAGE),
+    )
+    error = HTTPError(
+        "https://worker.example/turn",
+        429,
+        "capacity",
+        {},
+        BytesIO(b'{"status":"error","code":"AI_CAPACITY_EXCEEDED"}'),
+    )
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
+
+    with pytest.raises(NarrationProviderError) as caught:
+        provider("I listen.")
+    assert caught.value.status_code == 429
+    assert caught.value.message == "narration service is at capacity"
 
 
 @pytest.mark.parametrize(("status", "expected"), ((429, 429), (500, 502)))
