@@ -19,17 +19,21 @@ surface. Facts are the sole mutable runtime authority.
 
 ## Runtime contract
 
-Each turn is a strict, provider-normalized `TurnProposal`: narration plus
-optional typed fact operations, scene transition, story events, or a game-break
-warning. The runtime applies a proposal only to a cloned candidate and commits
-it atomically after validation. Invalid JSON, operations, events, or
-transitions leave facts unchanged.
-
-`RuntimeState` carries the current scene and phase, active/fired events,
-canonical facts, and an optional game-break decision. A warning blocks normal
-turns across process restarts. `proceed` clears it; `return_to_scene` restores
-the exact pre-action snapshot. SQLite saves are versioned, integrity-checked,
-and bound to the selected story package.
+- `SceneContextBuilder` sends the provider only the current scene contract,
+  local public entities, safe relevant facts, active storylets/events, and an
+  unambiguous named entity’s concise public history. It excludes protected and
+  speaker-private knowledge; ambiguous names add no entity state.
+- The provider returns one strict, normalized `TurnProposal`: narration plus
+  optional typed fact operations, scene transition, story events, or a
+  game-break warning. The prompt carries that JSON schema rather than a story
+  dump.
+- The runtime clones, validates, and atomically commits accepted proposals.
+  Invalid JSON, operations, events, and transitions leave canonical facts
+  unchanged. `RuntimeState` keeps the current scene/phase, active/fired events,
+  facts, and any pending decision.
+- A warning blocks normal turns across restarts. `proceed` clears it;
+  `return_to_scene` restores the exact pre-action snapshot. SQLite saves are
+  versioned, integrity-checked, and bound to the selected package.
 
 ## Authoring and hosting
 
@@ -45,10 +49,10 @@ adapter responsibilities, not gameplay policy.
 
 ## Guardrails
 
-- Facts, not prose or provider output, determine future play.
-- Shared runtime behavior never branches on story, character, genre, or premise.
-- Provider output fails closed and never renders or mutates invented facts.
-- Packages, saves, and derived artifacts have separate immutable/input roles.
+Facts—not prose or provider output—determine future play. Shared runtime never
+branches on story, character, genre, or premise; provider output fails closed;
+and packages, saves, and derived artifacts remain separate immutable inputs or
+projections.
 
 ## Developer workflow
 
