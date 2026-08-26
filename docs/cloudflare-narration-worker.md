@@ -1,7 +1,7 @@
-# Cloudflare V2 turn-model contract
+# Cloudflare turn-model contract
 
 The hosted API uses a Cloudflare Worker as its turn-model transport. The Worker
-must return structured V2 responses on both success and failure; it must not
+must return structured scene-runtime responses on both success and failure; it must not
 turn every upstream failure into a generic `503`.
 
 ## Configuration
@@ -21,11 +21,12 @@ closed as `service_unavailable`. Configure `CF_VERSION_METADATA` through
 
 ## HTTP contract
 
-Success is a valid `TurnResult` JSON object: non-empty `narration`, optional
-`operations`, `beat_updates`, `summary_delta`, and `material_progress`. Put
-trace, model, upstream request, and Worker-revision metadata in headers—not in
-the result object. Forward the adapter's bounded `max_tokens` value to Workers
-AI.
+Success is a valid `TurnProposal` JSON object: non-empty `narration`, optional
+typed fact `operations`, one scene `transition`, optional story `events`, and
+an optional `game_break` warning. The API validates it before a fact changes.
+Put trace, model, upstream request, and Worker-revision metadata in headers—not
+in the result object. Forward the adapter's bounded `max_tokens` value to
+Workers AI.
 
 Failures use `{ "status": "error", "code", "message", "trace_id" }`, with
 safe optional upstream fields. Preserve these classifications:
