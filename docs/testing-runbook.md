@@ -212,6 +212,26 @@ session/turn probe and use that header to correct the Worker portal setting or
 upstream AI condition. `TMPDIR=/tmp uv run pytest -q` then passed with 56 tests
 and 90.83% coverage.
 
+The deployment dashboard can be newer than the API's reported SHA because that
+endpoint reads an environment value. The next diagnostic revision always emits
+`X-Narration-Error-Code: UNKNOWN` for an untyped Worker HTTP failure and
+forwards `X-Trace-ID` and `X-Worker-Revision` when the Worker supplies them.
+This distinguishes an active adapter with a nonconforming Worker/upstream error
+from an older deployed adapter. `TMPDIR=/tmp uv run pytest -q` passed with 57
+tests and 91.11% coverage.
+
+The confirmed cause is Cloudflare edge error 1010, not a Worker or Workers AI
+error: the real 4,419-byte scene-context request sent by Python `urllib`
+received HTTP 403, plain text `error code: 1010`, and no Worker headers before
+the Worker executed. A small request using the same credentials succeeded,
+including with `response_format`. Cloudflare documents 1010 as Browser
+Integrity Check rejecting a client signature. The adapter now sends a standard
+browser `User-Agent`; the same real scene-context call then succeeded directly
+against the configured Worker. Do not disable Browser Integrity Check or alter
+Worker credentials for this failure. A focused transport run has 7 passing
+tests but intentionally exits nonzero under the repository's whole-project
+coverage gate; use the full suite below for the passing coverage result.
+
 ## Story Feed root page — local Playwright QA
 
 **Purpose:** Verify the root Story Feed UI's loading, loaded, and service-error
@@ -312,3 +332,47 @@ Chrome DevTools check of the built page returned the description text. Local
 Lighthouse no longer flagged `meta-description`; its remaining independent
 failures were `robots-txt` and `llms-txt`. The staging result remains pending a
 frontend deployment, so do not mark the live SEO finding resolved yet.
+
+## Cloudflare narration Worker source audit
+
+**Purpose:** Check the portal-exported Worker against the Railway adapter's
+request and typed-error contract without changing the deployed Worker.
+
+**Setup / seed:** `.plans/cloudflare.js` is a portal copy. Source the root
+`.env`, which supplies `CLOUDFLARE_WORKER_URL` and
+`CLOUDFLARE_WORKER_TOKEN`; never print either value.
+
+**Safe actions:** Static inspection and JavaScript syntax validation only.
+
+**Destructive or external actions:** A direct Worker request invokes Workers
+AI. Use a bounded prompt and do not send real player or protected story data.
+
+**Steps:**
+
+1. Confirm the Worker accepts the adapter's `system`, `user`, `max_tokens`,
+   and optional `response_format` fields.
+2. Confirm every Worker failure includes the JSON `code` and diagnostic
+   headers required by the contract.
+
+**Verify:**
+
+```bash
+node --check .plans/cloudflare.js
+```
+
+Expected: no output and exit status 0. Last verified 2026-08-26: passed. The
+portal copy accepts the adapter payload and returns typed JSON error bodies,
+but `errorJson()` omits the contract-required
+`X-Narration-Error-Code: <code>` header. This reduces diagnosis fidelity; it
+does not by itself explain a generic 502 because the Railway adapter also
+parses the JSON error body. Add that header before the next Worker portal
+upload. A direct unauthenticated request to the configured Worker endpoint
+returned HTTP 401 with JSON code `UNAUTHORIZED`, `X-Trace-ID`, and
+`X-Worker-Revision`, confirming that the public endpoint reaches this Worker.
+With the credentials sourced locally, small ordinary and `response_format`
+requests both returned HTTP 200. The production-size scene-context request was
+initially blocked at the Cloudflare edge with HTTP 403 / error 1010 because
+Python urllib's default user agent triggered Browser Integrity Check; the same
+request passed after the adapter supplied its browser user agent.
+
+**Cleanup:** None.
