@@ -78,9 +78,20 @@ class ScenePacing(_Model):
         return self
 
 
+class PacingEvent(_Model):
+    """A package-declared, deterministic deadline complication."""
+
+    id: str = Field(pattern=_ID)
+    scene_id: str = Field(pattern=_SCENE_ID)
+    at_seconds: int = Field(ge=0)
+    effects: tuple[FactPredicate, ...] = Field(min_length=1)
+    transition_id: str | None = Field(default=None, pattern=_ID)
+
+
 class PacingSource(_Model):
     scenes: tuple[ScenePacing, ...]
     transitions: tuple[Transition, ...]
+    events: tuple[PacingEvent, ...] = ()
 
 
 class Storylet(_Model):

@@ -286,24 +286,24 @@ the engine's accepted facts are the only source of the next scene and context.
 
 ### 4. Implement progression, pacing, and game-break analysis
 
-- Replace `storygame/runtime/validation.py` with focused validators for fact
+- [x] Replace `storygame/runtime/validation.py` with focused validators for fact
   operations, event eligibility, storylet effects, trigger evaluation, scene
   transitions, and future satisfiability.
-- Add a generic dependency-analysis service that checks the remaining reachable
+- [x] Add a generic dependency-analysis service that checks the remaining reachable
   scene graph after candidate effects. It must understand declared fallbacks
   (replacement item, alternative NPC, alternate trigger) and not consider an
   optional storylet or nonessential prop game-critical.
-- Refactor `RuntimeEngine.turn` to coordinate proposal -> clone -> validate ->
+- [x] Refactor `RuntimeEngine.turn` to coordinate proposal -> clone -> validate ->
   break warning or commit -> deterministic pacing. Retain the existing single
   recovery budget and post-commit rendering ordering. Remove the existing
   `_movement_affordance`, `_item_affordance`, inspection normalization, and all
   equivalent text/keyword action routing; a normal `turn` must always call the
   LLM exactly once (plus its one permitted recovery call).
-- Add end-to-end tests for: normal action-triggered transition; a deadline or
+- [x] Add end-to-end tests for: normal action-triggered transition; a deadline or
   pressure-triggered transition; optional storylet effect; leaving early;
   destroying the required memory card; incapacitating Gabriel before a required
   use; accepted `proceed`; and exact `return_to_scene` restoration.
-- Add pacing simulations using representative 18-, 20-, and 22-turn main-path
+- [x] Add pacing simulations using representative 18-, 20-, and 22-turn main-path
   transcripts. They must reach resolution in the 00:19:00–00:21:00 narrative
   target range, preserve all Freytag milestone ordering, cap optional
   storylets within their windows, and demonstrate that a slow real-world typist
@@ -370,6 +370,18 @@ the engine's accepted facts are the only source of the next scene and context.
   ambiguous name adds neither entity’s state.
 - [x] The provider prompt contains narration instructions and the strict,
   JSON-schema-sized `TurnProposal` change contract rather than a story dump.
+
+### Phase 4 exit criteria
+
+- [x] Player actions can satisfy scene triggers and move through the scene graph;
+  package-declared pacing events can also cause declared complications or moves.
+- [x] Aside from explicit save/load requests and an already-pending game-break
+  resolution, every submitted player input results in one provider call.
+- [x] Breaking a required story dependency produces a persistent warning with
+  explicit Proceed/Return behavior; return restores the exact pre-action state
+  and proceed commits the validated candidate.
+- [x] An 18-turn representative main-spine simulation reaches resolution in the
+  19–21 minute narrative-time range without requiring optional storylets.
 
 - The supplied Continuity Initiative Markdown package loads without any
   story-specific Python conditionals and starts Jeremiah in Scene 1A.

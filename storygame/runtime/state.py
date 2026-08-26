@@ -39,6 +39,7 @@ class RuntimeState(BaseModel):
     facts: FactStore = Field(default_factory=FactStore)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
+    pending_proposal: TurnProposal | None = None
 
     @model_validator(mode="after")
     def scene_and_phase_match_package(self) -> RuntimeState:
@@ -49,6 +50,8 @@ class RuntimeState(BaseModel):
             raise ValueError("phase must match the current scene")
         if (self.pending_break is None) != (self.pending_snapshot is None):
             raise ValueError("a pending break requires exactly one pre-action snapshot")
+        if (self.pending_break is None) != (self.pending_proposal is None):
+            raise ValueError("a pending break requires exactly one candidate proposal")
         return self
 
     @classmethod
@@ -73,12 +76,19 @@ class RuntimeState(BaseModel):
             facts=self.facts.clone(),
         )
 
-    def set_pending_break(self, warning: GameBreakWarning, *, snapshot: RuntimeSnapshot | None = None) -> None:
+    def set_pending_break(
+        self,
+        warning: GameBreakWarning,
+        *,
+        snapshot: RuntimeSnapshot | None = None,
+        proposal: TurnProposal | None = None,
+    ) -> None:
         self.require_turn_allowed()
         if warning.snapshot_id == "":
             raise RuntimeStateError("game break requires a snapshot ID")
         self.pending_snapshot = snapshot or self.snapshot()
         self.pending_break = warning
+        self.pending_proposal = proposal or TurnProposal(narration="Pending game-break candidate.")
 
     def apply_proposal(self, proposal: TurnProposal) -> None:
         """Validate a complete candidate before replacing canonical session state.
@@ -112,7 +122,9 @@ class RuntimeState(BaseModel):
             scene = next(item for item in self.package.scenes if item.metadata.scene_id == transition.target_scene_id)
             next_scene_id, next_phase = scene.metadata.scene_id, scene.metadata.freytag_phase
         if proposal.game_break:
-            self.set_pending_break(proposal.game_break, snapshot=before)
+            self.set_pending_break(
+                proposal.game_break, snapshot=before, proposal=proposal.model_copy(update={"game_break": None})
+            )
             return
         self.facts = candidate_facts
         self.active_event_ids = candidate_active
@@ -128,7 +140,7 @@ class RuntimeState(BaseModel):
             store.retract_fact(operation.fact)
 
     def resolve_break(self, decision: str) -> None:
-        if not self.pending_break or not self.pending_snapshot:
+        if not self.pending_break or not self.pending_snapshot or not self.pending_proposal:
             raise RuntimeStateError("there is no pending game break")
         if decision == "return_to_scene":
             snapshot = self.pending_snapshot
@@ -139,8 +151,16 @@ class RuntimeState(BaseModel):
             self.facts = snapshot.facts.clone()
         elif decision != "proceed":
             raise RuntimeStateError("game break decision must be proceed or return_to_scene")
+        else:
+            candidate = self.pending_proposal
+            self.pending_break = None
+            self.pending_snapshot = None
+            self.pending_proposal = None
+            self.apply_proposal(candidate)
+            return
         self.pending_break = None
         self.pending_snapshot = None
+        self.pending_proposal = None
 
     def new_snapshot_id(self) -> str:
         return f"snapshot_{uuid4().hex}"

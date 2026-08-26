@@ -1,3 +1,5 @@
+events:
+  - {id: pressure_1a, scene_id: 1A, at_seconds: 120, effects: [{fact_id: facility_proof, equals: true}]}
 scenes:
   - {scene_id: 1A, earliest_seconds: 0, target_seconds: 60, latest_seconds: 120}
   - {scene_id: 1B, earliest_seconds: 120, target_seconds: 195, latest_seconds: 270}
