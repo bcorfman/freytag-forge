@@ -160,6 +160,20 @@ def _validate(package: StoryPackage) -> None:
     if len(pacing_scene_ids) != len(package.pacing.scenes) or pacing_scene_ids != set(scenes):
         raise StoryPackageError("pacing must declare exactly one window per scene")
     windows = {p.scene_id: p for p in package.pacing.scenes}
+    event_ids: set[str] = set()
+    for event in package.pacing.events:
+        if event.id in event_ids:
+            raise StoryPackageError(f"duplicate pacing event ID '{event.id}'")
+        event_ids.add(event.id)
+        if event.scene_id not in scenes:
+            raise StoryPackageError(f"pacing event '{event.id}' references an unknown scene")
+        if event.transition_id and event.transition_id not in transition_ids:
+            raise StoryPackageError(f"pacing event '{event.id}' references an unknown transition")
+        if {effect.fact_id for effect in event.effects} - set(package.world.facts):
+            raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
+        window = windows[event.scene_id]
+        if not window.earliest_seconds <= event.at_seconds <= window.latest_seconds:
+            raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")
     for storylet in package.storylets:
         if storylet.scene_id not in scenes:
             raise StoryPackageError(f"storylet '{storylet.id}' references unknown scene")

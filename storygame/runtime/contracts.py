@@ -43,6 +43,7 @@ class GameBreakWarning(_StrictModel):
 
 class TurnProposal(_StrictModel):
     narration: str = Field(min_length=1, max_length=12000)
+    narrative_seconds: int = Field(default=60, ge=40, le=80)
     operations: tuple[FactOperation, ...] = ()
     transition: SceneTransitionProposal | None = None
     events: tuple[StoryEventProposal, ...] = ()

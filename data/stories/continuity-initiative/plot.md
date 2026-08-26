@@ -465,7 +465,7 @@ The apparent choice between exposure and rescue becomes a far more dangerous com
 ---
 scene_id: 3A
 location_id: detention_level
-freytag_phase: rising_action
+freytag_phase: crisis
 objective: Reach Sarah and join the uprising
 participant_ids: [jeremiah, sarah, gabriel]
 item_ids: [override_codes]
