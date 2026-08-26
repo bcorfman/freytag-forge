@@ -39,6 +39,8 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "phase": "exposition",
         "pending_game_break": False,
     }
+    assert "Sarah's phone lies facedown" in session.json()["opening"]["text"]
+    assert session.json()["opening"]["text"] != "Enter 1A"
     assert turn.json()["segments"] == [{"kind": "narration", "text": "The lead sharpens."}]
     assert turn.json()["lines"] == ["The lead sharpens."]
 
