@@ -14,85 +14,24 @@ import pytest
 
 TIERS = ("unit", "component", "integration", "evaluation")
 QUALITY_TIERS = ("runtime_safety", "authoring_quality")
-_AUTHORING_QUALITY_FILES = {
-    "test_authoring_quality_baseline.py",
-    "test_authoring_sources.py",
-    "test_blueprint_contracts.py",
-    "test_causal_spatial_projection_phase0.py",
-    "test_causal_spatial_projection_phase2.py",
-    "test_causal_spatial_projection_phase3.py",
-    "test_causal_story_contract.py",
-    "test_storylet_simulation_phase5.py",
-}
+_AUTHORING_QUALITY_FILES = {"test_markdown_story_package.py"}
 _HEALTH: dict[str, dict[str, Any]] = {}
 _SESSION_WALL = 0.0
 _SESSION_CPU = 0.0
 
 
-def _orchestration_class(nodeid: str, runtime: dict[str, int]) -> str | None:
-    """Classify complete-turn tests by the boundary they prove."""
-
-    if "complete_turn" not in runtime:
-        return None
-    lowered = nodeid.lower()
-    if "evaluation" in lowered or "reproducibility" in lowered:
-        return "evaluation"
-    if "savegame" in lowered or "save_and_load" in lowered or "persistence" in lowered:
-        return "persistence"
-    if any(token in lowered for token in ("dialogue", "npc", "conversation", "speaker")):
-        return "dialogue boundary"
-    if any(token in lowered for token in ("confirmation", "impact", "replan", "recovery")):
-        return "recovery/confirmation"
-    if any(token in lowered for token in ("inventory", "direction", "navigation", "take_path", "affordance")):
-        return "deterministic affordance"
-    if any(token in lowered for token in ("output", "narration", "debug", "editor", "parity")):
-        return "output contract"
-    return "proposal/commit contract"
-
-
-_EVALUATION_FILES = {"test_evaluation.py", "test_reproducibility.py", "test_runtime_quality_evaluation.py"}
 _INTEGRATION_FILES = {
-    "test_cli.py",
-    "test_cli_more.py",
-    "test_savegame_sqlite.py",
-    "test_web_api.py",
-    "test_web_demo_api.py",
-    "test_web_surface_parity.py",
-    "test_hosted_demo_e2e.py",
-    "test_blueprint_runtime_e2e.py",
-    "test_vector_memory.py",
-    "test_mvp_gaps.py",
-    "test_story_state_artifacts.py",
+    "test_scene_progression_phase4.py",
+    "test_scene_runtime_phase2.py",
+    "test_web_demo.py",
 }
 _COMPONENT_FILES = {
-    "test_adapters.py",
-    "test_freeform_unit.py",
-    "test_grounded_turn_contract_baseline.py",
-    "test_llm_context.py",
-    "test_dialogue_policy.py",
-    "test_world_builder.py",
-    "test_story_coherence.py",
-}
-_ORCHESTRATION_RETENTION_REASONS = {
-    "proposal/commit contract": "One complete turn proves novel intent validation, bounded effects, and fact commit.",
-    "deterministic affordance": (
-        "One complete turn proves the deterministic alias or navigation path still uses proposal/commit."
-    ),
-    "dialogue boundary": "One complete turn proves addressed-speaker, scene, and protected-context enforcement.",
-    "recovery/confirmation": (
-        "The minimum warning/confirmation sequence proves cancellation, proceed, and bounded recovery."
-    ),
-    "output contract": (
-        "One complete turn proves rendered output is derived after commit and remains surface-compatible."
-    ),
-    "persistence": "The minimum complete turn sequence proves save/load composition or post-load continuation.",
-    "evaluation": "The compact replay proves cross-genre determinism and evaluation artifact behavior.",
+    "test_cloudflare_transport.py",
+    "test_scene_context.py",
 }
 
 
 def _tier_for_path(path: Path) -> str:
-    if path.name in _EVALUATION_FILES:
-        return "evaluation"
     if path.name in _INTEGRATION_FILES:
         return "integration"
     if path.name in _COMPONENT_FILES:
@@ -283,12 +222,6 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
                 "seconds": health.get("seconds", 0.0),
                 "constructions": health.get("constructions", {}),
                 "runtime": {name: count for name, count in runtime.items() if "." not in name},
-                "orchestration_class": _orchestration_class(item.nodeid, runtime),
-                "orchestration_retention_reason": (
-                    _ORCHESTRATION_RETENTION_REASONS.get(_orchestration_class(item.nodeid, runtime))
-                    if _orchestration_class(item.nodeid, runtime)
-                    else None
-                ),
                 "commands": [
                     name.removeprefix("complete_turn.command.")
                     for name in runtime
@@ -303,9 +236,6 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     summary["runtime_counts_by_tier"] = {
         tier: dict(counts) for tier, counts in summary["runtime_counts_by_tier"].items()
     }
-    summary["orchestration_classes"] = dict(
-        Counter(row["orchestration_class"] for row in timings if row["orchestration_class"])
-    )
     summary["slowest"] = sorted(timings, key=lambda row: row["seconds"], reverse=True)[:50]
     summary["top20_by_call_time"] = sorted(timings, key=lambda row: row["call_seconds"], reverse=True)[:20]
     summary["top20_by_setup_time"] = sorted(timings, key=lambda row: row["setup_seconds"], reverse=True)[:20]

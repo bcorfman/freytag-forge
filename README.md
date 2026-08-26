@@ -2,17 +2,17 @@
 
 > Write anything. Make it matter.
 
-Freytag Forge turns any freeform move into grounded, persistent drama.
+Freytag Forge turns freeform roleplay into drama that remembers.
 
 ## Features
 
-- **Write freely.** Bluff, bargain, investigate, flee—your intent drives the drama.
-- **Make it matter.** Validated facts carry consequences, clues, and relationships across every scene.
-- **Feel the arc.** Markdown scenes, optional storylets, and Freytag pacing create pressure without menus or rails.
-- **Trust the reveal.** Scene-local memory keeps context sharp and protected knowledge private.
-- **Own the risk.** A story-breaking move gives you a real choice: proceed or return to the exact moment before.
+- **Write anything.** Bluff, bargain, investigate, flee—your intent drives the scene.
+- **Leave a mark.** Validated facts preserve consequences, clues, and relationships.
+- **Ride the arc.** Markdown scenes, storylets, and Freytag pacing bring pressure without menus.
+- **Keep the mystery.** Scene-local context protects revelations and private knowledge.
+- **Choose the risk.** A story-breaking move lets you proceed or return to the exact moment before.
 
-**Less prompt luck. More character, consequence, and drama that remembers.**
+**Less prompt luck. More consequence. More drama that remembers.**
 
 ## Play online
 
