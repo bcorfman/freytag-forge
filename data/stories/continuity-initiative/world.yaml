@@ -1,0 +1,25 @@
+story_id: continuity_initiative
+protagonist_id: jeremiah
+locations:
+  - {id: thomas_home, name: "Thomas home"}
+  - {id: los_angeles_park, name: "Los Angeles park"}
+  - {id: regional_facility, name: "Regional facility"}
+  - {id: facility_perimeter, name: "Facility perimeter"}
+  - {id: janus_archive, name: "JANUS archive"}
+  - {id: purge_chamber, name: "Purge chamber"}
+  - {id: detention_level, name: "Detention level"}
+  - {id: broadcast_relay, name: "Broadcast relay"}
+  - {id: facility_escape, name: "Facility escape route"}
+npcs:
+  - {id: jeremiah, name: "Jeremiah James Thomas", aliases: ["Jeremiah Thomas"]}
+  - {id: sarah, name: "Sarah Thomas"}
+  - {id: gabriel, name: "Gabriel Dexter"}
+  - {id: charles, name: "Charles Jenkins"}
+  - {id: rebecca, name: "Rebecca Jenkins"}
+items:
+  - {id: memory_card, name: "Hidden memory card", fallback_ids: [sarah_phone]}
+  - {id: sarah_phone, name: "Sarah's phone"}
+  - {id: transit_card, name: "Transit access card"}
+  - {id: override_codes, name: "Emergency override codes"}
+facts: [sarah_abduction_suspicion, facility_proof, false_identities_ready, janus_evidence, purge_clock_started, sarah_reached, relay_open, broadcast_started]
+protected_knowledge: [janus_selection_system, gabriel_history, phase_two]

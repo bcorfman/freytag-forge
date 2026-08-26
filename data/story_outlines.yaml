@@ -171544,6 +171544,18 @@ stories:
           activation: Thomas offers to produce the boiler log when challenged about his whereabouts.
           player_may_accompany: true
       interaction_frames:
+        - id: foyer_household_introduction
+          initiator_id: clara_mere
+          participant_ids: [beatrice_harrow, thomas_pike, julian_vale, clara_mere, lydia_fenn, player]
+          initiation: player_initiated
+          location_ids: [grand_foyer]
+          activation: The introduction is immediately eligible because the player already knows the household is assembled in the foyer.
+          dramatic_objective: Introduce every present household member and establish their distinct immediate reactions before the investigator chooses an individual account to pursue.
+          opening_move: At the investigator's request, Clara names each member of the gathered household and each responds briefly in their own public manner without turning the group into a single speaker or resolving the case.
+          response_obligations: [Identify every declared household member by public name and role, give each member an attributed immediate response, leave every member available for focused individual follow-up]
+          allowed_tactics: [introduce, reassure, deflect, challenge]
+          agency_modes: [engage, redirect, interrupt, depart]
+          refusal_path: If the investigator declines the introductions, the household remains present and each named member is still available for individual questioning.
         - id: clara_foyer_opening
           initiator_id: clara_mere
           participant_ids: [clara_mere, player]

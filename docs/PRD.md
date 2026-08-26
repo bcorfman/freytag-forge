@@ -1,4 +1,4 @@
-# Freytag Forge V2 product reference
+# Freytag Forge product reference
 
 Freytag Forge is a package-driven interactive-fiction engine: players may try
 any in-scope move, while deterministic policy makes every accepted consequence
@@ -7,20 +7,17 @@ player surface. `RuntimeState.facts` is the only mutable runtime authority;
 `data/`, reviewed packages, prose, traces, and transcripts are immutable input
 or derived projections.
 
-Detailed authoring, staging, and acceptance procedures live in
-[compiled-story authoring](compiled-story-authoring.md),
-[genre-blueprint authoring](genre-blueprint-authoring.md),
-[the causal-spatial plan](../.plans/causal-spatial-runtime-projection.md), and
-[the V2 acceptance matrix](v2-acceptance-matrix.md).
+The authoring contract is documented in
+[Markdown story authoring](markdown-story-authoring.md). Legacy compiled-story
+documentation is retained only as historical reference.
 
 ## Product experience
 
 The engine supports mystery, fantasy, sci-fi, and relationship stories through
 one fact-backed runtime—never through story- or genre-specific branches.
 
-- Players use ordinary language. Only `save`, `load`, `quit`, and `help` are
-  control commands; unambiguous movement and visible-item affordances are
-  normalized through the same proposal/commit boundary.
+- Players use ordinary language. Only explicit persistence actions are control
+  commands; every other roleplay input reaches the model unchanged.
 - New rooms and items may be richly described; known spaces stay concise unless
   the player explicitly looks again. Prose cannot create observation,
   discovery, location, custody, or relationship truth.
@@ -33,33 +30,17 @@ one fact-backed runtime—never through story- or genre-specific branches.
 - Conversation, inspection, and consequence unlock opportunities; they never
   become a fixed action menu or forced path.
 
-## Authoring and reviewed packages
+## Authoring packages
 
-The offline compiler produces a validated `story-blueprint-v2`: causal truth,
-space, cast, evidence, dramatic progression, and optional social interaction
-declarations. Those declarations include public placement, NPC performance,
-movement, scene subjects, group/party context, and interaction frames.
+The Markdown package loader produces a validated immutable package: scene
+frontmatter, world entities and facts, pacing transitions, and optional
+storylets. Prose remains author guidance; it never becomes canonical runtime
+truth by inference.
 
-The compiler plans causal and spatial continuity before dramatic opportunities.
-Local contracts and critics reject unknown references, impossible routes,
-incompatible custody, absent group members, protected-public leaks,
-unsatisfiable storylets, invalid interaction frames, end states that omit an
-outcome's required truth, and failure-forward cycles. Audits bootstrap the full
-runtime narrative projection and require all declared spatial targets to be
-fact-backed. Genre profiles inject generic minima; shared runtime code does not
-inspect genre names. Candidate generation allows one request plus one shared
-repair/recovery request, then requires review and promotion before play.
-
-Reviewed packages and their compatibility bridge are immutable runtime inputs;
-facts are the only session mutation authority.
-
-Offline conversation evaluation drives semantic player policies through
-isolated real engine sessions. An independent model judges each accepted,
-structured transcript against its authored performance context and returns a
-typed rubric with turn/segment citations. Local checks validate citations,
-grounding, and thresholds; they do not score prose by keywords. This evidence
-and human review gate promotion only—the ordinary runtime never calls an
-evaluation critic or accepts an evaluator-directed route.
+The loader rejects malformed sources, unknown IDs, invalid predicates,
+dependency cycles, ambiguous transition priorities, and storylet windows that
+escape their parent scene. Packages are immutable runtime inputs; facts are the
+only session mutation authority.
 
 ## Facts, bootstrap, and context
 

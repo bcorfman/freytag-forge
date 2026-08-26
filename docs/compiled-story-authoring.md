@@ -58,6 +58,20 @@ runs binding, semantic, spatial, and interaction critics. An exhausted or
 rejected run is a non-playable diagnostic artifact. It never overwrites a
 reviewed fixture or exposes credentials in its output.
 
+Incremental repair contracts are authoring evidence, not runtime inputs. A
+revision binds a typed proposal to one base SHA-256 and approved stable-ID
+semantic scope, applies only to a deep clone, and records its structural diff,
+lineage, and unchanged-section digests. Unknown IDs, duplicate operations,
+out-of-scope paths, and node-budget breaches fail closed. Supervisor routing
+and CLI repair controls arrive in later phases.
+
+For eligible low-risk work, Luna may propose that typed patch while Sol remains
+the sole classifier and acceptance authority. Sol writes machine-executable
+value, preservation, and diagnostic-clearance assertions before delegation. A
+failed Luna patch receives one retry brief with failing assertion IDs and
+expected/observed values; exhaustion records diagnostics and never promotes an
+artifact. The existing `--live` gate remains the only route to a provider.
+
 ## Audit, diagnostics, and promotion
 
 Run a read-only audit when a candidate needs review evidence:

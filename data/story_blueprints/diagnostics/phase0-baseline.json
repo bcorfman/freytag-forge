@@ -1,6 +1,12 @@
 {
   "schema_version": "story-blueprint-phase0-baseline-v1",
   "scope": "offline causal compiler characterization",
+  "telemetry_contract": {
+    "full_generation": {"request_count": 1, "token_count": null, "estimated_cost_usd": null},
+    "full_candidate_repair": {"request_count": 2, "token_count": null, "estimated_cost_usd": null},
+    "max_requests": 2,
+    "unreported_usage": "null; never inferred from prose or response length"
+  },
   "genres": ["mystery", "fantasy", "sci-fi", "relationship"],
   "diagnostic_compatibility": {
     "unknown_reference": "UNKNOWN_REFERENCE",
@@ -17,6 +23,7 @@
   },
   "notes": [
     "This is a characterization baseline, not a promotion artifact.",
-    "Phase 0 records current behavior; Phase 1 may change details only with an explicit compatibility update."
+    "Phase 0 records current behavior; Phase 1 may change details only with an explicit compatibility update.",
+    "Live artifacts record provider-reported input/output tokens and costs when available."
   ]
 }

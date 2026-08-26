@@ -24,7 +24,7 @@ class Fact(BaseModel):
 
 @dataclass
 class FactStore:
-    """Mutable fact authority used only inside ``RuntimeState``."""
+    """Mutable fact authority for the future scene runtime."""
 
     asserted: set[Fact] = field(default_factory=set)
 

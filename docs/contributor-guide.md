@@ -2,10 +2,8 @@
 
 This guide keeps repository-wide engineering rules concise. Start with the
 [PRD](PRD.md), then use the focused documentation for the boundary being
-changed: [compiled-story authoring](compiled-story-authoring.md),
-[genre-blueprint authoring](genre-blueprint-authoring.md),
-[Cloudflare narration](cloudflare-narration-worker.md),
-[staging evaluation](phase-5-staging-evaluation.md), and the
+changed: [Markdown story authoring](markdown-story-authoring.md),
+[Cloudflare narration](cloudflare-narration-worker.md), and the
 [test-suite guide](test-suite-performance-guide.md).
 
 ## Before changing code or operations
@@ -20,18 +18,16 @@ changed: [compiled-story authoring](compiled-story-authoring.md),
 
 ## Runtime and authoring boundaries
 
-- Build one story-agnostic engine for every outline in
-  `data/story_outlines.yaml`. Story, character, gender, premise, and genre
-  behavior belongs only in validated package data.
+- Build one story-agnostic engine for every Markdown package. Story, character,
+  premise, and genre behavior belongs only in validated package data.
 - Facts are the sole canonical mutable runtime state. Packages, prose, saves,
   artifacts, traces, and transcripts are immutable inputs or integrity-checked
   projections; never treat them as competing mutation authorities.
 - Put opening setup, public presentation, protected knowledge, relationships,
-  location, custody, and scene purpose in validated package declarations.
-  Correct inadequate output in the source outline or compiler/contracts, never
-  by editing candidates, reviewed packages, or projections.
-- Keep `storygame.web_demo` as the hosted adapter. Share code only below that
-  boundary and preserve its independent credentials and fail-closed behavior.
+  location, custody, pacing, and scene purpose in validated package declarations.
+  Correct authoring sources, never generated projections.
+- Keep the hosted adapter as a thin boundary when it is rebuilt. Share code
+  only below that boundary and preserve fail-closed behavior.
 
 ## Gameplay, model, and interaction safety
 

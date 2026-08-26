@@ -31,13 +31,11 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
-      - name: Verify compiled stories and V2 runtime contracts
+      - name: Verify Markdown story-package contracts
         run: >-
           TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_authoring_compiler.py tests/test_runtime_v2.py tests/test_cloudflare_turn_model.py
-          --tier-report=artifacts/v2-runtime.json
-      - name: Smoke hosted V2 API adapter
-        run: TMPDIR=/tmp uv run pytest -q --no-cov tests/test_web_demo_v2.py tests/test_deployment_channel_contract.py
+          tests/test_markdown_story_package.py
+          --tier-report=artifacts/markdown-story-package.json
       - name: Upload cutover reports
         if: always()
         uses: actions/upload-artifact@v7

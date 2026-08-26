@@ -1,0 +1,19 @@
+scenes:
+  - {scene_id: 1A, earliest_seconds: 0, target_seconds: 60, latest_seconds: 120}
+  - {scene_id: 1B, earliest_seconds: 120, target_seconds: 195, latest_seconds: 270}
+  - {scene_id: 1C, earliest_seconds: 270, target_seconds: 330, latest_seconds: 390}
+  - {scene_id: 2A, earliest_seconds: 390, target_seconds: 450, latest_seconds: 510}
+  - {scene_id: 2B, earliest_seconds: 510, target_seconds: 570, latest_seconds: 630}
+  - {scene_id: 2C, earliest_seconds: 630, target_seconds: 705, latest_seconds: 780}
+  - {scene_id: 3A, earliest_seconds: 780, target_seconds: 840, latest_seconds: 900}
+  - {scene_id: 3B, earliest_seconds: 900, target_seconds: 975, latest_seconds: 1050}
+  - {scene_id: 3C, earliest_seconds: 1050, target_seconds: 1140, latest_seconds: 1200}
+transitions:
+  - {id: t_1a_1b, source_scene_id: 1A, target_scene_id: 1B, priority: 10, triggers: [{fact_id: sarah_abduction_suspicion, equals: true}], required_dependencies: [memory_card]}
+  - {id: t_1b_1c, source_scene_id: 1B, target_scene_id: 1C, priority: 10, triggers: [{fact_id: facility_proof, equals: true}], required_dependencies: [transit_card, gabriel]}
+  - {id: t_1c_2a, source_scene_id: 1C, target_scene_id: 2A, priority: 10, triggers: [{fact_id: false_identities_ready, equals: true}]}
+  - {id: t_2a_2b, source_scene_id: 2A, target_scene_id: 2B, priority: 10, triggers: [{fact_id: janus_evidence, equals: true}]}
+  - {id: t_2b_2c, source_scene_id: 2B, target_scene_id: 2C, priority: 10, triggers: [{fact_id: purge_clock_started, equals: true}], required_dependencies: [gabriel]}
+  - {id: t_2c_3a, source_scene_id: 2C, target_scene_id: 3A, priority: 10, triggers: [{fact_id: sarah_reached, equals: true}], required_dependencies: [gabriel]}
+  - {id: t_3a_3b, source_scene_id: 3A, target_scene_id: 3B, priority: 10, triggers: [{fact_id: relay_open, equals: true}], required_dependencies: [override_codes]}
+  - {id: t_3b_3c, source_scene_id: 3B, target_scene_id: 3C, priority: 10, triggers: [{fact_id: broadcast_started, equals: true}], required_dependencies: [memory_card]}
