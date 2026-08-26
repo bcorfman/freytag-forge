@@ -271,16 +271,16 @@ the engine's accepted facts are the only source of the next scene and context.
 
 ### 3. Build scene context and reference-aware memory
 
-- Replace `RuntimeContextBuilder` in `storygame/runtime/context.py` with a
+- [x] Replace `RuntimeContextBuilder` in `storygame/runtime/context.py` with a
   `SceneContextBuilder`. Its default projection is strictly scene-local,
   including only entities that are present, owned, locally relevant, active in
   a storylet, or needed by a currently eligible pacing event.
-- Implement deterministic entity reference resolution over package aliases and
+- [x] Implement deterministic entity reference resolution over package aliases and
   public names. Resolve only unambiguous references; ambiguous references ask
   the model to clarify without adding either entity's private state.
-- Add public history snippets for referenced prior entities/events and retain
+- [x] Add public history snippets for referenced prior entities/events and retain
   the existing protected-revelation and speaker-private filtering guarantees.
-- Define and test a JSON-schema-sized prompt contract so Cloudflare receives
+- [x] Define and test a JSON-schema-sized prompt contract so Cloudflare receives
   narration instructions plus an explicit, bounded change schema—not the whole
   story or a free-form state dump.
 
@@ -361,6 +361,15 @@ the engine's accepted facts are the only source of the next scene and context.
 - [x] SQLite restores a versioned, integrity-checked pending warning and blocks
   normal turns until `proceed` or exact `return_to_scene` restoration.
 - [x] Invalid transitions and warnings leave canonical facts unchanged.
+
+### Phase 3 exit criteria
+
+- [x] Default prompts contain only the current scene’s public entities and
+  relevant committed facts; protected and speaker-private facts are excluded.
+- [x] An unambiguous public name adds only that entity’s safe history; an
+  ambiguous name adds neither entity’s state.
+- [x] The provider prompt contains narration instructions and the strict,
+  JSON-schema-sized `TurnProposal` change contract rather than a story dump.
 
 - The supplied Continuity Initiative Markdown package loads without any
   story-specific Python conditionals and starts Jeremiah in Scene 1A.

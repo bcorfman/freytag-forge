@@ -6,11 +6,11 @@ Freytag Forge turns any freeform move into grounded, persistent drama.
 
 ## Features
 
-- **Write the unexpected.** Bluff, bargain, investigate, flee—the story follows freeform intent.
-- **Make it stick.** Facts preserve people, clues, custody, and relationships across turns and saves.
-- **Play drama, not menus.** Markdown scenes, optional storylets, and Freytag pacing keep the plot responsive.
-- **Trust every turn.** Validated model proposals, durable snapshots, and explicit game-break choices protect the world.
-- **Bring any world.** One story-agnostic engine powers every genre without runtime genre rules.
+- **Write anything.** Bluff, bargain, investigate, flee—freeform intent drives the drama.
+- **Leave a mark.** Durable facts carry clues, custody, relationships, and consequences forward.
+- **Stay in the moment.** Markdown scenes, storylets, and Freytag pacing shape tension without menus.
+- **Keep secrets safe.** Scene-local memory recalls the right names and history without spilling future knowledge.
+- **Trust the turn.** Every model change is validated; snapshots make consequential choices explicit and reversible.
 
 **Less prompt luck. More character, consequence, and playable drama.**
 
