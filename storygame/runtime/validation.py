@@ -56,6 +56,15 @@ class ProgressionValidator:
         exactly one active route realization, so it cannot authorize a new fact.
         """
 
+        proposal = proposal.model_copy(
+            update={
+                "operations": tuple(
+                    operation
+                    for operation in proposal.operations
+                    if not self._canonical_operation_is_noop(state, operation)
+                )
+            }
+        )
         if not proposal.operations:
             return proposal
         canonical_operations = tuple(
@@ -110,6 +119,12 @@ class ProgressionValidator:
                 ),
             }
         )
+
+    def _canonical_operation_is_noop(self, state: RuntimeState, operation: FactOperation) -> bool:
+        if operation.fact.predicate not in self.package.world.facts:
+            return False
+        already_asserted = operation.fact in state.facts.asserted
+        return already_asserted if operation.operation == "assert" else not already_asserted
 
     def _validate_operations(self, proposal: TurnProposal) -> None:
         protected = set(self.package.world.protected_knowledge)
