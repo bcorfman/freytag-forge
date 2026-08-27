@@ -53,6 +53,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     assert captured["payload"]["user"].find("response_schema") >= 0
     assert "free-text action" in captured["payload"]["system"]
+    assert "hard knowledge and action boundary" in captured["payload"]["system"]
     assert "Creative consequences are allowed" in captured["payload"]["system"]
 
 
