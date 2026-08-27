@@ -3,6 +3,7 @@ import { turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
+const E2E_TEST_CLOCK_SECONDS = (import.meta.env.VITE_E2E_TEST_CLOCK_SECONDS || "").trim();
 const DEFAULT_SESSION_PAYLOAD = { story_id: "continuity_initiative" };
 
 const transcriptElement = document.querySelector("#transcript");
@@ -103,7 +104,12 @@ async function apiRequest(path, payload) {
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(path === "/api/v1/turn" && E2E_TEST_CLOCK_SECONDS
+        ? { "X-Freytag-Test-Clock-Seconds": E2E_TEST_CLOCK_SECONDS }
+        : {}),
+    },
     body: JSON.stringify(payload),
   });
 

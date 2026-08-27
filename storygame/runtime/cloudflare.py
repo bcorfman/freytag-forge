@@ -49,7 +49,19 @@ class CloudflareTurnProvider:
         payload = {
             "system": (
                 "Return only one JSON TurnProposal that conforms exactly to the response_schema in the user payload. "
-                "Do not echo the player input, scene context, schema, or any explanation."
+                "Treat player_input as a free-text action and narrate its immediate, scene-grounded consequence. "
+                "The narration must be new, directly responsive to that action, and must not merely repeat "
+                "the entry text. "
+                "Keep plot beats progressive: do not dump the scene outline or rush a transition merely because it "
+                "is eligible. Ordinary actions need a substantive consequence, concrete new detail, a world or NPC "
+                "reaction, and continued dramatic movement. Treat listed storylets as private realization guidance, "
+                "never player choices. "
+                "Creative consequences are allowed. Represent every durable invented or changed world fact, item, "
+                "relationship, custody change, event, or transition in the proposal's operations, events, "
+                "or transition so the runtime can validate it. Durable effects may only use an active storylet event "
+                "with its realization_id and its exact route-authorized operations. Do not echo the player input, "
+                "scene context, "
+                "schema, or any explanation."
             ),
             "user": json.dumps(
                 {

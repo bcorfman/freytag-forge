@@ -5,6 +5,7 @@ if (!apiBaseUrl) throw new Error("E2E_API_BASE_URL must point to the Cloudflare-
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: "**/*.spec.js",
   timeout: 120_000,
   fullyParallel: false,
   reporter: [["list"], ["json", { outputFile: "../artifacts/playwright-results.json" }]],
@@ -18,6 +19,7 @@ export default defineConfig({
       ...process.env,
       VITE_API_BASE_URL: apiBaseUrl,
       VITE_DEPLOYMENT_CHANNEL: process.env.E2E_DEPLOYMENT_CHANNEL || "production",
+      VITE_E2E_TEST_CLOCK_SECONDS: process.env.E2E_TEST_CLOCK_SECONDS || "",
     },
   },
 });

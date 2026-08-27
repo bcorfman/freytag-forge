@@ -1,14 +1,15 @@
 # Markdown story authoring
 
 A story package is an immutable source directory containing `plot.md`,
-`world.yaml`, `pacing.yaml`, and `storylets.md`. The loader rejects unknown
+`world.yaml`, `pacing.yaml`, `storylets.md`, and `storylet-routes.yaml`. The loader rejects unknown
 references, malformed Markdown/YAML, invalid timing, ambiguous transitions,
 and cyclic scene dependencies before a package can reach runtime.
 
-`plot.md` retains the human-readable plot. Every playable `## Scene 1A` heading
+`plot.md` retains the human-readable narrative canon. Every playable `## Scene 1A` heading
 is immediately followed by YAML frontmatter with its stable scene ID, location,
 Freytag phase, objective, participant/item IDs, entry text, and transition IDs.
-Prose is never inferred as runtime truth.
+Its metadata is descriptive; prose is scene-local model guidance, never runtime
+truth.
 
 `world.yaml` declares stable IDs for locations, NPCs, items, facts, protected
 knowledge, and explicit fallbacks. `pacing.yaml` supplies one ordered window
@@ -18,6 +19,14 @@ entry links to `plot.md`, names its allowed scene, retains all required dramatic
 sections, and declares `Pacing window` (`earliest`, `target`, `latest`) plus a
 `Pacing impact` of `none`, `brief_delay`, `pressure_increase`, or
 `advance_readiness`.
+
+`storylet-routes.yaml` is the executable companion to `storylets.md`. It
+declares scene-local activation predicates, exact fact operations for each
+realization, protected boundaries, canonical bridge events, and canonical
+resolution events. The runtime accepts a durable canonical fact from an LLM
+only through an eligible storylet realization with those exact operations.
+Pacing events remain authored in `pacing.yaml`; their job is observable pressure,
+not unearned knowledge or arbitrary scene transitions.
 
 Load a package with `storygame.story_package.load_story_package(path)`. It is a
 validated immutable authoring input; it does not interpret player text or add a

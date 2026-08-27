@@ -14,6 +14,7 @@ from storygame.story_package.models import (
     Scene,
     SceneMetadata,
     Storylet,
+    StoryletRoutesSource,
     StoryPackage,
     WorldSource,
 )
@@ -184,6 +185,30 @@ def _validate(package: StoryPackage) -> None:
         )
         if not within_scene_window:
             raise StoryPackageError(f"storylet '{storylet.id}' escapes its scene pacing window")
+    route_ids = {route.id for route in package.storylet_routes.storylets}
+    if route_ids != {storylet.id for storylet in package.storylets}:
+        raise StoryPackageError("storylet-routes must declare exactly the storylets in storylets.md")
+    if package.storylet_routes.canonical_scene_chain != tuple(scene.metadata.scene_id for scene in package.scenes):
+        raise StoryPackageError("storylet-routes canonical scene chain must match plot order")
+    if package.storylet_routes.sole_ending_scene_id != package.scenes[-1].metadata.scene_id:
+        raise StoryPackageError("storylet-routes sole ending must be the final plot scene")
+    for route in package.storylet_routes.storylets:
+        if route.scene_id not in scenes or route.id not in route_ids:
+            raise StoryPackageError("storylet route references unknown scene")
+        if {item.fact_id for item in route.activation_conditions} - set(package.world.facts):
+            raise StoryPackageError(f"storylet route '{route.id}' has an unknown activation fact")
+        for realization in route.realizations:
+            if {operation.fact_id for operation in realization.operations} - set(package.world.facts):
+                raise StoryPackageError(f"storylet route '{route.id}' has an unknown operation fact")
+            if set(realization.protected_knowledge_boundaries) - set(package.world.protected_knowledge):
+                raise StoryPackageError(f"storylet route '{route.id}' has an unknown protected boundary")
+    for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events):
+        if event.scene_id not in scenes:
+            raise StoryPackageError(f"canonical route event '{event.id}' references an unknown scene")
+        if {item.fact_id for item in event.activation_conditions} - set(package.world.facts):
+            raise StoryPackageError(f"canonical route event '{event.id}' has an unknown activation fact")
+        if {operation.fact_id for operation in event.operations} - set(package.world.facts):
+            raise StoryPackageError(f"canonical route event '{event.id}' has an unknown operation fact")
     visiting: set[str] = set()
     visited: set[str] = set()
 
@@ -215,6 +240,44 @@ def load_story_package(root: Path) -> StoryPackage:
         storylets = _parse_storylets((root / "storylets.md").read_text(encoding="utf-8"), plot_anchors)
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
+        routes_raw = _yaml(root / "storylet-routes.yaml")
+
+        def event_source(item: dict[str, Any]) -> dict[str, Any]:
+            activation = item.get("activation", {})
+            return {
+                "id": item["id"],
+                "scene_id": item["scene_id"],
+                "activation_conditions": tuple(
+                    {"fact_id": fact_id, "equals": True} for fact_id in activation.get("all_facts_true", ())
+                ),
+                "operations": item["produces"],
+            }
+
+        routes = StoryletRoutesSource.model_validate(
+            {
+                "story_id": routes_raw["story_id"],
+                "canonical_scene_chain": routes_raw["contract"]["canonical_scene_chain"],
+                "sole_ending_scene_id": routes_raw["contract"]["sole_ending_scene_id"],
+                "storylets": tuple(
+                    {
+                        "id": item["id"],
+                        "scene_id": item["scene_id"],
+                        "title": item["title"],
+                        "activation_conditions": item["activation"].get("conditions", ()),
+                        "earliest_seconds": item["activation"]["pacing"]["earliest_seconds"],
+                        "target_seconds": item["activation"]["pacing"]["target_seconds"],
+                        "latest_seconds": item["activation"]["pacing"]["latest_seconds"],
+                        "pressure_role": item["pressure_role"],
+                        "realizations": item["realization_options"],
+                    }
+                    for item in routes_raw["storylets"]
+                ),
+                "bridge_events": tuple(event_source(item) for item in routes_raw.get("canonical_bridge_events", ())),
+                "resolution_events": tuple(
+                    event_source(item) for item in routes_raw.get("canonical_resolution_events", ())
+                ),
+            }
+        )
     except (OSError, ValidationError) as exc:
         raise StoryPackageError(str(exc)) from exc
     package = StoryPackage(
@@ -224,6 +287,7 @@ def load_story_package(root: Path) -> StoryPackage:
         world=world,
         pacing=pacing,
         storylets=storylets,
+        storylet_routes=routes,
     )
     _validate(package)
     return package

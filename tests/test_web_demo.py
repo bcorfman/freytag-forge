@@ -40,6 +40,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "phase": "exposition",
         "pending_game_break": False,
         "fired_storylet_ids": [],
+        "fired_pacing_event_ids": [],
         "story_elapsed_seconds": 0,
     }
     assert "Sarah's phone lies facedown" in session.json()["opening"]["text"]
@@ -122,3 +123,60 @@ def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
 
     assert response.status_code == 200
     assert response.json()["segments"] == [{"kind": "narration", "text": "The lead sharpens."}]
+
+
+def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: lambda _input: {"narration": "The patrol's radios crackle outside."},
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I wait and listen."},
+            headers={"X-Freytag-Test-Clock-Seconds": "120"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["state"]["story_elapsed_seconds"] == 120
+
+
+def test_test_clock_header_is_ignored_without_local_opt_in(tmp_path) -> None:
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: lambda _input: {"narration": "The room stays tense.", "narrative_seconds": 40},
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen."},
+            headers={"X-Freytag-Test-Clock-Seconds": "120"},
+        )
+
+    assert response.json()["state"]["story_elapsed_seconds"] == 40
+
+
+def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: lambda _input: {"narration": "The room stays tense."},
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        invalid = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen."},
+            headers={"X-Freytag-Test-Clock-Seconds": "later"},
+        )
+        unsafe = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen."},
+            headers={"X-Freytag-Test-Clock-Seconds": "3601"},
+        )
+
+    assert invalid.status_code == 422
+    assert unsafe.status_code == 422

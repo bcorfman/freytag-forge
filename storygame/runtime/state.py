@@ -25,6 +25,7 @@ class RuntimeSnapshot(BaseModel):
     active_event_ids: tuple[str, ...]
     fired_event_ids: tuple[str, ...]
     facts: FactStore
+    narrative_history: tuple[str, ...] = ()
 
 
 class RuntimeState(BaseModel):
@@ -37,6 +38,7 @@ class RuntimeState(BaseModel):
     active_event_ids: set[str] = Field(default_factory=set)
     fired_event_ids: set[str] = Field(default_factory=set)
     facts: FactStore = Field(default_factory=FactStore)
+    narrative_history: list[str] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
     pending_proposal: TurnProposal | None = None
@@ -74,6 +76,7 @@ class RuntimeState(BaseModel):
             active_event_ids=tuple(sorted(self.active_event_ids)),
             fired_event_ids=tuple(sorted(self.fired_event_ids)),
             facts=self.facts.clone(),
+            narrative_history=tuple(self.narrative_history),
         )
 
     def set_pending_break(
@@ -129,8 +132,11 @@ class RuntimeState(BaseModel):
         self.facts = candidate_facts
         self.active_event_ids = candidate_active
         self.fired_event_ids = candidate_fired
+        changed_scene = next_scene_id != self.current_scene_id
         self.current_scene_id = next_scene_id
         self.phase = next_phase
+        if changed_scene:
+            self.active_event_ids.clear()
 
     @staticmethod
     def _apply_operation(store: FactStore, operation: FactOperation) -> None:
@@ -149,6 +155,7 @@ class RuntimeState(BaseModel):
             self.active_event_ids = set(snapshot.active_event_ids)
             self.fired_event_ids = set(snapshot.fired_event_ids)
             self.facts = snapshot.facts.clone()
+            self.narrative_history = list(snapshot.narrative_history)
         elif decision != "proceed":
             raise RuntimeStateError("game break decision must be proceed or return_to_scene")
         else:

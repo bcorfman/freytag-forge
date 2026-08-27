@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test src/*.test.js",
+    "test": "node --test src/*.test.js e2e/roleplay-judge.test.js",
     "test:e2e": "playwright test",
     "build": "vite build",
     "preview": "vite preview"
