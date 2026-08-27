@@ -33,8 +33,29 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert len(package.storylets) == 29
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
-    assert len(package.knowledge_indexes.by_id) == 68
+    assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
+    for route in package.storylet_routes.storylets:
+        for realization in route.realizations:
+            source_key = f"storylet:{route.id}:{realization.id}"
+            knowledge_ids = package.knowledge_indexes.source_to_knowledge[source_key]
+            effects = {
+                effect
+                for knowledge_id in knowledge_ids
+                for effect in package.knowledge_indexes.by_id[knowledge_id].establishes
+            }
+            assert effects == set(realization.operations)
+
+
+def test_scene_1a_entry_catalog_is_safe_before_any_route_is_selected() -> None:
+    package = load_story_package(PACKAGE)
+
+    entry = package.knowledge_indexes.by_id[package.knowledge_indexes.source_to_knowledge["entry:1A"][0]]
+
+    assert entry.establishes[0].fact_id == "scene_1a_entry_known"
+    assert entry.audience.player_visible
+    entry_text = " ".join((entry.statement, *entry.aliases)).casefold()
+    assert not {"warning", "janus", "facility", "patrol tape"} & set(entry_text.split())
 
 
 @pytest.mark.parametrize(
@@ -114,6 +135,40 @@ def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path
     catalog["knowledge"][0]["requires"] = [{"fact_id": "sarah_abduction_suspicion", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     with pytest.raises(StoryPackageError, match="own prerequisite"):
+        load_story_package(root)
+
+
+def test_loader_rejects_invalid_canonical_event_and_scene_entry_sources(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    event_knowledge = next(item for item in catalog["knowledge"] if item["id"] == "k_bridge_1b_departure")
+    event_knowledge["source"]["canonical_event_id"] = "missing_event"
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="canonical event source"):
+        load_story_package(root)
+
+    root = copied_package(tmp_path / "entry")
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    entry = next(item for item in catalog["knowledge"] if item["id"] == "k_scene_1a_entry")
+    entry["establishes"][0]["fact_id"] = "sarah_warning_known"
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="entry effects differ"):
+        load_story_package(root)
+
+
+def test_loader_rejects_same_scene_knowledge_prerequisite_cycle(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    suspicion = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_c_r2")
+    warning = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_b_r2")
+    suspicion["requires"] = [{"fact_id": "sarah_warning_known", "equals": True}]
+    warning["requires"] = [{"fact_id": "house_marked_for_return", "equals": True}]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="prerequisite/reveal cycle"):
         load_story_package(root)
 
 

@@ -6,11 +6,10 @@ Freytag Forge turns freeform roleplay into drama that remembers.
 
 ## Features
 
-- **Write anything.** Bluff, bargain, investigate, flee—your intent drives the scene.
-- **Make it count.** Validated facts make consequences, clues, and relationships stick.
-- **Reveal at the right moment.** Typed, audience-aware knowledge keeps mysteries earned.
-- **Feel the pressure.** Markdown storylets and Freytag pacing raise the stakes without menus.
-- **Own the risk.** A story-breaking move lets you proceed or return to the exact moment before.
+- **Write freely.** Investigate, bluff, bargain, or run—the scene follows intent, not menus.
+- **Make every move matter.** Validated facts preserve consequences, relationships, and discoveries.
+- **Earn the reveal.** Audience-aware knowledge keeps mysteries local, causal, and spoiler-free.
+- **Keep the tension.** Storylets, pacing, and reversible high-stakes choices turn momentum into drama.
 
 **Less prompt luck. More consequence. More drama that remembers.**
 

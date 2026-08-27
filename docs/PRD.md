@@ -38,7 +38,9 @@ The [Markdown story authoring](markdown-story-authoring.md) guide is the source
 format contract. Loading fails closed on malformed input, unknown IDs,
 predicates, knowledge sources, effects, audiences, timing windows, ambiguous
 transitions, and dependency cycles. Package inputs and compiled lookup indexes
-remain immutable at runtime.
+remain immutable at runtime. Schema-2 knowledge packages use save version 2;
+older snapshots fail closed rather than being reinterpreted under new
+revelation rules.
 
 FastAPI, React, Cloudflare Worker transport, and SQLite are the hosted stack.
 `POST /api/v1/session` selects a `story_id`; `POST /api/v1/turn` returns

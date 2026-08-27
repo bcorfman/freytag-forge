@@ -4,7 +4,8 @@ This guide keeps repository-wide engineering rules concise. Start with the
 [PRD](PRD.md), then use the focused documentation for the boundary being
 changed: [Markdown story authoring](markdown-story-authoring.md),
 [Cloudflare narration](cloudflare-narration-worker.md), and the
-[test-suite guide](test-suite-performance-guide.md).
+[test-suite guide](test-suite-performance-guide.md), and the
+[testing runbook](testing-runbook.md).
 
 ## Before changing code or operations
 
