@@ -18,7 +18,10 @@ class RuntimeSaveError(ValueError):
 
 
 class RuntimeStateSqliteStore:
-    SCHEMA_VERSION = 1
+    # Version 2 deliberately rejects snapshots written before package knowledge
+    # semantics were versioned.  Rehydrating prose-era saves would silently
+    # reinterpret their state under the new revelation contract.
+    SCHEMA_VERSION = 2
 
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)

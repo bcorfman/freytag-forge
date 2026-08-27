@@ -771,12 +771,34 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_c_r2
-  statement: 'Current-scene development: restricted corridor access, rebecca observing
-    infiltrators.'
-  entity_ids: []
+  statement: Jeremiah and Gabriel have opened a restricted infrastructure corridor.
+  entity_ids: [jeremiah, gabriel, regional_facility]
   aliases:
-  - restricted corridor access
-  - rebecca observing infiltrators
+  - restricted corridor
+  - infrastructure corridor
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-C
+    realization_id: SL-2A-C-R2
+  relevance:
+    entity_ids: [regional_facility]
+    priority: 10
+- id: k_sl_2a_c_r2_rebecca_observes
+  statement: Rebecca has ordered the infiltrators watched.
+  entity_ids: [rebecca, jeremiah, gabriel, regional_facility]
+  aliases:
+  - Rebecca ordered surveillance
+  - infiltrators watched
   audience:
     kind: world_only
     player_visible: false
@@ -785,9 +807,6 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: restricted_corridor_access
-    value: true
-  - op: assert
     fact_id: rebecca_observing_infiltrators
     value: true
   source:
@@ -795,7 +814,7 @@ knowledge:
     storylet_id: SL-2A-C
     realization_id: SL-2A-C-R2
   relevance:
-    entity_ids: []
+    entity_ids: [rebecca, regional_facility]
     priority: 0
 - id: k_sl_2b_a_r1
   statement: 'Current-scene development: janus evidence.'
@@ -1701,6 +1720,70 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+- id: k_bridge_1b_departure
+  statement: Jeremiah and Gabriel can depart along the identified transport route.
+  entity_ids: [jeremiah, gabriel, transit_card]
+  aliases: [transport departure, departure route]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: transport_route_departure_ready, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_1b_departure}
+- id: k_bridge_1c_infiltration
+  statement: Direct observation is no longer enough; the facility must be entered.
+  entity_ids: [jeremiah, gabriel, regional_facility]
+  aliases: [enter the facility, deeper access]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1C]
+  establishes: [{op: assert, fact_id: facility_infiltration_needed, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_1c_infiltration_needed}
+- id: k_bridge_2b_archive_crisis
+  statement: "The archive crisis is understood: the evidence, betrayal, and Sarah's resistance converge here."
+  entity_ids: [jeremiah, sarah, gabriel, janus_archive]
+  aliases: [archive crisis, Sarah's resistance]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  establishes: [{op: assert, fact_id: archive_crisis_understood, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_2b_archive_crisis}
+- id: k_bridge_3a_command_assault
+  statement: The uprising is active, and the group is moving toward the command and broadcast levels.
+  entity_ids: [jeremiah, sarah, broadcast_relay, detention_level]
+  aliases: [command levels, broadcast levels]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  establishes: [{op: assert, fact_id: command_levels_assault_underway, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_3a_command_assault}
+- id: k_bridge_3b_broadcast
+  statement: The national broadcast has begun.
+  entity_ids: [jeremiah, sarah, broadcast_relay]
+  aliases: [broadcast started, national transmission]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3B]
+  establishes: [{op: assert, fact_id: broadcast_started, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_3b_broadcast}
+- id: k_resolution_complete
+  statement: The exposure and escape resolution has landed, though the wider damage remains.
+  entity_ids: [jeremiah, sarah, facility_escape]
+  aliases: [resolution, exposure and escape]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: resolution_complete, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: resolution_complete}
+- id: k_resolution_sarah_publishing
+  statement: Sarah has begun publishing the recovered archive.
+  entity_ids: [sarah, janus_archive]
+  aliases: [Sarah publishing, archive publication]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: sarah_publishing_archive, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
+- id: k_resolution_jeremiah_rescue
+  statement: Jeremiah has joined the wider rescue effort to find remaining detention sites.
+  entity_ids: [jeremiah]
+  aliases: [rescue efforts, remaining detention sites]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: jeremiah_joined_rescue_efforts, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
 - id: k_scene_1a_entry
   statement: The house is quiet, Sarah is missing, and her phone remains on the kitchen floor.
   entity_ids: [jeremiah, sarah, sarah_phone]

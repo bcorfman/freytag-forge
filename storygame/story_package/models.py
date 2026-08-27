@@ -50,17 +50,22 @@ class Audience(_Model):
 class RevealSource(_Model):
     """One package-owned route that may establish knowledge."""
 
-    kind: Literal["storylet_realization", "scene_entry"]
+    kind: Literal["storylet_realization", "canonical_route_event", "scene_entry"]
     storylet_id: str | None = None
     realization_id: str | None = None
+    canonical_event_id: str | None = None
 
     @model_validator(mode="after")
     def complete_route_reference(self) -> RevealSource:
         route_fields = (self.storylet_id, self.realization_id)
         if self.kind == "storylet_realization" and not all(route_fields):
             raise ValueError("storylet realization source requires storylet_id and realization_id")
-        if self.kind == "scene_entry" and any(route_fields):
-            raise ValueError("scene entry source cannot name a storylet realization")
+        if self.kind == "storylet_realization" and self.canonical_event_id:
+            raise ValueError("storylet realization source cannot name a canonical route event")
+        if self.kind == "canonical_route_event" and (not self.canonical_event_id or any(route_fields)):
+            raise ValueError("canonical route event source requires only canonical_event_id")
+        if self.kind == "scene_entry" and (any(route_fields) or self.canonical_event_id):
+            raise ValueError("scene entry source cannot name another source")
         return self
 
 
@@ -93,6 +98,8 @@ class SceneFrame(_Model):
 
 
 class KnowledgeCatalog(_Model):
+    """Versioned knowledge source interpreted consistently by saves and runtime."""
+
     schema_version: Literal["2.0"]
     facts: tuple[FactDefinition, ...] = Field(min_length=1)
     scene_frames: tuple[SceneFrame, ...] = Field(min_length=1)

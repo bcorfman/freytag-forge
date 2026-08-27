@@ -13,6 +13,7 @@ from storygame.story_package.models import (
     KnowledgeCatalog,
     KnowledgeIndexes,
     PacingSource,
+    RouteOperation,
     Scene,
     SceneMetadata,
     Storylet,
@@ -136,7 +137,12 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
     audience_to_known_terms: dict[str, list[str]] = {}
     prerequisite_dependents: dict[str, list[str]] = {}
     for item in catalog.knowledge:
-        source_key = f"{item.source.storylet_id}:{item.source.realization_id}"
+        if item.source.kind == "storylet_realization":
+            source_key = f"storylet:{item.source.storylet_id}:{item.source.realization_id}"
+        elif item.source.kind == "canonical_route_event":
+            source_key = f"event:{item.source.canonical_event_id}"
+        else:
+            source_key = f"entry:{item.available_in_scenes[0]}"
         source_to_knowledge.setdefault(source_key, []).append(item.id)
         for effect in item.establishes:
             facts_to_knowledge.setdefault(effect.fact_id, []).append(item.id)
@@ -176,13 +182,17 @@ def _validate_knowledge(package: StoryPackage) -> None:
     if {frame.scene_id for frame in catalog.scene_frames} != scenes or len(catalog.scene_frames) != len(scenes):
         raise StoryPackageError("knowledge must declare exactly one safe scene frame per scene")
     routes = {route.id: route for route in package.storylet_routes.storylets}
+    canonical_events = {
+        event.id: event
+        for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)
+    }
     scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
     produced_by: dict[str, set[str]] = {}
     for known in catalog.knowledge:
         for effect in known.establishes:
             produced_by.setdefault(effect.fact_id, set()).update(known.available_in_scenes)
     seen_ids: set[str] = set()
-    owned_effects: set[tuple[str, str, str, object]] = set()
+    owned_effects: set[tuple[str, str, str, str, object]] = set()
     graph: dict[str, set[str]] = {}
     for item in catalog.knowledge:
         if item.id in seen_ids:
@@ -210,12 +220,26 @@ def _validate_knowledge(package: StoryPackage) -> None:
             route_effects = set(realization.operations)
             if not set(item.establishes).issubset(route_effects):
                 raise StoryPackageError(f"knowledge '{item.id}' effects differ from its realization")
+        elif item.source.kind == "canonical_route_event":
+            event = canonical_events.get(item.source.canonical_event_id or "")
+            if event is None or event.scene_id not in item.available_in_scenes:
+                raise StoryPackageError(f"knowledge '{item.id}' has an unknown or cross-scene canonical event source")
+            if not set(item.establishes).issubset(set(event.operations)):
+                raise StoryPackageError(f"knowledge '{item.id}' effects differ from its canonical event")
+        else:
+            if len(item.available_in_scenes) != 1:
+                raise StoryPackageError(f"knowledge '{item.id}' scene entry must name exactly one scene")
+            entry_fact = f"scene_{item.available_in_scenes[0].lower()}_entry_known"
+            if set(item.establishes) != {RouteOperation(op="assert", fact_id=entry_fact, value=True)}:
+                raise StoryPackageError(f"knowledge '{item.id}' scene entry effects differ from its entry fact")
         if {effect.fact_id for effect in item.establishes} & {predicate.fact_id for predicate in item.requires}:
             raise StoryPackageError(f"knowledge '{item.id}' establishes its own prerequisite")
         for predicate in item.requires:
             available = produced_by.get(predicate.fact_id, set())
             reachable = any(
-                scene_order[source] < scene_order[target] for source in available for target in item.available_in_scenes
+                scene_order[source] <= scene_order[target]
+                for source in available
+                for target in item.available_in_scenes
             )
             if not reachable:
                 raise StoryPackageError(f"knowledge '{item.id}' has an unreachable prerequisite")

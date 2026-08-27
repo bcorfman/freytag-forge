@@ -1,5 +1,58 @@
 # Testing runbook
 
+## Phase 1 knowledge-catalog migration and Scene 1A timeline
+
+**Purpose:** Verify the declarative catalog covers every Continuity Initiative
+fact and executable realization, rejects malformed ownership/visibility, and
+keeps the Scene 1A opening and unrecovered warning distinct.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root; pytest temporary files belong under `/tmp`.
+
+**Safe actions:**
+
+- The tests load the checked-in package and copy it into pytest temporary
+  directories before corrupting fixtures.
+
+**Destructive or external actions:**
+
+- None for the deterministic suite. The optional browser command creates a
+  disposable staging session and may make billed model calls.
+
+**Steps:**
+
+1. Run the focused package and Phase 1 persistence tests while editing the
+   catalog, loader, or save compatibility.
+2. Run the full suite after formatting.
+3. After the implementation revision is deployed to staging, run the opt-in
+   browser timeline probe; retain its redacted artifact.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
+```
+
+Expected: deterministic tests prove that opening entry knowledge is committed,
+the warning is absent until its source is selected, and malformed catalogs fail
+closed. The staged probe records each turn and rejects early warning/JANUS,
+unearned patrol tape, and generic repeated follow-up narration.
+
+**Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
+the evidence is no longer needed.
+
+**Notes:** The browser probe is intentionally not run against an undeployed
+local schema change. Record its observed revision and outcome here after the
+staging run; this regression contract carries through Phases 2–5.
+
+Last verified locally: 2026-08-27 — `uv run ruff check --fix .`, `uv run ruff
+format .`, and `TMPDIR=/tmp uv run pytest -q` passed with 89 tests and 90.86%
+coverage. The staged browser command remains pending deployment of this
+revision; do not treat local schema evidence as a staging result.
+
 ## Declarative knowledge package loading
 
 **Purpose:** Verify the Phase 0 knowledge catalog, safe scene frames, immutable

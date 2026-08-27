@@ -312,30 +312,30 @@ defense-in-depth quality check, not permission to render or mutate.
   high-complexity `_validate()` function.
 - [x] Compile immutable lookup indexes on `StoryPackage` or a dedicated package
   index object.
-- [ ] Migrate every Continuity Initiative world fact and storylet realization.
+- [x] Migrate every Continuity Initiative world fact and storylet realization.
   Split compound realizations into atomic knowledge units when their effects
   have different audiences or reveal timing; do not copy scene prose into
   `statement` fields.
 - [x] Declare safe scene frames and scene-entry reveals. Tag facts such as
   `rebecca_observing_infiltrators` as world-only until a later authored reveal
   establishes player knowledge.
-- [ ] Bump package schema/save compatibility metadata and update
+- [x] Bump package schema/save compatibility metadata and update
   `docs/markdown-story-authoring.md`, the PRD contract summary, and contributor
   links.
-- [ ] Add loader tests for all invalid references, effect mismatches, visibility
+- [x] Add loader tests for all invalid references, effect mismatches, visibility
   conflicts, duplicate ownership, prerequisite cycles, unreachable reveals,
   missing aliases, mixed versions, and cross-scene leaks.
 
-Exit gate: the package loads into a complete typed knowledge graph; every
+Exit gate: [x] the package loads into a complete typed knowledge graph; every
 runtime-revealable authored claim has exactly one scene-valid source and exact
 effects; malformed or ambiguous visibility fails closed. Live prompts are
 unchanged in this PR.
 
-Phase evidence: run the persistent Scene 1A knowledge-timeline fixture. It
-must prove that the entry fact is committed before render and that the typed
-catalog contains no unrevealed canonical warning, JANUS knowledge, or future
-scene entity before a source authorizes it. Non-game-breaking local clues may
-be invented and persisted as ordinary facts.
+Phase evidence: [x] deterministic coverage proves the entry fact is committed
+before render and the entry catalog omits the warning, JANUS, and future-scene
+terms. [ ] Run the persistent Scene 1A browser fixture after this revision is
+deployed to staging; it must retain the same timeline evidence. Non-game-breaking
+local clues may be invented and persisted as ordinary facts.
 
 ### Phase 2 / PR 2: Fact-derived projection in shadow mode
 

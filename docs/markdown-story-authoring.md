@@ -13,10 +13,13 @@ Its metadata is descriptive; prose is scene-local model guidance, never runtime
 truth.
 
 `world.yaml` declares stable IDs for locations, NPCs, items, facts, protected
-knowledge, and explicit fallbacks. `knowledge.yaml` supplies typed fact
-purposes, one safe frame per scene, and audience-scoped claims with aliases,
-prerequisites, exact effects, and a single route source. Its fact catalog must
-match `world.yaml`; every route effect must match its named realization.
+knowledge, and explicit fallbacks. `knowledge.yaml` is currently schema `2.0`:
+it supplies typed fact purposes, one safe frame per scene, and audience-scoped
+claims with aliases, prerequisites, exact effects, and one typed source
+(storylet realization, canonical route event, or scene entry). Its fact catalog
+must match `world.yaml`; each claim's effects must be authorized by its named
+source. Schema-2 saves use persistence version 2 and intentionally reject
+older snapshots rather than silently reinterpreting prose-era state.
 `pacing.yaml` supplies one ordered window
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`
