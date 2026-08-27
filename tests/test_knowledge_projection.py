@@ -83,7 +83,9 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
             ),
         )
     )
-    assert "k_sl_1a_b_r2" in _ids(projector.project(state, "player", "I replay the recording.").committed_knowledge)
+    after_recording = projector.project(state, "player", "I replay the recording.")
+    assert "k_sl_1a_b_r2" in _ids(after_recording.committed_knowledge)
+    assert not {"k_sl_1a_b_r1", "k_sl_1a_b_r2"} & _ids(after_recording.candidates)
 
     # A patrol route cannot supply its tape/pressure knowledge until the patrol
     # route itself is active and its exact effects have been committed.
