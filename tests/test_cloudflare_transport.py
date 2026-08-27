@@ -51,6 +51,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
+    assert "events[].event_id must be candidate.storylet_id" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
     assert context["player"]["candidates"] == []
     serialized = json.dumps(context).casefold()

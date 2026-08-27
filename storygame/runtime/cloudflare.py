@@ -63,7 +63,8 @@ class CloudflareTurnProvider:
                 "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
                 "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
                 "or invent durable evidence. Select a candidate only with its exact event and operations. Use segments "
-                "with grounding_ids when possible; dialogue may use only its speaker's sayable context."
+                "with grounding_ids when possible; dialogue may use only its speaker's sayable context. Candidate.id "
+                "belongs only in events[].knowledge_ids; events[].event_id must be candidate.storylet_id."
             ),
             "user": json.dumps(
                 {
