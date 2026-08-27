@@ -21,7 +21,7 @@ class RuntimeEngine:
 
         self.state.require_turn_allowed()
         self._activate_pacing()
-        proposal = parse_turn_proposal(self.provider(player_input))
+        proposal = self.validator.normalize(self.state, parse_turn_proposal(self.provider(player_input)))
         at_risk = self.validator.validate(self.state, proposal)
         if at_risk:
             warning = GameBreakWarning(

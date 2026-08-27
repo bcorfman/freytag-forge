@@ -64,6 +64,40 @@ def test_normal_freeform_turn_calls_provider_once_and_transitions() -> None:
     assert engine.state.current_scene_id == "1B"
 
 
+def test_exact_active_realization_operations_are_safely_normalized_into_an_event() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "Sarah's card yields a real lead.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {
+                            "predicate": "continuity_initiative_known",
+                            "subject": "story",
+                            "value": "true",
+                        },
+                    },
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+                    },
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
+                    },
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I recover Sarah's hidden evidence.")
+
+    assert "SL-1A-B" in engine.state.fired_event_ids
+
+
 def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),

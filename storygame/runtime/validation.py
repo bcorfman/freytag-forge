@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from storygame.runtime.contracts import FactOperation, SceneTransitionProposal, TurnProposal
+from storygame.runtime.contracts import FactOperation, SceneTransitionProposal, StoryEventProposal, TurnProposal
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
@@ -48,6 +48,38 @@ class ProgressionValidator:
                 self._apply(candidate, operation.operation, operation.fact)
         self._validate_transition(state, proposal.transition, candidate)
         return self.unsatisfied_dependencies(state.current_scene_id, candidate)
+
+    def normalize(self, state: RuntimeState, proposal: TurnProposal) -> TurnProposal:
+        """Accept an exact active realization even if a provider omitted its event wrapper.
+
+        This is a structural repair only: the full operation tuple must match
+        exactly one active route realization, so it cannot authorize a new fact.
+        """
+
+        if not proposal.operations or proposal.events:
+            return proposal
+        matches = [
+            (route, realization)
+            for route in self._routes.values()
+            if route.id in state.active_event_ids and route.id not in state.fired_event_ids
+            for realization in route.realizations
+            if tuple(self._route_operation(operation) for operation in realization.operations) == proposal.operations
+        ]
+        if len(matches) != 1:
+            return proposal
+        route, realization = matches[0]
+        return proposal.model_copy(
+            update={
+                "operations": (),
+                "events": (
+                    StoryEventProposal(
+                        event_id=route.id,
+                        realization_id=realization.id,
+                        operations=proposal.operations,
+                    ),
+                ),
+            }
+        )
 
     def _validate_operations(self, proposal: TurnProposal) -> None:
         protected = set(self.package.world.protected_knowledge)
