@@ -117,10 +117,24 @@ class SceneContextBuilder:
         facts = tuple(fact for fact in state.facts.asserted if self._is_safe_fact(fact, state))
         local_ids = self._expand_related_entity_ids(facts, local_ids, entity_by_id)
         references = self.resolve_references(player_input, entities)
-        local_ids.update(references.matched_ids)
-        local_facts = self._related_facts(facts, local_ids)
         referenced_ids = set(references.matched_ids) - {location.id}
         referenced_history = self._related_facts(facts, referenced_ids)
+        # A name in player input is not, by itself, authority to disclose a
+        # package entity. Only retain references the session has already made
+        # public through a safe fact; otherwise a future character or place
+        # could be surfaced merely by being named.
+        established_ids = {
+            entity_id
+            for fact in referenced_history
+            for entity_id in (fact.subject, fact.object)
+            if entity_id is not None
+        }
+        references = references.model_copy(
+            update={"matched_ids": tuple(item for item in references.matched_ids if item in established_ids)}
+        )
+        local_ids.update(references.matched_ids)
+        local_facts = self._related_facts(facts, local_ids)
+        referenced_history = self._related_facts(facts, set(references.matched_ids) - {location.id})
         return SceneContext(
             scene_id=scene.metadata.scene_id,
             freytag_phase=scene.metadata.freytag_phase,

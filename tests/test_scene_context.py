@@ -40,6 +40,16 @@ def test_unambiguous_reference_adds_public_entity_and_history_only() -> None:
     assert "janus_selection_system" not in context.prompt()
 
 
+def test_unestablished_future_reference_does_not_expand_scene_context() -> None:
+    state = _state()
+
+    context = SceneContextBuilder().build(state, "Could Gabriel Dexter have left a message?")
+
+    assert context.reference_resolution.matched_ids == ()
+    assert "gabriel" not in {entity.id for entity in context.entities}
+    assert "gabriel" not in context.prompt()
+
+
 def test_owned_entity_is_local_without_exposing_private_facts() -> None:
     state = _state()
     state.facts.assert_fact(Fact(predicate="custody", subject="jeremiah", object="transit_card"))
