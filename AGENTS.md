@@ -18,3 +18,4 @@
 
 - Verify CLI, environment, CI, and endpoint behavior in source/help/workflows; update the focused runbook with the change.
 - Use `TMPDIR=/tmp` for pytest, never pin collection counts, and use `uv run python` rather than `python`.
+- For a staging-verified change, merge the implementation PR first and poll the `main` CI workflow until its SHA-bound staging deployment succeeds before running staged E2E tests. Update the testing runbook only after those E2E results are observed. Commit that documentation as a final follow-up; do not rerun deployment/E2E solely for the documentation-only commit.
