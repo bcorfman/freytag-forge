@@ -15,7 +15,12 @@ export async function submitTurn(page, action) {
     (candidate) => candidate.request().method() === "POST" && candidate.url().endsWith("/api/v1/turn"),
   );
   await page.getByRole("button", { name: "Send" }).click();
-  const payload = await (await response).json();
+  const apiResponse = await response;
+  const payload = await apiResponse.json().catch(() => ({}));
+  if (!apiResponse.ok()) {
+    const detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload);
+    throw new Error(`Turn API returned HTTP ${apiResponse.status()}: ${detail}`);
+  }
   await expect(page.locator("#command-input")).toBeEnabled({ timeout: 90_000 });
   return payload;
 }
