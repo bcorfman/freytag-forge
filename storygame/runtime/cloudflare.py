@@ -8,7 +8,7 @@ from os import getenv
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from storygame.runtime.contracts import TurnProposal
+from storygame.runtime.contracts import RuntimeContractError, TurnProposal, parse_turn_proposal
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 
@@ -75,18 +75,47 @@ class CloudflareTurnProvider:
             "response_format": {"type": "json_object"},
         }
         try:
-            return self._request(payload)
+            response = self._request(payload)
         except HTTPError as error:
             if self._worker_error_code(error) != "AI_JSON_MODE_REJECTED":
                 raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
+        else:
+            try:
+                parse_turn_proposal(response)
+            except RuntimeContractError:
+                return self._recover_malformed_response(payload)
+            return response
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         try:
-            return self._request(fallback_payload)
+            response = self._request(fallback_payload)
+            parse_turn_proposal(response)
+            return response
         except HTTPError as error:
             raise self._narration_error(error) from error
+        except RuntimeContractError as error:
+            raise NarrationProviderError("narration service returned an invalid proposal", 502) from error
+        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            raise NarrationProviderError("narration service is unavailable") from error
+
+    def _recover_malformed_response(self, payload: dict[str, object]) -> object:
+        recovery_payload = {
+            **payload,
+            "system": (
+                f"{payload['system']} Your previous response was invalid. Return only a complete JSON TurnProposal "
+                "with either non-empty narration or non-empty segments; include no markdown or explanation."
+            ),
+        }
+        try:
+            response = self._request(recovery_payload)
+            parse_turn_proposal(response)
+            return response
+        except HTTPError as error:
+            raise self._narration_error(error) from error
+        except RuntimeContractError as error:
+            raise NarrationProviderError("narration service returned an invalid proposal", 502) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
 

@@ -160,6 +160,25 @@ def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeyp
     assert "response_format" not in payloads[1]
 
 
+def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response({"narration": '{"segments":[]}'})
+        return _Response({"narration": '{"segments":[{"kind":"action","text":"Jeremiah checks the door."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]}
+    assert len(payloads) == 2
+    assert "previous response was invalid" in payloads[1]["system"]
+
+
 def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
