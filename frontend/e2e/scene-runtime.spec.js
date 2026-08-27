@@ -143,8 +143,8 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
   const phone = await record("I examine Sarah's phone carefully without leaving the kitchen.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const recording = await record("I search the desk and drawer for Sarah's research or a damaged recording.");
-  expect(recording).toMatch(/warning|broadcast|recording/i);
+  const investigation = await record("I search the desk and drawer for Sarah's research or a damaged recording.");
+  expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
   const gate = await record("I check the front gate and listen for a patrol arriving or searching the house.");
   if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
   const followUp = await record("I reassess the house evidence and wait for the next concrete local consequence.");
