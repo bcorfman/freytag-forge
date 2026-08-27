@@ -38,8 +38,19 @@ class StoryletContext(_ContextModel):
     title: str
     pacing_impact: str
     pressure_role: str
-    realization_ids: tuple[str, ...]
-    guidance: tuple[str, ...]
+    realizations: tuple[StoryletRealizationContext, ...]
+
+
+class RouteOperationContext(_ContextModel):
+    operation: str
+    predicate: str
+    value: str | None
+
+
+class StoryletRealizationContext(_ContextModel):
+    id: str
+    dramatic_intent: str
+    operations: tuple[RouteOperationContext, ...]
 
 
 class EntityReferenceResult(_ContextModel):
@@ -217,6 +228,19 @@ class SceneContextBuilder:
             title=storylet.title,
             pacing_impact="scene_guidance",
             pressure_role=storylet.pressure_role,
-            realization_ids=tuple(item.id for item in storylet.realizations),
-            guidance=tuple(item.dramatic_intent for item in storylet.realizations),
+            realizations=tuple(
+                StoryletRealizationContext(
+                    id=item.id,
+                    dramatic_intent=item.dramatic_intent,
+                    operations=tuple(
+                        RouteOperationContext(
+                            operation=operation.op,
+                            predicate=operation.fact_id,
+                            value=str(operation.value).lower() if operation.value is not None else None,
+                        )
+                        for operation in item.operations
+                    ),
+                )
+                for item in storylet.realizations
+            ),
         )

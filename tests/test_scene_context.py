@@ -73,6 +73,13 @@ def test_active_storylet_is_scene_bound_and_prompt_declares_bounded_schema() -> 
     context = builder.build(state, "I look under the drawer.", active_storylet_ids=("SL-1A-B",))
 
     assert context.active_storylets[0].id == "SL-1A-B"
+    realization = context.active_storylets[0].realizations[0]
+    assert realization.id == "SL-1A-B-R1"
+    assert [(operation.operation, operation.predicate, operation.value) for operation in realization.operations] == [
+        ("assert", "continuity_initiative_known", "true"),
+        ("assert", "sarah_abduction_suspicion", "true"),
+        ("assert", "sarah_lead_actionable", "true"),
+    ]
     assert '"response_schema"' in context.prompt()
     with pytest.raises(ValueError, match="current scene"):
         builder.build(state, "I wait.", active_storylet_ids=("SL-1B-A",))
