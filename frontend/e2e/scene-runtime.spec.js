@@ -86,18 +86,22 @@ test("drives the main spine and reports reachability and pressure @spine", async
 
 test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
-  test.setTimeout(15 * 60_000);
+  test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the opt-in accelerated E2E game clock");
+  test.setTimeout(5 * 60_000);
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   let sceneId = "1A";
-  for (const playerInput of spineActions) {
-    const payload = await submitTurn(page, playerInput);
-    const narration = narrationText(payload);
-    byScene.get(sceneId).turns.push({ player_input: playerInput, narration });
-    await resolveWarningIfPresent(page);
-    sceneId = payload.state?.scene_id || sceneId;
-    if (!byScene.has(sceneId)) byScene.set(sceneId, { opening: "", turns: [] });
+  for (const [index, playerInput] of spineActions.entries()) {
+    await test.step(`turn ${index + 1}: scene ${sceneId}`, async () => {
+      const payload = await submitTurn(page, playerInput);
+      const narration = narrationText(payload);
+      byScene.get(sceneId).turns.push({ player_input: playerInput, narration });
+      await resolveWarningIfPresent(page);
+      sceneId = payload.state?.scene_id || sceneId;
+      if (!byScene.has(sceneId)) byScene.set(sceneId, { opening: "", turns: [] });
+      await writeCategoryReport("llm-canon-progress", { completed_turn: index + 1, current_scene: sceneId, by_scene: [...byScene] });
+    });
   }
   const judgments = [];
   for (const [id, scene] of byScene) {
