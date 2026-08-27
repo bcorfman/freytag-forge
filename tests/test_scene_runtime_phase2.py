@@ -28,6 +28,13 @@ def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None
     assert proposal.narration == "Jeremiah looks around."
     structured = parse_turn_proposal({"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]})
     assert structured.narration == "Jeremiah checks the door."
+    reveal = parse_turn_proposal(
+        {
+            "narration": "A damaged recording crackles to life.",
+            "events": [{"event_id": "SL-1A-B", "realization_id": "SL-1A-B-R2", "knowledge_ids": ["k_sl_1a_b_r2"]}],
+        }
+    )
+    assert reveal.events[0].knowledge_ids == ("k_sl_1a_b_r2",)
     with pytest.raises(RuntimeContractError):
         parse_turn_proposal({"content": "not JSON"})
     with pytest.raises(RuntimeContractError):
