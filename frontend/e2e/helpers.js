@@ -27,7 +27,11 @@ function waitForTurnOutcome(page) {
     const onFailure = (request) => {
       if (!isTurnRequest(request)) return;
       cleanup();
-      reject(new Error(`Turn API request failed: ${request.failure()?.errorText || "unknown browser network failure"}`));
+      reject(
+        new Error(
+          `Turn API request failed for ${request.url()}: ${request.failure()?.errorText || "unknown browser network failure"}`,
+        ),
+      );
     };
     page.on("response", onResponse);
     page.on("requestfailed", onFailure);
@@ -42,6 +46,11 @@ export async function startSceneSession(page) {
 }
 
 export async function submitTurn(page, action) {
+  const consoleErrors = [];
+  const captureConsoleError = (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  };
+  page.on("console", captureConsoleError);
   await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
   await page.locator("#command-input").fill(action);
   const response = waitForTurnOutcome(page);
@@ -51,7 +60,12 @@ export async function submitTurn(page, action) {
     apiResponse = await response;
   } catch (error) {
     const status = await page.locator("#status-line").textContent();
-    throw new Error(`${error instanceof Error ? error.message : String(error)} UI status: ${status || "(empty)"}`);
+    const diagnostics = consoleErrors.length ? ` Browser errors: ${consoleErrors.join(" | ")}` : "";
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)} UI status: ${status || "(empty)"}.${diagnostics}`,
+    );
+  } finally {
+    page.off("console", captureConsoleError);
   }
   const payload = await apiResponse.json().catch(() => ({}));
   if (!apiResponse.ok()) {

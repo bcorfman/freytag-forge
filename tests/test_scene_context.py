@@ -75,7 +75,10 @@ def test_active_storylet_is_scene_bound_and_prompt_declares_bounded_schema() -> 
     assert context.active_storylets[0].id == "SL-1A-B"
     realization = context.active_storylets[0].realizations[0]
     assert realization.id == "SL-1A-B-R1"
-    assert [(operation.operation, operation.predicate, operation.value) for operation in realization.operations] == [
+    operations = [
+        (operation.operation, operation.fact.predicate, operation.fact.value) for operation in realization.operations
+    ]
+    assert operations == [
         ("assert", "continuity_initiative_known", "true"),
         ("assert", "sarah_abduction_suspicion", "true"),
         ("assert", "sarah_lead_actionable", "true"),

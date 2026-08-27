@@ -43,8 +43,7 @@ class StoryletContext(_ContextModel):
 
 class RouteOperationContext(_ContextModel):
     operation: str
-    predicate: str
-    value: str | None
+    fact: ContextFact
 
 
 class StoryletRealizationContext(_ContextModel):
@@ -235,8 +234,11 @@ class SceneContextBuilder:
                     operations=tuple(
                         RouteOperationContext(
                             operation=operation.op,
-                            predicate=operation.fact_id,
-                            value=str(operation.value).lower() if operation.value is not None else None,
+                            fact=ContextFact(
+                                predicate=operation.fact_id,
+                                subject="story",
+                                value=str(operation.value).lower() if operation.value is not None else None,
+                            ),
                         )
                         for operation in item.operations
                     ),
