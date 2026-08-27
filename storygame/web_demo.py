@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.context import SceneContextBuilder
+from storygame.runtime.contracts import TurnProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -79,10 +79,20 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
     }
 
 
-def _turn_payload(state: RuntimeState, narration: str, game_break: object | None = None) -> dict[str, object]:
+def _turn_payload(
+    state: RuntimeState, proposal: TurnProposal | str, game_break: object | None = None
+) -> dict[str, object]:
     """Keep structured segments primary while retaining migration-era lines."""
+    if isinstance(proposal, str):
+        narration = proposal
+        segments = [{"kind": "narration", "text": narration}]
+    else:
+        narration = proposal.narration
+        segments = [item.model_dump(mode="json") for item in proposal.segments] or [
+            {"kind": "narration", "text": narration}
+        ]
     return {
-        "segments": [{"kind": "narration", "text": narration}],
+        "segments": segments,
         "lines": [narration],
         "game_break": game_break,
         "state": _state_summary(state),
@@ -121,7 +131,6 @@ def create_demo_app(
     if not packages:
         raise RuntimeError("at least one story package is required")
     store = RuntimeStateSqliteStore(store_path or Path(getenv("FREYTAG_SESSION_DB", "/tmp/freytag-forge.sqlite")))
-    context_builder = SceneContextBuilder()
     rate_limit = int(getenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "60"))
     request_times: dict[str, deque[float]] = {}
     request_times_lock = Lock()
@@ -148,7 +157,7 @@ def create_demo_app(
     def provider_for(state: RuntimeState) -> Callable[[str], object]:
         if provider_factory:
             return provider_factory(state)
-        return CloudflareTurnProvider.from_environment(context_builder, state)
+        return CloudflareTurnProvider.from_environment(state)
 
     def require_rate_limit(request: Request) -> None:
         if rate_limit <= 0:
@@ -204,7 +213,7 @@ def create_demo_app(
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
-        return _turn_payload(state, proposal.narration, warning)
+        return _turn_payload(state, proposal, warning)
 
     @app.post("/api/v1/game-break")
     def resolve_game_break(body: BreakResolutionRequest) -> dict[str, object]:

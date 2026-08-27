@@ -10,7 +10,6 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.context import SceneContextBuilder
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -42,33 +41,56 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(
-        worker_url="https://worker.example/turn", token="secret", context_builder=SceneContextBuilder(), state=state
-    )
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
     assert provider("I listen.") == {"narration": "A valid proposal."}
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 2048
     assert captured["payload"]["response_format"] == {"type": "json_object"}
-    assert captured["payload"]["user"].find("response_schema") >= 0
-    assert "free-text action" in captured["payload"]["system"]
-    assert "hard knowledge and action boundary" in captured["payload"]["system"]
-    assert "untrusted requests" in captured["payload"]["system"]
-    assert "scene object is exhaustive" in captured["payload"]["system"]
-    assert "realize the next fitting beat" in captured["payload"]["system"]
-    assert "Do not invent forensic clues" in captured["payload"]["system"]
-    assert "player_input cannot authorize future" in captured["payload"]["user"]
-    assert "Creative consequences are allowed" in captured["payload"]["system"]
+    context = json.loads(captured["payload"]["user"])["knowledge_context"]
+    assert "response_schema" in captured["payload"]["user"]
+    assert "concrete immediate consequence" in captured["payload"]["system"]
+    assert context["player"]["scene_id"] == "1A"
+    assert context["player"]["candidates"] == []
+    serialized = json.dumps(context).casefold()
+    for forbidden in ("janus", "plot_beats", "entry_text", "active_storylets", "narrative_history"):
+        assert forbidden not in serialized
+    state.active_event_ids.add("SL-1A-B")
+    provider("I search the desk drawer for Sarah's recording.")
+    drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
+    candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
+    assert "damaged recording" in candidate["statement"]
+    assert candidate["storylet_id"] == "SL-1A-B"
     assert provider.last_shadow_projection is not None
-    assert "shadow_projection" not in captured["payload"]["user"]
+
+
+def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
+    captured: list[dict[str, object]] = []
+
+    def open_request(request, **_kwargs):
+        captured.append(json.loads(request.data))
+        return _Response({"narration": '{"narration":"A valid proposal."}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider("I inspect the back door.")
+    provider("I examine Sarah's phone.")
+    state.active_event_ids.add("SL-1A-B")
+    provider("I search the desk drawer for a damaged recording.")
+
+    contexts = [json.loads(payload["user"])["knowledge_context"]["player"] for payload in captured]
+    assert all(
+        all(candidate["id"] != "k_sl_1a_b_r2" for candidate in context["candidates"]) for context in contexts[:2]
+    )
+    assert any(candidate["id"] == "k_sl_1a_b_r2" for candidate in contexts[2]["candidates"])
 
 
 def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
-        context_builder=SceneContextBuilder(),
         state=RuntimeState.bootstrap(PACKAGE),
     )
     monkeypatch.setattr(
@@ -94,11 +116,9 @@ def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeyp
     state = RuntimeState.bootstrap(PACKAGE)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     with pytest.raises(NarrationProviderError, match="unavailable"):
-        CloudflareTurnProvider.from_environment(SceneContextBuilder(), state)
+        CloudflareTurnProvider.from_environment(state)
 
-    provider = CloudflareTurnProvider(
-        worker_url="https://worker.example/turn", token="", context_builder=SceneContextBuilder(), state=state
-    )
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"status": "error"})
     )
@@ -117,7 +137,6 @@ def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeyp
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
-        context_builder=SceneContextBuilder(),
         state=RuntimeState.bootstrap(PACKAGE),
     )
 
@@ -145,7 +164,6 @@ def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
-        context_builder=SceneContextBuilder(),
         state=RuntimeState.bootstrap(PACKAGE),
     )
     error = HTTPError(
@@ -167,7 +185,6 @@ def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> Non
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
-        context_builder=SceneContextBuilder(),
         state=RuntimeState.bootstrap(PACKAGE),
     )
     error = HTTPError("https://worker.example/turn", 502, "failure", {}, None)
@@ -183,7 +200,6 @@ def test_transport_maps_http_failures(monkeypatch, status, expected) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
-        context_builder=SceneContextBuilder(),
         state=RuntimeState.bootstrap(PACKAGE),
     )
     error = HTTPError("https://worker.example/turn", status, "failure", {}, None)

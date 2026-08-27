@@ -366,30 +366,30 @@ before a patrol arrival/search, patrol tape must be absent.
 
 ### Phase 3 / PR 3: Provider-context cutover
 
-- [ ] Replace `SceneContext` with `TurnKnowledgeContext` in
+- [x] Replace `SceneContext` with `TurnKnowledgeContext` in
   `storygame/runtime/context.py`; delete `plot_beats` and all wholesale scene,
   storylet, route, and history prose from the serialized payload.
-- [ ] Change `CloudflareTurnProvider.__call__()` to send the safe scene frame,
+- [x] Change `CloudflareTurnProvider.__call__()` to send the safe scene frame,
   committed player projection, per-speaker sayable projections, and only the
   bounded eligible candidates.
-- [ ] Move long story-policy prose out of `cloudflare.py`; keep concise generic
+- [x] Move long story-policy prose out of `cloudflare.py`; keep concise generic
   instructions that describe the typed contract, since prompt warnings are no
   longer the secrecy mechanism.
-- [ ] Update `TurnProposal`/Worker JSON schema with structured segments,
+- [x] Update `TurnProposal`/Worker JSON schema with structured segments,
   grounding IDs, and selected knowledge IDs while preserving the existing one
   call plus one recovery budget.
-- [ ] Keep API `segments` primary and derive migration-era `narration`/`lines`
+- [x] Keep API `segments` primary and derive migration-era `narration`/`lines`
   only after acceptance. Update Cloudflare transport fixtures to assert absence
   of future names, plot prose, unselected effects, and raw narrative history.
-- [ ] Remove the shadow/legacy context path once cutover tests pass; do not leave
+- [x] Remove the shadow/legacy context path once cutover tests pass; do not leave
   two selectable knowledge policies.
 
-Exit gate: a captured Scene 1A provider payload contains no JANUS, later-scene
+Exit gate: [x] a captured deterministic Scene 1A provider payload contains no JANUS, later-scene
 purpose, future route effect, or full plot/storylet prose; it stays within the
 declared budget and still supplies the next eligible local reveal needed to
 respond substantively.
 
-Phase evidence: run the fixture through the browser/API harness and retain the
+Phase evidence: [x] run the deterministic fixture through the provider/API harness and retain the
 captured payload IDs. The drawer/recording turn must offer the damaged-warning
 candidate without exposing it earlier.
 

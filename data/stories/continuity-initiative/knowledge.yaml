@@ -291,7 +291,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_b_r2
-  statement: 'Current-scene development: sarah warning known, sarah abduction suspicion.'
+  statement: "Jeremiah recovers Sarah's damaged recording: do not trust emergency broadcasts."
   entity_ids: []
   aliases:
   - sarah warning known
