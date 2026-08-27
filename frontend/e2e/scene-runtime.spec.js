@@ -14,6 +14,17 @@ const spineActions = [
   "I bring the story to a responsible resolution.",
 ];
 
+const canonActions = [
+  "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
+  "I examine the forced back door, the blood by its frame, and anything an intruder left behind.",
+  "I study Sarah's phone for its last call, message, or damage without leaving the kitchen.",
+  "I search the desk and drawer for Sarah's research, notes, or a hidden recording.",
+  "I compare the missing work bag with the rest of the room and look for a route the abductor used.",
+  "I photograph the evidence and listen at the windows for anyone returning to the house.",
+  "I check the front gate and prepare a careful response if the federal patrol comes back.",
+  "I gather the house evidence into one actionable lead while keeping Sarah's warning in mind.",
+];
+
 function narrationText(payload) {
   const narration = (payload.segments || []).filter((segment) => segment.kind === "narration").map((segment) => segment.text);
   expect(narration, `Turn response lacks narration: ${JSON.stringify(payload)}`).not.toHaveLength(0);
@@ -92,7 +103,7 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   let sceneId = "1A";
-  for (const [index, playerInput] of spineActions.entries()) {
+  for (const [index, playerInput] of canonActions.entries()) {
     await test.step(`turn ${index + 1}: scene ${sceneId}`, async () => {
       const payload = await submitTurn(page, playerInput);
       const narration = narrationText(payload);
