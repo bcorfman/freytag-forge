@@ -180,3 +180,20 @@ def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> N
 
     assert invalid.status_code == 422
     assert unsafe.status_code == 422
+
+
+def test_test_clock_cors_header_is_available_only_with_local_opt_in(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite")
+    with TestClient(app) as client:
+        preflight = client.options(
+            "/api/v1/turn",
+            headers={
+                "Origin": "http://127.0.0.1:4173",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "X-Freytag-Test-Clock-Seconds",
+            },
+        )
+
+    assert preflight.status_code == 200
+    assert "x-freytag-test-clock-seconds" in preflight.headers["access-control-allow-headers"].lower()
