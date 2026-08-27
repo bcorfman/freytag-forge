@@ -178,6 +178,7 @@ async function runCommand(command, echoInput = true) {
     const payload = await apiRequest("/api/v1/turn", {
       session_id: sessionId,
       player_input: command,
+      ...(E2E_TEST_CLOCK_SECONDS ? { test_clock_seconds: Number(E2E_TEST_CLOCK_SECONDS) } : {}),
     });
     renderTurn(payload);
     setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);

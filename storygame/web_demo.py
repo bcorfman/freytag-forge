@@ -34,6 +34,7 @@ class TurnRequest(_Request):
     session_id: str = Field(min_length=1)
     player_input: str | None = Field(default=None, min_length=1, max_length=12000)
     command: str | None = Field(default=None, min_length=1, max_length=12000)
+    test_clock_seconds: int | None = Field(default=None, ge=0, le=3600)
 
     @model_validator(mode="after")
     def has_one_player_input(self) -> TurnRequest:
@@ -190,7 +191,7 @@ def create_demo_app(
         require_rate_limit(request)
         state = load_state(body.session_id)
         try:
-            test_clock = _test_clock_seconds(request)
+            test_clock = _test_clock_seconds(body, request)
             proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else {}
@@ -223,12 +224,14 @@ def create_demo_app(
     return app
 
 
-def _test_clock_seconds(request: Request) -> int | None:
+def _test_clock_seconds(body: TurnRequest, request: Request) -> int | None:
     """Allow deterministic pacing in a locally opted-in E2E server only."""
 
     if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") != "1":
         return None
-    value = request.headers.get("X-Freytag-Test-Clock-Seconds")
+    value = body.test_clock_seconds
+    if value is None:
+        value = request.headers.get("X-Freytag-Test-Clock-Seconds")
     if value is None:
         return None
     try:
