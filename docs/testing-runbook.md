@@ -302,7 +302,7 @@ Expected: every reached scene receives a passing verdict for canon consistency, 
 
 **Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` or `E2E_TEST_CLOCK_SECONDS` is absent. Start the local API with `FREYTAG_ALLOW_TEST_CLOCK=1`, then use `E2E_TEST_CLOCK_SECONDS=120`; Vite adds this value to the ordinary JSON turn body, avoiding a CORS preflight. Each turn is bounded to 30 seconds (override with `E2E_TURN_TIMEOUT_MS`) and partial progress is written to `artifacts/e2e-llm-canon-progress.{json,md}`.
 
-Last verified safely: 2026-08-27 — `npm test` passed 5 tests and Playwright discovered the tagged `@llm-canon` test with a placeholder API base URL; no live model calls were made.
+Last verified: 2026-08-27 — `source .env && cd frontend && npm run test:e2e -- --grep @llm-canon` reached the configured scene-v1 staging API, but turn 1 failed with HTTP 409: `canonical facts must use a validated storylet realization`. The provider had emitted an operation shared by equivalent realizations of the same active storylet, which the structural repair incorrectly treated as cross-route ambiguity. Normalization now accepts equivalent matches belonging to one active route and selects its stable first realization; `TMPDIR=/tmp uv run pytest -q` passed (64 tests, 90.37% coverage) and PR CI passed. Staging deploys only from `main`, so merge and deployment are required before the next live retry.
 
 ## Deterministic E2E pacing clock
 

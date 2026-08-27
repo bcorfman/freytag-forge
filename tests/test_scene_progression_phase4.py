@@ -98,6 +98,28 @@ def test_exact_active_realization_operations_are_safely_normalized_into_an_event
     assert "SL-1A-B" in engine.state.fired_event_ids
 
 
+def test_duplicate_equivalent_realizations_normalize_to_their_single_active_route() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "The forced entry makes Sarah's disappearance look targeted.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+                    }
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I inspect the signs of forced entry.")
+
+    assert "SL-1A-A" in engine.state.fired_event_ids
+
+
 def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),
