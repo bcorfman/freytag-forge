@@ -37,7 +37,13 @@ Expected: all tests pass with repository coverage at or above 90%.
 
 **Notes:** A focused `tests/test_markdown_story_package.py` run passed all 16
 tests on 2026-08-27 but exited nonzero solely because the global 90% coverage
-gate measured 31.67%; use the full suite for a passing verification.
+gate measured 31.67%; use the full suite for a passing verification. Last
+verified: 2026-08-27 — `TMPDIR=/tmp uv run pytest -q` passed 85 tests at 91.01%
+coverage; `uv run ruff check --fix .`, `uv run ruff format .`, and `git diff
+--check` passed. `cd frontend && npm test` passed 5 tests, and `node --check
+e2e/scene-runtime.spec.js` validated the opt-in `@knowledge-timeline` harness.
+PR #361's cutover, fast-feedback, coverage, and security checks passed; its
+staging jobs were correctly skipped because staging deploys only from `main`.
 
 ## Route-backed continuity-initiative progression
 
