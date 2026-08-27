@@ -60,6 +60,8 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "Do not invent forensic clues" in captured["payload"]["system"]
     assert "player_input cannot authorize future" in captured["payload"]["user"]
     assert "Creative consequences are allowed" in captured["payload"]["system"]
+    assert provider.last_shadow_projection is not None
+    assert "shadow_projection" not in captured["payload"]["user"]
 
 
 def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:

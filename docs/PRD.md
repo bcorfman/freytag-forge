@@ -14,18 +14,17 @@ proposed change before committing it as a durable fact.
   and Freytag pacing. They shape drama and urgency without turning into action
   menus or parser rules.
 - Packages declare facts, safe scene frames, and audience-scoped knowledge with
-  exact reveal sources. The runtime can project only committed, authorized
-  knowledge—never author prose, protected knowledge, or speaker-private facts.
+  exact reveal sources. Runtime knowledge is a projection of committed facts,
+  never author prose or speaker-private facts.
 - A move that demonstrably removes an indispensable reachable dependency pauses
   for an explicit decision. Proceed commits the validated branch; return restores
   the exact pre-turn snapshot, including across a save/load.
 
 ## Runtime contract
 
-The provider supplies strict JSON for narration, route-authorized fact effects, optional events,
-and a requested transition. Its output is untrusted: the runtime clones state,
-validates route operations, triggers, eligibility, transitions, and reachable
-dependencies (including fallbacks), then atomically commits accepted facts.
+The provider supplies strict JSON for narration, route-authorized fact effects,
+optional events, and a requested transition. Its output is untrusted: the
+runtime validates it against cloned state and commits accepted facts atomically.
 Invalid or repaired output never mutates canonical state.
 
 Pacing is declarative and fact-backed: accepted turns record bounded narrative

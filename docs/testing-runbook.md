@@ -1,5 +1,51 @@
 # Testing runbook
 
+## Phase 2 fact-derived shadow projection
+
+**Purpose:** Verify the legacy provider context remains unchanged while the
+runtime and Cloudflare adapter build an ID-observable, fact-only shadow view.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root; pytest temporary files belong under `/tmp`.
+
+**Safe actions:** Local deterministic tests use the checked-in package and a
+temporary SQLite snapshot only.
+
+**Destructive or external actions:** The staged browser probe creates a
+disposable session and may make billed model calls; do not run it before the
+implementation revision is deployed.
+
+**Steps:**
+
+1. Run the full suite after changing projection, state, provider-shadow, or
+   persistence code.
+2. After staging deploys, run the persistent knowledge-timeline probe and keep
+   its redacted artifact.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
+```
+
+Expected: the deterministic fixture keeps Sarah's warning out of committed
+knowledge until its exact recording route commits, keeps patrol knowledge out
+until patrol-route activation, excludes future input and transcript prose, and
+reproduces the same shadow projection after save/load. The browser probe must
+retain the same timeline evidence without treating its judge as runtime
+authority.
+
+**Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
+the staged evidence is no longer needed.
+
+**Notes:** Last verified locally on 2026-08-27: `uv run ruff check --fix .`,
+`uv run ruff format .`, and `TMPDIR=/tmp uv run pytest -q` passed with 95 tests
+and 91.26% coverage. The staging probe is pending deployment; it is not
+evidence for this local revision.
+
 ## Phase 1 knowledge-catalog migration and Scene 1A timeline
 
 **Purpose:** Verify the declarative catalog covers every Continuity Initiative
