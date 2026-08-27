@@ -6,12 +6,28 @@ from pathlib import Path
 
 import pytest
 
+from storygame.runtime.contracts import StoryEventProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState, RuntimeStateError
+from storygame.runtime.validation import ProgressionValidator
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def test_selected_knowledge_canonicalizes_its_exact_realization_operations() -> None:
+    event = StoryEventProposal(
+        event_id="SL-1A-B",
+        realization_id="SL-1A-B-R1",
+        knowledge_ids=("k_sl_1a_b_r1",),
+        operations=(),
+    )
+
+    normalized = ProgressionValidator(PACKAGE)._canonicalize_selected_knowledge_event(event)
+
+    assert normalized.operations
+    assert all(operation.fact.value == "true" for operation in normalized.operations)
 
 
 def _provider(payload: dict[str, object], calls: list[str]):

@@ -58,6 +58,9 @@ class ProgressionValidator:
         """
 
         proposal = proposal.model_copy(
+            update={"events": tuple(self._canonicalize_selected_knowledge_event(event) for event in proposal.events)}
+        )
+        proposal = proposal.model_copy(
             update={
                 "operations": tuple(
                     operation
@@ -66,6 +69,7 @@ class ProgressionValidator:
                 )
             }
         )
+
         if not proposal.operations:
             return proposal
         canonical_operations = tuple(
@@ -138,6 +142,29 @@ class ProgressionValidator:
                     ),
                 ),
             }
+        )
+
+    def _canonicalize_selected_knowledge_event(self, event: StoryEventProposal) -> StoryEventProposal:
+        """Use package operations only when selected knowledge proves this exact realization."""
+
+        if not event.knowledge_ids:
+            return event
+        route = self._routes.get(event.event_id)
+        realization = (
+            next((item for item in route.realizations if item.id == event.realization_id), None) if route else None
+        )
+        if realization is None:
+            return event
+        knowledge = self.package.knowledge_indexes.by_id
+        if not all(
+            item_id in knowledge
+            and knowledge[item_id].source.storylet_id == route.id
+            and knowledge[item_id].source.realization_id == realization.id
+            for item_id in event.knowledge_ids
+        ):
+            return event
+        return event.model_copy(
+            update={"operations": tuple(self._route_operation(operation) for operation in realization.operations)}
         )
 
     def _canonical_operation_is_noop(self, state: RuntimeState, operation: FactOperation) -> bool:
