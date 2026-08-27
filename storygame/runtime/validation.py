@@ -63,7 +63,9 @@ class ProgressionValidator:
         }
         for event in proposal.events:
             if event.event_id not in state.active_event_ids or event.event_id in state.fired_event_ids:
-                raise ProposalValidationError("event is not active")
+                raise ProposalValidationError(
+                    f"storylet event '{event.event_id}' is not active in scene {state.current_scene_id}"
+                )
             if event.event_id not in storylet_ids:
                 raise ProposalValidationError("storylet is not available in the current scene")
             route = self._routes[event.event_id]
