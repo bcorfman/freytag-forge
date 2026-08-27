@@ -121,6 +121,33 @@ def test_duplicate_equivalent_realizations_normalize_to_their_single_active_rout
     assert "SL-1A-A" in engine.state.fired_event_ids
 
 
+def test_unique_active_realization_subset_normalizes_to_its_full_route_effect() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.update(("SL-1A-B", "SL-1A-C"))
+    state.fired_event_ids.add("SL-1A-A")
+    state.facts.assert_fact(Fact(predicate="sarah_abduction_suspicion", subject="story", value="true"))
+    engine = RuntimeEngine(
+        state,
+        _provider(
+            {
+                "narration": "The card turns Sarah's disappearance into a lead Jeremiah can act on.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
+                    }
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I follow the strongest lead from Sarah's card.")
+
+    assert "SL-1A-B" in state.fired_event_ids
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+
+
 def test_normalization_preserves_new_facts_alongside_a_canonical_realization() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),

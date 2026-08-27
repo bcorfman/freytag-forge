@@ -50,10 +50,11 @@ class ProgressionValidator:
         return self.unsatisfied_dependencies(state.current_scene_id, candidate)
 
     def normalize(self, state: RuntimeState, proposal: TurnProposal) -> TurnProposal:
-        """Accept an exact active realization even if a provider omitted its event wrapper.
+        """Recover a uniquely identified active realization missing its event wrapper.
 
-        This is a structural repair only: the full operation tuple must match
-        exactly one active route realization, so it cannot authorize a new fact.
+        This is a structural repair only: a full tuple, or an unambiguous subset,
+        must identify one active route realization. The resulting effects always
+        come from that package-authored realization, never from a new fact.
         """
 
         proposal = proposal.model_copy(
@@ -93,16 +94,27 @@ class ProgressionValidator:
                 }
             )
         matches = [
-            (route, realization)
+            (route, realization, tuple(self._route_operation(operation) for operation in realization.operations))
             for route in self._routes.values()
             if route.id in state.active_event_ids and route.id not in state.fired_event_ids
             for realization in route.realizations
-            if tuple(self._route_operation(operation) for operation in realization.operations) == canonical_operations
         ]
-        route_ids = {route.id for route, _ in matches}
-        if len(route_ids) != 1:
-            return proposal
-        route, realization = matches[0]
+        exact_matches = [match for match in matches if match[2] == canonical_operations]
+        route_ids = {route.id for route, _, _ in exact_matches}
+        if len(route_ids) == 1:
+            route, realization, expected_operations = exact_matches[0]
+        else:
+            partial_matches = [
+                match for match in matches if all(operation in match[2] for operation in canonical_operations)
+            ]
+            partial_route_ids = {route.id for route, _, _ in partial_matches}
+            partial_operation_sets: list[tuple[FactOperation, ...]] = []
+            for _, _, operations in partial_matches:
+                if operations not in partial_operation_sets:
+                    partial_operation_sets.append(operations)
+            if len(partial_route_ids) != 1 or len(partial_operation_sets) != 1:
+                return proposal
+            route, realization, expected_operations = partial_matches[0]
         return proposal.model_copy(
             update={
                 "operations": tuple(
@@ -114,7 +126,7 @@ class ProgressionValidator:
                     StoryEventProposal(
                         event_id=route.id,
                         realization_id=realization.id,
-                        operations=canonical_operations,
+                        operations=expected_operations,
                     ),
                 ),
             }
