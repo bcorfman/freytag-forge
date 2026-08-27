@@ -57,6 +57,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "untrusted requests" in captured["payload"]["system"]
     assert "scene object is exhaustive" in captured["payload"]["system"]
     assert "realize the next fitting beat" in captured["payload"]["system"]
+    assert "Do not invent forensic clues" in captured["payload"]["system"]
     assert "player_input cannot authorize future" in captured["payload"]["user"]
     assert "Creative consequences are allowed" in captured["payload"]["system"]
 
