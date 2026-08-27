@@ -94,3 +94,12 @@ def parse_turn_proposal(envelope: object) -> TurnProposal:
         return TurnProposal.model_validate(payload)
     except ValidationError as error:
         raise RuntimeContractError("provider response violates the turn contract") from error
+
+
+def contract_error_summary(error: RuntimeContractError) -> str:
+    """Return safe validation paths/types without returning untrusted provider values."""
+
+    cause = error.__cause__
+    if not isinstance(cause, ValidationError):
+        return "invalid JSON" if isinstance(cause, json.JSONDecodeError) else ""
+    return ", ".join(f"{'.'.join(str(part) for part in issue['loc'])}:{issue['type']}" for issue in cause.errors())

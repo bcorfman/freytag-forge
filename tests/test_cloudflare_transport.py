@@ -179,6 +179,28 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
     assert "previous response was invalid" in payloads[1]["system"]
 
 
+def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    with pytest.raises(NarrationProviderError) as caught:
+        provider("I listen.")
+
+    assert caught.value.status_code == 502
+    assert caught.value.error_code == "INVALID_PROPOSAL"
+    assert caught.value.message.endswith(":value_error)")
+    assert "segments" not in caught.value.message
+    assert len(payloads) == 2
+
+
 def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
