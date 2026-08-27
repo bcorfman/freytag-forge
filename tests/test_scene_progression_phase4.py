@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.story_package.loader import load_story_package
 
@@ -188,6 +189,30 @@ def test_normalization_removes_only_canonical_operations_duplicated_by_a_valid_e
 
     assert engine.state.facts.has("has_blood", "thomas_home", value="true")
     assert "SL-1A-A" in engine.state.fired_event_ids
+
+
+def test_repeated_canonical_fact_is_a_safe_noop() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="sarah_abduction_suspicion", subject="story", value="true"))
+    engine = RuntimeEngine(
+        state,
+        _provider(
+            {
+                "narration": "The existing signs of forced entry still point to Sarah's abduction.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+                    }
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I reconsider the forced entry.")
+
+    assert state.facts.has("sarah_abduction_suspicion", "story", value="true")
 
 
 def test_unmatched_canonical_fact_still_fails_closed() -> None:
