@@ -65,7 +65,8 @@ class ProgressionValidator:
             for realization in route.realizations
             if tuple(self._route_operation(operation) for operation in realization.operations) == proposal.operations
         ]
-        if len(matches) != 1:
+        route_ids = {route.id for route, _ in matches}
+        if len(route_ids) != 1:
             return proposal
         route, realization = matches[0]
         return proposal.model_copy(
