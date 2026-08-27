@@ -62,6 +62,8 @@ class CloudflareTurnProvider:
                 "with its realization_id and its exact route-authorized operations. Emit an event only when its ID "
                 "appears in scene.active_storylets; otherwise use an empty events list. Never infer event availability "
                 "from plot prose, pacing, or a previously completed beat, and never retry a completed storylet. "
+                "For an event, copy the selected active realization's listed operations exactly, "
+                "using subject 'story'. "
                 "Do not echo the player input, "
                 "scene context, "
                 "schema, or any explanation."
