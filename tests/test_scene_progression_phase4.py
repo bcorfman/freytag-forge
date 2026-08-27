@@ -18,14 +18,16 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 def test_selected_knowledge_canonicalizes_its_exact_realization_operations() -> None:
     event = StoryEventProposal(
-        event_id="SL-1A-B",
-        realization_id="SL-1A-B-R1",
+        event_id="not_an_authored_event",
+        realization_id="not_an_authored_realization",
         knowledge_ids=("k_sl_1a_b_r1",),
         operations=(),
     )
 
     normalized = ProgressionValidator(PACKAGE)._canonicalize_selected_knowledge_event(event)
 
+    assert normalized.event_id == "SL-1A-B"
+    assert normalized.realization_id == "SL-1A-B-R1"
     assert normalized.operations
     assert all(operation.fact.value == "true" for operation in normalized.operations)
 

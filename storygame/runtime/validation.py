@@ -145,26 +145,28 @@ class ProgressionValidator:
         )
 
     def _canonicalize_selected_knowledge_event(self, event: StoryEventProposal) -> StoryEventProposal:
-        """Use package operations only when selected knowledge proves this exact realization."""
+        """Use package fields only when selected knowledge agrees on one authored realization."""
 
         if not event.knowledge_ids:
             return event
-        route = self._routes.get(event.event_id)
-        realization = (
-            next((item for item in route.realizations if item.id == event.realization_id), None) if route else None
-        )
+        knowledge = self.package.knowledge_indexes.by_id
+        selected = tuple(knowledge[item_id] for item_id in event.knowledge_ids if item_id in knowledge)
+        if len(selected) != len(event.knowledge_ids):
+            return event
+        sources = {(item.source.storylet_id, item.source.realization_id) for item in selected}
+        if len(sources) != 1:
+            return event
+        storylet_id, realization_id = sources.pop()
+        route = self._routes.get(storylet_id or "")
+        realization = next((item for item in route.realizations if item.id == realization_id), None) if route else None
         if realization is None:
             return event
-        knowledge = self.package.knowledge_indexes.by_id
-        if not all(
-            item_id in knowledge
-            and knowledge[item_id].source.storylet_id == route.id
-            and knowledge[item_id].source.realization_id == realization.id
-            for item_id in event.knowledge_ids
-        ):
-            return event
         return event.model_copy(
-            update={"operations": tuple(self._route_operation(operation) for operation in realization.operations)}
+            update={
+                "event_id": route.id,
+                "realization_id": realization.id,
+                "operations": tuple(self._route_operation(operation) for operation in realization.operations),
+            }
         )
 
     def _canonical_operation_is_noop(self, state: RuntimeState, operation: FactOperation) -> bool:
