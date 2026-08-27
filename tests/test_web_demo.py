@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 
 from storygame.runtime.cloudflare import NarrationProviderError
+from storygame.runtime.contracts import RuntimeContractError
 from storygame.web_demo import create_demo_app
 
 
@@ -110,6 +111,27 @@ def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
     assert response.headers["X-Narration-Error-Code"] == "WORKER_CONFIGURATION_ERROR"
     assert response.headers["X-Trace-ID"] == "trace-123"
     assert response.headers["X-Worker-Revision"] == "worker-456"
+
+
+def test_adapter_returns_cors_safe_invalid_provider_contract(tmp_path) -> None:
+    def invalid_provider(_state):
+        def reject(_input):
+            raise RuntimeContractError("provider response violates the turn contract")
+
+        return reject
+
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=invalid_provider)
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen."},
+            headers={"Origin": "http://127.0.0.1:4173"},
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "provider response violates the turn contract"}
+    assert response.headers["access-control-allow-origin"] == "*"
 
 
 def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
