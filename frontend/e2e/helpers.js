@@ -4,6 +4,36 @@ import { dirname, resolve } from "node:path";
 
 const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
 
+function isTurnRequest(candidate) {
+  return candidate.method() === "POST" && candidate.url().endsWith("/api/v1/turn");
+}
+
+function waitForTurnOutcome(page) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error(`Turn API did not produce a response within ${TURN_TIMEOUT_MS}ms.`));
+    }, TURN_TIMEOUT_MS);
+    const cleanup = () => {
+      clearTimeout(timeout);
+      page.off("response", onResponse);
+      page.off("requestfailed", onFailure);
+    };
+    const onResponse = (response) => {
+      if (!isTurnRequest(response.request())) return;
+      cleanup();
+      resolve(response);
+    };
+    const onFailure = (request) => {
+      if (!isTurnRequest(request)) return;
+      cleanup();
+      reject(new Error(`Turn API request failed: ${request.failure()?.errorText || "unknown browser network failure"}`));
+    };
+    page.on("response", onResponse);
+    page.on("requestfailed", onFailure);
+  });
+}
+
 export async function startSceneSession(page) {
   await page.goto("/");
   await page.getByRole("button", { name: "New Session" }).click();
@@ -14,12 +44,15 @@ export async function startSceneSession(page) {
 export async function submitTurn(page, action) {
   await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
   await page.locator("#command-input").fill(action);
-  const response = page.waitForResponse(
-    (candidate) => candidate.request().method() === "POST" && candidate.url().endsWith("/api/v1/turn"),
-    { timeout: TURN_TIMEOUT_MS },
-  );
+  const response = waitForTurnOutcome(page);
   await page.getByRole("button", { name: "Send" }).click({ timeout: TURN_TIMEOUT_MS });
-  const apiResponse = await response;
+  let apiResponse;
+  try {
+    apiResponse = await response;
+  } catch (error) {
+    const status = await page.locator("#status-line").textContent();
+    throw new Error(`${error instanceof Error ? error.message : String(error)} UI status: ${status || "(empty)"}`);
+  }
   const payload = await apiResponse.json().catch(() => ({}));
   if (!apiResponse.ok()) {
     const detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload);

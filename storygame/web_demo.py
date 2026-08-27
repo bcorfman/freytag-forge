@@ -125,12 +125,15 @@ def create_demo_app(
     request_times: dict[str, deque[float]] = {}
     request_times_lock = Lock()
     app = FastAPI(title="Freytag Forge", version="3")
+    allowed_headers = ["Content-Type", "Authorization"]
+    if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") == "1":
+        allowed_headers.append("X-Freytag-Test-Clock-Seconds")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[item for item in getenv("FREYTAG_CORS_ORIGINS", "*").split(",") if item],
         allow_credentials=False,
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_headers=allowed_headers,
     )
 
     def load_state(session_id: str) -> RuntimeState:
