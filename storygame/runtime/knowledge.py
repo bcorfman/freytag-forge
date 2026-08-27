@@ -135,6 +135,8 @@ class KnowledgeProjector:
             item = state.package.knowledge_indexes.by_id[knowledge_id]
             if self._established(item, state) or not self._visible_to(item, audience_id):
                 continue
+            if item.source.storylet_id in state.fired_event_ids:
+                continue
             if not all(predicate_matches(predicate, state.facts) for predicate in item.requires):
                 continue
             if item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids:

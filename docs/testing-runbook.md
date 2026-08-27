@@ -55,6 +55,15 @@ The first staging probe exposed a migration-era E2E assumption: a valid accepted
 The timeline harness now accepts text from all supported structured segment
 kinds; rerun the staged command after this revision deploys.
 
+An August 27 staging trace showed a provider selecting a knowledge ID outside
+the candidate IDs supplied for the third timeline turn after earlier storylets
+had fired. The Cloudflare transport now treats that as an invalid provider
+proposal and uses its one permitted recovery request; it also removes every
+realization of a fired storylet from later candidate projections. Verify the
+focused regression with `TMPDIR=/tmp uv run pytest -q` (the suite-wide coverage
+gate means focused file selection is informational only), then rerun the staged
+timeline command after the implementation revision deploys.
+
 A later staging attempt reported a browser CORS failure. Direct checks of the
 current staging revision's `OPTIONS /api/v1/turn` and cross-origin invalid
 `POST /api/v1/turn` both returned `Access-Control-Allow-Origin: *`; rerun the

@@ -89,7 +89,7 @@ class CloudflareTurnProvider:
             raise NarrationProviderError("narration service is unavailable") from error
         else:
             try:
-                parse_turn_proposal(response)
+                self._parse_eligible_proposal(response)
             except RuntimeContractError:
                 return self._recover_malformed_response(payload)
             return response
@@ -97,7 +97,7 @@ class CloudflareTurnProvider:
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         try:
             response = self._request(fallback_payload)
-            parse_turn_proposal(response)
+            self._parse_eligible_proposal(response)
             return response
         except HTTPError as error:
             raise self._narration_error(error) from error
@@ -121,7 +121,7 @@ class CloudflareTurnProvider:
         }
         try:
             response = self._request(recovery_payload)
-            parse_turn_proposal(response)
+            self._parse_eligible_proposal(response)
             return response
         except HTTPError as error:
             raise self._narration_error(error) from error
@@ -134,6 +134,15 @@ class CloudflareTurnProvider:
             ) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
+
+    def _parse_eligible_proposal(self, response: object) -> TurnProposal:
+        proposal = parse_turn_proposal(response)
+        if self.last_projection is None:
+            raise RuntimeContractError("knowledge projection is unavailable")
+        candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
+        if any(knowledge_id not in candidate_ids for knowledge_id in proposal.selected_knowledge_ids):
+            raise RuntimeContractError("selected knowledge is not eligible for this turn")
+        return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
         scene = next(

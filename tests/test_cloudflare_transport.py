@@ -178,6 +178,40 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
 
     assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]}
     assert len(payloads) == 2
+
+
+def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"An invalid reveal."}],'
+                        '"selected_knowledge_ids":["k_future_unavailable"]}'
+                    )
+                }
+            )
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"Sarah\'s damaged recording crackles."}],'
+                    '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I search the desk drawer for Sarah's damaged recording.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert len(payloads) == 2
     assert "previous response was invalid" in payloads[1]["system"]
 
 
