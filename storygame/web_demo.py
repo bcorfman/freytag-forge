@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.contracts import TurnProposal
+from storygame.runtime.contracts import RuntimeContractError, TurnProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -209,6 +209,8 @@ def create_demo_app(
             if error.worker_revision:
                 headers["X-Worker-Revision"] = error.worker_revision
             raise HTTPException(status_code=error.status_code, detail=error.message, headers=headers) from error
+        except RuntimeContractError as error:
+            raise HTTPException(status_code=422, detail="provider response violates the turn contract") from error
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
