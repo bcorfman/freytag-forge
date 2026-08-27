@@ -162,5 +162,15 @@ class KnowledgeProjector:
             entity_ids=item.entity_ids,
             storylet_id=item.source.storylet_id,
             realization_id=item.source.realization_id,
-            operations=tuple(effect.model_dump(mode="json") for effect in item.establishes),
+            operations=tuple(
+                {
+                    "operation": effect.op,
+                    "fact": {
+                        "predicate": effect.fact_id,
+                        "subject": "story",
+                        "value": str(effect.value).lower(),
+                    },
+                }
+                for effect in item.establishes
+            ),
         )
