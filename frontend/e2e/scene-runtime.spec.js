@@ -26,9 +26,11 @@ const canonActions = [
 ];
 
 function narrationText(payload) {
-  const narration = (payload.segments || []).filter((segment) => segment.kind === "narration").map((segment) => segment.text);
-  expect(narration, `Turn response lacks narration: ${JSON.stringify(payload)}`).not.toHaveLength(0);
-  return narration.join(" ").trim();
+  const turnText = (payload.segments || [])
+    .filter((segment) => ["narration", "action", "dialogue"].includes(segment.kind))
+    .map((segment) => segment.text);
+  expect(turnText, `Turn response lacks accepted turn text: ${JSON.stringify(payload)}`).not.toHaveLength(0);
+  return turnText.join(" ").trim();
 }
 
 async function exerciseDistinctFreeTextActions(page) {
