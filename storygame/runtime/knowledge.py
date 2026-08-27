@@ -31,7 +31,7 @@ class RevealCandidate(_KnowledgeModel):
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
-    """Shadow-only provider contract; Phase 3 makes this the live payload."""
+    """The complete fact-derived provider contract for one audience."""
 
     scene_id: str
     phase: str

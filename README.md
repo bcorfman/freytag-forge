@@ -7,9 +7,9 @@ Freytag Forge turns freeform roleplay into drama that remembers.
 ## Features
 
 - **Write freely.** Investigate, bluff, bargain, or run—no command menus.
-- **Make it stick.** Validated facts preserve consequences, discoveries, and relationships.
-- **Earn every reveal.** Audience-aware knowledge keeps mysteries causal and spoiler-free.
-- **Hold the tension.** Storylets, pacing, and reversible high-stakes choices keep drama moving.
+- **Make it stick.** Validated facts carry consequences, discoveries, and relationships forward.
+- **Keep secrets earned.** Fact-backed, audience-safe context makes every reveal causal and spoiler-free.
+- **Build momentum.** Storylets, pacing, and reversible high-stakes choices keep drama moving.
 
 **Less prompt luck. More consequence. Drama that remembers.**
 

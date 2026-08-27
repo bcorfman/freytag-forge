@@ -1,5 +1,51 @@
 # Testing runbook
 
+## Phase 3 provider knowledge-context cutover
+
+**Purpose:** Verify the Worker receives only the fact-derived player and
+speaker projections, with bounded eligible candidates and no legacy authoring
+or transcript context.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root; pytest temporary files belong under `/tmp`.
+
+**Safe actions:** Local transport tests intercept the Worker request; no
+network request is made.
+
+**Destructive or external actions:** The optional browser probe creates a
+disposable staging session and may make billed model calls.
+
+**Steps:**
+
+1. Run the full suite after changing the provider contract or proposal schema.
+2. After the implementation revision deploys to staging, run the persistent
+   knowledge-timeline probe and retain its redacted payload-ID artifact.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
+```
+
+Expected: the intercepted request excludes plot prose, route prose, future
+JANUS terms, raw narrative history, and unrevealed warning text; after the
+recording route becomes eligible it includes only that local candidate. The
+staged probe retains the same reveal timeline.
+
+**Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
+the staged evidence is no longer needed.
+
+**Notes:** Last verified locally on 2026-08-27: `uv run ruff check --fix .`,
+`uv run ruff format .`, `TMPDIR=/tmp uv run pytest -q` (91 passed, 90.81%
+coverage), `cd frontend && npm test`, and `cd frontend && npm run build` all
+passed. The transport fixture captures the payload and proves the opening has
+no candidate, while an activated `SL-1A-B` drawer turn exposes only the
+damaged-recording candidate. Record the deployed SHA and observed browser
+result here; do not treat this undeployed local run as staging evidence.
+
 ## Phase 2 fact-derived shadow projection
 
 **Purpose:** Verify the legacy provider context remains unchanged while the

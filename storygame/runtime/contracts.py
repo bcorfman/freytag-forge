@@ -42,8 +42,21 @@ class GameBreakWarning(_StrictModel):
     snapshot_id: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
 
 
+class NarrationSegment(_StrictModel):
+    """A provider-authored block with stable grounding for later validation."""
+
+    kind: Literal["narration", "dialogue", "action"]
+    text: str = Field(min_length=1, max_length=12000)
+    speaker_id: str | None = None
+    grounding_ids: tuple[str, ...] = ()
+
+
 class TurnProposal(_StrictModel):
+    # ``narration`` remains the migration input accepted by the Phase 2
+    # engine.  The provider schema now also advertises structured segments;
+    # Phase 4 makes their grounding an acceptance boundary.
     narration: str = Field(min_length=1, max_length=12000)
+    segments: tuple[NarrationSegment, ...] = ()
     narrative_seconds: int = Field(default=60, ge=40, le=80)
     operations: tuple[FactOperation, ...] = ()
     transition: SceneTransitionProposal | None = None

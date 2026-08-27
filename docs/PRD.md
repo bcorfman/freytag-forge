@@ -22,10 +22,13 @@ proposed change before committing it as a durable fact.
 
 ## Runtime contract
 
-The provider supplies strict JSON for narration, route-authorized fact effects,
-optional events, and a requested transition. Its output is untrusted: the
-runtime validates it against cloned state and commits accepted facts atomically.
-Invalid or repaired output never mutates canonical state.
+The provider receives a bounded `TurnKnowledgeContext`: safe scene frame,
+committed player knowledge, present-speaker sayable knowledge, and eligible
+reveal candidates—never plot prose, routes, future effects, or transcript
+memory. It returns strict JSON segments, route-authorized fact effects, optional
+events, and a requested transition. Its output is untrusted: the runtime
+validates it against cloned state and commits accepted facts atomically. Invalid
+or repaired output never mutates canonical state.
 
 Pacing is declarative and fact-backed: accepted turns record bounded narrative
 time, while package-declared deadlines may add pressure or perform an authored
