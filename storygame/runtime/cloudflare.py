@@ -59,7 +59,10 @@ class CloudflareTurnProvider:
                 "Creative consequences are allowed. Represent every durable invented or changed world fact, item, "
                 "relationship, custody change, event, or transition in the proposal's operations, events, "
                 "or transition so the runtime can validate it. Durable effects may only use an active storylet event "
-                "with its realization_id and its exact route-authorized operations. Do not echo the player input, "
+                "with its realization_id and its exact route-authorized operations. Emit an event only when its ID "
+                "appears in scene.active_storylets; otherwise use an empty events list. Never infer event availability "
+                "from plot prose, pacing, or a previously completed beat, and never retry a completed storylet. "
+                "Do not echo the player input, "
                 "scene context, "
                 "schema, or any explanation."
             ),

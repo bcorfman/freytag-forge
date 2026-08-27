@@ -97,7 +97,7 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
     RuntimeEngine(state, lambda _: event_payload).turn("I follow the lead.")
 
     assert storylet_id in state.fired_event_ids
-    with pytest.raises(ProposalValidationError, match="not active"):
+    with pytest.raises(ProposalValidationError, match=rf"{storylet_id}.*not active in scene 1A"):
         RuntimeEngine(state, lambda _: event_payload).turn("I try to repeat it.")
 
 
