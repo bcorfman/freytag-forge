@@ -44,6 +44,15 @@ items:
 - id: override_codes
   name: Emergency override codes
 facts:
+- scene_1a_entry_known
+- scene_1b_entry_known
+- scene_1c_entry_known
+- scene_2a_entry_known
+- scene_2b_entry_known
+- scene_2c_entry_known
+- scene_3a_entry_known
+- scene_3b_entry_known
+- scene_3c_entry_known
 - sarah_abduction_suspicion
 - facility_proof
 - false_identities_ready

@@ -266,8 +266,10 @@ def test_repeated_canonical_fact_is_a_safe_noop() -> None:
 
 
 def test_unmatched_canonical_fact_still_fails_closed() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    before = state.facts.as_json()
     engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
+        state,
         _provider(
             {
                 "narration": "The facility proof arrives too early.",
@@ -285,12 +287,14 @@ def test_unmatched_canonical_fact_still_fails_closed() -> None:
     with pytest.raises(RuntimeStateError, match="validated storylet realization"):
         engine.turn("I imagine proof from a distant facility.")
 
-    assert engine.state.facts.as_json() == []
+    assert engine.state.facts.as_json() == before
 
 
 def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    before = state.facts.as_json()
     engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
+        state,
         _provider({"narration": "I leave now.", "transition": {"transition_id": "t_1a_1b"}}, []),
     )
 
@@ -298,7 +302,7 @@ def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
         engine.turn("I leave immediately.")
 
     assert engine.state.current_scene_id == "1A"
-    assert engine.state.facts.as_json() == []
+    assert engine.state.facts.as_json() == before
 
 
 def test_deadline_pacing_event_advances_without_parsing_player_text() -> None:
@@ -319,6 +323,7 @@ def test_deadline_pacing_event_advances_without_parsing_player_text() -> None:
 
 def test_game_break_proceed_commits_candidate_and_return_restores_snapshot() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    before = state.facts.as_json()
     engine = RuntimeEngine(
         state,
         _provider(
@@ -332,9 +337,9 @@ def test_game_break_proceed_commits_candidate_and_return_restores_snapshot() -> 
 
     proposal = engine.turn("I attack Gabriel.")
     assert proposal.game_break is not None
-    assert state.facts.as_json() == []
+    assert state.facts.as_json() == before
     engine.resolve_break("return_to_scene")
-    assert state.facts.as_json() == []
+    assert state.facts.as_json() == before
 
     engine.turn("I attack Gabriel again.")
     engine.resolve_break("proceed")

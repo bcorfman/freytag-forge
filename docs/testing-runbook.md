@@ -1,5 +1,44 @@
 # Testing runbook
 
+## Declarative knowledge package loading
+
+**Purpose:** Verify the Phase 0 knowledge catalog, safe scene frames, immutable
+indexes, and fail-closed source/effect validation without changing provider
+context behavior.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root; use `/tmp` for pytest temporary files.
+
+**Safe actions:**
+
+- Tests copy the Continuity Initiative package into pytest temporary paths.
+
+**Destructive or external actions:**
+
+- None.
+
+**Steps:**
+
+1. Run the full Python suite after editing knowledge models, loader validation,
+   or `knowledge.yaml`.
+2. Apply Ruff autofix and formatting, then rerun the full suite.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: all tests pass with repository coverage at or above 90%.
+
+**Cleanup:** None; pytest temporary files are under `/tmp`.
+
+**Notes:** A focused `tests/test_markdown_story_package.py` run passed all 16
+tests on 2026-08-27 but exited nonzero solely because the global 90% coverage
+gate measured 31.67%; use the full suite for a passing verification.
+
 ## Route-backed continuity-initiative progression
 
 **Purpose:** Verify that the revised five-file story package loads with executable storylet routes, activates only eligible scene-local guidance, and rejects durable effects that are not route-authorized.

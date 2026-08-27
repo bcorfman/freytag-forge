@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -19,6 +20,95 @@ class FactPredicate(_Model):
 
     fact_id: str = Field(pattern=_ID)
     equals: str | bool | int | None = None
+
+
+class FactDefinition(_Model):
+    """A named world predicate and its authoring purpose."""
+
+    id: str = Field(pattern=_ID)
+    purpose: str = Field(min_length=1)
+
+
+class Audience(_Model):
+    """The only audiences a declarative revelation may address."""
+
+    kind: Literal["public", "characters", "world_only"]
+    character_ids: tuple[str, ...] = ()
+    player_visible: bool = False
+
+    @model_validator(mode="after")
+    def explicit_character_scope(self) -> Audience:
+        if self.kind == "characters" and not self.character_ids:
+            raise ValueError("character audience requires character_ids")
+        if self.kind != "characters" and self.character_ids:
+            raise ValueError("only character audiences may name character_ids")
+        if self.kind == "world_only" and self.player_visible:
+            raise ValueError("world-only knowledge cannot be player-visible")
+        return self
+
+
+class RevealSource(_Model):
+    """One package-owned route that may establish knowledge."""
+
+    kind: Literal["storylet_realization", "scene_entry"]
+    storylet_id: str | None = None
+    realization_id: str | None = None
+
+    @model_validator(mode="after")
+    def complete_route_reference(self) -> RevealSource:
+        route_fields = (self.storylet_id, self.realization_id)
+        if self.kind == "storylet_realization" and not all(route_fields):
+            raise ValueError("storylet realization source requires storylet_id and realization_id")
+        if self.kind == "scene_entry" and any(route_fields):
+            raise ValueError("scene entry source cannot name a storylet realization")
+        return self
+
+
+class Relevance(_Model):
+    entity_ids: tuple[str, ...] = ()
+    priority: int = 0
+
+
+class KnowledgeDefinition(_Model):
+    """A player-safe claim whose truth is derived only from its fact effects."""
+
+    id: str = Field(pattern=_ID)
+    statement: str = Field(min_length=1)
+    entity_ids: tuple[str, ...] = ()
+    aliases: tuple[str, ...] = Field(min_length=1)
+    audience: Audience
+    available_in_scenes: tuple[str, ...] = Field(min_length=1)
+    requires: tuple[FactPredicate, ...] = ()
+    establishes: tuple[RouteOperation, ...] = Field(min_length=1)
+    source: RevealSource
+    relevance: Relevance = Field(default_factory=Relevance)
+
+
+class SceneFrame(_Model):
+    """A concise, explicitly player-safe immediate scene situation."""
+
+    scene_id: str = Field(pattern=_SCENE_ID)
+    situation: str = Field(min_length=1)
+    pressure: str = Field(min_length=1)
+
+
+class KnowledgeCatalog(_Model):
+    schema_version: Literal["2.0"]
+    facts: tuple[FactDefinition, ...] = Field(min_length=1)
+    scene_frames: tuple[SceneFrame, ...] = Field(min_length=1)
+    knowledge: tuple[KnowledgeDefinition, ...] = Field(min_length=1)
+
+
+class KnowledgeIndexes(_Model):
+    """Immutable lookup tables compiled once at package load time."""
+
+    by_id: Mapping[str, KnowledgeDefinition]
+    facts_to_knowledge: Mapping[str, tuple[str, ...]]
+    source_to_knowledge: Mapping[str, tuple[str, ...]]
+    scene_to_candidates: Mapping[str, tuple[str, ...]]
+    alias_to_knowledge: Mapping[str, tuple[str, ...]]
+    audience_to_known_terms: Mapping[str, tuple[str, ...]]
+    prerequisite_dependents: Mapping[str, tuple[str, ...]]
 
 
 class Entity(_Model):
@@ -165,3 +255,9 @@ class StoryPackage(_Model):
     pacing: PacingSource
     storylets: tuple[Storylet, ...]
     storylet_routes: StoryletRoutesSource
+    knowledge: KnowledgeCatalog
+    knowledge_indexes: KnowledgeIndexes
+
+    @property
+    def fact_ids(self) -> frozenset[str]:
+        return frozenset(self.world.facts)
