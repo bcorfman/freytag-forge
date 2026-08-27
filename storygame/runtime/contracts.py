@@ -52,10 +52,9 @@ class NarrationSegment(_StrictModel):
 
 
 class TurnProposal(_StrictModel):
-    # ``narration`` remains the migration input accepted by the Phase 2
-    # engine.  The provider schema now also advertises structured segments;
-    # Phase 4 makes their grounding an acceptance boundary.
-    narration: str = Field(min_length=1, max_length=12000)
+    # Structured segments are primary. ``narration`` is a derived compatibility
+    # field for older runtime consumers and API ``lines``.
+    narration: str = Field(default="", max_length=12000)
     segments: tuple[NarrationSegment, ...] = ()
     narrative_seconds: int = Field(default=60, ge=40, le=80)
     operations: tuple[FactOperation, ...] = ()
@@ -67,7 +66,14 @@ class TurnProposal(_StrictModel):
     def no_duplicate_events(self) -> TurnProposal:
         if len({event.event_id for event in self.events}) != len(self.events):
             raise ValueError("event IDs must be unique")
-        return self
+        if self.narration:
+            return self
+        narration = " ".join(segment.text for segment in self.segments)
+        if not narration:
+            raise ValueError("a turn proposal needs narration or structured segments")
+        if len(narration) > 12000:
+            raise ValueError("derived narration is too long")
+        return self.model_copy(update={"narration": narration})
 
 
 def parse_turn_proposal(envelope: object) -> TurnProposal:
