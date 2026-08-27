@@ -300,7 +300,7 @@ Expected: every reached scene receives a passing verdict for canon consistency, 
 
 **Cleanup:** Remove generated ignored E2E artifacts if they are no longer useful.
 
-**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` is absent.
+**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` or `E2E_TEST_CLOCK_SECONDS` is absent. Start the local API with `FREYTAG_ALLOW_TEST_CLOCK=1`, then use `E2E_TEST_CLOCK_SECONDS=120`; each turn is bounded to 30 seconds (override with `E2E_TURN_TIMEOUT_MS`) and partial progress is written to `artifacts/e2e-llm-canon-progress.{json,md}`.
 
 Last verified safely: 2026-08-27 — `npm test` passed 5 tests and Playwright discovered the tagged `@llm-canon` test with a placeholder API base URL; no live model calls were made.
 
