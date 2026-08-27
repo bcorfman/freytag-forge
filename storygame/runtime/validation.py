@@ -94,9 +94,9 @@ class ProgressionValidator:
                 # and let the same route-subset recovery below prove the
                 # package-authorized effect; otherwise validation still rejects
                 # the proposal unchanged.
+                proposal = proposal.model_copy(update={"events": ()})
                 if not proposal.operations:
                     return proposal
-                proposal = proposal.model_copy(update={"events": ()})
             else:
                 return proposal.model_copy(
                     update={
