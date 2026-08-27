@@ -147,6 +147,49 @@ def test_normalization_preserves_new_facts_alongside_a_canonical_realization() -
     assert "SL-1A-A" in engine.state.fired_event_ids
 
 
+def test_normalization_removes_only_canonical_operations_duplicated_by_a_valid_event() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "The forced entry makes Sarah's disappearance look targeted.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "has_blood", "subject": "thomas_home", "value": "true"},
+                    },
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+                    },
+                ],
+                "events": [
+                    {
+                        "event_id": "SL-1A-A",
+                        "realization_id": "SL-1A-A-R1",
+                        "operations": [
+                            {
+                                "operation": "assert",
+                                "fact": {
+                                    "predicate": "sarah_abduction_suspicion",
+                                    "subject": "story",
+                                    "value": "true",
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I inspect the signs of forced entry.")
+
+    assert engine.state.facts.has("has_blood", "thomas_home", value="true")
+    assert "SL-1A-A" in engine.state.fired_event_ids
+
+
 def test_unmatched_canonical_fact_still_fails_closed() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),

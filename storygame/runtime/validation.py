@@ -56,13 +56,33 @@ class ProgressionValidator:
         exactly one active route realization, so it cannot authorize a new fact.
         """
 
-        if not proposal.operations or proposal.events:
+        if not proposal.operations:
             return proposal
         canonical_operations = tuple(
             operation for operation in proposal.operations if operation.fact.predicate in self.package.world.facts
         )
         if not canonical_operations:
             return proposal
+        if proposal.events:
+            event_operations = {
+                operation
+                for event in proposal.events
+                if event.event_id in state.active_event_ids and event.event_id not in state.fired_event_ids
+                if (route := self._routes.get(event.event_id)) is not None
+                for realization in route.realizations
+                if realization.id == event.realization_id
+                if event.operations == tuple(self._route_operation(operation) for operation in realization.operations)
+                for operation in event.operations
+            }
+            if not event_operations:
+                return proposal
+            return proposal.model_copy(
+                update={
+                    "operations": tuple(
+                        operation for operation in proposal.operations if operation not in event_operations
+                    )
+                }
+            )
         matches = [
             (route, realization)
             for route in self._routes.values()
