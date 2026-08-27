@@ -104,12 +104,7 @@ async function apiRequest(path, payload) {
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(path === "/api/v1/turn" && E2E_TEST_CLOCK_SECONDS
-        ? { "X-Freytag-Test-Clock-Seconds": E2E_TEST_CLOCK_SECONDS }
-        : {}),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
