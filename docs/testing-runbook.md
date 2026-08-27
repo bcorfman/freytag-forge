@@ -46,6 +46,11 @@ no candidate, while an activated `SL-1A-B` drawer turn exposes only the
 damaged-recording candidate. Record the deployed SHA and observed browser
 result here; do not treat this undeployed local run as staging evidence.
 
+The first staging probe exposed a migration-era E2E assumption: a valid accepted
+`action` segment was rejected because the helper looked only for `narration`.
+The timeline harness now accepts text from all supported structured segment
+kinds; rerun the staged command after this revision deploys.
+
 ## Phase 2 fact-derived shadow projection
 
 **Purpose:** Verify the legacy provider context remains unchanged while the
