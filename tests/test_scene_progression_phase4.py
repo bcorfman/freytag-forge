@@ -148,6 +148,29 @@ def test_unique_active_realization_subset_normalizes_to_its_full_route_effect() 
     assert state.facts.has("continuity_initiative_known", "story", value="true")
 
 
+def test_malformed_event_wrapper_can_recover_a_unique_canonical_subset() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "The hidden card turns the evidence into an actionable lead.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
+                    }
+                ],
+                "events": [{"event_id": "SL-1A-B", "realization_id": "SL-1A-B-R1", "operations": []}],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I recover Sarah's hidden evidence.")
+
+    assert "SL-1A-B" in engine.state.fired_event_ids
+
+
 def test_normalization_preserves_new_facts_alongside_a_canonical_realization() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),
