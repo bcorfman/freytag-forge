@@ -17,6 +17,18 @@ class RuntimeStateError(ValueError):
     """Raised for invalid state transitions or unresolved game breaks."""
 
 
+class TurnRecord(BaseModel):
+    """Bounded fact-derived continuity; display prose is intentionally excluded."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    id: str
+    reveal_ids: tuple[str, ...] = ()
+    affected_entity_ids: tuple[str, ...] = ()
+    event_ids: tuple[str, ...] = ()
+    transition_id: str | None = None
+    fact_keys: tuple[str, ...] = ()
+
+
 class RuntimeSnapshot(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     version: int = Field(default=SNAPSHOT_VERSION, ge=1)
@@ -26,6 +38,7 @@ class RuntimeSnapshot(BaseModel):
     fired_event_ids: tuple[str, ...]
     facts: FactStore
     narrative_history: tuple[str, ...] = ()
+    turn_records: tuple[TurnRecord, ...] = ()
 
 
 class RuntimeState(BaseModel):
@@ -39,6 +52,7 @@ class RuntimeState(BaseModel):
     fired_event_ids: set[str] = Field(default_factory=set)
     facts: FactStore = Field(default_factory=FactStore)
     narrative_history: list[str] = Field(default_factory=list)
+    turn_records: list[TurnRecord] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
     pending_proposal: TurnProposal | None = None
@@ -79,6 +93,7 @@ class RuntimeState(BaseModel):
             fired_event_ids=tuple(sorted(self.fired_event_ids)),
             facts=self.facts.clone(),
             narrative_history=tuple(self.narrative_history),
+            turn_records=tuple(self.turn_records),
         )
 
     def set_pending_break(
@@ -164,6 +179,7 @@ class RuntimeState(BaseModel):
             self.fired_event_ids = set(snapshot.fired_event_ids)
             self.facts = snapshot.facts.clone()
             self.narrative_history = list(snapshot.narrative_history)
+            self.turn_records = list(snapshot.turn_records)
         elif decision != "proceed":
             raise RuntimeStateError("game break decision must be proceed or return_to_scene")
         else:

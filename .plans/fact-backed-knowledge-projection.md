@@ -333,34 +333,34 @@ unchanged in this PR.
 
 Phase evidence: [x] deterministic coverage proves the entry fact is committed
 before render and the entry catalog omits the warning, JANUS, and future-scene
-terms. [ ] Run the persistent Scene 1A browser fixture after this revision is
+terms. [x] Run the persistent Scene 1A browser fixture after this revision is
 deployed to staging; it must retain the same timeline evidence. Non-game-breaking
 local clues may be invented and persisted as ordinary facts.
 
 ### Phase 2 / PR 2: Fact-derived projection in shadow mode
 
-- [ ] Add `storygame/runtime/knowledge.py` with `KnowledgeProjector`, typed
+- [x] Add `storygame/runtime/knowledge.py` with `KnowledgeProjector`, typed
   projections, eligibility/relevance selection, and audience-specific views.
-- [ ] Derive committed knowledge solely from facts. Add any required typed
+- [x] Derive committed knowledge solely from facts. Add any required typed
   reveal/audience facts through the normal route operations and persistence
   model.
-- [ ] Add structured `TurnRecord` continuity and stop adding new raw narration
+- [x] Add structured `TurnRecord` continuity and stop adding new raw narration
   to provider memory. Preserve transcript text only for UI/audit compatibility.
-- [ ] Integrate projection creation into `RuntimeEngine`/the provider adapter in
+- [x] Integrate projection creation into `RuntimeEngine`/the provider adapter in
   shadow mode: build it, measure it, and compare it in tests, but continue
   sending the old context until the exit gate is met.
-- [ ] Add observability containing counts/IDs and payload size only—never
+- [x] Add observability containing counts/IDs and payload size only—never
   protected statements, player text, or raw narration.
-- [ ] Add table-driven cross-genre fixtures proving public, character-private,
+- [x] Add table-driven cross-genre fixtures proving public, character-private,
   world-only, already-revealed, same-turn-reveal, ambiguous-reference, pacing,
   and save/load behavior.
 
-Exit gate: for every deterministic fixture, the shadow projection contains all
+Exit gate: [x] for every deterministic fixture, the shadow projection contains all
 and only audience-authorized knowledge, candidate selection is bounded and
 stable, and save/load reproduces the same projection. No provider behavior
 change yet.
 
-Phase evidence: run the same fixture against the shadow payload and retain a
+Phase evidence: [x] run the same fixture against the shadow payload and retain a
 redacted ID-only diff. Before the recording, Sarah's warning must be absent;
 before a patrol arrival/search, patrol tape must be absent.
 

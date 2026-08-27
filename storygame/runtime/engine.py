@@ -6,21 +6,27 @@ from collections.abc import Callable
 
 from storygame.runtime.contracts import FactOperation, GameBreakWarning, TurnProposal, parse_turn_proposal
 from storygame.runtime.facts import Fact
-from storygame.runtime.state import RuntimeState
+from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
+from storygame.runtime.state import RuntimeState, TurnRecord
 from storygame.runtime.validation import ProgressionValidator
 
 
 class RuntimeEngine:
-    def __init__(self, state: RuntimeState, provider: Callable[[str], object]) -> None:
+    def __init__(
+        self, state: RuntimeState, provider: Callable[[str], object], *, projector: KnowledgeProjector | None = None
+    ) -> None:
         self.state = state
         self.provider = provider
         self.validator = ProgressionValidator(state.package)
+        self.projector = projector or KnowledgeProjector()
+        self.last_shadow_projection: TurnKnowledgeContext | None = None
 
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> TurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.state.require_turn_allowed()
         self._activate_pacing()
+        self.last_shadow_projection = self.projector.project(self.state, "player", player_input)
         proposal = self.validator.normalize(self.state, parse_turn_proposal(self.provider(player_input)))
         at_risk = self.validator.validate(self.state, proposal)
         if at_risk:
@@ -33,13 +39,51 @@ class RuntimeEngine:
             self.state.set_pending_break(warning, proposal=proposal)
             return proposal.model_copy(update={"game_break": warning})
         self.state.apply_proposal(proposal)
-        self.state.narrative_history.append(proposal.narration)
-        del self.state.narrative_history[:-24]
+        self._record_turn(proposal)
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
         self._apply_canonical_route_events()
         self._activate_pacing()
         return proposal
+
+    def _record_turn(self, proposal: TurnProposal) -> None:
+        event_ids = tuple(sorted(event.event_id for event in proposal.events))
+        reveal_ids = tuple(
+            knowledge_id
+            for event in proposal.events
+            for knowledge_id in self.state.package.knowledge_indexes.source_to_knowledge.get(
+                f"storylet:{event.event_id}:{event.realization_id}", ()
+            )
+        )
+        fact_keys = tuple(
+            sorted(
+                {operation.fact.predicate for operation in proposal.operations}
+                | {operation.fact.predicate for event in proposal.events for operation in event.operations}
+            )
+        )
+        event_operations = tuple(operation for event in proposal.events for operation in event.operations)
+        all_operations = (*proposal.operations, *event_operations)
+        affected_entity_ids = tuple(
+            sorted(
+                {
+                    entity_id
+                    for operation in all_operations
+                    for entity_id in (operation.fact.subject, operation.fact.object)
+                    if entity_id is not None
+                }
+            )
+        )
+        self.state.turn_records.append(
+            TurnRecord(
+                id=f"turn_{len(self.state.turn_records) + 1}",
+                reveal_ids=reveal_ids,
+                affected_entity_ids=affected_entity_ids,
+                event_ids=event_ids,
+                transition_id=proposal.transition.transition_id if proposal.transition else None,
+                fact_keys=fact_keys,
+            )
+        )
+        del self.state.turn_records[:-24]
 
     def resolve_break(self, decision: str) -> None:
         self.state.resolve_break(decision)

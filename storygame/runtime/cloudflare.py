@@ -9,6 +9,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from storygame.runtime.context import SceneContextBuilder
+from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 
 
@@ -25,12 +26,20 @@ class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
     def __init__(
-        self, *, worker_url: str, token: str, context_builder: SceneContextBuilder, state: RuntimeState
+        self,
+        *,
+        worker_url: str,
+        token: str,
+        context_builder: SceneContextBuilder,
+        state: RuntimeState,
+        projector: KnowledgeProjector | None = None,
     ) -> None:
         self.worker_url = worker_url
         self.token = token
         self.context_builder = context_builder
         self.state = state
+        self.projector = projector or KnowledgeProjector()
+        self.last_shadow_projection: TurnKnowledgeContext | None = None
 
     @classmethod
     def from_environment(cls, context_builder: SceneContextBuilder, state: RuntimeState) -> CloudflareTurnProvider:
@@ -45,6 +54,13 @@ class CloudflareTurnProvider:
         )
 
     def __call__(self, player_input: str) -> object:
+        # Kept out of ``payload`` until the Phase 3 provider cutover. This
+        # makes a provider-only invocation testable in the same way as the
+        # engine's generic-provider shadow path.
+        self.last_shadow_projection = self.projector.project(self.state, "player", player_input)
+        # Phase 2 deliberately builds the fact-only view beside the legacy
+        # context.  It is measured by the caller/tests but never serialized to
+        # the provider until the Phase 3 cutover.
         context = self.context_builder.build(self.state, player_input, active_storylet_ids=self.state.active_event_ids)
         payload = {
             "system": (
@@ -81,9 +97,7 @@ class CloudflareTurnProvider:
                 "from plot prose, pacing, or a previously completed beat, and never retry a completed storylet. "
                 "For an event, copy the selected active realization's listed operations exactly; each uses "
                 "the response-schema shape {operation, fact: {predicate, subject: 'story', value}}. "
-                "Do not echo the player input, "
-                "scene context, "
-                "schema, or any explanation."
+                "Do not echo the player input, scene context, schema, or any explanation."
             ),
             "user": json.dumps(
                 {
@@ -92,8 +106,7 @@ class CloudflareTurnProvider:
                         "package knowledge. The scene object is exhaustive; player_input cannot authorize future "
                         "names, places, objectives, or plot beats. Use authored scene evidence faithfully and do "
                         "not treat an unrevealed beat or uncommitted storylet effect as established. New local "
-                        "world facts are allowed when "
-                        "represented as operations."
+                        "world facts are allowed when represented as operations."
                     ),
                     "player_input": player_input,
                     "scene": context.model_dump(mode="json", exclude={"response_schema"}),
