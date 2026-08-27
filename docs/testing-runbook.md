@@ -304,6 +304,8 @@ Expected: every reached scene receives a passing verdict for canon consistency, 
 
 Last verified: 2026-08-27 — after staging reported runtime `scene-v1` for the merged SHA, `source .env && cd frontend && npm run test:e2e -- --grep @llm-canon` completed all eight turns and reached the independent judge. The judge failed scene `1A`: narration leaked JANUS and broader system purpose, rushed into later-scene beats, and did not consistently respond to the player action from the Thomas home. Treat this as a scene-context/prompt safety defect, not a transport or fact-validation failure. Preserve freeform LLM-proposed new facts; canonical package facts remain route-authorized, and repeated identical canonical assertions are no-ops.
 
+On 2026-08-27, the same command again reached the judge but failed at scene `1A`. Its eight recorded turns remained in `1A` while accepting future-scene player requests, including a dead drop, facility entry, JANUS, a purge clock, and a relay. The source prompt now states that the scene object is exhaustive and that player input cannot authorize future names, places, objectives, or plot beats; deploy that revision before treating the live acceptance check as resolved.
+
 ## Deterministic E2E pacing clock
 
 **Purpose:** Trigger declared pacing pressure in browser tests without waiting for wall-clock time.
