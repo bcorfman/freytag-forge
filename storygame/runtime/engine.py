@@ -4,11 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from storygame.runtime.contracts import FactOperation, GameBreakWarning, TurnProposal, parse_turn_proposal
+from storygame.runtime.contracts import (
+    FactOperation,
+    GameBreakWarning,
+    NarrationSegment,
+    ResolvedTurnProposal,
+    parse_turn_proposal,
+)
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState, TurnRecord
-from storygame.runtime.validation import ProgressionValidator
+from storygame.runtime.validation import ProgressionValidator, SelectedRevealResolver
 
 
 class RuntimeEngine:
@@ -18,16 +24,21 @@ class RuntimeEngine:
         self.state = state
         self.provider = provider
         self.validator = ProgressionValidator(state.package)
+        self.reveal_resolver = SelectedRevealResolver(state.package)
         self.projector = projector or KnowledgeProjector()
-        self.last_shadow_projection: TurnKnowledgeContext | None = None
+        self.last_projection: TurnKnowledgeContext | None = None
+        self.last_post_selection_projection: TurnKnowledgeContext | None = None
 
-    def turn(self, player_input: str, *, clock_seconds: int | None = None) -> TurnProposal:
+    def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.state.require_turn_allowed()
         self._activate_pacing()
-        self.last_shadow_projection = self.projector.project(self.state, "player", player_input)
-        proposal = self.validator.normalize(self.state, parse_turn_proposal(self.provider(player_input)))
+        self.last_projection = self.projector.project(self.state, "player", player_input)
+        provider_proposal = parse_turn_proposal(self.provider(player_input))
+        proposal, self.last_post_selection_projection = self.reveal_resolver.resolve(
+            self.state, self.last_projection, provider_proposal, self.projector, player_input
+        )
         at_risk = self.validator.validate(self.state, proposal)
         if at_risk:
             warning = GameBreakWarning(
@@ -46,7 +57,7 @@ class RuntimeEngine:
         self._activate_pacing()
         return proposal
 
-    def _record_turn(self, proposal: TurnProposal) -> None:
+    def _record_turn(self, proposal: ResolvedTurnProposal) -> None:
         event_ids = tuple(sorted(event.event_id for event in proposal.events))
         reveal_ids = tuple(
             knowledge_id
@@ -116,8 +127,12 @@ class RuntimeEngine:
                 self.state.fired_event_ids.add(event.id)
                 if event.transition_id:
                     self.state.apply_proposal(
-                        TurnProposal(
-                            narration="A declared pacing event changes the situation.",
+                        ResolvedTurnProposal(
+                            segments=(
+                                NarrationSegment(
+                                    kind="narration", text="A declared pacing event changes the situation."
+                                ),
+                            ),
                             transition={"transition_id": event.transition_id},
                         )
                     )

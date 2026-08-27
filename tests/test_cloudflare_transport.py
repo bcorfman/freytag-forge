@@ -37,13 +37,13 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
         captured["headers"] = dict(request.header_items())
         captured["payload"] = json.loads(request.data)
         captured["timeout"] = timeout
-        return _Response({"narration": '{"narration":"A valid proposal."}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"A valid proposal."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
-    assert provider("I listen.") == {"narration": "A valid proposal."}
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 2048
@@ -51,7 +51,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
-    assert "events[].event_id must be candidate.storylet_id" in captured["payload"]["system"]
+    assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
     assert context["player"]["candidates"] == []
     serialized = json.dumps(context).casefold()
@@ -62,18 +62,8 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
     assert "damaged recording" in candidate["statement"]
-    assert candidate["storylet_id"] == "SL-1A-B"
-    assert candidate["operations"] == [
-        {
-            "operation": "assert",
-            "fact": {"predicate": "sarah_warning_known", "subject": "story", "value": "true"},
-        },
-        {
-            "operation": "assert",
-            "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-        },
-    ]
-    assert provider.last_shadow_projection is not None
+    assert set(candidate) == {"id", "statement"}
+    assert provider.last_projection is not None
 
 
 def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
@@ -81,7 +71,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
 
     def open_request(request, **_kwargs):
         captured.append(json.loads(request.data))
-        return _Response({"narration": '{"narration":"A valid proposal."}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"A valid proposal."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
@@ -108,19 +98,14 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
         "storygame.runtime.cloudflare.urlopen",
         lambda *_args, **_kwargs: _Response(
             {
-                "narration": '{"narration":"A valid proposal.","operations":[],"transition":null,"events":[]}',
+                "narration": '{"segments":[{"kind":"narration","text":"A valid proposal."}]}',
                 "model": "worker-model",
                 "trace_id": "trace-123",
             }
         ),
     )
 
-    assert provider("I listen.") == {
-        "narration": "A valid proposal.",
-        "operations": [],
-        "transition": None,
-        "events": [],
-    }
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
 
 
 def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeypatch) -> None:
@@ -128,6 +113,12 @@ def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeyp
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     with pytest.raises(NarrationProviderError, match="unavailable"):
         CloudflareTurnProvider.from_environment(state)
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", " token ")
+    configured = CloudflareTurnProvider.from_environment(state)
+    assert configured.worker_url == "https://worker.example/turn"
+    assert configured.token == "token"
 
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
@@ -162,11 +153,11 @@ def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeyp
                 {},
                 BytesIO(b'{"status":"error","code":"AI_JSON_MODE_REJECTED"}'),
             )
-        return _Response({"narration": '{"narration":"A recovered proposal."}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"A recovered proposal."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"narration": "A recovered proposal."}
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
     assert payloads[0]["response_format"] == {"type": "json_object"}
     assert "response_format" not in payloads[1]
 
@@ -207,8 +198,7 @@ def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch
 
     assert caught.value.status_code == 502
     assert caught.value.error_code == "INVALID_PROPOSAL"
-    assert caught.value.message.endswith(":value_error)")
-    assert "segments" not in caught.value.message
+    assert caught.value.message.endswith("segments:too_short)")
     assert len(payloads) == 2
 
 

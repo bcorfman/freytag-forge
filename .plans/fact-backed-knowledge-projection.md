@@ -366,32 +366,54 @@ before a patrol arrival/search, patrol tape must be absent.
 
 ### Phase 3 / PR 3: Provider-context cutover
 
-- [x] Replace `SceneContext` with `TurnKnowledgeContext` in
-  `storygame/runtime/context.py`; delete `plot_beats` and all wholesale scene,
-  storylet, route, and history prose from the serialized payload.
-- [x] Change `CloudflareTurnProvider.__call__()` to send the safe scene frame,
-  committed player projection, per-speaker sayable projections, and only the
-  bounded eligible candidates.
-- [x] Move long story-policy prose out of `cloudflare.py`; keep concise generic
-  instructions that describe the typed contract, since prompt warnings are no
-  longer the secrecy mechanism.
-- [x] Update `TurnProposal`/Worker JSON schema with structured segments,
-  grounding IDs, and selected knowledge IDs while preserving the existing one
-  call plus one recovery budget.
+- [x] Replace the normal-turn provider transition contract with exactly two
+  provider-owned outputs: structured `segments` and `selected_knowledge_ids`.
+  Remove provider-authored `event_id`, `realization_id`, canonical fact
+  operations, and transitions from the normal reveal path; one package choice
+  must never be serialized through several independently generated fields.
+- [x] Keep `TurnKnowledgeContext` narrow: safe scene frame, committed
+  audience/speaker projections, bounded eligible candidates, and no wholesale
+  scene, storylet, route, or transcript prose. Candidate payloads expose the
+  stable knowledge ID and player-safe statement only; source ownership and
+  executable effects remain server-side package data.
+- [x] Add a deterministic selected-reveal resolver below the provider boundary.
+  It accepts only IDs in the current projected candidate set, rejects duplicate
+  or incompatible selections, derives the exact source storylet/realization and
+  operations from immutable package indexes, validates on a cloned fact store,
+  and returns one atomic internal proposal. It contains no story-, genre-, or
+  action-phrase-specific branch.
+- [x] Make malformed or unavailable selected IDs a typed no-mutation rejection.
+  JSON/schema recovery may make one additional provider request, but semantic
+  recovery must never infer a reveal from a provider-supplied operation tuple,
+  guessed event ID, narration text, or player input.
+- [x] Project post-selection knowledge from the resolver result before segment
+  validation/rendering. `grounding_ids` refer to committed knowledge or the
+  single resolved selection, never to a provider-invented source identifier.
 - [x] Keep API `segments` primary and derive migration-era `narration`/`lines`
-  only after acceptance. Update Cloudflare transport fixtures to assert absence
-  of future names, plot prose, unselected effects, and raw narrative history.
-- [x] Remove the shadow/legacy context path once cutover tests pass; do not leave
-  two selectable knowledge policies.
+  only after acceptance. Transport fixtures must prove the payload omits future
+  names, plot prose, raw history, source IDs, and route effects.
+- [x] Remove the legacy/shadow context and all wrapper-normalization branches
+  that repair provider-authored event IDs, realization IDs, or canonical
+  operations. Do not leave two selectable knowledge policies.
 
-Exit gate: [x] a captured deterministic Scene 1A provider payload contains no JANUS, later-scene
-purpose, future route effect, or full plot/storylet prose; it stays within the
-declared budget and still supplies the next eligible local reveal needed to
-respond substantively.
+Exit gate: [x] a deterministic Scene 1A provider/API fixture demonstrates that
+one selected knowledge ID is resolved to its exact package-owned source and
+effects, commits before its grounded narration renders, and that malformed,
+future, duplicate, or unselected IDs leave facts, events, continuity,
+transcript, and persistence unchanged. The captured provider payload contains
+no JANUS, later-scene purpose, source IDs, future route effects, or full
+plot/storylet prose, stays within the declared budget, and still offers the
+next eligible local reveal.
 
-Phase evidence: [x] run the deterministic fixture through the provider/API harness and retain the
-captured payload IDs. The drawer/recording turn must offer the damaged-warning
-candidate without exposing it earlier.
+Phase evidence: [ ] retain the deterministic fixture's request payload IDs,
+selected IDs, resolved package IDs, facts before/after, accepted segments, and
+rejection reason. Run it through the staged API/browser harness with a
+test-only deterministic provider selected by deployment configuration (never a
+player-controlled request flag). The drawer/recording turn must resolve and
+commit the damaged-warning candidate only on that turn; physical-search and
+phone turns must prove that an invalid provider selection cannot abort the turn
+or leak the warning. Run the live-provider `@knowledge-timeline` variant
+separately as quality evidence, not as structural authorization.
 
 ### Phase 4 / PR 4: Pre-commit narration safety and atomic rendering
 

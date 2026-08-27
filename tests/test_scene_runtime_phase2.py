@@ -9,36 +9,40 @@ import pytest
 from storygame.runtime.contracts import (
     FactOperation,
     GameBreakWarning,
+    NarrationSegment,
+    ResolvedTurnProposal,
     RuntimeContractError,
     SceneTransitionProposal,
-    TurnProposal,
+    StoryEventProposal,
     parse_turn_proposal,
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
+from storygame.runtime.validation import ProgressionValidator, ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import FactPredicate
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
 def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None:
-    proposal = parse_turn_proposal({"response": '{"narration":"Jeremiah looks around."}'})
+    proposal = parse_turn_proposal({"response": '{"segments":[{"kind":"narration","text":"Jeremiah looks around."}]}'})
 
     assert proposal.narration == "Jeremiah looks around."
     structured = parse_turn_proposal({"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]})
     assert structured.narration == "Jeremiah checks the door."
     reveal = parse_turn_proposal(
         {
-            "narration": "A damaged recording crackles to life.",
-            "events": [{"event_id": "SL-1A-B", "realization_id": "SL-1A-B-R2", "knowledge_ids": ["k_sl_1a_b_r2"]}],
+            "segments": [{"kind": "narration", "text": "A damaged recording crackles to life."}],
+            "selected_knowledge_ids": ["k_sl_1a_b_r2"],
         }
     )
-    assert reveal.events[0].knowledge_ids == ("k_sl_1a_b_r2",)
+    assert reveal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     with pytest.raises(RuntimeContractError):
         parse_turn_proposal({"content": "not JSON"})
     with pytest.raises(RuntimeContractError):
-        parse_turn_proposal({"narration": "ok", "unknown": True})
+        parse_turn_proposal({"segments": [{"kind": "narration", "text": "ok"}], "unknown": True})
 
 
 def test_fact_store_helpers_round_trip() -> None:
@@ -66,8 +70,8 @@ def test_scene_entry_fact_is_committed_at_bootstrap() -> None:
 def test_invalid_transition_or_event_is_atomic() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     original = state.facts.as_json()
-    proposal = TurnProposal(
-        narration="This cannot commit.",
+    proposal = ResolvedTurnProposal(
+        segments=(NarrationSegment(kind="narration", text="This cannot commit."),),
         operations=(FactOperation(operation="assert", fact=Fact(predicate="noticed", subject="memory_card")),),
         transition=SceneTransitionProposal(transition_id="t_1b_1c"),
     )
@@ -89,8 +93,8 @@ def test_warning_persists_and_return_restores_exact_snapshot(tmp_path) -> None:
         snapshot_id="snapshot_before_card",
     )
     state.apply_proposal(
-        TurnProposal(
-            narration="The card is ruined.",
+        ResolvedTurnProposal(
+            segments=(NarrationSegment(kind="narration", text="The card is ruined."),),
             operations=(FactOperation(operation="assert", fact=Fact(predicate="destroyed", subject="memory_card")),),
             game_break=warning,
         )
@@ -102,7 +106,7 @@ def test_warning_persists_and_return_restores_exact_snapshot(tmp_path) -> None:
     assert restored.pending_break == warning
     assert restored.facts.as_json() == before.facts.as_json()
     with pytest.raises(RuntimeStateError):
-        restored.apply_proposal(TurnProposal(narration="Ignore it."))
+        restored.apply_proposal(ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="Ignore it."),)))
     restored.resolve_break("return_to_scene")
     assert restored.snapshot() == before
 
@@ -136,8 +140,8 @@ def test_successful_proposal_commits_events_and_transition() -> None:
     state.active_event_ids.add("SL-1A-A")
     fact = Fact(predicate="noticed", subject="sarah_phone")
     state.apply_proposal(
-        TurnProposal(
-            narration="Jeremiah pockets the phone.",
+        ResolvedTurnProposal(
+            segments=(NarrationSegment(kind="narration", text="Jeremiah pockets the phone."),),
             operations=(FactOperation(operation="assert", fact=fact),),
             events=(
                 {
@@ -171,3 +175,74 @@ def test_invalid_break_decisions_and_missing_save_fail_closed(tmp_path) -> None:
     store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite")
     with pytest.raises(RuntimeSaveError, match="does not exist"):
         store.load("missing", PACKAGE)
+
+
+def test_internal_validator_rejects_protected_and_unrouted_canonical_operations() -> None:
+    validator = ProgressionValidator(PACKAGE)
+    state = RuntimeState.bootstrap(PACKAGE)
+    for operation in (
+        FactOperation(operation="assert", fact=Fact(predicate="facility_proof", subject="story", value="true")),
+        FactOperation(operation="assert", fact=Fact(predicate="janus_selection_system", subject="story", value="true")),
+    ):
+        proposal = ResolvedTurnProposal(
+            segments=(NarrationSegment(kind="narration", text="Internal validation fixture."),), operations=(operation,)
+        )
+        with pytest.raises(ProposalValidationError):
+            validator.validate(state, proposal)
+
+
+def test_internal_validator_checks_event_ownership_and_transition_triggers() -> None:
+    validator = ProgressionValidator(PACKAGE)
+    state = RuntimeState.bootstrap(PACKAGE)
+    inactive = ResolvedTurnProposal(
+        segments=(NarrationSegment(kind="narration", text="No active route."),),
+        events=(StoryEventProposal(event_id="SL-1A-B", realization_id="SL-1A-B-R2"),),
+    )
+    with pytest.raises(ProposalValidationError, match="not active"):
+        validator.validate(state, inactive)
+
+    state.active_event_ids.add("SL-1A-B")
+    wrong_effects = inactive.model_copy(
+        update={"events": (StoryEventProposal(event_id="SL-1A-B", realization_id="SL-1A-B-R2"),)}
+    )
+    with pytest.raises(ProposalValidationError, match="operations"):
+        validator.validate(state, wrong_effects)
+    transition = ResolvedTurnProposal(
+        segments=(NarrationSegment(kind="narration", text="Too soon to leave."),),
+        transition=SceneTransitionProposal(transition_id="t_1a_1b"),
+    )
+    with pytest.raises(ProposalValidationError, match="triggers"):
+        validator.validate(state, transition)
+
+
+def test_internal_dependency_analysis_honors_declared_fallbacks() -> None:
+    validator = ProgressionValidator(PACKAGE)
+    facts = RuntimeState.bootstrap(PACKAGE).facts.clone()
+    facts.assert_fact(Fact(predicate="incapacitated", subject="memory_card"))
+    assert validator.unsatisfied_dependencies("1A", facts) == ()
+    facts.assert_fact(Fact(predicate="destroyed", subject="gabriel"))
+    assert "gabriel" in validator.unsatisfied_dependencies("1A", facts)
+    assert validator.eligible_transitions(RuntimeState.bootstrap(PACKAGE)) == ()
+
+
+def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="sarah_lead_actionable", subject="story", value="true"))
+    validator = ProgressionValidator(PACKAGE)
+    proposal = ResolvedTurnProposal(
+        segments=(NarrationSegment(kind="narration", text="The route out is ready."),),
+        transition=SceneTransitionProposal(transition_id="t_1a_1b"),
+    )
+
+    assert validator.validate(state, proposal) == ()
+    assert validator.eligible_transitions(state)[0].id == "t_1a_1b"
+    assert not predicate_matches(FactPredicate(fact_id="unseen", equals=True), state.facts)
+    assert predicate_matches(FactPredicate(fact_id="unseen", equals=False), state.facts)
+
+
+def test_internal_resolved_proposal_rejects_duplicate_event_ids() -> None:
+    event = StoryEventProposal(event_id="SL-1A-B", realization_id="SL-1A-B-R2")
+    with pytest.raises(ValueError, match="unique"):
+        ResolvedTurnProposal(
+            segments=(NarrationSegment(kind="narration", text="Duplicate event fixture."),), events=(event, event)
+        )

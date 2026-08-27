@@ -1,4 +1,4 @@
-"""End-to-end validation for LLM-first scene progression."""
+"""Regression tests retained while the provider contract is narrowed in Phase 3."""
 
 from __future__ import annotations
 
@@ -6,396 +6,99 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.contracts import StoryEventProposal
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
-from storygame.runtime.state import RuntimeState, RuntimeStateError
-from storygame.runtime.validation import ProgressionValidator
+from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
-def test_selected_knowledge_canonicalizes_its_exact_realization_operations() -> None:
-    event = StoryEventProposal(
-        event_id="not_an_authored_event",
-        realization_id="not_an_authored_realization",
-        knowledge_ids=("k_sl_1a_b_r1",),
-        operations=(),
-    )
-
-    normalized = ProgressionValidator(PACKAGE)._canonicalize_selected_knowledge_event(event)
-
-    assert normalized.event_id == "SL-1A-B"
-    assert normalized.realization_id == "SL-1A-B-R1"
-    assert normalized.operations
-    assert all(operation.fact.value == "true" for operation in normalized.operations)
+def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
+    return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": selected or []}
 
 
-def _provider(payload: dict[str, object], calls: list[str]):
-    def call(player_input: str) -> dict[str, object]:
-        calls.append(player_input)
-        return payload
-
-    return call
-
-
-def test_normal_freeform_turn_calls_provider_once_and_transitions() -> None:
-    calls: list[str] = []
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "I connect Sarah's disappearance to the card.",
-                "events": [
-                    {
-                        "event_id": "SL-1A-B",
-                        "realization_id": "SL-1A-B-R1",
-                        "operations": [
-                            {
-                                "operation": "assert",
-                                "fact": {
-                                    "predicate": "continuity_initiative_known",
-                                    "subject": "story",
-                                    "value": "true",
-                                },
-                            },
-                            {
-                                "operation": "assert",
-                                "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                            },
-                            {
-                                "operation": "assert",
-                                "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
-                            },
-                        ],
-                    }
-                ],
-                "transition": {"transition_id": "t_1a_1b"},
-            },
-            calls,
-        ),
-    )
-
-    engine.turn("I question everyone, then head for the dead drop.")
-
-    assert calls == ["I question everyone, then head for the dead drop."]
-    assert engine.state.current_scene_id == "1B"
-
-
-def test_exact_active_realization_operations_are_safely_normalized_into_an_event() -> None:
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "Sarah's card yields a real lead.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {
-                            "predicate": "continuity_initiative_known",
-                            "subject": "story",
-                            "value": "true",
-                        },
-                    },
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                    },
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
-                    },
-                ],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I recover Sarah's hidden evidence.")
-
-    assert "SL-1A-B" in engine.state.fired_event_ids
-
-
-def test_duplicate_equivalent_realizations_normalize_to_their_single_active_route() -> None:
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "The forced entry makes Sarah's disappearance look targeted.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                    }
-                ],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I inspect the signs of forced entry.")
-
-    assert "SL-1A-A" in engine.state.fired_event_ids
-
-
-def test_unique_active_realization_subset_normalizes_to_its_full_route_effect() -> None:
+def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.update(("SL-1A-B", "SL-1A-C"))
-    state.fired_event_ids.add("SL-1A-A")
-    state.facts.assert_fact(Fact(predicate="sarah_abduction_suspicion", subject="story", value="true"))
-    engine = RuntimeEngine(
-        state,
-        _provider(
-            {
-                "narration": "The card turns Sarah's disappearance into a lead Jeremiah can act on.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
-                    }
-                ],
-            },
-            [],
-        ),
-    )
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(state, lambda _: _turn("The damaged recording carries Sarah's warning.", ["k_sl_1a_b_r2"]))
 
-    engine.turn("I follow the strongest lead from Sarah's card.")
+    proposal = engine.turn("I search the desk drawer and play the damaged recording.")
 
+    assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
+    assert [(event.event_id, event.realization_id) for event in proposal.events] == [("SL-1A-B", "SL-1A-B-R2")]
+    assert state.facts.has("sarah_warning_known", "story", value="true")
     assert "SL-1A-B" in state.fired_event_ids
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert engine.last_post_selection_projection is not None
+    assert "k_sl_1a_b_r2" in {item.id for item in engine.last_post_selection_projection.committed_knowledge}
 
 
-def test_malformed_event_wrapper_can_recover_a_unique_canonical_subset() -> None:
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "The hidden card turns the evidence into an actionable lead.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_lead_actionable", "subject": "story", "value": "true"},
-                    }
-                ],
-                "events": [{"event_id": "SL-1A-B", "realization_id": "SL-1A-B-R1", "operations": []}],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I recover Sarah's hidden evidence.")
-
-    assert "SL-1A-B" in engine.state.fired_event_ids
-
-
-def test_normalization_preserves_new_facts_alongside_a_canonical_realization() -> None:
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "A blood smear makes the forced entry impossible to dismiss.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "has_blood", "subject": "thomas_home", "value": "true"},
-                    },
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                    },
-                ],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I inspect the signs of forced entry.")
-
-    assert engine.state.facts.has("has_blood", "thomas_home", value="true")
-    assert "SL-1A-A" in engine.state.fired_event_ids
-
-
-def test_normalization_removes_only_canonical_operations_duplicated_by_a_valid_event() -> None:
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider(
-            {
-                "narration": "The forced entry makes Sarah's disappearance look targeted.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "has_blood", "subject": "thomas_home", "value": "true"},
-                    },
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                    },
-                ],
-                "events": [
-                    {
-                        "event_id": "SL-1A-A",
-                        "realization_id": "SL-1A-A-R1",
-                        "operations": [
-                            {
-                                "operation": "assert",
-                                "fact": {
-                                    "predicate": "sarah_abduction_suspicion",
-                                    "subject": "story",
-                                    "value": "true",
-                                },
-                            }
-                        ],
-                    }
-                ],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I inspect the signs of forced entry.")
-
-    assert engine.state.facts.has("has_blood", "thomas_home", value="true")
-    assert "SL-1A-A" in engine.state.fired_event_ids
-
-
-def test_repeated_canonical_fact_is_a_safe_noop() -> None:
+@pytest.mark.parametrize(
+    "selected", [["k_sl_1c_b_r1"], ["k_sl_1a_b_r2", "k_sl_1a_b_r2"], ["k_sl_1a_b_r1", "k_sl_1a_b_r2"]]
+)
+def test_invalid_or_duplicate_selection_is_atomic(selected: list[str]) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="sarah_abduction_suspicion", subject="story", value="true"))
+    before = (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records))
+    engine = RuntimeEngine(state, lambda _: _turn("The room yields no unearned revelation.", selected))
+
+    with pytest.raises((ProposalValidationError, ValueError)):
+        engine.turn("I inspect Sarah's phone.")
+
+    assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
+
+
+def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
-        _provider(
-            {
-                "narration": "The existing signs of forced entry still point to Sarah's abduction.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
-                    }
-                ],
-            },
-            [],
-        ),
+        lambda _: {
+            "segments": [{"kind": "narration", "text": "A recording clicks on.", "grounding_ids": ["SL-1A-B"]}],
+            "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+        },
     )
 
-    engine.turn("I reconsider the forced entry.")
+    with pytest.raises(ProposalValidationError, match="grounding"):
+        engine.turn("I recover the damaged recording.")
+    assert not state.facts.has("sarah_warning_known", "story", value="true")
 
-    assert state.facts.has("sarah_abduction_suspicion", "story", value="true")
 
-
-def test_unmatched_canonical_fact_still_fails_closed() -> None:
+def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    before = state.facts.as_json()
+    engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
+
+    engine.turn("I wait.")
+    engine.turn("I continue waiting.")
+
+    assert state.facts.has("patrol_return_pressure", "story", value="true")
+    assert "pressure_1a" in state.fired_event_ids
+    assert state.facts.has("story_elapsed_seconds", "story", value="120")
+
+
+def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    before = (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records))
     engine = RuntimeEngine(
         state,
-        _provider(
-            {
-                "narration": "The facility proof arrives too early.",
-                "operations": [
-                    {
-                        "operation": "assert",
-                        "fact": {"predicate": "facility_proof", "subject": "story", "value": "true"},
-                    }
-                ],
-            },
-            [],
-        ),
+        lambda _: {
+            "segments": [{"kind": "narration", "text": "An invented shortcut appears."}],
+            "operations": [{"operation": "assert", "fact": {"predicate": "facility_proof", "subject": "story"}}],
+        },
     )
 
-    with pytest.raises(RuntimeStateError, match="validated storylet realization"):
-        engine.turn("I imagine proof from a distant facility.")
+    with pytest.raises(ValueError):
+        engine.turn("I imagine distant proof.")
+    assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
 
-    assert engine.state.facts.as_json() == before
 
-
-def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
+def test_internal_game_break_path_keeps_the_resolved_candidate_pending_until_proceed(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    before = state.facts.as_json()
-    engine = RuntimeEngine(
-        state,
-        _provider({"narration": "I leave now.", "transition": {"transition_id": "t_1a_1b"}}, []),
-    )
+    engine = RuntimeEngine(state, lambda _: _turn("The choice would strand a future dependency."))
+    monkeypatch.setattr(engine.validator, "validate", lambda *_: ("gabriel",))
 
-    with pytest.raises(RuntimeStateError, match="triggers"):
-        engine.turn("I leave immediately.")
+    proposal = engine.turn("I make the risky attempt.")
 
-    assert engine.state.current_scene_id == "1A"
-    assert engine.state.facts.as_json() == before
-
-
-def test_deadline_pacing_event_advances_without_parsing_player_text() -> None:
-    calls: list[str] = []
-    engine = RuntimeEngine(
-        RuntimeState.bootstrap(PACKAGE),
-        _provider({"narration": "I hesitate.", "narrative_seconds": 60}, calls),
-    )
-
-    engine.turn("wait")
-    engine.turn("I keep waiting, unsure what to do.")
-
-    assert calls == ["wait", "I keep waiting, unsure what to do."]
-    assert engine.state.current_scene_id == "1A"
-    assert engine.state.facts.has("patrol_return_pressure", "story", value="true")
-    assert "pressure_1a" in engine.state.fired_event_ids
-
-
-def test_game_break_proceed_commits_candidate_and_return_restores_snapshot() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    before = state.facts.as_json()
-    engine = RuntimeEngine(
-        state,
-        _provider(
-            {
-                "narration": "I permanently incapacitate Gabriel.",
-                "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "gabriel"}}],
-            },
-            [],
-        ),
-    )
-
-    proposal = engine.turn("I attack Gabriel.")
     assert proposal.game_break is not None
-    assert state.facts.as_json() == before
-    engine.resolve_break("return_to_scene")
-    assert state.facts.as_json() == before
-
-    engine.turn("I attack Gabriel again.")
+    assert state.has_pending_break
     engine.resolve_break("proceed")
-    assert state.facts.has("incapacitated", "gabriel")
-
-
-def test_declared_item_fallback_prevents_false_game_break() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    engine = RuntimeEngine(
-        state,
-        _provider(
-            {
-                "narration": "The memory card is destroyed.",
-                "operations": [{"operation": "assert", "fact": {"predicate": "destroyed", "subject": "memory_card"}}],
-            },
-            [],
-        ),
-    )
-
-    engine.turn("I smash the memory card.")
-
     assert not state.has_pending_break
-    assert state.facts.has("destroyed", "memory_card")
-
-
-@pytest.mark.parametrize(("turns", "narrative_seconds"), ((18, 65), (20, 60), (22, 55)))
-def test_main_path_pacing_simulations_reach_resolution_in_target_narrative_window(
-    turns: int, narrative_seconds: int
-) -> None:
-    transitions = (
-        ("sarah_abduction_suspicion", "t_1a_1b"),
-        ("facility_proof", "t_1b_1c"),
-        ("false_identities_ready", "t_1c_2a"),
-        ("janus_evidence", "t_2a_2b"),
-        ("purge_clock_started", "t_2b_2c"),
-        ("sarah_reached", "t_2c_3a"),
-        ("relay_open", "t_3a_3b"),
-        ("broadcast_started", "t_3b_3c"),
-    )
-    assert turns * narrative_seconds in range(1100, 1211)
-    assert len(transitions) == 8

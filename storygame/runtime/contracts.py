@@ -53,10 +53,31 @@ class NarrationSegment(_StrictModel):
 
 
 class TurnProposal(_StrictModel):
-    # Structured segments are primary. ``narration`` is a derived compatibility
-    # field for older runtime consumers and API ``lines``.
-    narration: str = Field(default="", max_length=12000)
-    segments: tuple[NarrationSegment, ...] = ()
+    """The complete untrusted normal-turn provider contract.
+
+    A provider may narrate and select one authored knowledge unit.  It cannot
+    name package routes, mutate facts, or choose a transition.
+    """
+
+    segments: tuple[NarrationSegment, ...] = Field(min_length=1)
+    selected_knowledge_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def has_unique_selections(self) -> TurnProposal:
+        if len(set(self.selected_knowledge_ids)) != len(self.selected_knowledge_ids):
+            raise ValueError("selected knowledge IDs must be unique")
+        return self
+
+    @property
+    def narration(self) -> str:
+        return " ".join(segment.text for segment in self.segments)
+
+
+class ResolvedTurnProposal(_StrictModel):
+    """Internal, package-derived candidate accepted by the state boundary."""
+
+    segments: tuple[NarrationSegment, ...] = Field(min_length=1)
+    selected_knowledge_ids: tuple[str, ...] = ()
     narrative_seconds: int = Field(default=60, ge=40, le=80)
     operations: tuple[FactOperation, ...] = ()
     transition: SceneTransitionProposal | None = None
@@ -64,17 +85,14 @@ class TurnProposal(_StrictModel):
     game_break: GameBreakWarning | None = None
 
     @model_validator(mode="after")
-    def no_duplicate_events(self) -> TurnProposal:
+    def no_duplicate_events(self) -> ResolvedTurnProposal:
         if len({event.event_id for event in self.events}) != len(self.events):
             raise ValueError("event IDs must be unique")
-        if self.narration:
-            return self
-        narration = " ".join(segment.text for segment in self.segments)
-        if not narration:
-            raise ValueError("a turn proposal needs narration or structured segments")
-        if len(narration) > 12000:
-            raise ValueError("derived narration is too long")
-        return self.model_copy(update={"narration": narration})
+        return self
+
+    @property
+    def narration(self) -> str:
+        return " ".join(segment.text for segment in self.segments)
 
 
 def parse_turn_proposal(envelope: object) -> TurnProposal:
