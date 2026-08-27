@@ -300,7 +300,7 @@ Expected: every reached scene receives a passing verdict for canon consistency, 
 
 **Cleanup:** Remove generated ignored E2E artifacts if they are no longer useful.
 
-**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` or `E2E_TEST_CLOCK_SECONDS` is absent. Start the local API with `FREYTAG_ALLOW_TEST_CLOCK=1`, then use `E2E_TEST_CLOCK_SECONDS=120`; each turn is bounded to 30 seconds (override with `E2E_TURN_TIMEOUT_MS`) and partial progress is written to `artifacts/e2e-llm-canon-progress.{json,md}`.
+**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` or `E2E_TEST_CLOCK_SECONDS` is absent. Start the local API with `FREYTAG_ALLOW_TEST_CLOCK=1`, then use `E2E_TEST_CLOCK_SECONDS=120`; Vite adds this value to the ordinary JSON turn body, avoiding a CORS preflight. Each turn is bounded to 30 seconds (override with `E2E_TURN_TIMEOUT_MS`) and partial progress is written to `artifacts/e2e-llm-canon-progress.{json,md}`.
 
 Last verified safely: 2026-08-27 — `npm test` passed 5 tests and Playwright discovered the tagged `@llm-canon` test with a placeholder API base URL; no live model calls were made.
 
@@ -311,11 +311,11 @@ Last verified safely: 2026-08-27 — `npm test` passed 5 tests and Playwright di
 **Setup / seed:**
 
 - Start only a local/API test server with `FREYTAG_ALLOW_TEST_CLOCK=1`.
-- Start Vite with `E2E_TEST_CLOCK_SECONDS=120`; this adds the test-clock header to turn requests.
+- Start Vite with `E2E_TEST_CLOCK_SECONDS=120`; this adds `test_clock_seconds` to JSON turn requests.
 
 **Safe actions:**
 
-- The header is ignored unless the API process explicitly opted in.
+- The test-clock body field is ignored unless the API process explicitly opted in.
 
 **Destructive or external actions:**
 
@@ -336,7 +336,7 @@ Expected: the turn response reports `pressure_1a` in `fired_pacing_event_ids` wi
 
 **Cleanup:** Unset `FREYTAG_ALLOW_TEST_CLOCK` after local testing.
 
-**Notes:** The application accepts `X-Freytag-Test-Clock-Seconds` only with explicit server-side opt-in and bounds it to 0–3600 seconds.
+**Notes:** The application accepts `test_clock_seconds` only with explicit server-side opt-in and bounds it to 0–3600 seconds. The legacy header remains supported for non-browser harnesses.
 
 ## Story Feed root page — local Playwright QA
 

@@ -135,8 +135,7 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I wait and listen."},
-            headers={"X-Freytag-Test-Clock-Seconds": "120"},
+            json={"session_id": session_id, "player_input": "I wait and listen.", "test_clock_seconds": 120},
         )
 
     assert response.status_code == 200
@@ -152,8 +151,7 @@ def test_test_clock_header_is_ignored_without_local_opt_in(tmp_path) -> None:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen."},
-            headers={"X-Freytag-Test-Clock-Seconds": "120"},
+            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
         )
 
     assert response.json()["state"]["story_elapsed_seconds"] == 40
