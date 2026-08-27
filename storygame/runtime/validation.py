@@ -85,14 +85,22 @@ class ProgressionValidator:
                 for operation in event.operations
             }
             if not event_operations:
-                return proposal
-            return proposal.model_copy(
-                update={
-                    "operations": tuple(
-                        operation for operation in proposal.operations if operation not in event_operations
-                    )
-                }
-            )
+                # A provider can pair a uniquely identifying canonical subset
+                # with a malformed event wrapper.  Discard only that wrapper
+                # and let the same route-subset recovery below prove the
+                # package-authorized effect; otherwise validation still rejects
+                # the proposal unchanged.
+                if not proposal.operations:
+                    return proposal
+                proposal = proposal.model_copy(update={"events": ()})
+            else:
+                return proposal.model_copy(
+                    update={
+                        "operations": tuple(
+                            operation for operation in proposal.operations if operation not in event_operations
+                        )
+                    }
+                )
         matches = [
             (route, realization, tuple(self._route_operation(operation) for operation in realization.operations))
             for route in self._routes.values()
