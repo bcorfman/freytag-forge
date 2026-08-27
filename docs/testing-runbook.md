@@ -39,6 +39,17 @@ Expected: all tests pass with repository coverage at or above 90%.
 tests on 2026-08-27 but exited nonzero solely because the global 90% coverage
 gate measured 31.67%; use the full suite for a passing verification.
 
+After merged SHA `fb49aea9a7bcae79c20c53bb6f13f7fc72b647b4` completed the
+staging deployment, the opt-in browser gate passed: `source .env && cd
+frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep
+@knowledge-timeline` ran one Chromium test successfully in 10.3 seconds on
+2026-08-27. It wrote ignored local evidence to
+`artifacts/e2e-knowledge-timeline.{json,md}`. This remote run creates a staging
+session and may make billed model calls; retain the artifacts while evaluating
+the phase and delete them when no longer needed. Chrome DevTools MCP was not
+available in the verification session, so Playwright supplied the browser
+evidence.
+
 ## Route-backed continuity-initiative progression
 
 **Purpose:** Verify that the revised five-file story package loads with executable storylet routes, activates only eligible scene-local guidance, and rejects durable effects that are not route-authorized.
