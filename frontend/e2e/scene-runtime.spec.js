@@ -128,7 +128,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   test.skip(!process.env.E2E_KNOWLEDGE_TIMELINE, "requires an explicitly selected staged knowledge-timeline run");
   await startSceneSession(page);
   const turns = [];
-  const forbiddenBeforeRecording = /torn fabric|sarah(?:'s)? warning|emergency broadcasts?|patrol tape|janus/i;
+  const forbiddenBeforeRecording = /sarah(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
     const payload = await submitTurn(page, input);
     const narration = narrationText(payload);

@@ -333,8 +333,9 @@ unchanged in this PR.
 
 Phase evidence: run the persistent Scene 1A knowledge-timeline fixture. It
 must prove that the entry fact is committed before render and that the typed
-catalog contains no warning, patrol tape, or unsupported physical evidence
-before a source authorizes it.
+catalog contains no unrevealed canonical warning, JANUS knowledge, or future
+scene entity before a source authorizes it. Non-game-breaking local clues may
+be invented and persisted as ordinary facts.
 
 ### Phase 2 / PR 2: Fact-derived projection in shadow mode
 
@@ -410,7 +411,7 @@ candidate without exposing it earlier.
   infer narrative authorization.
 - [ ] Add adversarial tests for future entity aliases, protected paraphrases,
   uncited knowledge, wrong-speaker dialogue, unselected candidate effects,
-  premature transitions, invented evidence, durable incidental claims, and
+  premature transitions, invented game-breaking evidence, durable incidental claims, and
   rejected-turn atomicity.
 - [ ] Add API/frontend tests proving rejected narration never reaches
   `segments`/`lines` and accepted segments preserve their validated structure.
@@ -419,10 +420,11 @@ Exit gate: no narration is rendered or remembered unless its grounding and
 same-turn effects validate against the candidate projection; every failure
 leaves facts, scene, events, continuity, transcript, and persistence unchanged.
 
-Phase evidence: run the fixture with adversarial provider replies: invented
-torn fabric, a premature warning, and patrol tape without an arrival/search
-event. Each must be rejected atomically; a grounded recording reveal commits
-before it renders.
+Phase evidence: run the fixture with adversarial provider replies: an invented
+clue that incorrectly completes a required dependency, a premature warning,
+and patrol tape without an arrival/search event. The game-breaking and
+premature claims must be rejected atomically; ordinary local clues remain
+valid, and a grounded recording reveal commits before it renders.
 
 ### Phase 5 / PR 5: Staged acceptance, rollout, and cleanup
 
@@ -466,8 +468,8 @@ judge path in PR 5.
 
 | Step | Player input | Required evidence | Must remain absent |
 | --- | --- | --- | --- |
-| Opening | Start a session | Quiet house, Sarah missing, phone on the kitchen floor; entry fact committed. | Torn fabric, warning, patrol tape, JANUS, future facilities. |
-| Physical search | Inspect the back door and room | Only authored physical clues and a concrete local consequence. | Invented evidence such as torn fabric. |
+| Opening | Start a session | Quiet house, Sarah missing, phone on the kitchen floor; entry fact committed. | Unrevealed warning, JANUS, future facilities. |
+| Physical search | Inspect the back door and room | A concrete local consequence; non-game-breaking invented clues may persist as ordinary facts. | A clue that completes a canonical dependency or leaks future knowledge. |
 | Phone | Examine Sarah's phone | Phone-specific result; no warning unless its realization is selected. | Sarah's warning or a patrol event. |
 | Drawer/recording | Search desk/drawer for research or recording | Damaged-warning candidate is offered; its fact commits before narration. | Warning before that commit. |
 | Gate | Check the gate after a patrol arrival/search | Arrival/search precedes any patrol tape or recording. | Patrol tape without causal arrival/search. |
