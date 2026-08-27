@@ -62,6 +62,16 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
     assert "damaged recording" in candidate["statement"]
     assert candidate["storylet_id"] == "SL-1A-B"
+    assert candidate["operations"] == [
+        {
+            "operation": "assert",
+            "fact": {"predicate": "sarah_warning_known", "subject": "story", "value": "true"},
+        },
+        {
+            "operation": "assert",
+            "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+        },
+    ]
     assert provider.last_shadow_projection is not None
 
 
