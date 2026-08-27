@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.contracts import FactOperation, StoryEventProposal, TurnProposal
+from storygame.runtime.contracts import FactOperation, NarrationSegment, ResolvedTurnProposal, StoryEventProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -64,8 +64,10 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
 
     warning = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"]
     state.apply_proposal(
-        TurnProposal(
-            narration="The damaged recording begins with Sarah's breath catching.",
+        ResolvedTurnProposal(
+            segments=(
+                NarrationSegment(kind="narration", text="The damaged recording begins with Sarah's breath catching."),
+            ),
             events=(
                 StoryEventProposal(
                     event_id="SL-1A-B",
@@ -91,14 +93,17 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     assert {"k_sl_1a_c_r1", "k_sl_1a_c_r2"} <= _ids(patrol.candidates)
 
 
-def test_shadow_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path) -> None:
+def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    engine = RuntimeEngine(state, lambda _: {"narration": "Dust shifts beneath the desk as I search."})
+    engine = RuntimeEngine(
+        state,
+        lambda _: {"segments": [{"kind": "narration", "text": "Dust shifts beneath the desk as I search."}]},
+    )
 
     engine.turn("I search the desk.")
     assert state.narrative_history == []
     assert state.turn_records[0].id == "turn_1"
-    assert engine.last_shadow_projection is not None
+    assert engine.last_projection is not None
 
     store = RuntimeStateSqliteStore(tmp_path / "shadow.sqlite")
     store.save("shadow", state)

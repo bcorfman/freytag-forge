@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.contracts import RuntimeContractError, TurnProposal, contract_error_summary
+from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -80,7 +80,7 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
 
 
 def _turn_payload(
-    state: RuntimeState, proposal: TurnProposal | str, game_break: object | None = None
+    state: RuntimeState, proposal: ResolvedTurnProposal | str, game_break: object | None = None
 ) -> dict[str, object]:
     """Keep structured segments primary while retaining migration-era lines."""
     if isinstance(proposal, str):

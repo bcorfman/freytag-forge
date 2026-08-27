@@ -24,10 +24,6 @@ class ProjectedKnowledge(_KnowledgeModel):
 class RevealCandidate(_KnowledgeModel):
     id: str
     statement: str
-    entity_ids: tuple[str, ...]
-    storylet_id: str | None = None
-    realization_id: str | None = None
-    operations: tuple[dict[str, object], ...]
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
@@ -156,21 +152,6 @@ class KnowledgeProjector:
 
     @staticmethod
     def _candidate(item: KnowledgeDefinition) -> RevealCandidate:
-        return RevealCandidate(
-            id=item.id,
-            statement=item.statement,
-            entity_ids=item.entity_ids,
-            storylet_id=item.source.storylet_id,
-            realization_id=item.source.realization_id,
-            operations=tuple(
-                {
-                    "operation": effect.op,
-                    "fact": {
-                        "predicate": effect.fact_id,
-                        "subject": "story",
-                        "value": str(effect.value).lower(),
-                    },
-                }
-                for effect in item.establishes
-            ),
-        )
+        """Expose only the player-safe selection affordance to the provider."""
+
+        return RevealCandidate(id=item.id, statement=item.statement)

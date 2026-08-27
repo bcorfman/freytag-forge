@@ -3,8 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from copy import deepcopy
 
-from storygame.runtime.contracts import FactOperation, SceneTransitionProposal, StoryEventProposal, TurnProposal
+from storygame.runtime.contracts import (
+    FactOperation,
+    ResolvedTurnProposal,
+    SceneTransitionProposal,
+    StoryEventProposal,
+    TurnProposal,
+)
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
@@ -28,6 +35,55 @@ def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
     return not matched if predicate.equals is False else matched
 
 
+class SelectedRevealResolver:
+    """Resolve a provider knowledge ID into one immutable package route."""
+
+    def __init__(self, package: StoryPackage) -> None:
+        self.package = package
+        self._validator = ProgressionValidator(package)
+        self._routes = {route.id: route for route in package.storylet_routes.storylets}
+
+    def resolve(self, state, projection, provider_proposal: TurnProposal, projector, player_input: str):
+        selected = provider_proposal.selected_knowledge_ids
+        if len(selected) > 1:
+            raise ProposalValidationError("at most one knowledge selection is allowed per turn")
+        candidate_ids = {item.id for item in projection.candidates}
+        if any(item_id not in candidate_ids for item_id in selected):
+            raise ProposalValidationError("selected knowledge is not eligible for this turn")
+        events: tuple[StoryEventProposal, ...] = ()
+        if selected:
+            knowledge = self.package.knowledge_indexes.by_id[selected[0]]
+            route = self._routes.get(knowledge.source.storylet_id or "")
+            realization = (
+                next((item for item in route.realizations if item.id == knowledge.source.realization_id), None)
+                if route
+                else None
+            )
+            if route is None or realization is None:
+                raise ProposalValidationError("selected knowledge has no executable package source")
+            events = (
+                StoryEventProposal(
+                    event_id=route.id,
+                    realization_id=realization.id,
+                    knowledge_ids=selected,
+                    operations=tuple(self._validator._route_operation(item) for item in realization.operations),
+                ),
+            )
+        resolved = ResolvedTurnProposal(
+            segments=provider_proposal.segments,
+            selected_knowledge_ids=selected,
+            events=events,
+        )
+        self._validator.validate(state, resolved)
+        candidate_state = deepcopy(state)
+        candidate_state.apply_proposal(resolved)
+        post_projection = projector.project(candidate_state, "player", player_input)
+        allowed = {item.id for item in projection.committed_knowledge} | set(selected)
+        if any(grounding_id not in allowed for segment in resolved.segments for grounding_id in segment.grounding_ids):
+            raise ProposalValidationError("segment grounding is not committed or selected knowledge")
+        return resolved, post_projection
+
+
 class ProgressionValidator:
     """Validates effects, storylets, transitions, and future dependencies."""
 
@@ -37,7 +93,7 @@ class ProgressionValidator:
         self._transitions = {transition.id: transition for transition in package.pacing.transitions}
         self._routes = {route.id: route for route in package.storylet_routes.storylets}
 
-    def validate(self, state: RuntimeState, proposal: TurnProposal) -> tuple[str, ...]:
+    def validate(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> tuple[str, ...]:
         self._validate_operations(proposal)
         candidate = state.facts.clone()
         for operation in proposal.operations:
@@ -49,133 +105,7 @@ class ProgressionValidator:
         self._validate_transition(state, proposal.transition, candidate)
         return self.unsatisfied_dependencies(state.current_scene_id, candidate)
 
-    def normalize(self, state: RuntimeState, proposal: TurnProposal) -> TurnProposal:
-        """Recover a uniquely identified active realization missing its event wrapper.
-
-        This is a structural repair only: a full tuple, or an unambiguous subset,
-        must identify one active route realization. The resulting effects always
-        come from that package-authored realization, never from a new fact.
-        """
-
-        proposal = proposal.model_copy(
-            update={"events": tuple(self._canonicalize_selected_knowledge_event(event) for event in proposal.events)}
-        )
-        proposal = proposal.model_copy(
-            update={
-                "operations": tuple(
-                    operation
-                    for operation in proposal.operations
-                    if not self._canonical_operation_is_noop(state, operation)
-                )
-            }
-        )
-
-        if not proposal.operations:
-            return proposal
-        canonical_operations = tuple(
-            operation for operation in proposal.operations if operation.fact.predicate in self.package.world.facts
-        )
-        if not canonical_operations:
-            return proposal
-        if proposal.events:
-            event_operations = {
-                operation
-                for event in proposal.events
-                if event.event_id in state.active_event_ids and event.event_id not in state.fired_event_ids
-                if (route := self._routes.get(event.event_id)) is not None
-                for realization in route.realizations
-                if realization.id == event.realization_id
-                if event.operations == tuple(self._route_operation(operation) for operation in realization.operations)
-                for operation in event.operations
-            }
-            if not event_operations:
-                # A provider can pair a uniquely identifying canonical subset
-                # with a malformed event wrapper.  Discard only that wrapper
-                # and let the same route-subset recovery below prove the
-                # package-authorized effect; otherwise validation still rejects
-                # the proposal unchanged.
-                if not proposal.operations:
-                    return proposal
-                proposal = proposal.model_copy(update={"events": ()})
-            else:
-                return proposal.model_copy(
-                    update={
-                        "operations": tuple(
-                            operation for operation in proposal.operations if operation not in event_operations
-                        )
-                    }
-                )
-        matches = [
-            (route, realization, tuple(self._route_operation(operation) for operation in realization.operations))
-            for route in self._routes.values()
-            if route.id in state.active_event_ids and route.id not in state.fired_event_ids
-            for realization in route.realizations
-        ]
-        exact_matches = [match for match in matches if match[2] == canonical_operations]
-        route_ids = {route.id for route, _, _ in exact_matches}
-        if len(route_ids) == 1:
-            route, realization, expected_operations = exact_matches[0]
-        else:
-            partial_matches = [
-                match for match in matches if all(operation in match[2] for operation in canonical_operations)
-            ]
-            partial_route_ids = {route.id for route, _, _ in partial_matches}
-            partial_operation_sets: list[tuple[FactOperation, ...]] = []
-            for _, _, operations in partial_matches:
-                if operations not in partial_operation_sets:
-                    partial_operation_sets.append(operations)
-            if len(partial_route_ids) != 1 or len(partial_operation_sets) != 1:
-                return proposal
-            route, realization, expected_operations = partial_matches[0]
-        return proposal.model_copy(
-            update={
-                "operations": tuple(
-                    operation
-                    for operation in proposal.operations
-                    if operation.fact.predicate not in self.package.world.facts
-                ),
-                "events": (
-                    StoryEventProposal(
-                        event_id=route.id,
-                        realization_id=realization.id,
-                        operations=expected_operations,
-                    ),
-                ),
-            }
-        )
-
-    def _canonicalize_selected_knowledge_event(self, event: StoryEventProposal) -> StoryEventProposal:
-        """Use package fields only when selected knowledge agrees on one authored realization."""
-
-        if not event.knowledge_ids:
-            return event
-        knowledge = self.package.knowledge_indexes.by_id
-        selected = tuple(knowledge[item_id] for item_id in event.knowledge_ids if item_id in knowledge)
-        if len(selected) != len(event.knowledge_ids):
-            return event
-        sources = {(item.source.storylet_id, item.source.realization_id) for item in selected}
-        if len(sources) != 1:
-            return event
-        storylet_id, realization_id = sources.pop()
-        route = self._routes.get(storylet_id or "")
-        realization = next((item for item in route.realizations if item.id == realization_id), None) if route else None
-        if realization is None:
-            return event
-        return event.model_copy(
-            update={
-                "event_id": route.id,
-                "realization_id": realization.id,
-                "operations": tuple(self._route_operation(operation) for operation in realization.operations),
-            }
-        )
-
-    def _canonical_operation_is_noop(self, state: RuntimeState, operation: FactOperation) -> bool:
-        if operation.fact.predicate not in self.package.world.facts:
-            return False
-        already_asserted = operation.fact in state.facts.asserted
-        return already_asserted if operation.operation == "assert" else not already_asserted
-
-    def _validate_operations(self, proposal: TurnProposal) -> None:
+    def _validate_operations(self, proposal: ResolvedTurnProposal) -> None:
         protected = set(self.package.world.protected_knowledge)
         for operation in proposal.operations:
             if operation.fact.predicate in protected or operation.fact.subject in protected:
@@ -183,7 +113,7 @@ class ProgressionValidator:
             if operation.fact.predicate in self.package.world.facts:
                 raise ProposalValidationError("canonical facts must use a validated storylet realization")
 
-    def _validate_events(self, state: RuntimeState, proposal: TurnProposal) -> None:
+    def _validate_events(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> None:
         storylet_ids = {
             storylet.id for storylet in self.package.storylets if storylet.scene_id == state.current_scene_id
         }

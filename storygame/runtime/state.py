@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from storygame.runtime.contracts import FactOperation, GameBreakWarning, TurnProposal
+from storygame.runtime.contracts import FactOperation, GameBreakWarning, ResolvedTurnProposal
 from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import StoryPackage
 
@@ -55,7 +55,7 @@ class RuntimeState(BaseModel):
     turn_records: list[TurnRecord] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
-    pending_proposal: TurnProposal | None = None
+    pending_proposal: ResolvedTurnProposal | None = None
 
     @model_validator(mode="after")
     def scene_and_phase_match_package(self) -> RuntimeState:
@@ -101,16 +101,18 @@ class RuntimeState(BaseModel):
         warning: GameBreakWarning,
         *,
         snapshot: RuntimeSnapshot | None = None,
-        proposal: TurnProposal | None = None,
+        proposal: ResolvedTurnProposal | None = None,
     ) -> None:
         self.require_turn_allowed()
         if warning.snapshot_id == "":
             raise RuntimeStateError("game break requires a snapshot ID")
         self.pending_snapshot = snapshot or self.snapshot()
         self.pending_break = warning
-        self.pending_proposal = proposal or TurnProposal(narration="Pending game-break candidate.")
+        self.pending_proposal = proposal or ResolvedTurnProposal(
+            segments=({"kind": "narration", "text": "Pending game-break candidate."},)
+        )
 
-    def apply_proposal(self, proposal: TurnProposal) -> None:
+    def apply_proposal(self, proposal: ResolvedTurnProposal) -> None:
         """Validate a complete candidate before replacing canonical session state.
 
         A warning intentionally commits no candidate facts: only the explicit

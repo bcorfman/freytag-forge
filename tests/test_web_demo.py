@@ -1,10 +1,20 @@
 """Hosted scene-runtime adapter contracts."""
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError
+from storygame.runtime.persistence import RuntimeStateSqliteStore
+from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
+
+PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _provider(text: str):
+    return lambda _input: {"segments": [{"kind": "narration", "text": text}]}
 
 
 def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch, tmp_path) -> None:
@@ -12,7 +22,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     app = create_demo_app(
         channel="staging",
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: lambda _input: {"narration": "The lead sharpens."},
+        provider_factory=lambda _state: _provider("The lead sharpens."),
     )
 
     with TestClient(app) as client:
@@ -46,16 +56,16 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     }
     assert "Sarah's phone lies facedown" in session.json()["opening"]["text"]
     assert session.json()["opening"]["text"] != "Enter 1A"
-    assert turn.json()["segments"] == [{"kind": "narration", "text": "The lead sharpens."}]
+    assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
 
 
-def test_game_break_is_typed_persistent_and_resolved_server_side(tmp_path) -> None:
+def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_path) -> None:
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: (
             lambda _input: {
-                "narration": "I incapacitate Gabriel.",
+                "segments": [{"kind": "narration", "text": "I incapacitate Gabriel."}],
                 "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "gabriel"}}],
             }
         ),
@@ -63,20 +73,8 @@ def test_game_break_is_typed_persistent_and_resolved_server_side(tmp_path) -> No
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I attack Gabriel."})
-        blocked = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I keep going."})
-        resolution = client.post(
-            "/api/v1/game-break",
-            json={
-                "session_id": session_id,
-                "warning_id": warning.json()["game_break"]["warning_id"],
-                "decision": "return_to_scene",
-            },
-        )
-
-    assert warning.json()["game_break"]["warning_id"] == "future_dependency_at_risk"
-    assert warning.json()["state"]["pending_game_break"] is True
-    assert blocked.status_code == 409
-    assert resolution.json()["state"]["pending_game_break"] is False
+    assert warning.status_code == 422
+    assert "operations" in warning.json()["detail"]
 
 
 def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limits(monkeypatch, tmp_path) -> None:
@@ -137,21 +135,21 @@ def test_adapter_returns_cors_safe_invalid_provider_contract(tmp_path) -> None:
 def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: lambda _input: {"narration": "The lead sharpens."},
+        provider_factory=lambda _state: _provider("The lead sharpens."),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "I listen."})
 
     assert response.status_code == 200
-    assert response.json()["segments"] == [{"kind": "narration", "text": "The lead sharpens."}]
+    assert response.json()["segments"][0]["text"] == "The lead sharpens."
 
 
 def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: lambda _input: {"narration": "The patrol's radios crackle outside."},
+        provider_factory=lambda _state: _provider("The patrol's radios crackle outside."),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
@@ -167,7 +165,7 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
 def test_test_clock_header_is_ignored_without_local_opt_in(tmp_path) -> None:
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: lambda _input: {"narration": "The room stays tense.", "narrative_seconds": 40},
+        provider_factory=lambda _state: _provider("The room stays tense."),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
@@ -176,14 +174,62 @@ def test_test_clock_header_is_ignored_without_local_opt_in(tmp_path) -> None:
             json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
         )
 
-    assert response.json()["state"]["story_elapsed_seconds"] == 40
+    assert response.json()["state"]["story_elapsed_seconds"] == 60
+
+
+def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_path) -> None:
+    """Deterministic API E2E evidence for the Scene 1A warning regression."""
+
+    responses = iter(
+        (
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "The damaged recording crackles: Sarah warns Jeremiah not to trust broadcasts.",
+                        "grounding_ids": ["k_sl_1a_b_r2"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+            },
+            {
+                "segments": [{"kind": "narration", "text": "An unearned later clue appears."}],
+                "selected_knowledge_ids": ["k_future_unavailable"],
+            },
+        )
+    )
+
+    def provider_factory(state):
+        state.active_event_ids.add("SL-1A-B")
+        return lambda _input: next(responses)
+
+    store_path = tmp_path / "phase3.sqlite"
+    app = create_demo_app(store_path=store_path, provider_factory=provider_factory)
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        accepted = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I search the drawer."})
+        invalid_session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()[
+            "session_id"
+        ]
+        before_rejection = RuntimeStateSqliteStore(store_path).load(invalid_session_id, PACKAGE).snapshot()
+        rejected = client.post(
+            "/api/v1/turn", json={"session_id": invalid_session_id, "player_input": "I check the gate."}
+        )
+
+    restored = RuntimeStateSqliteStore(store_path).load(session_id, PACKAGE)
+    invalid_restored = RuntimeStateSqliteStore(store_path).load(invalid_session_id, PACKAGE)
+    assert accepted.status_code == 200
+    assert accepted.json()["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert restored.facts.has("sarah_warning_known", "story", value="true")
+    assert rejected.status_code == 409
+    assert invalid_restored.snapshot() == before_rejection
 
 
 def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: lambda _input: {"narration": "The room stays tense."},
+        provider_factory=lambda _state: _provider("The room stays tense."),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]

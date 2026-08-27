@@ -2,9 +2,9 @@
 
 ## Phase 3 provider knowledge-context cutover
 
-**Purpose:** Verify the Worker receives only the fact-derived player and
-speaker projections, with bounded eligible candidates and no legacy authoring
-or transcript context.
+**Purpose:** Verify the Worker receives only fact-derived player and speaker
+projections, and that its sole reveal authority is one eligible knowledge ID;
+the runtime must derive the source and fact effects atomically.
 
 **Setup / seed:**
 
@@ -30,26 +30,36 @@ TMPDIR=/tmp uv run pytest -q
 source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
 ```
 
-Expected: the intercepted request excludes plot prose, route prose, future
-JANUS terms, raw narrative history, and unrevealed warning text; after the
-recording route becomes eligible it includes only that local candidate. The
-staged probe retains the same reveal timeline.
+Expected: the intercepted request excludes plot prose, route prose, source IDs,
+fact effects, future JANUS terms, raw narrative history, and unrevealed warning
+text; after the recording route becomes eligible it includes only that local
+candidate. The deterministic API fixture proves valid selection commits the
+authored damaged-warning route before grounded narration is returned, while
+future, duplicate, and unavailable IDs leave facts, events, records, and the
+saved session unchanged. The staged probe retains the same reveal timeline.
 
 **Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
 the staged evidence is no longer needed.
 
-**Notes:** Last verified locally on 2026-08-27: `uv run ruff check --fix .`,
-`uv run ruff format .`, `TMPDIR=/tmp uv run pytest -q` (91 passed, 90.81%
-coverage), `cd frontend && npm test`, and `cd frontend && npm run build` all
-passed. The transport fixture captures the payload and proves the opening has
-no candidate, while an activated `SL-1A-B` drawer turn exposes only the
-damaged-recording candidate. Record the deployed SHA and observed browser
-result here; do not treat this undeployed local run as staging evidence.
+**Notes:** Last verified locally on 2026-08-27: `TMPDIR=/tmp uv run pytest -q`
+passed with 92 tests after the resolver cutover. The transport fixture captures
+the payload and proves the opening has no candidate, while an activated
+`SL-1A-B` drawer turn exposes only the damaged-recording candidate, not its
+source or effects. `test_phase3_api_timeline_resolves_only_an_eligible_recording_selection`
+records the API-level selection, route effect, rejected future ID, and SQLite
+snapshot check. Record the deployed SHA and observed browser result here; do
+not treat this undeployed local run as staging evidence.
 
 The first staging probe exposed a migration-era E2E assumption: a valid accepted
 `action` segment was rejected because the helper looked only for `narration`.
 The timeline harness now accepts text from all supported structured segment
 kinds; rerun the staged command after this revision deploys.
+
+A later staging attempt reported a browser CORS failure. Direct checks of the
+current staging revision's `OPTIONS /api/v1/turn` and cross-origin invalid
+`POST /api/v1/turn` both returned `Access-Control-Allow-Origin: *`; rerun the
+probe before changing CORS configuration, and record the deployed SHA if it
+recurs.
 
 ## Phase 2 fact-derived shadow projection
 

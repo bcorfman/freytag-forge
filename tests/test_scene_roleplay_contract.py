@@ -23,28 +23,13 @@ POLICY_INPUTS = (
 )
 
 
-def _transition_provider(state: RuntimeState, calls: list[str]) -> Callable[[str], object]:
+def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str], object]:
     def provider(player_input: str) -> object:
         calls.append(player_input)
         assert state.current_scene_id == "1A"
-        route = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-B")
-        realization = route.realizations[0]
         return {
-            "narration": "The current scene moves forward through the validated proposal.",
-            "events": [
-                {
-                    "event_id": route.id,
-                    "realization_id": realization.id,
-                    "operations": [
-                        {
-                            "operation": item.op,
-                            "fact": {"predicate": item.fact_id, "subject": "story", "value": str(item.value).lower()},
-                        }
-                        for item in realization.operations
-                    ],
-                }
-            ],
-            "transition": {"transition_id": "t_1a_1b"},
+            "segments": [{"kind": "narration", "text": "The current scene gains a concrete lead."}],
+            "selected_knowledge_ids": ["k_sl_1a_b_r1"],
         }
 
     return provider
@@ -54,12 +39,13 @@ def _transition_provider(state: RuntimeState, calls: list[str]) -> Callable[[str
 def test_every_policy_style_reaches_the_provider_unchanged(player_input: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     calls: list[str] = []
-    engine = RuntimeEngine(state, _transition_provider(state, calls))
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(state, _selection_provider(state, calls))
 
     engine.turn(player_input)
 
     assert calls == [player_input]
-    assert state.current_scene_id == "1B"
+    assert "SL-1A-B" in state.fired_event_ids
 
 
 def test_route_package_has_the_fixed_canonical_scene_chain() -> None:
@@ -68,42 +54,23 @@ def test_route_package_has_the_fixed_canonical_scene_chain() -> None:
 
 def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    first = RuntimeEngine(state, lambda _: {"narration": "I search the room."})
-    first.turn("I examine the room.")
-    storylet_id = next(iter(state.active_event_ids))
-    route = next(item for item in PACKAGE.storylet_routes.storylets if item.id == storylet_id)
-    realization = route.realizations[0]
+    state.active_event_ids.add("SL-1A-B")
+    knowledge_id = "k_sl_1a_b_r2"
     event_payload = {
-        "narration": "A bounded scene situation changes the pressure.",
-        "events": [
-            {
-                "event_id": storylet_id,
-                "realization_id": realization.id,
-                "operations": [
-                    {
-                        "operation": operation.op,
-                        "fact": {
-                            "predicate": operation.fact_id,
-                            "subject": "story",
-                            "value": str(operation.value).lower(),
-                        },
-                    }
-                    for operation in realization.operations
-                ],
-            }
-        ],
+        "segments": [{"kind": "narration", "text": "A bounded scene situation changes the pressure."}],
+        "selected_knowledge_ids": [knowledge_id],
     }
 
-    RuntimeEngine(state, lambda _: event_payload).turn("I follow the lead.")
+    RuntimeEngine(state, lambda _: event_payload).turn("I recover Sarah's damaged recording.")
 
-    assert storylet_id in state.fired_event_ids
-    with pytest.raises(ProposalValidationError, match=rf"{storylet_id}.*not active in scene 1A"):
+    assert "SL-1A-B" in state.fired_event_ids
+    with pytest.raises(ProposalValidationError, match="not eligible"):
         RuntimeEngine(state, lambda _: event_payload).turn("I try to repeat it.")
 
 
 def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    engine = RuntimeEngine(state, lambda _: {"narration": "I wait.", "narrative_seconds": 60})
+    engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "I wait."}]})
 
     engine.turn("I wait.")
     engine.turn("I continue waiting.")

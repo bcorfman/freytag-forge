@@ -42,7 +42,7 @@ class CloudflareTurnProvider:
         self.token = token
         self.state = state
         self.projector = projector or KnowledgeProjector()
-        self.last_shadow_projection: TurnKnowledgeContext | None = None
+        self.last_projection: TurnKnowledgeContext | None = None
 
     @classmethod
     def from_environment(cls, state: RuntimeState) -> CloudflareTurnProvider:
@@ -56,21 +56,21 @@ class CloudflareTurnProvider:
         )
 
     def __call__(self, player_input: str) -> object:
-        self.last_shadow_projection = self.projector.project(self.state, "player", player_input)
+        self.last_projection = self.projector.project(self.state, "player", player_input)
         speaker_contexts = self._speaker_contexts(player_input)
         payload = {
             "system": (
                 "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
                 "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
-                "or invent durable evidence. Select a candidate only with its exact event and operations. Use segments "
-                "with grounding_ids when possible; dialogue may use only its speaker's sayable context. Candidate.id "
-                "belongs only in events[].knowledge_ids; events[].event_id must be candidate.storylet_id."
+                "or invent durable evidence. Use segments with grounding_ids when possible; dialogue may use only its "
+                "speaker's sayable context. Select at most one candidate by its ID in selected_knowledge_ids. Never "
+                "return source IDs, events, operations, facts, or transitions."
             ),
             "user": json.dumps(
                 {
                     "player_input": player_input,
                     "knowledge_context": {
-                        "player": self.last_shadow_projection.model_dump(mode="json"),
+                        "player": self.last_projection.model_dump(mode="json"),
                         "speakers": speaker_contexts,
                     },
                     "response_schema": TurnProposal.model_json_schema(),
@@ -116,7 +116,7 @@ class CloudflareTurnProvider:
             **payload,
             "system": (
                 f"{payload['system']} Your previous response was invalid. Return only a complete JSON TurnProposal "
-                "with either non-empty narration or non-empty segments; include no markdown or explanation."
+                "with non-empty segments and optional selected_knowledge_ids; include no markdown or explanation."
             ),
         }
         try:
