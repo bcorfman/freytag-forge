@@ -8,7 +8,12 @@ from os import getenv
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from storygame.runtime.contracts import RuntimeContractError, TurnProposal, parse_turn_proposal
+from storygame.runtime.contracts import (
+    RuntimeContractError,
+    TurnProposal,
+    contract_error_summary,
+    parse_turn_proposal,
+)
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 
@@ -96,7 +101,12 @@ class CloudflareTurnProvider:
         except HTTPError as error:
             raise self._narration_error(error) from error
         except RuntimeContractError as error:
-            raise NarrationProviderError("narration service returned an invalid proposal", 502) from error
+            summary = contract_error_summary(error) or "invalid proposal"
+            raise NarrationProviderError(
+                f"narration service returned an invalid proposal ({summary})",
+                502,
+                "INVALID_PROPOSAL",
+            ) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
 
@@ -115,7 +125,12 @@ class CloudflareTurnProvider:
         except HTTPError as error:
             raise self._narration_error(error) from error
         except RuntimeContractError as error:
-            raise NarrationProviderError("narration service returned an invalid proposal", 502) from error
+            summary = contract_error_summary(error) or "invalid proposal"
+            raise NarrationProviderError(
+                f"narration service returned an invalid proposal ({summary})",
+                502,
+                "INVALID_PROPOSAL",
+            ) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
 

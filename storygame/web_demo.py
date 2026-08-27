@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.contracts import RuntimeContractError, TurnProposal
+from storygame.runtime.contracts import RuntimeContractError, TurnProposal, contract_error_summary
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -114,6 +114,12 @@ def _scene_opening(state: RuntimeState) -> str:
     )
 
 
+def _contract_error_detail(error: RuntimeContractError) -> str:
+    """Expose only schema paths/types; never provider prose or rejected values."""
+    summary = contract_error_summary(error)
+    return f"provider response violates the turn contract ({summary})" if summary else str(error)
+
+
 def create_demo_app(
     *,
     channel: str | None = None,
@@ -210,7 +216,7 @@ def create_demo_app(
                 headers["X-Worker-Revision"] = error.worker_revision
             raise HTTPException(status_code=error.status_code, detail=error.message, headers=headers) from error
         except RuntimeContractError as error:
-            raise HTTPException(status_code=422, detail="provider response violates the turn contract") from error
+            raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
