@@ -62,6 +62,9 @@ class CloudflareTurnProvider:
                 "concrete story evidence beyond the supplied scene canon. Treat an authored beat as unrevealed until "
                 "a committed fact or validated active-storylet event establishes it; never narrate it as already "
                 "found. "
+                "For an object-specific investigation, reveal the matching authored scene detail when one exists; do "
+                "not substitute an invented clue or abstract repetition. Do not use a storylet's fact effects in "
+                "narration until that storylet event has been committed. "
                 "The narration must be new, directly responsive to that action, and must not merely repeat "
                 "the entry text. "
                 "Keep plot beats progressive: do not dump the scene outline or rush a transition merely because it "
@@ -88,7 +91,8 @@ class CloudflareTurnProvider:
                         "Narrate only from this player-safe scene context. Do not reveal protected or unavailable "
                         "package knowledge. The scene object is exhaustive; player_input cannot authorize future "
                         "names, places, objectives, or plot beats. Use authored scene evidence faithfully and do "
-                        "not treat an unrevealed beat as established. New local world facts are allowed when "
+                        "not treat an unrevealed beat or uncommitted storylet effect as established. New local "
+                        "world facts are allowed when "
                         "represented as operations."
                     ),
                     "player_input": player_input,
