@@ -10,6 +10,8 @@ import yaml
 from pydantic import ValidationError
 
 from storygame.story_package.models import (
+    KnowledgeCatalog,
+    KnowledgeIndexes,
     PacingSource,
     Scene,
     SceneMetadata,
@@ -121,6 +123,130 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
             )
         )
     return tuple(storylets)
+
+
+def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
+    """Compile deterministic indexes so runtime never interprets author prose."""
+
+    by_id = {item.id: item for item in catalog.knowledge}
+    facts_to_knowledge: dict[str, list[str]] = {}
+    source_to_knowledge: dict[str, list[str]] = {}
+    scene_to_candidates: dict[str, list[str]] = {}
+    alias_to_knowledge: dict[str, list[str]] = {}
+    audience_to_known_terms: dict[str, list[str]] = {}
+    prerequisite_dependents: dict[str, list[str]] = {}
+    for item in catalog.knowledge:
+        source_key = f"{item.source.storylet_id}:{item.source.realization_id}"
+        source_to_knowledge.setdefault(source_key, []).append(item.id)
+        for effect in item.establishes:
+            facts_to_knowledge.setdefault(effect.fact_id, []).append(item.id)
+        for scene_id in item.available_in_scenes:
+            scene_to_candidates.setdefault(scene_id, []).append(item.id)
+        for alias in item.aliases:
+            alias_to_knowledge.setdefault(alias.casefold(), []).append(item.id)
+        audience_key = item.audience.kind + ":" + ",".join(item.audience.character_ids)
+        audience_to_known_terms.setdefault(audience_key, []).extend((item.statement, *item.aliases))
+        for predicate in item.requires:
+            prerequisite_dependents.setdefault(predicate.fact_id, []).append(item.id)
+
+    def frozen(values: dict[str, list[str]]) -> dict[str, tuple[str, ...]]:
+        return {key: tuple(sorted(set(value))) for key, value in values.items()}
+
+    return KnowledgeIndexes(
+        by_id=by_id,
+        facts_to_knowledge=frozen(facts_to_knowledge),
+        source_to_knowledge=frozen(source_to_knowledge),
+        scene_to_candidates=frozen(scene_to_candidates),
+        alias_to_knowledge=frozen(alias_to_knowledge),
+        audience_to_known_terms={key: tuple(sorted(set(value))) for key, value in audience_to_known_terms.items()},
+        prerequisite_dependents=frozen(prerequisite_dependents),
+    )
+
+
+def _validate_knowledge(package: StoryPackage) -> None:
+    """Fail closed when a declarative revelation cannot be proven package-local."""
+
+    scenes = {scene.metadata.scene_id for scene in package.scenes}
+    entity_groups = (package.world.locations, package.world.npcs, package.world.items)
+    entities = {entity.id for group in entity_groups for entity in group}
+    facts = package.fact_ids
+    catalog = package.knowledge
+    if {item.id for item in catalog.facts} != facts or len(catalog.facts) != len(facts):
+        raise StoryPackageError("knowledge facts must define every world fact exactly once")
+    if {frame.scene_id for frame in catalog.scene_frames} != scenes or len(catalog.scene_frames) != len(scenes):
+        raise StoryPackageError("knowledge must declare exactly one safe scene frame per scene")
+    routes = {route.id: route for route in package.storylet_routes.storylets}
+    scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
+    produced_by: dict[str, set[str]] = {}
+    for known in catalog.knowledge:
+        for effect in known.establishes:
+            produced_by.setdefault(effect.fact_id, set()).update(known.available_in_scenes)
+    seen_ids: set[str] = set()
+    owned_effects: set[tuple[str, str, str, object]] = set()
+    graph: dict[str, set[str]] = {}
+    for item in catalog.knowledge:
+        if item.id in seen_ids:
+            raise StoryPackageError(f"duplicate knowledge ID '{item.id}'")
+        seen_ids.add(item.id)
+        if set(item.entity_ids + item.relevance.entity_ids) - entities:
+            raise StoryPackageError(f"knowledge '{item.id}' references unknown entities")
+        if set(item.available_in_scenes) - scenes:
+            raise StoryPackageError(f"knowledge '{item.id}' references an unknown scene")
+        required_facts = {predicate.fact_id for predicate in item.requires}
+        established_facts = {effect.fact_id for effect in item.establishes}
+        if required_facts - facts or established_facts - facts:
+            raise StoryPackageError(f"knowledge '{item.id}' references an unknown fact")
+        if item.audience.kind == "characters" and set(item.audience.character_ids) - {
+            entity.id for entity in package.world.npcs
+        }:
+            raise StoryPackageError(f"knowledge '{item.id}' references an unknown audience character")
+        if item.source.kind == "storylet_realization":
+            route = routes.get(item.source.storylet_id or "")
+            if route is None or route.scene_id not in item.available_in_scenes:
+                raise StoryPackageError(f"knowledge '{item.id}' has a source unavailable in its scene")
+            realization = next((value for value in route.realizations if value.id == item.source.realization_id), None)
+            if realization is None:
+                raise StoryPackageError(f"knowledge '{item.id}' references an unknown realization")
+            route_effects = set(realization.operations)
+            if not set(item.establishes).issubset(route_effects):
+                raise StoryPackageError(f"knowledge '{item.id}' effects differ from its realization")
+        if {effect.fact_id for effect in item.establishes} & {predicate.fact_id for predicate in item.requires}:
+            raise StoryPackageError(f"knowledge '{item.id}' establishes its own prerequisite")
+        for predicate in item.requires:
+            available = produced_by.get(predicate.fact_id, set())
+            reachable = any(
+                scene_order[source] < scene_order[target] for source in available for target in item.available_in_scenes
+            )
+            if not reachable:
+                raise StoryPackageError(f"knowledge '{item.id}' has an unreachable prerequisite")
+        for predicate in item.requires:
+            graph.setdefault(predicate.fact_id, set()).update(effect.fact_id for effect in item.establishes)
+        for effect in item.establishes:
+            key = (
+                item.source.storylet_id or "scene_entry",
+                item.source.realization_id or item.id,
+                effect.op,
+                effect.fact_id,
+                effect.value,
+            )
+            if key in owned_effects:
+                raise StoryPackageError("knowledge source/effect ownership is ambiguous")
+            owned_effects.add(key)
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(fact_id: str) -> None:
+        if fact_id in visiting:
+            raise StoryPackageError("knowledge prerequisite/reveal cycle")
+        if fact_id not in visited:
+            visiting.add(fact_id)
+            for next_fact in graph.get(fact_id, ()):
+                visit(next_fact)
+            visiting.remove(fact_id)
+            visited.add(fact_id)
+
+    for fact_id in graph:
+        visit(fact_id)
 
 
 def _validate(package: StoryPackage) -> None:
@@ -241,6 +367,7 @@ def load_story_package(root: Path) -> StoryPackage:
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
+        knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))
 
         def event_source(item: dict[str, Any]) -> dict[str, Any]:
             activation = item.get("activation", {})
@@ -288,6 +415,9 @@ def load_story_package(root: Path) -> StoryPackage:
         pacing=pacing,
         storylets=storylets,
         storylet_routes=routes,
+        knowledge=knowledge,
+        knowledge_indexes=_compile_knowledge_indexes(knowledge),
     )
     _validate(package)
+    _validate_knowledge(package)
     return package

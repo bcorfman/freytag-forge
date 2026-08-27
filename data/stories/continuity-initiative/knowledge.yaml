@@ -1,0 +1,1775 @@
+schema_version: '2.0'
+facts:
+- id: sarah_abduction_suspicion
+  purpose: 'Canonical world state: sarah abduction suspicion.'
+- id: facility_proof
+  purpose: 'Canonical world state: facility proof.'
+- id: false_identities_ready
+  purpose: 'Canonical world state: false identities ready.'
+- id: janus_evidence
+  purpose: 'Canonical world state: janus evidence.'
+- id: purge_clock_started
+  purpose: 'Canonical world state: purge clock started.'
+- id: sarah_reached
+  purpose: 'Canonical world state: sarah reached.'
+- id: relay_open
+  purpose: 'Canonical world state: relay open.'
+- id: broadcast_started
+  purpose: 'Canonical world state: broadcast started.'
+- id: continuity_initiative_known
+  purpose: Jeremiah knows Sarah was investigating a suspicious emergency program called
+    the Continuity Initiative.
+- id: sarah_warning_known
+  purpose: Jeremiah has recovered Sarah’s warning not to trust emergency broadcasts.
+- id: official_interest_in_sarah_known
+  purpose: Jeremiah knows the welfare patrol was specifically interested in Sarah’s
+    reporting.
+- id: house_marked_for_return
+  purpose: The Thomas home has been marked by the patrol for a likely return.
+- id: transport_route_identified
+  purpose: Jeremiah and Gabriel have enough evidence to follow the removal operation’s
+    physical transport route toward a specific industrial/freight destination.
+- id: gabriel_face_known
+  purpose: Jeremiah recognizes Gabriel as the unidentified man in Sarah’s photograph.
+- id: gabriel_identified
+  purpose: Jeremiah knows the follower is Gabriel Dexter, Sarah’s contact.
+- id: missing_may_be_alive
+  purpose: Jeremiah has credible reason to believe at least some missing people are
+    alive.
+- id: gabriel_retains_system_access
+  purpose: Jeremiah has observed Gabriel using retained Continuity-system access.
+- id: service_level_access_known
+  purpose: Jeremiah and Gabriel know a credible service-level route into the regional
+    facility.
+- id: captives_confirmed_alive
+  purpose: Jeremiah has directly confirmed living captives inside the regional facility.
+- id: sarah_possible_sighting
+  purpose: Jeremiah has an obscured, unconfirmed possible sighting of Sarah inside
+    the facility.
+- id: national_detention_network_known
+  purpose: Jeremiah knows the Los Angeles site is part of a national detention network.
+- id: architects_strategy_known
+  purpose: Jeremiah knows Charles and Rebecca intend to leverage the manufactured
+    catastrophe for political reconstruction/control.
+- id: gabriel_prepared_before_event
+  purpose: Jeremiah knows Gabriel prepared for the disappearance before it occurred.
+- id: restricted_corridor_access
+  purpose: Jeremiah and Gabriel have access to restricted infrastructure corridors.
+- id: rebecca_observing_infiltrators
+  purpose: Rebecca has quietly ordered the infiltrators observed; this fact is not
+    automatically known to Jeremiah.
+- id: jeremiah_deliberately_left_behind
+  purpose: JANUS records show Jeremiah was deliberately left behind.
+- id: gabriel_janus_role_known
+  purpose: Jeremiah knows Gabriel helped develop JANUS.
+- id: gabriel_claimed_reform_motive
+  purpose: Gabriel has claimed he broke with Charles after learning JANUS would be
+    used for mass detention/control.
+- id: sarah_resistance_known
+  purpose: Jeremiah knows Sarah is actively sabotaging the facility from inside.
+- id: rebecca_offer_active
+  purpose: Rebecca has offered Gabriel safety/Sarah’s release in exchange for helping
+    her displace Charles.
+- id: antagonist_split_known
+  purpose: Jeremiah has legitimate evidence that Rebecca and Charles are in conflict.
+- id: combined_broadcast_rescue_plan_known
+  purpose: Jeremiah/Gabriel know Sarah’s plan to combine evidence transmission with
+    opening detention sectors via Rebecca’s office.
+- id: uprising_prepared
+  purpose: Jeremiah knows Sarah has organized an active prisoner resistance network.
+- id: conditioned_release_plan_known
+  purpose: Jeremiah knows selected captives were being conditioned to support Charles’s
+    public explanation.
+- id: behavioral_experiments_known
+  purpose: Jeremiah knows the facility conducted the authored neurological/behavioral
+    experiments.
+- id: military_override_codes_available
+  purpose: The resistance has secured or reliably relayed the emergency military override
+    codes.
+- id: human_security_control
+  purpose: JANUS can no longer reliably predict the group’s route and human operators
+    have taken direct control.
+- id: detention_locations_offer_known
+  purpose: Rebecca has offered detention-site location information as leverage.
+- id: charles_abandoned_rebecca
+  purpose: Charles has stripped Rebecca of local control and treated her as expendable.
+- id: gabriel_confession_available
+  purpose: Gabriel’s confession authenticating his JANUS role is available for the
+    broadcast.
+- id: truth_no_longer_containable
+  purpose: Enough independently verifiable evidence is public that Charles cannot
+    contain the conspiracy by controlling one channel.
+- id: portable_archive_secured
+  purpose: The portable archive has been recovered from Rebecca’s sole control.
+- id: archive_contains_prisoner_locations
+  purpose: The recovered archive is known to contain prisoner locations as well as
+    conspirator identities.
+- id: archive_copies_distributed
+  purpose: Copies of the archive have been distributed to independent networks.
+- id: evacuation_route_open
+  purpose: A viable evacuation path from the collapsing facility is open.
+- id: captives_reaching_surface
+  purpose: Surviving captives are reaching the surface.
+- id: los_angeles_facility_lost
+  purpose: The Los Angeles facility is no longer a viable concealed Continuity operation.
+- id: national_network_fragmenting
+  purpose: Public reports show the national detention network is fragmenting.
+- id: community_rescue_efforts_begun
+  purpose: Communities/families have begun independent rescue efforts.
+- id: phase_one_label_known
+  purpose: The disappearance operation is known to have been labeled Phase One.
+- id: phase_two_conflict_plan_known
+  purpose: The recovered JANUS material states Phase Two was designed to provoke conflict
+    among those who remained.
+- id: charles_at_large
+  purpose: Charles remains at large after the Los Angeles exposure.
+- id: sarah_lead_actionable
+  purpose: Jeremiah has a concrete, credible lead from Sarah’s investigation that
+    can be followed away from the house.
+- id: patrol_return_pressure
+  purpose: Observable signs indicate the federal patrol is likely to return or intensify
+    scrutiny at the Thomas home.
+- id: facility_infiltration_needed
+  purpose: Jeremiah and Gabriel understand that direct rescue or observation is insufficient
+    and that controlled deeper access to the facility is necessary.
+- id: detention_uprising_started
+  purpose: Sarah’s resistance has openly begun coordinated action and the protagonists
+    are committed to moving toward the command/broadcast levels.
+- id: park_pursuit_resolved
+  purpose: Jeremiah and Gabriel have survived or otherwise resolved the park pursuit
+    and can depart together.
+- id: transport_route_departure_ready
+  purpose: Jeremiah and Gabriel have the transport lead, have resolved the park pursuit,
+    and can proceed to the industrial destination.
+- id: archive_crisis_understood
+  purpose: Jeremiah has secured JANUS evidence, learned the bait/Gabriel revelations,
+    and recognized Sarah’s active resistance, completing the archive crisis.
+- id: override_codes_deadline_known
+  purpose: Jeremiah and Sarah understand that the senior official’s emergency override
+    authorization will expire when Charles activates his new authority, whether or
+    not the codes are secured.
+- id: command_levels_assault_underway
+  purpose: Sarah’s uprising is active and the protagonists are moving from the detention
+    levels toward the command/broadcast levels.
+- id: detention_locations_secured
+  purpose: The protagonists have secured exact detention-site location information
+    for the national broadcast without treating Rebecca’s claims as trusted merely
+    because she offered them.
+- id: rebecca_captured
+  purpose: Rebecca has been captured and no longer controls the portable archive or
+    the local operation.
+- id: resolution_complete
+  purpose: 'The canonical 3C resolution has landed: exposure is durable, captives
+    are escaping, the network is fragmenting, Charles remains at large, and Phase
+    Two has been revealed.'
+- id: sarah_publishing_archive
+  purpose: Sarah has begun distributing/publishing the Continuity Initiative archive
+    after the exposure.
+- id: jeremiah_joined_rescue_efforts
+  purpose: Jeremiah has committed to helping locate and open remaining detention facilities.
+- id: scene_1a_entry_known
+  purpose: The safe opening frame for scene 1A has been established.
+- id: scene_1b_entry_known
+  purpose: The safe opening frame for scene 1B has been established.
+- id: scene_1c_entry_known
+  purpose: The safe opening frame for scene 1C has been established.
+- id: scene_2a_entry_known
+  purpose: The safe opening frame for scene 2A has been established.
+- id: scene_2b_entry_known
+  purpose: The safe opening frame for scene 2B has been established.
+- id: scene_2c_entry_known
+  purpose: The safe opening frame for scene 2C has been established.
+- id: scene_3a_entry_known
+  purpose: The safe opening frame for scene 3A has been established.
+- id: scene_3b_entry_known
+  purpose: The safe opening frame for scene 3B has been established.
+- id: scene_3c_entry_known
+  purpose: The safe opening frame for scene 3C has been established.
+scene_frames:
+- scene_id: 1A
+  situation: The house is too quiet. Sarah's phone lies facedown on the kitchen floor
+    beside an overturned chair, while her laptop and work bag are gone.
+  pressure: Find evidence of Sarahs disappearance
+- scene_id: 1B
+  situation: Enter 1B
+  pressure: Follow Sarahs lead and survive the park
+- scene_id: 1C
+  situation: Enter 1C
+  pressure: Confirm the facility and its purpose
+- scene_id: 2A
+  situation: Enter 2A
+  pressure: Enter the facility under false identities
+- scene_id: 2B
+  situation: Enter 2B
+  pressure: Secure evidence while judging Gabriels betrayal
+- scene_id: 2C
+  situation: Enter 2C
+  pressure: Survive the purge clock and choose a combined mission
+- scene_id: 3A
+  situation: Enter 3A
+  pressure: Reach Sarah and join the uprising
+- scene_id: 3B
+  situation: Enter 3B
+  pressure: Overload JANUS and seize the broadcast
+- scene_id: 3C
+  situation: Enter 3C
+  pressure: Expose the network and escape
+knowledge:
+- id: k_sl_1a_a_r1
+  statement: 'Current-scene development: sarah abduction suspicion.'
+  entity_ids: []
+  aliases:
+  - sarah abduction suspicion
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-A
+    realization_id: SL-1A-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1a_a_r2
+  statement: 'Current-scene development: sarah abduction suspicion.'
+  entity_ids: []
+  aliases:
+  - sarah abduction suspicion
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-A
+    realization_id: SL-1A-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1a_b_r1
+  statement: 'Current-scene development: continuity initiative known, sarah abduction
+    suspicion, sarah lead actionable.'
+  entity_ids: []
+  aliases:
+  - continuity initiative known
+  - sarah abduction suspicion
+  - sarah lead actionable
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: continuity_initiative_known
+    value: true
+  - op: assert
+    fact_id: sarah_abduction_suspicion
+    value: true
+  - op: assert
+    fact_id: sarah_lead_actionable
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-B
+    realization_id: SL-1A-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1a_b_r2
+  statement: 'Current-scene development: sarah warning known, sarah abduction suspicion.'
+  entity_ids: []
+  aliases:
+  - sarah warning known
+  - sarah abduction suspicion
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_warning_known
+    value: true
+  - op: assert
+    fact_id: sarah_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-B
+    realization_id: SL-1A-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1a_c_r1
+  statement: 'Current-scene development: official interest in sarah known, sarah abduction
+    suspicion.'
+  entity_ids: []
+  aliases:
+  - official interest in sarah known
+  - sarah abduction suspicion
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: official_interest_in_sarah_known
+    value: true
+  - op: assert
+    fact_id: sarah_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-C
+    realization_id: SL-1A-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1a_c_r2
+  statement: 'Current-scene development: house marked for return, patrol return pressure.'
+  entity_ids: []
+  aliases:
+  - house marked for return
+  - patrol return pressure
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: house_marked_for_return
+    value: true
+  - op: assert
+    fact_id: patrol_return_pressure
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-C
+    realization_id: SL-1A-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_a_r1
+  statement: 'Current-scene development: transport route identified.'
+  entity_ids: []
+  aliases:
+  - transport route identified
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: transport_route_identified
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-A
+    realization_id: SL-1B-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_a_r2
+  statement: 'Current-scene development: gabriel face known.'
+  entity_ids: []
+  aliases:
+  - gabriel face known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_face_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-A
+    realization_id: SL-1B-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_b_r1
+  statement: 'Current-scene development: gabriel identified, missing may be alive,
+    transport route identified.'
+  entity_ids: []
+  aliases:
+  - gabriel identified
+  - missing may be alive
+  - transport route identified
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_identified
+    value: true
+  - op: assert
+    fact_id: missing_may_be_alive
+    value: true
+  - op: assert
+    fact_id: transport_route_identified
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-B
+    realization_id: SL-1B-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_b_r2
+  statement: 'Current-scene development: gabriel identified.'
+  entity_ids: []
+  aliases:
+  - gabriel identified
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_identified
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-B
+    realization_id: SL-1B-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_c_r1
+  statement: 'Current-scene development: gabriel retains system access, transport
+    route identified, park pursuit resolved.'
+  entity_ids: []
+  aliases:
+  - gabriel retains system access
+  - transport route identified
+  - park pursuit resolved
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_retains_system_access
+    value: true
+  - op: assert
+    fact_id: transport_route_identified
+    value: true
+  - op: assert
+    fact_id: park_pursuit_resolved
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-C
+    realization_id: SL-1B-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1b_c_r2
+  statement: 'Current-scene development: gabriel retains system access, park pursuit
+    resolved.'
+  entity_ids: []
+  aliases:
+  - gabriel retains system access
+  - park pursuit resolved
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_retains_system_access
+    value: true
+  - op: assert
+    fact_id: park_pursuit_resolved
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-C
+    realization_id: SL-1B-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_a_r1
+  statement: 'Current-scene development: facility proof.'
+  entity_ids: []
+  aliases:
+  - facility proof
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: facility_proof
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-A
+    realization_id: SL-1C-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_a_r2
+  statement: 'Current-scene development: facility proof, service level access known.'
+  entity_ids: []
+  aliases:
+  - facility proof
+  - service level access known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: facility_proof
+    value: true
+  - op: assert
+    fact_id: service_level_access_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-A
+    realization_id: SL-1C-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_b_r1
+  statement: 'Current-scene development: captives confirmed alive.'
+  entity_ids: []
+  aliases:
+  - captives confirmed alive
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: captives_confirmed_alive
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-B
+    realization_id: SL-1C-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_b_r2
+  statement: 'Current-scene development: sarah possible sighting.'
+  entity_ids: []
+  aliases:
+  - sarah possible sighting
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_possible_sighting
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-B
+    realization_id: SL-1C-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_c_r1
+  statement: 'Current-scene development: national detention network known.'
+  entity_ids: []
+  aliases:
+  - national detention network known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: national_detention_network_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-C
+    realization_id: SL-1C-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_1c_c_r2
+  statement: 'Current-scene development: architects strategy known.'
+  entity_ids: []
+  aliases:
+  - architects strategy known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: architects_strategy_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1C-C
+    realization_id: SL-1C-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_a_r1
+  statement: 'Current-scene development: gabriel prepared before event.'
+  entity_ids: []
+  aliases:
+  - gabriel prepared before event
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_prepared_before_event
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-A
+    realization_id: SL-2A-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_a_r2
+  statement: 'Current-scene development: gabriel prepared before event.'
+  entity_ids: []
+  aliases:
+  - gabriel prepared before event
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_prepared_before_event
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-A
+    realization_id: SL-2A-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_b_r1
+  statement: 'Current-scene development: false identities ready.'
+  entity_ids: []
+  aliases:
+  - false identities ready
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: false_identities_ready
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-B
+    realization_id: SL-2A-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_b_r2
+  statement: 'Current-scene development: false identities ready.'
+  entity_ids: []
+  aliases:
+  - false identities ready
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: false_identities_ready
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-B
+    realization_id: SL-2A-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_c_r1
+  statement: 'Current-scene development: restricted corridor access.'
+  entity_ids: []
+  aliases:
+  - restricted corridor access
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-C
+    realization_id: SL-2A-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2a_c_r2
+  statement: 'Current-scene development: restricted corridor access, rebecca observing
+    infiltrators.'
+  entity_ids: []
+  aliases:
+  - restricted corridor access
+  - rebecca observing infiltrators
+  audience:
+    kind: world_only
+    player_visible: false
+  available_in_scenes:
+  - 2A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-C
+    realization_id: SL-2A-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_a_r1
+  statement: 'Current-scene development: janus evidence.'
+  entity_ids: []
+  aliases:
+  - janus evidence
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-A
+    realization_id: SL-2B-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_a_r2
+  statement: 'Current-scene development: janus evidence, jeremiah deliberately left
+    behind.'
+  entity_ids: []
+  aliases:
+  - janus evidence
+  - jeremiah deliberately left behind
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  - op: assert
+    fact_id: jeremiah_deliberately_left_behind
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-A
+    realization_id: SL-2B-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_b_r1
+  statement: 'Current-scene development: gabriel janus role known, janus evidence,
+    gabriel claimed reform motive.'
+  entity_ids: []
+  aliases:
+  - gabriel janus role known
+  - janus evidence
+  - gabriel claimed reform motive
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_janus_role_known
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  - op: assert
+    fact_id: gabriel_claimed_reform_motive
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-B
+    realization_id: SL-2B-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_b_r2
+  statement: 'Current-scene development: gabriel janus role known, gabriel claimed
+    reform motive, janus evidence.'
+  entity_ids: []
+  aliases:
+  - gabriel janus role known
+  - gabriel claimed reform motive
+  - janus evidence
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: gabriel_janus_role_known
+    value: true
+  - op: assert
+    fact_id: gabriel_claimed_reform_motive
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-B
+    realization_id: SL-2B-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_c_r1
+  statement: 'Current-scene development: sarah resistance known, janus evidence.'
+  entity_ids: []
+  aliases:
+  - sarah resistance known
+  - janus evidence
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_resistance_known
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-C
+    realization_id: SL-2B-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_c_r2
+  statement: 'Current-scene development: sarah resistance known, janus evidence.'
+  entity_ids: []
+  aliases:
+  - sarah resistance known
+  - janus evidence
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_resistance_known
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-C
+    realization_id: SL-2B-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_a_r1
+  statement: 'Current-scene development: rebecca offer active.'
+  entity_ids: []
+  aliases:
+  - rebecca offer active
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: rebecca_offer_active
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-A
+    realization_id: SL-2C-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_a_r2
+  statement: 'Current-scene development: rebecca offer active, antagonist split known.'
+  entity_ids: []
+  aliases:
+  - rebecca offer active
+  - antagonist split known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: rebecca_offer_active
+    value: true
+  - op: assert
+    fact_id: antagonist_split_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-A
+    realization_id: SL-2C-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_b_r1
+  statement: 'Current-scene development: purge clock started.'
+  entity_ids: []
+  aliases:
+  - purge clock started
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: purge_clock_started
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-B
+    realization_id: SL-2C-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_b_r2
+  statement: 'Current-scene development: purge clock started.'
+  entity_ids: []
+  aliases:
+  - purge clock started
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: purge_clock_started
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-B
+    realization_id: SL-2C-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_c_r1
+  statement: 'Current-scene development: combined broadcast rescue plan known.'
+  entity_ids: []
+  aliases:
+  - combined broadcast rescue plan known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-C
+    realization_id: SL-2C-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2c_c_r2
+  statement: 'Current-scene development: combined broadcast rescue plan known.'
+  entity_ids: []
+  aliases:
+  - combined broadcast rescue plan known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2C-C
+    realization_id: SL-2C-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_a_r1
+  statement: 'Current-scene development: sarah reached, uprising prepared.'
+  entity_ids: []
+  aliases:
+  - sarah reached
+  - uprising prepared
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_reached
+    value: true
+  - op: assert
+    fact_id: uprising_prepared
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-A
+    realization_id: SL-3A-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_a_r2
+  statement: 'Current-scene development: sarah reached, uprising prepared.'
+  entity_ids: []
+  aliases:
+  - sarah reached
+  - uprising prepared
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: sarah_reached
+    value: true
+  - op: assert
+    fact_id: uprising_prepared
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-A
+    realization_id: SL-3A-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_b_r1
+  statement: 'Current-scene development: conditioned release plan known.'
+  entity_ids: []
+  aliases:
+  - conditioned release plan known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: conditioned_release_plan_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-B
+    realization_id: SL-3A-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_b_r2
+  statement: 'Current-scene development: behavioral experiments known.'
+  entity_ids: []
+  aliases:
+  - behavioral experiments known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: behavioral_experiments_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-B
+    realization_id: SL-3A-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_c_r1
+  statement: 'Current-scene development: military override codes available, override
+    codes deadline known.'
+  entity_ids: []
+  aliases:
+  - military override codes available
+  - override codes deadline known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: military_override_codes_available
+    value: true
+  - op: assert
+    fact_id: override_codes_deadline_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-C
+    realization_id: SL-3A-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_c_r2
+  statement: 'Current-scene development: military override codes available, override
+    codes deadline known.'
+  entity_ids: []
+  aliases:
+  - military override codes available
+  - override codes deadline known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: military_override_codes_available
+    value: true
+  - op: assert
+    fact_id: override_codes_deadline_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-C
+    realization_id: SL-3A-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_c_r3
+  statement: 'Current-scene development: detention uprising started, override codes
+    deadline known.'
+  entity_ids: []
+  aliases:
+  - detention uprising started
+  - override codes deadline known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: detention_uprising_started
+    value: true
+  - op: assert
+    fact_id: override_codes_deadline_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-C
+    realization_id: SL-3A-C-R3
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_a_r1
+  statement: 'Current-scene development: human security control.'
+  entity_ids: []
+  aliases:
+  - human security control
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: human_security_control
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-A
+    realization_id: SL-3B-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_a_r2
+  statement: 'Current-scene development: human security control.'
+  entity_ids: []
+  aliases:
+  - human security control
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: human_security_control
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-A
+    realization_id: SL-3B-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_b_r1
+  statement: 'Current-scene development: detention locations offer known, detention
+    locations secured, charles abandoned rebecca.'
+  entity_ids: []
+  aliases:
+  - detention locations offer known
+  - detention locations secured
+  - charles abandoned rebecca
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: detention_locations_offer_known
+    value: true
+  - op: assert
+    fact_id: detention_locations_secured
+    value: true
+  - op: assert
+    fact_id: charles_abandoned_rebecca
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-B
+    realization_id: SL-3B-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_b_r2
+  statement: 'Current-scene development: charles abandoned rebecca, detention locations
+    offer known, detention locations secured.'
+  entity_ids: []
+  aliases:
+  - charles abandoned rebecca
+  - detention locations offer known
+  - detention locations secured
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: charles_abandoned_rebecca
+    value: true
+  - op: assert
+    fact_id: detention_locations_offer_known
+    value: true
+  - op: assert
+    fact_id: detention_locations_secured
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-B
+    realization_id: SL-3B-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_c_r1
+  statement: 'Current-scene development: relay open, gabriel confession available.'
+  entity_ids: []
+  aliases:
+  - relay open
+  - gabriel confession available
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: relay_open
+    value: true
+  - op: assert
+    fact_id: gabriel_confession_available
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-C
+    realization_id: SL-3B-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_c_r2
+  statement: 'Current-scene development: relay open, gabriel confession available.'
+  entity_ids: []
+  aliases:
+  - relay open
+  - gabriel confession available
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: relay_open
+    value: true
+  - op: assert
+    fact_id: gabriel_confession_available
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-C
+    realization_id: SL-3B-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_a_r1
+  statement: 'Current-scene development: truth no longer containable.'
+  entity_ids: []
+  aliases:
+  - truth no longer containable
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: truth_no_longer_containable
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-A
+    realization_id: SL-3C-A-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_a_r2
+  statement: 'Current-scene development: truth no longer containable.'
+  entity_ids: []
+  aliases:
+  - truth no longer containable
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: truth_no_longer_containable
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-A
+    realization_id: SL-3C-A-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_b_r1
+  statement: 'Current-scene development: portable archive secured, archive contains
+    prisoner locations, archive copies distributed, rebecca captured.'
+  entity_ids: []
+  aliases:
+  - portable archive secured
+  - archive contains prisoner locations
+  - archive copies distributed
+  - rebecca captured
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: portable_archive_secured
+    value: true
+  - op: assert
+    fact_id: archive_contains_prisoner_locations
+    value: true
+  - op: assert
+    fact_id: archive_copies_distributed
+    value: true
+  - op: assert
+    fact_id: rebecca_captured
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-B
+    realization_id: SL-3C-B-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_b_r2
+  statement: 'Current-scene development: portable archive secured, archive copies
+    distributed, archive contains prisoner locations, rebecca captured.'
+  entity_ids: []
+  aliases:
+  - portable archive secured
+  - archive copies distributed
+  - archive contains prisoner locations
+  - rebecca captured
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: portable_archive_secured
+    value: true
+  - op: assert
+    fact_id: archive_copies_distributed
+    value: true
+  - op: assert
+    fact_id: archive_contains_prisoner_locations
+    value: true
+  - op: assert
+    fact_id: rebecca_captured
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-B
+    realization_id: SL-3C-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_c_r1
+  statement: 'Current-scene development: evacuation route open, captives reaching
+    surface.'
+  entity_ids: []
+  aliases:
+  - evacuation route open
+  - captives reaching surface
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: evacuation_route_open
+    value: true
+  - op: assert
+    fact_id: captives_reaching_surface
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-C
+    realization_id: SL-3C-C-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_c_r2
+  statement: 'Current-scene development: captives reaching surface, los angeles facility
+    lost.'
+  entity_ids: []
+  aliases:
+  - captives reaching surface
+  - los angeles facility lost
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: captives_reaching_surface
+    value: true
+  - op: assert
+    fact_id: los_angeles_facility_lost
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-C
+    realization_id: SL-3C-C-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_d_r1
+  statement: 'Current-scene development: national network fragmenting.'
+  entity_ids: []
+  aliases:
+  - national network fragmenting
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: national_network_fragmenting
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-D
+    realization_id: SL-3C-D-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_d_r2
+  statement: 'Current-scene development: community rescue efforts begun.'
+  entity_ids: []
+  aliases:
+  - community rescue efforts begun
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: community_rescue_efforts_begun
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-D
+    realization_id: SL-3C-D-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_e_r1
+  statement: 'Current-scene development: phase one label known, phase two conflict
+    plan known, charles at large.'
+  entity_ids: []
+  aliases:
+  - phase one label known
+  - phase two conflict plan known
+  - charles at large
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: phase_one_label_known
+    value: true
+  - op: assert
+    fact_id: phase_two_conflict_plan_known
+    value: true
+  - op: assert
+    fact_id: charles_at_large
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-E
+    realization_id: SL-3C-E-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3c_e_r2
+  statement: 'Current-scene development: phase two conflict plan known, charles at
+    large.'
+  entity_ids: []
+  aliases:
+  - phase two conflict plan known
+  - charles at large
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3C
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: phase_two_conflict_plan_known
+    value: true
+  - op: assert
+    fact_id: charles_at_large
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-E
+    realization_id: SL-3C-E-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_scene_1a_entry
+  statement: The house is quiet, Sarah is missing, and her phone remains on the kitchen floor.
+  entity_ids: [jeremiah, sarah, sarah_phone]
+  aliases: [Sarah's phone, kitchen floor, empty house]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_1b_entry
+  statement: The park is an immediate place of pursuit and uncertainty.
+  entity_ids: [jeremiah, los_angeles_park]
+  aliases: [park, pursuit]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_1c_entry
+  statement: The regional facility is the immediate, dangerous destination.
+  entity_ids: [jeremiah, regional_facility]
+  aliases: [facility, regional facility]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1C]
+  establishes: [{op: assert, fact_id: scene_1c_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_2a_entry
+  statement: The protagonists are entering the facility under false identities.
+  entity_ids: [jeremiah, regional_facility]
+  aliases: [false identities, facility entrance]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  establishes: [{op: assert, fact_id: scene_2a_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_2b_entry
+  statement: The archive crisis is immediate and evidence must be secured.
+  entity_ids: [jeremiah, janus_archive]
+  aliases: [archive, evidence]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  establishes: [{op: assert, fact_id: scene_2b_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_2c_entry
+  statement: The purge clock is active and the group must act under pressure.
+  entity_ids: [jeremiah, purge_chamber]
+  aliases: [purge clock, purge]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  establishes: [{op: assert, fact_id: scene_2c_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_3a_entry
+  statement: Reaching Sarah and supporting the uprising are immediate priorities.
+  entity_ids: [jeremiah, sarah, detention_level]
+  aliases: [Sarah, uprising]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  establishes: [{op: assert, fact_id: scene_3a_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_3b_entry
+  statement: The broadcast relay is the immediate contested objective.
+  entity_ids: [jeremiah, broadcast_relay]
+  aliases: [broadcast relay, relay]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3B]
+  establishes: [{op: assert, fact_id: scene_3b_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_scene_3c_entry
+  statement: Exposure and escape are both immediate under the collapsing operation.
+  entity_ids: [jeremiah, facility_escape]
+  aliases: [escape route, exposure]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: scene_3c_entry_known, value: true}]
+  source: {kind: scene_entry}

@@ -13,8 +13,9 @@ proposed change before committing it as a durable fact.
   executable storylet routes,
   and Freytag pacing. They shape drama and urgency without turning into action
   menus or parser rules.
-- Prompts contain the current scene, relevant public facts, and safe history for
-  an unambiguous reference—never protected or speaker-private knowledge.
+- Packages declare facts, safe scene frames, and audience-scoped knowledge with
+  exact reveal sources. The runtime can project only committed, authorized
+  knowledge—never author prose, protected knowledge, or speaker-private facts.
 - A move that demonstrably removes an indispensable reachable dependency pauses
   for an explicit decision. Proceed commits the validated branch; return restores
   the exact pre-turn snapshot, including across a save/load.
@@ -34,9 +35,10 @@ transition. The runtime never infers gameplay from prose or selects an action.
 ## Authoring and deployment
 
 The [Markdown story authoring](markdown-story-authoring.md) guide is the source
-format contract. Loading fails closed on malformed input, unknown IDs or
-predicates, invalid timing windows, ambiguous transitions, dependency cycles,
-and invalid pacing events. Package inputs remain immutable at runtime.
+format contract. Loading fails closed on malformed input, unknown IDs,
+predicates, knowledge sources, effects, audiences, timing windows, ambiguous
+transitions, and dependency cycles. Package inputs and compiled lookup indexes
+remain immutable at runtime.
 
 FastAPI, React, Cloudflare Worker transport, and SQLite are the hosted stack.
 `POST /api/v1/session` selects a `story_id`; `POST /api/v1/turn` returns

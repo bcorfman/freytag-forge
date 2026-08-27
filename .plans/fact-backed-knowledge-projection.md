@@ -304,19 +304,19 @@ defense-in-depth quality check, not permission to render or mutate.
 
 ### Phase 1 / PR 1: Declarative knowledge schema and package migration
 
-- [ ] Add knowledge, audience, source, prerequisite, scene-frame, and fact
+- [x] Add knowledge, audience, source, prerequisite, scene-frame, and fact
   definition models in `storygame/story_package/models.py`; split models if the
   module would exceed the contributor-guide size target.
-- [ ] Parse `knowledge.yaml` in `storygame/story_package/loader.py` and extract
+- [x] Parse `knowledge.yaml` in `storygame/story_package/loader.py` and extract
   loader validation into focused validators rather than extending the current
   high-complexity `_validate()` function.
-- [ ] Compile immutable lookup indexes on `StoryPackage` or a dedicated package
+- [x] Compile immutable lookup indexes on `StoryPackage` or a dedicated package
   index object.
 - [ ] Migrate every Continuity Initiative world fact and storylet realization.
   Split compound realizations into atomic knowledge units when their effects
   have different audiences or reveal timing; do not copy scene prose into
   `statement` fields.
-- [ ] Declare safe scene frames and scene-entry reveals. Tag facts such as
+- [x] Declare safe scene frames and scene-entry reveals. Tag facts such as
   `rebecca_observing_infiltrators` as world-only until a later authored reveal
   establishes player knowledge.
 - [ ] Bump package schema/save compatibility metadata and update
@@ -330,6 +330,12 @@ Exit gate: the package loads into a complete typed knowledge graph; every
 runtime-revealable authored claim has exactly one scene-valid source and exact
 effects; malformed or ambiguous visibility fails closed. Live prompts are
 unchanged in this PR.
+
+Phase evidence: run the persistent Scene 1A knowledge-timeline fixture. It
+must prove that the entry fact is committed before render and that the typed
+catalog contains no unrevealed canonical warning, JANUS knowledge, or future
+scene entity before a source authorizes it. Non-game-breaking local clues may
+be invented and persisted as ordinary facts.
 
 ### Phase 2 / PR 2: Fact-derived projection in shadow mode
 
@@ -353,6 +359,10 @@ Exit gate: for every deterministic fixture, the shadow projection contains all
 and only audience-authorized knowledge, candidate selection is bounded and
 stable, and save/load reproduces the same projection. No provider behavior
 change yet.
+
+Phase evidence: run the same fixture against the shadow payload and retain a
+redacted ID-only diff. Before the recording, Sarah's warning must be absent;
+before a patrol arrival/search, patrol tape must be absent.
 
 ### Phase 3 / PR 3: Provider-context cutover
 
@@ -379,6 +389,10 @@ purpose, future route effect, or full plot/storylet prose; it stays within the
 declared budget and still supplies the next eligible local reveal needed to
 respond substantively.
 
+Phase evidence: run the fixture through the browser/API harness and retain the
+captured payload IDs. The drawer/recording turn must offer the damaged-warning
+candidate without exposing it earlier.
+
 ### Phase 4 / PR 4: Pre-commit narration safety and atomic rendering
 
 - [ ] Add `NarrationSafetyValidator` and package alias indexes. Validate each
@@ -397,7 +411,7 @@ respond substantively.
   infer narrative authorization.
 - [ ] Add adversarial tests for future entity aliases, protected paraphrases,
   uncited knowledge, wrong-speaker dialogue, unselected candidate effects,
-  premature transitions, invented evidence, durable incidental claims, and
+  premature transitions, invented game-breaking evidence, durable incidental claims, and
   rejected-turn atomicity.
 - [ ] Add API/frontend tests proving rejected narration never reaches
   `segments`/`lines` and accepted segments preserve their validated structure.
@@ -405,6 +419,12 @@ respond substantively.
 Exit gate: no narration is rendered or remembered unless its grounding and
 same-turn effects validate against the candidate projection; every failure
 leaves facts, scene, events, continuity, transcript, and persistence unchanged.
+
+Phase evidence: run the fixture with adversarial provider replies: an invented
+clue that incorrectly completes a required dependency, a premature warning,
+and patrol tape without an arrival/search event. The game-breaking and
+premature claims must be rejected atomically; ordinary local clues remain
+valid, and a grounded recording reveal commits before it renders.
 
 ### Phase 5 / PR 5: Staged acceptance, rollout, and cleanup
 
@@ -435,6 +455,30 @@ Exit gate: deterministic leakage tests pass across all scenes and audiences;
 staged `@llm-canon` passes progressive revelation and protected safety without
 rushing future beats; the exact promoted revision passes production smoke and
 knowledge probes; the focused runbook records only observed final evidence.
+
+Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
+against staging, then production after promotion. Preserve JSON/Markdown
+artifacts and stop on the first failed assertion.
+
+### Persistent Scene 1A knowledge-timeline acceptance harness
+
+Keep this scenario through every phase; it is a regression contract, not a
+one-off prompt. Use deterministic providers in PRs 1–4 and browser/API plus the
+judge path in PR 5.
+
+| Step | Player input | Required evidence | Must remain absent |
+| --- | --- | --- | --- |
+| Opening | Start a session | Quiet house, Sarah missing, phone on the kitchen floor; entry fact committed. | Unrevealed warning, JANUS, future facilities. |
+| Physical search | Inspect the back door and room | A concrete local consequence; non-game-breaking invented clues may persist as ordinary facts. | A clue that completes a canonical dependency or leaks future knowledge. |
+| Phone | Examine Sarah's phone | Phone-specific result; no warning unless its realization is selected. | Sarah's warning or a patrol event. |
+| Drawer/recording | Search desk/drawer for research or recording | Damaged-warning candidate is offered; its fact commits before narration. | Warning before that commit. |
+| Gate | Check the gate after a patrol arrival/search | Arrival/search precedes any patrol tape or recording. | Patrol tape without causal arrival/search. |
+| Follow-up | Repeat a clue or wait | A distinct local consequence or bounded pressure, not generic recycled prose. | Future names, objectives, and unsupported facts. |
+
+The deterministic fixture records `input`, segments, selected knowledge IDs,
+operations, facts before/after, and rejection reason. Browser runs also record
+provider payload IDs and a redacted transcript. The judge is quality evidence;
+structural assertions remain authoritative.
 
 ## PR dependency and rollback boundaries
 
@@ -506,4 +550,3 @@ and environment documented in `docs/testing-runbook.md`.
   genre-specific runtime branch.
 - Staging and production evidence demonstrate progressive local narration and
   no early JANUS/future-purpose leakage from Scene 1A.
-

@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
 from storygame.story_package import StoryPackageError, load_story_package
 
@@ -31,6 +32,111 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     ]
     assert len(package.storylets) == 29
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
+    assert package.knowledge.schema_version == "2.0"
+    assert len(package.knowledge_indexes.by_id) == 68
+    assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda data: data["knowledge"][0]["establishes"][0].update(fact_id="unknown_fact"), "unknown fact"),
+        (lambda data: data["knowledge"][0]["source"].update(realization_id="missing"), "unknown realization"),
+        (lambda data: data["knowledge"][0].update(available_in_scenes=["1B"]), "source unavailable"),
+        (lambda data: data["knowledge"][0].update(aliases=[]), "at least 1 item"),
+        (lambda data: data.update(schema_version="1.1"), "schema_version"),
+    ],
+)
+def test_loader_rejects_invalid_knowledge_catalog(tmp_path: Path, mutate: object, message: str) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    mutate(catalog)  # type: ignore[operator]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match=message):
+        load_story_package(root)
+
+
+def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    duplicate = dict(catalog["knowledge"][0])
+    duplicate["id"] = "k_duplicate"
+    catalog["knowledge"].append(duplicate)
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="ownership is ambiguous"):
+        load_story_package(root)
+
+    root = copied_package(tmp_path / "unreachable")
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    catalog["knowledge"][0]["requires"] = [{"fact_id": "broadcast_started", "equals": True}]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="unreachable prerequisite"):
+        load_story_package(root)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("entity_ids", ["missing_entity"], "unknown entities"),
+        ("available_in_scenes", ["9Z"], "unknown scene"),
+        (
+            "audience",
+            {"kind": "characters", "character_ids": ["missing_character"], "player_visible": False},
+            "unknown audience character",
+        ),
+    ],
+)
+def test_loader_rejects_knowledge_reference_boundaries(tmp_path: Path, field: str, value: object, message: str) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    catalog["knowledge"][0][field] = value
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match=message):
+        load_story_package(root)
+
+
+def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    catalog["knowledge"][0]["establishes"][0]["fact_id"] = "sarah_warning_known"
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="effects differ"):
+        load_story_package(root)
+
+    root = copied_package(tmp_path / "self")
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    catalog["knowledge"][0]["requires"] = [{"fact_id": "sarah_abduction_suspicion", "equals": True}]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match="own prerequisite"):
+        load_story_package(root)
+
+
+def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1b_a_r1")
+    candidate["requires"] = [{"fact_id": "sarah_abduction_suspicion", "equals": True}]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    package = load_story_package(root)
+    assert package.knowledge_indexes.prerequisite_dependents == {"sarah_abduction_suspicion": ("k_sl_1b_a_r1",)}
+
+
+@pytest.mark.parametrize(("field", "message"), [("facts", "facts must define"), ("scene_frames", "safe scene frame")])
+def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str, message: str) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    catalog[field].pop()
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    with pytest.raises(StoryPackageError, match=message):
+        load_story_package(root)
 
 
 @pytest.mark.parametrize(

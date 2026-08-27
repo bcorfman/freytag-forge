@@ -124,6 +124,32 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   expect(judgments.at(-1)?.scene_id).toBe("3C");
 });
 
+test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ page }) => {
+  test.skip(!process.env.E2E_KNOWLEDGE_TIMELINE, "requires an explicitly selected staged knowledge-timeline run");
+  await startSceneSession(page);
+  const turns = [];
+  const forbiddenBeforeRecording = /sarah(?:'s)? warning|do not trust.*broadcast|janus/i;
+  const record = async (input) => {
+    const payload = await submitTurn(page, input);
+    const narration = narrationText(payload);
+    turns.push({ input, narration, state: payload.state });
+    await resolveWarningIfPresent(page);
+    return narration;
+  };
+
+  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Sarah's disappearance.");
+  expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
+  const phone = await record("I examine Sarah's phone carefully without leaving the kitchen.");
+  expect(phone).not.toMatch(forbiddenBeforeRecording);
+  const recording = await record("I search the desk and drawer for Sarah's research or a damaged recording.");
+  expect(recording).toMatch(/warning|broadcast|recording/i);
+  const gate = await record("I check the front gate and listen for a patrol arriving or searching the house.");
+  if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
+  const followUp = await record("I reassess the house evidence and wait for the next concrete local consequence.");
+  expect(followUp).not.toMatch(/nothing but silence|someone is watching/i);
+  await writeCategoryReport("knowledge-timeline", { turns });
+});
+
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [

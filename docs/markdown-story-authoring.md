@@ -1,7 +1,8 @@
 # Markdown story authoring
 
 A story package is an immutable source directory containing `plot.md`,
-`world.yaml`, `pacing.yaml`, `storylets.md`, and `storylet-routes.yaml`. The loader rejects unknown
+`world.yaml`, `pacing.yaml`, `storylets.md`, `storylet-routes.yaml`, and
+`knowledge.yaml`. The loader rejects unknown
 references, malformed Markdown/YAML, invalid timing, ambiguous transitions,
 and cyclic scene dependencies before a package can reach runtime.
 
@@ -12,7 +13,11 @@ Its metadata is descriptive; prose is scene-local model guidance, never runtime
 truth.
 
 `world.yaml` declares stable IDs for locations, NPCs, items, facts, protected
-knowledge, and explicit fallbacks. `pacing.yaml` supplies one ordered window
+knowledge, and explicit fallbacks. `knowledge.yaml` supplies typed fact
+purposes, one safe frame per scene, and audience-scoped claims with aliases,
+prerequisites, exact effects, and a single route source. Its fact catalog must
+match `world.yaml`; every route effect must match its named realization.
+`pacing.yaml` supplies one ordered window
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`
 entry links to `plot.md`, names its allowed scene, retains all required dramatic

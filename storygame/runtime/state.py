@@ -7,7 +7,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.contracts import FactOperation, GameBreakWarning, TurnProposal
-from storygame.runtime.facts import FactStore
+from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import StoryPackage
 
 SNAPSHOT_VERSION = 1
@@ -59,7 +59,9 @@ class RuntimeState(BaseModel):
     @classmethod
     def bootstrap(cls, package: StoryPackage) -> RuntimeState:
         first = package.scenes[0].metadata
-        return cls(package=package, current_scene_id=first.scene_id, phase=first.freytag_phase)
+        state = cls(package=package, current_scene_id=first.scene_id, phase=first.freytag_phase)
+        state._assert_scene_entry_fact(first.scene_id)
+        return state
 
     @property
     def has_pending_break(self) -> bool:
@@ -137,6 +139,12 @@ class RuntimeState(BaseModel):
         self.phase = next_phase
         if changed_scene:
             self.active_event_ids.clear()
+            self._assert_scene_entry_fact(next_scene_id)
+
+    def _assert_scene_entry_fact(self, scene_id: str) -> None:
+        """Commit the typed scene-entry reveal before any opening can render."""
+
+        self.facts.assert_fact(Fact(predicate=f"scene_{scene_id.lower()}_entry_known", subject="story", value="true"))
 
     @staticmethod
     def _apply_operation(store: FactStore, operation: FactOperation) -> None:

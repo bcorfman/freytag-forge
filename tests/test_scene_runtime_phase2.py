@@ -35,16 +35,23 @@ def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None
 def test_fact_store_helpers_round_trip() -> None:
     fact = Fact(predicate="located", subject="jeremiah", object="thomas_home")
     state = RuntimeState.bootstrap(PACKAGE)
+    entry_fact = Fact(predicate="scene_1a_entry_known", subject="story", value="true")
     state.facts.assert_fact(fact)
 
     assert state.facts.has("located", "jeremiah", "thomas_home")
     assert state.facts.matching("located", "jeremiah") == (fact,)
-    assert state.facts.as_json() == [fact.model_dump(mode="json")]
+    assert state.facts.as_json() == [fact.model_dump(mode="json"), entry_fact.model_dump(mode="json")]
     restored = state.facts.from_json(state.facts.as_json())
     restored.retract_fact(fact)
     assert not restored.has("located", "jeremiah", "thomas_home")
     with pytest.raises(ValueError, match="facts must be a list"):
         state.facts.from_json({})
+
+
+def test_scene_entry_fact_is_committed_at_bootstrap() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+
+    assert state.facts.has("scene_1a_entry_known", "story", value="true")
 
 
 def test_invalid_transition_or_event_is_atomic() -> None:
