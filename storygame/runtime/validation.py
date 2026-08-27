@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from storygame.runtime.contracts import SceneTransitionProposal, TurnProposal
+from storygame.runtime.contracts import FactOperation, SceneTransitionProposal, TurnProposal
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
@@ -18,11 +18,14 @@ def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
     """Evaluate a declared predicate without deriving truth from narration."""
 
     expected = str(predicate.equals).lower() if isinstance(predicate.equals, bool) else predicate.equals
+    matched = False
     for fact in facts.matching(predicate.fact_id):
         actual = fact.value if fact.value is not None else fact.object
         if predicate.equals is None or actual == expected:
-            return True
-    return False
+            matched = True
+            break
+    # Route activation uses an absent fact as the ordinary false state.
+    return not matched if predicate.equals is False else matched
 
 
 class ProgressionValidator:
@@ -32,6 +35,7 @@ class ProgressionValidator:
         self.package = package
         self._entities = {entity.id: entity for group in (package.world.npcs, package.world.items) for entity in group}
         self._transitions = {transition.id: transition for transition in package.pacing.transitions}
+        self._routes = {route.id: route for route in package.storylet_routes.storylets}
 
     def validate(self, state: RuntimeState, proposal: TurnProposal) -> tuple[str, ...]:
         self._validate_operations(proposal)
@@ -50,6 +54,8 @@ class ProgressionValidator:
         for operation in proposal.operations:
             if operation.fact.predicate in protected or operation.fact.subject in protected:
                 raise ProposalValidationError("proposal attempts to mutate protected knowledge")
+            if operation.fact.predicate in self.package.world.facts:
+                raise ProposalValidationError("canonical facts must use a validated storylet realization")
 
     def _validate_events(self, state: RuntimeState, proposal: TurnProposal) -> None:
         storylet_ids = {
@@ -58,8 +64,25 @@ class ProgressionValidator:
         for event in proposal.events:
             if event.event_id not in state.active_event_ids or event.event_id in state.fired_event_ids:
                 raise ProposalValidationError("event is not active")
-            if event.event_id.startswith("SL-") and event.event_id not in storylet_ids:
+            if event.event_id not in storylet_ids:
                 raise ProposalValidationError("storylet is not available in the current scene")
+            route = self._routes[event.event_id]
+            realization = next((item for item in route.realizations if item.id == event.realization_id), None)
+            if realization is None:
+                raise ProposalValidationError("storylet event must name a valid realization")
+            expected = tuple(self._route_operation(operation) for operation in realization.operations)
+            if event.operations != expected:
+                raise ProposalValidationError("storylet event operations do not match its validated realization")
+
+    @staticmethod
+    def _route_operation(operation: object) -> FactOperation:
+        # Routes are world-level facts; their canonical subject is always story.
+        from storygame.runtime.facts import Fact
+
+        return FactOperation(
+            operation=operation.op,
+            fact=Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower()),
+        )
 
     def _validate_transition(
         self, state: RuntimeState, proposal: SceneTransitionProposal | None, facts: FactStore

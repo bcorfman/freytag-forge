@@ -71,6 +71,9 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
         "phase": state.phase,
         "pending_game_break": state.has_pending_break,
         "fired_storylet_ids": sorted(event_id for event_id in state.fired_event_ids if event_id.startswith("SL-")),
+        "fired_pacing_event_ids": sorted(
+            event.id for event in state.package.pacing.events if event.id in state.fired_event_ids
+        ),
         "story_elapsed_seconds": int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0,
     }
 
@@ -83,6 +86,21 @@ def _turn_payload(state: RuntimeState, narration: str, game_break: object | None
         "game_break": game_break,
         "state": _state_summary(state),
     }
+
+
+def _scene_opening(state: RuntimeState) -> str:
+    """Give a new scene room to breathe; entry_text remains only its seed."""
+
+    scene = next(item for item in state.package.scenes if item.metadata.scene_id == state.current_scene_id)
+    location = next(item for item in state.package.world.locations if item.id == scene.metadata.location_id)
+    seed = scene.metadata.entry_text
+    return (
+        f"{location.name} closes around Jeremiah in the unsettled pause after the last move. {seed}\n\n"
+        f"Nothing here is resolved yet. The immediate pressure is clear—{scene.metadata.objective.lower()}—"
+        "but the place still offers its own textures, sounds, and small contradictions to read before he commits.\n\n"
+        "Jeremiah can inspect what is close at hand, test the people or systems around him, or answer the tension in "
+        "his own way; the scene will meet that choice with consequences rather than a prescribed menu."
+    )
 
 
 def create_demo_app(
@@ -161,7 +179,7 @@ def create_demo_app(
         return {
             "session_id": session_id,
             "state": _state_summary(state),
-            "opening": {"scene_id": scene.scene_id, "phase": scene.freytag_phase, "text": scene.entry_text},
+            "opening": {"scene_id": scene.scene_id, "phase": scene.freytag_phase, "text": _scene_opening(state)},
         }
 
     @app.post("/api/v1/turn")
@@ -169,7 +187,8 @@ def create_demo_app(
         require_rate_limit(request)
         state = load_state(body.session_id)
         try:
-            proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text)
+            test_clock = _test_clock_seconds(request)
+            proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else {}
             if error.trace_id:
@@ -199,6 +218,23 @@ def create_demo_app(
         return _turn_payload(state, narration)
 
     return app
+
+
+def _test_clock_seconds(request: Request) -> int | None:
+    """Allow deterministic pacing in a locally opted-in E2E server only."""
+
+    if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") != "1":
+        return None
+    value = request.headers.get("X-Freytag-Test-Clock-Seconds")
+    if value is None:
+        return None
+    try:
+        seconds = int(value)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail="test clock must be an integer number of seconds") from error
+    if not 0 <= seconds <= 3600:
+        raise HTTPException(status_code=422, detail="test clock must be between 0 and 3600 seconds")
+    return seconds
 
 
 app = create_demo_app()

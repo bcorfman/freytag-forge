@@ -29,6 +29,7 @@ class SceneTransitionProposal(_StrictModel):
 
 class StoryEventProposal(_StrictModel):
     event_id: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]*$")
+    realization_id: str | None = Field(default=None, min_length=1)
     operations: tuple[FactOperation, ...] = ()
 
 

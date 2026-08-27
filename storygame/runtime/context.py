@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict
 from storygame.runtime.contracts import TurnProposal
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.story_package.models import Entity, Storylet
+from storygame.story_package.models import Entity, StoryletRoute
 
 _PRIVATE_PREDICATES = frozenset({"belief", "beliefs", "knowledge", "knows", "private_knowledge", "speaker_private"})
 
@@ -37,7 +37,9 @@ class StoryletContext(_ContextModel):
     id: str
     title: str
     pacing_impact: str
-    available_when: str | None = None
+    pressure_role: str
+    realization_ids: tuple[str, ...]
+    guidance: tuple[str, ...]
 
 
 class EntityReferenceResult(_ContextModel):
@@ -52,11 +54,14 @@ class SceneContext(_ContextModel):
     freytag_phase: str
     objective: str
     entry_text: str
+    plot_beats: str
     location: ContextEntity
     entities: tuple[ContextEntity, ...]
     facts: tuple[ContextFact, ...]
     active_storylets: tuple[StoryletContext, ...]
     active_event_ids: tuple[str, ...]
+    pressure: str | None = None
+    protected_boundaries: tuple[str, ...]
     referenced_history: tuple[ContextFact, ...]
     reference_resolution: EntityReferenceResult
     response_schema: dict[str, object]
@@ -111,6 +116,7 @@ class SceneContextBuilder:
             freytag_phase=scene.metadata.freytag_phase,
             objective=scene.metadata.objective,
             entry_text=scene.metadata.entry_text,
+            plot_beats=scene.prose,
             location=self._context_entity(location, "location"),
             entities=tuple(
                 self._context_entity(entity, kind)
@@ -120,6 +126,8 @@ class SceneContextBuilder:
             facts=local_facts,
             active_storylets=tuple(self._storylet_context(item, state) for item in active_storylets),
             active_event_ids=tuple(sorted(state.active_event_ids)),
+            pressure=self._pressure(state),
+            protected_boundaries=("Do not reveal protected future knowledge.",),
             referenced_history=referenced_history,
             reference_resolution=references,
             response_schema=TurnProposal.model_json_schema(),
@@ -145,22 +153,21 @@ class SceneContextBuilder:
         groups = (("location", world.locations), ("npc", world.npcs), ("item", world.items))
         return tuple((entity, kind) for kind, group in groups for entity in group)
 
-    def _active_storylets(self, state: RuntimeState, requested_ids: Iterable[str]) -> tuple[Storylet, ...]:
+    def _active_storylets(self, state: RuntimeState, requested_ids: Iterable[str]) -> tuple[StoryletRoute, ...]:
         requested = set(requested_ids)
-        known = {item.id: item for item in state.package.storylets if item.scene_id == state.current_scene_id}
+        known = {
+            item.id: item for item in state.package.storylet_routes.storylets if item.scene_id == state.current_scene_id
+        }
         unknown = requested - known.keys()
         if unknown:
             raise ValueError("active storylets must belong to the current scene")
         return tuple(known[storylet_id] for storylet_id in sorted(requested))
 
-    def _storylet_entity_ids(self, storylets: Iterable[Storylet], entities: Iterable[tuple[Entity, str]]) -> set[str]:
-        selected: set[str] = set()
-        for storylet in storylets:
-            participants = storylet.sections.get("Participants / items", "").casefold()
-            for entity, _kind in entities:
-                if any(name.casefold() in participants for name in (entity.name, *entity.aliases)):
-                    selected.add(entity.id)
-        return selected
+    def _storylet_entity_ids(
+        self, storylets: Iterable[StoryletRoute], entities: Iterable[tuple[Entity, str]]
+    ) -> set[str]:
+        # Route logic deliberately contains no cast list; plot metadata remains the scene-local entity authority.
+        return set()
 
     @staticmethod
     def _context_entity(entity: Entity, kind: str) -> ContextEntity:
@@ -193,15 +200,23 @@ class SceneContextBuilder:
                 expanded.add(fact.subject)
         return expanded
 
-    def _storylet_context(self, storylet: Storylet, state: RuntimeState) -> StoryletContext:
-        available_when = storylet.sections.get("Available when")
-        if available_when and any(
-            term.casefold() in available_when.casefold() for term in state.package.world.protected_knowledge
-        ):
-            available_when = None
+    @staticmethod
+    def _pressure(state: RuntimeState) -> str | None:
+        elapsed = state.facts.matching("story_elapsed_seconds", "story")
+        total = int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0
+        window = next(item for item in state.package.pacing.scenes if item.scene_id == state.current_scene_id)
+        if total >= window.latest_seconds:
+            return "deadline pressure is active; introduce an observable, scene-local complication"
+        if total >= window.target_seconds:
+            return "pressure is rising; keep the scene active while making urgency felt"
+        return None
+
+    def _storylet_context(self, storylet: StoryletRoute, state: RuntimeState) -> StoryletContext:
         return StoryletContext(
             id=storylet.id,
             title=storylet.title,
-            pacing_impact=storylet.pacing_impact,
-            available_when=available_when,
+            pacing_impact="scene_guidance",
+            pressure_role=storylet.pressure_role,
+            realization_ids=tuple(item.id for item in storylet.realizations),
+            guidance=tuple(item.dramatic_intent for item in storylet.realizations),
         )

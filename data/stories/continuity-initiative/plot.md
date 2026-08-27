@@ -2,6 +2,14 @@
 
 **Genre:** Adventure / Conspiracy Thriller
 
+> **Runtime authority note:** This document defines narrative canon, scene ordering, dramatic beats, protected revelations, and intended story meaning. The embedded scene metadata is descriptive authoring context.
+>
+> Executable state, fact IDs, transition predicates, pacing events, dependency rules, canonical bridge events, and validated storylet effects are defined by `world.reviewed.yaml`, `pacing.reviewed.yaml`, and `storylet-routes.reviewed.yaml`. `storylets.reviewed.md` provides optional storylet authoring guidance and realization context.
+>
+> `participant_ids` and `item_ids` identify entities and items that are narratively relevant to a scene; they do **not** imply mandatory runtime dependencies. Hard dependencies, when any are required, are declared only in the reviewed runtime YAML.
+>
+> If descriptive metadata here conflicts with validated runtime data, the reviewed runtime YAML governs execution. This plot continues to govern the intended narrative result, and any conflict should be reconciled explicitly rather than silently changing the story.
+
 ## Premise
 
 The sudden disappearance of millions of people across the United States throws Jeremiah Thomas’s life into turmoil when his wife, investigative journalist Sarah Thomas, vanishes. His search leads him through a fractured, post-disappearance America and into a conspiracy involving government officials, private corporations, secret detention facilities, and a plan to reshape the country through fear and controlled reconstruction.
@@ -686,7 +694,7 @@ Jeremiah must seemingly choose between transmitting evidence and rescuing the ca
 
 ## Climax
 
-Jeremiah, Sarah, and Gabriel seize the emergency broadcast system while the prisoners revolt. Gabriel holds open the communications relay, Sarah exposes the conspiracy nationally, and Jeremiah defeats the facility’s predictive security system.
+Jeremiah, Sarah, and Gabriel seize the emergency broadcast system while the prisoners revolt. Jeremiah defeats the facility’s predictive security system, Gabriel holds open the communications relay, and Sarah begins the national exposure of the conspiracy; the transmission’s public contest and consequences continue into Scene 3C.
 
 ## Falling Action
 

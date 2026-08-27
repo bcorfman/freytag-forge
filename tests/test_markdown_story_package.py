@@ -67,7 +67,7 @@ def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
         source.read_text()
         + "\n"
         + (
-            "  - {id: t_cycle, source_scene_id: 3C, target_scene_id: 1A, priority: 1, "
+            "- {id: t_cycle, source_scene_id: 3C, target_scene_id: 1A, priority: 1, "
             "triggers: [{fact_id: broadcast_started, equals: true}]}\n"
         )
     )
@@ -78,13 +78,13 @@ def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     pacing = root / "pacing.yaml"
-    pacing.write_text(pacing.read_text().replace("fact_id: sarah_abduction_suspicion", "fact_id: unknown_fact", 1))
+    pacing.write_text(pacing.read_text().replace("fact_id: sarah_lead_actionable", "fact_id: unknown_fact", 1))
     with pytest.raises(StoryPackageError, match="unknown trigger predicate"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "fallback")
     world = root / "world.yaml"
-    world.write_text(world.read_text().replace("fallback_ids: [sarah_phone]", "fallback_ids: [missing_item]"))
+    world.write_text(world.read_text().replace("  - sarah_phone", "  - missing_item", 1))
     with pytest.raises(StoryPackageError, match="unknown fallback"):
         load_story_package(root)
 
@@ -97,8 +97,8 @@ def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -
         ("storylets.md", "earliest: `00:00:00`", "earliest: `00:99:00`", "invalid timestamp"),
         (
             "pacing.yaml",
-            "required_dependencies: [memory_card]",
-            "required_dependencies: [unknown]",
+            "  - memory_card",
+            "  - unknown",
             "unknown dependency",
         ),
         ("pacing.yaml", "id: t_1b_1c", "id: t_1a_1b", "duplicate transition ID"),
@@ -119,8 +119,8 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         source.read_text()
         + "\n"
         + (
-            "  - {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: sarah_abduction_suspicion, equals: true}]}\n"
+            "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
+            "triggers: [{fact_id: sarah_lead_actionable, equals: true}]}\n"
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):

@@ -10,6 +10,7 @@ proposed change before committing it as a durable fact.
   save/load and a typed resolution of an already-issued game-break warning are
   control actions.
 - Markdown packages define scenes, entities, transitions, optional storylets,
+  executable storylet routes,
   and Freytag pacing. They shape drama and urgency without turning into action
   menus or parser rules.
 - Prompts contain the current scene, relevant public facts, and safe history for
@@ -20,9 +21,9 @@ proposed change before committing it as a durable fact.
 
 ## Runtime contract
 
-The provider supplies strict JSON for narration, fact effects, optional events,
+The provider supplies strict JSON for narration, route-authorized fact effects, optional events,
 and a requested transition. Its output is untrusted: the runtime clones state,
-validates operations, triggers, eligibility, transitions, and reachable
+validates route operations, triggers, eligibility, transitions, and reachable
 dependencies (including fallbacks), then atomically commits accepted facts.
 Invalid or repaired output never mutates canonical state.
 

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { resolveWarningIfPresent, startSceneSession, submitTurn, writeCategoryReport } from "./helpers.js";
+import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 
 const spineActions = [
   "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
@@ -13,13 +14,53 @@ const spineActions = [
   "I bring the story to a responsible resolution.",
 ];
 
-test("starts a scene session and accepts freeform narration @smoke", async ({ page }) => {
+function narrationText(payload) {
+  const narration = (payload.segments || []).filter((segment) => segment.kind === "narration").map((segment) => segment.text);
+  expect(narration).not.toHaveLength(0);
+  return narration.join(" ").trim();
+}
+
+async function exerciseDistinctFreeTextActions(page) {
   await startSceneSession(page);
-  const payload = await submitTurn(page, "I look carefully at Sarah's phone.");
-  await writeCategoryReport("smoke", { state: payload.state, segments: payload.segments });
+  const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
+  const phoneAction = "I look carefully at Sarah's phone.";
+  const bagAction = "I search for Sarah's work bag and any clue to where she went.";
+  const phoneTurn = await submitTurn(page, phoneAction);
+  const phoneNarration = narrationText(phoneTurn);
+  const bagTurn = await submitTurn(page, bagAction);
+  const bagNarration = narrationText(bagTurn);
+  return { opening, phoneAction, phoneTurn, phoneNarration, bagAction, bagTurn, bagNarration };
+}
+
+test("starts a scene session and accepts freeform narration @smoke", async ({ page }) => {
+  const { opening, phoneNarration, bagTurn, bagNarration } = await exerciseDistinctFreeTextActions(page);
+  await writeCategoryReport("smoke", {
+    state: bagTurn.state,
+    opening,
+    phone_narration: phoneNarration,
+    bag_narration: bagNarration,
+  });
   await page.screenshot({ path: "../artifacts/e2e-smoke-loaded.png", fullPage: true });
-  expect(payload.segments?.some((segment) => segment.kind === "narration")).toBe(true);
+  expect(phoneNarration).not.toBe(opening);
+  expect(bagNarration).not.toBe(opening);
+  expect(bagNarration).not.toBe(phoneNarration);
   await expect(page.locator(".entry-system")).toHaveCount(0);
+});
+
+test("judges free-text roleplay quality with OpenAI @llm-judge", async ({ page }) => {
+  const { opening, phoneAction, phoneNarration, bagAction, bagTurn, bagNarration } = await exerciseDistinctFreeTextActions(page);
+  const phoneJudgment = await judgeRoleplayTurn({ opening, playerInput: phoneAction, narration: phoneNarration });
+  const bagJudgment = await judgeRoleplayTurn({ opening, playerInput: bagAction, narration: bagNarration });
+  await writeCategoryReport("llm-judge", {
+    state: bagTurn.state,
+    opening,
+    phone_narration: phoneNarration,
+    bag_narration: bagNarration,
+    phone_judgment: phoneJudgment,
+    bag_judgment: bagJudgment,
+  });
+  expect(phoneJudgment.verdict, phoneJudgment.reasons.join("; ")).toBe("pass");
+  expect(bagJudgment.verdict, bagJudgment.reasons.join("; ")).toBe("pass");
 });
 
 test("drives the main spine and reports reachability and pressure @spine", async ({ page }) => {
@@ -40,6 +81,32 @@ test("drives the main spine and reports reachability and pressure @spine", async
     distinct_paths_to_climax: [sceneOrder.join(">")],
   });
   expect(sceneOrder.every((scene) => /^[123][ABC]$/.test(scene))).toBe(true);
+  expect(sceneOrder.at(-1)).toBe("3C");
+});
+
+test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
+  test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
+  test.setTimeout(15 * 60_000);
+  await startSceneSession(page);
+  const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
+  const byScene = new Map([["1A", { opening, turns: [] }]]);
+  let sceneId = "1A";
+  for (const playerInput of spineActions) {
+    const payload = await submitTurn(page, playerInput);
+    const narration = narrationText(payload);
+    byScene.get(sceneId).turns.push({ player_input: playerInput, narration });
+    await resolveWarningIfPresent(page);
+    sceneId = payload.state?.scene_id || sceneId;
+    if (!byScene.has(sceneId)) byScene.set(sceneId, { opening: "", turns: [] });
+  }
+  const judgments = [];
+  for (const [id, scene] of byScene) {
+    const judgment = await judgeSceneNarration({ sceneId: id, ...scene });
+    judgments.push({ scene_id: id, ...judgment });
+    expect(judgment.verdict, judgment.reasons.join("; ")).toBe("pass");
+  }
+  await writeCategoryReport("llm-canon", { judgments, reached_scenes: [...byScene.keys()] });
+  expect(judgments.at(-1)?.scene_id).toBe("3C");
 });
 
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {
@@ -60,6 +127,16 @@ test("samples optional storylets without presenting a menu @storylets", async ({
     storylet_reuse: { unique: fired.size, repeated_ids: [] },
   });
   expect([...fired].every((id) => id.startsWith("SL-"))).toBe(true);
+  expect(fired.size).toBeGreaterThan(0);
+});
+
+test("advances declared pressure with the opt-in E2E clock instead of wall-clock waiting @timed-events", async ({ page }) => {
+  test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the local test clock");
+  await startSceneSession(page);
+  const payload = await submitTurn(page, "I pause long enough for the house's pressure to build.");
+  await writeCategoryReport("timed-events", { state: payload.state });
+  expect(payload.state?.story_elapsed_seconds).toBeGreaterThanOrEqual(120);
+  expect(payload.state?.fired_pacing_event_ids).toContain("pressure_1a");
 });
 
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {

@@ -112,6 +112,49 @@ class Storylet(_Model):
         return self
 
 
+class RouteOperation(_Model):
+    op: Literal["assert", "retract"]
+    fact_id: str = Field(pattern=_ID)
+    value: str | bool | int | None = None
+
+
+class RouteRealization(_Model):
+    id: str = Field(min_length=1)
+    dramatic_intent: str = Field(min_length=1)
+    operations: tuple[RouteOperation, ...] = ()
+    eligible_storylet_event_id: str | None = None
+    helps_transition_triggers: tuple[str, ...] = ()
+    protected_knowledge_boundaries: tuple[str, ...] = ()
+
+
+class StoryletRoute(_Model):
+    id: str = Field(pattern=r"^SL-[1-9][A-Z]-[A-Z]$")
+    scene_id: str = Field(pattern=_SCENE_ID)
+    title: str = Field(min_length=1)
+    activation_conditions: tuple[FactPredicate, ...] = ()
+    earliest_seconds: int = Field(ge=0)
+    target_seconds: int = Field(ge=0)
+    latest_seconds: int = Field(ge=0)
+    pressure_role: str = Field(min_length=1)
+    realizations: tuple[RouteRealization, ...] = Field(min_length=1)
+
+
+class CanonicalRouteEvent(_Model):
+    id: str = Field(min_length=1)
+    scene_id: str = Field(pattern=_SCENE_ID)
+    activation_conditions: tuple[FactPredicate, ...] = ()
+    operations: tuple[RouteOperation, ...] = Field(min_length=1)
+
+
+class StoryletRoutesSource(_Model):
+    story_id: str = Field(pattern=_ID)
+    canonical_scene_chain: tuple[str, ...] = Field(min_length=1)
+    sole_ending_scene_id: str = Field(pattern=_SCENE_ID)
+    storylets: tuple[StoryletRoute, ...]
+    bridge_events: tuple[CanonicalRouteEvent, ...] = ()
+    resolution_events: tuple[CanonicalRouteEvent, ...] = ()
+
+
 class StoryPackage(_Model):
     """The immutable input to the future scene runtime."""
 
@@ -121,3 +164,4 @@ class StoryPackage(_Model):
     world: WorldSource
     pacing: PacingSource
     storylets: tuple[Storylet, ...]
+    storylet_routes: StoryletRoutesSource

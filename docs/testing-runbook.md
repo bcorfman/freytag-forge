@@ -1,5 +1,41 @@
 # Testing runbook
 
+## Route-backed continuity-initiative progression
+
+**Purpose:** Verify that the revised five-file story package loads with executable storylet routes, activates only eligible scene-local guidance, and rejects durable effects that are not route-authorized.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root with `/tmp` as pytest's temporary directory.
+
+**Safe actions:**
+
+- Tests use copied package fixtures and local SQLite temporary files only.
+
+**Destructive or external actions:**
+
+- None.
+
+**Steps:**
+
+1. Run the Markdown-package, context, and progression tests after changing the story package or route validator.
+2. Run the full suite before handoff because the coverage gate is repository-wide.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: all tests pass with the project coverage gate at or above 90%.
+
+**Cleanup:** None; pytest temporary files are under `/tmp`.
+
+**Notes:** Durable LLM effects must be submitted as an active `SL-*` event with a route realization ID and the exact reviewed operations. `entry_text` is an opening seed, not the full scene prose.
+
+Last verified: 2026-08-26 — `TMPDIR=/tmp uv run pytest -q` completed with 58 passing tests and 90.17% coverage; Ruff autofix and formatting also passed.
+
 ## Frontend structured-turn rendering unit tests
 
 **Purpose:** Verify that the browser renderer preserves accepted structured
@@ -232,6 +268,76 @@ Worker credentials for this failure. A focused transport run has 7 passing
 tests but intentionally exits nonzero under the repository's whole-project
 coverage gate; use the full suite below for the passing coverage result.
 
+## LLM scene-canon E2E acceptance
+
+**Purpose:** Judge each reached scene’s narration against its scene-local plot, storylet guidance/routes, pacing, and world canon.
+
+**Setup / seed:**
+
+- A working scene-v1 API target plus `OPENAI_API_KEY` for the independent judge.
+- The test reads the five story sources locally and sends only the current scene’s canon to the judge.
+
+**Safe actions:**
+
+- Creates a remote game session and makes model/judge calls; it does not alter package sources or a deployed configuration.
+
+**Destructive or external actions:**
+
+- Billed external model calls. Run deliberately against the intended environment.
+
+**Steps:**
+
+1. Configure `E2E_API_BASE_URL`, `E2E_DEPLOYMENT_CHANNEL`, and `OPENAI_API_KEY`.
+2. Run the opt-in full-spine acceptance category.
+
+**Verify:**
+
+```bash
+source .env && cd frontend && npm run test:e2e -- --grep @llm-canon
+```
+
+Expected: every reached scene receives a passing verdict for canon consistency, scene locality, progressive revelation, richness, and protected-knowledge safety; `artifacts/e2e-llm-canon.{json,md}` records the evidence.
+
+**Cleanup:** Remove generated ignored E2E artifacts if they are no longer useful.
+
+**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` is absent.
+
+Last verified safely: 2026-08-27 — `npm test` passed 5 tests and Playwright discovered the tagged `@llm-canon` test with a placeholder API base URL; no live model calls were made.
+
+## Deterministic E2E pacing clock
+
+**Purpose:** Trigger declared pacing pressure in browser tests without waiting for wall-clock time.
+
+**Setup / seed:**
+
+- Start only a local/API test server with `FREYTAG_ALLOW_TEST_CLOCK=1`.
+- Start Vite with `E2E_TEST_CLOCK_SECONDS=120`; this adds the test-clock header to turn requests.
+
+**Safe actions:**
+
+- The header is ignored unless the API process explicitly opted in.
+
+**Destructive or external actions:**
+
+- None; do not enable this environment variable on a deployed API.
+
+**Steps:**
+
+1. Start the opted-in local API and Vite test server.
+2. Run the tagged Playwright test.
+
+**Verify:**
+
+```bash
+cd frontend && E2E_TEST_CLOCK_SECONDS=120 npm run test:e2e -- --grep @timed-events
+```
+
+Expected: the turn response reports `pressure_1a` in `fired_pacing_event_ids` without a two-minute wait.
+
+**Cleanup:** Unset `FREYTAG_ALLOW_TEST_CLOCK` after local testing.
+
+**Notes:** The application accepts `X-Freytag-Test-Clock-Seconds` only with explicit server-side opt-in and bounds it to 0–3600 seconds.
+
 ## Story Feed root page — local Playwright QA
 
 **Purpose:** Verify the root Story Feed UI's loading, loaded, and service-error
@@ -374,6 +480,68 @@ requests both returned HTTP 200. The production-size scene-context request was
 initially blocked at the Cloudflare edge with HTTP 403 / error 1010 because
 Python urllib's default user agent triggered Browser Integrity Check; the same
 request passed after the adapter supplied its browser user agent.
+
+## Hosted free-text roleplay quality evaluation
+
+**Purpose:** Verify that a real player action receives a responsive, progressive
+roleplay narration rather than a repeated opening, while allowing creative
+consequences that the runtime validates through proposed state effects.
+
+**Setup / seed:** Source the root `.env` with `E2E_API_BASE_URL`,
+`E2E_DEPLOYMENT_CHANNEL`, and `OPENAI_API_KEY`. The optional
+`E2E_JUDGE_MODEL` selects the OpenAI judge; it defaults to `gpt-5.4`. Do not
+print or commit credentials.
+
+**Safe actions:** The staged test creates a disposable remote session and two
+turns. The judge uses the OpenAI Responses API with `store: false` and writes
+only its structured verdict and reasons to ignored `artifacts/` evidence.
+
+**Destructive or external actions:** Invokes the staged narration model and two
+paid OpenAI judge calls. It does not deploy, change credentials, or mutate
+canonical state outside the disposable session.
+
+**Steps:**
+
+1. Start a session and submit two distinct free-text actions.
+2. Assert neither narration repeats the opening and that the two narrations
+   differ.
+3. Ask the OpenAI judge whether each narration responds directly, progresses,
+   and remains coherent with the supplied grounding. Creative additions are
+   explicitly allowed; story-beat/state-effect validity remains the runtime's
+   deterministic responsibility.
+
+**Verify:**
+
+```bash
+source .env && cd frontend && npm run test:e2e -- --grep @llm-judge
+```
+
+Expected: both OpenAI structured verdicts are `pass` and
+`artifacts/e2e-llm-judge.{json,md}` records the narrations plus reasons. This
+is an explicit, paid manual evaluation; ordinary `@smoke`, `npm test`, pulls,
+pushes, and PR checks do not call OpenAI. Last
+verified locally on 2026-08-26: the judge returned `fail` for the known defect
+where the opening text was returned verbatim for `Look at the phone`.
+
+**Cleanup:** The generated `artifacts/e2e-llm-judge.*` files are ignored; remove
+them when no longer useful. The remote test session is disposable.
+
+**Notes:** As of 2026-08-26, the existing `@spine` E2E only reports whether
+its fixed policy reached `3C`; it does not assert it. `@storylets` only checks
+that any observed IDs have the `SL-` prefix, so an empty set passes. The
+current `pacing.yaml` declares one outgoing transition from each of `1A`
+through `3B` and a single terminal `3C`; it has no alternate transition or
+ending branches. Do not claim live E2E proof of complete storylet coverage,
+branch coverage, or multiple endings until package-declared coverage oracles
+and repeated policy runs are implemented.
+
+The loader reads only `data/stories/continuity-initiative/{plot.md,storylets.md,
+pacing.yaml,world.yaml}`; `.plans/` copies are not runtime inputs. The loaded
+`storylets.md` defines optional scene-local storylets and supplies their prose
+sections to the model context, but it does not compile `Effects`, `Completion`,
+or `Abort` prose into transition edges. Actual scene branches and endings must
+be declared as additional `pacing.yaml` transitions and listed in the source
+scene's `transition_ids` frontmatter.
 
 After the adapter change was deployed, two staging `@smoke` retries still
 timed out after 120 seconds in `page.waitForResponse()` for `POST

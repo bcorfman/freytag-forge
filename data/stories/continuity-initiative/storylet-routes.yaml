@@ -1,0 +1,2246 @@
+schema_version: '1.1'
+story_id: continuity_initiative
+contract:
+  canonical_scene_chain:
+  - 1A
+  - 1B
+  - 1C
+  - 2A
+  - 2B
+  - 2C
+  - 3A
+  - 3B
+  - 3C
+  sole_ending_scene_id: 3C
+  free_text_player_input: true
+  storylets_are_model_guidance_not_ui_choices: true
+  durable_effects_require_validated_fact_operations: true
+  transition_mutation_allowed: false
+  canonical_beats_may_use_optional_storylets_as_realization_guidance: true
+  pacing_events_must_create_observable_pressure_not_unearned_knowledge: true
+  canonical_resolution_uses_optional_storylets_as_realization_guidance: true
+pacing_event_review:
+- event_id: pressure_1a
+  scene_id: 1A
+  at_seconds: 120
+  effect:
+    op: assert
+    fact_id: patrol_return_pressure
+    value: true
+  status: approved
+  reason: Escalates an observable return threat at the house without revealing the later facility.
+new_fact_ids:
+- id: continuity_initiative_known
+  definition: Jeremiah knows Sarah was investigating a suspicious emergency program called the Continuity Initiative.
+  used_by_storylets:
+  - SL-1A-B
+  used_by_transitions: []
+- id: sarah_warning_known
+  definition: Jeremiah has recovered Sarah’s warning not to trust emergency broadcasts.
+  used_by_storylets:
+  - SL-1A-B
+  used_by_transitions: []
+- id: official_interest_in_sarah_known
+  definition: Jeremiah knows the welfare patrol was specifically interested in Sarah’s reporting.
+  used_by_storylets:
+  - SL-1A-C
+  used_by_transitions: []
+- id: house_marked_for_return
+  definition: The Thomas home has been marked by the patrol for a likely return.
+  used_by_storylets:
+  - SL-1A-C
+  used_by_transitions: []
+- id: transport_route_identified
+  definition: Jeremiah and Gabriel have enough evidence to follow the removal operation’s physical transport route
+    toward a specific industrial/freight destination.
+  used_by_storylets:
+  - SL-1B-A
+  - SL-1B-B
+  - SL-1B-C
+  used_by_transitions: []
+- id: gabriel_face_known
+  definition: Jeremiah recognizes Gabriel as the unidentified man in Sarah’s photograph.
+  used_by_storylets:
+  - SL-1B-A
+  used_by_transitions: []
+- id: gabriel_identified
+  definition: Jeremiah knows the follower is Gabriel Dexter, Sarah’s contact.
+  used_by_storylets:
+  - SL-1B-B
+  used_by_transitions: []
+- id: missing_may_be_alive
+  definition: Jeremiah has credible reason to believe at least some missing people are alive.
+  used_by_storylets:
+  - SL-1B-B
+  used_by_transitions: []
+- id: gabriel_retains_system_access
+  definition: Jeremiah has observed Gabriel using retained Continuity-system access.
+  used_by_storylets:
+  - SL-1B-C
+  used_by_transitions: []
+- id: service_level_access_known
+  definition: Jeremiah and Gabriel know a credible service-level route into the regional facility.
+  used_by_storylets:
+  - SL-1C-A
+  used_by_transitions: []
+- id: captives_confirmed_alive
+  definition: Jeremiah has directly confirmed living captives inside the regional facility.
+  used_by_storylets:
+  - SL-1C-B
+  used_by_transitions: []
+- id: sarah_possible_sighting
+  definition: Jeremiah has an obscured, unconfirmed possible sighting of Sarah inside the facility.
+  used_by_storylets:
+  - SL-1C-B
+  used_by_transitions: []
+- id: national_detention_network_known
+  definition: Jeremiah knows the Los Angeles site is part of a national detention network.
+  used_by_storylets:
+  - SL-1C-C
+  used_by_transitions: []
+- id: architects_strategy_known
+  definition: Jeremiah knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
+  used_by_storylets:
+  - SL-1C-C
+  used_by_transitions: []
+- id: gabriel_prepared_before_event
+  definition: Jeremiah knows Gabriel prepared for the disappearance before it occurred.
+  used_by_storylets:
+  - SL-2A-A
+  used_by_transitions: []
+- id: restricted_corridor_access
+  definition: Jeremiah and Gabriel have access to restricted infrastructure corridors.
+  used_by_storylets:
+  - SL-2A-C
+  used_by_transitions:
+  - t_2a_2b
+- id: rebecca_observing_infiltrators
+  definition: Rebecca has quietly ordered the infiltrators observed; this fact is not automatically known to Jeremiah.
+  used_by_storylets:
+  - SL-2A-C
+  used_by_transitions: []
+- id: jeremiah_deliberately_left_behind
+  definition: JANUS records show Jeremiah was deliberately left behind.
+  used_by_storylets:
+  - SL-2B-A
+  used_by_transitions: []
+- id: gabriel_janus_role_known
+  definition: Jeremiah knows Gabriel helped develop JANUS.
+  used_by_storylets:
+  - SL-2B-B
+  used_by_transitions: []
+- id: gabriel_claimed_reform_motive
+  definition: Gabriel has claimed he broke with Charles after learning JANUS would be used for mass detention/control.
+  used_by_storylets:
+  - SL-2B-B
+  used_by_transitions: []
+- id: sarah_resistance_known
+  definition: Jeremiah knows Sarah is actively sabotaging the facility from inside.
+  used_by_storylets:
+  - SL-2B-C
+  used_by_transitions: []
+- id: rebecca_offer_active
+  definition: Rebecca has offered Gabriel safety/Sarah’s release in exchange for helping her displace Charles.
+  used_by_storylets:
+  - SL-2C-A
+  used_by_transitions: []
+- id: antagonist_split_known
+  definition: Jeremiah has legitimate evidence that Rebecca and Charles are in conflict.
+  used_by_storylets:
+  - SL-2C-A
+  used_by_transitions: []
+- id: combined_broadcast_rescue_plan_known
+  definition: Jeremiah/Gabriel know Sarah’s plan to combine evidence transmission with opening detention sectors
+    via Rebecca’s office.
+  used_by_storylets:
+  - SL-2C-C
+  used_by_transitions:
+  - t_2c_3a
+- id: uprising_prepared
+  definition: Jeremiah knows Sarah has organized an active prisoner resistance network.
+  used_by_storylets:
+  - SL-3A-A
+  used_by_transitions: []
+- id: conditioned_release_plan_known
+  definition: Jeremiah knows selected captives were being conditioned to support Charles’s public explanation.
+  used_by_storylets:
+  - SL-3A-B
+  used_by_transitions: []
+- id: behavioral_experiments_known
+  definition: Jeremiah knows the facility conducted the authored neurological/behavioral experiments.
+  used_by_storylets:
+  - SL-3A-B
+  used_by_transitions: []
+- id: military_override_codes_available
+  definition: The resistance has secured or reliably relayed the emergency military override codes.
+  used_by_storylets:
+  - SL-3A-C
+  used_by_transitions: []
+- id: human_security_control
+  definition: JANUS can no longer reliably predict the group’s route and human operators have taken direct control.
+  used_by_storylets:
+  - SL-3B-A
+  used_by_transitions: []
+- id: detention_locations_offer_known
+  definition: Rebecca has offered detention-site location information as leverage.
+  used_by_storylets:
+  - SL-3B-B
+  used_by_transitions: []
+- id: charles_abandoned_rebecca
+  definition: Charles has stripped Rebecca of local control and treated her as expendable.
+  used_by_storylets:
+  - SL-3B-B
+  used_by_transitions: []
+- id: gabriel_confession_available
+  definition: Gabriel’s confession authenticating his JANUS role is available for the broadcast.
+  used_by_storylets:
+  - SL-3B-C
+  used_by_transitions: []
+- id: truth_no_longer_containable
+  definition: Enough independently verifiable evidence is public that Charles cannot contain the conspiracy by controlling
+    one channel.
+  used_by_storylets:
+  - SL-3C-A
+  - SL-3C-D
+  - SL-3C-E
+  used_by_transitions: []
+- id: portable_archive_secured
+  definition: The portable archive has been recovered from Rebecca’s sole control.
+  used_by_storylets:
+  - SL-3C-B
+  used_by_transitions: []
+- id: archive_contains_prisoner_locations
+  definition: The recovered archive is known to contain prisoner locations as well as conspirator identities.
+  used_by_storylets:
+  - SL-3C-B
+  used_by_transitions: []
+- id: archive_copies_distributed
+  definition: Copies of the archive have been distributed to independent networks.
+  used_by_storylets:
+  - SL-3C-B
+  used_by_transitions: []
+- id: evacuation_route_open
+  definition: A viable evacuation path from the collapsing facility is open.
+  used_by_storylets:
+  - SL-3C-C
+  used_by_transitions: []
+- id: captives_reaching_surface
+  definition: Surviving captives are reaching the surface.
+  used_by_storylets:
+  - SL-3C-C
+  - SL-3C-D
+  - SL-3C-E
+  used_by_transitions: []
+- id: los_angeles_facility_lost
+  definition: The Los Angeles facility is no longer a viable concealed Continuity operation.
+  used_by_storylets:
+  - SL-3C-C
+  used_by_transitions: []
+- id: national_network_fragmenting
+  definition: Public reports show the national detention network is fragmenting.
+  used_by_storylets:
+  - SL-3C-D
+  used_by_transitions: []
+- id: community_rescue_efforts_begun
+  definition: Communities/families have begun independent rescue efforts.
+  used_by_storylets:
+  - SL-3C-D
+  used_by_transitions: []
+- id: phase_one_label_known
+  definition: The disappearance operation is known to have been labeled Phase One.
+  used_by_storylets:
+  - SL-3C-E
+  used_by_transitions: []
+- id: phase_two_conflict_plan_known
+  definition: The recovered JANUS material states Phase Two was designed to provoke conflict among those who remained.
+  used_by_storylets:
+  - SL-3C-E
+  used_by_transitions: []
+- id: charles_at_large
+  definition: Charles remains at large after the Los Angeles exposure.
+  used_by_storylets:
+  - SL-3C-E
+  used_by_transitions: []
+- id: sarah_lead_actionable
+  definition: Jeremiah has a concrete, credible lead from Sarah’s investigation that can be followed away from the
+    house.
+  used_by_storylets:
+  - SL-1A-B
+  used_by_transitions:
+  - t_1a_1b
+- id: patrol_return_pressure
+  definition: Observable signs indicate the federal patrol is likely to return or intensify scrutiny at the Thomas
+    home.
+  used_by_storylets:
+  - SL-1A-C
+  used_by_transitions: []
+- id: facility_infiltration_needed
+  definition: Jeremiah and Gabriel understand that direct rescue or observation is insufficient and that controlled
+    deeper access to the facility is necessary.
+  used_by_storylets:
+  - SL-1C-A
+  - SL-1C-B
+  - SL-1C-C
+  used_by_transitions:
+  - t_1c_2a
+- id: detention_uprising_started
+  definition: Sarah’s resistance has openly begun coordinated action and the protagonists are committed to moving
+    toward the command/broadcast levels.
+  used_by_storylets:
+  - SL-3A-A
+  - SL-3A-C
+  used_by_transitions: []
+- id: park_pursuit_resolved
+  definition: Jeremiah and Gabriel have survived or otherwise resolved the park pursuit and can depart together.
+  used_by_storylets:
+  - SL-1B-C
+  used_by_transitions: []
+- id: transport_route_departure_ready
+  definition: Jeremiah and Gabriel have the transport lead, have resolved the park pursuit, and can proceed to the
+    industrial destination.
+  used_by_storylets:
+  - SL-1B-A
+  - SL-1B-B
+  - SL-1B-C
+  used_by_transitions:
+  - t_1b_1c
+- id: archive_crisis_understood
+  definition: Jeremiah has secured JANUS evidence, learned the bait/Gabriel revelations, and recognized Sarah’s
+    active resistance, completing the archive crisis.
+  used_by_storylets:
+  - SL-2B-A
+  - SL-2B-B
+  - SL-2B-C
+  used_by_transitions:
+  - t_2b_2c
+- id: override_codes_deadline_known
+  definition: Jeremiah and Sarah understand that the senior official’s emergency override authorization will expire
+    when Charles activates his new authority, whether or not the codes are secured.
+  used_by_storylets:
+  - SL-3A-C
+  used_by_transitions: []
+- id: command_levels_assault_underway
+  definition: Sarah’s uprising is active and the protagonists are moving from the detention levels toward the command/broadcast
+    levels.
+  used_by_storylets:
+  - SL-3A-A
+  - SL-3A-B
+  - SL-3A-C
+  used_by_transitions:
+  - t_3a_3b
+- id: detention_locations_secured
+  definition: The protagonists have secured exact detention-site location information for the national broadcast
+    without treating Rebecca’s claims as trusted merely because she offered them.
+  used_by_storylets:
+  - SL-3B-B
+  used_by_transitions: []
+- id: rebecca_captured
+  definition: Rebecca has been captured and no longer controls the portable archive or the local operation.
+  used_by_storylets:
+  - SL-3C-B
+  used_by_transitions: []
+- id: resolution_complete
+  definition: 'The canonical 3C resolution has landed: exposure is durable, captives are escaping, the network is
+    fragmenting, Charles remains at large, and Phase Two has been revealed.'
+  used_by_storylets:
+  - SL-3C-A
+  - SL-3C-B
+  - SL-3C-C
+  - SL-3C-D
+  - SL-3C-E
+  used_by_transitions: []
+- id: sarah_publishing_archive
+  definition: Sarah has begun distributing/publishing the Continuity Initiative archive after the exposure.
+  used_by_storylets:
+  - SL-3C-D
+  used_by_transitions: []
+- id: jeremiah_joined_rescue_efforts
+  definition: Jeremiah has committed to helping locate and open remaining detention facilities.
+  used_by_storylets:
+  - SL-3C-D
+  used_by_transitions: []
+storylets:
+- id: SL-1A-A
+  scene_id: 1A
+  title: The House Does Not Look Abandoned
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: sarah_abduction_suspicion
+      equals: false
+    pacing:
+      earliest_seconds: 0
+      target_seconds: 60
+      latest_seconds: 120
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If Jeremiah searches slowly or treats the disappearance as generic chaos, foreground contradictory
+    physical evidence so curiosity naturally tightens into abduction suspicion.
+  realization_options:
+  - id: SL-1A-A-R1
+    dramatic_intent: Connect forced entry, blood, missing work materials, or localized disorder into a credible
+      forced-removal theory.
+    operations:
+    - op: assert
+      fact_id: sarah_abduction_suspicion
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1A-A-R2
+    dramatic_intent: A hurried or partial inspection still makes one concrete contradiction impossible to dismiss,
+      raising suspicion without identifying an abductor.
+    operations:
+    - op: assert
+      fact_id: sarah_abduction_suspicion
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: sarah_abduction_suspicion
+      equals: true
+    - scene_transition_valid: t_1a_1b
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1A-B
+  scene_id: 1A
+  title: Sarah Hid Something for Jeremiah
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: continuity_initiative_known
+      equals: false
+    pacing:
+      earliest_seconds: 0
+      target_seconds: 60
+      latest_seconds: 120
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the player lingers in Sarah’s work area, let her preparation reward investigation and connect
+    her disappearance to a deliberate threat rather than require a specific search command.
+  realization_options:
+  - id: SL-1A-B-R1
+    dramatic_intent: Discover or securely recover Sarah’s evidence and infer that she expected targeted danger.
+    operations:
+    - op: assert
+      fact_id: continuity_initiative_known
+      value: true
+    - op: assert
+      fact_id: sarah_abduction_suspicion
+      value: true
+    - op: assert
+      fact_id: sarah_lead_actionable
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1a_1b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1A-B-R2
+    dramatic_intent: Recover the damaged warning first; its interrupted ending plus the house evidence is enough
+      to support abduction suspicion even before every file is understood.
+    operations:
+    - op: assert
+      fact_id: sarah_warning_known
+      value: true
+    - op: assert
+      fact_id: sarah_abduction_suspicion
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - continuity_initiative_known
+      - sarah_warning_known
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1A-C
+  scene_id: 1A
+  title: The Welfare Check Feels Like a Search
+  activation:
+    scene_id: 1A
+    conditions: []
+    pacing:
+      earliest_seconds: 0
+      target_seconds: 60
+      latest_seconds: 120
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If Jeremiah stalls after finding evidence, official scrutiny raises urgency and makes staying costly
+    without dictating whether he hides, lies, argues, or leaves.
+  realization_options:
+  - id: SL-1A-C-R1
+    dramatic_intent: Observe that the patrol is specifically interested in Sarah’s reporting; this corroborates
+      targeted removal without revealing who ordered it.
+    operations:
+    - op: assert
+      fact_id: official_interest_in_sarah_known
+      value: true
+    - op: assert
+      fact_id: sarah_abduction_suspicion
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1A-C-R2
+    dramatic_intent: Notice the gate marker after the patrol leaves, establishing a concrete return threat and a
+      reason to move on.
+    operations:
+    - op: assert
+      fact_id: house_marked_for_return
+      value: true
+    - op: assert
+      fact_id: patrol_return_pressure
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - official_interest_in_sarah_known
+      - house_marked_for_return
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1B-A
+  scene_id: 1B
+  title: The Dead Drop Has More Than One Meaning
+  activation:
+    scene_id: 1B
+    conditions: []
+    pacing:
+      earliest_seconds: 120
+      target_seconds: 195
+      latest_seconds: 270
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Turn lingering investigation into several converging leads—tests, a man in Sarah’s photo, and physical
+    transport infrastructure—without making one clue the required interaction.
+  realization_options:
+  - id: SL-1B-A-R1
+    dramatic_intent: Correlate the transit card with Sarah’s handwritten sequence/dates so the encoded routing information
+      points to a specific freight/industrial destination used by the removal operation.
+    operations:
+    - op: assert
+      fact_id: transport_route_identified
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1b_1c
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  - id: SL-1B-A-R2
+    dramatic_intent: Identify the photographed stranger as a live lead while preserving uncertainty about his allegiance.
+    operations:
+    - op: assert
+      fact_id: gabriel_face_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - transport_route_identified
+      - gabriel_face_known
+    abort_when:
+    - scene_id_not: 1B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1B-B
+  scene_id: 1B
+  title: Is Gabriel Hunter or Rescuer?
+  activation:
+    scene_id: 1B
+    conditions: []
+    pacing:
+      earliest_seconds: 120
+      target_seconds: 195
+      latest_seconds: 270
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the player resists trusting Gabriel, let behavior under pressure earn only provisional cooperation
+    while keeping his deeper history unresolved.
+  realization_options:
+  - id: SL-1B-B-R1
+    dramatic_intent: Gabriel intervenes against the patrol, identifies himself as Sarah’s contact, and credibly
+      connects her transit clue to a route used by the removal operation without revealing the facility itself.
+    operations:
+    - op: assert
+      fact_id: gabriel_identified
+      value: true
+    - op: assert
+      fact_id: missing_may_be_alive
+      value: true
+    - op: assert
+      fact_id: transport_route_identified
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1b_1c
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  - id: SL-1B-B-R2
+    dramatic_intent: Jeremiah confronts him with the photograph; Gabriel admits prior Initiative work but withholds
+      the protected JANUS role.
+    operations:
+    - op: assert
+      fact_id: gabriel_identified
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: gabriel_identified
+      equals: true
+    abort_when:
+    - scene_id_not: 1B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1B-C
+  scene_id: 1B
+  title: The Gate Code Gives Gabriel Away
+  activation:
+    scene_id: 1B
+    conditions:
+    - fact_id: gabriel_identified
+      equals: true
+    - fact_id: missing_may_be_alive
+      equals: true
+    pacing:
+      earliest_seconds: 120
+      target_seconds: 195
+      latest_seconds: 270
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'Convert pursuit into both forward motion and suspicion: Gabriel can solve the immediate escape
+    problem, but doing so exposes unexplained retained access.'
+  realization_options:
+  - id: SL-1B-C-R1
+    dramatic_intent: Gabriel uses a specialized code to open the maintenance route after ordinary access fails.
+    operations:
+    - op: assert
+      fact_id: gabriel_retains_system_access
+      value: true
+    - op: assert
+      fact_id: transport_route_identified
+      value: true
+    - op: assert
+      fact_id: park_pursuit_resolved
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1b_1c
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  - id: SL-1B-C-R2
+    dramatic_intent: Jeremiah notices Gabriel’s practiced system access during escape and carries that unresolved
+      suspicion forward.
+    operations:
+    - op: assert
+      fact_id: gabriel_retains_system_access
+      value: true
+    - op: assert
+      fact_id: park_pursuit_resolved
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: gabriel_retains_system_access
+      equals: true
+    abort_when:
+    - scene_id_not: 1B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1C-A
+  scene_id: 1C
+  title: The “Abandoned” Terminal Is Working Too Hard
+  activation:
+    scene_id: 1C
+    conditions: []
+    pacing:
+      earliest_seconds: 270
+      target_seconds: 330
+      latest_seconds: 390
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Use Jeremiah’s engineering expertise to reward free-form inspection and turn hesitation into accumulating
+    physical proof of an active hidden installation.
+  realization_options:
+  - id: SL-1C-A-R1
+    dramatic_intent: Infer an active underground complex from power draw, ventilation, tire tracks, and recent structural
+      work.
+    operations:
+    - op: assert
+      fact_id: facility_proof
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1C-A-R2
+    dramatic_intent: Confirm the active underground facility and a service-level route, while establishing that
+      the main installation cannot be reached safely without a deliberate infiltration plan.
+    operations:
+    - op: assert
+      fact_id: facility_proof
+      value: true
+    - op: assert
+      fact_id: service_level_access_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: facility_proof
+      equals: true
+    abort_when:
+    - scene_id_not: 1C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1C-B
+  scene_id: 1C
+  title: One Face in the Processing Line
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: facility_proof
+      equals: true
+    pacing:
+      earliest_seconds: 270
+      target_seconds: 330
+      latest_seconds: 390
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Sarah sighting
+    to heighten urgency while preserving the need for broader understanding.
+  realization_options:
+  - id: SL-1C-B-R1
+    dramatic_intent: Confirm living captives and make the cost of an impulsive rescue concrete, establishing that
+      controlled deeper access is necessary.
+    operations:
+    - op: assert
+      fact_id: captives_confirmed_alive
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1C-B-R2
+    dramatic_intent: Catch an obscured possible glimpse of Sarah without converting uncertainty into confirmed location.
+    operations:
+    - op: assert
+      fact_id: sarah_possible_sighting
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - captives_confirmed_alive
+      - sarah_possible_sighting
+    abort_when:
+    - scene_id_not: 1C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1C-C
+  scene_id: 1C
+  title: A Regional Hub, Not the Prison
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: facility_proof
+      equals: true
+    - fact_id: captives_confirmed_alive
+      equals: true
+    pacing:
+      earliest_seconds: 270
+      target_seconds: 330
+      latest_seconds: 390
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the player is ready to treat the site as the whole conspiracy, widen the scale through logistics
+    and recordings so the next phase feels necessary.
+  realization_options:
+  - id: SL-1C-C-R1
+    dramatic_intent: Read logistics categories and understand that the Los Angeles site is part of a national detention
+      network.
+    operations:
+    - op: assert
+      fact_id: national_detention_network_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-1C-C-R2
+    dramatic_intent: Understand Charles and Rebecca’s reconstruction strategy and conclude that exposing and disrupting
+      the operation requires deeper access than a local rescue attempt can provide.
+    operations:
+    - op: assert
+      fact_id: architects_strategy_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - national_detention_network_known
+      - architects_strategy_known
+    abort_when:
+    - scene_id_not: 1C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2A-A
+  scene_id: 2A
+  title: Gabriel Prepared for This Years Ago
+  activation:
+    scene_id: 2A
+    conditions: []
+    pacing:
+      earliest_seconds: 390
+      target_seconds: 450
+      latest_seconds: 510
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If planning becomes static, make Gabriel’s long preparation useful but suspicious, encouraging
+    questioning while keeping his JANUS role protected.
+  realization_options:
+  - id: SL-2A-A-R1
+    dramatic_intent: Establish that Gabriel prepared for the disappearance and claims he was discredited after trying
+      to expose the Initiative.
+    operations:
+    - op: assert
+      fact_id: gabriel_prepared_before_event
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - phase_two
+  - id: SL-2A-A-R2
+    dramatic_intent: Notice retained professional resources without resolving whether they indicate foresight, guilt,
+      or both.
+    operations:
+    - op: assert
+      fact_id: gabriel_prepared_before_event
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: gabriel_prepared_before_event
+      equals: true
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2A-B
+  scene_id: 2A
+  title: Build the Cover Around a Real Structural Risk
+  activation:
+    scene_id: 2A
+    conditions:
+    - fact_id: facility_infiltration_needed
+      equals: true
+    pacing:
+      earliest_seconds: 390
+      target_seconds: 450
+      latest_seconds: 510
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Give the player many ways to contribute expertise to infiltration preparation; any plausible cover
+    built around the real defect can converge on readiness.
+  realization_options:
+  - id: SL-2A-B-R1
+    dramatic_intent: Jeremiah identifies a credible structural/cooling risk and Gabriel turns it into inspector
+      credentials.
+    operations:
+    - op: assert
+      fact_id: false_identities_ready
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  - id: SL-2A-B-R2
+    dramatic_intent: 'Use more truth in the cover story: the real support-column danger justifies an unscheduled
+      specialist visit.'
+    operations:
+    - op: assert
+      fact_id: false_identities_ready
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - gabriel_history
+    - janus_selection_system
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: false_identities_ready
+      equals: true
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2A-C
+  scene_id: 2A
+  title: The Supervisor Needs a Reason
+  activation:
+    scene_id: 2A
+    conditions:
+    - fact_id: false_identities_ready
+      equals: true
+    pacing:
+      earliest_seconds: 390
+      target_seconds: 450
+      latest_seconds: 510
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If the player hesitates at security or challenges the cover, make the supervisor a free-form social/technical
+    pressure test rather than a fixed dialogue puzzle.
+  realization_options:
+  - id: SL-2A-C-R1
+    dramatic_intent: Jeremiah convincingly explains progressive-collapse risk and gains restricted corridor access.
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2a_2b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  - id: SL-2A-C-R2
+    dramatic_intent: An imperfect explanation still gets conditional access while quietly increasing observation
+      pressure.
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2a_2b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - gabriel_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: restricted_corridor_access
+      equals: true
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2B-A
+  scene_id: 2B
+  title: JANUS Classified Everyone
+  activation:
+    scene_id: 2B
+    conditions: []
+    pacing:
+      earliest_seconds: 510
+      target_seconds: 570
+      latest_seconds: 630
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the player explores the archive, let Sarah’s record, Jeremiah’s record, or classification
+    categories independently reveal the selection mechanism.
+  realization_options:
+  - id: SL-2B-A-R1
+    dramatic_intent: Discover the JANUS classification system through Sarah’s record and the resistance/influence
+      categories.
+    operations:
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2B-A-R2
+    dramatic_intent: Discover Jeremiah’s own record and learn that being left behind was deliberate; the record
+      itself is sufficient JANUS evidence.
+    operations:
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    - op: assert
+      fact_id: jeremiah_deliberately_left_behind
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: janus_evidence
+      equals: true
+    abort_when:
+    - scene_id_not: 2B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2B-B
+  scene_id: 2B
+  title: Gabriel’s Name Is in the Build Records
+  activation:
+    scene_id: 2B
+    conditions:
+    - fact_id: janus_evidence
+      equals: true
+    pacing:
+      earliest_seconds: 510
+      target_seconds: 570
+      latest_seconds: 630
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation,
+    without forcing forgiveness or hostility.
+  realization_options:
+  - id: SL-2B-B-R1
+    dramatic_intent: Find Gabriel’s name in JANUS build records; the records both authenticate JANUS and force the
+      confrontation over his role.
+    operations:
+    - op: assert
+      fact_id: gabriel_janus_role_known
+      value: true
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    - op: assert
+      fact_id: gabriel_claimed_reform_motive
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2B-B-R2
+    dramatic_intent: Delay confrontation long enough to corroborate his name, then establish both authorship and
+      his claimed break with Charles.
+    operations:
+    - op: assert
+      fact_id: gabriel_janus_role_known
+      value: true
+    - op: assert
+      fact_id: gabriel_claimed_reform_motive
+      value: true
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: gabriel_janus_role_known
+      equals: true
+    abort_when:
+    - scene_id_not: 2B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2B-C
+  scene_id: 2B
+  title: Sarah Is Already Sabotaging the System
+  activation:
+    scene_id: 2B
+    conditions:
+    - fact_id: janus_evidence
+      equals: true
+    pacing:
+      earliest_seconds: 510
+      target_seconds: 570
+      latest_seconds: 630
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Sarah’s
+    agency in corrupted files and maintenance messages.
+  realization_options:
+  - id: SL-2B-C-R1
+    dramatic_intent: Recognize Sarah’s signature in corrupted JANUS/prisoner records and preserve enough of the
+      records to serve as evidence while revealing her active resistance.
+    operations:
+    - op: assert
+      fact_id: sarah_resistance_known
+      value: true
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2B-C-R2
+    dramatic_intent: Infer organized sabotage from altered classifications and delayed transfers even before its
+      full scale is known.
+    operations:
+    - op: assert
+      fact_id: sarah_resistance_known
+      value: true
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: sarah_resistance_known
+      equals: true
+    abort_when:
+    - scene_id_not: 2B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-A
+  scene_id: 2C
+  title: Rebecca Offers Gabriel a Different Conspiracy
+  activation:
+    scene_id: 2C
+    conditions: []
+    pacing:
+      earliest_seconds: 630
+      target_seconds: 705
+      latest_seconds: 780
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Use antagonist fracture to create pressure and possible executive access without making Rebecca
+    trustworthy or requiring Jeremiah to accept Gabriel’s performance.
+  realization_options:
+  - id: SL-2C-A-R1
+    dramatic_intent: Gabriel strategically entertains Rebecca’s offer to gain leverage/access while treating her
+      claims as unverified.
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2C-A-R2
+    dramatic_intent: Jeremiah becomes legitimately aware of the offer and interprets it as evidence that the antagonist
+      coalition is fracturing.
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    - op: assert
+      fact_id: antagonist_split_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: rebecca_offer_active
+      equals: true
+    abort_when:
+    - scene_id_not: 2C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-B
+  scene_id: 2C
+  title: The Purge Clock Starts Moving
+  activation:
+    scene_id: 2C
+    conditions: []
+    pacing:
+      earliest_seconds: 630
+      target_seconds: 705
+      latest_seconds: 780
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'If the player lingers over strategy, convert delay into an explicit worsening deadline: transfers
+    accelerate and safe options narrow.'
+  realization_options:
+  - id: SL-2C-B-R1
+    dramatic_intent: Read or overhear Charles’s purge/transfer order and make the deadline explicit.
+    operations:
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2C-B-R2
+    dramatic_intent: Infer the same order from coordinated transfer movement and broadcast preparation, then verify
+      enough to treat the purge as active.
+    operations:
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: purge_clock_started
+      equals: true
+    abort_when:
+    - scene_id_not: 2C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-C
+  scene_id: 2C
+  title: The False Choice Breaks Open
+  activation:
+    scene_id: 2C
+    conditions:
+    - fact_id: purge_clock_started
+      equals: true
+    pacing:
+      earliest_seconds: 630
+      target_seconds: 705
+      latest_seconds: 780
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let argument, refusal, or hesitation play naturally until Sarah’s coded message creates the authored
+    combined mission and focuses urgency.
+  realization_options:
+  - id: SL-2C-C-R1
+    dramatic_intent: Sarah’s coded message establishes that broadcast and detention access can be combined through
+      Rebecca’s secured office.
+    operations:
+    - op: assert
+      fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2c_3a
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-2C-C-R2
+    dramatic_intent: Jeremiah and Gabriel independently reach the rescue/exposure impasse; Sarah’s message then
+      resolves the false binary without resolving the danger.
+    operations:
+    - op: assert
+      fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2c_3a
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: combined_broadcast_rescue_plan_known
+      equals: true
+    abort_when:
+    - scene_id_not: 2C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3A-A
+  scene_id: 3A
+  title: The Rescue Target Is Running an Uprising
+  activation:
+    scene_id: 3A
+    conditions: []
+    pacing:
+      earliest_seconds: 780
+      target_seconds: 840
+      latest_seconds: 900
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If Jeremiah focuses narrowly on extracting Sarah, her visible leadership reframes the objective
+    and turns reunion into immediate coordinated action.
+  realization_options:
+  - id: SL-3A-A-R1
+    dramatic_intent: Jeremiah reaches Sarah and recognizes her as the uprising organizer.
+    operations:
+    - op: assert
+      fact_id: sarah_reached
+      value: true
+    - op: assert
+      fact_id: uprising_prepared
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3A-A-R2
+    dramatic_intent: The reunion is interrupted as Sarah gives the launch signal and directs prisoners into coordinated
+      action, establishing contact and beginning the uprising without requiring an extended reunion scene.
+    operations:
+    - op: assert
+      fact_id: sarah_reached
+      value: true
+    - op: assert
+      fact_id: uprising_prepared
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: sarah_reached
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3A-B
+  scene_id: 3A
+  title: The “Rescued” Captives Were Being Prepared
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: sarah_reached
+      equals: true
+    pacing:
+      earliest_seconds: 780
+      target_seconds: 840
+      latest_seconds: 900
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the player wants to rush upward, make the medical level evidence matter by showing why exposure
+    must include the conditioning program.
+  realization_options:
+  - id: SL-3A-B-R1
+    dramatic_intent: Corroborate Sarah’s account with experiment records and establish that selected released captives
+      were being conditioned for Charles’s narrative.
+    operations:
+    - op: assert
+      fact_id: conditioned_release_plan_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3A-B-R2
+    dramatic_intent: Inspect treatment setup and establish the behavioral-experiment program without claiming guaranteed
+      mind control.
+    operations:
+    - op: assert
+      fact_id: behavioral_experiments_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - conditioned_release_plan_known
+      - behavioral_experiments_known
+    abort_when:
+    - scene_id_not: 3A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3A-C
+  scene_id: 3A
+  title: The Override Codes Are Expiring
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: sarah_reached
+      equals: true
+    - fact_id: behavioral_experiments_known
+      equals: true
+    pacing:
+      earliest_seconds: 780
+      target_seconds: 840
+      latest_seconds: 900
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'Add a second deadline when the player lingers: the imprisoned official’s codes lose value once
+    Charles activates the new authority.'
+  realization_options:
+  - id: SL-3A-C-R1
+    dramatic_intent: Secure the emergency override codes and understand their expiration condition.
+    operations:
+    - op: assert
+      fact_id: military_override_codes_available
+      value: true
+    - op: assert
+      fact_id: override_codes_deadline_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3A-C-R2
+    dramatic_intent: Relay/copy the codes rather than physically carry them, preserving free-form action while establishing
+      that the resistance has usable authorization.
+    operations:
+    - op: assert
+      fact_id: military_override_codes_available
+      value: true
+    - op: assert
+      fact_id: override_codes_deadline_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3A-C-R3
+    dramatic_intent: The expiring authorization window makes further delay untenable; Sarah launches the coordinated
+      disturbances while the codes are still useful.
+    operations:
+    - op: assert
+      fact_id: detention_uprising_started
+      value: true
+    - op: assert
+      fact_id: override_codes_deadline_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_3a_3b
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: military_override_codes_available
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3B-A
+  scene_id: 3B
+  title: Give JANUS Too Many Emergencies
+  activation:
+    scene_id: 3B
+    conditions: []
+    pacing:
+      earliest_seconds: 900
+      target_seconds: 975
+      latest_seconds: 1050
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When predictive security blocks obvious routes, reward irrational, engineering-driven disruption;
+    failed attempts can worsen local pressure without prescribing a single puzzle answer.
+  realization_options:
+  - id: SL-3B-A-R1
+    dramatic_intent: Create enough unrelated infrastructure emergencies that JANUS loses route confidence and humans
+      must take control.
+    operations:
+    - op: assert
+      fact_id: human_security_control
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3B-A-R2
+    dramatic_intent: Use deliberately irrational movement plus power/door disruptions to reach the same human-control
+      threshold.
+    operations:
+    - op: assert
+      fact_id: human_security_control
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: human_security_control
+      equals: true
+    abort_when:
+    - scene_id_not: 3B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3B-B
+  scene_id: 3B
+  title: Rebecca Bargains With the Only Thing She Still Has
+  activation:
+    scene_id: 3B
+    conditions:
+    - fact_id: human_security_control
+      equals: true
+    pacing:
+      earliest_seconds: 900
+      target_seconds: 975
+      latest_seconds: 1050
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'If the player stalls in Rebecca’s office, force antagonist conflict into the open: her information
+    remains useful even as Charles strips her control.'
+  realization_options:
+  - id: SL-3B-B-R1
+    dramatic_intent: Sarah confronts Rebecca with experiment approvals; Rebecca yields exact detention-site locations
+      as leverage, then Charles strips her control and locks down the office.
+    operations:
+    - op: assert
+      fact_id: detention_locations_offer_known
+      value: true
+    - op: assert
+      fact_id: detention_locations_secured
+      value: true
+    - op: assert
+      fact_id: charles_abandoned_rebecca
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3B-B-R2
+    dramatic_intent: Charles betrays Rebecca first; trapped and expendable, she bargains with the only leverage
+      she retains—the national detention-site locations—which Sarah secures without treating Rebecca as trustworthy.
+    operations:
+    - op: assert
+      fact_id: charles_abandoned_rebecca
+      value: true
+    - op: assert
+      fact_id: detention_locations_offer_known
+      value: true
+    - op: assert
+      fact_id: detention_locations_secured
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - all_facts_true:
+      - detention_locations_secured
+      - charles_abandoned_rebecca
+    abort_when:
+    - scene_id_not: 3B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3B-C
+  scene_id: 3B
+  title: Gabriel Holds the Relay Open
+  activation:
+    scene_id: 3B
+    conditions:
+    - fact_id: human_security_control
+      equals: true
+    - fact_id: charles_abandoned_rebecca
+      equals: true
+    - fact_id: detention_locations_secured
+      equals: true
+    pacing:
+      earliest_seconds: 900
+      target_seconds: 975
+      latest_seconds: 1050
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Gabriel’s
+    accountability and danger create climax pressure without scripting Jeremiah’s response.
+  realization_options:
+  - id: SL-3B-C-R1
+    dramatic_intent: Gabriel disconnects the external relay from JANUS and holds it open; Sarah and Jeremiah use
+      the opening to activate the national transmission.
+    operations:
+    - op: assert
+      fact_id: relay_open
+      value: true
+    - op: assert
+      fact_id: gabriel_confession_available
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_3b_3c
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3B-C-R2
+    dramatic_intent: Gabriel opens the relay and transmits his confession as authentication; Sarah and Jeremiah
+      immediately begin the broadcast while he keeps the path open.
+    operations:
+    - op: assert
+      fact_id: relay_open
+      value: true
+    - op: assert
+      fact_id: gabriel_confession_available
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_3b_3c
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: relay_open
+      equals: true
+    abort_when:
+    - scene_id_not: 3B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-A
+  scene_id: 3C
+  title: Charles Tries to Reframe the Broadcast
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: broadcast_started
+      equals: true
+    pacing:
+      earliest_seconds: 1050
+      target_seconds: 1140
+      latest_seconds: 1200
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'Once transmission begins, prevent the climax from becoming a passive upload: Charles contests
+    credibility, and accumulated verifiable evidence lets Sarah answer him.'
+  realization_options:
+  - id: SL-3C-A-R1
+    dramatic_intent: Use the already-running national transmission to publish verifiable evidence until the conspiracy
+      can no longer be contained by controlling one channel.
+    operations:
+    - op: assert
+      fact_id: truth_no_longer_containable
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3C-A-R2
+    dramatic_intent: Counter Charles’s terrorist claim with live or independently checkable facility evidence until
+      suppression by a single channel is no longer plausible.
+    operations:
+    - op: assert
+      fact_id: truth_no_longer_containable
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    abort_when:
+    - broadcast_capability_lost: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-B
+  scene_id: 3C
+  title: Rebecca’s Archive Cannot Simply Be Destroyed
+  activation:
+    scene_id: 3C
+    conditions: []
+    pacing:
+      earliest_seconds: 1050
+      target_seconds: 1140
+      latest_seconds: 1200
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Turn Rebecca’s attempted escape into an information-custody dilemma so destruction is not an easy
+    moral shortcut.
+  realization_options:
+  - id: SL-3C-B-R1
+    dramatic_intent: Secure the portable archive and establish that it contains prisoner locations as well as conspirator
+      identities.
+    operations:
+    - op: assert
+      fact_id: portable_archive_secured
+      value: true
+    - op: assert
+      fact_id: archive_contains_prisoner_locations
+      value: true
+    - op: assert
+      fact_id: archive_copies_distributed
+      value: true
+    - op: assert
+      fact_id: rebecca_captured
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3C-B-R2
+    dramatic_intent: Duplicate the archive to independent networks rather than leave sole custody with either Rebecca
+      or the protagonists.
+    operations:
+    - op: assert
+      fact_id: portable_archive_secured
+      value: true
+    - op: assert
+      fact_id: archive_copies_distributed
+      value: true
+    - op: assert
+      fact_id: archive_contains_prisoner_locations
+      value: true
+    - op: assert
+      fact_id: rebecca_captured
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - all_facts_true:
+      - portable_archive_secured
+      - archive_copies_distributed
+      - rebecca_captured
+    abort_when:
+    - archive_destroyed_or_lost: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-C
+  scene_id: 3C
+  title: Escape While the Facility Comes Apart
+  activation:
+    scene_id: 3C
+    conditions: []
+    pacing:
+      earliest_seconds: 1050
+      target_seconds: 1140
+      latest_seconds: 1200
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'Keep falling action dangerous: Jeremiah’s engineering choices preserve routes while Sarah moves
+    people, but no single maneuver guarantees every section survives.'
+  realization_options:
+  - id: SL-3C-C-R1
+    dramatic_intent: Redirect power/supports enough to open an evacuation route and move surviving captives toward
+      the surface.
+    operations:
+    - op: assert
+      fact_id: evacuation_route_open
+      value: true
+    - op: assert
+      fact_id: captives_reaching_surface
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3C-C-R2
+    dramatic_intent: Use maintenance tunnels and the opened gates to get captives out while accepting loss of the
+      Los Angeles facility.
+    operations:
+    - op: assert
+      fact_id: captives_reaching_surface
+      value: true
+    - op: assert
+      fact_id: los_angeles_facility_lost
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: captives_reaching_surface
+      equals: true
+    abort_when:
+    - resolution_complete: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-D
+  scene_id: 3C
+  title: The Network Fractures
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: captives_reaching_surface
+      equals: true
+    pacing:
+      earliest_seconds: 1050
+      target_seconds: 1140
+      latest_seconds: 1200
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color
+    without creating a new playable scene or new ending.
+  realization_options:
+  - id: SL-3C-D-R1
+    dramatic_intent: Public reports establish that some sites surrender or release prisoners while others remain
+      contested.
+    operations:
+    - op: assert
+      fact_id: national_network_fragmenting
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  - id: SL-3C-D-R2
+    dramatic_intent: Reports establish that families and communities begin independent rescue efforts.
+    operations:
+    - op: assert
+      fact_id: community_rescue_efforts_begun
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - national_network_fragmenting
+      - community_rescue_efforts_begun
+    abort_when:
+    - never_in_canonical_resolution: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-E
+  scene_id: 3C
+  title: Phase One
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: captives_reaching_surface
+      equals: true
+    pacing:
+      earliest_seconds: 1050
+      target_seconds: 1140
+      latest_seconds: 1200
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Only after the sole ending is secure, deliver the final unresolved-threat reversal; this is sequel-scale
+    context, not an alternate ending.
+  realization_options:
+  - id: SL-3C-E-R1
+    dramatic_intent: Recover the “Phase One” label and the authored statement that Phase Two was designed to provoke
+      conflict among those who remained.
+    operations:
+    - op: assert
+      fact_id: phase_one_label_known
+      value: true
+    - op: assert
+      fact_id: phase_two_conflict_plan_known
+      value: true
+    - op: assert
+      fact_id: charles_at_large
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: []
+  - id: SL-3C-E-R2
+    dramatic_intent: Recognize the Phase Two statement against visible unrest, without inventing mechanisms beyond
+      the source.
+    operations:
+    - op: assert
+      fact_id: phase_two_conflict_plan_known
+      value: true
+    - op: assert
+      fact_id: charles_at_large
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: []
+  completion_or_abort:
+    complete_when:
+    - fact_id: phase_two_conflict_plan_known
+      equals: true
+    abort_when:
+    - never_in_canonical_resolution: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+coverage_matrix:
+- scene_id: 1A
+  outgoing_transition_id: t_1a_1b
+  trigger_fact_id: sarah_lead_actionable
+  storylets_helping_in_source_scene:
+  - SL-1A-B
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_1a_actionable_lead
+- scene_id: 1B
+  outgoing_transition_id: t_1b_1c
+  trigger_fact_id: transport_route_departure_ready
+  storylets_helping_in_source_scene:
+  - SL-1B-A
+  - SL-1B-B
+  - SL-1B-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_1b_departure
+- scene_id: 1C
+  outgoing_transition_id: t_1c_2a
+  trigger_fact_id: facility_infiltration_needed
+  storylets_helping_in_source_scene:
+  - SL-1C-A
+  - SL-1C-B
+  - SL-1C-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_1c_infiltration_needed
+- scene_id: 2A
+  outgoing_transition_id: t_2a_2b
+  trigger_fact_id: restricted_corridor_access
+  storylets_helping_in_source_scene:
+  - SL-2A-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_2a_restricted_access
+- scene_id: 2B
+  outgoing_transition_id: t_2b_2c
+  trigger_fact_id: archive_crisis_understood
+  storylets_helping_in_source_scene:
+  - SL-2B-A
+  - SL-2B-B
+  - SL-2B-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_2b_archive_crisis
+- scene_id: 2C
+  outgoing_transition_id: t_2c_3a
+  trigger_fact_id: combined_broadcast_rescue_plan_known
+  storylets_helping_in_source_scene:
+  - SL-2C-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_2c_combined_plan
+- scene_id: 3A
+  outgoing_transition_id: t_3a_3b
+  trigger_fact_id: command_levels_assault_underway
+  storylets_helping_in_source_scene:
+  - SL-3A-A
+  - SL-3A-B
+  - SL-3A-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_3a_command_assault
+- scene_id: 3B
+  outgoing_transition_id: t_3b_3c
+  trigger_fact_id: broadcast_started
+  storylets_helping_in_source_scene:
+  - SL-3B-A
+  - SL-3B-B
+  - SL-3B-C
+  status: covered_by_gated_canonical_bridge
+  canonical_fallback_event: bridge_3b_broadcast
+missing_trigger_routes: []
+authoring_decisions_requiring_approval: []
+canonical_transition_snapshot:
+- id: t_1a_1b
+  source_scene_id: 1A
+  trigger_fact_id: sarah_lead_actionable
+- id: t_1b_1c
+  source_scene_id: 1B
+  trigger_fact_id: transport_route_departure_ready
+- id: t_1c_2a
+  source_scene_id: 1C
+  trigger_fact_id: facility_infiltration_needed
+- id: t_2a_2b
+  source_scene_id: 2A
+  trigger_fact_id: restricted_corridor_access
+- id: t_2b_2c
+  source_scene_id: 2B
+  trigger_fact_id: archive_crisis_understood
+- id: t_2c_3a
+  source_scene_id: 2C
+  trigger_fact_id: combined_broadcast_rescue_plan_known
+- id: t_3a_3b
+  source_scene_id: 3A
+  trigger_fact_id: command_levels_assault_underway
+- id: t_3b_3c
+  source_scene_id: 3B
+  trigger_fact_id: broadcast_started
+canonical_bridge_events:
+- id: bridge_1a_actionable_lead
+  scene_id: 1A
+  activation: {}
+  produces:
+  - op: assert
+    fact_id: sarah_lead_actionable
+    value: true
+  realization_storylets:
+  - SL-1A-B
+  fallback_realization: Validated free-text recovery of Sarah’s memory-card files may establish the concrete park/dead-drop
+    lead; the warning alone is not sufficient.
+- id: bridge_1b_departure
+  scene_id: 1B
+  activation:
+    all_facts_true:
+    - transport_route_identified
+    - gabriel_identified
+    - missing_may_be_alive
+    - park_pursuit_resolved
+  produces:
+  - op: assert
+    fact_id: transport_route_departure_ready
+    value: true
+  realization_storylets:
+  - SL-1B-A
+  - SL-1B-B
+  - SL-1B-C
+  fallback_realization: The transit clue/Gabriel explanation and a validated resolution of the park pursuit may
+    establish departure toward the freight terminal without requiring a particular escape action.
+- id: bridge_1c_infiltration_needed
+  scene_id: 1C
+  activation:
+    all_facts_true:
+    - facility_proof
+    - captives_confirmed_alive
+    - national_detention_network_known
+    - architects_strategy_known
+  produces:
+  - op: assert
+    fact_id: facility_infiltration_needed
+    value: true
+  realization_storylets:
+  - SL-1C-A
+  - SL-1C-B
+  - SL-1C-C
+  fallback_realization: Once the facility, living captives, national scope, and architects’ strategy are established,
+    validated free-text reasoning may conclude that deliberate deeper infiltration is necessary.
+- id: bridge_2a_restricted_access
+  scene_id: 2A
+  activation:
+    all_facts_true:
+    - false_identities_ready
+  produces:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  realization_storylets:
+  - SL-2A-C
+  fallback_realization: The canonical security confrontation may be realized through any convincing free-text technical/social
+    approach consistent with the false-inspector cover.
+- id: bridge_2b_archive_crisis
+  scene_id: 2B
+  activation:
+    all_facts_true:
+    - janus_evidence
+    - jeremiah_deliberately_left_behind
+    - gabriel_janus_role_known
+    - gabriel_claimed_reform_motive
+    - sarah_resistance_known
+  produces:
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  realization_storylets:
+  - SL-2B-A
+  - SL-2B-B
+  - SL-2B-C
+  fallback_realization: Free-text archive investigation and confrontation may establish the same JANUS, bait, Gabriel,
+    and Sarah-resistance revelations without selecting a storylet.
+- id: bridge_2c_combined_plan
+  scene_id: 2C
+  activation:
+    all_facts_true:
+    - purge_clock_started
+  produces:
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  realization_storylets:
+  - SL-2C-C
+  fallback_realization: After the purge crisis is active, Sarah’s canonical coded message must eventually make the
+    combined rescue/broadcast mission known; the player may react freely.
+- id: bridge_3a_command_assault
+  scene_id: 3A
+  activation:
+    all_facts_true:
+    - sarah_reached
+    - behavioral_experiments_known
+    - override_codes_deadline_known
+    - detention_uprising_started
+  produces:
+  - op: assert
+    fact_id: command_levels_assault_underway
+    value: true
+  realization_storylets:
+  - SL-3A-A
+  - SL-3A-B
+  - SL-3A-C
+  fallback_realization: Once Jeremiah has reached Sarah, understands the experiment stakes and expiring-code deadline,
+    and the uprising has begun, the resistance commits to fighting upward toward the command/broadcast levels.
+- id: bridge_3b_broadcast
+  scene_id: 3B
+  activation:
+    all_facts_true:
+    - human_security_control
+    - charles_abandoned_rebecca
+    - detention_locations_secured
+    - gabriel_confession_available
+    - relay_open
+  produces:
+  - op: assert
+    fact_id: broadcast_started
+    value: true
+  realization_storylets:
+  - SL-3B-A
+  - SL-3B-B
+  - SL-3B-C
+  fallback_realization: After JANUS loses predictive control, Rebecca’s location data is secured, Charles betrays
+    her, and Gabriel opens the relay with his confession, Sarah/Jeremiah begin the transmission.
+canonical_resolution_events:
+- id: resolution_exposure_holds
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - broadcast_started
+    - gabriel_confession_available
+    - detention_locations_secured
+  produces:
+  - op: assert
+    fact_id: truth_no_longer_containable
+    value: true
+  realization_storylets:
+  - SL-3C-A
+  fallback_realization: The running broadcast publishes independently verifiable evidence and exact facility information
+    until Charles can no longer contain it.
+- id: resolution_archive_and_rebecca
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - truth_no_longer_containable
+  produces:
+  - op: assert
+    fact_id: portable_archive_secured
+    value: true
+  - op: assert
+    fact_id: archive_copies_distributed
+    value: true
+  - op: assert
+    fact_id: rebecca_captured
+    value: true
+  realization_storylets:
+  - SL-3C-B
+  fallback_realization: Validated free-text confrontation preserves and distributes the archive while Rebecca is
+    captured; destroying the archive is not the canonical resolution.
+- id: resolution_escape
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - truth_no_longer_containable
+  produces:
+  - op: assert
+    fact_id: captives_reaching_surface
+    value: true
+  - op: assert
+    fact_id: los_angeles_facility_lost
+    value: true
+  realization_storylets:
+  - SL-3C-C
+  fallback_realization: Jeremiah’s engineering and Sarah’s evacuation leadership get surviving captives to the surface
+    while the Los Angeles facility is lost.
+- id: resolution_network_consequences
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - truth_no_longer_containable
+    - captives_reaching_surface
+  produces:
+  - op: assert
+    fact_id: national_network_fragmenting
+    value: true
+  - op: assert
+    fact_id: community_rescue_efforts_begun
+    value: true
+  - op: assert
+    fact_id: sarah_publishing_archive
+    value: true
+  - op: assert
+    fact_id: jeremiah_joined_rescue_efforts
+    value: true
+  - op: assert
+    fact_id: charles_at_large
+    value: true
+  realization_storylets:
+  - SL-3C-D
+  fallback_realization: Canonical resolution reports establish network fragmentation, community rescues, Sarah’s
+    publication effort, Jeremiah’s rescue work, and Charles’s escape.
+- id: resolution_phase_two
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - national_network_fragmenting
+    - charles_at_large
+  produces:
+  - op: assert
+    fact_id: phase_one_label_known
+    value: true
+  - op: assert
+    fact_id: phase_two_conflict_plan_known
+    value: true
+  realization_storylets:
+  - SL-3C-E
+  fallback_realization: The partially recovered JANUS file canonically reveals the Phase One label and the authored
+    Phase Two conflict objective.
+- id: resolution_complete
+  scene_id: 3C
+  activation:
+    all_facts_true:
+    - truth_no_longer_containable
+    - captives_reaching_surface
+    - archive_copies_distributed
+    - rebecca_captured
+    - national_network_fragmenting
+    - charles_at_large
+    - phase_two_conflict_plan_known
+  produces:
+  - op: assert
+    fact_id: resolution_complete
+    value: true
+  realization_storylets:
+  - SL-3C-A
+  - SL-3C-B
+  - SL-3C-C
+  - SL-3C-D
+  - SL-3C-E
+  fallback_realization: The sole authored ending at 3C is complete once exposure, escape, antagonist outcomes, national
+    consequences, and the Phase Two reveal have all landed.
+audit_notes:
+- Bridge facts that summarize scene completion are produced only by gated canonical events, preventing one early
+  optional storylet from skipping later core beats.
+- The damaged warning in 1A no longer counts as an actionable park lead by itself.
+- The 1B departure bridge now requires Gabriel’s identity/warning and a resolved pursuit in addition to the transport
+  lead.
+- Scene 2B now preserves the JANUS, bait, Gabriel, and Sarah-resistance reversals before transition.
+- Scene 3A requires the reunion, experiment stakes, override-code deadline, and uprising before the assault moves
+  upward; securing the codes themselves remains optional.
+- Scene 3B now preserves JANUS defeat, Rebecca/Charles fracture, exact detention locations, Gabriel’s confession,
+  and the relay opening before the broadcast begins.
+- Canonical 3C resolution events guarantee Rebecca’s capture, Charles remaining at large, network fragmentation,
+  and the Phase Two reveal even if the optional epilogue storylets are not selected.

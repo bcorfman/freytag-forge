@@ -17,6 +17,7 @@ Each entry below is authoring data, not a player action menu.
 - **Dramatic purpose** explains why the situation exists.
 - **Possible realizations** are examples for the narration model, not fixed commands or required branches.
 - **Effects** are bounded state changes the storylet may propose if realized and validated.
+- **Canonical fact operations live in `storylet-routes.yaml`.** Backticked effect/quality names in this prose source are semantic authoring shorthand unless they also appear as declared fact operations in the compiled route document; do not compile them implicitly.
 - **Completion / abort** keep the situation finite.
 - **Protected boundary** prevents optional content from leaking later revelations.
 
@@ -110,7 +111,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `continuity_initiative_known`.
 - May set `emergency_broadcasts_distrusted`.
 - May increase `sarah_investigation_context`.
-- May help satisfy the semantic trigger for following Sarah’s lead.
+- May set `sarah_lead_actionable` once Jeremiah has a concrete lead he can follow away from the house.
 
 **Completion**
 - Jeremiah possesses or has securely copied the relevant evidence and understands that Sarah expected danger.
@@ -212,7 +213,7 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - The dates lead Jeremiah to suspect earlier tests.
 - The photograph makes the unknown man personally important.
-- The transit card suggests physical infrastructure rather than a purely informational conspiracy.
+- The transit card and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
 - The number sequence remains unresolved context for later interpretation.
 
 **Effects**
@@ -269,6 +270,7 @@ Each entry below is authoring data, not a player action menu.
 - May change `trust_gabriel` within an early bounded range.
 - May set `gabriel_identified`.
 - May set `missing_may_be_alive`.
+- May set `transport_route_identified` when Gabriel can credibly connect Sarah’s transit clue to the removal operation.
 - May increase `gabriel_suspicion` at the same time that trust increases.
 
 **Completion**
@@ -322,7 +324,7 @@ Each entry below is authoring data, not a player action menu.
 - May increase `danger`.
 - May increase `gabriel_suspicion`.
 - May set `gabriel_retains_system_access`.
-- May help satisfy the scene transition toward following the transport route.
+- May establish `transport_route_identified` when Gabriel’s retained access and the escape route make the physical removal route followable.
 
 **Completion**
 - Jeremiah and Gabriel escape the immediate park pursuit.
@@ -374,6 +376,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `facility_location_confirmed`.
 - May increase `facility_activity_evidence`.
 - May establish safe service-level access.
+- May set `facility_infiltration_needed` when the main installation cannot be reached safely from the service level.
 
 **Completion**
 - Jeremiah and Gabriel have a credible route into the service level.
@@ -401,6 +404,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `1C`
 
 **Available when**
+- The active underground facility has been credibly confirmed.
 - Jeremiah can observe the captive-processing area.
 - Sarah’s status remains unconfirmed.
 
@@ -426,6 +430,7 @@ Each entry below is authoring data, not a player action menu.
 - May increase `rescue_urgency`.
 - May change `trust_gabriel`.
 - May set `sarah_possible_sighting` without setting `sarah_location_confirmed`.
+- May set `facility_infiltration_needed` when an impulsive rescue would endanger or relocate the captives.
 
 **Completion**
 - Jeremiah accepts that living captives are being held here.
@@ -453,6 +458,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `1C`
 
 **Available when**
+- The active facility and living captives have been credibly confirmed.
 - Gabriel can access the logistics terminal or equivalent authored records.
 - Jeremiah knows captives are present but does not yet know the operation’s scale.
 
@@ -478,7 +484,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `selection_categories_known`.
 - May set `charles_rebecca_architects_known`.
 - May increase `conspiracy_scope`.
-- May satisfy the scene’s transition trigger once the central strategy is understood.
+- May establish `facility_infiltration_needed` once Jeremiah understands that observation or a direct local rescue is insufficient.
 
 **Completion**
 - Jeremiah understands that the disappearances were engineered to remove, classify, and later leverage people at national scale.
@@ -562,6 +568,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2A`
 
 **Available when**
+- Jeremiah and Gabriel have concluded that deliberate deeper infiltration is necessary.
 - Jeremiah and Gabriel are preparing entry.
 - The cooling/structural-monitoring weakness is known or discoverable from authored facility information.
 
@@ -613,6 +620,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2A`
 
 **Available when**
+- The false inspection identities/cover are ready.
 - Jeremiah and Gabriel are passing facility security.
 - Their credentials have survived initial checks.
 - The unscheduled nature of the inspection is being questioned.
@@ -637,7 +645,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `restricted_corridor_access`.
 - May change `facility_suspicion`.
 - May set `rebecca_observing_infiltrators` through a pacing/event effect once facial recognition occurs.
-- May satisfy the transition into deeper facility access.
+- `restricted_corridor_access` is the outgoing scene bridge once the protagonists have moved beyond the outer security layer.
 
 **Completion**
 - Jeremiah and Gabriel have moved beyond the main public/security entry layer.
@@ -717,6 +725,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2B`
 
 **Available when**
+- JANUS has been credibly identified in the archive evidence.
 - JANUS records are accessible.
 - Gabriel’s development role has not yet been confronted.
 
@@ -738,6 +747,7 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May set `gabriel_janus_role_known`.
 - May set `gabriel_claimed_reform_motive`.
+- May set `janus_evidence` when the development records are preserved/authenticated as evidence.
 - May substantially change `trust_gabriel`.
 - May increase or decrease `gabriel_suspicion` depending on accepted interaction facts.
 
@@ -767,6 +777,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2B`
 
 **Available when**
+- JANUS has been credibly identified in the archive evidence.
 - Jeremiah can inspect corrupted prisoner/maintenance records.
 - Sarah’s active resistance is not yet known.
 
@@ -790,7 +801,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `sarah_resistance_known`.
 - May increase `hope`.
 - May set `prisoner_records_corrupted`.
-- May help satisfy the transition toward finding/contacting Sarah.
+- May preserve enough corrupted JANUS/prisoner material to establish `janus_evidence` while also pointing toward Sarah’s resistance.
 
 **Completion**
 - Jeremiah knows Sarah is alive enough to act or has left recent operational evidence strongly supporting that conclusion.
@@ -922,6 +933,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2C`
 
 **Available when**
+- The purge/transfer clock is active and understood.
 - Enough evidence exists to expose the conspiracy.
 - Rescue remains possible but dangerous.
 - Sarah’s coded maintenance channel can reach Jeremiah/Gabriel.
@@ -948,7 +960,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `rescue_exposure_crisis_explicit`.
 - May set `combined_broadcast_rescue_plan_known`.
 - May set `rebecca_office_required_for_broadcast`.
-- Satisfies the scene transition toward reaching Sarah/executing the combined mission.
+- Establishes `combined_broadcast_rescue_plan_known`, the scene bridge toward reaching Sarah and executing the combined mission.
 
 **Completion**
 - Jeremiah and Gabriel understand that the next objective combines rescue and exposure.
@@ -999,11 +1011,13 @@ Each entry below is authoring data, not a player action menu.
 - The reunion is interrupted by Sarah directing others.
 - Jeremiah tries to prioritize Sarah; she redirects him to the national stakes.
 - Prisoners treat Sarah as an organizer rather than a victim.
+- The reunion can establish that Sarah is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
 - Gabriel’s arrival may be met with distrust because of his history.
 
 **Effects**
 - May set `jeremiah_sarah_reunited`.
 - May set `uprising_prepared`.
+- May establish that the uprising is prepared; the canonical launch is gated later in the scene.
 - May increase `network_locations_required_for_broadcast`.
 - May change relationship/trust facts consistent with the reunion.
 
@@ -1033,6 +1047,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3A`
 
 **Available when**
+- Jeremiah has reached Sarah and can move with her resistance network.
 - Jeremiah and Sarah can pass through or access evidence from the medical level.
 - The experiment program is not yet fully understood.
 
@@ -1083,6 +1098,8 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3A`
 
 **Available when**
+- Jeremiah has reached Sarah.
+- The behavioral-experiment stakes have been established.
 - The senior official prisoner is reachable.
 - Charles’s planned authority activation remains pending.
 
@@ -1100,14 +1117,16 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - The official explains that Charles framed and imprisoned members of his own government.
 - Sarah evaluates the codes as one more way to disrupt the takeover.
-- The uprising begins before every implication can be discussed.
+- The uprising may begin before every implication can be discussed.
+- The expiring authorization window can itself force the resistance to launch coordinated disturbances.
 - The codes can be secured or relayed according to validated free-form action.
 
 **Effects**
 - May set `charles_framed_officials_known`.
 - May set `military_override_codes_available`.
 - Starts/advances `authority_activation_pressure`.
-- May help resistance efforts under declared package rules.
+- May set `detention_uprising_started` when the deadline forces Sarah to launch the resistance.
+- May help resistance efforts under declared package rules; securing the codes is not required for the Scene 3A → 3B transition.
 
 **Completion**
 - The codes and their expiration condition are understood/secured, or a declared alternate path makes them unnecessary.
@@ -1191,6 +1210,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3B`
 
 **Available when**
+- JANUS has been overloaded enough that human security has taken direct control.
 - Jeremiah and Sarah have reached Rebecca’s office.
 - Rebecca is present and has not yet escaped.
 - Charles has not fully destroyed the local situation.
@@ -1245,6 +1265,8 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3B`
 
 **Available when**
+- JANUS predictive control has been defeated.
+- Charles has stripped Rebecca of control and the protagonists have secured exact detention-site locations.
 - The broadcast is ready except for Charles’s control of the external communications relay.
 - Gabriel is still capable of reaching/operating the relay chamber.
 
@@ -1268,8 +1290,9 @@ Each entry below is authoring data, not a player action menu.
 - May set `external_relay_disconnected_from_janus`.
 - May set `gabriel_confession_available`.
 - May set `broadcast_path_open`.
+- May set `broadcast_started` once Sarah/Jeremiah activate the transmission through the opened relay.
 - May critically worsen `gabriel_health/status` only through validated effects consistent with the authored sacrifice.
-- Helps satisfy the transition to Scene 3C.
+- `broadcast_started` is the Scene 3B → 3C bridge.
 
 **Completion**
 - The relay remains open long enough for Sarah and Jeremiah to begin the broadcast.
@@ -1299,6 +1322,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3C`
 
 **Available when**
+- `broadcast_started` is true.
 - The broadcast path is open.
 - Sarah has sufficient evidence to transmit.
 - Charles still has remote communications capability.
@@ -1452,9 +1476,9 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-# Resolution-only optional epilogue storylets
+# Resolution-phase storylet realizations
 
-These do **not** create a new playable scene after `3C`; they are bounded optional resolution color that may be selected only after the canonical resolution conditions are satisfied.
+These do **not** create a new playable scene after `3C`. The storylets themselves remain optional realization guidance, but the underlying authored resolution beats that belong to the sole ending—network fragmentation, Charles remaining at large, and the Phase Two revelation—are canonical and must also have non-storylet fallback realizations in the compiled package.
 
 ### SL-3C-D — The Network Fractures
 
@@ -1566,12 +1590,20 @@ These do **not** create a new playable scene after `3C`; they are bounded option
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
 | [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, collapse, epilogue |
 
+## Canonical scene beats vs. optional storylets
+
+The compiled story package may declare a **canonical bridge event** for a scene transition. A canonical bridge event is story progression that must eventually become true for the single authored scene chain to continue, but **no storylet is itself mandatory**. Storylets are optional realization guidance: free-text player action, NPC reaction, or pacing pressure may realize the same validated fact operation without selecting a storylet.
+
+Bridge facts should describe why the current scene is complete and the next scene is now necessary; they should not pre-assert a revelation whose dramatic payoff belongs to the next scene. Pacing events should create observable pressure or consequences rather than unearned player knowledge.
+
+Current bridge facts are: `sarah_lead_actionable`, `transport_route_departure_ready`, `facility_infiltration_needed`, `restricted_corridor_access`, `archive_crisis_understood`, `combined_broadcast_rescue_plan_known`, `command_levels_assault_underway`, and `broadcast_started`.
+
 ## Authoring notes
 
-1. **Optional means optional.** A scene must remain satisfiable even if none of its ordinary storylets are selected, unless a storylet is explicitly promoted to a declared scene completion trigger in the story package.
+1. **Optional means optional.** A scene must remain satisfiable even if none of its ordinary storylets are selected. Canonical bridge events may be required, but storylets only provide optional realization guidance for them.
 2. **No fixed action vocabulary.** “Possible realizations” are prompt guidance only. The LLM interprets arbitrary player roleplay and proposes semantic effects.
 3. **Scene-local context first.** Only participating/present/relevant entities should enter the default turn context. Off-scene references should add only public/currently-known facts.
-4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the collapse/broadcast situations are natural places for deterministic pacing events so the player cannot indefinitely postpone rising-action/crisis/climax events.
+4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the collapse/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Jeremiah unexplained knowledge.
 5. **Required dependencies stay explicit elsewhere.** The memory card, Gabriel, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
 6. **Protected revelations are monotonic.** Optional content can foreshadow later facts, but it must not make a protected revelation true/known before the original scene permits it.
 7. **Effects are bounded proposals.** The exact fact paths, numeric pressure ranges, trigger predicates, and transition priorities belong in validated package data rather than being inferred from prose here.
