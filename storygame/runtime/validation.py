@@ -58,12 +58,17 @@ class ProgressionValidator:
 
         if not proposal.operations or proposal.events:
             return proposal
+        canonical_operations = tuple(
+            operation for operation in proposal.operations if operation.fact.predicate in self.package.world.facts
+        )
+        if not canonical_operations:
+            return proposal
         matches = [
             (route, realization)
             for route in self._routes.values()
             if route.id in state.active_event_ids and route.id not in state.fired_event_ids
             for realization in route.realizations
-            if tuple(self._route_operation(operation) for operation in realization.operations) == proposal.operations
+            if tuple(self._route_operation(operation) for operation in realization.operations) == canonical_operations
         ]
         route_ids = {route.id for route, _ in matches}
         if len(route_ids) != 1:
@@ -71,12 +76,16 @@ class ProgressionValidator:
         route, realization = matches[0]
         return proposal.model_copy(
             update={
-                "operations": (),
+                "operations": tuple(
+                    operation
+                    for operation in proposal.operations
+                    if operation.fact.predicate not in self.package.world.facts
+                ),
                 "events": (
                     StoryEventProposal(
                         event_id=route.id,
                         realization_id=realization.id,
-                        operations=proposal.operations,
+                        operations=canonical_operations,
                     ),
                 ),
             }
