@@ -120,6 +120,56 @@ def test_duplicate_equivalent_realizations_normalize_to_their_single_active_rout
     assert "SL-1A-A" in engine.state.fired_event_ids
 
 
+def test_normalization_preserves_new_facts_alongside_a_canonical_realization() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "A blood smear makes the forced entry impossible to dismiss.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "has_blood", "subject": "thomas_home", "value": "true"},
+                    },
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "sarah_abduction_suspicion", "subject": "story", "value": "true"},
+                    },
+                ],
+            },
+            [],
+        ),
+    )
+
+    engine.turn("I inspect the signs of forced entry.")
+
+    assert engine.state.facts.has("has_blood", "thomas_home", value="true")
+    assert "SL-1A-A" in engine.state.fired_event_ids
+
+
+def test_unmatched_canonical_fact_still_fails_closed() -> None:
+    engine = RuntimeEngine(
+        RuntimeState.bootstrap(PACKAGE),
+        _provider(
+            {
+                "narration": "The facility proof arrives too early.",
+                "operations": [
+                    {
+                        "operation": "assert",
+                        "fact": {"predicate": "facility_proof", "subject": "story", "value": "true"},
+                    }
+                ],
+            },
+            [],
+        ),
+    )
+
+    with pytest.raises(RuntimeStateError, match="validated storylet realization"):
+        engine.turn("I imagine proof from a distant facility.")
+
+    assert engine.state.facts.as_json() == []
+
+
 def test_unsatisfied_trigger_leaves_state_unchanged() -> None:
     engine = RuntimeEngine(
         RuntimeState.bootstrap(PACKAGE),
