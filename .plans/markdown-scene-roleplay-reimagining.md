@@ -69,7 +69,7 @@ player choice safely.
   Warnings must state the concrete dependency at risk, without revealing
   protected future plot details.
 - No story, character, genre, or premise branches in shared Python/JS code.
-  Jeremiah, Sarah, JANUS, and the Continuity Initiative belong solely in the
+  Kristin, Michelle, JANUS, and the Continuity Initiative belong solely in the
   Markdown/declarative package used as the acceptance fixture.
 - The engine never selects or performs a player action. It may deterministically
   determine whether an LLM-proposed effect is legal, whether it triggers a
@@ -151,14 +151,14 @@ Use these target timestamps for the Continuity Initiative main storyline:
 
 | Active-play timestamp | Plot/Freytag milestone | Main-path scene window |
 | --- | --- | --- |
-| 00:00–02:00 | Exposition and inciting discovery: Sarah is gone; abduction and Continuity evidence become credible. | 1A |
-| 02:00–04:30 | Rising action: dead drop, Gabriel contact, and park escape. | 1B |
+| 00:00–02:00 | Exposition and inciting discovery: Michelle is gone; abduction and Continuity evidence become credible. | 1A |
+| 02:00–04:30 | Rising action: dead drop, Brandon contact, and park escape. | 1B |
 | 04:30–06:30 | Rising action: facility proof and the conspiracy's scale. | 1C |
 | 06:30–08:30 | Rising action: prepare/enter under false identities. | 2A |
-| 08:30–10:30 | Midpoint reversal: JANUS, Jeremiah-as-bait, Gabriel's guilt, Sarah's resistance. | 2B |
+| 08:30–10:30 | Midpoint reversal: JANUS, Kristin-as-bait, Brandon's guilt, Sarah's resistance. | 2B |
 | 10:30–13:00 | Crisis: purge clock, evidence-versus-rescue conflict, combined mission. | 2C |
-| 13:00–15:00 | Final rise: reunite with Sarah, learn the stakes, begin uprising. | 3A |
-| 15:00–17:30 | Climax: overload JANUS, seize broadcast, Gabriel opens the relay. | 3B |
+| 13:00–15:00 | Final rise: reunite with Michelle, learn the stakes, begin uprising. | 3A |
+| 15:00–17:30 | Climax: overload JANUS, seize broadcast, Brandon opens the relay. | 3B |
 | 17:30–19:00 | Falling action: national exposure, archive decision, facility escape. | 3C (A–C) |
 | 19:00–20:00 | Resolution: network fractures, reunion/new mission, Phase Two hook. | 3C (D–E) |
 
@@ -407,7 +407,7 @@ the engine's accepted facts are the only source of the next scene and context.
   transitions, game-break decisions, context scoping, and structured output.
 
 - The supplied Continuity Initiative Markdown package loads without any
-  story-specific Python conditionals and starts Jeremiah in Scene 1A.
+  story-specific Python conditionals and starts Kristin in Scene 1A.
 - Player actions can satisfy scene triggers and move through the scene graph;
   deterministic pacing events can also cause declared complications or moves.
 - The Continuity Initiative package parses `plot.md` plus its linked

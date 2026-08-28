@@ -253,3 +253,5 @@ def _block_outbound_network(request: pytest.FixtureRequest, monkeypatch: pytest.
         raise RuntimeError("Outbound network is disabled in tests. Mock urllib.request.urlopen in this test.")
 
     monkeypatch.setattr(urllib.request, "urlopen", _blocked_urlopen)
+    # The transport imports urlopen by name, so patching urllib.request alone leaves it reachable.
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", _blocked_urlopen)

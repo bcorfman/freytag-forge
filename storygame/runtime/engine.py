@@ -16,6 +16,8 @@ from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState, TurnRecord
 from storygame.runtime.validation import ProgressionValidator, SelectedRevealResolver
 
+SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
+
 
 class RuntimeEngine:
     def __init__(
@@ -28,6 +30,18 @@ class RuntimeEngine:
         self.projector = projector or KnowledgeProjector()
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_post_selection_projection: TurnKnowledgeContext | None = None
+
+    def opening(self) -> ResolvedTurnProposal:
+        """Ask the provider to narrate scene entry; an opening commits no canon.
+
+        The package supplies the frame (location, objective, entry text, phase) and
+        the provider supplies the prose, so no scene text is authored in the runtime.
+        """
+
+        self.last_projection = self.projector.project(self.state, "player", "")
+        request = getattr(self.provider, "opening", None)
+        proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
+        return ResolvedTurnProposal(segments=proposal.segments)
 
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
