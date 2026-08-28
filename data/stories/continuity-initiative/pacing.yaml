@@ -5,6 +5,24 @@ events:
   effects:
   - fact_id: patrol_return_pressure
     equals: true
+- id: purge_2c
+  scene_id: 2C
+  at_seconds: 690
+  effects:
+  - fact_id: purge_clock_started
+    equals: true
+- id: override_deadline_3a
+  scene_id: 3A
+  at_seconds: 870
+  effects:
+  - fact_id: override_codes_deadline_known
+    equals: true
+- id: destruction_3b
+  scene_id: 3B
+  at_seconds: 1020
+  effects:
+  - fact_id: facility_destruction_threat
+    equals: true
 scenes:
 - scene_id: 1A
   earliest_seconds: 0
@@ -49,6 +67,8 @@ transitions:
   priority: 10
   triggers:
   - fact_id: michelle_lead_actionable
+    equals: true
+  - fact_id: house_marked_for_return
     equals: true
   required_dependencies:
   - memory_card

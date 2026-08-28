@@ -437,6 +437,9 @@ storylets:
       fact_id: michelle_abduction_suspicion
       value: true
     - op: assert
+      fact_id: michelle_warning_known
+      value: true
+    - op: assert
       fact_id: michelle_lead_actionable
       value: true
     eligible_storylet_event_id: null
@@ -595,6 +598,9 @@ storylets:
     dramatic_intent: Brandon intervenes against the patrol, identifies himself as Michelle’s contact, and credibly
       connects her transit clue to a route used by the removal operation without revealing the facility itself.
     operations:
+    - op: assert
+      fact_id: trust_brandon
+      value: true
     - op: assert
       fact_id: brandon_identified
       value: true
@@ -971,6 +977,9 @@ storylets:
     - op: assert
       fact_id: restricted_corridor_access
       value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
     - t_2a_2b
@@ -1021,6 +1030,12 @@ storylets:
     dramatic_intent: Discover the JANUS classification system through Michelle’s record and the resistance/influence
       categories.
     operations:
+    - op: assert
+      fact_id: janus_known
+      value: true
+    - op: assert
+      fact_id: michelle_selected_for_resistance_influence
+      value: true
     - op: assert
       fact_id: janus_evidence
       value: true
@@ -1076,9 +1091,6 @@ storylets:
       fact_id: brandon_janus_role_known
       value: true
     - op: assert
-      fact_id: janus_evidence
-      value: true
-    - op: assert
       fact_id: brandon_claimed_reform_motive
       value: true
     eligible_storylet_event_id: null
@@ -1095,9 +1107,6 @@ storylets:
       value: true
     - op: assert
       fact_id: brandon_claimed_reform_motive
-      value: true
-    - op: assert
-      fact_id: janus_evidence
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1133,10 +1142,10 @@ storylets:
       records to serve as evidence while revealing her active resistance.
     operations:
     - op: assert
-      fact_id: michelle_resistance_known
+      fact_id: prisoner_records_corrupted
       value: true
     - op: assert
-      fact_id: janus_evidence
+      fact_id: michelle_resistance_known
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1149,9 +1158,6 @@ storylets:
     operations:
     - op: assert
       fact_id: michelle_resistance_known
-      value: true
-    - op: assert
-      fact_id: janus_evidence
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1276,6 +1282,12 @@ storylets:
     dramatic_intent: Michelle’s coded message establishes that broadcast and detention access can be combined through
       Rebecca’s secured office.
     operations:
+    - op: assert
+      fact_id: evidence_ready_to_transmit
+      value: true
+    - op: assert
+      fact_id: rebecca_office_required_for_broadcast
+      value: true
     - op: assert
       fact_id: combined_broadcast_rescue_plan_known
       value: true
@@ -1422,6 +1434,9 @@ storylets:
     dramatic_intent: Secure the emergency override codes and understand their expiration condition.
     operations:
     - op: assert
+      fact_id: charles_framed_officials_known
+      value: true
+    - op: assert
       fact_id: military_override_codes_available
       value: true
     - op: assert
@@ -1462,7 +1477,10 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: military_override_codes_available
+    - any_fact_true:
+      - military_override_codes_available
+      - detention_uprising_started
+    - fact_id: override_codes_deadline_known
       equals: true
     abort_when:
     - scene_id_not: 3A
@@ -1532,6 +1550,12 @@ storylets:
     dramatic_intent: Michelle confronts Rebecca with experiment approvals; Rebecca yields exact detention-site locations
       as leverage, then Charles strips her control and locks down the office.
     operations:
+    - op: assert
+      fact_id: rebecca_experiment_approval_confronted
+      value: true
+    - op: assert
+      fact_id: facility_destruction_threat
+      value: true
     - op: assert
       fact_id: detention_locations_offer_known
       value: true
@@ -1650,6 +1674,9 @@ storylets:
       can no longer be contained by controlling one channel.
     operations:
     - op: assert
+      fact_id: national_facility_locations_broadcast
+      value: true
+    - op: assert
       fact_id: truth_no_longer_containable
       value: true
     eligible_storylet_event_id: null
@@ -1680,7 +1707,9 @@ storylets:
   title: Rebecca’s Archive Cannot Simply Be Destroyed
   activation:
     scene_id: 3C
-    conditions: []
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
     pacing:
       earliest_seconds: 1050
       target_seconds: 1140
@@ -1705,6 +1734,9 @@ storylets:
     - op: assert
       fact_id: rebecca_captured
       value: true
+    - op: assert
+      fact_id: charles_at_large
+      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
@@ -1725,6 +1757,9 @@ storylets:
     - op: assert
       fact_id: rebecca_captured
       value: true
+    - op: assert
+      fact_id: charles_at_large
+      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
@@ -1744,7 +1779,11 @@ storylets:
   title: Escape While the Facility Comes Apart
   activation:
     scene_id: 3C
-    conditions: []
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: rebecca_captured
+      equals: true
     pacing:
       earliest_seconds: 1050
       target_seconds: 1140
@@ -1865,9 +1904,6 @@ storylets:
     - op: assert
       fact_id: phase_two_conflict_plan_known
       value: true
-    - op: assert
-      fact_id: charles_at_large
-      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries: []
@@ -1876,10 +1912,10 @@ storylets:
       the source.
     operations:
     - op: assert
-      fact_id: phase_two_conflict_plan_known
+      fact_id: phase_one_label_known
       value: true
     - op: assert
-      fact_id: charles_at_large
+      fact_id: phase_two_conflict_plan_known
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
