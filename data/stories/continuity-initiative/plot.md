@@ -89,8 +89,6 @@ Kristin reaches her neighborhood after navigating abandoned vehicles, stalled pu
 * The back door shows signs of forced entry.
 * A small smear of blood appears beside the doorframe.
 
-Kristin initially assumes looters entered the house after Michelle vanished, but the blood and missing work materials suggest that she may have still been present when someone arrived.
-
 ### Scene 1A.2 — Michelle’s Last Investigation
 
 Kristin finds a hidden memory card taped beneath a drawer. It contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.

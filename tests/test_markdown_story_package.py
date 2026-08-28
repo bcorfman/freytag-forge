@@ -47,6 +47,15 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
             assert effects == set(realization.operations)
 
 
+def test_a_scene_without_a_first_beat_fails_to_load(tmp_path: Path) -> None:
+    package = copied_package(tmp_path)
+    plot = package / "plot.md"
+    plot.write_text(plot.read_text(encoding="utf-8").replace("### Scene 1A.1 — The Empty House", ""), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A lacks an opening beat"):
+        load_story_package(package)
+
+
 def test_scene_1a_entry_catalog_is_safe_before_any_route_is_selected() -> None:
     package = load_story_package(PACKAGE)
 

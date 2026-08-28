@@ -82,14 +82,16 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "story_elapsed_seconds": 0,
     }
     opening = session.json()["opening"]
-    assert opening["text"] == "Kristin steps into a house that has already been searched."
+    entry_text = PACKAGE.scenes[0].metadata.entry_text
+    assert opening["text"] == f"{entry_text} Kristin steps into a house that has already been searched."
     assert opening["segments"] == [
+        {"kind": "narration", "text": entry_text, "speaker_id": None, "grounding_ids": []},
         {
             "kind": "narration",
             "text": "Kristin steps into a house that has already been searched.",
             "speaker_id": None,
             "grounding_ids": [],
-        }
+        },
     ]
     assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."

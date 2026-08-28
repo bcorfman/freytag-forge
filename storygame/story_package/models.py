@@ -148,9 +148,18 @@ class SceneMetadata(_Model):
     transition_ids: tuple[str, ...] = ()
 
 
+class SceneBeat(_Model):
+    """One authored sub-beat of a scene, quoted verbatim as narration context."""
+
+    id: str = Field(pattern=r"^[1-9][A-Z]\.[1-9]$")
+    title: str = Field(min_length=1)
+    prose: str = Field(min_length=1)
+
+
 class Scene(_Model):
     metadata: SceneMetadata
     prose: str = Field(min_length=1)
+    opening_beat: SceneBeat
 
 
 class Transition(_Model):

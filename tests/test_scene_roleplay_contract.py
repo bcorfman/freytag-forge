@@ -80,11 +80,12 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     assert state.facts.has("story_elapsed_seconds", "story", value="120")
 
 
-def test_scene_opening_is_provider_authored_and_commits_no_canon() -> None:
+def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() -> None:
     """The runtime must never author scene prose of its own."""
 
     state = RuntimeState.bootstrap(PACKAGE)
     before = state.snapshot()
+    entry_text = PACKAGE.scenes[0].metadata.entry_text
     requests: list[str] = []
 
     def provider(player_input: str) -> object:
@@ -94,7 +95,8 @@ def test_scene_opening_is_provider_authored_and_commits_no_canon() -> None:
     opening = RuntimeEngine(state, provider).opening()
 
     assert requests == [SCENE_ENTRY_REQUEST]
-    assert opening.narration == "Kristin steps into a house that answers nothing."
+    assert opening.segments[0].text == entry_text
+    assert opening.narration == f"{entry_text} Kristin steps into a house that answers nothing."
     assert state.snapshot() == before
 
 
@@ -110,5 +112,5 @@ def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> 
 
     opening = RuntimeEngine(state, _OpeningProvider()).opening()
 
-    assert opening.narration == "The kitchen light is still on."
+    assert opening.narration == f"{PACKAGE.scenes[0].metadata.entry_text} The kitchen light is still on."
     assert opening.selected_knowledge_ids == ()

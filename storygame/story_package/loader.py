@@ -15,6 +15,7 @@ from storygame.story_package.models import (
     PacingSource,
     RouteOperation,
     Scene,
+    SceneBeat,
     SceneMetadata,
     Storylet,
     StoryletRoutesSource,
@@ -28,6 +29,7 @@ class StoryPackageError(ValueError):
 
 
 _SCENE = re.compile(r"^## Scene ([1-9][A-Z]) .*$", re.MULTILINE)
+_SCENE_BEAT = re.compile(r"^### Scene ([1-9][A-Z]\.[1-9])\s+[—-]\s+(.+)$", re.MULTILINE)
 _STORYLET = re.compile(r"^### (SL-([1-9][A-Z])-[A-Z]) — (.+)$", re.MULTILINE)
 _SECTION = re.compile(r"^\*\*([^*]+)\*\*\s*(.*?)(?=^\*\*|^---\s*$|\Z)", re.MULTILINE | re.DOTALL)
 _REQUIRED_STORYLET_SECTIONS = {
@@ -73,8 +75,22 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
         if metadata.scene_id != match.group(1):
             raise StoryPackageError(f"heading and frontmatter disagree for scene {match.group(1)}")
         prose = body[frontmatter.end() :].strip()
-        scenes.append(Scene(metadata=metadata, prose=prose))
+        scenes.append(Scene(metadata=metadata, prose=prose, opening_beat=_parse_opening_beat(metadata.scene_id, prose)))
     return tuple(scenes)
+
+
+def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
+    """Isolate the scene's first authored beat so an opening embellishes canon instead of inventing it."""
+
+    matches = list(_SCENE_BEAT.finditer(prose))
+    first = next((match for match in matches if match.group(1) == f"{scene_id}.1"), None)
+    if first is None:
+        raise StoryPackageError(f"scene {scene_id} lacks an opening beat heading '### Scene {scene_id}.1'")
+    end = next((match.start() for match in matches if match.start() > first.start()), len(prose))
+    body = prose[first.end() : end].strip()
+    if not body:
+        raise StoryPackageError(f"scene {scene_id} opening beat has no prose")
+    return SceneBeat(id=first.group(1), title=first.group(2).strip(), prose=body)
 
 
 def _clock(value: str) -> int:
