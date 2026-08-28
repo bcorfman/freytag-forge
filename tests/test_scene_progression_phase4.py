@@ -21,13 +21,13 @@ def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
 def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
-    engine = RuntimeEngine(state, lambda _: _turn("The damaged recording carries Sarah's warning.", ["k_sl_1a_b_r2"]))
+    engine = RuntimeEngine(state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"]))
 
     proposal = engine.turn("I search the desk drawer and play the damaged recording.")
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     assert [(event.event_id, event.realization_id) for event in proposal.events] == [("SL-1A-B", "SL-1A-B-R2")]
-    assert state.facts.has("sarah_warning_known", "story", value="true")
+    assert state.facts.has("michelle_warning_known", "story", value="true")
     assert "SL-1A-B" in state.fired_event_ids
     assert engine.last_post_selection_projection is not None
     assert "k_sl_1a_b_r2" in {item.id for item in engine.last_post_selection_projection.committed_knowledge}
@@ -42,7 +42,7 @@ def test_invalid_or_duplicate_selection_is_atomic(selected: list[str]) -> None:
     engine = RuntimeEngine(state, lambda _: _turn("The room yields no unearned revelation.", selected))
 
     with pytest.raises((ProposalValidationError, ValueError)):
-        engine.turn("I inspect Sarah's phone.")
+        engine.turn("I inspect Michelle's phone.")
 
     assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
 
@@ -60,7 +60,7 @@ def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
 
     with pytest.raises(ProposalValidationError, match="grounding"):
         engine.turn("I recover the damaged recording.")
-    assert not state.facts.has("sarah_warning_known", "story", value="true")
+    assert not state.facts.has("michelle_warning_known", "story", value="true")
 
 
 def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:
@@ -94,7 +94,7 @@ def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
 def test_internal_game_break_path_keeps_the_resolved_candidate_pending_until_proceed(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("The choice would strand a future dependency."))
-    monkeypatch.setattr(engine.validator, "validate", lambda *_: ("gabriel",))
+    monkeypatch.setattr(engine.validator, "validate", lambda *_: ("brandon",))
 
     proposal = engine.turn("I make the risky attempt.")
 

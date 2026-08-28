@@ -61,7 +61,7 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
         "selected_knowledge_ids": [knowledge_id],
     }
 
-    RuntimeEngine(state, lambda _: event_payload).turn("I recover Sarah's damaged recording.")
+    RuntimeEngine(state, lambda _: event_payload).turn("I recover Michelle's damaged recording.")
 
     assert "SL-1A-B" in state.fired_event_ids
     with pytest.raises(ProposalValidationError, match="not eligible"):

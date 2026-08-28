@@ -56,13 +56,23 @@ The timeline harness now accepts text from all supported structured segment
 kinds; rerun the staged command after this revision deploys.
 
 An August 27 staging trace showed a provider selecting a knowledge ID outside
-the candidate IDs supplied for the third timeline turn after earlier storylets
-had fired. The Cloudflare transport now treats that as an invalid provider
-proposal and uses its one permitted recovery request; it also removes every
-realization of a fired storylet from later candidate projections. Verify the
-focused regression with `TMPDIR=/tmp uv run pytest -q` (the suite-wide coverage
-gate means focused file selection is informational only), then rerun the staged
-timeline command after the implementation revision deploys.
+the candidate IDs supplied for the third timeline turn. The actual cause was
+that the package exposed `SL-1A-B` on the first turn and `SL-1A-C` on the
+second, consuming the recording route before its intended input. The routes now
+sequence physical evidence (0–60s), the recording (at 120s), then patrol
+pressure after the warning; Scene 1A remains eligible through the fourth
+60-second test turn. The Cloudflare transport also performs its single allowed
+recovery for an out-of-candidate provider selection, and fired storylet
+realizations are removed from later candidate projections. The deterministic
+`test_scene_1a_route_windows_preserve_the_recording_timeline` locks this
+availability sequence. Run the full suite, then rerun the staged timeline only
+after the implementation revision deploys.
+
+The browser probe keeps its broad free-text investigation intent—Sarah's
+research or a damaged recording. Its assertion accepts either authored
+`SL-1A-B` outcome, while the preceding turns still prove the warning cannot
+appear early.
+
 
 A later staging attempt reported a browser CORS failure. Direct checks of the
 current staging revision's `OPTIONS /api/v1/turn` and cross-origin invalid

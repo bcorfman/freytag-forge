@@ -1,8 +1,8 @@
 story_id: continuity_initiative
-protagonist_id: jeremiah
+protagonist_id: kristin
 locations:
-- id: thomas_home
-  name: Thomas home
+- id: mcgehee_home
+  name: McGehee home
 - id: los_angeles_park
   name: Los Angeles park
 - id: regional_facility
@@ -20,14 +20,23 @@ locations:
 - id: facility_escape
   name: Facility escape route
 npcs:
-- id: jeremiah
-  name: Jeremiah James Thomas
+- id: kristin
+  name: Kristin Schweitzer
   aliases:
-  - Jeremiah Thomas
-- id: sarah
-  name: Sarah Thomas
-- id: gabriel
-  name: Gabriel Dexter
+  - Kristin
+  - Kristin Schweitzer
+- id: michelle
+  name: Dr. Michelle McGehee
+  aliases:
+  - Michelle
+  - Dr. McGehee
+  - Michelle McGehee
+  - Shelly
+- id: brandon
+  name: Brandon Corfman
+  aliases:
+  - Brandon
+  - Brandon Corfman
 - id: charles
   name: Charles Jenkins
 - id: rebecca
@@ -36,9 +45,9 @@ items:
 - id: memory_card
   name: Hidden memory card
   fallback_ids:
-  - sarah_phone
-- id: sarah_phone
-  name: Sarah's phone
+  - michelle_phone
+- id: michelle_phone
+  name: Michelle's phone
 - id: transit_card
   name: Transit access card
 - id: override_codes
@@ -53,35 +62,35 @@ facts:
 - scene_3a_entry_known
 - scene_3b_entry_known
 - scene_3c_entry_known
-- sarah_abduction_suspicion
+- michelle_abduction_suspicion
 - facility_proof
 - false_identities_ready
 - janus_evidence
 - purge_clock_started
-- sarah_reached
+- michelle_reached
 - relay_open
 - broadcast_started
 - continuity_initiative_known
-- sarah_warning_known
-- official_interest_in_sarah_known
+- michelle_warning_known
+- official_interest_in_michelle_known
 - house_marked_for_return
 - transport_route_identified
-- gabriel_face_known
-- gabriel_identified
+- brandon_face_known
+- brandon_identified
 - missing_may_be_alive
-- gabriel_retains_system_access
+- brandon_retains_system_access
 - service_level_access_known
 - captives_confirmed_alive
-- sarah_possible_sighting
+- michelle_possible_sighting
 - national_detention_network_known
 - architects_strategy_known
-- gabriel_prepared_before_event
+- brandon_prepared_before_event
 - restricted_corridor_access
 - rebecca_observing_infiltrators
-- jeremiah_deliberately_left_behind
-- gabriel_janus_role_known
-- gabriel_claimed_reform_motive
-- sarah_resistance_known
+- kristin_deliberately_left_behind
+- brandon_janus_role_known
+- brandon_claimed_reform_motive
+- michelle_resistance_known
 - rebecca_offer_active
 - antagonist_split_known
 - combined_broadcast_rescue_plan_known
@@ -92,7 +101,7 @@ facts:
 - human_security_control
 - detention_locations_offer_known
 - charles_abandoned_rebecca
-- gabriel_confession_available
+- brandon_confession_available
 - truth_no_longer_containable
 - portable_archive_secured
 - archive_contains_prisoner_locations
@@ -105,7 +114,7 @@ facts:
 - phase_one_label_known
 - phase_two_conflict_plan_known
 - charles_at_large
-- sarah_lead_actionable
+- michelle_lead_actionable
 - patrol_return_pressure
 - facility_infiltration_needed
 - detention_uprising_started
@@ -117,9 +126,9 @@ facts:
 - detention_locations_secured
 - rebecca_captured
 - resolution_complete
-- sarah_publishing_archive
-- jeremiah_joined_rescue_efforts
+- michelle_publishing_archive
+- kristin_joined_rescue_efforts
 protected_knowledge:
 - janus_selection_system
-- gabriel_history
+- brandon_history
 - phase_two

@@ -54,7 +54,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "fired_pacing_event_ids": [],
         "story_elapsed_seconds": 0,
     }
-    assert "Sarah's phone lies facedown" in session.json()["opening"]["text"]
+    assert "Michelle's phone lies facedown" in session.json()["opening"]["text"]
     assert session.json()["opening"]["text"] != "Enter 1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
@@ -65,14 +65,14 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: (
             lambda _input: {
-                "segments": [{"kind": "narration", "text": "I incapacitate Gabriel."}],
-                "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "gabriel"}}],
+                "segments": [{"kind": "narration", "text": "I incapacitate Brandon."}],
+                "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "brandon"}}],
             }
         ),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I attack Gabriel."})
+        warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I attack Brandon."})
     assert warning.status_code == 422
     assert "operations" in warning.json()["detail"]
 
@@ -186,7 +186,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "The damaged recording crackles: Sarah warns Jeremiah not to trust broadcasts.",
+                        "text": "The damaged recording crackles: Michelle warns Kristin not to trust broadcasts.",
                         "grounding_ids": ["k_sl_1a_b_r2"],
                     }
                 ],
@@ -220,7 +220,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
     invalid_restored = RuntimeStateSqliteStore(store_path).load(invalid_session_id, PACKAGE)
     assert accepted.status_code == 200
     assert accepted.json()["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
-    assert restored.facts.has("sarah_warning_known", "story", value="true")
+    assert restored.facts.has("michelle_warning_known", "story", value="true")
     assert rejected.status_code == 409
     assert invalid_restored.snapshot() == before_rejection
 

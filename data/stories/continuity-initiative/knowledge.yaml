@@ -1,7 +1,7 @@
 schema_version: '2.0'
 facts:
-- id: sarah_abduction_suspicion
-  purpose: 'Canonical world state: sarah abduction suspicion.'
+- id: michelle_abduction_suspicion
+  purpose: 'Canonical world state: michelle abduction suspicion.'
 - id: facility_proof
   purpose: 'Canonical world state: facility proof.'
 - id: false_identities_ready
@@ -10,78 +10,78 @@ facts:
   purpose: 'Canonical world state: janus evidence.'
 - id: purge_clock_started
   purpose: 'Canonical world state: purge clock started.'
-- id: sarah_reached
-  purpose: 'Canonical world state: sarah reached.'
+- id: michelle_reached
+  purpose: 'Canonical world state: michelle reached.'
 - id: relay_open
   purpose: 'Canonical world state: relay open.'
 - id: broadcast_started
   purpose: 'Canonical world state: broadcast started.'
 - id: continuity_initiative_known
-  purpose: Jeremiah knows Sarah was investigating a suspicious emergency program called
-    the Continuity Initiative.
-- id: sarah_warning_known
-  purpose: Jeremiah has recovered Sarah’s warning not to trust emergency broadcasts.
-- id: official_interest_in_sarah_known
-  purpose: Jeremiah knows the welfare patrol was specifically interested in Sarah’s
-    reporting.
+  purpose: Kristin knows Michelle’s research into genetics led her to investigate suspicious
+    secret contracts tied to the Continuity Initiative.
+- id: michelle_warning_known
+  purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
+- id: official_interest_in_michelle_known
+  purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
+    research and findings.
 - id: house_marked_for_return
-  purpose: The Thomas home has been marked by the patrol for a likely return.
+  purpose: The McGehee home has been marked by the patrol for a likely return.
 - id: transport_route_identified
-  purpose: Jeremiah and Gabriel have enough evidence to follow the removal operation’s
+  purpose: Kristin and Brandon have enough evidence to follow the removal operation’s
     physical transport route toward a specific industrial/freight destination.
-- id: gabriel_face_known
-  purpose: Jeremiah recognizes Gabriel as the unidentified man in Sarah’s photograph.
-- id: gabriel_identified
-  purpose: Jeremiah knows the follower is Gabriel Dexter, Sarah’s contact.
+- id: brandon_face_known
+  purpose: Kristin recognizes Brandon as the unidentified man in Michelle’s photograph.
+- id: brandon_identified
+  purpose: Kristin knows the follower is Brandon Corfman, Michelle’s contact.
 - id: missing_may_be_alive
-  purpose: Jeremiah has credible reason to believe at least some missing people are
+  purpose: Kristin has credible reason to believe at least some missing people are
     alive.
-- id: gabriel_retains_system_access
-  purpose: Jeremiah has observed Gabriel using retained Continuity-system access.
+- id: brandon_retains_system_access
+  purpose: Kristin has observed Brandon using retained Continuity-system access.
 - id: service_level_access_known
-  purpose: Jeremiah and Gabriel know a credible service-level route into the regional
+  purpose: Kristin and Brandon know a credible service-level route into the regional
     facility.
 - id: captives_confirmed_alive
-  purpose: Jeremiah has directly confirmed living captives inside the regional facility.
-- id: sarah_possible_sighting
-  purpose: Jeremiah has an obscured, unconfirmed possible sighting of Sarah inside
+  purpose: Kristin has directly confirmed living captives inside the regional facility.
+- id: michelle_possible_sighting
+  purpose: Kristin has an obscured, unconfirmed possible sighting of Michelle inside
     the facility.
 - id: national_detention_network_known
-  purpose: Jeremiah knows the Los Angeles site is part of a national detention network.
+  purpose: Kristin knows the Los Angeles site is part of a national detention network.
 - id: architects_strategy_known
-  purpose: Jeremiah knows Charles and Rebecca intend to leverage the manufactured
+  purpose: Kristin knows Charles and Rebecca intend to leverage the manufactured
     catastrophe for political reconstruction/control.
-- id: gabriel_prepared_before_event
-  purpose: Jeremiah knows Gabriel prepared for the disappearance before it occurred.
+- id: brandon_prepared_before_event
+  purpose: Kristin knows Brandon prepared for the disappearance before it occurred.
 - id: restricted_corridor_access
-  purpose: Jeremiah and Gabriel have access to restricted infrastructure corridors.
+  purpose: Kristin and Brandon have access to restricted infrastructure corridors.
 - id: rebecca_observing_infiltrators
   purpose: Rebecca has quietly ordered the infiltrators observed; this fact is not
-    automatically known to Jeremiah.
-- id: jeremiah_deliberately_left_behind
-  purpose: JANUS records show Jeremiah was deliberately left behind.
-- id: gabriel_janus_role_known
-  purpose: Jeremiah knows Gabriel helped develop JANUS.
-- id: gabriel_claimed_reform_motive
-  purpose: Gabriel has claimed he broke with Charles after learning JANUS would be
+    automatically known to Kristin.
+- id: kristin_deliberately_left_behind
+  purpose: JANUS records show Kristin was deliberately left behind.
+- id: brandon_janus_role_known
+  purpose: Kristin knows Brandon wrote JANUS AI software to identify threats.
+- id: brandon_claimed_reform_motive
+  purpose: Brandon has claimed he broke with Charles after learning JANUS would be
     used for mass detention/control.
-- id: sarah_resistance_known
-  purpose: Jeremiah knows Sarah is actively sabotaging the facility from inside.
+- id: michelle_resistance_known
+  purpose: Kristin knows Michelle is actively sabotaging the facility from inside.
 - id: rebecca_offer_active
-  purpose: Rebecca has offered Gabriel safety/Sarah’s release in exchange for helping
+  purpose: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping
     her displace Charles.
 - id: antagonist_split_known
-  purpose: Jeremiah has legitimate evidence that Rebecca and Charles are in conflict.
+  purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
 - id: combined_broadcast_rescue_plan_known
-  purpose: Jeremiah/Gabriel know Sarah’s plan to combine evidence transmission with
+  purpose: Kristin/Brandon know Michelle’s plan to combine evidence transmission with
     opening detention sectors via Rebecca’s office.
 - id: uprising_prepared
-  purpose: Jeremiah knows Sarah has organized an active prisoner resistance network.
+  purpose: Kristin knows Michelle has organized an active prisoner resistance network.
 - id: conditioned_release_plan_known
-  purpose: Jeremiah knows selected captives were being conditioned to support Charles’s
+  purpose: Kristin knows selected captives were being conditioned to support Charles’s
     public explanation.
 - id: behavioral_experiments_known
-  purpose: Jeremiah knows the facility conducted the authored neurological/behavioral
+  purpose: Kristin knows the facility conducted the authored neurological/behavioral
     experiments.
 - id: military_override_codes_available
   purpose: The resistance has secured or reliably relayed the emergency military override
@@ -93,8 +93,8 @@ facts:
   purpose: Rebecca has offered detention-site location information as leverage.
 - id: charles_abandoned_rebecca
   purpose: Charles has stripped Rebecca of local control and treated her as expendable.
-- id: gabriel_confession_available
-  purpose: Gabriel’s confession authenticating his JANUS role is available for the
+- id: brandon_confession_available
+  purpose: Brandon’s confession authenticating his JANUS role is available for the
     broadcast.
 - id: truth_no_longer_containable
   purpose: Enough independently verifiable evidence is public that Charles cannot
@@ -123,33 +123,33 @@ facts:
     among those who remained.
 - id: charles_at_large
   purpose: Charles remains at large after the Los Angeles exposure.
-- id: sarah_lead_actionable
-  purpose: Jeremiah has a concrete, credible lead from Sarah’s investigation that
+- id: michelle_lead_actionable
+  purpose: Kristin has a concrete, credible lead from Michelle’s research that
     can be followed away from the house.
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
-    scrutiny at the Thomas home.
+    scrutiny at the McGehee home.
 - id: facility_infiltration_needed
-  purpose: Jeremiah and Gabriel understand that direct rescue or observation is insufficient
+  purpose: Kristin and Brandon understand that direct rescue or observation is insufficient
     and that controlled deeper access to the facility is necessary.
 - id: detention_uprising_started
-  purpose: Sarah’s resistance has openly begun coordinated action and the protagonists
+  purpose: Michelle’s resistance has openly begun coordinated action and the protagonists
     are committed to moving toward the command/broadcast levels.
 - id: park_pursuit_resolved
-  purpose: Jeremiah and Gabriel have survived or otherwise resolved the park pursuit
+  purpose: Kristin and Brandon have survived or otherwise resolved the park pursuit
     and can depart together.
 - id: transport_route_departure_ready
-  purpose: Jeremiah and Gabriel have the transport lead, have resolved the park pursuit,
+  purpose: Kristin and Brandon have the transport lead, have resolved the park pursuit,
     and can proceed to the industrial destination.
 - id: archive_crisis_understood
-  purpose: Jeremiah has secured JANUS evidence, learned the bait/Gabriel revelations,
-    and recognized Sarah’s active resistance, completing the archive crisis.
+  purpose: Kristin has secured JANUS evidence, learned the bait/Brandon revelations,
+    and recognized Michelle’s active resistance, completing the archive crisis.
 - id: override_codes_deadline_known
-  purpose: Jeremiah and Sarah understand that the senior official’s emergency override
+  purpose: Kristin and Michelle understand that the senior official’s emergency override
     authorization will expire when Charles activates his new authority, whether or
     not the codes are secured.
 - id: command_levels_assault_underway
-  purpose: Sarah’s uprising is active and the protagonists are moving from the detention
+  purpose: Michelle’s uprising is active and the protagonists are moving from the detention
     levels toward the command/broadcast levels.
 - id: detention_locations_secured
   purpose: The protagonists have secured exact detention-site location information
@@ -162,11 +162,11 @@ facts:
   purpose: 'The canonical 3C resolution has landed: exposure is durable, captives
     are escaping, the network is fragmenting, Charles remains at large, and Phase
     Two has been revealed.'
-- id: sarah_publishing_archive
-  purpose: Sarah has begun distributing/publishing the Continuity Initiative archive
+- id: michelle_publishing_archive
+  purpose: Michelle has begun distributing/publishing the Continuity Initiative archive
     after the exposure.
-- id: jeremiah_joined_rescue_efforts
-  purpose: Jeremiah has committed to helping locate and open remaining detention facilities.
+- id: kristin_joined_rescue_efforts
+  purpose: Kristin has committed to helping locate and open remaining detention facilities.
 - id: scene_1a_entry_known
   purpose: The safe opening frame for scene 1A has been established.
 - id: scene_1b_entry_known
@@ -187,12 +187,12 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: The house is too quiet. Sarah's phone lies facedown on the kitchen floor
+  situation: The house is too quiet. Michelle's phone lies facedown on the kitchen floor
     beside an overturned chair, while her laptop and work bag are gone.
-  pressure: Find evidence of Sarahs disappearance
+  pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: Enter 1B
-  pressure: Follow Sarahs lead and survive the park
+  pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
   situation: Enter 1C
   pressure: Confirm the facility and its purpose
@@ -201,13 +201,13 @@ scene_frames:
   pressure: Enter the facility under false identities
 - scene_id: 2B
   situation: Enter 2B
-  pressure: Secure evidence while judging Gabriels betrayal
+  pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
   situation: Enter 2C
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
   situation: Enter 3A
-  pressure: Reach Sarah and join the uprising
+  pressure: Reach Michelle and join the uprising
 - scene_id: 3B
   situation: Enter 3B
   pressure: Overload JANUS and seize the broadcast
@@ -216,10 +216,10 @@ scene_frames:
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
-  statement: 'Current-scene development: sarah abduction suspicion.'
+  statement: 'Current-scene development: michelle abduction suspicion.'
   entity_ids: []
   aliases:
-  - sarah abduction suspicion
+  - michelle abduction suspicion
   audience:
     kind: public
     player_visible: true
@@ -228,7 +228,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_abduction_suspicion
+    fact_id: michelle_abduction_suspicion
     value: true
   source:
     kind: storylet_realization
@@ -238,10 +238,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_a_r2
-  statement: 'Current-scene development: sarah abduction suspicion.'
+  statement: 'Current-scene development: michelle abduction suspicion.'
   entity_ids: []
   aliases:
-  - sarah abduction suspicion
+  - michelle abduction suspicion
   audience:
     kind: public
     player_visible: true
@@ -250,7 +250,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_abduction_suspicion
+    fact_id: michelle_abduction_suspicion
     value: true
   source:
     kind: storylet_realization
@@ -260,13 +260,13 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_b_r1
-  statement: 'Current-scene development: continuity initiative known, sarah abduction
-    suspicion, sarah lead actionable.'
+  statement: 'Current-scene development: continuity initiative known, michelle abduction
+    suspicion, michelle lead actionable.'
   entity_ids: []
   aliases:
   - continuity initiative known
-  - sarah abduction suspicion
-  - sarah lead actionable
+  - michelle abduction suspicion
+  - michelle lead actionable
   audience:
     kind: public
     player_visible: true
@@ -278,10 +278,10 @@ knowledge:
     fact_id: continuity_initiative_known
     value: true
   - op: assert
-    fact_id: sarah_abduction_suspicion
+    fact_id: michelle_abduction_suspicion
     value: true
   - op: assert
-    fact_id: sarah_lead_actionable
+    fact_id: michelle_lead_actionable
     value: true
   source:
     kind: storylet_realization
@@ -291,11 +291,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_b_r2
-  statement: "Jeremiah recovers Sarah's damaged recording: do not trust emergency broadcasts."
+  statement: "Kristin recovers Michelle's damaged recording: do not trust emergency broadcasts."
   entity_ids: []
   aliases:
-  - sarah warning known
-  - sarah abduction suspicion
+  - michelle warning known
+  - michelle abduction suspicion
   audience:
     kind: public
     player_visible: true
@@ -304,10 +304,10 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_warning_known
+    fact_id: michelle_warning_known
     value: true
   - op: assert
-    fact_id: sarah_abduction_suspicion
+    fact_id: michelle_abduction_suspicion
     value: true
   source:
     kind: storylet_realization
@@ -317,12 +317,12 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_c_r1
-  statement: 'Current-scene development: official interest in sarah known, sarah abduction
+  statement: 'Current-scene development: official interest in michelle known, michelle abduction
     suspicion.'
   entity_ids: []
   aliases:
-  - official interest in sarah known
-  - sarah abduction suspicion
+  - official interest in michelle known
+  - michelle abduction suspicion
   audience:
     kind: public
     player_visible: true
@@ -331,10 +331,10 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: official_interest_in_sarah_known
+    fact_id: official_interest_in_michelle_known
     value: true
   - op: assert
-    fact_id: sarah_abduction_suspicion
+    fact_id: michelle_abduction_suspicion
     value: true
   source:
     kind: storylet_realization
@@ -392,10 +392,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_a_r2
-  statement: 'Current-scene development: gabriel face known.'
+  statement: 'Current-scene development: brandon face known.'
   entity_ids: []
   aliases:
-  - gabriel face known
+  - brandon face known
   audience:
     kind: public
     player_visible: true
@@ -404,7 +404,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_face_known
+    fact_id: brandon_face_known
     value: true
   source:
     kind: storylet_realization
@@ -414,11 +414,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_b_r1
-  statement: 'Current-scene development: gabriel identified, missing may be alive,
+  statement: 'Current-scene development: brandon identified, missing may be alive,
     transport route identified.'
   entity_ids: []
   aliases:
-  - gabriel identified
+  - brandon identified
   - missing may be alive
   - transport route identified
   audience:
@@ -429,7 +429,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_identified
+    fact_id: brandon_identified
     value: true
   - op: assert
     fact_id: missing_may_be_alive
@@ -445,10 +445,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_b_r2
-  statement: 'Current-scene development: gabriel identified.'
+  statement: 'Current-scene development: brandon identified.'
   entity_ids: []
   aliases:
-  - gabriel identified
+  - brandon identified
   audience:
     kind: public
     player_visible: true
@@ -457,7 +457,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_identified
+    fact_id: brandon_identified
     value: true
   source:
     kind: storylet_realization
@@ -467,11 +467,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_c_r1
-  statement: 'Current-scene development: gabriel retains system access, transport
+  statement: 'Current-scene development: brandon retains system access, transport
     route identified, park pursuit resolved.'
   entity_ids: []
   aliases:
-  - gabriel retains system access
+  - brandon retains system access
   - transport route identified
   - park pursuit resolved
   audience:
@@ -482,7 +482,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_retains_system_access
+    fact_id: brandon_retains_system_access
     value: true
   - op: assert
     fact_id: transport_route_identified
@@ -498,11 +498,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_c_r2
-  statement: 'Current-scene development: gabriel retains system access, park pursuit
+  statement: 'Current-scene development: brandon retains system access, park pursuit
     resolved.'
   entity_ids: []
   aliases:
-  - gabriel retains system access
+  - brandon retains system access
   - park pursuit resolved
   audience:
     kind: public
@@ -512,7 +512,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_retains_system_access
+    fact_id: brandon_retains_system_access
     value: true
   - op: assert
     fact_id: park_pursuit_resolved
@@ -595,10 +595,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_b_r2
-  statement: 'Current-scene development: sarah possible sighting.'
+  statement: 'Current-scene development: michelle possible sighting.'
   entity_ids: []
   aliases:
-  - sarah possible sighting
+  - michelle possible sighting
   audience:
     kind: public
     player_visible: true
@@ -607,7 +607,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_possible_sighting
+    fact_id: michelle_possible_sighting
     value: true
   source:
     kind: storylet_realization
@@ -661,10 +661,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_a_r1
-  statement: 'Current-scene development: gabriel prepared before event.'
+  statement: 'Current-scene development: brandon prepared before event.'
   entity_ids: []
   aliases:
-  - gabriel prepared before event
+  - brandon prepared before event
   audience:
     kind: public
     player_visible: true
@@ -673,7 +673,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_prepared_before_event
+    fact_id: brandon_prepared_before_event
     value: true
   source:
     kind: storylet_realization
@@ -683,10 +683,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_a_r2
-  statement: 'Current-scene development: gabriel prepared before event.'
+  statement: 'Current-scene development: brandon prepared before event.'
   entity_ids: []
   aliases:
-  - gabriel prepared before event
+  - brandon prepared before event
   audience:
     kind: public
     player_visible: true
@@ -695,7 +695,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_prepared_before_event
+    fact_id: brandon_prepared_before_event
     value: true
   source:
     kind: storylet_realization
@@ -771,8 +771,8 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_c_r2
-  statement: Jeremiah and Gabriel have opened a restricted infrastructure corridor.
-  entity_ids: [jeremiah, gabriel, regional_facility]
+  statement: Kristin and Brandon have opened a restricted infrastructure corridor.
+  entity_ids: [kristin, brandon, regional_facility]
   aliases:
   - restricted corridor
   - infrastructure corridor
@@ -795,7 +795,7 @@ knowledge:
     priority: 10
 - id: k_sl_2a_c_r2_rebecca_observes
   statement: Rebecca has ordered the infiltrators watched.
-  entity_ids: [rebecca, jeremiah, gabriel, regional_facility]
+  entity_ids: [rebecca, kristin, brandon, regional_facility]
   aliases:
   - Rebecca ordered surveillance
   - infiltrators watched
@@ -839,12 +839,12 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_a_r2
-  statement: 'Current-scene development: janus evidence, jeremiah deliberately left
+  statement: 'Current-scene development: janus evidence, kristin deliberately left
     behind.'
   entity_ids: []
   aliases:
   - janus evidence
-  - jeremiah deliberately left behind
+  - kristin deliberately left behind
   audience:
     kind: public
     player_visible: true
@@ -856,7 +856,7 @@ knowledge:
     fact_id: janus_evidence
     value: true
   - op: assert
-    fact_id: jeremiah_deliberately_left_behind
+    fact_id: kristin_deliberately_left_behind
     value: true
   source:
     kind: storylet_realization
@@ -866,13 +866,13 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_b_r1
-  statement: 'Current-scene development: gabriel janus role known, janus evidence,
-    gabriel claimed reform motive.'
+  statement: 'Current-scene development: brandon janus role known, janus evidence,
+    brandon claimed reform motive.'
   entity_ids: []
   aliases:
-  - gabriel janus role known
+  - brandon janus role known
   - janus evidence
-  - gabriel claimed reform motive
+  - brandon claimed reform motive
   audience:
     kind: public
     player_visible: true
@@ -881,13 +881,13 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_janus_role_known
+    fact_id: brandon_janus_role_known
     value: true
   - op: assert
     fact_id: janus_evidence
     value: true
   - op: assert
-    fact_id: gabriel_claimed_reform_motive
+    fact_id: brandon_claimed_reform_motive
     value: true
   source:
     kind: storylet_realization
@@ -897,12 +897,12 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_b_r2
-  statement: 'Current-scene development: gabriel janus role known, gabriel claimed
+  statement: 'Current-scene development: brandon janus role known, brandon claimed
     reform motive, janus evidence.'
   entity_ids: []
   aliases:
-  - gabriel janus role known
-  - gabriel claimed reform motive
+  - brandon janus role known
+  - brandon claimed reform motive
   - janus evidence
   audience:
     kind: public
@@ -912,10 +912,10 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: gabriel_janus_role_known
+    fact_id: brandon_janus_role_known
     value: true
   - op: assert
-    fact_id: gabriel_claimed_reform_motive
+    fact_id: brandon_claimed_reform_motive
     value: true
   - op: assert
     fact_id: janus_evidence
@@ -928,10 +928,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_c_r1
-  statement: 'Current-scene development: sarah resistance known, janus evidence.'
+  statement: 'Current-scene development: michelle resistance known, janus evidence.'
   entity_ids: []
   aliases:
-  - sarah resistance known
+  - michelle resistance known
   - janus evidence
   audience:
     kind: public
@@ -941,7 +941,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_resistance_known
+    fact_id: michelle_resistance_known
     value: true
   - op: assert
     fact_id: janus_evidence
@@ -954,10 +954,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_c_r2
-  statement: 'Current-scene development: sarah resistance known, janus evidence.'
+  statement: 'Current-scene development: michelle resistance known, janus evidence.'
   entity_ids: []
   aliases:
-  - sarah resistance known
+  - michelle resistance known
   - janus evidence
   audience:
     kind: public
@@ -967,7 +967,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_resistance_known
+    fact_id: michelle_resistance_known
     value: true
   - op: assert
     fact_id: janus_evidence
@@ -1116,10 +1116,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_a_r1
-  statement: 'Current-scene development: sarah reached, uprising prepared.'
+  statement: 'Current-scene development: michelle reached, uprising prepared.'
   entity_ids: []
   aliases:
-  - sarah reached
+  - michelle reached
   - uprising prepared
   audience:
     kind: public
@@ -1129,7 +1129,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_reached
+    fact_id: michelle_reached
     value: true
   - op: assert
     fact_id: uprising_prepared
@@ -1142,10 +1142,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_a_r2
-  statement: 'Current-scene development: sarah reached, uprising prepared.'
+  statement: 'Current-scene development: michelle reached, uprising prepared.'
   entity_ids: []
   aliases:
-  - sarah reached
+  - michelle reached
   - uprising prepared
   audience:
     kind: public
@@ -1155,7 +1155,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: sarah_reached
+    fact_id: michelle_reached
     value: true
   - op: assert
     fact_id: uprising_prepared
@@ -1399,11 +1399,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_c_r1
-  statement: 'Current-scene development: relay open, gabriel confession available.'
+  statement: 'Current-scene development: relay open, brandon confession available.'
   entity_ids: []
   aliases:
   - relay open
-  - gabriel confession available
+  - brandon confession available
   audience:
     kind: public
     player_visible: true
@@ -1415,7 +1415,7 @@ knowledge:
     fact_id: relay_open
     value: true
   - op: assert
-    fact_id: gabriel_confession_available
+    fact_id: brandon_confession_available
     value: true
   source:
     kind: storylet_realization
@@ -1425,11 +1425,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_c_r2
-  statement: 'Current-scene development: relay open, gabriel confession available.'
+  statement: 'Current-scene development: relay open, brandon confession available.'
   entity_ids: []
   aliases:
   - relay open
-  - gabriel confession available
+  - brandon confession available
   audience:
     kind: public
     player_visible: true
@@ -1441,7 +1441,7 @@ knowledge:
     fact_id: relay_open
     value: true
   - op: assert
-    fact_id: gabriel_confession_available
+    fact_id: brandon_confession_available
     value: true
   source:
     kind: storylet_realization
@@ -1721,8 +1721,8 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_bridge_1b_departure
-  statement: Jeremiah and Gabriel can depart along the identified transport route.
-  entity_ids: [jeremiah, gabriel, transit_card]
+  statement: Kristin and Brandon can depart along the identified transport route.
+  entity_ids: [kristin, brandon, transit_card]
   aliases: [transport departure, departure route]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1B]
@@ -1730,23 +1730,23 @@ knowledge:
   source: {kind: canonical_route_event, canonical_event_id: bridge_1b_departure}
 - id: k_bridge_1c_infiltration
   statement: Direct observation is no longer enough; the facility must be entered.
-  entity_ids: [jeremiah, gabriel, regional_facility]
+  entity_ids: [kristin, brandon, regional_facility]
   aliases: [enter the facility, deeper access]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1C]
   establishes: [{op: assert, fact_id: facility_infiltration_needed, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: bridge_1c_infiltration_needed}
 - id: k_bridge_2b_archive_crisis
-  statement: "The archive crisis is understood: the evidence, betrayal, and Sarah's resistance converge here."
-  entity_ids: [jeremiah, sarah, gabriel, janus_archive]
-  aliases: [archive crisis, Sarah's resistance]
+  statement: "The archive crisis is understood: the evidence, betrayal, and Michelle's resistance converge here."
+  entity_ids: [kristin, michelle, brandon, janus_archive]
+  aliases: [archive crisis, Michelle's resistance]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   establishes: [{op: assert, fact_id: archive_crisis_understood, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: bridge_2b_archive_crisis}
 - id: k_bridge_3a_command_assault
   statement: The uprising is active, and the group is moving toward the command and broadcast levels.
-  entity_ids: [jeremiah, sarah, broadcast_relay, detention_level]
+  entity_ids: [kristin, michelle, broadcast_relay, detention_level]
   aliases: [command levels, broadcast levels]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3A]
@@ -1754,7 +1754,7 @@ knowledge:
   source: {kind: canonical_route_event, canonical_event_id: bridge_3a_command_assault}
 - id: k_bridge_3b_broadcast
   statement: The national broadcast has begun.
-  entity_ids: [jeremiah, sarah, broadcast_relay]
+  entity_ids: [kristin, michelle, broadcast_relay]
   aliases: [broadcast started, national transmission]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
@@ -1762,39 +1762,39 @@ knowledge:
   source: {kind: canonical_route_event, canonical_event_id: bridge_3b_broadcast}
 - id: k_resolution_complete
   statement: The exposure and escape resolution has landed, though the wider damage remains.
-  entity_ids: [jeremiah, sarah, facility_escape]
+  entity_ids: [kristin, michelle, facility_escape]
   aliases: [resolution, exposure and escape]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: resolution_complete, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_complete}
-- id: k_resolution_sarah_publishing
-  statement: Sarah has begun publishing the recovered archive.
-  entity_ids: [sarah, janus_archive]
-  aliases: [Sarah publishing, archive publication]
+- id: k_resolution_michelle_publishing
+  statement: Michelle has begun publishing the recovered archive.
+  entity_ids: [michelle, janus_archive]
+  aliases: [Michelle publishing, archive publication]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
-  establishes: [{op: assert, fact_id: sarah_publishing_archive, value: true}]
+  establishes: [{op: assert, fact_id: michelle_publishing_archive, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
-- id: k_resolution_jeremiah_rescue
-  statement: Jeremiah has joined the wider rescue effort to find remaining detention sites.
-  entity_ids: [jeremiah]
+- id: k_resolution_kristin_rescue
+  statement: Kristin has joined the wider rescue effort to find remaining detention sites.
+  entity_ids: [kristin]
   aliases: [rescue efforts, remaining detention sites]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
-  establishes: [{op: assert, fact_id: jeremiah_joined_rescue_efforts, value: true}]
+  establishes: [{op: assert, fact_id: kristin_joined_rescue_efforts, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
 - id: k_scene_1a_entry
-  statement: The house is quiet, Sarah is missing, and her phone remains on the kitchen floor.
-  entity_ids: [jeremiah, sarah, sarah_phone]
-  aliases: [Sarah's phone, kitchen floor, empty house]
+  statement: The house is quiet, Michelle is missing, and her phone remains on the kitchen floor.
+  entity_ids: [kristin, michelle, michelle_phone]
+  aliases: [Michelle's phone, kitchen floor, empty house]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1A]
   establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_1b_entry
   statement: The park is an immediate place of pursuit and uncertainty.
-  entity_ids: [jeremiah, los_angeles_park]
+  entity_ids: [kristin, los_angeles_park]
   aliases: [park, pursuit]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1B]
@@ -1802,7 +1802,7 @@ knowledge:
   source: {kind: scene_entry}
 - id: k_scene_1c_entry
   statement: The regional facility is the immediate, dangerous destination.
-  entity_ids: [jeremiah, regional_facility]
+  entity_ids: [kristin, regional_facility]
   aliases: [facility, regional facility]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1C]
@@ -1810,7 +1810,7 @@ knowledge:
   source: {kind: scene_entry}
 - id: k_scene_2a_entry
   statement: The protagonists are entering the facility under false identities.
-  entity_ids: [jeremiah, regional_facility]
+  entity_ids: [kristin, regional_facility]
   aliases: [false identities, facility entrance]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2A]
@@ -1818,7 +1818,7 @@ knowledge:
   source: {kind: scene_entry}
 - id: k_scene_2b_entry
   statement: The archive crisis is immediate and evidence must be secured.
-  entity_ids: [jeremiah, janus_archive]
+  entity_ids: [kristin, janus_archive]
   aliases: [archive, evidence]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
@@ -1826,23 +1826,23 @@ knowledge:
   source: {kind: scene_entry}
 - id: k_scene_2c_entry
   statement: The purge clock is active and the group must act under pressure.
-  entity_ids: [jeremiah, purge_chamber]
+  entity_ids: [kristin, purge_chamber]
   aliases: [purge clock, purge]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
   establishes: [{op: assert, fact_id: scene_2c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_3a_entry
-  statement: Reaching Sarah and supporting the uprising are immediate priorities.
-  entity_ids: [jeremiah, sarah, detention_level]
-  aliases: [Sarah, uprising]
+  statement: Reaching Michelle and supporting the uprising are immediate priorities.
+  entity_ids: [kristin, michelle, detention_level]
+  aliases: [Michelle, uprising]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3A]
   establishes: [{op: assert, fact_id: scene_3a_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_3b_entry
   statement: The broadcast relay is the immediate contested objective.
-  entity_ids: [jeremiah, broadcast_relay]
+  entity_ids: [kristin, broadcast_relay]
   aliases: [broadcast relay, relay]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
@@ -1850,7 +1850,7 @@ knowledge:
   source: {kind: scene_entry}
 - id: k_scene_3c_entry
   statement: Exposure and escape are both immediate under the collapsing operation.
-  entity_ids: [jeremiah, facility_escape]
+  entity_ids: [kristin, facility_escape]
   aliases: [escape route, exposure]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]

@@ -2,7 +2,7 @@
 
 > Companion storylet pool for [`plot.md`](plot.md).
 >
-> **Design contract:** Storylets are optional, bounded situations attached to a playable scene. They may reveal already-permitted context, change pressure, move a scene-local NPC/item, or help satisfy a scene trigger. They are **not** hidden mandatory actions and do not replace free-form LLM roleplay. The player is always Jeremiah Thomas.
+> **Design contract:** Storylets are optional, bounded situations attached to a playable scene. They may reveal already-permitted context, change pressure, move a scene-local NPC/item, or help satisfy a scene trigger. They are **not** hidden mandatory actions and do not replace free-form LLM roleplay. The player is always Kristin Schweitzer.
 >
 > **ID scheme:** `SL-<scene>-<letter>`. For example, `SL-1A-B` is the second optional storylet associated with **Scene 1A**.
 
@@ -25,106 +25,106 @@ Each entry below is authoring data, not a player action menu.
 
 # Scene 1 — The Search Begins
 
-## Storylets for [Scene 1A — Sarah’s Disappearance](plot.md#scene-1a--sarahs-disappearance)
+## Storylets for [Scene 1A — Michelle’s Disappearance](plot.md#scene-1a--michelles-disappearance)
 
 ### SL-1A-A — The House Does Not Look Abandoned
 
-**Source beats:** [1A.1 — The Empty House](plot.md#scene-1a1--the-empty-house), [1A.2 — Sarah’s Last Investigation](plot.md#scene-1a2--sarahs-last-investigation)
+**Source beats:** [1A.1 — The Empty House](plot.md#scene-1a1--the-empty-house), [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
 
 **Allowed scene:** `1A`
 
 **Available when**
-- Jeremiah is at the house.
+- Kristin is at the house.
 - The forced entry, blood, missing work materials, or overturned chair have not yet been meaningfully reconciled.
 - The federal patrol has not made the house unsafe.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas, only through her possessions and prior presence
-- Sarah’s phone
+- Kristin Schweitzer
+- Dr. Michelle McGehee, only through her possessions and prior presence
+- Michelle’s phone
 - Hidden memory card
-- Sarah’s missing laptop/work bag as absence evidence
+- Michelle’s missing laptop/work bag as absence evidence
 
 **Dramatic purpose**
 - Turn the house from a generic post-disappearance loss into a physical crime scene.
-- Let player curiosity accumulate toward the authored conclusion that Sarah was probably taken.
+- Let player curiosity accumulate toward the authored conclusion that Michelle was probably taken.
 
 **Possible realizations**
-- Jeremiah notices that the disorder is too localized to fit ordinary looting.
-- Handling Sarah’s phone makes the missing laptop and work bag stand out.
-- Inspecting the back door or blood changes Jeremiah’s working theory.
+- Kristin notices that the disorder is too localized to fit ordinary looting.
+- Handling Michelle’s phone makes the missing laptop and work bag stand out.
+- Inspecting the back door or blood changes Kristin’s working theory.
 - A failed or hurried search can leave uncertainty while still increasing suspicion.
 
 **Effects**
-- May increase `sarah_abduction_suspicion`.
+- May increase `michelle_abduction_suspicion`.
 - May establish one or more already-authored evidence facts as noticed.
 - May make the memory card easier to discover without making this storylet the only route to it.
 
 **Completion**
-- Jeremiah has enough physical evidence to treat forced removal as a serious possibility.
+- Kristin has enough physical evidence to treat forced removal as a serious possibility.
 
 **Abort**
-- Jeremiah leaves the house after the scene transition becomes valid.
+- Kristin leaves the house after the scene transition becomes valid.
 - The federal patrol forces the immediate threat situation to dominate.
 
 **Protected boundary**
-- Does not reveal who took Sarah, JANUS, Gabriel’s role, the detention network, or the true mechanics of the disappearances.
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
 
 **Pacing window**
 - earliest: `00:00:00`
 - target: `00:01:00`
-- latest: `00:02:00`
+- latest: `00:01:00`
 
 **Pacing impact**
 `brief_delay`
 
 ---
 
-### SL-1A-B — Sarah Hid Something for Jeremiah
+### SL-1A-B — Michelle Hid Something for Kristin
 
-**Source beats:** [1A.2 — Sarah’s Last Investigation](plot.md#scene-1a2--sarahs-last-investigation), [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)
+**Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation), [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)
 
 **Allowed scene:** `1A`
 
 **Available when**
-- Jeremiah remains able to search Sarah’s work area.
+- Kristin remains able to search Michelle’s work area.
 - The memory card has not been destroyed or permanently lost.
-- Sarah’s investigation is not yet understood.
+- Michelle’s investigation is not yet understood.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas through notes/recordings
+- Kristin Schweitzer
+- Dr. Michelle McGehee through research notes, author drafts, and recordings
 - Hidden memory card
 - Damaged voice recording
 
 **Dramatic purpose**
-- Provide a compact investigative situation in which Sarah’s own preparation gives Jeremiah direction.
-- Reinforce Sarah as an active investigator rather than merely a missing objective.
+- Provide a compact investigative situation in which Michelle’s own preparation gives her best friend and longtime roommate Kristin direction.
+- Reinforce Michelle as an active researcher rather than merely a missing objective.
 
 **Possible realizations**
-- Jeremiah discovers the memory card through careful searching.
+- Kristin discovers the memory card through careful searching.
 - The damaged recording and card are encountered in either order.
-- Jeremiah may initially mistrust the material and only later connect it to the forced entry.
-- The recording can emotionally sharpen the danger without adding facts beyond Sarah’s authored warning.
+- Kristin may initially mistrust the material and only later connect it to the forced entry.
+- The recording can emotionally sharpen the danger without adding facts beyond Michelle’s authored warning.
 
 **Effects**
 - May set `continuity_initiative_known`.
 - May set `emergency_broadcasts_distrusted`.
-- May increase `sarah_investigation_context`.
-- May set `sarah_lead_actionable` once Jeremiah has a concrete lead he can follow away from the house.
+- May increase `michelle_investigation_context`.
+- May set `michelle_lead_actionable` once Kristin has a concrete lead she can follow away from the house.
 
 **Completion**
-- Jeremiah possesses or has securely copied the relevant evidence and understands that Sarah expected danger.
+- Kristin possesses or has securely copied the relevant evidence and understands that Michelle expected danger.
 
 **Abort**
 - The evidence becomes inaccessible through a player-caused destructive proposal; if it is a required future dependency with no fallback, normal game-break handling applies.
 
 **Protected boundary**
-- “Continuity Initiative” may be known as Sarah’s suspicious emergency program, but its actual national purpose remains protected.
+- “Continuity Initiative” may be known as Michelle’s suspicious emergency program, but its actual national purpose remains protected.
 
 **Pacing window**
-- earliest: `00:00:00`
-- target: `00:01:00`
+- earliest: `00:02:00`
+- target: `00:02:00`
 - latest: `00:02:00`
 
 **Pacing impact**
@@ -139,25 +139,26 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `1A`
 
 **Available when**
-- Jeremiah is still at or immediately around the house.
+- Kristin is still at or immediately around the house.
 - The federal emergency patrol has arrived.
-- Jeremiah has not openly surrendered Sarah’s investigation materials.
+- Michelle's recovered warning has established the immediate danger.
+- Kristin has not openly surrendered Michelle’s investigation materials.
 
 **Participants / items**
-- Jeremiah Thomas
+- Kristin Schweitzer
 - Federal emergency patrol officers
-- Sarah’s office/work materials
+- Michelle’s office/work materials
 - Hidden memory card, if currently carried or concealed
 - Reflective gate tape
 
 **Dramatic purpose**
-- Add pressure and force Jeremiah to interpret official behavior without requiring a scripted confrontation.
+- Add pressure and force Kristin to interpret official behavior without requiring a scripted confrontation.
 - Establish that the search is dangerous before the park sequence.
 
 **Possible realizations**
-- Jeremiah deflects questions while observing what the officers care about.
-- An officer’s attention to Sarah’s reporting becomes more revealing than the stated welfare-check purpose.
-- Jeremiah notices the reflective marker only after the patrol leaves.
+- Kristin deflects questions while observing what the officers care about.
+- An officer’s attention to Michelle’s research becomes more revealing than the stated welfare-check purpose.
+- Kristin notices the reflective marker only after the patrol leaves.
 - Open defiance may raise pressure without automatically forcing combat.
 
 **Effects**
@@ -170,7 +171,7 @@ Each entry below is authoring data, not a player action menu.
 - The patrol departs or the interaction otherwise resolves without ending the authored story.
 
 **Abort**
-- Jeremiah is no longer at the house.
+- Kristin is no longer at the house.
 - A larger validated game-break consequence supersedes the storylet.
 
 **Protected boundary**
@@ -178,8 +179,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `00:00:00`
-- target: `00:01:00`
-- latest: `00:02:00`
+- target: `00:03:00`
+- latest: `00:05:00`
 
 **Pacing impact**
 `brief_delay`
@@ -190,20 +191,20 @@ Each entry below is authoring data, not a player action menu.
 
 ### SL-1B-A — The Dead Drop Has More Than One Meaning
 
-**Source beats:** [1B.1 — Sarah’s Dead Drop](plot.md#scene-1b1--sarahs-dead-drop)
+**Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
 
 **Allowed scene:** `1B`
 
 **Available when**
-- Jeremiah reaches the park/dead-drop area.
+- Kristin reaches the park/dead-drop area.
 - The dead-drop materials remain recoverable.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas through the dead drop
+- Kristin Schweitzer
+- Dr. Michelle McGehee through the dead drop
 - Transit access card
 - Handwritten number sequence
-- Photograph of Sarah with Gabriel
+- Photograph of Michelle with Brandon
 - List of earlier disappearance dates
 
 **Dramatic purpose**
@@ -211,25 +212,25 @@ Each entry below is authoring data, not a player action menu.
 - Build a quality-based investigative texture rather than a single “correct” inspection.
 
 **Possible realizations**
-- The dates lead Jeremiah to suspect earlier tests.
+- The dates lead Kristin to suspect earlier tests.
 - The photograph makes the unknown man personally important.
 - The transit card and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
 - The number sequence remains unresolved context for later interpretation.
 
 **Effects**
 - May increase `evidence_secret_tests`.
-- May set `gabriel_face_known`.
+- May set `brandon_face_known`.
 - May set `transit_card_acquired`.
 - May increase `transport_route_interest`.
 
 **Completion**
-- Jeremiah has recovered the dead-drop materials or enough of them to continue.
+- Kristin has recovered the dead-drop materials or enough of them to continue.
 
 **Abort**
 - The park situation is overtaken by the pursuit/ambush.
 
 **Protected boundary**
-- Gabriel is not yet established as trustworthy or as a JANUS developer.
+- Brandon is not yet established as trustworthy or as a JANUS developer.
 
 **Pacing window**
 - earliest: `00:02:00`
@@ -241,47 +242,47 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-1B-B — Is Gabriel Hunter or Rescuer?
+### SL-1B-B — Is Brandon Hunter or Rescuer?
 
-**Source beats:** [1B.2 — The Man Following Him](plot.md#scene-1b2--the-man-following-him), [1B.3 — Gabriel’s Warning](plot.md#scene-1b3--gabriels-warning)
+**Source beats:** [1B.2 — The Man Following Him](plot.md#scene-1b2--the-man-following-him), [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
 
 **Allowed scene:** `1B`
 
 **Available when**
-- Gabriel is following or has just contacted Jeremiah.
-- Jeremiah has not yet reached a stable judgment about Gabriel.
+- Brandon is following or has just contacted Kristin.
+- Kristin has not yet reached a stable judgment about Brandon.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer, former assessment lead for the U.S. Army with Army intelligence, infrastructure, and operations experience
+- Brandon Corfman
 - Photograph from the dead drop
 
 **Dramatic purpose**
-- Create an early trust problem without forcing the player to accept Gabriel immediately.
-- Give Gabriel a reason to earn provisional credibility through behavior and limited disclosure.
+- Create an early trust problem without forcing the player to accept Brandon immediately.
+- Give Brandon a reason to earn provisional credibility through behavior and limited disclosure.
 
 **Possible realizations**
-- Jeremiah confronts Gabriel with the photograph.
-- Jeremiah tries to evade him and sees Gabriel intervene against the patrol.
-- Jeremiah questions how Gabriel knows the missing are alive.
-- Gabriel refuses full disclosure, preserving suspicion.
+- Kristin confronts Brandon with the photograph.
+- Kristin tries to evade him and sees Brandon intervene against the patrol.
+- Kristin questions how Brandon knows the missing are alive.
+- Brandon refuses full disclosure, preserving suspicion.
 
 **Effects**
-- May change `trust_gabriel` within an early bounded range.
-- May set `gabriel_identified`.
+- May change `trust_brandon` within an early bounded range.
+- May set `brandon_identified`.
 - May set `missing_may_be_alive`.
-- May set `transport_route_identified` when Gabriel can credibly connect Sarah’s transit clue to the removal operation.
-- May increase `gabriel_suspicion` at the same time that trust increases.
+- May set `transport_route_identified` when Brandon can credibly connect Michelle’s transit clue to the removal operation.
+- May increase `brandon_suspicion` at the same time that trust increases.
 
 **Completion**
-- Jeremiah has enough reason to continue with Gabriel, even if he remains distrustful.
+- Kristin has enough reason to continue with Brandon, even if he remains distrustful.
 
 **Abort**
-- Gabriel becomes unavailable through a validated destructive branch.
+- Brandon becomes unavailable through a validated destructive branch.
 - The park escape forces immediate movement into the next situation.
 
 **Protected boundary**
-- Gabriel may admit prior Continuity Initiative work, but not yet the full JANUS-development history.
+- Brandon may admit prior Continuity Initiative work, but not yet the full JANUS-development history.
 
 **Pacing window**
 - earliest: `00:02:00`
@@ -293,47 +294,47 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-1B-C — The Gate Code Gives Gabriel Away
+### SL-1B-C — The Gate Code Gives Brandon Away
 
 **Source beats:** [1B.4 — The Park Ambush](plot.md#scene-1b4--the-park-ambush)
 
 **Allowed scene:** `1B`
 
 **Available when**
-- A tactical/emergency team has closed on Jeremiah and Gabriel.
+- A tactical/emergency team has closed on Kristin and Brandon.
 - The secured maintenance route is relevant.
-- Gabriel remains capable of helping.
+- Brandon remains capable of helping.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Tactical/emergency patrol
 - Secured maintenance gate
 
 **Dramatic purpose**
 - Turn escape pressure into character evidence.
-- Let Gabriel solve an immediate problem in a way that creates a larger trust problem.
+- Let Brandon solve an immediate problem in a way that creates a larger trust problem.
 
 **Possible realizations**
-- Gabriel uses specialized codes only after ordinary access fails.
-- Jeremiah notices how practiced Gabriel is with the system.
-- Gabriel minimizes the significance of his access.
+- Brandon uses specialized codes only after ordinary access fails.
+- Kristin notices how practiced Brandon is with the system.
+- Brandon minimizes the significance of his access.
 - The escape succeeds but the player can press him afterward.
 
 **Effects**
 - May increase `danger`.
-- May increase `gabriel_suspicion`.
-- May set `gabriel_retains_system_access`.
-- May establish `transport_route_identified` when Gabriel’s retained access and the escape route make the physical removal route followable.
+- May increase `brandon_suspicion`.
+- May set `brandon_retains_system_access`.
+- May establish `transport_route_identified` when Brandon’s retained access and the escape route make the physical removal route followable.
 
 **Completion**
-- Jeremiah and Gabriel escape the immediate park pursuit.
+- Kristin and Brandon escape the immediate park pursuit.
 
 **Abort**
 - The maintenance route is no longer relevant or the scene has advanced.
 
 **Protected boundary**
-- The access proves deeper involvement, not the exact nature of Gabriel’s guilt.
+- The access proves deeper involvement, not the exact nature of Brandon’s guilt.
 
 **Pacing window**
 - earliest: `00:02:00`
@@ -354,23 +355,23 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `1C`
 
 **Available when**
-- Jeremiah and Gabriel are at the freight terminal/industrial site.
+- Kristin and Brandon are at the freight terminal/industrial site.
 - The underground complex has not yet been fully confirmed.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Transit access card
 - Freight-terminal infrastructure
 
 **Dramatic purpose**
-- Give Jeremiah’s engineering expertise real investigative weight.
+- Give Kristin’s Army infrastructure and operations background real investigative weight.
 - Make discovery of the facility emerge from physical contradictions in the site.
 
 **Possible realizations**
-- Jeremiah compares declared abandonment with electrical load, ventilation, or recent structural work.
+- Kristin compares declared abandonment with electrical load, ventilation, and recent infrastructure work.
 - The transit card opens access that should not exist at a dead facility.
-- Gabriel supplies operational context while Jeremiah supplies structural inference.
+- Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.
 
 **Effects**
 - May set `facility_location_confirmed`.
@@ -379,7 +380,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `facility_infiltration_needed` when the main installation cannot be reached safely from the service level.
 
 **Completion**
-- Jeremiah and Gabriel have a credible route into the service level.
+- Kristin and Brandon have a credible route into the service level.
 
 **Abort**
 - The facility becomes openly alerted and the subtle-entry situation ends.
@@ -405,41 +406,41 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - The active underground facility has been credibly confirmed.
-- Jeremiah can observe the captive-processing area.
-- Sarah’s status remains unconfirmed.
+- Kristin can observe the captive-processing area.
+- Michelle’s status remains unconfirmed.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Sedated prisoners
-- Sarah Thomas only as a possible, obscured sighting
-- Sarah’s missing-person evidence/identification records, if available
+- Dr. Michelle McGehee only as a possible, obscured sighting
+- Michelle’s missing-person evidence/identification records, if available
 
 **Dramatic purpose**
 - Convert abstract conspiracy evidence into immediate human stakes.
-- Intensify Jeremiah’s rescue impulse while preserving uncertainty about Sarah.
+- Intensify Kristin’s rescue impulse while preserving uncertainty about Michelle.
 
 **Possible realizations**
-- Jeremiah matches prisoner identifiers to missing-person records.
-- He sees a woman who might be Sarah but cannot obtain certainty.
-- Gabriel physically or verbally stops an impulsive move into the processing area.
-- Jeremiah can resent Gabriel’s restraint even if it is strategically sound.
+- Kristin matches prisoner identifiers to missing-person records.
+- She sees a woman who might be Michelle but cannot obtain certainty.
+- Brandon physically or verbally stops an impulsive move into the processing area.
+- Kristin can resent Brandon’s restraint even if it is strategically sound.
 
 **Effects**
 - May set `captives_confirmed_alive`.
 - May increase `rescue_urgency`.
-- May change `trust_gabriel`.
-- May set `sarah_possible_sighting` without setting `sarah_location_confirmed`.
+- May change `trust_brandon`.
+- May set `michelle_possible_sighting` without setting `michelle_location_confirmed`.
 - May set `facility_infiltration_needed` when an impulsive rescue would endanger or relocate the captives.
 
 **Completion**
-- Jeremiah accepts that living captives are being held here.
+- Kristin accepts that living captives are being held here.
 
 **Abort**
 - Observation becomes impossible because of security movement or scene progression.
 
 **Protected boundary**
-- Sarah’s exact position and resistance network remain protected.
+- Michelle’s exact position and resistance network remain protected.
 
 **Pacing window**
 - earliest: `00:04:30`
@@ -459,12 +460,12 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - The active facility and living captives have been credibly confirmed.
-- Gabriel can access the logistics terminal or equivalent authored records.
-- Jeremiah knows captives are present but does not yet know the operation’s scale.
+- Brandon can access the logistics terminal or equivalent authored records.
+- Kristin knows captives are present but does not yet know the operation’s scale.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Charles Jenkins through recorded conference material
 - Rebecca Jenkins through recorded conference material
 - Logistics records / recorded conference
@@ -475,25 +476,25 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Logistics categories reveal why different people were selected.
-- Jeremiah focuses on Sarah’s category before recognizing the national pattern.
+- Kristin focuses on Michelle’s category before recognizing the national pattern.
 - The Charles/Rebecca recording clarifies the reconstruction strategy.
-- Gabriel’s reactions can create additional suspicion without disclosing his later confession.
+- Brandon’s reactions can create additional suspicion without disclosing his later confession.
 
 **Effects**
 - May set `national_detention_network_known`.
 - May set `selection_categories_known`.
 - May set `charles_rebecca_architects_known`.
 - May increase `conspiracy_scope`.
-- May establish `facility_infiltration_needed` once Jeremiah understands that observation or a direct local rescue is insufficient.
+- May establish `facility_infiltration_needed` once Kristin understands that observation or a direct local rescue is insufficient.
 
 **Completion**
-- Jeremiah understands that the disappearances were engineered to remove, classify, and later leverage people at national scale.
+- Kristin understands that the disappearances were engineered to remove, classify, and later leverage people at national scale.
 
 **Abort**
 - Required records become inaccessible and no declared fallback remains; use dependency/game-break handling rather than silently rewriting the plot.
 
 **Protected boundary**
-- JANUS itself, Jeremiah-as-bait, Gabriel’s development role, and Sarah’s resistance network remain protected for Scene 2B.
+- JANUS itself, Kristin-as-bait, Brandon’s development role, and Michelle’s resistance network remain protected for Scene 2B.
 
 **Pacing window**
 - earliest: `00:04:30`
@@ -509,37 +510,37 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2A — False Identities](plot.md#scene-2a--false-identities)
 
-### SL-2A-A — Gabriel Prepared for This Years Ago
+### SL-2A-A — Brandon Prepared for This Years Ago
 
-**Source beats:** [2A.1 — Gabriel’s Hideout](plot.md#scene-2a1--gabriels-hideout)
+**Source beats:** [2A.1 — Brandon’s Hideout](plot.md#scene-2a1--brandons-hideout)
 
 **Allowed scene:** `2A`
 
 **Available when**
-- Jeremiah is inside Gabriel’s communications-center hideout.
-- Gabriel’s history remains only partially trusted.
+- Kristin is inside Brandon’s communications-center hideout.
+- Brandon’s history remains only partially trusted.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
-- Surveillance equipment
+- Kristin Schweitzer
+- Brandon Corfman, a former software developer now living as an isolated conspiracy researcher estranged from his family
+- Servers and salvaged hardware
 - Emergency supplies
 - Continuity Initiative files
 
 **Dramatic purpose**
-- Deepen the contradiction around Gabriel: preparedness can read as foresight, obsession, guilt, or all three.
+- Deepen the contradiction around Brandon: preparedness can read as foresight, obsession, guilt, or all three.
 - Support free-form questioning without prematurely resolving his history.
 
 **Possible realizations**
-- Jeremiah examines how long Gabriel has tracked the Initiative.
-- Gabriel describes being discredited after trying to expose it.
-- Jeremiah notices resources that imply retained professional capability.
+- Kristin examines how long Brandon has tracked the Initiative.
+- Brandon describes being discredited after trying to expose it.
+- Kristin notices leaked code, internal documents, and old software/security contacts that imply retained technical capability.
 - The player may accept the explanation provisionally or become more suspicious.
 
 **Effects**
-- May change `trust_gabriel`.
-- May increase `gabriel_suspicion`.
-- May set `gabriel_prepared_before_event`.
+- May change `trust_brandon`.
+- May increase `brandon_suspicion`.
+- May set `brandon_prepared_before_event`.
 - May increase `continuity_history_context`.
 
 **Completion**
@@ -549,7 +550,7 @@ Each entry below is authoring data, not a player action menu.
 - The group leaves for the facility.
 
 **Protected boundary**
-- Gabriel’s direct work on JANUS remains protected.
+- Brandon’s direct work on JANUS remains protected.
 
 **Pacing window**
 - earliest: `00:06:30`
@@ -568,23 +569,23 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2A`
 
 **Available when**
-- Jeremiah and Gabriel have concluded that deliberate deeper infiltration is necessary.
-- Jeremiah and Gabriel are preparing entry.
+- Kristin and Brandon have concluded that deliberate deeper infiltration is necessary.
+- Kristin and Brandon are preparing entry.
 - The cooling/structural-monitoring weakness is known or discoverable from authored facility information.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - False credentials
 - Facility structural/cooling information
 
 **Dramatic purpose**
-- Make the infiltration cover depend on Jeremiah’s authentic expertise rather than pure spycraft.
+- Make the infiltration cover depend on Kristin’s authentic Army infrastructure and operations background rather than pure deception.
 - Give the LLM room to improvise a technically plausible cover story while preserving the authored objective set.
 
 **Possible realizations**
-- Jeremiah identifies which infrastructure concern would justify an unscheduled inspection.
-- Gabriel shapes that into credential/cover material.
+- Kristin identifies which infrastructure concern would justify an unscheduled inspection.
+- Brandon shapes that into credential/cover material.
 - They discuss how much truth to include in the lie.
 - Preparation can improve confidence without guaranteeing entry.
 
@@ -621,23 +622,23 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - The false inspection identities/cover are ready.
-- Jeremiah and Gabriel are passing facility security.
+- Kristin and Brandon are passing facility security.
 - Their credentials have survived initial checks.
 - The unscheduled nature of the inspection is being questioned.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Facility supervisor
 - False credentials
 
 **Dramatic purpose**
-- Give Jeremiah a social/technical obstacle that can be realized through free-form roleplay.
-- Preserve dramatic irony: entry can succeed even as Rebecca quietly becomes aware of Gabriel.
+- Give Kristin a social/technical obstacle that can be realized through free-form roleplay.
+- Preserve dramatic irony: entry can succeed even as Rebecca quietly becomes aware of Brandon.
 
 **Possible realizations**
-- Jeremiah explains progressive-collapse risk in his own words.
-- Gabriel stays quiet to avoid drawing recognition.
+- Kristin explains progressive-collapse risk in her own words.
+- Brandon stays quiet to avoid drawing recognition.
 - Overexplaining may raise suspicion while still succeeding.
 - The supervisor grants restricted-infrastructure access reluctantly.
 
@@ -648,13 +649,13 @@ Each entry below is authoring data, not a player action menu.
 - `restricted_corridor_access` is the outgoing scene bridge once the protagonists have moved beyond the outer security layer.
 
 **Completion**
-- Jeremiah and Gabriel have moved beyond the main public/security entry layer.
+- Kristin and Brandon have moved beyond the main public/security entry layer.
 
 **Abort**
 - The cover is fully blown and an alternate declared transition supersedes it.
 
 **Protected boundary**
-- Jeremiah and Gabriel do not learn that Rebecca is observing them merely because the state flag exists.
+- Kristin and Brandon do not learn that Rebecca is observing them merely because the state flag exists.
 
 **Pacing window**
 - earliest: `00:06:30`
@@ -675,38 +676,38 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2B`
 
 **Available when**
-- Jeremiah can access the records archive.
+- Kristin can access the records archive.
 - JANUS has not yet been understood.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - JANUS records
 
 **Dramatic purpose**
 - Reveal the selection system through concrete classifications rather than an exposition dump.
-- Connect national-scale data collection directly to Sarah and Jeremiah.
+- Connect national-scale data collection directly to Michelle and Kristin.
 
 **Possible realizations**
-- Jeremiah searches Sarah’s record first.
-- He notices the categories used to predict resistance, influence, vulnerability, and leverage.
-- His own record reveals that being left behind was itself a decision.
-- Gabriel’s reaction can become part of the evidence.
+- Kristin searches Michelle’s record first.
+- She notices the categories used to predict resistance, influence, vulnerability, and leverage.
+- Her own record reveals that being left behind was itself a decision.
+- Brandon’s reaction can become part of the evidence.
 
 **Effects**
 - May set `janus_known`.
-- May set `sarah_selected_for_resistance_influence`.
-- May set `jeremiah_deliberately_left_behind`.
+- May set `michelle_selected_for_resistance_influence`.
+- May set `kristin_deliberately_left_behind`.
 - May sharply increase `betrayal_pressure`.
 
 **Completion**
-- Jeremiah understands JANUS as the selection mechanism and recognizes that his own path was modeled.
+- Kristin understands JANUS as the selection mechanism and recognizes that her own path was modeled.
 
 **Abort**
 - Archive access ends before enough material is recovered; another declared source may serve as fallback if the package defines one.
 
 **Protected boundary**
-- The exact reason Charles expected Jeremiah to expose Gabriel may emerge only as supported by the authored records; no new hidden motives are invented.
+- The exact reason Charles expected Kristin to expose Brandon may emerge only as supported by the authored records; no new hidden motives are invented.
 
 **Pacing window**
 - earliest: `00:08:30`
@@ -718,20 +719,20 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-2B-B — Gabriel’s Name Is in the Build Records
+### SL-2B-B — Brandon’s Name Is in the Build Records
 
-**Source beats:** [2B.2 — Jeremiah Was Bait](plot.md#scene-2b2--jeremiah-was-bait), [2B.3 — Gabriel’s Role](plot.md#scene-2b3--gabriels-role)
+**Source beats:** [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait), [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role)
 
 **Allowed scene:** `2B`
 
 **Available when**
 - JANUS has been credibly identified in the archive evidence.
 - JANUS records are accessible.
-- Gabriel’s development role has not yet been confronted.
+- Brandon’s development role has not yet been confronted.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - JANUS development records
 
 **Dramatic purpose**
@@ -739,26 +740,26 @@ Each entry below is authoring data, not a player action menu.
 - Preserve ambiguity between culpability for creating the system and opposition to its later use.
 
 **Possible realizations**
-- Jeremiah confronts Gabriel immediately.
-- He withholds the discovery briefly and observes Gabriel first.
-- Gabriel admits helping design JANUS for emergency-risk identification.
-- Jeremiah challenges whether Gabriel is still manipulating him.
+- Kristin confronts Brandon immediately.
+- She withholds the discovery briefly and observes Brandon first.
+- Brandon admits writing AI software for JANUS to identify threats.
+- Kristin challenges whether Brandon is still manipulating her.
 
 **Effects**
-- May set `gabriel_janus_role_known`.
-- May set `gabriel_claimed_reform_motive`.
+- May set `brandon_janus_role_known`.
+- May set `brandon_claimed_reform_motive`.
 - May set `janus_evidence` when the development records are preserved/authenticated as evidence.
-- May substantially change `trust_gabriel`.
-- May increase or decrease `gabriel_suspicion` depending on accepted interaction facts.
+- May substantially change `trust_brandon`.
+- May increase or decrease `brandon_suspicion` depending on accepted interaction facts.
 
 **Completion**
-- Gabriel’s original role and claimed break with Charles are explicit between him and Jeremiah.
+- Brandon’s original role and claimed break with Charles are explicit between him and Kristin.
 
 **Abort**
-- Gabriel is absent/unavailable and the confrontation must be deferred by declared package logic.
+- Brandon is absent/unavailable and the confrontation must be deferred by declared package logic.
 
 **Protected boundary**
-- Gabriel’s later sacrifice/confession is not foreshadowed as guaranteed.
+- Brandon’s later sacrifice/confession is not foreshadowed as guaranteed.
 
 **Pacing window**
 - earliest: `00:08:30`
@@ -770,41 +771,41 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-2B-C — Sarah Is Already Sabotaging the System
+### SL-2B-C — Michelle Is Already Sabotaging the System
 
-**Source beats:** [2B.4 — Sarah’s Hidden Resistance](plot.md#scene-2b4--sarahs-hidden-resistance)
+**Source beats:** [2B.4 — Michelle’s Hidden Resistance](plot.md#scene-2b4--michelles-hidden-resistance)
 
 **Allowed scene:** `2B`
 
 **Available when**
 - JANUS has been credibly identified in the archive evidence.
-- Jeremiah can inspect corrupted prisoner/maintenance records.
-- Sarah’s active resistance is not yet known.
+- Kristin can inspect corrupted prisoner/maintenance records.
+- Michelle’s active resistance is not yet known.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
-- Sarah Thomas through coded records
+- Kristin Schweitzer
+- Brandon Corfman
+- Dr. Michelle McGehee through coded records
 - Corrupted prisoner files / maintenance reports
 
 **Dramatic purpose**
-- Reverse the rescue framing: Sarah is an active agent affecting the facility from inside.
-- Give Jeremiah renewed direction after the JANUS/Gabriel betrayal.
+- Reverse the rescue framing: Michelle is an active agent affecting the facility from inside.
+- Give Kristin renewed direction after the JANUS/Brandon betrayal.
 
 **Possible realizations**
-- Jeremiah recognizes phrases Sarah used in private notes.
+- Kristin recognizes phrases Michelle used in private notes.
 - A pattern of delayed transfers and altered classifications becomes visible.
-- Gabriel sees operational sabotage; Jeremiah sees Sarah’s signature.
+- Brandon sees operational sabotage; Kristin sees Michelle’s signature.
 - The player may infer organization before knowing its full scale.
 
 **Effects**
-- May set `sarah_resistance_known`.
+- May set `michelle_resistance_known`.
 - May increase `hope`.
 - May set `prisoner_records_corrupted`.
-- May preserve enough corrupted JANUS/prisoner material to establish `janus_evidence` while also pointing toward Sarah’s resistance.
+- May preserve enough corrupted JANUS/prisoner material to establish `janus_evidence` while also pointing toward Michelle’s resistance.
 
 **Completion**
-- Jeremiah knows Sarah is alive enough to act or has left recent operational evidence strongly supporting that conclusion.
+- Kristin knows Michelle is alive enough to act or has left recent operational evidence strongly supporting that conclusion.
 
 **Abort**
 - The records are lost and a declared alternate path must carry the same necessary transition information.
@@ -824,40 +825,40 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2C — The Trap Closes](plot.md#scene-2c--the-trap-closes)
 
-### SL-2C-A — Rebecca Offers Gabriel a Different Conspiracy
+### SL-2C-A — Rebecca Offers Brandon a Different Conspiracy
 
 **Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer)
 
 **Allowed scene:** `2C`
 
 **Available when**
-- Rebecca has identified Gabriel.
-- Gabriel remains capable of private contact.
-- Jeremiah may know of the contact only if the interaction makes that knowledge available.
+- Rebecca has identified Brandon.
+- Brandon remains capable of private contact.
+- Kristin may know of the contact only if the interaction makes that knowledge available.
 
 **Participants / items**
-- Gabriel Dexter
+- Brandon Corfman
 - Rebecca Jenkins
-- Jeremiah Thomas, only when physically/informationally justified
+- Kristin Schweitzer, only when physically/informationally justified
 
 **Dramatic purpose**
 - Show fracture inside the antagonist coalition without turning Rebecca into an ally.
-- Pressure Gabriel’s credibility after his JANUS admission.
+- Pressure Brandon’s credibility after his JANUS admission.
 
 **Possible realizations**
 - Rebecca frames Charles as the immediate danger.
-- She offers Sarah’s release in exchange for helping her seize control.
-- Gabriel appears to consider the offer to gain executive access.
-- Jeremiah can misread Gabriel’s performance if he lacks context.
+- She offers Michelle’s release in exchange for helping her seize control.
+- Brandon appears to consider the offer to gain executive access.
+- Kristin can misread Brandon’s performance if he lacks context.
 
 **Effects**
 - May set `rebecca_offer_active`.
 - May increase `antagonist_internal_conflict`.
-- May change `trust_gabriel` only if Jeremiah has legitimate knowledge of the exchange.
+- May change `trust_brandon` only if Kristin has legitimate knowledge of the exchange.
 - May open a route toward executive-level access.
 
 **Completion**
-- Gabriel has accepted, rejected, or strategically exploited the offer enough for the scene to move on.
+- Brandon has accepted, rejected, or strategically exploited the offer enough for the scene to move on.
 
 **Abort**
 - Rebecca withdraws the offer or direct conflict supersedes it.
@@ -886,20 +887,20 @@ Each entry below is authoring data, not a player action menu.
 - The purge/transfer order has become active.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Brandon Corfman
 - Charles Jenkins through orders/broadcast preparation
 - Facility records/alerts where locally available
 
 **Dramatic purpose**
 - Add deterministic time/pressure to a scene that could otherwise become leisurely.
-- Make delay materially dangerous without scripting Jeremiah’s response.
+- Make delay materially dangerous without scripting Kristin’s response.
 
 **Possible realizations**
 - An internal order reveals accelerated transfers.
 - Facility movement patterns suddenly change.
 - Broadcast-preparation traffic exposes the deadline indirectly.
-- Jeremiah and Gabriel disagree about what the remaining time permits.
+- Kristin and Brandon disagree about what the remaining time permits.
 
 **Effects**
 - Starts or advances `purge_pressure`.
@@ -914,7 +915,7 @@ Each entry below is authoring data, not a player action menu.
 - None while the authored purge order is active, though the storylet itself does not have to be selected as a discrete encounter.
 
 **Protected boundary**
-- Does not reveal the later exact broadcast-system solution before Sarah provides it.
+- Does not reveal the later exact broadcast-system solution before Michelle provides it.
 
 **Pacing window**
 - earliest: `00:10:30`
@@ -928,7 +929,7 @@ Each entry below is authoring data, not a player action menu.
 
 ### SL-2C-C — The False Choice Breaks Open
 
-**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Sarah Changes the Choice](plot.md#scene-2c4--sarah-changes-the-choice)
+**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Michelle Changes the Choice](plot.md#scene-2c4--michelle-changes-the-choice)
 
 **Allowed scene:** `2C`
 
@@ -936,12 +937,12 @@ Each entry below is authoring data, not a player action menu.
 - The purge/transfer clock is active and understood.
 - Enough evidence exists to expose the conspiracy.
 - Rescue remains possible but dangerous.
-- Sarah’s coded maintenance channel can reach Jeremiah/Gabriel.
+- Michelle’s coded maintenance channel can reach Kristin/Brandon.
 
 **Participants / items**
-- Jeremiah Thomas
-- Gabriel Dexter
-- Sarah Thomas through coded communication
+- Kristin Schweitzer
+- Brandon Corfman
+- Dr. Michelle McGehee through coded communication
 - Copied conspiracy evidence
 - Maintenance network
 
@@ -950,26 +951,26 @@ Each entry below is authoring data, not a player action menu.
 - Keep the player free to argue, hesitate, or explore while pacing prevents indefinite stalling.
 
 **Possible realizations**
-- Gabriel argues for immediate transmission.
-- Jeremiah refuses to abandon the captives.
-- Their conflict can become personal because of Gabriel’s earlier guilt.
-- Sarah’s coded message introduces the manual broadcast/door-opening solution.
+- Brandon argues for immediate transmission.
+- Kristin refuses to abandon the captives.
+- Their conflict can become personal because of Brandon’s earlier guilt.
+- Michelle’s coded message introduces the manual broadcast/door-opening solution.
 
 **Effects**
 - May set `evidence_ready_to_transmit`.
 - May set `rescue_exposure_crisis_explicit`.
 - May set `combined_broadcast_rescue_plan_known`.
 - May set `rebecca_office_required_for_broadcast`.
-- Establishes `combined_broadcast_rescue_plan_known`, the scene bridge toward reaching Sarah and executing the combined mission.
+- Establishes `combined_broadcast_rescue_plan_known`, the scene bridge toward reaching Michelle and executing the combined mission.
 
 **Completion**
-- Jeremiah and Gabriel understand that the next objective combines rescue and exposure.
+- Kristin and Brandon understand that the next objective combines rescue and exposure.
 
 **Abort**
 - The player causes a validated non-canonical branch that makes the combined plan impossible and chooses `proceed`.
 
 **Protected boundary**
-- Exact events of the uprising, Gabriel’s sacrifice, facility destruction, and final broadcast outcome remain protected.
+- Exact events of the uprising, Brandon’s sacrifice, facility destruction, and final broadcast outcome remain protected.
 
 **Pacing window**
 - earliest: `00:10:30`
@@ -983,7 +984,7 @@ Each entry below is authoring data, not a player action menu.
 
 # Scene 3 — The Captives
 
-## Storylets for [Scene 3A — Reaching Sarah](plot.md#scene-3a--reaching-sarah)
+## Storylets for [Scene 3A — Reaching Michelle](plot.md#scene-3a--reaching-michelle)
 
 ### SL-3A-A — The Rescue Target Is Running an Uprising
 
@@ -992,43 +993,43 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3A`
 
 **Available when**
-- Jeremiah reaches Sarah’s detention sector.
-- Sarah is active and the purge countdown is running.
+- Kristin reaches Michelle’s detention sector.
+- Michelle is active and the purge countdown is running.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman
 - Prisoners
 - Sympathetic facility workers
 - Stolen radios
 
 **Dramatic purpose**
-- Pay off Sarah’s agency with an in-person reversal of Jeremiah’s rescue expectations.
-- Reframe the immediate goal from “get Sarah out” to “help the organized captives expose the whole network.”
+- Pay off Michelle’s agency with an in-person reversal of Kristin’s rescue expectations.
+- Reframe the immediate goal from “get Michelle out” to “help the organized captives expose the whole network.”
 
 **Possible realizations**
-- The reunion is interrupted by Sarah directing others.
-- Jeremiah tries to prioritize Sarah; she redirects him to the national stakes.
-- Prisoners treat Sarah as an organizer rather than a victim.
-- The reunion can establish that Sarah is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
-- Gabriel’s arrival may be met with distrust because of his history.
+- The reunion is interrupted by Michelle directing others.
+- Kristin tries to prioritize Michelle; she redirects her to the national stakes.
+- Prisoners treat Michelle as an organizer rather than a victim.
+- The reunion can establish that Michelle is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
+- Brandon’s arrival may be met with distrust because of his history.
 
 **Effects**
-- May set `jeremiah_sarah_reunited`.
+- May set `kristin_michelle_reunited`.
 - May set `uprising_prepared`.
 - May establish that the uprising is prepared; the canonical launch is gated later in the scene.
 - May increase `network_locations_required_for_broadcast`.
 - May change relationship/trust facts consistent with the reunion.
 
 **Completion**
-- Jeremiah accepts Sarah as an operational partner and understands the larger rescue requirement.
+- Kristin accepts Michelle as an operational partner and understands the larger rescue requirement.
 
 **Abort**
 - Scene pressure escalates directly into the uprising before the interaction fully resolves.
 
 **Protected boundary**
-- The final outcome of the broadcast and Gabriel’s fate remain unknown.
+- The final outcome of the broadcast and Brandon’s fate remain unknown.
 
 **Pacing window**
 - earliest: `00:13:00`
@@ -1047,13 +1048,13 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3A`
 
 **Available when**
-- Jeremiah has reached Sarah and can move with her resistance network.
-- Jeremiah and Sarah can pass through or access evidence from the medical level.
+- Kristin has reached Michelle and can move with her resistance network.
+- Kristin and Michelle can pass through or access evidence from the medical level.
 - The experiment program is not yet fully understood.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Prisoners
 - Medical/behavioral experiment records or equipment already present in the authored setting
 
@@ -1062,9 +1063,9 @@ Each entry below is authoring data, not a player action menu.
 - Show that simply releasing selected prisoners could strengthen the conspiracy.
 
 **Possible realizations**
-- Sarah explains what she has observed while Jeremiah sees corroborating evidence.
+- Michelle explains what she has observed while Kristin sees corroborating evidence.
 - A conditioned “rescue” plan becomes visible through records or treatment setup.
-- Jeremiah recognizes that public testimony itself has been engineered.
+- Kristin recognizes that public testimony itself has been engineered.
 
 **Effects**
 - May set `behavioral_experiments_known`.
@@ -1073,7 +1074,7 @@ Each entry below is authoring data, not a player action menu.
 - May increase `danger` or `moral_urgency`.
 
 **Completion**
-- Jeremiah understands why exposing the experiments must be part of the broadcast evidence.
+- Kristin understands why exposing the experiments must be part of the broadcast evidence.
 
 **Abort**
 - Immediate security pressure makes the medical level inaccessible.
@@ -1098,15 +1099,15 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3A`
 
 **Available when**
-- Jeremiah has reached Sarah.
+- Kristin has reached Michelle.
 - The behavioral-experiment stakes have been established.
 - The senior official prisoner is reachable.
 - Charles’s planned authority activation remains pending.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman
 - Senior official prisoner
 - Emergency military override authorization codes
 
@@ -1116,7 +1117,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - The official explains that Charles framed and imprisoned members of his own government.
-- Sarah evaluates the codes as one more way to disrupt the takeover.
+- Michelle evaluates the codes as one more way to disrupt the takeover.
 - The uprising may begin before every implication can be discussed.
 - The expiring authorization window can itself force the resistance to launch coordinated disturbances.
 - The codes can be secured or relayed according to validated free-form action.
@@ -1125,7 +1126,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `charles_framed_officials_known`.
 - May set `military_override_codes_available`.
 - Starts/advances `authority_activation_pressure`.
-- May set `detention_uprising_started` when the deadline forces Sarah to launch the resistance.
+- May set `detention_uprising_started` when the deadline forces Michelle to launch the resistance.
 - May help resistance efforts under declared package rules; securing the codes is not required for the Scene 3A → 3B transition.
 
 **Completion**
@@ -1158,22 +1159,22 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - JANUS is predicting resistance movement.
-- Jeremiah can affect facility infrastructure.
+- Kristin can affect facility infrastructure.
 - The group is trying to reach Rebecca’s office/broadcast controls.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
-- Gabriel Dexter
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman
 - JANUS as system
 - Facility doors, cameras, power, structural alarms, and unused corridors
 
 **Dramatic purpose**
-- Make Jeremiah’s engineering mindset the counter to predictive security.
+- Make Kristin’s Army operations mindset the counter to predictive security.
 - Encourage creative free-form disruption rather than one prescribed puzzle solution.
 
 **Possible realizations**
-- Jeremiah creates unrelated structural alarms.
+- Kristin creates unrelated infrastructure alarms.
 - Power cuts or flooding make the group’s true route less legible.
 - The group intentionally chooses tactically irrational movement.
 - A failed disruption can still raise pressure while teaching what JANUS is using.
@@ -1191,7 +1192,7 @@ Each entry below is authoring data, not a player action menu.
 - JANUS is already disconnected or the group has reached Rebecca’s office.
 
 **Protected boundary**
-- The disruption does not itself disconnect the external relay; that remains Gabriel’s later task.
+- The disruption does not itself disconnect the external relay; that remains Brandon’s later task.
 
 **Pacing window**
 - earliest: `00:15:00`
@@ -1211,24 +1212,24 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - JANUS has been overloaded enough that human security has taken direct control.
-- Jeremiah and Sarah have reached Rebecca’s office.
+- Kristin and Michelle have reached Rebecca’s office.
 - Rebecca is present and has not yet escaped.
 - Charles has not fully destroyed the local situation.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Rebecca Jenkins
 - Charles Jenkins through remote communication
 - Detention-site location information available to Rebecca
 
 **Dramatic purpose**
-- Put Rebecca’s self-preservation against Sarah’s evidence of her direct responsibility.
+- Put Rebecca’s self-preservation against Michelle’s evidence of her direct responsibility.
 - Allow Charles’s betrayal to collapse Rebecca’s bargaining position in real time.
 
 **Possible realizations**
 - Rebecca claims surrender is the only way to save the failing facility.
-- Sarah confronts her with approvals for experiments.
+- Michelle confronts her with approvals for experiments.
 - Rebecca offers all detention-site locations.
 - Charles remotely strips Rebecca of control and locks down the office.
 
@@ -1258,9 +1259,9 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-3B-C — Gabriel Holds the Relay Open
+### SL-3B-C — Brandon Holds the Relay Open
 
-**Source beats:** [3B.4 — Gabriel’s Sacrifice](plot.md#scene-3b4--gabriels-sacrifice)
+**Source beats:** [3B.4 — Brandon’s Sacrifice](plot.md#scene-3b4--brandons-sacrifice)
 
 **Allowed scene:** `3B`
 
@@ -1268,40 +1269,40 @@ Each entry below is authoring data, not a player action menu.
 - JANUS predictive control has been defeated.
 - Charles has stripped Rebecca of control and the protagonists have secured exact detention-site locations.
 - The broadcast is ready except for Charles’s control of the external communications relay.
-- Gabriel is still capable of reaching/operating the relay chamber.
+- Brandon is still capable of reaching/operating the relay chamber.
 
 **Participants / items**
-- Gabriel Dexter
-- Jeremiah Thomas and Sarah Thomas through communication where justified
+- Brandon Corfman
+- Kristin Schweitzer and Dr. Michelle McGehee through communication where justified
 - External communications relay
-- Gabriel’s confession recording/transmission
+- Brandon’s confession recording/transmission
 
 **Dramatic purpose**
-- Resolve Gabriel’s guilt arc through an action that is both operationally necessary and personally accountable.
-- Create the final condition for the national transmission without scripting Jeremiah’s emotional response.
+- Resolve Brandon’s guilt arc through an action that is both operationally necessary and personally accountable.
+- Create the final condition for the national transmission without scripting Kristin’s emotional response.
 
 **Possible realizations**
-- Gabriel chooses the relay because his old access makes him the viable operator.
-- He transmits a confession that authenticates Sarah’s evidence.
+- Brandon chooses the relay because his old access makes him the viable operator.
+- He transmits a confession that authenticates Michelle’s evidence.
 - Security pressure and electrical danger make continued relay control costly.
-- Jeremiah or Sarah may argue against him, but the authored situation keeps the relay problem concrete.
+- Kristin or Michelle may argue against him, but the authored situation keeps the relay problem concrete.
 
 **Effects**
 - May set `external_relay_disconnected_from_janus`.
-- May set `gabriel_confession_available`.
+- May set `brandon_confession_available`.
 - May set `broadcast_path_open`.
-- May set `broadcast_started` once Sarah/Jeremiah activate the transmission through the opened relay.
-- May critically worsen `gabriel_health/status` only through validated effects consistent with the authored sacrifice.
+- May set `broadcast_started` once Michelle/Kristin activate the transmission through the opened relay.
+- May critically worsen `brandon_health/status` only through validated effects consistent with the authored sacrifice.
 - `broadcast_started` is the Scene 3B → 3C bridge.
 
 **Completion**
-- The relay remains open long enough for Sarah and Jeremiah to begin the broadcast.
+- The relay remains open long enough for Michelle and Kristin to begin the broadcast.
 
 **Abort**
-- A declared fallback solves the relay dependency instead; otherwise incapacitating Gabriel beforehand may be game-breaking and must be handled explicitly.
+- A declared fallback solves the relay dependency instead; otherwise incapacitating Brandon beforehand may be game-breaking and must be handled explicitly.
 
 **Protected boundary**
-- Gabriel’s final survival/fate remains unresolved until the authored escape/collapse outcome permits it.
+- Brandon’s final survival/fate remains unresolved until the authored escape/collapse outcome permits it.
 
 **Pacing window**
 - earliest: `00:15:00`
@@ -1324,26 +1325,26 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - `broadcast_started` is true.
 - The broadcast path is open.
-- Sarah has sufficient evidence to transmit.
+- Michelle has sufficient evidence to transmit.
 - Charles still has remote communications capability.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Charles Jenkins remotely
 - Broadcast evidence
-- Gabriel’s confession, if available
+- Brandon’s confession, if available
 - Live facility feeds where available
 
 **Dramatic purpose**
 - Make exposure a contest over credibility rather than a simple upload-success event.
-- Let accumulated evidence qualities determine how convincingly Sarah can answer Charles.
+- Let accumulated evidence qualities determine how convincingly Michelle can answer Charles.
 
 **Possible realizations**
-- Sarah presents captives, JANUS records, facility locations, experiment evidence, and planning records.
+- Michelle presents captives, JANUS records, facility locations, experiment evidence, and planning records.
 - Charles calls the group terrorists.
-- Sarah counters with independently verifiable facility information or live images.
-- Gabriel’s confession can authenticate evidence without being the only possible credibility support if fallbacks are declared.
+- Michelle counters with independently verifiable facility information or live images.
+- Brandon’s confession can authenticate evidence without being the only possible credibility support if fallbacks are declared.
 
 **Effects**
 - May increase `public_conspiracy_awareness`.
@@ -1381,8 +1382,8 @@ Each entry below is authoring data, not a player action menu.
 - The portable archive is present and recoverable.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Rebecca Jenkins
 - Portable archive of conspirator identities and prisoner locations
 
@@ -1391,9 +1392,9 @@ Each entry below is authoring data, not a player action menu.
 - Prevent “destroy the bad thing” from being an uncomplicated solution because the same archive can save captives.
 
 **Possible realizations**
-- Jeremiah stops Rebecca and learns what the archive contains.
+- Kristin stops Rebecca and learns what the archive contains.
 - Rebecca exploits the mixed contents to bargain.
-- Sarah argues for duplication/distribution rather than destruction or sole custody.
+- Michelle argues for duplication/distribution rather than destruction or sole custody.
 - The archive can be copied to independent networks once capability exists.
 
 **Effects**
@@ -1430,25 +1431,25 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Charles has activated facility destruction.
 - The prisoners are moving toward escape routes.
-- Jeremiah can still affect structural/power systems.
+- Kristin can still affect structural/power systems.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
-- Gabriel Dexter only as allowed by his current status/fate
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman only as allowed by his current status/fate
 - Escaping prisoners
 - Facility emergency supports / power systems
 - Surface gates and maintenance tunnels
 
 **Dramatic purpose**
-- Give Jeremiah one final engineering problem while Sarah leads the human evacuation.
+- Give Kristin one final infrastructure-and-operations problem while Michelle leads the human evacuation.
 - Move the climax into falling action without removing danger too early.
 
 **Possible realizations**
-- Jeremiah redirects power to keep some sections supported.
-- Sarah organizes movement through maintenance tunnels.
+- Kristin redirects power to keep some sections supported.
+- Michelle organizes movement through maintenance tunnels.
 - The group must accept that not every section can be saved.
-- Gabriel’s relay action contributes to the surface gates opening if his authored state permits it.
+- Brandon’s relay action contributes to the surface gates opening if his authored state permits it.
 
 **Effects**
 - May increase `facility_collapse`.
@@ -1492,8 +1493,8 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - The broadcast consequences are being summarized.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Public reports from other detention sites
 
 **Dramatic purpose**
@@ -1503,12 +1504,12 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - Reports indicate some facilities surrender while others resist.
 - Families and communities begin independent rescue efforts.
 - Official agencies issue conflicting denials.
-- Jeremiah and Sarah understand that Los Angeles was a victory, not an ending.
+- Kristin and Michelle understand that Los Angeles was a victory, not an ending.
 
 **Effects**
 - May set `national_network_fragmenting`.
 - May set `community_rescue_efforts_begun`.
-- May establish Jeremiah/Sarah’s next-direction facts.
+- May establish Kristin/Michelle’s next-direction facts.
 
 **Completion**
 - The immediate national consequences are established.
@@ -1540,15 +1541,15 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - A partially recovered JANUS file is available through the authored resolution event.
 
 **Participants / items**
-- Jeremiah Thomas
-- Sarah Thomas
+- Kristin Schweitzer
+- Dr. Michelle McGehee
 - Partially recovered JANUS file
 
 **Dramatic purpose**
 - Deliver the final sequel-scale reversal only after the main personal and national victory has landed.
 
 **Possible realizations**
-- Sarah or Jeremiah notices the operation label “Phase One.”
+- Michelle or Kristin notices the operation label “Phase One.”
 - The recovered material identifies Phase Two as an effort to provoke conflict among those who remained.
 - The revelation changes the meaning of the unrest already visible outside the facility.
 
@@ -1580,13 +1581,13 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 | Playable scene | Storylets | Primary function |
 |---|---|---|
-| [1A](plot.md#scene-1a--sarahs-disappearance) | `SL-1A-A` … `SL-1A-C` | Crime-scene inference, Sarah’s evidence, first authority pressure |
-| [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-C` | Dead-drop clues, Gabriel trust, pursuit |
+| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-C` | Crime-scene inference, Michelle’s evidence, first authority pressure |
+| [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-C` | Dead-drop clues, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-C` | Facility discovery, living captives, national scale |
-| [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Gabriel context, infiltration preparation, entry complication |
-| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Jeremiah-as-bait, Gabriel’s role, Sarah’s resistance |
+| [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |
+| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Kristin-as-bait, Brandon’s role, Michelle’s resistance |
 | [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-A` … `SL-2C-C` | Rebecca’s offer, purge pressure, crisis reframing |
-| [3A](plot.md#scene-3a--reaching-sarah) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
+| [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
 | [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, collapse, epilogue |
 
@@ -1596,15 +1597,15 @@ The compiled story package may declare a **canonical bridge event** for a scene 
 
 Bridge facts should describe why the current scene is complete and the next scene is now necessary; they should not pre-assert a revelation whose dramatic payoff belongs to the next scene. Pacing events should create observable pressure or consequences rather than unearned player knowledge.
 
-Current bridge facts are: `sarah_lead_actionable`, `transport_route_departure_ready`, `facility_infiltration_needed`, `restricted_corridor_access`, `archive_crisis_understood`, `combined_broadcast_rescue_plan_known`, `command_levels_assault_underway`, and `broadcast_started`.
+Current bridge facts are: `michelle_lead_actionable`, `transport_route_departure_ready`, `facility_infiltration_needed`, `restricted_corridor_access`, `archive_crisis_understood`, `combined_broadcast_rescue_plan_known`, `command_levels_assault_underway`, and `broadcast_started`.
 
 ## Authoring notes
 
 1. **Optional means optional.** A scene must remain satisfiable even if none of its ordinary storylets are selected. Canonical bridge events may be required, but storylets only provide optional realization guidance for them.
 2. **No fixed action vocabulary.** “Possible realizations” are prompt guidance only. The LLM interprets arbitrary player roleplay and proposes semantic effects.
 3. **Scene-local context first.** Only participating/present/relevant entities should enter the default turn context. Off-scene references should add only public/currently-known facts.
-4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the collapse/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Jeremiah unexplained knowledge.
-5. **Required dependencies stay explicit elsewhere.** The memory card, Gabriel, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
+4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the collapse/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
+5. **Required dependencies stay explicit elsewhere.** The memory card, Brandon, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
 6. **Protected revelations are monotonic.** Optional content can foreshadow later facts, but it must not make a protected revelation true/known before the original scene permits it.
 7. **Effects are bounded proposals.** The exact fact paths, numeric pressure ranges, trigger predicates, and transition priorities belong in validated package data rather than being inferred from prose here.
 

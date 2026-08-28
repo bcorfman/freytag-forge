@@ -58,7 +58,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     for forbidden in ("janus", "plot_beats", "entry_text", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
     state.active_event_ids.add("SL-1A-B")
-    provider("I search the desk drawer for Sarah's recording.")
+    provider("I search the desk drawer for Michelle's recording.")
     drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
     assert "damaged recording" in candidate["statement"]
@@ -77,7 +77,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("I inspect the back door.")
-    provider("I examine Sarah's phone.")
+    provider("I examine Michelle's phone.")
     state.active_event_ids.add("SL-1A-B")
     provider("I search the desk drawer for a damaged recording.")
 
@@ -172,11 +172,11 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
         payloads.append(json.loads(request.data))
         if len(payloads) == 1:
             return _Response({"narration": '{"segments":[]}'})
-        return _Response({"narration": '{"segments":[{"kind":"action","text":"Jeremiah checks the door."}]}'})
+        return _Response({"narration": '{"segments":[{"kind":"action","text":"Kristin checks the door."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]}
+    assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
     assert len(payloads) == 2
 
 
@@ -200,7 +200,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Sarah\'s damaged recording crackles."}],'
+                    '{"segments":[{"kind":"narration","text":"Michelle\'s damaged recording crackles."}],'
                     '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -208,7 +208,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I search the desk drawer for Sarah's damaged recording.")
+    proposal = provider("I search the desk drawer for Michelle's damaged recording.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 2
