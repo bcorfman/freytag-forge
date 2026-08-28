@@ -31,143 +31,143 @@ pacing_event_review:
   reason: Escalates an observable return threat at the house without revealing the later facility.
 new_fact_ids:
 - id: continuity_initiative_known
-  definition: Jeremiah knows Sarah was investigating a suspicious emergency program called the Continuity Initiative.
+  definition: Kristin knows Dr. McGehee was researching a suspicious emergency program called the Continuity Initiative.
   used_by_storylets:
   - SL-1A-B
   used_by_transitions: []
-- id: sarah_warning_known
-  definition: Jeremiah has recovered Sarah’s warning not to trust emergency broadcasts.
+- id: michelle_warning_known
+  definition: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
   used_by_storylets:
   - SL-1A-B
   used_by_transitions: []
-- id: official_interest_in_sarah_known
-  definition: Jeremiah knows the welfare patrol was specifically interested in Sarah’s reporting.
+- id: official_interest_in_michelle_known
+  definition: Kristin knows the welfare patrol was specifically interested in Dr. McGehee’s research.
   used_by_storylets:
   - SL-1A-C
   used_by_transitions: []
 - id: house_marked_for_return
-  definition: The Thomas home has been marked by the patrol for a likely return.
+  definition: Kristin and Michelle’s home has been marked by the patrol for a likely return.
   used_by_storylets:
   - SL-1A-C
   used_by_transitions: []
 - id: transport_route_identified
-  definition: Jeremiah and Gabriel have enough evidence to follow the removal operation’s physical transport route
+  definition: Kristin and Brandon have enough evidence to follow the removal operation’s physical transport route
     toward a specific industrial/freight destination.
   used_by_storylets:
   - SL-1B-A
   - SL-1B-B
   - SL-1B-C
   used_by_transitions: []
-- id: gabriel_face_known
-  definition: Jeremiah recognizes Gabriel as the unidentified man in Sarah’s photograph.
+- id: brandon_face_known
+  definition: Kristin recognizes Brandon as the unidentified man in Michelle’s photograph.
   used_by_storylets:
   - SL-1B-A
   used_by_transitions: []
-- id: gabriel_identified
-  definition: Jeremiah knows the follower is Gabriel Dexter, Sarah’s contact.
+- id: brandon_identified
+  definition: Kristin knows the follower is Brandon Corfman, Michelle’s contact.
   used_by_storylets:
   - SL-1B-B
   used_by_transitions: []
 - id: missing_may_be_alive
-  definition: Jeremiah has credible reason to believe at least some missing people are alive.
+  definition: Kristin has credible reason to believe at least some missing people are alive.
   used_by_storylets:
   - SL-1B-B
   used_by_transitions: []
-- id: gabriel_retains_system_access
-  definition: Jeremiah has observed Gabriel using retained Continuity-system access.
+- id: brandon_retains_system_access
+  definition: Kristin has observed Brandon using retained Continuity-system access.
   used_by_storylets:
   - SL-1B-C
   used_by_transitions: []
 - id: service_level_access_known
-  definition: Jeremiah and Gabriel know a credible service-level route into the regional facility.
+  definition: Kristin and Brandon know a credible service-level route into the regional facility.
   used_by_storylets:
   - SL-1C-A
   used_by_transitions: []
 - id: captives_confirmed_alive
-  definition: Jeremiah has directly confirmed living captives inside the regional facility.
+  definition: Kristin has directly confirmed living captives inside the regional facility.
   used_by_storylets:
   - SL-1C-B
   used_by_transitions: []
-- id: sarah_possible_sighting
-  definition: Jeremiah has an obscured, unconfirmed possible sighting of Sarah inside the facility.
+- id: michelle_possible_sighting
+  definition: Kristin has an obscured, unconfirmed possible sighting of Michelle inside the facility.
   used_by_storylets:
   - SL-1C-B
   used_by_transitions: []
 - id: national_detention_network_known
-  definition: Jeremiah knows the Los Angeles site is part of a national detention network.
+  definition: Kristin knows the Los Angeles site is part of a national detention network.
   used_by_storylets:
   - SL-1C-C
   used_by_transitions: []
 - id: architects_strategy_known
-  definition: Jeremiah knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
+  definition: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
   used_by_storylets:
   - SL-1C-C
   used_by_transitions: []
-- id: gabriel_prepared_before_event
-  definition: Jeremiah knows Gabriel prepared for the disappearance before it occurred.
+- id: brandon_prepared_before_event
+  definition: Kristin knows Brandon prepared for the disappearance before it occurred.
   used_by_storylets:
   - SL-2A-A
   used_by_transitions: []
 - id: restricted_corridor_access
-  definition: Jeremiah and Gabriel have access to restricted infrastructure corridors.
+  definition: Kristin and Brandon have access to restricted infrastructure corridors.
   used_by_storylets:
   - SL-2A-C
   used_by_transitions:
   - t_2a_2b
 - id: rebecca_observing_infiltrators
-  definition: Rebecca has quietly ordered the infiltrators observed; this fact is not automatically known to Jeremiah.
+  definition: Rebecca has quietly ordered the infiltrators observed; this fact is not automatically known to Kristin.
   used_by_storylets:
   - SL-2A-C
   used_by_transitions: []
-- id: jeremiah_deliberately_left_behind
-  definition: JANUS records show Jeremiah was deliberately left behind.
+- id: kristin_deliberately_left_behind
+  definition: JANUS records show Kristin was deliberately left behind.
   used_by_storylets:
   - SL-2B-A
   used_by_transitions: []
-- id: gabriel_janus_role_known
-  definition: Jeremiah knows Gabriel helped develop JANUS.
+- id: brandon_janus_role_known
+  definition: Kristin knows Brandon helped develop JANUS.
   used_by_storylets:
   - SL-2B-B
   used_by_transitions: []
-- id: gabriel_claimed_reform_motive
-  definition: Gabriel has claimed he broke with Charles after learning JANUS would be used for mass detention/control.
+- id: brandon_claimed_reform_motive
+  definition: Brandon has claimed he broke with Charles after learning JANUS would be used for mass detention/control.
   used_by_storylets:
   - SL-2B-B
   used_by_transitions: []
-- id: sarah_resistance_known
-  definition: Jeremiah knows Sarah is actively sabotaging the facility from inside.
+- id: michelle_resistance_known
+  definition: Kristin knows Michelle is actively sabotaging the facility from inside.
   used_by_storylets:
   - SL-2B-C
   used_by_transitions: []
 - id: rebecca_offer_active
-  definition: Rebecca has offered Gabriel safety/Sarah’s release in exchange for helping her displace Charles.
+  definition: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping her displace Charles.
   used_by_storylets:
   - SL-2C-A
   used_by_transitions: []
 - id: antagonist_split_known
-  definition: Jeremiah has legitimate evidence that Rebecca and Charles are in conflict.
+  definition: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
   used_by_storylets:
   - SL-2C-A
   used_by_transitions: []
 - id: combined_broadcast_rescue_plan_known
-  definition: Jeremiah/Gabriel know Sarah’s plan to combine evidence transmission with opening detention sectors
+  definition: Kristin/Brandon know Michelle’s plan to combine evidence transmission with opening detention sectors
     via Rebecca’s office.
   used_by_storylets:
   - SL-2C-C
   used_by_transitions:
   - t_2c_3a
 - id: uprising_prepared
-  definition: Jeremiah knows Sarah has organized an active prisoner resistance network.
+  definition: Kristin knows Michelle has organized an active prisoner resistance network.
   used_by_storylets:
   - SL-3A-A
   used_by_transitions: []
 - id: conditioned_release_plan_known
-  definition: Jeremiah knows selected captives were being conditioned to support Charles’s public explanation.
+  definition: Kristin knows selected captives were being conditioned to support Charles’s public explanation.
   used_by_storylets:
   - SL-3A-B
   used_by_transitions: []
 - id: behavioral_experiments_known
-  definition: Jeremiah knows the facility conducted the authored neurological/behavioral experiments.
+  definition: Kristin knows the facility conducted the authored neurological/behavioral experiments.
   used_by_storylets:
   - SL-3A-B
   used_by_transitions: []
@@ -191,8 +191,8 @@ new_fact_ids:
   used_by_storylets:
   - SL-3B-B
   used_by_transitions: []
-- id: gabriel_confession_available
-  definition: Gabriel’s confession authenticating his JANUS role is available for the broadcast.
+- id: brandon_confession_available
+  definition: Brandon’s confession authenticating his JANUS role is available for the broadcast.
   used_by_storylets:
   - SL-3B-C
   used_by_transitions: []
@@ -261,21 +261,21 @@ new_fact_ids:
   used_by_storylets:
   - SL-3C-E
   used_by_transitions: []
-- id: sarah_lead_actionable
-  definition: Jeremiah has a concrete, credible lead from Sarah’s investigation that can be followed away from the
+- id: michelle_lead_actionable
+  definition: Kristin has a concrete, credible lead from Michelle’s research that can be followed away from the
     house.
   used_by_storylets:
   - SL-1A-B
   used_by_transitions:
   - t_1a_1b
 - id: patrol_return_pressure
-  definition: Observable signs indicate the federal patrol is likely to return or intensify scrutiny at the Thomas
-    home.
+  definition: Observable signs indicate the federal patrol is likely to return or intensify scrutiny at Kristin and
+    Michelle’s home.
   used_by_storylets:
   - SL-1A-C
   used_by_transitions: []
 - id: facility_infiltration_needed
-  definition: Jeremiah and Gabriel understand that direct rescue or observation is insufficient and that controlled
+  definition: Kristin and Brandon understand that direct rescue or observation is insufficient and that controlled
     deeper access to the facility is necessary.
   used_by_storylets:
   - SL-1C-A
@@ -284,19 +284,19 @@ new_fact_ids:
   used_by_transitions:
   - t_1c_2a
 - id: detention_uprising_started
-  definition: Sarah’s resistance has openly begun coordinated action and the protagonists are committed to moving
+  definition: Michelle’s resistance has openly begun coordinated action and the protagonists are committed to moving
     toward the command/broadcast levels.
   used_by_storylets:
   - SL-3A-A
   - SL-3A-C
   used_by_transitions: []
 - id: park_pursuit_resolved
-  definition: Jeremiah and Gabriel have survived or otherwise resolved the park pursuit and can depart together.
+  definition: Kristin and Brandon have survived or otherwise resolved the park pursuit and can depart together.
   used_by_storylets:
   - SL-1B-C
   used_by_transitions: []
 - id: transport_route_departure_ready
-  definition: Jeremiah and Gabriel have the transport lead, have resolved the park pursuit, and can proceed to the
+  definition: Kristin and Brandon have the transport lead, have resolved the park pursuit, and can proceed to the
     industrial destination.
   used_by_storylets:
   - SL-1B-A
@@ -305,7 +305,7 @@ new_fact_ids:
   used_by_transitions:
   - t_1b_1c
 - id: archive_crisis_understood
-  definition: Jeremiah has secured JANUS evidence, learned the bait/Gabriel revelations, and recognized Sarah’s
+  definition: Kristin has secured JANUS evidence, learned the bait/Brandon revelations, and recognized Michelle’s
     active resistance, completing the archive crisis.
   used_by_storylets:
   - SL-2B-A
@@ -314,13 +314,13 @@ new_fact_ids:
   used_by_transitions:
   - t_2b_2c
 - id: override_codes_deadline_known
-  definition: Jeremiah and Sarah understand that the senior official’s emergency override authorization will expire
+  definition: Kristin and Michelle understand that the senior official’s emergency override authorization will expire
     when Charles activates his new authority, whether or not the codes are secured.
   used_by_storylets:
   - SL-3A-C
   used_by_transitions: []
 - id: command_levels_assault_underway
-  definition: Sarah’s uprising is active and the protagonists are moving from the detention levels toward the command/broadcast
+  definition: Michelle’s uprising is active and the protagonists are moving from the detention levels toward the command/broadcast
     levels.
   used_by_storylets:
   - SL-3A-A
@@ -349,13 +349,13 @@ new_fact_ids:
   - SL-3C-D
   - SL-3C-E
   used_by_transitions: []
-- id: sarah_publishing_archive
-  definition: Sarah has begun distributing/publishing the Continuity Initiative archive after the exposure.
+- id: michelle_publishing_archive
+  definition: Michelle has begun distributing/publishing the Continuity Initiative archive after the exposure.
   used_by_storylets:
   - SL-3C-D
   used_by_transitions: []
-- id: jeremiah_joined_rescue_efforts
-  definition: Jeremiah has committed to helping locate and open remaining detention facilities.
+- id: kristin_joined_rescue_efforts
+  definition: Kristin has committed to helping locate and open remaining detention facilities.
   used_by_storylets:
   - SL-3C-D
   used_by_transitions: []
@@ -366,14 +366,14 @@ storylets:
   activation:
     scene_id: 1A
     conditions:
-    - fact_id: sarah_abduction_suspicion
+    - fact_id: michelle_abduction_suspicion
       equals: false
     pacing:
       earliest_seconds: 0
       target_seconds: 60
-      latest_seconds: 120
+      latest_seconds: 60
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If Jeremiah searches slowly or treats the disappearance as generic chaos, foreground contradictory
+  pressure_role: If Kristin searches slowly or treats the disappearance as generic chaos, foreground contradictory
     physical evidence so curiosity naturally tightens into abduction suspicion.
   realization_options:
   - id: SL-1A-A-R1
@@ -381,30 +381,30 @@ storylets:
       forced-removal theory.
     operations:
     - op: assert
-      fact_id: sarah_abduction_suspicion
+      fact_id: michelle_abduction_suspicion
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1A-A-R2
     dramatic_intent: A hurried or partial inspection still makes one concrete contradiction impossible to dismiss,
       raising suspicion without identifying an abductor.
     operations:
     - op: assert
-      fact_id: sarah_abduction_suspicion
+      fact_id: michelle_abduction_suspicion
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: sarah_abduction_suspicion
+    - fact_id: michelle_abduction_suspicion
       equals: true
     - scene_transition_valid: t_1a_1b
     abort_when:
@@ -413,60 +413,60 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1A-B
   scene_id: 1A
-  title: Sarah Hid Something for Jeremiah
+  title: Michelle Hid Something for Kristin
   activation:
     scene_id: 1A
     conditions:
     - fact_id: continuity_initiative_known
       equals: false
     pacing:
-      earliest_seconds: 0
-      target_seconds: 60
+      earliest_seconds: 120
+      target_seconds: 120
       latest_seconds: 120
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player lingers in Sarah’s work area, let her preparation reward investigation and connect
+  pressure_role: When the player lingers in Michelle’s work area, let her preparation reward investigation and connect
     her disappearance to a deliberate threat rather than require a specific search command.
   realization_options:
   - id: SL-1A-B-R1
-    dramatic_intent: Discover or securely recover Sarah’s evidence and infer that she expected targeted danger.
+    dramatic_intent: Discover or securely recover Michelle’s research and infer that she expected targeted danger.
     operations:
     - op: assert
       fact_id: continuity_initiative_known
       value: true
     - op: assert
-      fact_id: sarah_abduction_suspicion
+      fact_id: michelle_abduction_suspicion
       value: true
     - op: assert
-      fact_id: sarah_lead_actionable
+      fact_id: michelle_lead_actionable
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
     - t_1a_1b
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1A-B-R2
     dramatic_intent: Recover the damaged warning first; its interrupted ending plus the house evidence is enough
       to support abduction suspicion even before every file is understood.
     operations:
     - op: assert
-      fact_id: sarah_warning_known
+      fact_id: michelle_warning_known
       value: true
     - op: assert
-      fact_id: sarah_abduction_suspicion
+      fact_id: michelle_abduction_suspicion
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
       - continuity_initiative_known
-      - sarah_warning_known
+      - michelle_warning_known
     abort_when:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
@@ -476,30 +476,32 @@ storylets:
   title: The Welfare Check Feels Like a Search
   activation:
     scene_id: 1A
-    conditions: []
+    conditions:
+    - fact_id: michelle_warning_known
+      equals: true
     pacing:
       earliest_seconds: 0
-      target_seconds: 60
-      latest_seconds: 120
+      target_seconds: 180
+      latest_seconds: 300
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If Jeremiah stalls after finding evidence, official scrutiny raises urgency and makes staying costly
-    without dictating whether he hides, lies, argues, or leaves.
+  pressure_role: If Kristin stalls after finding evidence, official scrutiny raises urgency and makes staying costly
+    without dictating whether she hides, lies, argues, or leaves.
   realization_options:
   - id: SL-1A-C-R1
-    dramatic_intent: Observe that the patrol is specifically interested in Sarah’s reporting; this corroborates
+    dramatic_intent: Observe that the patrol is specifically interested in Dr. McGehee’s research; this corroborates
       targeted removal without revealing who ordered it.
     operations:
     - op: assert
-      fact_id: official_interest_in_sarah_known
+      fact_id: official_interest_in_michelle_known
       value: true
     - op: assert
-      fact_id: sarah_abduction_suspicion
+      fact_id: michelle_abduction_suspicion
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1A-C-R2
     dramatic_intent: Notice the gate marker after the patrol leaves, establishing a concrete return threat and a
@@ -515,12 +517,12 @@ storylets:
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
-      - official_interest_in_sarah_known
+      - official_interest_in_michelle_known
       - house_marked_for_return
     abort_when:
     - scene_id_not: 1A
@@ -537,11 +539,11 @@ storylets:
       target_seconds: 195
       latest_seconds: 270
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Turn lingering investigation into several converging leads—tests, a man in Sarah’s photo, and physical
+  pressure_role: Turn lingering investigation into several converging leads—tests, a man in Michelle’s photo, and physical
     transport infrastructure—without making one clue the required interaction.
   realization_options:
   - id: SL-1B-A-R1
-    dramatic_intent: Correlate the transit card with Sarah’s handwritten sequence/dates so the encoded routing information
+    dramatic_intent: Correlate the transit card with Michelle’s handwritten sequence/dates so the encoded routing information
       points to a specific freight/industrial destination used by the removal operation.
     operations:
     - op: assert
@@ -551,33 +553,33 @@ storylets:
     helps_transition_triggers:
     - t_1b_1c
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   - id: SL-1B-A-R2
     dramatic_intent: Identify the photographed stranger as a live lead while preserving uncertainty about his allegiance.
     operations:
     - op: assert
-      fact_id: gabriel_face_known
+      fact_id: brandon_face_known
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
       - transport_route_identified
-      - gabriel_face_known
+      - brandon_face_known
     abort_when:
     - scene_id_not: 1B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1B-B
   scene_id: 1B
-  title: Is Gabriel Hunter or Rescuer?
+  title: Is Brandon Hunter or Rescuer?
   activation:
     scene_id: 1B
     conditions: []
@@ -586,15 +588,15 @@ storylets:
       target_seconds: 195
       latest_seconds: 270
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player resists trusting Gabriel, let behavior under pressure earn only provisional cooperation
+  pressure_role: When the player resists trusting Brandon, let behavior under pressure earn only provisional cooperation
     while keeping his deeper history unresolved.
   realization_options:
   - id: SL-1B-B-R1
-    dramatic_intent: Gabriel intervenes against the patrol, identifies himself as Sarah’s contact, and credibly
+    dramatic_intent: Brandon intervenes against the patrol, identifies himself as Michelle’s contact, and credibly
       connects her transit clue to a route used by the removal operation without revealing the facility itself.
     operations:
     - op: assert
-      fact_id: gabriel_identified
+      fact_id: brandon_identified
       value: true
     - op: assert
       fact_id: missing_may_be_alive
@@ -606,25 +608,25 @@ storylets:
     helps_transition_triggers:
     - t_1b_1c
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   - id: SL-1B-B-R2
-    dramatic_intent: Jeremiah confronts him with the photograph; Gabriel admits prior Initiative work but withholds
+    dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work but withholds
       the protected JANUS role.
     operations:
     - op: assert
-      fact_id: gabriel_identified
+      fact_id: brandon_identified
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: gabriel_identified
+    - fact_id: brandon_identified
       equals: true
     abort_when:
     - scene_id_not: 1B
@@ -632,11 +634,11 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1B-C
   scene_id: 1B
-  title: The Gate Code Gives Gabriel Away
+  title: The Gate Code Gives Brandon Away
   activation:
     scene_id: 1B
     conditions:
-    - fact_id: gabriel_identified
+    - fact_id: brandon_identified
       equals: true
     - fact_id: missing_may_be_alive
       equals: true
@@ -645,14 +647,14 @@ storylets:
       target_seconds: 195
       latest_seconds: 270
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: 'Convert pursuit into both forward motion and suspicion: Gabriel can solve the immediate escape
+  pressure_role: 'Convert pursuit into both forward motion and suspicion: Brandon can solve the immediate escape
     problem, but doing so exposes unexplained retained access.'
   realization_options:
   - id: SL-1B-C-R1
-    dramatic_intent: Gabriel uses a specialized code to open the maintenance route after ordinary access fails.
+    dramatic_intent: Brandon uses a specialized code to open the maintenance route after ordinary access fails.
     operations:
     - op: assert
-      fact_id: gabriel_retains_system_access
+      fact_id: brandon_retains_system_access
       value: true
     - op: assert
       fact_id: transport_route_identified
@@ -664,15 +666,15 @@ storylets:
     helps_transition_triggers:
     - t_1b_1c
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   - id: SL-1B-C-R2
-    dramatic_intent: Jeremiah notices Gabriel’s practiced system access during escape and carries that unresolved
+    dramatic_intent: Kristin notices Brandon’s practiced system access during escape and carries that unresolved
       suspicion forward.
     operations:
     - op: assert
-      fact_id: gabriel_retains_system_access
+      fact_id: brandon_retains_system_access
       value: true
     - op: assert
       fact_id: park_pursuit_resolved
@@ -680,12 +682,12 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: gabriel_retains_system_access
+    - fact_id: brandon_retains_system_access
       equals: true
     abort_when:
     - scene_id_not: 1B
@@ -702,7 +704,7 @@ storylets:
       target_seconds: 330
       latest_seconds: 390
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Use Jeremiah’s engineering expertise to reward free-form inspection and turn hesitation into accumulating
+  pressure_role: Use Kristin’s Army infrastructure and operations background to reward free-form inspection and turn hesitation into accumulating
     physical proof of an active hidden installation.
   realization_options:
   - id: SL-1C-A-R1
@@ -717,7 +719,7 @@ storylets:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1C-A-R2
     dramatic_intent: Confirm the active underground facility and a service-level route, while establishing that
@@ -734,7 +736,7 @@ storylets:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
@@ -757,7 +759,7 @@ storylets:
       target_seconds: 330
       latest_seconds: 390
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Sarah sighting
+  pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Michelle sighting
     to heighten urgency while preserving the need for broader understanding.
   realization_options:
   - id: SL-1C-B-R1
@@ -772,26 +774,26 @@ storylets:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1C-B-R2
-    dramatic_intent: Catch an obscured possible glimpse of Sarah without converting uncertainty into confirmed location.
+    dramatic_intent: Catch an obscured possible glimpse of Michelle without converting uncertainty into confirmed location.
     operations:
     - op: assert
-      fact_id: sarah_possible_sighting
+      fact_id: michelle_possible_sighting
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
       - captives_confirmed_alive
-      - sarah_possible_sighting
+      - michelle_possible_sighting
     abort_when:
     - scene_id_not: 1C
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
@@ -826,7 +828,7 @@ storylets:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-1C-C-R2
     dramatic_intent: Understand Charles and Rebecca’s reconstruction strategy and conclude that exposing and disrupting
@@ -840,7 +842,7 @@ storylets:
     - t_1c_2a
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
@@ -853,7 +855,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2A-A
   scene_id: 2A
-  title: Gabriel Prepared for This Years Ago
+  title: Brandon Prepared for This Years Ago
   activation:
     scene_id: 2A
     conditions: []
@@ -862,36 +864,36 @@ storylets:
       target_seconds: 450
       latest_seconds: 510
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If planning becomes static, make Gabriel’s long preparation useful but suspicious, encouraging
+  pressure_role: If planning becomes static, make Brandon’s long preparation useful but suspicious, encouraging
     questioning while keeping his JANUS role protected.
   realization_options:
   - id: SL-2A-A-R1
-    dramatic_intent: Establish that Gabriel prepared for the disappearance and claims he was discredited after trying
+    dramatic_intent: Establish that Brandon prepared for the disappearance and claims he was discredited after trying
       to expose the Initiative.
     operations:
     - op: assert
-      fact_id: gabriel_prepared_before_event
+      fact_id: brandon_prepared_before_event
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-2A-A-R2
     dramatic_intent: Notice retained professional resources without resolving whether they indicate foresight, guilt,
       or both.
     operations:
     - op: assert
-      fact_id: gabriel_prepared_before_event
+      fact_id: brandon_prepared_before_event
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: gabriel_prepared_before_event
+    - fact_id: brandon_prepared_before_event
       equals: true
     abort_when:
     - scene_id_not: 2A
@@ -899,7 +901,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2A-B
   scene_id: 2A
-  title: Build the Cover Around a Real Structural Risk
+  title: Build the Cover Around a Real Infrastructure Risk
   activation:
     scene_id: 2A
     conditions:
@@ -914,7 +916,7 @@ storylets:
     built around the real defect can converge on readiness.
   realization_options:
   - id: SL-2A-B-R1
-    dramatic_intent: Jeremiah identifies a credible structural/cooling risk and Gabriel turns it into inspector
+    dramatic_intent: Kristin identifies a credible infrastructure/cooling risk and Brandon turns it into inspector
       credentials.
     operations:
     - op: assert
@@ -923,11 +925,11 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   - id: SL-2A-B-R2
-    dramatic_intent: 'Use more truth in the cover story: the real support-column danger justifies an unscheduled
+    dramatic_intent: 'Use more truth in the cover story: the real cooling-system danger justifies an unscheduled
       specialist visit.'
     operations:
     - op: assert
@@ -936,7 +938,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - gabriel_history
+    - brandon_history
     - janus_selection_system
     - phase_two
   completion_or_abort:
@@ -964,7 +966,7 @@ storylets:
     pressure test rather than a fixed dialogue puzzle.
   realization_options:
   - id: SL-2A-C-R1
-    dramatic_intent: Jeremiah convincingly explains progressive-collapse risk and gains restricted corridor access.
+    dramatic_intent: Kristin convincingly explains the cooling-system risk and gains restricted corridor access.
     operations:
     - op: assert
       fact_id: restricted_corridor_access
@@ -974,7 +976,7 @@ storylets:
     - t_2a_2b
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   - id: SL-2A-C-R2
     dramatic_intent: An imperfect explanation still gets conditional access while quietly increasing observation
@@ -991,7 +993,7 @@ storylets:
     - t_2a_2b
     protected_knowledge_boundaries:
     - janus_selection_system
-    - gabriel_history
+    - brandon_history
     - phase_two
   completion_or_abort:
     complete_when:
@@ -1012,11 +1014,11 @@ storylets:
       target_seconds: 570
       latest_seconds: 630
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player explores the archive, let Sarah’s record, Jeremiah’s record, or classification
+  pressure_role: When the player explores the archive, let Michelle’s record, Kristin’s record, or classification
     categories independently reveal the selection mechanism.
   realization_options:
   - id: SL-2B-A-R1
-    dramatic_intent: Discover the JANUS classification system through Sarah’s record and the resistance/influence
+    dramatic_intent: Discover the JANUS classification system through Michelle’s record and the resistance/influence
       categories.
     operations:
     - op: assert
@@ -1028,14 +1030,14 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-2B-A-R2
-    dramatic_intent: Discover Jeremiah’s own record and learn that being left behind was deliberate; the record
+    dramatic_intent: Discover Kristin’s own record and learn that being left behind was deliberate; the record
       itself is sufficient JANUS evidence.
     operations:
     - op: assert
       fact_id: janus_evidence
       value: true
     - op: assert
-      fact_id: jeremiah_deliberately_left_behind
+      fact_id: kristin_deliberately_left_behind
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1052,7 +1054,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2B-B
   scene_id: 2B
-  title: Gabriel’s Name Is in the Build Records
+  title: Brandon’s Name Is in the Build Records
   activation:
     scene_id: 2B
     conditions:
@@ -1067,17 +1069,17 @@ storylets:
     without forcing forgiveness or hostility.
   realization_options:
   - id: SL-2B-B-R1
-    dramatic_intent: Find Gabriel’s name in JANUS build records; the records both authenticate JANUS and force the
+    dramatic_intent: Find Brandon’s name in JANUS build records; the records both authenticate JANUS and force the
       confrontation over his role.
     operations:
     - op: assert
-      fact_id: gabriel_janus_role_known
+      fact_id: brandon_janus_role_known
       value: true
     - op: assert
       fact_id: janus_evidence
       value: true
     - op: assert
-      fact_id: gabriel_claimed_reform_motive
+      fact_id: brandon_claimed_reform_motive
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1089,10 +1091,10 @@ storylets:
       his claimed break with Charles.
     operations:
     - op: assert
-      fact_id: gabriel_janus_role_known
+      fact_id: brandon_janus_role_known
       value: true
     - op: assert
-      fact_id: gabriel_claimed_reform_motive
+      fact_id: brandon_claimed_reform_motive
       value: true
     - op: assert
       fact_id: janus_evidence
@@ -1104,7 +1106,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: gabriel_janus_role_known
+    - fact_id: brandon_janus_role_known
       equals: true
     abort_when:
     - scene_id_not: 2B
@@ -1112,7 +1114,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2B-C
   scene_id: 2B
-  title: Sarah Is Already Sabotaging the System
+  title: Michelle Is Already Sabotaging the System
   activation:
     scene_id: 2B
     conditions:
@@ -1123,15 +1125,15 @@ storylets:
       target_seconds: 570
       latest_seconds: 630
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Sarah’s
+  pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Michelle’s
     agency in corrupted files and maintenance messages.
   realization_options:
   - id: SL-2B-C-R1
-    dramatic_intent: Recognize Sarah’s signature in corrupted JANUS/prisoner records and preserve enough of the
+    dramatic_intent: Recognize Michelle’s signature in corrupted JANUS/prisoner records and preserve enough of the
       records to serve as evidence while revealing her active resistance.
     operations:
     - op: assert
-      fact_id: sarah_resistance_known
+      fact_id: michelle_resistance_known
       value: true
     - op: assert
       fact_id: janus_evidence
@@ -1146,7 +1148,7 @@ storylets:
       full scale is known.
     operations:
     - op: assert
-      fact_id: sarah_resistance_known
+      fact_id: michelle_resistance_known
       value: true
     - op: assert
       fact_id: janus_evidence
@@ -1158,7 +1160,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: sarah_resistance_known
+    - fact_id: michelle_resistance_known
       equals: true
     abort_when:
     - scene_id_not: 2B
@@ -1166,7 +1168,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2C-A
   scene_id: 2C
-  title: Rebecca Offers Gabriel a Different Conspiracy
+  title: Rebecca Offers Brandon a Different Conspiracy
   activation:
     scene_id: 2C
     conditions: []
@@ -1176,10 +1178,10 @@ storylets:
       latest_seconds: 780
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Use antagonist fracture to create pressure and possible executive access without making Rebecca
-    trustworthy or requiring Jeremiah to accept Gabriel’s performance.
+    trustworthy or requiring Kristin to accept Brandon’s performance.
   realization_options:
   - id: SL-2C-A-R1
-    dramatic_intent: Gabriel strategically entertains Rebecca’s offer to gain leverage/access while treating her
+    dramatic_intent: Brandon strategically entertains Rebecca’s offer to gain leverage/access while treating her
       claims as unverified.
     operations:
     - op: assert
@@ -1190,7 +1192,7 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-2C-A-R2
-    dramatic_intent: Jeremiah becomes legitimately aware of the offer and interprets it as evidence that the antagonist
+    dramatic_intent: Kristin becomes legitimately aware of the offer and interprets it as evidence that the antagonist
       coalition is fracturing.
     operations:
     - op: assert
@@ -1267,11 +1269,11 @@ storylets:
       target_seconds: 705
       latest_seconds: 780
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Let argument, refusal, or hesitation play naturally until Sarah’s coded message creates the authored
+  pressure_role: Let argument, refusal, or hesitation play naturally until Michelle’s coded message creates the authored
     combined mission and focuses urgency.
   realization_options:
   - id: SL-2C-C-R1
-    dramatic_intent: Sarah’s coded message establishes that broadcast and detention access can be combined through
+    dramatic_intent: Michelle’s coded message establishes that broadcast and detention access can be combined through
       Rebecca’s secured office.
     operations:
     - op: assert
@@ -1283,7 +1285,7 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-2C-C-R2
-    dramatic_intent: Jeremiah and Gabriel independently reach the rescue/exposure impasse; Sarah’s message then
+    dramatic_intent: Kristin and Brandon independently reach the rescue/exposure impasse; Michelle’s message then
       resolves the false binary without resolving the danger.
     operations:
     - op: assert
@@ -1313,14 +1315,14 @@ storylets:
       target_seconds: 840
       latest_seconds: 900
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If Jeremiah focuses narrowly on extracting Sarah, her visible leadership reframes the objective
+  pressure_role: If Kristin focuses narrowly on extracting Michelle, her visible leadership reframes the objective
     and turns reunion into immediate coordinated action.
   realization_options:
   - id: SL-3A-A-R1
-    dramatic_intent: Jeremiah reaches Sarah and recognizes her as the uprising organizer.
+    dramatic_intent: Kristin reaches Michelle and recognizes her as the uprising organizer.
     operations:
     - op: assert
-      fact_id: sarah_reached
+      fact_id: michelle_reached
       value: true
     - op: assert
       fact_id: uprising_prepared
@@ -1330,11 +1332,11 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-3A-A-R2
-    dramatic_intent: The reunion is interrupted as Sarah gives the launch signal and directs prisoners into coordinated
+    dramatic_intent: The reunion is interrupted as Michelle gives the launch signal and directs prisoners into coordinated
       action, establishing contact and beginning the uprising without requiring an extended reunion scene.
     operations:
     - op: assert
-      fact_id: sarah_reached
+      fact_id: michelle_reached
       value: true
     - op: assert
       fact_id: uprising_prepared
@@ -1345,7 +1347,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: sarah_reached
+    - fact_id: michelle_reached
       equals: true
     abort_when:
     - scene_id_not: 3A
@@ -1357,7 +1359,7 @@ storylets:
   activation:
     scene_id: 3A
     conditions:
-    - fact_id: sarah_reached
+    - fact_id: michelle_reached
       equals: true
     pacing:
       earliest_seconds: 780
@@ -1368,7 +1370,7 @@ storylets:
     must include the conditioning program.
   realization_options:
   - id: SL-3A-B-R1
-    dramatic_intent: Corroborate Sarah’s account with experiment records and establish that selected released captives
+    dramatic_intent: Corroborate Michelle’s account with experiment records and establish that selected released captives
       were being conditioned for Charles’s narrative.
     operations:
     - op: assert
@@ -1404,7 +1406,7 @@ storylets:
   activation:
     scene_id: 3A
     conditions:
-    - fact_id: sarah_reached
+    - fact_id: michelle_reached
       equals: true
     - fact_id: behavioral_experiments_known
       equals: true
@@ -1444,7 +1446,7 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-3A-C-R3
-    dramatic_intent: The expiring authorization window makes further delay untenable; Sarah launches the coordinated
+    dramatic_intent: The expiring authorization window makes further delay untenable; Michelle launches the coordinated
       disturbances while the codes are still useful.
     operations:
     - op: assert
@@ -1477,7 +1479,7 @@ storylets:
       target_seconds: 975
       latest_seconds: 1050
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When predictive security blocks obvious routes, reward irrational, engineering-driven disruption;
+  pressure_role: When predictive security blocks obvious routes, reward irrational, operations-driven disruption;
     failed attempts can worsen local pressure without prescribing a single puzzle answer.
   realization_options:
   - id: SL-3B-A-R1
@@ -1527,7 +1529,7 @@ storylets:
     remains useful even as Charles strips her control.'
   realization_options:
   - id: SL-3B-B-R1
-    dramatic_intent: Sarah confronts Rebecca with experiment approvals; Rebecca yields exact detention-site locations
+    dramatic_intent: Michelle confronts Rebecca with experiment approvals; Rebecca yields exact detention-site locations
       as leverage, then Charles strips her control and locks down the office.
     operations:
     - op: assert
@@ -1545,7 +1547,7 @@ storylets:
     - phase_two
   - id: SL-3B-B-R2
     dramatic_intent: Charles betrays Rebecca first; trapped and expendable, she bargains with the only leverage
-      she retains—the national detention-site locations—which Sarah secures without treating Rebecca as trustworthy.
+      she retains—the national detention-site locations—which Michelle secures without treating Rebecca as trustworthy.
     operations:
     - op: assert
       fact_id: charles_abandoned_rebecca
@@ -1571,7 +1573,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-3B-C
   scene_id: 3B
-  title: Gabriel Holds the Relay Open
+  title: Brandon Holds the Relay Open
   activation:
     scene_id: 3B
     conditions:
@@ -1586,18 +1588,18 @@ storylets:
       target_seconds: 975
       latest_seconds: 1050
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Gabriel’s
-    accountability and danger create climax pressure without scripting Jeremiah’s response.
+  pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Brandon’s
+    accountability and danger create climax pressure without scripting Kristin’s response.
   realization_options:
   - id: SL-3B-C-R1
-    dramatic_intent: Gabriel disconnects the external relay from JANUS and holds it open; Sarah and Jeremiah use
+    dramatic_intent: Brandon disconnects the external relay from JANUS and holds it open; Michelle and Kristin use
       the opening to activate the national transmission.
     operations:
     - op: assert
       fact_id: relay_open
       value: true
     - op: assert
-      fact_id: gabriel_confession_available
+      fact_id: brandon_confession_available
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1605,14 +1607,14 @@ storylets:
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-3B-C-R2
-    dramatic_intent: Gabriel opens the relay and transmits his confession as authentication; Sarah and Jeremiah
+    dramatic_intent: Brandon opens the relay and transmits his confession as authentication; Michelle and Kristin
       immediately begin the broadcast while he keeps the path open.
     operations:
     - op: assert
       fact_id: relay_open
       value: true
     - op: assert
-      fact_id: gabriel_confession_available
+      fact_id: brandon_confession_available
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1641,7 +1643,7 @@ storylets:
       latest_seconds: 1200
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Once transmission begins, prevent the climax from becoming a passive upload: Charles contests
-    credibility, and accumulated verifiable evidence lets Sarah answer him.'
+    credibility, and accumulated verifiable evidence lets Michelle answer him.'
   realization_options:
   - id: SL-3C-A-R1
     dramatic_intent: Use the already-running national transmission to publish verifiable evidence until the conspiracy
@@ -1748,7 +1750,7 @@ storylets:
       target_seconds: 1140
       latest_seconds: 1200
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: 'Keep falling action dangerous: Jeremiah’s engineering choices preserve routes while Sarah moves
+  pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves
     people, but no single maneuver guarantees every section survives.'
   realization_options:
   - id: SL-3C-C-R1
@@ -1893,7 +1895,7 @@ storylets:
 coverage_matrix:
 - scene_id: 1A
   outgoing_transition_id: t_1a_1b
-  trigger_fact_id: sarah_lead_actionable
+  trigger_fact_id: michelle_lead_actionable
   storylets_helping_in_source_scene:
   - SL-1A-B
   status: covered_by_gated_canonical_bridge
@@ -1962,7 +1964,7 @@ authoring_decisions_requiring_approval: []
 canonical_transition_snapshot:
 - id: t_1a_1b
   source_scene_id: 1A
-  trigger_fact_id: sarah_lead_actionable
+  trigger_fact_id: michelle_lead_actionable
 - id: t_1b_1c
   source_scene_id: 1B
   trigger_fact_id: transport_route_departure_ready
@@ -1990,18 +1992,18 @@ canonical_bridge_events:
   activation: {}
   produces:
   - op: assert
-    fact_id: sarah_lead_actionable
+    fact_id: michelle_lead_actionable
     value: true
   realization_storylets:
   - SL-1A-B
-  fallback_realization: Validated free-text recovery of Sarah’s memory-card files may establish the concrete park/dead-drop
+  fallback_realization: Validated free-text recovery of Michelle’s memory-card files may establish the concrete park/dead-drop
     lead; the warning alone is not sufficient.
 - id: bridge_1b_departure
   scene_id: 1B
   activation:
     all_facts_true:
     - transport_route_identified
-    - gabriel_identified
+    - brandon_identified
     - missing_may_be_alive
     - park_pursuit_resolved
   produces:
@@ -2012,7 +2014,7 @@ canonical_bridge_events:
   - SL-1B-A
   - SL-1B-B
   - SL-1B-C
-  fallback_realization: The transit clue/Gabriel explanation and a validated resolution of the park pursuit may
+  fallback_realization: The transit clue/Brandon explanation and a validated resolution of the park pursuit may
     establish departure toward the freight terminal without requiring a particular escape action.
 - id: bridge_1c_infiltration_needed
   scene_id: 1C
@@ -2050,10 +2052,10 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - janus_evidence
-    - jeremiah_deliberately_left_behind
-    - gabriel_janus_role_known
-    - gabriel_claimed_reform_motive
-    - sarah_resistance_known
+    - kristin_deliberately_left_behind
+    - brandon_janus_role_known
+    - brandon_claimed_reform_motive
+    - michelle_resistance_known
   produces:
   - op: assert
     fact_id: archive_crisis_understood
@@ -2062,8 +2064,8 @@ canonical_bridge_events:
   - SL-2B-A
   - SL-2B-B
   - SL-2B-C
-  fallback_realization: Free-text archive investigation and confrontation may establish the same JANUS, bait, Gabriel,
-    and Sarah-resistance revelations without selecting a storylet.
+  fallback_realization: Free-text archive investigation and confrontation may establish the same JANUS, bait, Brandon,
+    and Michelle-resistance revelations without selecting a storylet.
 - id: bridge_2c_combined_plan
   scene_id: 2C
   activation:
@@ -2075,13 +2077,13 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-2C-C
-  fallback_realization: After the purge crisis is active, Sarah’s canonical coded message must eventually make the
+  fallback_realization: After the purge crisis is active, Michelle’s canonical coded message must eventually make the
     combined rescue/broadcast mission known; the player may react freely.
 - id: bridge_3a_command_assault
   scene_id: 3A
   activation:
     all_facts_true:
-    - sarah_reached
+    - michelle_reached
     - behavioral_experiments_known
     - override_codes_deadline_known
     - detention_uprising_started
@@ -2093,7 +2095,7 @@ canonical_bridge_events:
   - SL-3A-A
   - SL-3A-B
   - SL-3A-C
-  fallback_realization: Once Jeremiah has reached Sarah, understands the experiment stakes and expiring-code deadline,
+  fallback_realization: Once Kristin has reached Michelle, understands the experiment stakes and expiring-code deadline,
     and the uprising has begun, the resistance commits to fighting upward toward the command/broadcast levels.
 - id: bridge_3b_broadcast
   scene_id: 3B
@@ -2102,7 +2104,7 @@ canonical_bridge_events:
     - human_security_control
     - charles_abandoned_rebecca
     - detention_locations_secured
-    - gabriel_confession_available
+    - brandon_confession_available
     - relay_open
   produces:
   - op: assert
@@ -2113,14 +2115,14 @@ canonical_bridge_events:
   - SL-3B-B
   - SL-3B-C
   fallback_realization: After JANUS loses predictive control, Rebecca’s location data is secured, Charles betrays
-    her, and Gabriel opens the relay with his confession, Sarah/Jeremiah begin the transmission.
+    her, and Brandon opens the relay with his confession, Michelle/Kristin begin the transmission.
 canonical_resolution_events:
 - id: resolution_exposure_holds
   scene_id: 3C
   activation:
     all_facts_true:
     - broadcast_started
-    - gabriel_confession_available
+    - brandon_confession_available
     - detention_locations_secured
   produces:
   - op: assert
@@ -2163,7 +2165,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-C
-  fallback_realization: Jeremiah’s engineering and Sarah’s evacuation leadership get surviving captives to the surface
+  fallback_realization: Kristin’s Army infrastructure and operations background and Michelle’s evacuation leadership get surviving captives to the surface
     while the Los Angeles facility is lost.
 - id: resolution_network_consequences
   scene_id: 3C
@@ -2179,18 +2181,18 @@ canonical_resolution_events:
     fact_id: community_rescue_efforts_begun
     value: true
   - op: assert
-    fact_id: sarah_publishing_archive
+    fact_id: michelle_publishing_archive
     value: true
   - op: assert
-    fact_id: jeremiah_joined_rescue_efforts
+    fact_id: kristin_joined_rescue_efforts
     value: true
   - op: assert
     fact_id: charles_at_large
     value: true
   realization_storylets:
   - SL-3C-D
-  fallback_realization: Canonical resolution reports establish network fragmentation, community rescues, Sarah’s
-    publication effort, Jeremiah’s rescue work, and Charles’s escape.
+  fallback_realization: Canonical resolution reports establish network fragmentation, community rescues, Michelle’s
+    publication effort, Kristin’s rescue work, and Charles’s escape.
 - id: resolution_phase_two
   scene_id: 3C
   activation:
@@ -2235,12 +2237,12 @@ audit_notes:
 - Bridge facts that summarize scene completion are produced only by gated canonical events, preventing one early
   optional storylet from skipping later core beats.
 - The damaged warning in 1A no longer counts as an actionable park lead by itself.
-- The 1B departure bridge now requires Gabriel’s identity/warning and a resolved pursuit in addition to the transport
+- The 1B departure bridge now requires Brandon’s identity/warning and a resolved pursuit in addition to the transport
   lead.
-- Scene 2B now preserves the JANUS, bait, Gabriel, and Sarah-resistance reversals before transition.
+- Scene 2B now preserves the JANUS, bait, Brandon, and Michelle-resistance reversals before transition.
 - Scene 3A requires the reunion, experiment stakes, override-code deadline, and uprising before the assault moves
   upward; securing the codes themselves remains optional.
-- Scene 3B now preserves JANUS defeat, Rebecca/Charles fracture, exact detention locations, Gabriel’s confession,
+- Scene 3B now preserves JANUS defeat, Rebecca/Charles fracture, exact detention locations, Brandon’s confession,
   and the relay opening before the broadcast begins.
 - Canonical 3C resolution events guarantee Rebecca’s capture, Charles remaining at large, network fragmentation,
   and the Phase Two reveal even if the optional epilogue storylets are not selected.

@@ -27,11 +27,11 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
 def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None:
-    proposal = parse_turn_proposal({"response": '{"segments":[{"kind":"narration","text":"Jeremiah looks around."}]}'})
+    proposal = parse_turn_proposal({"response": '{"segments":[{"kind":"narration","text":"Kristin looks around."}]}'})
 
-    assert proposal.narration == "Jeremiah looks around."
-    structured = parse_turn_proposal({"segments": [{"kind": "action", "text": "Jeremiah checks the door."}]})
-    assert structured.narration == "Jeremiah checks the door."
+    assert proposal.narration == "Kristin looks around."
+    structured = parse_turn_proposal({"segments": [{"kind": "action", "text": "Kristin checks the door."}]})
+    assert structured.narration == "Kristin checks the door."
     reveal = parse_turn_proposal(
         {
             "segments": [{"kind": "narration", "text": "A damaged recording crackles to life."}],
@@ -46,17 +46,17 @@ def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None
 
 
 def test_fact_store_helpers_round_trip() -> None:
-    fact = Fact(predicate="located", subject="jeremiah", object="thomas_home")
+    fact = Fact(predicate="located", subject="kristin", object="mcgehee_home")
     state = RuntimeState.bootstrap(PACKAGE)
     entry_fact = Fact(predicate="scene_1a_entry_known", subject="story", value="true")
     state.facts.assert_fact(fact)
 
-    assert state.facts.has("located", "jeremiah", "thomas_home")
-    assert state.facts.matching("located", "jeremiah") == (fact,)
+    assert state.facts.has("located", "kristin", "mcgehee_home")
+    assert state.facts.matching("located", "kristin") == (fact,)
     assert state.facts.as_json() == [fact.model_dump(mode="json"), entry_fact.model_dump(mode="json")]
     restored = state.facts.from_json(state.facts.as_json())
     restored.retract_fact(fact)
-    assert not restored.has("located", "jeremiah", "thomas_home")
+    assert not restored.has("located", "kristin", "mcgehee_home")
     with pytest.raises(ValueError, match="facts must be a list"):
         state.facts.from_json({})
 
@@ -138,10 +138,10 @@ def test_knowledge_schema_save_cutover_rejects_legacy_snapshot_version(tmp_path)
 def test_successful_proposal_commits_events_and_transition() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-A")
-    fact = Fact(predicate="noticed", subject="sarah_phone")
+    fact = Fact(predicate="noticed", subject="michelle_phone")
     state.apply_proposal(
         ResolvedTurnProposal(
-            segments=(NarrationSegment(kind="narration", text="Jeremiah pockets the phone."),),
+            segments=(NarrationSegment(kind="narration", text="Kristin pockets the phone."),),
             operations=(FactOperation(operation="assert", fact=fact),),
             events=(
                 {
@@ -155,7 +155,7 @@ def test_successful_proposal_commits_events_and_transition() -> None:
 
     assert state.current_scene_id == "1B"
     assert state.phase == "rising_action"
-    assert state.facts.has("noticed", "sarah_phone")
+    assert state.facts.has("noticed", "michelle_phone")
     assert state.facts.has("seen", "memory_card")
     assert state.fired_event_ids == {"SL-1A-A"}
 
@@ -220,14 +220,14 @@ def test_internal_dependency_analysis_honors_declared_fallbacks() -> None:
     facts = RuntimeState.bootstrap(PACKAGE).facts.clone()
     facts.assert_fact(Fact(predicate="incapacitated", subject="memory_card"))
     assert validator.unsatisfied_dependencies("1A", facts) == ()
-    facts.assert_fact(Fact(predicate="destroyed", subject="gabriel"))
-    assert "gabriel" in validator.unsatisfied_dependencies("1A", facts)
+    facts.assert_fact(Fact(predicate="destroyed", subject="brandon"))
+    assert "brandon" in validator.unsatisfied_dependencies("1A", facts)
     assert validator.eligible_transitions(RuntimeState.bootstrap(PACKAGE)) == ()
 
 
 def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="sarah_lead_actionable", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     validator = ProgressionValidator(PACKAGE)
     proposal = ResolvedTurnProposal(
         segments=(NarrationSegment(kind="narration", text="The route out is ready."),),

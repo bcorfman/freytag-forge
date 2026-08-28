@@ -8,8 +8,8 @@ events:
 scenes:
 - scene_id: 1A
   earliest_seconds: 0
-  target_seconds: 60
-  latest_seconds: 120
+  target_seconds: 180
+  latest_seconds: 300
 - scene_id: 1B
   earliest_seconds: 120
   target_seconds: 195
@@ -48,7 +48,7 @@ transitions:
   target_scene_id: 1B
   priority: 10
   triggers:
-  - fact_id: sarah_lead_actionable
+  - fact_id: michelle_lead_actionable
     equals: true
   required_dependencies:
   - memory_card
@@ -61,7 +61,7 @@ transitions:
     equals: true
   required_dependencies:
   - transit_card
-  - gabriel
+  - brandon
 - id: t_1c_2a
   source_scene_id: 1C
   target_scene_id: 2A
@@ -84,7 +84,7 @@ transitions:
   - fact_id: archive_crisis_understood
     equals: true
   required_dependencies:
-  - gabriel
+  - brandon
 - id: t_2c_3a
   source_scene_id: 2C
   target_scene_id: 3A
@@ -93,7 +93,7 @@ transitions:
   - fact_id: combined_broadcast_rescue_plan_known
     equals: true
   required_dependencies:
-  - gabriel
+  - brandon
 - id: t_3a_3b
   source_scene_id: 3A
   target_scene_id: 3B

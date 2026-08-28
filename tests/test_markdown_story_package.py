@@ -124,7 +124,7 @@ def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path
     root = copied_package(tmp_path)
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0]["establishes"][0]["fact_id"] = "sarah_warning_known"
+    catalog["knowledge"][0]["establishes"][0]["fact_id"] = "michelle_warning_known"
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     with pytest.raises(StoryPackageError, match="effects differ"):
         load_story_package(root)
@@ -132,7 +132,7 @@ def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path
     root = copied_package(tmp_path / "self")
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0]["requires"] = [{"fact_id": "sarah_abduction_suspicion", "equals": True}]
+    catalog["knowledge"][0]["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     with pytest.raises(StoryPackageError, match="own prerequisite"):
         load_story_package(root)
@@ -152,7 +152,7 @@ def test_loader_rejects_invalid_canonical_event_and_scene_entry_sources(tmp_path
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
     entry = next(item for item in catalog["knowledge"] if item["id"] == "k_scene_1a_entry")
-    entry["establishes"][0]["fact_id"] = "sarah_warning_known"
+    entry["establishes"][0]["fact_id"] = "michelle_warning_known"
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     with pytest.raises(StoryPackageError, match="entry effects differ"):
         load_story_package(root)
@@ -164,7 +164,7 @@ def test_loader_rejects_same_scene_knowledge_prerequisite_cycle(tmp_path: Path) 
     catalog = yaml.safe_load(source.read_text())
     suspicion = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_c_r2")
     warning = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_b_r2")
-    suspicion["requires"] = [{"fact_id": "sarah_warning_known", "equals": True}]
+    suspicion["requires"] = [{"fact_id": "michelle_warning_known", "equals": True}]
     warning["requires"] = [{"fact_id": "house_marked_for_return", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
 
@@ -177,10 +177,10 @@ def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> Non
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
     candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1b_a_r1")
-    candidate["requires"] = [{"fact_id": "sarah_abduction_suspicion", "equals": True}]
+    candidate["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     package = load_story_package(root)
-    assert package.knowledge_indexes.prerequisite_dependents == {"sarah_abduction_suspicion": ("k_sl_1b_a_r1",)}
+    assert package.knowledge_indexes.prerequisite_dependents == {"michelle_abduction_suspicion": ("k_sl_1b_a_r1",)}
 
 
 @pytest.mark.parametrize(("field", "message"), [("facts", "facts must define"), ("scene_frames", "safe scene frame")])
@@ -199,7 +199,7 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
     [
         ("plot.md", "scene_id: 1A", "scene_id: 9Z", "heading and frontmatter"),
         ("plot.md", "---\nscene_id: 1A", "scene_id: 1A", "lacks YAML frontmatter"),
-        ("world.yaml", "thomas_home", "unknown_home", "unknown entities"),
+        ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
         ("pacing.yaml", "latest_seconds: 120", "latest_seconds: 30", "pacing timestamps"),
         ("storylets.md", "**Pacing impact**", "**Impact**", "lacks sections"),
         ("storylets.md", "plot.md#scene-1a1", "plot.md#missing", "unknown plot heading"),
@@ -216,7 +216,7 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `00:02:00`", "latest: `00:02:01`", 1))
+    source.write_text(source.read_text().replace("latest: `00:05:00`", "latest: `00:05:01`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 
@@ -239,13 +239,13 @@ def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     pacing = root / "pacing.yaml"
-    pacing.write_text(pacing.read_text().replace("fact_id: sarah_lead_actionable", "fact_id: unknown_fact", 1))
+    pacing.write_text(pacing.read_text().replace("fact_id: michelle_lead_actionable", "fact_id: unknown_fact", 1))
     with pytest.raises(StoryPackageError, match="unknown trigger predicate"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "fallback")
     world = root / "world.yaml"
-    world.write_text(world.read_text().replace("  - sarah_phone", "  - missing_item", 1))
+    world.write_text(world.read_text().replace("  - michelle_phone", "  - missing_item", 1))
     with pytest.raises(StoryPackageError, match="unknown fallback"):
         load_story_package(root)
 
@@ -281,7 +281,7 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         + "\n"
         + (
             "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: sarah_lead_actionable, equals: true}]}\n"
+            "triggers: [{fact_id: michelle_lead_actionable, equals: true}]}\n"
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):

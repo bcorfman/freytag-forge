@@ -26,7 +26,7 @@ def _ids(items: object) -> set[str]:
     ("audience", "kind", "player_visible", "expected"),
     [
         ("player", "public", True, True),
-        ("sarah", "characters", False, True),
+        ("michelle", "characters", False, True),
         ("player", "characters", False, False),
         ("player", "world_only", False, False),
     ],
@@ -34,7 +34,7 @@ def _ids(items: object) -> set[str]:
 def test_audience_visibility_matrix(audience: str, kind: str, player_visible: bool, expected: bool) -> None:
     scoped_audience = Audience(
         kind=kind,
-        character_ids=("sarah",) if kind == "characters" else (),
+        character_ids=("michelle",) if kind == "characters" else (),
         player_visible=player_visible,
     )
     item = PACKAGE.knowledge.knowledge[0].model_copy(update={"audience": scoped_audience})
@@ -48,7 +48,7 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     projector = KnowledgeProjector(max_candidates=8)
 
-    opening = projector.project(state, "player", "I inspect Sarah's phone.")
+    opening = projector.project(state, "player", "I inspect Michelle's phone.")
     assert "k_sl_1a_b_r2" not in _ids(opening.committed_knowledge)
     assert "k_sl_1a_b_r2" not in _ids(opening.candidates)
     assert all("patrol" not in item.id for item in opening.committed_knowledge)
@@ -56,17 +56,17 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     # Shadow eligibility starts only after the package's route has activated;
     # the warning is still a candidate, never a committed discovery.
     state.active_event_ids.update({"SL-1A-A", "SL-1A-B"})
-    recording = projector.project(state, "player", "I search the desk drawer for Sarah's damaged recording.")
+    recording = projector.project(state, "player", "I search the desk drawer for Michelle's damaged recording.")
     assert "k_sl_1a_b_r2" in _ids(recording.candidates)
     assert "k_sl_1a_b_r2" not in _ids(recording.committed_knowledge)
     assert recording.payload_size() < 8_192
-    assert "Sarah" not in str(recording.observability())
+    assert "Michelle" not in str(recording.observability())
 
     warning = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"]
     state.apply_proposal(
         ResolvedTurnProposal(
             segments=(
-                NarrationSegment(kind="narration", text="The damaged recording begins with Sarah's breath catching."),
+                NarrationSegment(kind="narration", text="The damaged recording begins with Michelle's breath catching."),
             ),
             events=(
                 StoryEventProposal(
@@ -95,6 +95,74 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     assert {"k_sl_1a_c_r1", "k_sl_1a_c_r2"} <= _ids(patrol.candidates)
 
 
+def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    responses = iter(
+        (
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "Forced entry leaves a concrete contradiction.",
+                        "grounding_ids": ["k_sl_1a_a_r1"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_a_r1"],
+            },
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "The cracked phone is nearly out of power.",
+                        "grounding_ids": ["k_scene_1a_entry"],
+                    }
+                ]
+            },
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "Michelle's damaged recording warns Kristin not to trust emergency broadcasts.",
+                        "grounding_ids": ["k_sl_1a_b_r2"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+            },
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "The patrol approaches the gate.",
+                        "grounding_ids": ["k_sl_1a_c_r1"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_c_r1"],
+            },
+        )
+    )
+    engine = RuntimeEngine(state, lambda _: next(responses))
+
+    expected_candidates = (
+        {"k_sl_1a_a_r1", "k_sl_1a_a_r2"},
+        set(),
+        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
+        {"k_sl_1a_c_r1", "k_sl_1a_c_r2"},
+    )
+    for player_input, expected in zip(
+        (
+            "I inspect the back door.",
+            "I examine Michelle's phone.",
+            "I search the desk and drawer for Michelle's research or a damaged recording.",
+            "I check the gate.",
+        ),
+        expected_candidates,
+        strict=True,
+    ):
+        engine._activate_pacing()
+        assert _ids(engine.projector.project(state, "player", player_input).candidates) == expected
+        engine.turn(player_input)
+
+
 def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(
@@ -116,12 +184,12 @@ def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path
 
 def test_future_or_ambiguous_input_and_raw_history_do_not_expand_shadow_context() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.narrative_history.append("JANUS and Gabriel were already revealed in an old transcript.")
+    state.narrative_history.append("JANUS and Brandon were already revealed in an old transcript.")
     state.active_event_ids.add("SL-1A-B")
     projector = KnowledgeProjector()
 
     ordinary = projector.project(state, "player", "I search the desk.")
-    future_named = projector.project(state, "player", "I call Gabriel about JANUS and the facility.")
+    future_named = projector.project(state, "player", "I call Brandon about JANUS and the facility.")
 
     assert future_named.referenced_entity_ids == ()
     assert _ids(future_named.candidates) == _ids(ordinary.candidates)
