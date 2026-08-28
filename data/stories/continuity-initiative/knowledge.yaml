@@ -1,21 +1,21 @@
 schema_version: '2.0'
 facts:
 - id: michelle_abduction_suspicion
-  purpose: 'Canonical world state: michelle abduction suspicion.'
+  purpose: Kristin has enough signs of forced entry, blood, and missing work materials to reasonably suspect Michelle was abducted.
 - id: facility_proof
-  purpose: 'Canonical world state: facility proof.'
+  purpose: Kristin has confirmed that the supposedly abandoned terminal conceals an active underground detention facility.
 - id: false_identities_ready
-  purpose: 'Canonical world state: false identities ready.'
+  purpose: Kristin and Brandon have credible technical-inspector identities and a structural-risk cover story for entering the facility.
 - id: janus_evidence
-  purpose: 'Canonical world state: janus evidence.'
+  purpose: Kristin has secured archive material showing JANUS classified Americans for detention, leverage, and political control.
 - id: purge_clock_started
-  purpose: 'Canonical world state: purge clock started.'
+  purpose: Charles has ordered valuable captives transferred and the rest destroyed within hours after Michelle corrupts the records.
 - id: michelle_reached
-  purpose: 'Canonical world state: michelle reached.'
+  purpose: Kristin has reached Michelle alive in the detention sector and joined her active prisoner resistance.
 - id: relay_open
-  purpose: 'Canonical world state: relay open.'
+  purpose: Brandon has manually disconnected the external communications relay from JANUS so the emergency broadcast can proceed.
 - id: broadcast_started
-  purpose: 'Canonical world state: broadcast started.'
+  purpose: Kristin and Michelle have begun transmitting evidence of the detention network through the opened emergency broadcast system.
 - id: continuity_initiative_known
   purpose: Kristin knows Michelle’s research into genetics led her to investigate suspicious
     secret contracts tied to the Continuity Initiative.
@@ -167,6 +167,26 @@ facts:
     after the exposure.
 - id: kristin_joined_rescue_efforts
   purpose: Kristin has committed to helping locate and open remaining detention facilities.
+- id: janus_known
+  purpose: Kristin has identified JANUS as the selection system before its records expose Brandon's role.
+- id: trust_brandon
+  purpose: Kristin's trust in Brandon is a durable relationship state across his warning, betrayal, and confession.
+- id: charles_framed_officials_known
+  purpose: Kristin knows Charles framed imprisoned officials for the catastrophe before the override deadline.
+- id: evidence_ready_to_transmit
+  purpose: The protagonists have enough authenticated evidence to attempt the combined exposure-and-rescue mission.
+- id: facility_destruction_threat
+  purpose: Charles has activated the threat to destroy the Los Angeles facility, making escape urgent.
+- id: michelle_selected_for_resistance_influence
+  purpose: Kristin knows JANUS selected Michelle for her predicted ability to unite resistance.
+- id: national_facility_locations_broadcast
+  purpose: National detention-site locations have been broadcast to enable distributed rescue responses.
+- id: prisoner_records_corrupted
+  purpose: Michelle's resistance has corrupted prisoner records, triggering Charles's purge order.
+- id: rebecca_experiment_approval_confronted
+  purpose: Rebecca's personal approval of the experiments has been confronted before her capture.
+- id: rebecca_office_required_for_broadcast
+  purpose: Rebecca's secured office is the required manual activation point for the combined mission.
 - id: scene_1a_entry_known
   purpose: The safe opening frame for scene 1A has been established.
 - id: scene_1b_entry_known
@@ -216,7 +236,7 @@ scene_frames:
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
-  statement: 'Current-scene development: michelle abduction suspicion.'
+  statement: 'Kristin traces the forced entry, blood, and missing work bag to a removal too deliberate to be looting.'
   entity_ids: []
   aliases:
   - michelle abduction suspicion
@@ -238,7 +258,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_a_r2
-  statement: 'Current-scene development: michelle abduction suspicion.'
+  statement: 'A hurried search leaves Kristin uncertain, but the broken door and overturned chair make Michelle’s absence feel staged.'
   entity_ids: []
   aliases:
   - michelle abduction suspicion
@@ -260,8 +280,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_b_r1
-  statement: 'Current-scene development: continuity initiative known, michelle abduction
-    suspicion, michelle lead actionable.'
+  statement: 'Kristin finds Michelle’s hidden card and damaged recording, learning that Michelle feared the emergency broadcasts.'
   entity_ids: []
   aliases:
   - continuity initiative known
@@ -274,6 +293,9 @@ knowledge:
   - 1A
   requires: []
   establishes:
+  - op: assert
+    fact_id: michelle_warning_known
+    value: true
   - op: assert
     fact_id: continuity_initiative_known
     value: true
@@ -317,8 +339,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_c_r1
-  statement: 'Current-scene development: official interest in michelle known, michelle abduction
-    suspicion.'
+  statement: 'The patrol’s interest in Michelle’s research makes Kristin doubt that its welfare check is innocent.'
   entity_ids: []
   aliases:
   - official interest in michelle known
@@ -328,7 +349,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: michelle_warning_known
+    equals: true
   establishes:
   - op: assert
     fact_id: official_interest_in_michelle_known
@@ -344,7 +367,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_c_r2
-  statement: 'Current-scene development: house marked for return, patrol return pressure.'
+  statement: 'After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be watched.'
   entity_ids: []
   aliases:
   - house marked for return
@@ -354,7 +377,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: michelle_warning_known
+    equals: true
   establishes:
   - op: assert
     fact_id: house_marked_for_return
@@ -370,7 +395,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_a_r1
-  statement: 'Current-scene development: transport route identified.'
+  statement: 'Kristin matches the transit card and number sequence to a freight route leading out of the city.'
   entity_ids: []
   aliases:
   - transport route identified
@@ -392,7 +417,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_a_r2
-  statement: 'Current-scene development: brandon face known.'
+  statement: 'A photograph hidden in Michelle’s dead drop gives Kristin the face of the man who has been following her.'
   entity_ids: []
   aliases:
   - brandon face known
@@ -414,8 +439,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_b_r1
-  statement: 'Current-scene development: brandon identified, missing may be alive,
-    transport route identified.'
+  statement: 'Confronted with Michelle’s photograph, Brandon identifies himself and says the missing are being moved alive.'
   entity_ids: []
   aliases:
   - brandon identified
@@ -428,6 +452,9 @@ knowledge:
   - 1B
   requires: []
   establishes:
+  - op: assert
+    fact_id: trust_brandon
+    value: true
   - op: assert
     fact_id: brandon_identified
     value: true
@@ -445,7 +472,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_b_r2
-  statement: 'Current-scene development: brandon identified.'
+  statement: 'Brandon admits he knew Michelle, but his evasions leave Kristin unsure whether he came to help or watch her.'
   entity_ids: []
   aliases:
   - brandon identified
@@ -467,8 +494,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_c_r1
-  statement: 'Current-scene development: brandon retains system access, transport
-    route identified, park pursuit resolved.'
+  statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -479,7 +505,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1B
-  requires: []
+  requires:
+  - fact_id: brandon_identified
+    equals: true
+  - fact_id: missing_may_be_alive
+    equals: true
   establishes:
   - op: assert
     fact_id: brandon_retains_system_access
@@ -498,8 +528,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_c_r2
-  statement: 'Current-scene development: brandon retains system access, park pursuit
-    resolved.'
+  statement: 'Brandon enters a code no civilian should know, getting them clear of the ambush while deepening Kristin’s suspicion.'
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -509,7 +538,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1B
-  requires: []
+  requires:
+  - fact_id: brandon_identified
+    equals: true
+  - fact_id: missing_may_be_alive
+    equals: true
   establishes:
   - op: assert
     fact_id: brandon_retains_system_access
@@ -525,7 +558,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_a_r1
-  statement: 'Current-scene development: facility proof.'
+  statement: 'Kristin finds electrical load, fresh ventilation, and recent work that prove the abandoned terminal is still operating.'
   entity_ids: []
   aliases:
   - facility proof
@@ -547,7 +580,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_a_r2
-  statement: 'Current-scene development: facility proof, service level access known.'
+  statement: 'Michelle’s transit card opens a service entrance beneath the terminal, confirming an active facility below.'
   entity_ids: []
   aliases:
   - facility proof
@@ -573,7 +606,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_b_r1
-  statement: 'Current-scene development: captives confirmed alive.'
+  statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
   entity_ids: []
   aliases:
   - captives confirmed alive
@@ -582,7 +615,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1C
-  requires: []
+  requires:
+  - fact_id: facility_proof
+    equals: true
   establishes:
   - op: assert
     fact_id: captives_confirmed_alive
@@ -595,7 +630,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_b_r2
-  statement: 'Current-scene development: michelle possible sighting.'
+  statement: 'Kristin glimpses a woman who could be Michelle in a transfer line, but the view vanishes before she can be sure.'
   entity_ids: []
   aliases:
   - michelle possible sighting
@@ -604,7 +639,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1C
-  requires: []
+  requires:
+  - fact_id: facility_proof
+    equals: true
   establishes:
   - op: assert
     fact_id: michelle_possible_sighting
@@ -617,7 +654,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_c_r1
-  statement: 'Current-scene development: national detention network known.'
+  statement: 'A logistics terminal shows that Los Angeles is only a regional hub in a detention network spanning the country.'
   entity_ids: []
   aliases:
   - national detention network known
@@ -626,7 +663,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1C
-  requires: []
+  requires:
+  - fact_id: facility_proof
+    equals: true
+  - fact_id: captives_confirmed_alive
+    equals: true
   establishes:
   - op: assert
     fact_id: national_detention_network_known
@@ -639,7 +680,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_c_r2
-  statement: 'Current-scene development: architects strategy known.'
+  statement: 'A recording of Charles and Rebecca reveals they engineered the crisis to rule as its promised solution.'
   entity_ids: []
   aliases:
   - architects strategy known
@@ -648,7 +689,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1C
-  requires: []
+  requires:
+  - fact_id: facility_proof
+    equals: true
+  - fact_id: captives_confirmed_alive
+    equals: true
   establishes:
   - op: assert
     fact_id: architects_strategy_known
@@ -661,7 +706,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_a_r1
-  statement: 'Current-scene development: brandon prepared before event.'
+  statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
   entity_ids: []
   aliases:
   - brandon prepared before event
@@ -683,7 +728,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_a_r2
-  statement: 'Current-scene development: brandon prepared before event.'
+  statement: 'Brandon says he tried to expose the program before the disappearances, but Kristin cannot tell foresight from guilt.'
   entity_ids: []
   aliases:
   - brandon prepared before event
@@ -705,7 +750,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_b_r1
-  statement: 'Current-scene development: false identities ready.'
+  statement: 'Kristin turns the facility’s cooling weakness into a credible inspection emergency, and Brandon builds their cover around it.'
   entity_ids: []
   aliases:
   - false identities ready
@@ -714,7 +759,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2A
-  requires: []
+  requires:
+  - fact_id: facility_infiltration_needed
+    equals: true
   establishes:
   - op: assert
     fact_id: false_identities_ready
@@ -727,7 +774,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_b_r2
-  statement: 'Current-scene development: false identities ready.'
+  statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real structural danger to put in their lie.'
   entity_ids: []
   aliases:
   - false identities ready
@@ -736,7 +783,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2A
-  requires: []
+  requires:
+  - fact_id: facility_infiltration_needed
+    equals: true
   establishes:
   - op: assert
     fact_id: false_identities_ready
@@ -749,17 +798,22 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_c_r1
-  statement: 'Current-scene development: restricted corridor access.'
+  statement: 'Kristin persuades a doubtful supervisor that a support-column failure could collapse the facility, gaining corridor access.'
   entity_ids: []
   aliases:
   - restricted corridor access
   audience:
-    kind: public
-    player_visible: true
+    kind: world_only
+    player_visible: false
   available_in_scenes:
   - 2A
-  requires: []
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
   establishes:
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
   - op: assert
     fact_id: restricted_corridor_access
     value: true
@@ -781,7 +835,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2A
-  requires: []
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
   establishes:
   - op: assert
     fact_id: restricted_corridor_access
@@ -804,7 +860,9 @@ knowledge:
     player_visible: false
   available_in_scenes:
   - 2A
-  requires: []
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_observing_infiltrators
@@ -817,7 +875,7 @@ knowledge:
     entity_ids: [rebecca, regional_facility]
     priority: 0
 - id: k_sl_2b_a_r1
-  statement: 'Current-scene development: janus evidence.'
+  statement: 'In the archive, Kristin secures JANUS files showing how Americans were ranked for detention, leverage, or control.'
   entity_ids: []
   aliases:
   - janus evidence
@@ -829,6 +887,12 @@ knowledge:
   requires: []
   establishes:
   - op: assert
+    fact_id: janus_known
+    value: true
+  - op: assert
+    fact_id: michelle_selected_for_resistance_influence
+    value: true
+  - op: assert
     fact_id: janus_evidence
     value: true
   source:
@@ -839,8 +903,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_a_r2
-  statement: 'Current-scene development: janus evidence, kristin deliberately left
-    behind.'
+  statement: 'JANUS records show Kristin was left behind because Charles expected her to lead investigators to Brandon.'
   entity_ids: []
   aliases:
   - janus evidence
@@ -866,8 +929,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_b_r1
-  statement: 'Current-scene development: brandon janus role known, janus evidence,
-    brandon claimed reform motive.'
+  statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -878,13 +940,12 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2B
-  requires: []
+  requires:
+  - fact_id: janus_evidence
+    equals: true
   establishes:
   - op: assert
     fact_id: brandon_janus_role_known
-    value: true
-  - op: assert
-    fact_id: janus_evidence
     value: true
   - op: assert
     fact_id: brandon_claimed_reform_motive
@@ -897,8 +958,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_b_r2
-  statement: 'Current-scene development: brandon janus role known, brandon claimed
-    reform motive, janus evidence.'
+  statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -909,16 +969,15 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2B
-  requires: []
+  requires:
+  - fact_id: janus_evidence
+    equals: true
   establishes:
   - op: assert
     fact_id: brandon_janus_role_known
     value: true
   - op: assert
     fact_id: brandon_claimed_reform_motive
-    value: true
-  - op: assert
-    fact_id: janus_evidence
     value: true
   source:
     kind: storylet_realization
@@ -928,7 +987,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_c_r1
-  statement: 'Current-scene development: michelle resistance known, janus evidence.'
+  statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -938,13 +997,15 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2B
-  requires: []
+  requires:
+  - fact_id: janus_evidence
+    equals: true
   establishes:
   - op: assert
-    fact_id: michelle_resistance_known
+    fact_id: prisoner_records_corrupted
     value: true
   - op: assert
-    fact_id: janus_evidence
+    fact_id: michelle_resistance_known
     value: true
   source:
     kind: storylet_realization
@@ -954,7 +1015,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2b_c_r2
-  statement: 'Current-scene development: michelle resistance known, janus evidence.'
+  statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -964,13 +1025,12 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2B
-  requires: []
+  requires:
+  - fact_id: janus_evidence
+    equals: true
   establishes:
   - op: assert
     fact_id: michelle_resistance_known
-    value: true
-  - op: assert
-    fact_id: janus_evidence
     value: true
   source:
     kind: storylet_realization
@@ -980,13 +1040,13 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_a_r1
-  statement: 'Current-scene development: rebecca offer active.'
+  statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
   entity_ids: []
   aliases:
   - rebecca offer active
   audience:
-    kind: public
-    player_visible: true
+    kind: world_only
+    player_visible: false
   available_in_scenes:
   - 2C
   requires: []
@@ -1002,7 +1062,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_a_r2
-  statement: 'Current-scene development: rebecca offer active, antagonist split known.'
+  statement: 'Rebecca tells Brandon that Charles will discard conspirators as well as prisoners, then asks him to join her instead.'
   entity_ids: []
   aliases:
   - rebecca offer active
@@ -1028,7 +1088,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_b_r1
-  statement: 'Current-scene development: purge clock started.'
+  statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
   entity_ids: []
   aliases:
   - purge clock started
@@ -1050,7 +1110,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_b_r2
-  statement: 'Current-scene development: purge clock started.'
+  statement: 'Charles prepares a broadcast of selected survivors while the purge order turns the detention sectors into a deadline.'
   entity_ids: []
   aliases:
   - purge clock started
@@ -1072,7 +1132,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_c_r1
-  statement: 'Current-scene development: combined broadcast rescue plan known.'
+  statement: 'Kristin refuses to choose evidence over the prisoners when Michelle’s message offers a way to do both.'
   entity_ids: []
   aliases:
   - combined broadcast rescue plan known
@@ -1081,8 +1141,20 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2C
-  requires: []
+  requires:
+  - fact_id: purge_clock_started
+    equals: true
+  - fact_id: janus_evidence
+    equals: true
+  - fact_id: michelle_resistance_known
+    equals: true
   establishes:
+  - op: assert
+    fact_id: evidence_ready_to_transmit
+    value: true
+  - op: assert
+    fact_id: rebecca_office_required_for_broadcast
+    value: true
   - op: assert
     fact_id: combined_broadcast_rescue_plan_known
     value: true
@@ -1094,7 +1166,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_c_r2
-  statement: 'Current-scene development: combined broadcast rescue plan known.'
+  statement: 'Michelle’s coded message reveals that Rebecca’s office can open the cells and broadcast the evidence at once.'
   entity_ids: []
   aliases:
   - combined broadcast rescue plan known
@@ -1103,7 +1175,13 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 2C
-  requires: []
+  requires:
+  - fact_id: purge_clock_started
+    equals: true
+  - fact_id: janus_evidence
+    equals: true
+  - fact_id: michelle_resistance_known
+    equals: true
   establishes:
   - op: assert
     fact_id: combined_broadcast_rescue_plan_known
@@ -1116,7 +1194,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_a_r1
-  statement: 'Current-scene development: michelle reached, uprising prepared.'
+  statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
   entity_ids: []
   aliases:
   - michelle reached
@@ -1142,7 +1220,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_a_r2
-  statement: 'Current-scene development: michelle reached, uprising prepared.'
+  statement: 'Michelle reunites with Kristin briefly, then explains that freeing this block means little without exposing the other sites.'
   entity_ids: []
   aliases:
   - michelle reached
@@ -1168,7 +1246,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_b_r1
-  statement: 'Current-scene development: conditioned release plan known.'
+  statement: 'Kristin learns Charles’s planned survivors were conditioned to support his story before their public release.'
   entity_ids: []
   aliases:
   - conditioned release plan known
@@ -1177,7 +1255,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3A
-  requires: []
+  requires:
+  - fact_id: michelle_reached
+    equals: true
   establishes:
   - op: assert
     fact_id: conditioned_release_plan_known
@@ -1190,7 +1270,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_b_r2
-  statement: 'Current-scene development: behavioral experiments known.'
+  statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
   entity_ids: []
   aliases:
   - behavioral experiments known
@@ -1199,7 +1279,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3A
-  requires: []
+  requires:
+  - fact_id: michelle_reached
+    equals: true
   establishes:
   - op: assert
     fact_id: behavioral_experiments_known
@@ -1212,8 +1294,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_c_r1
-  statement: 'Current-scene development: military override codes available, override
-    codes deadline known.'
+  statement: 'An imprisoned official gives Kristin military override codes that expire when Charles formally claims emergency authority.'
   entity_ids: []
   aliases:
   - military override codes available
@@ -1223,8 +1304,15 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3A
-  requires: []
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
   establishes:
+  - op: assert
+    fact_id: charles_framed_officials_known
+    value: true
   - op: assert
     fact_id: military_override_codes_available
     value: true
@@ -1239,8 +1327,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_c_r2
-  statement: 'Current-scene development: military override codes available, override
-    codes deadline known.'
+  statement: 'Kristin learns Charles framed the captive official for the catastrophe, leaving the rescue tied to a vanishing deadline.'
   entity_ids: []
   aliases:
   - military override codes available
@@ -1250,7 +1337,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3A
-  requires: []
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
   establishes:
   - op: assert
     fact_id: military_override_codes_available
@@ -1266,8 +1357,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_c_r3
-  statement: 'Current-scene development: detention uprising started, override codes
-    deadline known.'
+  statement: 'Michelle triggers the uprising; prisoners seize checkpoints as Charles seals the exits and sends armed teams below.'
   entity_ids: []
   aliases:
   - detention uprising started
@@ -1277,7 +1367,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3A
-  requires: []
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
   establishes:
   - op: assert
     fact_id: detention_uprising_started
@@ -1293,7 +1387,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_a_r1
-  statement: 'Current-scene development: human security control.'
+  statement: 'Kristin floods corridors, cuts unrelated power, and creates structural alarms until JANUS must yield to human operators.'
   entity_ids: []
   aliases:
   - human security control
@@ -1315,7 +1409,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_a_r2
-  statement: 'Current-scene development: human security control.'
+  statement: 'By making the facility’s emergencies impossible to predict, Kristin forces security to abandon JANUS’s guidance.'
   entity_ids: []
   aliases:
   - human security control
@@ -1337,8 +1431,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_b_r1
-  statement: 'Current-scene development: detention locations offer known, detention
-    locations secured, charles abandoned rebecca.'
+  statement: 'Rebecca offers every detention-site location, then learns Charles has locked her in and marked her for death.'
   entity_ids: []
   aliases:
   - detention locations offer known
@@ -1349,8 +1442,16 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3B
-  requires: []
+  requires:
+  - fact_id: human_security_control
+    equals: true
   establishes:
+  - op: assert
+    fact_id: rebecca_experiment_approval_confronted
+    value: true
+  - op: assert
+    fact_id: facility_destruction_threat
+    value: true
   - op: assert
     fact_id: detention_locations_offer_known
     value: true
@@ -1368,8 +1469,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_b_r2
-  statement: 'Current-scene development: charles abandoned rebecca, detention locations
-    offer known, detention locations secured.'
+  statement: 'Michelle confronts Rebecca over the experiments as Charles abandons her, and her archive becomes the prisoners’ lifeline.'
   entity_ids: []
   aliases:
   - charles abandoned rebecca
@@ -1380,7 +1480,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3B
-  requires: []
+  requires:
+  - fact_id: human_security_control
+    equals: true
   establishes:
   - op: assert
     fact_id: charles_abandoned_rebecca
@@ -1399,17 +1501,23 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_c_r1
-  statement: 'Current-scene development: relay open, brandon confession available.'
+  statement: 'Brandon disconnects the external relay from JANUS and sends a confession that authenticates Michelle’s evidence.'
   entity_ids: []
   aliases:
   - relay open
   - brandon confession available
   audience:
-    kind: public
-    player_visible: true
+    kind: world_only
+    player_visible: false
   available_in_scenes:
   - 3B
-  requires: []
+  requires:
+  - fact_id: human_security_control
+    equals: true
+  - fact_id: charles_abandoned_rebecca
+    equals: true
+  - fact_id: detention_locations_secured
+    equals: true
   establishes:
   - op: assert
     fact_id: relay_open
@@ -1425,17 +1533,23 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_c_r2
-  statement: 'Current-scene development: relay open, brandon confession available.'
+  statement: 'Brandon holds the relay open against the surge and security forces so Kristin and Michelle can begin the broadcast.'
   entity_ids: []
   aliases:
   - relay open
   - brandon confession available
   audience:
-    kind: public
-    player_visible: true
+    kind: world_only
+    player_visible: false
   available_in_scenes:
   - 3B
-  requires: []
+  requires:
+  - fact_id: human_security_control
+    equals: true
+  - fact_id: charles_abandoned_rebecca
+    equals: true
+  - fact_id: detention_locations_secured
+    equals: true
   establishes:
   - op: assert
     fact_id: relay_open
@@ -1451,7 +1565,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_a_r1
-  statement: 'Current-scene development: truth no longer containable.'
+  statement: 'Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent networks.'
   entity_ids: []
   aliases:
   - truth no longer containable
@@ -1460,8 +1574,13 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: broadcast_started
+    equals: true
   establishes:
+  - op: assert
+    fact_id: national_facility_locations_broadcast
+    value: true
   - op: assert
     fact_id: truth_no_longer_containable
     value: true
@@ -1473,7 +1592,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_a_r2
-  statement: 'Current-scene development: truth no longer containable.'
+  statement: 'When Charles calls her a terrorist, Michelle answers with live revolts that make the truth impossible to contain.'
   entity_ids: []
   aliases:
   - truth no longer containable
@@ -1482,7 +1601,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: broadcast_started
+    equals: true
   establishes:
   - op: assert
     fact_id: truth_no_longer_containable
@@ -1495,8 +1616,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_b_r1
-  statement: 'Current-scene development: portable archive secured, archive contains
-    prisoner locations, archive copies distributed, rebecca captured.'
+  statement: 'Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.'
   entity_ids: []
   aliases:
   - portable archive secured
@@ -1508,7 +1628,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
   establishes:
   - op: assert
     fact_id: portable_archive_secured
@@ -1521,6 +1643,9 @@ knowledge:
     value: true
   - op: assert
     fact_id: rebecca_captured
+    value: true
+  - op: assert
+    fact_id: charles_at_large
     value: true
   source:
     kind: storylet_realization
@@ -1530,8 +1655,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_b_r2
-  statement: 'Current-scene development: portable archive secured, archive copies
-    distributed, archive contains prisoner locations, rebecca captured.'
+  statement: 'The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.'
   entity_ids: []
   aliases:
   - portable archive secured
@@ -1543,7 +1667,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
   establishes:
   - op: assert
     fact_id: portable_archive_secured
@@ -1557,6 +1683,9 @@ knowledge:
   - op: assert
     fact_id: rebecca_captured
     value: true
+  - op: assert
+    fact_id: charles_at_large
+    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3C-B
@@ -1565,8 +1694,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_c_r1
-  statement: 'Current-scene development: evacuation route open, captives reaching
-    surface.'
+  statement: 'Kristin keeps emergency supports working as Michelle leads captives through the maintenance tunnels toward the surface.'
   entity_ids: []
   aliases:
   - evacuation route open
@@ -1576,7 +1704,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: rebecca_captured
+    equals: true
   establishes:
   - op: assert
     fact_id: evacuation_route_open
@@ -1592,8 +1724,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_c_r2
-  statement: 'Current-scene development: captives reaching surface, los angeles facility
-    lost.'
+  statement: 'Brandon’s final override opens the surface gates as the relay chamber is destroyed and the facility collapses around them.'
   entity_ids: []
   aliases:
   - captives reaching surface
@@ -1603,7 +1734,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: rebecca_captured
+    equals: true
   establishes:
   - op: assert
     fact_id: captives_reaching_surface
@@ -1619,7 +1754,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_d_r1
-  statement: 'Current-scene development: national network fragmenting.'
+  statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   entity_ids: []
   aliases:
   - national network fragmenting
@@ -1628,7 +1763,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: captives_reaching_surface
+    equals: true
   establishes:
   - op: assert
     fact_id: national_network_fragmenting
@@ -1641,7 +1780,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_d_r2
-  statement: 'Current-scene development: community rescue efforts begun.'
+  statement: 'Families and communities organize independent rescue efforts after learning that many of the missing are still alive.'
   entity_ids: []
   aliases:
   - community rescue efforts begun
@@ -1650,7 +1789,11 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: captives_reaching_surface
+    equals: true
   establishes:
   - op: assert
     fact_id: community_rescue_efforts_begun
@@ -1663,8 +1806,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_e_r1
-  statement: 'Current-scene development: phase one label known, phase two conflict
-    plan known, charles at large.'
+  statement: 'A recovered JANUS file names the disappearances Phase One and reveals a second plan to provoke conflict among survivors.'
   entity_ids: []
   aliases:
   - phase one label known
@@ -1675,16 +1817,21 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: captives_reaching_surface
+    equals: true
+  - fact_id: national_network_fragmenting
+    equals: true
+  - fact_id: charles_at_large
+    equals: true
   establishes:
   - op: assert
     fact_id: phase_one_label_known
     value: true
   - op: assert
     fact_id: phase_two_conflict_plan_known
-    value: true
-  - op: assert
-    fact_id: charles_at_large
     value: true
   source:
     kind: storylet_realization
@@ -1694,8 +1841,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_e_r2
-  statement: 'Current-scene development: phase two conflict plan known, charles at
-    large.'
+  statement: 'From an unknown location, Charles watches the unrest and believes frightened people may still ask him to restore order.'
   entity_ids: []
   aliases:
   - phase two conflict plan known
@@ -1705,13 +1851,21 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 3C
-  requires: []
+  requires:
+  - fact_id: truth_no_longer_containable
+    equals: true
+  - fact_id: captives_reaching_surface
+    equals: true
+  - fact_id: national_network_fragmenting
+    equals: true
+  - fact_id: charles_at_large
+    equals: true
   establishes:
   - op: assert
-    fact_id: phase_two_conflict_plan_known
+    fact_id: phase_one_label_known
     value: true
   - op: assert
-    fact_id: charles_at_large
+    fact_id: phase_two_conflict_plan_known
     value: true
   source:
     kind: storylet_realization

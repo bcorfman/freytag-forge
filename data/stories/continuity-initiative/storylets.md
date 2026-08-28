@@ -109,8 +109,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `continuity_initiative_known`.
-- May set `emergency_broadcasts_distrusted`.
-- May increase `michelle_investigation_context`.
+- May establish Kristin's distrust of the emergency broadcasts as part of the warning's emotional force.
+- May deepen the context for Michelle's investigation.
 - May set `michelle_lead_actionable` once Kristin has a concrete lead she can follow away from the house.
 
 **Completion**
@@ -162,9 +162,9 @@ Each entry below is authoring data, not a player action menu.
 - Open defiance may raise pressure without automatically forcing combat.
 
 **Effects**
-- May increase `authority_attention`.
+- May establish `house_marked_for_return` through the marked gate.
 - May set `house_marked_for_return`.
-- May increase `official_story_distrust`.
+- May make the official story less credible.
 - May create immediate pressure to leave the house.
 
 **Completion**
@@ -218,10 +218,10 @@ Each entry below is authoring data, not a player action menu.
 - The number sequence remains unresolved context for later interpretation.
 
 **Effects**
-- May increase `evidence_secret_tests`.
+- May reveal evidence of earlier secret tests.
 - May set `brandon_face_known`.
-- May set `transit_card_acquired`.
-- May increase `transport_route_interest`.
+- May establish possession of the `transit_card`.
+- May make the transport route more compelling to investigate.
 
 **Completion**
 - Kristin has recovered the dead-drop materials or enough of them to continue.
@@ -272,7 +272,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `brandon_identified`.
 - May set `missing_may_be_alive`.
 - May set `transport_route_identified` when Brandon can credibly connect Michelle’s transit clue to the removal operation.
-- May increase `brandon_suspicion` at the same time that trust increases.
+- May leave Brandon suspicious even as trust increases.
 
 **Completion**
 - Kristin has enough reason to continue with Brandon, even if he remains distrustful.
@@ -322,8 +322,8 @@ Each entry below is authoring data, not a player action menu.
 - The escape succeeds but the player can press him afterward.
 
 **Effects**
-- May increase `danger`.
-- May increase `brandon_suspicion`.
+- May increase immediate danger.
+- May leave Brandon more suspicious.
 - May set `brandon_retains_system_access`.
 - May establish `transport_route_identified` when Brandon’s retained access and the escape route make the physical removal route followable.
 
@@ -374,8 +374,8 @@ Each entry below is authoring data, not a player action menu.
 - Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.
 
 **Effects**
-- May set `facility_location_confirmed`.
-- May increase `facility_activity_evidence`.
+- May set `facility_proof`.
+- May reveal evidence of continuing facility activity.
 - May establish safe service-level access.
 - May set `facility_infiltration_needed` when the main installation cannot be reached safely from the service level.
 
@@ -428,9 +428,9 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `captives_confirmed_alive`.
-- May increase `rescue_urgency`.
+- May make rescue more urgent.
 - May change `trust_brandon`.
-- May set `michelle_possible_sighting` without setting `michelle_location_confirmed`.
+- May set `michelle_possible_sighting` without confirming Michelle's location.
 - May set `facility_infiltration_needed` when an impulsive rescue would endanger or relocate the captives.
 
 **Completion**
@@ -482,9 +482,9 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `national_detention_network_known`.
-- May set `selection_categories_known`.
-- May set `charles_rebecca_architects_known`.
-- May increase `conspiracy_scope`.
+- May reveal the selection categories.
+- May set `architects_strategy_known`.
+- May convey the conspiracy's national scope.
 - May establish `facility_infiltration_needed` once Kristin understands that observation or a direct local rescue is insufficient.
 
 **Completion**
@@ -539,9 +539,9 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May change `trust_brandon`.
-- May increase `brandon_suspicion`.
+- May leave Brandon more suspicious.
 - May set `brandon_prepared_before_event`.
-- May increase `continuity_history_context`.
+- May provide historical context for the Continuity Initiative.
 
 **Completion**
 - The hideout has yielded enough context to support planning the infiltration.
@@ -590,9 +590,9 @@ Each entry below is authoring data, not a player action menu.
 - Preparation can improve confidence without guaranteeing entry.
 
 **Effects**
-- May set `false_credentials_ready`.
-- May set `structural_inspection_cover_ready`.
-- May increase `infiltration_preparedness`.
+- May set `false_identities_ready`.
+- May establish a structural-inspection cover.
+- May improve infiltration preparedness.
 - May reduce initial entry pressure.
 
 **Completion**
@@ -644,7 +644,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `restricted_corridor_access`.
-- May change `facility_suspicion`.
+- May change how suspicious the facility is of the pair.
 - May set `rebecca_observing_infiltrators` through a pacing/event effect once facial recognition occurs.
 - `restricted_corridor_access` is the outgoing scene bridge once the protagonists have moved beyond the outer security layer.
 
@@ -698,7 +698,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `janus_known`.
 - May set `michelle_selected_for_resistance_influence`.
 - May set `kristin_deliberately_left_behind`.
-- May sharply increase `betrayal_pressure`.
+- May sharply intensify the betrayal.
 
 **Completion**
 - Kristin understands JANUS as the selection mechanism and recognizes that her own path was modeled.
@@ -750,7 +750,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `brandon_claimed_reform_motive`.
 - May set `janus_evidence` when the development records are preserved/authenticated as evidence.
 - May substantially change `trust_brandon`.
-- May increase or decrease `brandon_suspicion` depending on accepted interaction facts.
+- May leave Brandon more or less suspicious depending on accepted interaction facts.
 
 **Completion**
 - Brandon’s original role and claimed break with Charles are explicit between him and Kristin.
@@ -800,7 +800,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `michelle_resistance_known`.
-- May increase `hope`.
+- May renew hope.
 - May set `prisoner_records_corrupted`.
 - May preserve enough corrupted JANUS/prisoner material to establish `janus_evidence` while also pointing toward Michelle’s resistance.
 
@@ -853,7 +853,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `rebecca_offer_active`.
-- May increase `antagonist_internal_conflict`.
+- May set `antagonist_split_known`.
 - May change `trust_brandon` only if Kristin has legitimate knowledge of the exchange.
 - May open a route toward executive-level access.
 
@@ -903,8 +903,8 @@ Each entry below is authoring data, not a player action menu.
 - Kristin and Brandon disagree about what the remaining time permits.
 
 **Effects**
-- Starts or advances `purge_pressure`.
-- May set `charles_broadcast_imminent`.
+- Starts or advances `purge_clock_started`.
+- May establish that Charles's broadcast is imminent.
 - May reduce safe infiltration options as pressure rises.
 - May fire scene pacing complications at declared thresholds.
 
@@ -958,7 +958,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `evidence_ready_to_transmit`.
-- May set `rescue_exposure_crisis_explicit`.
+- May set `archive_crisis_understood`.
 - May set `combined_broadcast_rescue_plan_known`.
 - May set `rebecca_office_required_for_broadcast`.
 - Establishes `combined_broadcast_rescue_plan_known`, the scene bridge toward reaching Michelle and executing the combined mission.
@@ -967,7 +967,7 @@ Each entry below is authoring data, not a player action menu.
 - Kristin and Brandon understand that the next objective combines rescue and exposure.
 
 **Abort**
-- The player causes a validated non-canonical branch that makes the combined plan impossible and chooses `proceed`.
+- The player causes a validated non-canonical branch that makes the combined plan impossible and chooses to proceed.
 
 **Protected boundary**
 - Exact events of the uprising, Brandon’s sacrifice, facility destruction, and final broadcast outcome remain protected.
@@ -1016,10 +1016,10 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s arrival may be met with distrust because of his history.
 
 **Effects**
-- May set `kristin_michelle_reunited`.
+- May set `michelle_reached`.
 - May set `uprising_prepared`.
 - May establish that the uprising is prepared; the canonical launch is gated later in the scene.
-- May increase `network_locations_required_for_broadcast`.
+- May establish that national facility locations are required for the broadcast.
 - May change relationship/trust facts consistent with the reunion.
 
 **Completion**
@@ -1070,8 +1070,8 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May set `behavioral_experiments_known`.
 - May set `conditioned_release_plan_known`.
-- May increase `broadcast_evidence_value`.
-- May increase `danger` or `moral_urgency`.
+- May make the broadcast evidence more compelling.
+- May increase danger or moral urgency.
 
 **Completion**
 - Kristin understands why exposing the experiments must be part of the broadcast evidence.
@@ -1125,7 +1125,7 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May set `charles_framed_officials_known`.
 - May set `military_override_codes_available`.
-- Starts/advances `authority_activation_pressure`.
+- Starts/advances `override_codes_deadline_known`.
 - May set `detention_uprising_started` when the deadline forces Michelle to launch the resistance.
 - May help resistance efforts under declared package rules; securing the codes is not required for the Scene 3A → 3B transition.
 
@@ -1180,9 +1180,7 @@ Each entry below is authoring data, not a player action menu.
 - A failed disruption can still raise pressure while teaching what JANUS is using.
 
 **Effects**
-- May increase `janus_prediction_noise`.
-- May reduce `janus_route_confidence`.
-- May force `human_security_control` when a declared threshold is reached.
+- May force `human_security_control` when enough conflicting emergencies overload JANUS.
 - May increase local infrastructure pressure as a cost.
 
 **Completion**
@@ -1237,7 +1235,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `rebecca_experiment_approval_confronted`.
 - May set `detention_locations_offer_known`.
 - May set `charles_abandoned_rebecca`.
-- May increase `facility_destruction_threat`.
+- May set `facility_destruction_threat`.
 - May change Rebecca’s status from antagonist-in-control to trapped/self-preserving antagonist.
 
 **Completion**
@@ -1288,9 +1286,9 @@ Each entry below is authoring data, not a player action menu.
 - Kristin or Michelle may argue against him, but the authored situation keeps the relay problem concrete.
 
 **Effects**
-- May set `external_relay_disconnected_from_janus`.
+- May set `relay_open`.
 - May set `brandon_confession_available`.
-- May set `broadcast_path_open`.
+- May set `relay_open`.
 - May set `broadcast_started` once Michelle/Kristin activate the transmission through the opened relay.
 - May critically worsen `brandon_health/status` only through validated effects consistent with the authored sacrifice.
 - `broadcast_started` is the Scene 3B → 3C bridge.
@@ -1347,9 +1345,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s confession can authenticate evidence without being the only possible credibility support if fallbacks are declared.
 
 **Effects**
-- May increase `public_conspiracy_awareness`.
+- May make the public aware of the conspiracy.
 - May set `national_facility_locations_broadcast`.
-- May set `charles_public_denial`.
+- May show Charles publicly denying the evidence.
 - May set `truth_no_longer_containable` once declared credibility/evidence conditions are met.
 
 **Completion**
@@ -1452,7 +1450,7 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s relay action contributes to the surface gates opening if his authored state permits it.
 
 **Effects**
-- May increase `facility_collapse`.
+- May intensify the facility's collapse.
 - May set `evacuation_route_open`.
 - May set `captives_reaching_surface`.
 - May set `los_angeles_facility_lost`.

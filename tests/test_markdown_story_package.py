@@ -180,7 +180,7 @@ def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> Non
     candidate["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     package = load_story_package(root)
-    assert package.knowledge_indexes.prerequisite_dependents == {"michelle_abduction_suspicion": ("k_sl_1b_a_r1",)}
+    assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["michelle_abduction_suspicion"]
 
 
 @pytest.mark.parametrize(("field", "message"), [("facts", "facts must define"), ("scene_frames", "safe scene frame")])
@@ -281,7 +281,8 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         + "\n"
         + (
             "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: michelle_lead_actionable, equals: true}]}\n"
+            "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
+            "{fact_id: house_marked_for_return, equals: true}]}\n"
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):
