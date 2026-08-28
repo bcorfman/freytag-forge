@@ -16,7 +16,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
-from storygame.story_package.models import SceneMetadata
+from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 
 @dataclass(frozen=True)
@@ -77,16 +77,20 @@ class CloudflareTurnProvider:
         )
 
     def opening(self) -> object:
-        """Narrate scene entry from package data alone, before any player input exists."""
+        """Continue the authored entry text, before any player input exists."""
 
         self.last_projection = self.projector.project(self.state, "player", "")
         return self._dispatch(
             (
-                "Return one JSON TurnProposal matching response_schema. Narrate the protagonist entering this scene: "
-                "establish the place, the situation, and the pressure carried by scene_entry and knowledge_context "
-                "only. Do not invent evidence, characters, or events absent from that context, do not act for the "
-                "protagonist or resolve the objective, and do not offer a menu of choices. Leave "
-                "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
+                "Return one JSON TurnProposal matching response_schema. The player has already read "
+                "scene_entry.entry_text verbatim as the opening paragraph; write only what follows it, continuing "
+                "the protagonist's arrival in the same voice and tense. Embellish strictly from "
+                "scene_entry.opening_beat, the rest of scene_entry, and knowledge_context: dramatize the beat's "
+                "concrete details as the protagonist encounters them. Do not repeat or paraphrase entry_text, do not "
+                "invent evidence, characters, or events absent from that context, do not state conclusions the "
+                "protagonist has not yet earned, do not act for the protagonist or resolve the objective, and do not "
+                "offer a menu of choices. Leave selected_knowledge_ids empty. Never return source IDs, events, "
+                "operations, facts, or transitions."
             ),
             {
                 "scene_entry": self._scene_entry(),
@@ -94,10 +98,11 @@ class CloudflareTurnProvider:
             },
         )
 
-    def _scene_entry(self) -> dict[str, str]:
-        """Expose the package-authored frame the opening must dramatize, never invent."""
+    def _scene_entry(self) -> dict[str, object]:
+        """Expose the package-authored frame and first beat the opening must dramatize, never invent."""
 
         scene = self._current_scene()
+        beat = self._current_beat()
         world = self.state.package.world
         location = next(item for item in world.locations if item.id == scene.location_id)
         protagonist = next((item.name for item in world.npcs if item.id == world.protagonist_id), world.protagonist_id)
@@ -107,6 +112,7 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
+            "opening_beat": {"id": beat.id, "title": beat.title, "prose": beat.prose},
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:
@@ -192,10 +198,13 @@ class CloudflareTurnProvider:
         }
 
     def _current_scene(self) -> SceneMetadata:
-        scene = next(
-            item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
-        )
-        return scene.metadata
+        return self._scene().metadata
+
+    def _current_beat(self) -> SceneBeat:
+        return self._scene().opening_beat
+
+    def _scene(self) -> Scene:
+        return next(item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id)
 
     def _request(self, payload: dict[str, object]) -> object:
         headers = {

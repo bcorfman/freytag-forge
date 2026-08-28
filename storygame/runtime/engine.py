@@ -32,16 +32,21 @@ class RuntimeEngine:
         self.last_post_selection_projection: TurnKnowledgeContext | None = None
 
     def opening(self) -> ResolvedTurnProposal:
-        """Ask the provider to narrate scene entry; an opening commits no canon.
+        """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
 
-        The package supplies the frame (location, objective, entry text, phase) and
-        the provider supplies the prose, so no scene text is authored in the runtime.
+        The package owns the first words verbatim, so the scene always starts the
+        way plot.md wrote it. The provider only continues from there, embellishing
+        the scene's first authored beat, and no scene text is written in the runtime.
         """
 
         self.last_projection = self.projector.project(self.state, "player", "")
+        scene = next(
+            item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
+        )
         request = getattr(self.provider, "opening", None)
         proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
-        return ResolvedTurnProposal(segments=proposal.segments)
+        entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
+        return ResolvedTurnProposal(segments=(entry, *proposal.segments))
 
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""

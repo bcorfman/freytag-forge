@@ -21,8 +21,9 @@ SQLite, and exposes typed game-break resolution separately at
 | — | `CLOUDFLARE_TIMEOUT` | Bounded request timeout |
 
 Without `CLOUDFLARE_WORKER_URL`, session creation and freeform turns both fail
-closed as `service_unavailable`, because the scene opening is narrated by the
-Worker from package data rather than authored in the runtime. Configure
+closed as `service_unavailable`, because the scene opening continues the
+package's `entry_text` with prose narrated by the Worker from the scene's first
+authored beat rather than authored in the runtime. Configure
 `CF_VERSION_METADATA` through `version_metadata` in `wrangler.jsonc`; return its
 version ID as `X-Worker-Revision` on every response.
 

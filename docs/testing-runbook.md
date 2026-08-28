@@ -261,7 +261,7 @@ Expected: all tests pass with the project coverage gate at or above 90%.
 
 **Cleanup:** None; pytest temporary files are under `/tmp`.
 
-**Notes:** Durable LLM effects must be submitted as an active `SL-*` event with a route realization ID and the exact reviewed operations. `entry_text` is an opening seed, not the full scene prose.
+**Notes:** Durable LLM effects must be submitted as an active `SL-*` event with a route realization ID and the exact reviewed operations. `entry_text` opens the scene verbatim as the opening's first segment; the provider only continues it from the scene's first authored beat, and neither is the full scene prose.
 
 Last verified: 2026-08-26 — `TMPDIR=/tmp uv run pytest -q` completed with 58 passing tests and 90.17% coverage; Ruff autofix and formatting also passed.
 
