@@ -265,6 +265,12 @@ Expected: all tests pass with the project coverage gate at or above 90%.
 
 Last verified: 2026-08-26 — `TMPDIR=/tmp uv run pytest -q` completed with 58 passing tests and 90.17% coverage; Ruff autofix and formatting also passed.
 
+Verified locally on 2026-08-28: `TMPDIR=/tmp uv run pytest -q` passed 98 tests
+with 90.56% coverage after removing a withdrawn Scene 1A.1 opening-beat test.
+`uv run ruff check --fix .` remains blocked by pre-existing E501 lines in
+`tests/test_knowledge_projection.py:69` and
+`tests/test_scene_progression_phase4.py:24`; neither unrelated file was changed.
+
 ## Frontend structured-turn rendering unit tests
 
 **Purpose:** Verify that the browser renderer preserves accepted structured

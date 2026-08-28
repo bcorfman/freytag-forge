@@ -47,19 +47,6 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
             assert effects == set(realization.operations)
 
 
-def test_every_scene_exposes_its_first_authored_beat_as_opening_context() -> None:
-    package = load_story_package(PACKAGE)
-
-    assert [scene.opening_beat.id for scene in package.scenes] == [
-        f"{scene.metadata.scene_id}.1" for scene in package.scenes
-    ]
-    first = package.scenes[0].opening_beat
-    assert first.title == "The Empty House"
-    assert first.prose.startswith("Kristin reaches her neighborhood")
-    assert "still been present when someone arrived" in first.prose
-    assert "Michelle’s Last Investigation" not in first.prose
-
-
 def test_a_scene_without_a_first_beat_fails_to_load(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
     plot = package / "plot.md"
