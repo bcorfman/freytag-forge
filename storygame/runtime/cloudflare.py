@@ -16,6 +16,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
+from storygame.story_package.models import SceneMetadata
 
 
 @dataclass(frozen=True)
@@ -58,25 +59,62 @@ class CloudflareTurnProvider:
     def __call__(self, player_input: str) -> object:
         self.last_projection = self.projector.project(self.state, "player", player_input)
         speaker_contexts = self._speaker_contexts(player_input)
-        payload = {
-            "system": (
+        return self._dispatch(
+            (
                 "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
                 "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
                 "or invent durable evidence. Use segments with grounding_ids when possible; dialogue may use only its "
                 "speaker's sayable context. Select at most one candidate by its ID in selected_knowledge_ids. Never "
                 "return source IDs, events, operations, facts, or transitions."
             ),
-            "user": json.dumps(
-                {
-                    "player_input": player_input,
-                    "knowledge_context": {
-                        "player": self.last_projection.model_dump(mode="json"),
-                        "speakers": speaker_contexts,
-                    },
-                    "response_schema": TurnProposal.model_json_schema(),
+            {
+                "player_input": player_input,
+                "knowledge_context": {
+                    "player": self.last_projection.model_dump(mode="json"),
+                    "speakers": speaker_contexts,
                 },
-                separators=(",", ":"),
+            },
+        )
+
+    def opening(self) -> object:
+        """Narrate scene entry from package data alone, before any player input exists."""
+
+        self.last_projection = self.projector.project(self.state, "player", "")
+        return self._dispatch(
+            (
+                "Return one JSON TurnProposal matching response_schema. Narrate the protagonist entering this scene: "
+                "establish the place, the situation, and the pressure carried by scene_entry and knowledge_context "
+                "only. Do not invent evidence, characters, or events absent from that context, do not act for the "
+                "protagonist or resolve the objective, and do not offer a menu of choices. Leave "
+                "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
             ),
+            {
+                "scene_entry": self._scene_entry(),
+                "knowledge_context": {"player": self.last_projection.model_dump(mode="json")},
+            },
+        )
+
+    def _scene_entry(self) -> dict[str, str]:
+        """Expose the package-authored frame the opening must dramatize, never invent."""
+
+        scene = self._current_scene()
+        world = self.state.package.world
+        location = next(item for item in world.locations if item.id == scene.location_id)
+        protagonist = next((item.name for item in world.npcs if item.id == world.protagonist_id), world.protagonist_id)
+        return {
+            "protagonist": protagonist,
+            "location": location.name,
+            "phase": scene.freytag_phase,
+            "objective": scene.objective,
+            "entry_text": scene.entry_text,
+        }
+
+    def _dispatch(self, system: str, user: dict[str, object]) -> object:
+        """Send one prompt, then recover once from a rejected or malformed reply."""
+
+        payload = {
+            "system": system,
+            "user": json.dumps({**user, "response_schema": TurnProposal.model_json_schema()}, separators=(",", ":")),
             "max_tokens": 2048,
             "response_format": {"type": "json_object"},
         }
@@ -145,15 +183,19 @@ class CloudflareTurnProvider:
         return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
-        scene = next(
-            item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
-        )
+        scene = self._current_scene()
         npc_ids = {item.id for item in self.state.package.world.npcs}
         return {
             speaker_id: self.projector.project(self.state, speaker_id, player_input).model_dump(mode="json")
-            for speaker_id in scene.metadata.participant_ids
+            for speaker_id in scene.participant_ids
             if speaker_id in npc_ids
         }
+
+    def _current_scene(self) -> SceneMetadata:
+        scene = next(
+            item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
+        )
+        return scene.metadata
 
     def _request(self, payload: dict[str, object]) -> object:
         headers = {

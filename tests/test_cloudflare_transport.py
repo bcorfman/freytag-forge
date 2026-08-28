@@ -284,3 +284,29 @@ def test_transport_maps_http_failures(monkeypatch, status, expected) -> None:
     with pytest.raises(NarrationProviderError) as caught:
         provider("I listen.")
     assert caught.value.status_code == expected
+
+
+def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def open_request(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is silent."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
+    assert "Narrate the protagonist entering this scene" in captured["payload"]["system"]
+    user = json.loads(captured["payload"]["user"])
+    assert "player_input" not in user
+    assert user["scene_entry"] == {
+        "protagonist": "Kristin Schweitzer",
+        "location": "McGehee home",
+        "phase": "exposition",
+        "objective": PACKAGE.scenes[0].metadata.objective,
+        "entry_text": PACKAGE.scenes[0].metadata.entry_text,
+    }
+    assert user["knowledge_context"]["player"]["scene_id"] == "1A"
+    assert "speakers" not in user["knowledge_context"]

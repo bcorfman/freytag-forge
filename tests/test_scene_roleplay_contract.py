@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
@@ -78,3 +78,37 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     assert state.facts.has("patrol_return_pressure", "story", value="true")
     assert "pressure_1a" in state.fired_event_ids
     assert state.facts.has("story_elapsed_seconds", "story", value="120")
+
+
+def test_scene_opening_is_provider_authored_and_commits_no_canon() -> None:
+    """The runtime must never author scene prose of its own."""
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    before = state.snapshot()
+    requests: list[str] = []
+
+    def provider(player_input: str) -> object:
+        requests.append(player_input)
+        return {"segments": [{"kind": "narration", "text": "Kristin steps into a house that answers nothing."}]}
+
+    opening = RuntimeEngine(state, provider).opening()
+
+    assert requests == [SCENE_ENTRY_REQUEST]
+    assert opening.narration == "Kristin steps into a house that answers nothing."
+    assert state.snapshot() == before
+
+
+def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+
+    class _OpeningProvider:
+        def opening(self) -> object:
+            return {"segments": [{"kind": "narration", "text": "The kitchen light is still on."}]}
+
+        def __call__(self, player_input: str) -> object:
+            raise AssertionError("an opening must not be requested as an ordinary turn")
+
+    opening = RuntimeEngine(state, _OpeningProvider()).opening()
+
+    assert opening.narration == "The kitchen light is still on."
+    assert opening.selected_knowledge_ids == ()

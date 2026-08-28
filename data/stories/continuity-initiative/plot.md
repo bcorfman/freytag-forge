@@ -63,14 +63,14 @@ Charles’s 56-year-old wife and the chief executive of a biotechnology and defe
 scene_id: 1A
 location_id: mcgehee_home
 freytag_phase: exposition
-objective: Find evidence of Michelles disappearance
+objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
-entry_text: "The house is too quiet. Michelle's phone lies facedown on the kitchen floor beside an overturned chair, while her laptop and work bag are gone."
+entry_text: "Michelle's text buzzed on Kristin's phone a little after 11:30am. The text said she had found something but nothing more. Kristin spent the next 30 minutes fretting and wondering why Michelle wasn't returning her calls, until she just got in her truck with the thought of covering the normal 5-hour trip in far less time."
 transition_ids: [t_1a_1b]
 ---
 
-**Setting:** Kristin and Michelle’s shared home in Los Angeles
+**Setting:** Michelle’s home in Los Angeles
 
 **Characters:**
 

@@ -99,19 +99,15 @@ def _turn_payload(
     }
 
 
-def _scene_opening(state: RuntimeState) -> str:
-    """Give a new scene room to breathe; entry_text remains only its seed."""
+def _narration_http_error(error: NarrationProviderError) -> HTTPException:
+    """Surface the worker's safe diagnostic headers without leaking provider prose."""
 
-    scene = next(item for item in state.package.scenes if item.metadata.scene_id == state.current_scene_id)
-    location = next(item for item in state.package.world.locations if item.id == scene.metadata.location_id)
-    seed = scene.metadata.entry_text
-    return (
-        f"{location.name} closes around Jeremiah in the unsettled pause after the last move. {seed}\n\n"
-        f"Nothing here is resolved yet. The immediate pressure is clear—{scene.metadata.objective.lower()}—"
-        "but the place still offers its own textures, sounds, and small contradictions to read before he commits.\n\n"
-        "Jeremiah can inspect what is close at hand, test the people or systems around him, or answer the tension in "
-        "his own way; the scene will meet that choice with consequences rather than a prescribed menu."
-    )
+    headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else {}
+    if error.trace_id:
+        headers["X-Trace-ID"] = error.trace_id
+    if error.worker_revision:
+        headers["X-Worker-Revision"] = error.worker_revision
+    return HTTPException(status_code=error.status_code, detail=error.message, headers=headers)
 
 
 def _contract_error_detail(error: RuntimeContractError) -> str:
@@ -191,14 +187,25 @@ def create_demo_app(
         package = packages.get(body.story_id)
         if package is None:
             raise HTTPException(status_code=404, detail="story does not exist")
-        session_id = uuid4().hex
         state = RuntimeState.bootstrap(package)
+        try:
+            opening = RuntimeEngine(state, provider_for(state)).opening()
+        except NarrationProviderError as error:
+            raise _narration_http_error(error) from error
+        except RuntimeContractError as error:
+            raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
+        session_id = uuid4().hex
         store.save(session_id, state)
         scene = package.scenes[0].metadata
         return {
             "session_id": session_id,
             "state": _state_summary(state),
-            "opening": {"scene_id": scene.scene_id, "phase": scene.freytag_phase, "text": _scene_opening(state)},
+            "opening": {
+                "scene_id": scene.scene_id,
+                "phase": scene.freytag_phase,
+                "text": opening.narration,
+                "segments": [item.model_dump(mode="json") for item in opening.segments],
+            },
         }
 
     @app.post("/api/v1/turn")
@@ -209,12 +216,7 @@ def create_demo_app(
             test_clock = _test_clock_seconds(body, request)
             proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
-            headers = {"X-Narration-Error-Code": error.error_code} if error.error_code else {}
-            if error.trace_id:
-                headers["X-Trace-ID"] = error.trace_id
-            if error.worker_revision:
-                headers["X-Worker-Revision"] = error.worker_revision
-            raise HTTPException(status_code=error.status_code, detail=error.message, headers=headers) from error
+            raise _narration_http_error(error) from error
         except RuntimeContractError as error:
             raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
         except RuntimeStateError as error:

@@ -13,8 +13,33 @@ from storygame.web_demo import create_demo_app
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
+class _StubProvider:
+    """Separate scene openings from ordinary turns the way the transport does."""
+
+    def __init__(self, turn_text: str, opening_text: str = "A stub opening for this scene.") -> None:
+        self.turn_text = turn_text
+        self.opening_text = opening_text
+
+    def opening(self) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": self.opening_text}]}
+
+    def __call__(self, _input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": self.turn_text}]}
+
+
+class _TurnFailureProvider(_StubProvider):
+    """Keep the scene opening valid so a test can isolate an ordinary-turn failure."""
+
+    def __init__(self, turn) -> None:
+        super().__init__("unused")
+        self.turn = turn
+
+    def __call__(self, player_input: str) -> object:
+        return self.turn(player_input)
+
+
 def _provider(text: str):
-    return lambda _input: {"segments": [{"kind": "narration", "text": text}]}
+    return _StubProvider(text)
 
 
 def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch, tmp_path) -> None:
@@ -22,7 +47,9 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     app = create_demo_app(
         channel="staging",
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: _provider("The lead sharpens."),
+        provider_factory=lambda _state: _StubProvider(
+            "The lead sharpens.", "Kristin steps into a house that has already been searched."
+        ),
     )
 
     with TestClient(app) as client:
@@ -54,8 +81,17 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "fired_pacing_event_ids": [],
         "story_elapsed_seconds": 0,
     }
-    assert "Michelle's phone lies facedown" in session.json()["opening"]["text"]
-    assert session.json()["opening"]["text"] != "Enter 1A"
+    opening = session.json()["opening"]
+    assert opening["text"] == "Kristin steps into a house that has already been searched."
+    assert opening["segments"] == [
+        {
+            "kind": "narration",
+            "text": "Kristin steps into a house that has already been searched.",
+            "speaker_id": None,
+            "grounding_ids": [],
+        }
+    ]
+    assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
 
@@ -63,7 +99,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
 def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_path) -> None:
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
-        provider_factory=lambda _state: (
+        provider_factory=lambda _state: _TurnFailureProvider(
             lambda _input: {
                 "segments": [{"kind": "narration", "text": "I incapacitate Brandon."}],
                 "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "brandon"}}],
@@ -79,15 +115,17 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
 
 def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limits(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
+    monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     app = create_demo_app(store_path=tmp_path / "sessions.sqlite")
     with TestClient(app) as client:
         missing_story = client.post("/api/v1/session", json={"story_id": "missing"})
-        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        unavailable = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
-        limited = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I try again."})
+        unavailable = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+        allowed = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "I listen."})
+        limited = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "I try again."})
 
     assert missing_story.status_code == 404
     assert unavailable.status_code == 503
+    assert allowed.status_code == 404
     assert limited.status_code == 429
 
 
@@ -98,7 +136,7 @@ def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
                 "narration service rejected the turn", 502, "WORKER_CONFIGURATION_ERROR", "trace-123", "worker-456"
             )
 
-        return reject
+        return _TurnFailureProvider(reject)
 
     app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=rejected_provider)
     with TestClient(app) as client:
@@ -116,7 +154,7 @@ def test_adapter_returns_cors_safe_invalid_provider_contract(tmp_path) -> None:
         def reject(_input):
             raise RuntimeContractError("provider response violates the turn contract")
 
-        return reject
+        return _TurnFailureProvider(reject)
 
     app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=invalid_provider)
     with TestClient(app) as client:
@@ -199,9 +237,16 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
         )
     )
 
+    class _SequencedProvider:
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "The kitchen holds its breath."}]}
+
+        def __call__(self, _input: str) -> object:
+            return next(responses)
+
     def provider_factory(state):
         state.active_event_ids.add("SL-1A-B")
-        return lambda _input: next(responses)
+        return _SequencedProvider()
 
     store_path = tmp_path / "phase3.sqlite"
     app = create_demo_app(store_path=store_path, provider_factory=provider_factory)

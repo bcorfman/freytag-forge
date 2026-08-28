@@ -45,11 +45,13 @@ older snapshots fail closed rather than being reinterpreted under new
 revelation rules.
 
 FastAPI, React, Cloudflare Worker transport, and SQLite are the hosted stack.
-`POST /api/v1/session` selects a `story_id`; `POST /api/v1/turn` returns
-structured `segments`, a compatibility `lines` field, scene/phase state, and an
-optional typed `game_break`; `POST /api/v1/game-break` is the only way to
-resolve it. The web adapter owns transport, CORS, deployment identity, and
-persistence—not gameplay policy.
+`POST /api/v1/session` selects a `story_id` and returns a provider-narrated
+`opening` for the first scene, so it fails closed with the same narration errors
+as a turn when the Worker is unavailable; `POST /api/v1/turn` returns structured
+`segments`, a compatibility `lines` field, scene/phase state, and an optional
+typed `game_break`; `POST /api/v1/game-break` is the only way to resolve it. The
+web adapter owns transport, CORS, deployment identity, and persistence—not
+gameplay policy.
 
 ## Developer workflow
 

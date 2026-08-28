@@ -69,26 +69,26 @@ between Markdown and YAML.
 schema_version: "2.0"
 knowledge:
   - id: K-1A-SARAH-WARNING
-    statement: Jeremiah has recovered Sarah's warning not to trust emergency broadcasts.
-    entity_ids: [jeremiah, sarah, sarah_phone]
-    aliases: [Sarah's warning, emergency broadcast warning]
+    statement: Kristin has recovered Michelle's warning not to trust emergency broadcasts.
+    entity_ids: [kristin, michelle, michelle_phone]
+    aliases: [Michelle's warning, emergency broadcast warning]
     audience:
       kind: characters
-      character_ids: [jeremiah]
+      character_ids: [kristin]
       player_visible: true
     available_in_scenes: [1A]
     requires:
-      - fact_id: sarah_phone_accessible
+      - fact_id: michelle_phone_accessible
         equals: true
     establishes:
       - op: assert
-        fact_id: sarah_warning_known
+        fact_id: michelle_warning_known
         value: true
     source:
       storylet_id: SL-1A-B
       realization_id: SL-1A-B-R1
     relevance:
-      entity_ids: [sarah_phone, sarah]
+      entity_ids: [michelle_phone, michelle]
       priority: 20
 ```
 
