@@ -63,9 +63,11 @@ class CloudflareTurnProvider:
             (
                 "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
                 "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
-                "or invent durable evidence. Use segments with grounding_ids when possible; dialogue may use only its "
-                "speaker's sayable context. Select at most one candidate by its ID in selected_knowledge_ids. Never "
-                "return source IDs, events, operations, facts, or transitions."
+                "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
+                "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
+                "applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
+                "sayable context. Select at most one candidate by its ID in selected_knowledge_ids. Never return "
+                "source IDs, events, operations, facts, or transitions."
             ),
             {
                 "player_input": player_input,
@@ -160,7 +162,8 @@ class CloudflareTurnProvider:
             **payload,
             "system": (
                 f"{payload['system']} Your previous response was invalid. Return only a complete JSON TurnProposal "
-                "with non-empty segments and optional selected_knowledge_ids; include no markdown or explanation."
+                "with non-empty segments and optional selected_knowledge_ids; include no markdown or explanation. "
+                "If you are unsure whether an ID is groundable, omit grounding_ids entirely."
             ),
         }
         try:
@@ -186,6 +189,15 @@ class CloudflareTurnProvider:
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
         if any(knowledge_id not in candidate_ids for knowledge_id in proposal.selected_knowledge_ids):
             raise RuntimeContractError("selected knowledge is not eligible for this turn")
+        # The runtime rejects a turn whose grounding is neither committed nor selected; catching it
+        # here spends the transport's single recovery instead of failing the player's turn.
+        groundable = {item.id for item in self.last_projection.committed_knowledge} | set(
+            proposal.selected_knowledge_ids
+        )
+        if any(
+            grounding_id not in groundable for segment in proposal.segments for grounding_id in segment.grounding_ids
+        ):
+            raise RuntimeContractError("segment grounding is not committed or selected knowledge")
         return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
