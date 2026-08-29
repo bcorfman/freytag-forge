@@ -66,7 +66,7 @@ freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
-entry_text: "Michelle's text buzzed on Kristin's phone a little after 11:30am. The text said she had found something but nothing more. Kristin spent the next 30 minutes fretting and wondering why Michelle wasn't returning her calls, until she just got in her truck with the thought of covering the normal 5-hour trip in far less time."
+entry_text: "Michelle's text buzzed came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible.\n\n"
 transition_ids: [t_1a_1b]
 ---
 
@@ -87,7 +87,6 @@ Kristin reaches her neighborhood after navigating abandoned vehicles, stalled pu
 * Her laptop and work bag are missing.
 * A chair has been overturned.
 * The back door shows signs of forced entry.
-* A small smear of blood appears beside the doorframe.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 

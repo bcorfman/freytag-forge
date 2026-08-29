@@ -35,7 +35,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - Kristin is at the house.
-- The forced entry, blood, missing work materials, or overturned chair have not yet been meaningfully reconciled.
+- The forced entry, missing work materials, or overturned chair have not yet been meaningfully reconciled.
 - The federal patrol has not made the house unsafe.
 
 **Participants / items**
@@ -52,7 +52,7 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - Kristin notices that the disorder is too localized to fit ordinary looting.
 - Handling Michelle’s phone makes the missing laptop and work bag stand out.
-- Inspecting the back door or blood changes Kristin’s working theory.
+- Inspecting the back door changes Kristin’s working theory.
 - A failed or hurried search can leave uncertainty while still increasing suspicion.
 
 **Effects**
