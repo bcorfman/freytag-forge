@@ -213,6 +213,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 2
     assert "previous response was invalid" in payloads[1]["system"]
+    assert "k_future_unavailable" in payloads[1]["system"]
 
 
 def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(monkeypatch) -> None:
@@ -250,6 +251,9 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
     assert proposal["segments"][0]["text"] == "The drawer sticks, then gives."
     assert len(payloads) == 2
     assert "previous response was invalid" in payloads[1]["system"]
+    # The retry must name the offending ID; a blind retry repeats the same mistake.
+    assert "k_sl_1a_b_r2" in payloads[1]["system"]
+    assert "grounding_ids" in payloads[1]["system"]
 
 
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
@@ -275,6 +279,33 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> N
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 1, "grounding on the selected candidate must not spend a recovery"
+
+
+def test_repeated_ineligible_selection_reports_the_rule_without_leaking_ids(monkeypatch) -> None:
+    """A twice-failing provider must say which rule broke, and never echo a story ID."""
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"An invalid reveal."}],'
+                    '"selected_knowledge_ids":["k_future_unavailable"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    with pytest.raises(NarrationProviderError) as error:
+        provider("I reach for something I have not earned.")
+
+    assert "selected knowledge is not eligible for this turn" in error.value.message
+    assert "k_future_unavailable" not in error.value.message
+    assert error.value.status_code == 502
 
 
 def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch) -> None:

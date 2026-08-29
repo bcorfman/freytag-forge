@@ -28,6 +28,20 @@ class NarrationProviderError(RuntimeError):
     worker_revision: str = ""
 
 
+class _EligibilityError(RuntimeContractError):
+    """A proposal that parsed cleanly but named knowledge this turn may not use.
+
+    ``summary`` is safe to return to the client: it names the rule, never a
+    story ID. ``hint`` is for the recovery prompt only, where the offending IDs
+    are already part of the Worker's own context.
+    """
+
+    def __init__(self, summary: str, hint: str) -> None:
+        super().__init__(summary)
+        self.summary = summary
+        self.hint = hint
+
+
 class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
@@ -136,8 +150,8 @@ class CloudflareTurnProvider:
         else:
             try:
                 self._parse_eligible_proposal(response)
-            except RuntimeContractError:
-                return self._recover_malformed_response(payload)
+            except RuntimeContractError as error:
+                return self._recover_malformed_response(payload, getattr(error, "hint", ""))
             return response
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
@@ -148,7 +162,7 @@ class CloudflareTurnProvider:
         except HTTPError as error:
             raise self._narration_error(error) from error
         except RuntimeContractError as error:
-            summary = contract_error_summary(error) or "invalid proposal"
+            summary = contract_error_summary(error) or getattr(error, "summary", "") or "invalid proposal"
             raise NarrationProviderError(
                 f"narration service returned an invalid proposal ({summary})",
                 502,
@@ -157,13 +171,14 @@ class CloudflareTurnProvider:
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
 
-    def _recover_malformed_response(self, payload: dict[str, object]) -> object:
+    def _recover_malformed_response(self, payload: dict[str, object], hint: str = "") -> object:
+        correction = f" {hint}" if hint else ""
         recovery_payload = {
             **payload,
             "system": (
-                f"{payload['system']} Your previous response was invalid. Return only a complete JSON TurnProposal "
-                "with non-empty segments and optional selected_knowledge_ids; include no markdown or explanation. "
-                "If you are unsure whether an ID is groundable, omit grounding_ids entirely."
+                f"{payload['system']} Your previous response was invalid.{correction} Return only a complete JSON "
+                "TurnProposal with non-empty segments and optional selected_knowledge_ids; include no markdown or "
+                "explanation. If you are unsure whether an ID is groundable, omit grounding_ids entirely."
             ),
         }
         try:
@@ -173,7 +188,7 @@ class CloudflareTurnProvider:
         except HTTPError as error:
             raise self._narration_error(error) from error
         except RuntimeContractError as error:
-            summary = contract_error_summary(error) or "invalid proposal"
+            summary = contract_error_summary(error) or getattr(error, "summary", "") or "invalid proposal"
             raise NarrationProviderError(
                 f"narration service returned an invalid proposal ({summary})",
                 502,
@@ -187,17 +202,35 @@ class CloudflareTurnProvider:
         if self.last_projection is None:
             raise RuntimeContractError("knowledge projection is unavailable")
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
-        if any(knowledge_id not in candidate_ids for knowledge_id in proposal.selected_knowledge_ids):
-            raise RuntimeContractError("selected knowledge is not eligible for this turn")
+        ineligible = sorted(
+            {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}
+        )
+        if ineligible:
+            raise _EligibilityError(
+                "selected knowledge is not eligible for this turn",
+                f"You selected {', '.join(ineligible)}, which this turn does not offer. Select exactly one of "
+                f"[{', '.join(sorted(candidate_ids)) or 'no candidates are available'}] or select nothing.",
+            )
         # The runtime rejects a turn whose grounding is neither committed nor selected; catching it
         # here spends the transport's single recovery instead of failing the player's turn.
         groundable = {item.id for item in self.last_projection.committed_knowledge} | set(
             proposal.selected_knowledge_ids
         )
-        if any(
-            grounding_id not in groundable for segment in proposal.segments for grounding_id in segment.grounding_ids
-        ):
-            raise RuntimeContractError("segment grounding is not committed or selected knowledge")
+        ungroundable = sorted(
+            {
+                grounding_id
+                for segment in proposal.segments
+                for grounding_id in segment.grounding_ids
+                if grounding_id not in groundable
+            }
+        )
+        if ungroundable:
+            raise _EligibilityError(
+                "segment grounding is not committed or selected knowledge",
+                f"You grounded a segment on {', '.join(ungroundable)}, which is neither committed knowledge nor a "
+                "candidate you selected. Either put that ID in selected_knowledge_ids when it is one of this turn's "
+                "candidates, or return the segment with an empty grounding_ids list.",
+            )
         return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
