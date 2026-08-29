@@ -59,13 +59,14 @@ export const scenePrompts = {
   ],
 };
 
-// A scene's prompts are exhausted only if the model needs more turns there than
-// authored; repeating the last prompt keeps the run moving without inventing
-// new player intent.
+// A scene may need more turns than it has authored prompts - a reveal can be
+// gated on a pacing event that only lands later in the scene. Cycling re-offers
+// the earlier intents once that gate opens, where clamping to the last prompt
+// would strand a beat the scene still needs.
 export function promptFor(sceneId, usedCount) {
   const prompts = scenePrompts[sceneId];
   if (!prompts) throw new Error(`No authored prompts for scene ${sceneId}.`);
-  return prompts[Math.min(usedCount, prompts.length - 1)];
+  return prompts[usedCount % prompts.length];
 }
 
 // The unclocked spine run advances 60 authored seconds per turn and cannot skip

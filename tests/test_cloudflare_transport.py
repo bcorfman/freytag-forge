@@ -217,6 +217,9 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
     assert len(payloads) == 2
     assert "previous response was invalid" in payloads[1]["system"]
     assert "k_future_unavailable" in payloads[1]["system"]
+    # The retry must lead with the response that always validates. Offering only a menu
+    # lets the model keep reaching for the reveal the player's intent implies.
+    assert "empty list" in payloads[1]["system"]
 
 
 def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(monkeypatch) -> None:

@@ -226,22 +226,27 @@ class CloudflareTurnProvider:
         if len(proposal.selected_knowledge_ids) > 1:
             raise _EligibilityError(
                 "at most one knowledge selection is allowed per turn",
-                f"You selected {', '.join(sorted(proposal.selected_knowledge_ids))}. Choose exactly one of those "
-                "IDs and drop the rest; a turn may reveal at most one candidate.",
+                f"You selected {', '.join(sorted(proposal.selected_knowledge_ids))}. Resend the same narration with "
+                "selected_knowledge_ids holding at most one of those IDs, or an empty list to reveal nothing.",
             )
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
         ineligible = sorted(
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}
         )
         if ineligible:
-            available = (
-                f"Select exactly one of [{', '.join(sorted(candidate_ids))}] or select nothing."
+            # Steer to the one response that is always valid. Offering a menu invites the model to
+            # keep reaching for the reveal the player's intent implies, which fails the turn again.
+            alternative = (
+                f" Only if one of [{', '.join(sorted(candidate_ids))}] genuinely fits this moment may you select "
+                "exactly one of those instead."
                 if candidate_ids
-                else "This turn offers no candidates at all: return selected_knowledge_ids as an empty list."
+                else " This turn offers no candidates at all."
             )
             raise _EligibilityError(
                 "selected knowledge is not eligible for this turn",
-                f"You selected {', '.join(ineligible)}, which this turn does not offer. {available}",
+                f"You selected {', '.join(ineligible)}, which this turn does not offer. Resend the same narration "
+                "with selected_knowledge_ids as an empty list and no grounding_ids, revealing nothing new."
+                + alternative,
             )
         # The runtime rejects a turn whose grounding is neither committed nor selected; catching it
         # here spends the transport's single recovery instead of failing the player's turn.
@@ -260,8 +265,8 @@ class CloudflareTurnProvider:
             raise _EligibilityError(
                 "segment grounding is not committed or selected knowledge",
                 f"You grounded a segment on {', '.join(ungroundable)}, which is neither committed knowledge nor a "
-                "candidate you selected. Either put that ID in selected_knowledge_ids when it is one of this turn's "
-                "candidates, or return the segment with an empty grounding_ids list.",
+                "candidate you selected. Resend the same narration with an empty grounding_ids list; only if that ID "
+                "is one of this turn's candidates may you instead place it in selected_knowledge_ids.",
             )
         return proposal
 
