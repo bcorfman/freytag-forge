@@ -326,6 +326,59 @@ def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> No
         provider._parse_eligible_proposal({"segments": segments, "selected_knowledge_ids": selected})
 
 
+def test_turn_prompt_forbids_selection_when_no_candidate_is_offered(monkeypatch) -> None:
+    """A quiet turn must not invite a selection; inventing one costs the player the turn."""
+
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room stays quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    provider("I stand still and listen.")
+    assert provider.last_projection is not None and provider.last_projection.candidates == ()
+    quiet_prompt = payloads[-1]["system"]
+    assert "MUST be an empty list" in quiet_prompt
+    assert "Select at most one candidate" not in quiet_prompt
+
+    state.active_event_ids.add("SL-1A-B")
+    provider("I search the desk drawer for Michelle's recording.")
+    offered_prompt = payloads[-1]["system"]
+    assert "Select at most one candidate" in offered_prompt
+    assert "MUST be an empty list" not in offered_prompt
+
+
+def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"An invented reveal."}],'
+                        '"selected_knowledge_ids":["k_sl_3c_e_r1"]}'
+                    )
+                }
+            )
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room stays quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    provider("I stand still and listen.")
+
+    assert len(payloads) == 2
+    assert "offers no candidates at all" in payloads[1]["system"]
+
+
 def test_repeated_ineligible_selection_reports_the_rule_without_leaking_ids(monkeypatch) -> None:
     """A twice-failing provider must say which rule broke, and never echo a story ID."""
 
