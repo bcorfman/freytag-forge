@@ -210,25 +210,10 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
     ]),
   );
 
-  // One ascending ladder of every authored instant a turn may need to land on. Pacing events win
-  // ties so the evidence names the event rather than a scene boundary that shares its timestamp.
-  const ladder = [...eventMilestones.values(), ...[...sceneMilestones.values()].flatMap((points) => [...points.values()])]
-    // "latest" is a deadline, not a place to stop; 0 is the story's start, already reached.
-    .filter((milestone) => milestone.point !== "latest" && milestone.target_seconds > 0)
-    .sort((left, right) => left.target_seconds - right.target_seconds || (left.kind === "pacing_event" ? -1 : 1));
-  const dedupedLadder = Object.freeze(
-    ladder.filter(
-      (milestone, index) => index === 0 || milestone.target_seconds !== ladder[index - 1].target_seconds,
-    ),
-  );
-
   const projection = {
     storyId,
     sceneOrder: frozenSceneOrder,
     eventOrder: Object.freeze([...eventRecords.keys()]),
-    milestoneLadder() {
-      return dedupedLadder;
-    },
     scenePoint(sceneId, point) {
       if (!sceneMilestones.has(sceneId)) {
         throw pacingError(storyId, resolvedPacingPath, sceneId, `scene "${sceneId}" is not declared`);

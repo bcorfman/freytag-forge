@@ -11,6 +11,10 @@ import { loadPackagePacing } from "./package-clock.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
 
+// Nine scenes needing up to three earned reveals each, with headroom for a turn
+// the model spends on a non-progressing but valid candidate.
+const MAX_CANON_TURNS = 36;
+
 function narrationText(payload) {
   const turnText = (payload.segments || [])
     .filter((segment) => ["narration", "action", "dialogue"].includes(segment.kind))
@@ -96,16 +100,31 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   const sceneOrder = pacing.sceneOrder;
-  const ladder = pacing.milestoneLadder();
   let sceneId = "1A";
+  let elapsed = 0;
   const promptsUsed = new Map();
   const progress = [];
 
-  for (const [index, milestone] of ladder.entries()) {
-    if (sceneId === sceneOrder.at(-1) && promptsUsed.get(sceneId) >= scenePrompts[sceneId].length) break;
+  // The clock follows the story, never the other way round. A scene needs
+  // several turns to earn its outgoing bridge, so time advances only as far as
+  // the next scene's authored entry window and then holds until the story is
+  // ready. Advancing on every turn instead lets the clock outrun the spine and
+  // strands scene-bound pacing events in a scene the story has not reached.
+  const clockTargetFor = (currentSceneId, currentElapsed) => {
+    const next = sceneOrder[sceneOrder.indexOf(currentSceneId) + 1];
+    const goal = next
+      ? pacing.scenePoint(next, "earliest")
+      : pacing.scenePoint(currentSceneId, "target");
+    if (goal.target_seconds > currentElapsed) return goal;
+    return { kind: "scene_point", scene_id: currentSceneId, point: "hold", target_seconds: currentElapsed };
+  };
+
+  for (let index = 0; index < MAX_CANON_TURNS; index += 1) {
+    if (sceneId === sceneOrder.at(-1) && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
     const sourceSceneId = sceneId;
     const used = promptsUsed.get(sourceSceneId) || 0;
     const input = promptFor(sourceSceneId, used);
+    const milestone = clockTargetFor(sourceSceneId, elapsed);
     await test.step(`turn ${index + 1}: scene ${sourceSceneId} at ${milestone.target_seconds}s`, async () => {
       controller.arm(milestone);
       const payload = await submitTurn(page, input);
@@ -133,15 +152,21 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
       expect(to - from, `Turn ${index + 1} regressed from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeGreaterThanOrEqual(0);
       expect(to - from, `Turn ${index + 1} skipped past a scene from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeLessThanOrEqual(1);
 
-      // Any pacing event whose authored instant has passed must have fired.
+      // A pacing event is bound to its own scene, so it is due only once the
+      // story is in that scene at or past its instant - or has left the scene
+      // behind, in which case a beat that never landed is a real defect.
       for (const eventId of pacing.eventOrder) {
-        if (pacing.eventPoint(eventId).target_seconds > milestone.target_seconds) continue;
+        const event = pacing.eventPoint(eventId);
+        const eventScene = sceneOrder.indexOf(event.scene_id);
+        const inScenePastDue = eventScene === to && observedElapsed >= event.target_seconds;
+        if (!inScenePastDue && eventScene >= to) continue;
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
       }
 
       if (!byScene.has(reachedSceneId)) byScene.set(reachedSceneId, { opening: "", turns: [] });
       byScene.get(reachedSceneId).turns.push({ player_input: input, narration, source_scene_id: sourceSceneId });
       sceneId = reachedSceneId;
+      elapsed = observedElapsed;
       progress.push({
         turn: index + 1,
         input,
