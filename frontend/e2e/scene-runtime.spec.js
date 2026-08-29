@@ -1,7 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { resolveWarningIfPresent, startSceneSession, submitTurn, writeCategoryReport } from "./helpers.js";
+import {
+  installPackageClock,
+  resolveWarningIfPresent,
+  startSceneSession,
+  submitTurn,
+  writeCategoryReport,
+} from "./helpers.js";
+import { loadPackagePacing } from "./package-clock.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
+import { canonJourney } from "./canon-journey.js";
 
 const spineActions = [
   "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
@@ -12,17 +20,6 @@ const spineActions = [
   "I use the relay and broadcast the evidence before the network can recover.",
   "I finish the current objective and protect the route to the climax.",
   "I bring the story to a responsible resolution.",
-];
-
-const canonActions = [
-  "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
-  "I examine the forced back door, the blood by its frame, and anything an intruder left behind.",
-  "I study Sarah's phone for its last call, message, or damage without leaving the kitchen.",
-  "I search the desk and drawer for Sarah's research, notes, or a hidden recording.",
-  "I compare the missing work bag with the rest of the room and look for a route the abductor used.",
-  "I photograph the evidence and listen at the windows for anyone returning to the house.",
-  "I check the front gate and prepare a careful response if the federal patrol comes back.",
-  "I gather the house evidence into one actionable lead while keeping Sarah's warning in mind.",
 ];
 
 function narrationText(payload) {
@@ -99,21 +96,64 @@ test("drives the main spine and reports reachability and pressure @spine", async
 
 test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
-  test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the opt-in accelerated E2E game clock");
+  test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
   test.setTimeout(5 * 60_000);
+  const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
+  const controller = await installPackageClock(page, {
+    pacing,
+    token: process.env.FREYTAG_TEST_CLOCK_TOKEN,
+  });
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   let sceneId = "1A";
-  for (const [index, playerInput] of canonActions.entries()) {
-    await test.step(`turn ${index + 1}: scene ${sceneId}`, async () => {
-      const payload = await submitTurn(page, playerInput);
+  const progress = [];
+  for (const [index, step] of canonJourney.entries()) {
+    await test.step(`turn ${index + 1}: scene ${sceneId} to ${step.expectedSceneId}`, async () => {
+      const milestone = step.clock.eventId
+        ? pacing.eventPoint(step.clock.eventId)
+        : pacing.scenePoint(step.clock.sceneId, step.clock.point);
+      controller.arm(milestone);
+      const sourceSceneId = sceneId;
+      const payload = await submitTurn(page, step.input);
+      const warningResolved = await resolveWarningIfPresent(page);
+      const timing = controller.history().at(-1);
+      const observedElapsed = payload.state?.story_elapsed_seconds;
+      if (!timing?.reached) {
+        throw new Error(
+          `Package clock missed ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${step.clock.point || "event"}`}; observed elapsed ${String(observedElapsed)} (pending game break: ${String(payload.state?.pending_game_break === true)}, warning resolved: ${String(warningResolved)}).`,
+        );
+      }
+
       const narration = narrationText(payload);
-      byScene.get(sceneId).turns.push({ player_input: playerInput, narration });
-      await resolveWarningIfPresent(page);
-      sceneId = payload.state?.scene_id || sceneId;
-      if (!byScene.has(sceneId)) byScene.set(sceneId, { opening: "", turns: [] });
-      await writeCategoryReport("llm-canon-progress", { completed_turn: index + 1, current_scene: sceneId, by_scene: [...byScene] });
+      expect(payload.state?.scene_id, `Turn ${index + 1} did not end in the authored scene.`).toBe(step.expectedSceneId);
+      expect(payload.state?.story_elapsed_seconds, `Turn ${index + 1} missed its package milestone.`).toBe(
+        milestone.target_seconds,
+      );
+      for (const eventId of step.expectedEventIds) {
+        expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
+      }
+
+      if (!byScene.has(step.expectedSceneId)) byScene.set(step.expectedSceneId, { opening: "", turns: [] });
+      byScene.get(step.expectedSceneId).turns.push({
+        player_input: step.input,
+        narration,
+        source_scene_id: sourceSceneId,
+      });
+      sceneId = step.expectedSceneId;
+      progress.push({
+        turn: index + 1,
+        input: step.input,
+        requested_milestone: milestone,
+        observed_timing: timing,
+        state: payload.state,
+      });
+      await writeCategoryReport("llm-canon-progress", {
+        completed_turn: index + 1,
+        current_scene: sceneId,
+        by_scene: [...byScene],
+        progress,
+      });
     });
   }
   const judgments = [];
