@@ -60,21 +60,32 @@ class KnowledgeProjector:
     """Projects immutable package knowledge from the canonical fact store."""
 
     def __init__(
-        self, *, max_candidates: int = 4, max_continuity_records: int = 12, max_committed_knowledge: int = 24
+        self,
+        *,
+        max_candidates: int = 4,
+        max_continuity_records: int = 12,
+        max_committed_knowledge: int = 24,
+        max_sayable_knowledge: int = 8,
     ) -> None:
         if max_candidates < 1:
             raise ValueError("max_candidates must be positive")
         if max_committed_knowledge < 1:
             raise ValueError("max_committed_knowledge must be positive")
+        if max_sayable_knowledge < 1:
+            raise ValueError("max_sayable_knowledge must be positive")
         self.max_candidates = max_candidates
         self.max_continuity_records = max_continuity_records
         self.max_committed_knowledge = max_committed_knowledge
+        self.max_sayable_knowledge = max_sayable_knowledge
 
     def project(self, state: RuntimeState, audience_id: str, player_input: str) -> TurnKnowledgeContext:
         frame = next(
             frame for frame in state.package.knowledge.scene_frames if frame.scene_id == state.current_scene_id
         )
-        committed = self._committed(state, audience_id)
+        committed = self._established_for(state, audience_id, self.max_committed_knowledge)
+        # What a speaker may say aloud is a tighter, scene-focused slice than the
+        # grounding basis; they are not the same list.
+        sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
         established_ids = tuple(sorted({entity_id for item in committed for entity_id in item.entity_ids}))
         referenced_ids = self._referenced_established_ids(state, player_input, established_ids)
         candidates = self._candidates(state, audience_id, referenced_ids)
@@ -85,14 +96,14 @@ class KnowledgeProjector:
             pressure=frame.pressure,
             audience_id=audience_id,
             committed_knowledge=committed,
-            sayable_knowledge=committed,
+            sayable_knowledge=sayable,
             established_entity_ids=established_ids,
             referenced_entity_ids=referenced_ids,
             continuity_ids=tuple(record.id for record in state.turn_records[-self.max_continuity_records :]),
             candidates=candidates,
         )
 
-    def _committed(self, state: RuntimeState, audience_id: str) -> tuple[ProjectedKnowledge, ...]:
+    def _established_for(self, state: RuntimeState, audience_id: str, limit: int) -> tuple[ProjectedKnowledge, ...]:
         """Project established knowledge, bounded so a long story cannot outgrow one turn.
 
         Committed knowledge accumulates for the whole playthrough, so an unbounded
@@ -110,13 +121,13 @@ class KnowledgeProjector:
             for item in state.package.knowledge.knowledge
             if self._established(item, state) and self._visible_to(item, audience_id)
         ]
-        if len(established) <= self.max_committed_knowledge:
+        if len(established) <= limit:
             return tuple(self._projected(item) for item in established)
         ranked = sorted(
             enumerate(established),
             key=lambda pair: (state.current_scene_id not in pair[1].available_in_scenes, -pair[0]),
         )
-        keep = {index for index, _ in ranked[: self.max_committed_knowledge]}
+        keep = {index for index, _ in ranked[:limit]}
         return tuple(self._projected(item) for index, item in enumerate(established) if index in keep)
 
     @staticmethod

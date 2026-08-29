@@ -78,7 +78,9 @@ class CloudflareTurnProvider:
             {
                 "player_input": player_input,
                 "knowledge_context": {
-                    "player": self.last_projection.model_dump(mode="json"),
+                    # sayable_knowledge is the speakers' dialogue basis; repeating it for the
+                    # player doubled the largest field in every request for no reader.
+                    "player": self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"}),
                     "speakers": speaker_contexts,
                 },
             },
@@ -290,10 +292,23 @@ class CloudflareTurnProvider:
         return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
+        """Send each speaker only what bounds their dialogue.
+
+        A speaker context exists so an NPC says nothing it could not know. A
+        second full projection per speaker - scene frame, candidates, entity
+        lists and all - multiplies the request without telling the model
+        anything it cannot already read in the player context.
+        """
+
         scene = self._current_scene()
         npc_ids = {item.id for item in self.state.package.world.npcs}
         return {
-            speaker_id: self.projector.project(self.state, speaker_id, player_input).model_dump(mode="json")
+            speaker_id: {
+                "sayable_knowledge": [
+                    {"id": item.id, "statement": item.statement}
+                    for item in self.projector.project(self.state, speaker_id, player_input).sayable_knowledge
+                ]
+            }
             for speaker_id in scene.participant_ids
             if speaker_id in npc_ids
         }
