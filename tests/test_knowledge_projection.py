@@ -196,3 +196,39 @@ def test_future_or_ambiguous_input_and_raw_history_do_not_expand_shadow_context(
     assert future_named.referenced_entity_ids == ()
     assert _ids(future_named.candidates) == _ids(ordinary.candidates)
     assert "JANUS" not in future_named.model_dump_json()
+
+
+def test_committed_projection_stays_bounded_as_the_story_accumulates() -> None:
+    """A whole playthrough of committed knowledge must still fit one narration turn.
+
+    Unbounded growth made every later turn slower than the last until the Worker
+    call timed out and the player lost the turn in Act 3.
+    """
+
+    package = load_story_package(Path("data/stories/continuity-initiative"))
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3C"
+    state.phase = next(scene.metadata.freytag_phase for scene in package.scenes if scene.metadata.scene_id == "3C")
+    for fact_id in sorted(package.world.facts):
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+
+    projector = KnowledgeProjector()
+    projection = projector.project(state, "player", "I act.")
+
+    assert len(projection.committed_knowledge) == projector.max_committed_knowledge
+    assert projection.payload_size() < 8000, "a late-game turn must not approach the narration timeout"
+
+    # The current scene keeps its grounding; distant history is what gives way.
+    by_id = {item.id: item for item in package.knowledge.knowledge}
+    kept_scene_local = [
+        item.id for item in projection.committed_knowledge if "3C" in by_id[item.id].available_in_scenes
+    ]
+    all_scene_local = [
+        item.id
+        for item in package.knowledge.knowledge
+        if "3C" in item.available_in_scenes and item.id in {k.id for k in projection.committed_knowledge}
+    ]
+    assert kept_scene_local == all_scene_local, "every established Scene 3C unit must survive the bound"
+
+    # Bounding must stay deterministic so a reloaded session projects identically.
+    assert projector.project(state, "player", "I act.").committed_knowledge == projection.committed_knowledge
