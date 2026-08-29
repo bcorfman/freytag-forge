@@ -119,7 +119,8 @@ class CloudflareTurnProvider:
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
             f"sayable context. {selection_rule} Never return "
-            "source IDs, events, operations, facts, or transitions."
+            "source IDs, events, operations, facts, or transitions. Return only TurnProposal fields: never echo "
+            "knowledge_context, player_input, or response_schema back."
         )
 
     def opening(self) -> object:
@@ -199,8 +200,9 @@ class CloudflareTurnProvider:
             **payload,
             "system": (
                 f"{payload['system']} Your previous response was invalid.{correction} Return only a complete JSON "
-                "TurnProposal with non-empty segments and optional selected_knowledge_ids; include no markdown or "
-                "explanation. If you are unsure whether an ID is groundable, omit grounding_ids entirely."
+                "TurnProposal with non-empty segments and optional selected_knowledge_ids; include no markdown, no "
+                "explanation, and none of the request's own fields echoed back. If you are unsure whether an ID is "
+                "groundable, omit grounding_ids entirely."
             ),
         }
         try:

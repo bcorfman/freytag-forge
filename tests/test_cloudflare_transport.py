@@ -585,3 +585,28 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
     context = json.loads(captured[-1]["user"])["knowledge_context"]
     assert "sayable_knowledge" not in context["player"]
     assert all(set(speaker) == {"sayable_knowledge"} for speaker in context["speakers"].values())
+
+
+def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
+    """A provider that echoed the request back cost the player a turn with HTTP 502.
+
+    The reply carried knowledge_context, player_input and response_schema instead of
+    a proposal, which is unparseable and so cannot be salvaged after the fact.
+    """
+
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response({"narration": '{"player_input":"x","knowledge_context":{},"response_schema":{}}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"A recovered proposal."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
+    assert "never echo" in payloads[0]["system"]
+    assert "echoed back" in payloads[1]["system"]
