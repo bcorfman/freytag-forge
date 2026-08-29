@@ -82,7 +82,16 @@ test("loads the real package and resolves irregular scene and event milestones",
   assert.equal(Object.isFrozen(projection.sceneOrder), true);
   assert.equal(Object.isFrozen(projection.scenePoint("1B", "target")), true);
   assert.equal(Object.isFrozen(projection.eventPoint("purge_2c")), true);
-  assert.deepEqual(Object.keys(projection), ["storyId", "sceneOrder", "scenePoint", "eventPoint"]);
+  assert.deepEqual(Object.keys(projection), [
+    "storyId",
+    "sceneOrder",
+    "eventOrder",
+    "milestoneLadder",
+    "scenePoint",
+    "eventPoint",
+  ]);
+  assert.equal(Object.isFrozen(projection.eventOrder), true);
+  assert.equal(Object.isFrozen(projection.milestoneLadder()), true);
 });
 
 test("reports unknown story, scene, event, and point identifiers", () => {
@@ -249,5 +258,31 @@ events:
 `,
     "event_missing_scene",
     "undeclared scene",
+  );
+});
+
+test("milestoneLadder walks every authored instant once, ascending", () => {
+  const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
+  const ladder = pacing.milestoneLadder();
+  const seconds = ladder.map((milestone) => milestone.target_seconds);
+
+  assert.deepEqual(seconds, [...seconds].sort((left, right) => left - right), "ladder must ascend");
+  assert.equal(new Set(seconds).size, seconds.length, "ladder must not repeat an instant");
+
+  // Every pacing event and every scene entry window must be landable.
+  for (const eventId of pacing.eventOrder) {
+    assert.ok(seconds.includes(pacing.eventPoint(eventId).target_seconds), `missing event ${eventId}`);
+  }
+  // Every scene the story must still transition into needs a landable entry window.
+  // The first scene's window is the story's start, which no turn can land on.
+  for (const sceneId of pacing.sceneOrder.slice(1)) {
+    assert.ok(
+      seconds.includes(pacing.scenePoint(sceneId, "earliest").target_seconds),
+      `missing earliest window for ${sceneId}`,
+    );
+  }
+  assert.ok(
+    seconds.every((value) => value > 0),
+    "the ladder must not offer the already-reached story start",
   );
 });

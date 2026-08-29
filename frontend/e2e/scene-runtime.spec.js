@@ -9,7 +9,7 @@ import {
 } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
-import { canonJourney, spineJourney } from "./canon-journey.js";
+import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
 
 function narrationText(payload) {
   const turnText = (payload.segments || [])
@@ -95,44 +95,56 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
+  const sceneOrder = pacing.sceneOrder;
+  const ladder = pacing.milestoneLadder();
   let sceneId = "1A";
+  const promptsUsed = new Map();
   const progress = [];
-  for (const [index, step] of canonJourney.entries()) {
-    await test.step(`turn ${index + 1}: scene ${sceneId} to ${step.expectedSceneId}`, async () => {
-      const milestone = step.clock.eventId
-        ? pacing.eventPoint(step.clock.eventId)
-        : pacing.scenePoint(step.clock.sceneId, step.clock.point);
+
+  for (const [index, milestone] of ladder.entries()) {
+    if (sceneId === sceneOrder.at(-1) && promptsUsed.get(sceneId) >= scenePrompts[sceneId].length) break;
+    const sourceSceneId = sceneId;
+    const used = promptsUsed.get(sourceSceneId) || 0;
+    const input = promptFor(sourceSceneId, used);
+    await test.step(`turn ${index + 1}: scene ${sourceSceneId} at ${milestone.target_seconds}s`, async () => {
       controller.arm(milestone);
-      const sourceSceneId = sceneId;
-      const payload = await submitTurn(page, step.input);
+      const payload = await submitTurn(page, input);
       const warningResolved = await resolveWarningIfPresent(page);
       const timing = controller.history().at(-1);
       const observedElapsed = payload.state?.story_elapsed_seconds;
       if (!timing?.reached) {
         throw new Error(
-          `Package clock missed ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${step.clock.point || "event"}`}; observed elapsed ${String(observedElapsed)} (pending game break: ${String(payload.state?.pending_game_break === true)}, warning resolved: ${String(warningResolved)}).`,
+          `Package clock missed ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${milestone.point}`}; observed elapsed ${String(observedElapsed)} (pending game break: ${String(payload.state?.pending_game_break === true)}, warning resolved: ${String(warningResolved)}).`,
         );
       }
 
       const narration = narrationText(payload);
-      expect(payload.state?.scene_id, `Turn ${index + 1} did not end in the authored scene.`).toBe(step.expectedSceneId);
+      const reachedSceneId = payload.state?.scene_id;
+      promptsUsed.set(sourceSceneId, used + 1);
       expect(payload.state?.story_elapsed_seconds, `Turn ${index + 1} missed its package milestone.`).toBe(
         milestone.target_seconds,
       );
-      for (const eventId of step.expectedEventIds) {
+
+      // The spine may pause in a scene or step forward exactly one scene, never
+      // backward and never skipping an authored scene.
+      const from = sceneOrder.indexOf(sourceSceneId);
+      const to = sceneOrder.indexOf(reachedSceneId);
+      expect(to, `Turn ${index + 1} left the authored spine at ${String(reachedSceneId)}.`).toBeGreaterThanOrEqual(0);
+      expect(to - from, `Turn ${index + 1} regressed from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeGreaterThanOrEqual(0);
+      expect(to - from, `Turn ${index + 1} skipped past a scene from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeLessThanOrEqual(1);
+
+      // Any pacing event whose authored instant has passed must have fired.
+      for (const eventId of pacing.eventOrder) {
+        if (pacing.eventPoint(eventId).target_seconds > milestone.target_seconds) continue;
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
       }
 
-      if (!byScene.has(step.expectedSceneId)) byScene.set(step.expectedSceneId, { opening: "", turns: [] });
-      byScene.get(step.expectedSceneId).turns.push({
-        player_input: step.input,
-        narration,
-        source_scene_id: sourceSceneId,
-      });
-      sceneId = step.expectedSceneId;
+      if (!byScene.has(reachedSceneId)) byScene.set(reachedSceneId, { opening: "", turns: [] });
+      byScene.get(reachedSceneId).turns.push({ player_input: input, narration, source_scene_id: sourceSceneId });
+      sceneId = reachedSceneId;
       progress.push({
         turn: index + 1,
-        input: step.input,
+        input,
         requested_milestone: milestone,
         observed_timing: timing,
         state: payload.state,
@@ -145,6 +157,10 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
       });
     });
   }
+
+  expect([...byScene.keys()], "the playthrough must visit every authored scene in order").toEqual([...sceneOrder]);
+  expect(sceneId, "the playthrough must end in the authored resolution scene").toBe(sceneOrder.at(-1));
+
   const judgments = [];
   for (const [id, scene] of byScene) {
     const judgment = await judgeSceneNarration({ sceneId: id, ...scene });
