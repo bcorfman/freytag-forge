@@ -215,6 +215,68 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
     assert "previous response was invalid" in payloads[1]["system"]
 
 
+def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(monkeypatch) -> None:
+    """Bad grounding must spend the single recovery, not fail the player's turn with HTTP 409."""
+
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"A recording plays.",'
+                        '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":[]}'
+                    )
+                }
+            )
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"The drawer sticks, then gives."}],'
+                    '"selected_knowledge_ids":[]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I search the desk drawer.")
+
+    assert proposal["segments"][0]["text"] == "The drawer sticks, then gives."
+    assert len(payloads) == 2
+    assert "previous response was invalid" in payloads[1]["system"]
+
+
+def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"Michelle\'s warning crackles.",'
+                    '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I play the damaged recording.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert len(payloads) == 1, "grounding on the selected candidate must not spend a recovery"
+
+
 def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
