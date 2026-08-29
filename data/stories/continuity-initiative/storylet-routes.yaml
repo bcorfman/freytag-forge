@@ -618,11 +618,14 @@ storylets:
     - janus_selection_system
     - phase_two
   - id: SL-1B-B-R2
-    dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work but withholds
-      the protected JANUS role.
+    dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work and that the
+      missing may still be alive, but withholds the protected JANUS role.
     operations:
     - op: assert
       fact_id: brandon_identified
+      value: true
+    - op: assert
+      fact_id: missing_may_be_alive
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
@@ -676,11 +679,14 @@ storylets:
     - janus_selection_system
     - phase_two
   - id: SL-1B-C-R2
-    dramatic_intent: Kristin notices Brandon’s practiced system access during escape and carries that unresolved
-      suspicion forward.
+    dramatic_intent: Kristin notices Brandon’s practiced system access during the maintenance-route escape and carries
+      that unresolved suspicion forward while the transport route toward the freight terminal becomes clear.
     operations:
     - op: assert
       fact_id: brandon_retains_system_access
+      value: true
+    - op: assert
+      fact_id: transport_route_identified
       value: true
     - op: assert
       fact_id: park_pursuit_resolved
@@ -783,8 +789,12 @@ storylets:
     - brandon_history
     - phase_two
   - id: SL-1C-B-R2
-    dramatic_intent: Catch an obscured possible glimpse of Michelle without converting uncertainty into confirmed location.
+    dramatic_intent: Confirm the sedated captives are alive and catch an obscured possible glimpse of Michelle without
+      converting uncertainty into confirmed location.
     operations:
+    - op: assert
+      fact_id: captives_confirmed_alive
+      value: true
     - op: assert
       fact_id: michelle_possible_sighting
       value: true
@@ -1379,25 +1389,38 @@ storylets:
       latest_seconds: 900
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player wants to rush upward, make the medical level evidence matter by showing why exposure
-    must include the conditioning program.
+    must include the conditioning program, and let the imprisoned official's expiring codes reward the documentation
+    detour.
   realization_options:
   - id: SL-3A-B-R1
-    dramatic_intent: Corroborate Michelle’s account with experiment records and establish that selected released captives
-      were being conditioned for Charles’s narrative.
+    dramatic_intent: Corroborate Michelle’s account with experiment records, establish that selected released captives
+      were being conditioned for Charles’s narrative, and secure the framed official’s emergency override codes.
     operations:
     - op: assert
+      fact_id: behavioral_experiments_known
+      value: true
+    - op: assert
       fact_id: conditioned_release_plan_known
+      value: true
+    - op: assert
+      fact_id: military_override_codes_available
+      value: true
+    - op: assert
+      fact_id: charles_framed_officials_known
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-3A-B-R2
-    dramatic_intent: Inspect treatment setup and establish the behavioral-experiment program without claiming guaranteed
-      mind control.
+    dramatic_intent: Inspect treatment setup, establish the behavioral-experiment program without claiming guaranteed
+      mind control, and copy the imprisoned official’s usable authorization codes.
     operations:
     - op: assert
       fact_id: behavioral_experiments_known
+      value: true
+    - op: assert
+      fact_id: military_override_codes_available
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
@@ -1414,53 +1437,35 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-3A-C
   scene_id: 3A
-  title: The Override Codes Are Expiring
+  title: The Uprising Begins
   activation:
     scene_id: 3A
     conditions:
     - fact_id: michelle_reached
       equals: true
-    - fact_id: behavioral_experiments_known
+    - fact_id: uprising_prepared
       equals: true
     pacing:
       earliest_seconds: 780
       target_seconds: 840
       latest_seconds: 900
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: 'Add a second deadline when the player lingers: the imprisoned official’s codes lose value once
-    Charles activates the new authority.'
+  pressure_role: 'Convert the expiring authorization into forward motion: once the codes lose value with Charles’s
+    new authority, Michelle’s prepared disturbances become the only viable route upward.'
   realization_options:
   - id: SL-3A-C-R1
-    dramatic_intent: Secure the emergency override codes and understand their expiration condition.
+    dramatic_intent: Michelle triggers the coordinated disturbances across the detention sectors and the group turns
+      the freed checkpoints into a route toward the command levels.
     operations:
     - op: assert
-      fact_id: charles_framed_officials_known
-      value: true
-    - op: assert
-      fact_id: military_override_codes_available
-      value: true
-    - op: assert
-      fact_id: override_codes_deadline_known
+      fact_id: detention_uprising_started
       value: true
     eligible_storylet_event_id: null
-    helps_transition_triggers: []
+    helps_transition_triggers:
+    - t_3a_3b
     protected_knowledge_boundaries:
     - phase_two
   - id: SL-3A-C-R2
-    dramatic_intent: Relay/copy the codes rather than physically carry them, preserving free-form action while establishing
-      that the resistance has usable authorization.
-    operations:
-    - op: assert
-      fact_id: military_override_codes_available
-      value: true
-    - op: assert
-      fact_id: override_codes_deadline_known
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - phase_two
-  - id: SL-3A-C-R3
     dramatic_intent: The expiring authorization window makes further delay untenable; Michelle launches the coordinated
       disturbances while the codes are still useful.
     operations:
@@ -1477,10 +1482,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - any_fact_true:
-      - military_override_codes_available
-      - detention_uprising_started
-    - fact_id: override_codes_deadline_known
+    - fact_id: detention_uprising_started
       equals: true
     abort_when:
     - scene_id_not: 3A
@@ -2025,7 +2027,9 @@ canonical_transition_snapshot:
 canonical_bridge_events:
 - id: bridge_1a_actionable_lead
   scene_id: 1A
-  activation: {}
+  activation:
+    all_facts_true:
+    - continuity_initiative_known
   produces:
   - op: assert
     fact_id: michelle_lead_actionable
@@ -2058,8 +2062,6 @@ canonical_bridge_events:
     all_facts_true:
     - facility_proof
     - captives_confirmed_alive
-    - national_detention_network_known
-    - architects_strategy_known
   produces:
   - op: assert
     fact_id: facility_infiltration_needed
@@ -2075,6 +2077,7 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - false_identities_ready
+    - rebecca_observing_infiltrators
   produces:
   - op: assert
     fact_id: restricted_corridor_access
@@ -2088,7 +2091,6 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - janus_evidence
-    - kristin_deliberately_left_behind
     - brandon_janus_role_known
     - brandon_claimed_reform_motive
     - michelle_resistance_known
@@ -2107,6 +2109,7 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - purge_clock_started
+    - evidence_ready_to_transmit
   produces:
   - op: assert
     fact_id: combined_broadcast_rescue_plan_known
@@ -2120,8 +2123,6 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - michelle_reached
-    - behavioral_experiments_known
-    - override_codes_deadline_known
     - detention_uprising_started
   produces:
   - op: assert

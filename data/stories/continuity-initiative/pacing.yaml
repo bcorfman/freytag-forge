@@ -68,7 +68,7 @@ transitions:
   triggers:
   - fact_id: michelle_lead_actionable
     equals: true
-  - fact_id: house_marked_for_return
+  - fact_id: patrol_return_pressure
     equals: true
   required_dependencies:
   - memory_card

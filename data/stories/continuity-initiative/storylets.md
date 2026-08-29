@@ -1043,7 +1043,7 @@ Each entry below is authoring data, not a player action menu.
 
 ### SL-3A-B — The “Rescued” Captives Were Being Prepared
 
-**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments)
+**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments), [3A.3 — The Unexpected Prisoner](plot.md#scene-3a3--the-unexpected-prisoner)
 
 **Allowed scene:** `3A`
 
@@ -1055,21 +1055,24 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee
-- Prisoners
+- Prisoners, including the imprisoned senior official
 - Medical/behavioral experiment records or equipment already present in the authored setting
+- Emergency military override authorization codes
 
 **Dramatic purpose**
 - Raise the moral and political stakes of Charles’s planned broadcast.
 - Show that simply releasing selected prisoners could strengthen the conspiracy.
+- Turn one prisoner into a time-sensitive strategic resource without making the NPC a permanent companion.
 
 **Possible realizations**
-- Michelle explains what she has observed while Kristin sees corroborating evidence.
-- A conditioned “rescue” plan becomes visible through records or treatment setup.
+- Michelle explains what she has observed while Kristin sees corroborating evidence, and the framed official hands over his expiring authorization.
+- A conditioned “rescue” plan becomes visible through records or treatment setup while the codes are secured or copied.
 - Kristin recognizes that public testimony itself has been engineered.
 
 **Effects**
 - May set `behavioral_experiments_known`.
 - May set `conditioned_release_plan_known`.
+- May set `military_override_codes_available` and `charles_framed_officials_known`.
 - May make the broadcast evidence more compelling.
 - May increase danger or moral urgency.
 
@@ -1081,6 +1084,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Protected boundary**
 - Do not invent successful mind control beyond the specific authored methods and goals.
+- The codes do not automatically solve the facility fight or national conspiracy.
 
 **Pacing window**
 - earliest: `00:13:00`
@@ -1092,52 +1096,44 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-3A-C — The Override Codes Are Expiring
+### SL-3A-C — The Uprising Begins
 
-**Source beats:** [3A.3 — The Unexpected Prisoner](plot.md#scene-3a3--the-unexpected-prisoner), [3A.4 — The Uprising Begins](plot.md#scene-3a4--the-uprising-begins)
+**Source beats:** [3A.4 — The Uprising Begins](plot.md#scene-3a4--the-uprising-begins)
 
 **Allowed scene:** `3A`
 
 **Available when**
 - Kristin has reached Michelle.
-- The behavioral-experiment stakes have been established.
-- The senior official prisoner is reachable.
+- Michelle’s uprising preparation is in place.
 - Charles’s planned authority activation remains pending.
 
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee
 - Brandon Corfman
-- Senior official prisoner
-- Emergency military override authorization codes
+- Organized prisoners across the detention sectors
 
 **Dramatic purpose**
-- Add a second deadline tied directly to the national political takeover.
-- Turn one prisoner into a time-sensitive strategic resource without making the NPC a permanent companion.
+- Convert the expiring authorization deadline into forward motion toward the command levels.
+- Commit the resistance to the coordinated assault that carries the story into Scene 3B.
 
 **Possible realizations**
-- The official explains that Charles framed and imprisoned members of his own government.
-- Michelle evaluates the codes as one more way to disrupt the takeover.
-- The uprising may begin before every implication can be discussed.
-- The expiring authorization window can itself force the resistance to launch coordinated disturbances.
-- The codes can be secured or relayed according to validated free-form action.
+- Michelle triggers coordinated disturbances and the freed checkpoints become a route upward.
+- The expiring authorization window itself forces the resistance to launch while the codes retain value.
 
 **Effects**
-- May set `charles_framed_officials_known`.
-- May set `military_override_codes_available`.
-- Starts/advances `override_codes_deadline_known`.
-- May set `detention_uprising_started` when the deadline forces Michelle to launch the resistance.
-- May help resistance efforts under declared package rules; securing the codes is not required for the Scene 3A → 3B transition.
+- Sets `detention_uprising_started`.
+- May advance `override_codes_deadline_known` when the deadline forces the launch.
+- Helps the Scene 3A → 3B transition under declared package rules.
 
 **Completion**
-- The codes and their expiration condition are understood/secured, or a declared alternate path makes them unnecessary.
+- The uprising is underway and the group is committed to fighting toward the command and broadcast levels.
 
 **Abort**
-- The codes expire after the relevant pacing deadline.
-- The NPC becomes unavailable; future satisfiability determines whether a warning is required.
+- Immediate security lockdown pins the resistance before the disturbances can begin.
 
 **Protected boundary**
-- The codes do not automatically solve the facility fight or national conspiracy.
+- The uprising does not by itself defeat JANUS, seize the broadcast, or resolve the national conspiracy.
 
 **Pacing window**
 - earliest: `00:13:00`

@@ -124,7 +124,7 @@ freytag_phase: rising_action
 objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 item_ids: [memory_card, transit_card]
-entry_text: "Enter 1B"
+entry_text: "The park was quieter than the streets around it. Michelle's files pointed to an ordinary bench near the service path - the dead drop where she traded information with a source she never named. Kristin crossed the damaged grounds, keeping clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
 ---
 
@@ -186,7 +186,7 @@ freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
 item_ids: [transit_card]
-entry_text: "Enter 1C"
+entry_text: "The transit card led to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. Kristin and Brandon slipped into the service level beneath the loading docks, where an observation shaft overlooked something much larger below.\n\n"
 transition_ids: [t_1c_2a]
 ---
 
@@ -264,7 +264,7 @@ freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
 item_ids: [transit_card]
-entry_text: "Enter 2A"
+entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its overstressed cooling and support columns were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
 transition_ids: [t_2a_2b]
 ---
 
@@ -324,7 +324,7 @@ freytag_phase: crisis
 objective: Secure evidence while judging Brandons betrayal
 participant_ids: [kristin, brandon, michelle]
 item_ids: [memory_card]
-entry_text: "Enter 2B"
+entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
 ---
 
@@ -397,7 +397,7 @@ freytag_phase: crisis
 objective: Survive the purge clock and choose a combined mission
 participant_ids: [kristin, brandon]
 item_ids: [memory_card]
-entry_text: "Enter 2C"
+entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count.\n\n"
 transition_ids: [t_2c_3a]
 ---
 
@@ -474,7 +474,7 @@ freytag_phase: crisis
 objective: Reach Michelle and join the uprising
 participant_ids: [kristin, michelle, brandon]
 item_ids: [override_codes]
-entry_text: "Enter 3A"
+entry_text: "The detention sector doors opened onto rows of holding blocks. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
 transition_ids: [t_3a_3b]
 ---
 
@@ -534,7 +534,7 @@ freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, brandon, rebecca]
 item_ids: [override_codes]
-entry_text: "Enter 3B"
+entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 ---
 
@@ -594,7 +594,7 @@ freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, brandon, rebecca]
 item_ids: [memory_card]
-entry_text: "Enter 3C"
+entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, the facility was beginning to fail; inside, the evidence was ready to leave for good.\n\n"
 transition_ids: []
 ---
 

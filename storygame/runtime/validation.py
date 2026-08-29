@@ -162,6 +162,18 @@ class ProgressionValidator:
         ]
         return tuple(sorted(eligible, key=lambda transition: transition.priority, reverse=True))
 
+    def transition_dependencies_available(self, transition: Transition, facts: FactStore) -> bool:
+        """Check the transition's declared dependencies, honoring declared fallbacks."""
+
+        unavailable = {fact.subject for fact in facts.matching("destroyed")} | {
+            fact.subject for fact in facts.matching("incapacitated")
+        }
+        return all(
+            dependency not in unavailable
+            or any(fallback not in unavailable for fallback in self._fallbacks(dependency))
+            for dependency in transition.required_dependencies
+        )
+
     def unsatisfied_dependencies(self, scene_id: str, facts: FactStore) -> tuple[str, ...]:
         """Find indispensable reachable entities, honoring declared fallbacks."""
 

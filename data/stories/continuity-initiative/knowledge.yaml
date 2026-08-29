@@ -211,28 +211,28 @@ scene_frames:
     beside an overturned chair, while her laptop and work bag are gone.
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
-  situation: Enter 1B
+  situation: 'A damaged public park holding Michelle''s dead drop: an ordinary bench with a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: Enter 1C
+  situation: A supposedly abandoned freight terminal above an underground installation. The transit card opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
   pressure: Confirm the facility and its purpose
 - scene_id: 2A
-  situation: Enter 2A
+  situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's overstressed cooling and support-column monitoring requires outside inspectors - a flaw that false credentials could exploit to reach its restricted corridors.
   pressure: Enter the facility under false identities
 - scene_id: 2B
-  situation: Enter 2B
+  situation: 'The facility''s records archive: selection files, development records naming the system''s authors, and corrupted prisoner files threaded with oddly familiar phrasing. A medical terminal''s maintenance reports carry a rhythm that reads like a message.'
   pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
-  situation: Enter 2C
+  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, a coded message waits for someone who knows Michelle''s phrasing.'
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
-  situation: Enter 3A
+  situation: 'The detention sector: holding blocks, stolen radios, a medical level bearing the experiments, and an imprisoned senior official whose emergency military override codes expire the moment the new authority activates.'
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
-  situation: Enter 3B
+  situation: Security corridors between the resistance and Rebecca's executive office. The predictive system anticipates every rational move; only conflicting, irrational emergencies confuse it. Beyond the office lies the external broadcast relay chamber.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
-  situation: Enter 3C
+  situation: 'Rebecca''s office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
@@ -472,10 +472,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_b_r2
-  statement: 'Brandon admits he knew Michelle, but his evasions leave Kristin unsure whether he came to help or watch her.'
+  statement: 'Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.'
   entity_ids: []
   aliases:
   - brandon identified
+  - missing may be alive
   audience:
     kind: public
     player_visible: true
@@ -485,6 +486,9 @@ knowledge:
   establishes:
   - op: assert
     fact_id: brandon_identified
+    value: true
+  - op: assert
+    fact_id: missing_may_be_alive
     value: true
   source:
     kind: storylet_realization
@@ -528,10 +532,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1b_c_r2
-  statement: 'Brandon enters a code no civilian should know, getting them clear of the ambush while deepening Kristin’s suspicion.'
+  statement: 'Brandon enters a code no civilian should know, getting them clear toward the freight route while deepening Kristin’s suspicion.'
   entity_ids: []
   aliases:
   - brandon retains system access
+  - transport route identified
   - park pursuit resolved
   audience:
     kind: public
@@ -546,6 +551,9 @@ knowledge:
   establishes:
   - op: assert
     fact_id: brandon_retains_system_access
+    value: true
+  - op: assert
+    fact_id: transport_route_identified
     value: true
   - op: assert
     fact_id: park_pursuit_resolved
@@ -630,9 +638,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_b_r2
-  statement: 'Kristin glimpses a woman who could be Michelle in a transfer line, but the view vanishes before she can be sure.'
+  statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
   entity_ids: []
   aliases:
+  - captives confirmed alive
   - michelle possible sighting
   audience:
     kind: public
@@ -643,6 +652,9 @@ knowledge:
   - fact_id: facility_proof
     equals: true
   establishes:
+  - op: assert
+    fact_id: captives_confirmed_alive
+    value: true
   - op: assert
     fact_id: michelle_possible_sighting
     value: true
@@ -1246,34 +1258,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_b_r1
-  statement: 'Kristin learns Charles’s planned survivors were conditioned to support his story before their public release.'
+  statement: 'Michelle shows Kristin the experiment records proving planned "survivors" were conditioned to support Charles''s story, and the framed official hands over expiring military override codes.'
   entity_ids: []
   aliases:
   - conditioned release plan known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 3A
-  requires:
-  - fact_id: michelle_reached
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: conditioned_release_plan_known
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-3A-B
-    realization_id: SL-3A-B-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-- id: k_sl_3a_b_r2
-  statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
-  entity_ids: []
-  aliases:
-  - behavioral experiments known
+  - military override codes available
   audience:
     kind: public
     player_visible: true
@@ -1286,19 +1275,28 @@ knowledge:
   - op: assert
     fact_id: behavioral_experiments_known
     value: true
+  - op: assert
+    fact_id: conditioned_release_plan_known
+    value: true
+  - op: assert
+    fact_id: military_override_codes_available
+    value: true
+  - op: assert
+    fact_id: charles_framed_officials_known
+    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3A-B
-    realization_id: SL-3A-B-R2
+    realization_id: SL-3A-B-R1
   relevance:
     entity_ids: []
     priority: 0
-- id: k_sl_3a_c_r1
-  statement: 'An imprisoned official gives Kristin military override codes that expire when Charles formally claims emergency authority.'
+- id: k_sl_3a_b_r2
+  statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments, and Kristin copies the imprisoned official''s usable override authorization.'
   entity_ids: []
   aliases:
+  - behavioral experiments known
   - military override codes available
-  - override codes deadline known
   audience:
     kind: public
     player_visible: true
@@ -1307,17 +1305,38 @@ knowledge:
   requires:
   - fact_id: michelle_reached
     equals: true
-  - fact_id: behavioral_experiments_known
-    equals: true
   establishes:
   - op: assert
-    fact_id: charles_framed_officials_known
+    fact_id: behavioral_experiments_known
     value: true
   - op: assert
     fact_id: military_override_codes_available
     value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-B
+    realization_id: SL-3A-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_c_r1
+  statement: 'Michelle triggers the coordinated uprising; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
+  entity_ids: []
+  aliases:
+  - detention uprising started
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: uprising_prepared
+    equals: true
+  establishes:
   - op: assert
-    fact_id: override_codes_deadline_known
+    fact_id: detention_uprising_started
     value: true
   source:
     kind: storylet_realization
@@ -1327,37 +1346,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_c_r2
-  statement: 'Kristin learns Charles framed the captive official for the catastrophe, leaving the rescue tied to a vanishing deadline.'
-  entity_ids: []
-  aliases:
-  - military override codes available
-  - override codes deadline known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 3A
-  requires:
-  - fact_id: michelle_reached
-    equals: true
-  - fact_id: behavioral_experiments_known
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: military_override_codes_available
-    value: true
-  - op: assert
-    fact_id: override_codes_deadline_known
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-3A-C
-    realization_id: SL-3A-C-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-- id: k_sl_3a_c_r3
-  statement: 'Michelle triggers the uprising; prisoners seize checkpoints as Charles seals the exits and sends armed teams below.'
+  statement: 'With the override codes about to expire under Charles''s new authority, Michelle launches the prepared uprising rather than wait.'
   entity_ids: []
   aliases:
   - detention uprising started
@@ -1370,7 +1359,7 @@ knowledge:
   requires:
   - fact_id: michelle_reached
     equals: true
-  - fact_id: behavioral_experiments_known
+  - fact_id: uprising_prepared
     equals: true
   establishes:
   - op: assert
@@ -1382,7 +1371,7 @@ knowledge:
   source:
     kind: storylet_realization
     storylet_id: SL-3A-C
-    realization_id: SL-3A-C-R3
+    realization_id: SL-3A-C-R2
   relevance:
     entity_ids: []
     priority: 0
@@ -1507,8 +1496,8 @@ knowledge:
   - relay open
   - brandon confession available
   audience:
-    kind: world_only
-    player_visible: false
+    kind: public
+    player_visible: true
   available_in_scenes:
   - 3B
   requires:
@@ -1539,8 +1528,8 @@ knowledge:
   - relay open
   - brandon confession available
   audience:
-    kind: world_only
-    player_visible: false
+    kind: public
+    player_visible: true
   available_in_scenes:
   - 3B
   requires:
