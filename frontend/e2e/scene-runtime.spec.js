@@ -12,11 +12,11 @@ import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { canonJourney } from "./canon-journey.js";
 
 const spineActions = [
-  "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
-  "I pursue the dead drop and ask Gabriel for the evidence needed to move forward.",
+  "I search for concrete evidence of Michelle's disappearance and follow the strongest lead.",
+  "I pursue the dead drop and ask Brandon for the evidence needed to move forward.",
   "I prepare false identities and enter the facility without delaying the mission.",
   "I secure proof of JANUS and act on the current objective.",
-  "I respond to the purge clock, reach Sarah, and preserve the rescue and evidence mission.",
+  "I respond to the purge clock, reach Michelle, and preserve the rescue and evidence mission.",
   "I use the relay and broadcast the evidence before the network can recover.",
   "I finish the current objective and protect the route to the climax.",
   "I bring the story to a responsible resolution.",
@@ -33,8 +33,8 @@ function narrationText(payload) {
 async function exerciseDistinctFreeTextActions(page) {
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
-  const phoneAction = "I look carefully at Sarah's phone.";
-  const bagAction = "I search for Sarah's work bag and any clue to where she went.";
+  const phoneAction = "I look carefully at Michelle's phone.";
+  const bagAction = "I search for Michelle's work bag and any clue to where she went.";
   const phoneTurn = await submitTurn(page, phoneAction);
   const phoneNarration = narrationText(phoneTurn);
   const bagTurn = await submitTurn(page, bagAction);
@@ -170,7 +170,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   test.skip(!process.env.E2E_KNOWLEDGE_TIMELINE, "requires an explicitly selected staged knowledge-timeline run");
   await startSceneSession(page);
   const turns = [];
-  const forbiddenBeforeRecording = /sarah(?:'s)? warning|do not trust.*broadcast|janus/i;
+  const forbiddenBeforeRecording = /michelle(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
     const payload = await submitTurn(page, input);
     const narration = narrationText(payload);
@@ -179,11 +179,11 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
     return narration;
   };
 
-  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Sarah's disappearance.");
+  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Michelle's disappearance.");
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
-  const phone = await record("I examine Sarah's phone carefully without leaving the kitchen.");
+  const phone = await record("I examine Michelle's phone carefully without leaving the kitchen.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("I search the desk and drawer for Sarah's research or a damaged recording.");
+  const investigation = await record("I search the desk and drawer for Michelle's research or a damaged recording.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
   const gate = await record("I check the front gate and listen for a patrol arriving or searching the house.");
   if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
@@ -225,8 +225,8 @@ test("advances declared pressure with the opt-in E2E clock instead of wall-clock
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I call Gabriel Dexter and ask what he knows about Sarah's disappearance.",
-    "I review Sarah's message and ask only what the current evidence supports.",
+    "I call Brandon Corfman and ask what he knows about Michelle's disappearance.",
+    "I review Michelle's message and ask only what the current evidence supports.",
   ];
   const narrations = [];
   for (const prompt of prompts) {
@@ -240,8 +240,8 @@ test("keeps NPC interaction and reveals bounded to the current scene @npc", asyn
 
 test("preserves legal world-state changes across follow-up turns @world-state", async ({ page }) => {
   await startSceneSession(page);
-  const pickup = await submitTurn(page, "I pick up Sarah's phone and keep it with me.");
-  const followUp = await submitTurn(page, "I check that I still have Sarah's phone and use only what I carry.");
+  const pickup = await submitTurn(page, "I pick up Michelle's phone and keep it with me.");
+  const followUp = await submitTurn(page, "I check that I still have Michelle's phone and use only what I carry.");
   await resolveWarningIfPresent(page);
   await writeCategoryReport("world-state", {
     pickup_state: pickup.state,
