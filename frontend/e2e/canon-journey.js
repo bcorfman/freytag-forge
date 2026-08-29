@@ -2,60 +2,76 @@
 // legitimately satisfy a scene's outgoing bridge in fewer turns than the
 // authored maximum, so a fixed turn-indexed script produces false failures the
 // moment a valid faster ordering is chosen. The harness reads the scene the
-// runtime reports and sends that scene's next prompt, asserting the invariants
-// that actually matter: the spine never regresses, never skips a scene, and
-// ends at the authored resolution.
+// runtime reports and sends that scene's next prompt.
 //
-// Each scene lists prompts in authored beat order. They name only evidence the
-// player can already have in that scene, so the run never smuggles in a future
-// reveal.
+// Each scene's prompts follow its authored beat order in plot.md, one beat per
+// prompt. A prompt must never presuppose a beat that has not happened yet: the
+// canon judge reads a player action that already knows a later reveal as the
+// scene contradicting its own authored order. Asking to watch "the marked gate"
+// on the first turn of 1A failed exactly that way, because the patrol has not
+// visited and marked it until 1A.4.
 export const scenePrompts = {
+  // 1A.1 empty house -> 1A.2 hidden research -> 1A.3 damaged recording -> 1A.4 patrol and gate marker
   "1A": [
-    "I search the house for concrete signs Michelle was taken - the overturned chair, the forced back door - and I stay hidden while I watch the marked front gate for the patrol's return.",
-    "I retrieve the hidden memory card taped beneath the drawer, preserve Michelle's research, and use it to identify an actionable lead away from the house.",
-    "I go back over the kitchen and her work area for anything I have not yet accounted for.",
+    "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+    "I look for anything Michelle hid deliberately, checking under the drawers and behind her work area for materials she did not want found.",
+    "I try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+    "Someone official is at the door asking questions about her work; I keep what I found hidden, then watch what they do at the gate as they leave.",
   ],
+  // 1B.1 dead drop -> 1B.2 the man following -> 1B.3 his warning -> 1B.4 ambush and escape
   "1B": [
-    "At the park dead drop I take the transit card and the photograph, and when the stranger from the photo intervenes against the patrol I demand to know who he is and whether the missing are still alive.",
-    "I escape with him through the storm drains and watch closely as he unlocks the secured maintenance gate with a specialized code no civilian should have, following the route toward the freight terminal.",
-    "I press him on the handwritten sequence and the dates until the route it points to is unambiguous.",
+    "At the bench her files pointed to, I search underneath for whatever she left there and study every item of it.",
+    "The man watching me from across the park moves when I do; I break for the service tunnels, and when he intervenes I demand to know who he is.",
+    "I press him on what actually happened to the missing people, and whether any of them are still alive.",
+    "A tactical team closes in; I get us out through the storm drains and watch how he opens the secured gate.",
   ],
+  // 1C.1 transport route -> 1C.2 captives -> 1C.3 nationwide network -> 1C.4 architects
   "1C": [
-    "I use the transit card at the freight terminal and slip into the service level to confirm the site is active beneath the abandoned surface.",
-    "From the observation shaft I document the rows of sedated prisoners being moved and match their identification numbers against the missing-person files.",
-    "I read the logistics terminal and the recorded conference to understand how far this network reaches and who is directing it.",
+    "I use the transit card at the freight terminal and work down into the service level, reading the site for signs it is still active.",
+    "From the observation shaft I watch the processing floor and match what I see against the missing-person records.",
+    "I get into a logistics terminal and follow where the transports actually go beyond this site.",
+    "I play back the recorded conference between the people directing this operation and listen to what they intend next.",
   ],
+  // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover
   "2A": [
-    "At the hideout I take stock of how long he has been preparing for this and what he has been hoarding against it.",
-    "I build false inspector identities around the facility's real cooling and support-column failure risk so we can enter as technical specialists.",
-    "We enter under the inspection cover and I convince the questioning supervisor that a progressive support-column collapse is imminent, gaining access to the restricted infrastructure corridors.",
+    "At his hideout I take stock of the servers, the salvaged hardware, and how long he has been preparing for this.",
+    "I work the facility's cooling and support-column weakness into credentials that present us as the inspectors it would have to admit.",
+    "We go in under that cover, and when a supervisor challenges the unscheduled inspection I make the collapse risk sound imminent enough to earn the restricted corridors.",
   ],
+  // 2B.1 selection algorithm -> 2B.2 Kristin was bait -> 2B.3 his role -> 2B.4 Michelle's resistance
   "2B": [
-    "In the records archive I open the selection files to learn why Michelle was taken and why I was left behind.",
-    "I confront my ally with his name in the original development records and demand the truth about his role and his motives.",
-    "I trace the corrupted prisoner files and equipment failures and recognize Michelle's phrasing in them - she has been resisting from inside.",
+    "In the records archive I open the selection files and read how people were sorted, and why Michelle was among them.",
+    "I look for my own name in those records and find out what they expected me to do.",
+    "I put his name in the development records in front of him and demand the truth about what he built.",
+    "I trace the corrupted prisoner files and equipment failures until I recognize whose hand is behind them.",
   ],
+  // 2C.1 the offer -> 2C.3 evidence or rescue -> 2C.4 Michelle's combined plan
   "2C": [
-    "I stay close to Brandon as he fields the private executive channel and judge whether the architects are turning on each other.",
-    "I follow Michelle's coded maintenance message and commit to the combined plan: broadcast the evidence from the secured executive office while opening the detention sectors for the rescue.",
-    "I take stock of exactly what evidence we are carrying and what transmitting it will cost us.",
+    "I stay close while the executive channel makes its private offer, and judge whether the people running this are turning on each other.",
+    "I weigh what transmitting our evidence right now would cost the people still held here.",
+    "I follow Michelle's coded message through the maintenance network and commit to the plan it describes.",
   ],
+  // 3A.1 reach Michelle -> 3A.2 experiments -> 3A.3 override codes -> 3A.4 uprising
   "3A": [
-    "I descend into the detention block and reach Michelle where she is coordinating the prisoners through stolen radios and coded announcements.",
-    "Michelle leads me through the medical level; I document the behavioral experiments and copy the imprisoned official's emergency override authorization before it expires.",
-    "With the override codes about to lose their value, Michelle triggers the coordinated uprising and we fight upward toward the command and broadcast levels.",
+    "I get down into the detention sector and find Michelle where she is running her network.",
+    "She walks me through the medical level, and I document what was done to the prisoners there.",
+    "I find the imprisoned official among the captives and secure the authorization he is carrying before it lapses.",
+    "With that window closing, Michelle gives the signal and we move with the prisoners toward the upper levels.",
   ],
+  // 3B.1 overload JANUS -> 3B.2 Rebecca's office -> 3B.3 betrayal -> 3B.4 relay
   "3B": [
-    "I create conflicting infrastructure emergencies - flooded corridors, structural alarms, power cuts - to overload the predictive security system until human operators take control.",
-    "In Rebecca's office I confront her over the experiments she approved while Charles locks her out and abandons her, and I secure her record of the detention-site locations.",
-    "Brandon reaches the relay chamber, disconnects it from the automated network, and transmits his confession while holding the relay open for us.",
+    "I set off contradictory emergencies across the infrastructure until the system predicting us has to hand control back to people.",
+    "We reach the executive office and I confront her with what she personally approved.",
+    "Her own side locks her out and writes off this site; I take the detention-site locations she is suddenly willing to trade.",
+    "He goes for the relay chamber to cut it loose from the network and put his own confession on the wire.",
   ],
+  // 3C.1 transmission -> 3C.2 archive and confrontation -> 3C.3 collapse -> 3C.4 resolution
   "3C": [
-    "Michelle starts the national broadcast through the open relay - the captives, the selection records, the detention locations - until the truth can no longer be contained.",
-    "I stop Rebecca from leaving with the portable archive, and rather than destroy it we copy it out to independent networks.",
-    "I hold the emergency supports while Michelle leads the captives up through the maintenance tunnels to the surface.",
-    "I take account of what this has changed across the country and what it has not.",
-    "I read the recovered fragment describing what was planned to follow all of this.",
+    "Michelle opens the broadcast and we push the evidence out - the captives, the selection records, the locations.",
+    "I stop her leaving with the portable archive, and rather than destroy it we copy it out to independent networks.",
+    "I hold the emergency supports while the prisoners are led up through the maintenance tunnels.",
+    "I take account of what this has changed across the country, and what it has not.",
+    "I read the recovered fragment describing what was meant to follow all of this.",
   ],
 };
 
@@ -73,6 +89,6 @@ export function promptFor(sceneId, usedCount) {
 // ahead, so it walks the same prompts in authored scene order.
 export const spineJourney = [
   scenePrompts["1A"][0],
-  "I keep watch from cover and reassess the physical evidence without leaving the house.",
+  "I keep looking over the room for anything I have not yet accounted for.",
   ...Object.values(scenePrompts).flat(),
 ];
