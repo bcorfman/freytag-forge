@@ -15,6 +15,10 @@ import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
 // the model spends on a non-progressing but valid candidate.
 const MAX_CANON_TURNS = 36;
 
+// A scene has at most three authored reveals, so more consecutive empty turns than
+// that means the scene is not progressing rather than merely taking its time.
+const MAX_STALLED_TURNS = 5;
+
 function narrationText(payload) {
   const turnText = (payload.segments || [])
     .filter((segment) => ["narration", "action", "dialogue"].includes(segment.kind))
@@ -102,6 +106,8 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   const sceneOrder = pacing.sceneOrder;
   let sceneId = "1A";
   let elapsed = 0;
+  let stalledTurns = 0;
+  let lastCommittedCount = 0;
   const promptsUsed = new Map();
   const progress = [];
 
@@ -162,6 +168,17 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
         if (!inScenePastDue && eventScene >= to) continue;
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
       }
+
+      // A scene that commits nothing several turns running is stalled: the reveals
+      // its outgoing bridge needs are never landing. Say so where it happens rather
+      // than letting it quietly consume the whole turn budget.
+      const committed = (payload.state?.fired_storylet_ids || []).length;
+      stalledTurns = committed === lastCommittedCount && reachedSceneId === sourceSceneId ? stalledTurns + 1 : 0;
+      lastCommittedCount = committed;
+      expect(
+        stalledTurns,
+        `Scene ${sourceSceneId} committed nothing for ${stalledTurns} turns running; its outgoing reveals are not landing.`,
+      ).toBeLessThan(MAX_STALLED_TURNS);
 
       if (!byScene.has(reachedSceneId)) byScene.set(reachedSceneId, { opening: "", turns: [] });
       byScene.get(reachedSceneId).turns.push({ player_input: input, narration, source_scene_id: sourceSceneId });

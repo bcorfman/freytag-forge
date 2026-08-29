@@ -330,8 +330,12 @@ def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> No
         provider._parse_eligible_proposal({"segments": segments, "selected_knowledge_ids": selected})
 
 
-def test_turn_prompt_forbids_selection_when_no_candidate_is_offered(monkeypatch) -> None:
-    """A quiet turn must not invite a selection; inventing one costs the player the turn."""
+def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
+    """A quiet turn must not invite a selection, and an offered reveal must be claimed.
+
+    Inventing an ID on a quiet turn costs the player the turn; declining an earned
+    reveal costs the story its progress and stalls the scene.
+    """
 
     payloads: list[dict[str, object]] = []
 
@@ -352,7 +356,10 @@ def test_turn_prompt_forbids_selection_when_no_candidate_is_offered(monkeypatch)
     state.active_event_ids.add("SL-1A-B")
     provider("I search the desk drawer for Michelle's recording.")
     offered_prompt = payloads[-1]["system"]
-    assert "Select at most one candidate" in offered_prompt
+    # An offered reveal is a duty, not an option: permissive wording let the model
+    # narrate the earned moment without committing it, stalling the scene.
+    assert "MUST reveal it" in offered_prompt
+    assert "k_sl_1a_b_r2" in offered_prompt, "the offered candidate IDs must be named"
     assert "MUST be an empty list" not in offered_prompt
 
 
