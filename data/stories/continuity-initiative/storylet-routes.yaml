@@ -531,6 +531,69 @@ storylets:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1A-D
+  scene_id: 1A
+  title: The Memory Card Under the Drawer
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: continuity_initiative_known
+      equals: false
+    - fact_id: michelle_warning_known
+      equals: true
+    pacing:
+      earliest_seconds: 0
+      target_seconds: 120
+      latest_seconds: 300
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: When Kristin reached the damaged recording before the files, the card is still under the drawer;
+    the warning tells her Michelle hid something deliberately, so keep searching for what it points to.
+  realization_options:
+  - id: SL-1A-D-R1
+    dramatic_intent: Kristin finds the card taped beneath the drawer and reads enough of the files to know where
+      Michelle was pointing her.
+    operations:
+    - op: assert
+      fact_id: continuity_initiative_known
+      value: true
+    - op: assert
+      fact_id: michelle_abduction_suspicion
+      value: true
+    - op: assert
+      fact_id: michelle_lead_actionable
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1a_1b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - phase_two
+  - id: SL-1A-D-R2
+    dramatic_intent: Only fragments of the research survive recovery, but they still name the exchange point Michelle
+      used, which is enough to move on.
+    operations:
+    - op: assert
+      fact_id: continuity_initiative_known
+      value: true
+    - op: assert
+      fact_id: michelle_lead_actionable
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1a_1b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: michelle_lead_actionable
+      equals: true
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1B-A
   scene_id: 1B
   title: The Dead Drop Has More Than One Meaning
@@ -1936,6 +1999,7 @@ coverage_matrix:
   trigger_fact_id: michelle_lead_actionable
   storylets_helping_in_source_scene:
   - SL-1A-B
+  - SL-1A-D
   status: covered_by_gated_canonical_bridge
   canonical_fallback_event: bridge_1a_actionable_lead
 - scene_id: 1B
@@ -2036,6 +2100,7 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-1A-B
+  - SL-1A-D
   fallback_realization: Validated free-text recovery of Michelle’s memory-card files may establish the concrete park/dead-drop
     lead; the warning alone is not sufficient.
 - id: bridge_1b_departure

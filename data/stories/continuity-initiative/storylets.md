@@ -132,6 +132,54 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-D — The Memory Card Under the Drawer
+
+**Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin has recovered Michelle’s damaged warning but not yet her research files.
+- Kristin remains able to search Michelle’s work area.
+- The memory card has not been destroyed or permanently lost.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee through her research notes
+- Hidden memory card
+
+**Dramatic purpose**
+- Guarantee that the concrete lead away from the house stays earnable when Kristin reached the damaged recording before the research files.
+- Keep the memory card, not the damaged recording, as the thing that names where Michelle was working.
+
+**Possible realizations**
+- Kristin finds the card taped beneath the drawer and reads enough of the files to know where Michelle was pointing.
+- Kristin recovers only fragments of the research, but they still name the exchange point Michelle used.
+
+**Effects**
+- Sets `continuity_initiative_known`.
+- Sets `michelle_lead_actionable` once Kristin has a concrete lead she can follow away from the house.
+- May set `michelle_abduction_suspicion`.
+
+**Completion**
+- Kristin holds or has copied Michelle’s research and knows where to go next.
+
+**Abort**
+- The card becomes inaccessible through a player-caused destructive proposal; if it is a required future dependency with no fallback, normal game-break handling applies.
+
+**Protected boundary**
+- “Continuity Initiative” may be known as Michelle’s suspicious emergency program, but its actual national purpose remains protected.
+
+**Pacing window**
+- earliest: `00:00:00`
+- target: `00:02:00`
+- latest: `00:05:00`
+
+**Pacing impact**
+`brief_delay`
+
+---
+
 ### SL-1A-C — The Welfare Check Feels Like a Search
 
 **Source beats:** [1A.4 — The First Threat](plot.md#scene-1a4--the-first-threat)
@@ -1575,7 +1623,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 | Playable scene | Storylets | Primary function |
 |---|---|---|
-| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-C` | Crime-scene inference, Michelle’s evidence, first authority pressure |
+| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-C` | Dead-drop clues, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-C` | Facility discovery, living captives, national scale |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |

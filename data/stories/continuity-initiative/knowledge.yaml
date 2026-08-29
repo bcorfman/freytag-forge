@@ -338,6 +338,61 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+- id: k_sl_1a_d_r1
+  statement: 'Taped beneath a drawer, Michelle''s memory card holds her research and names the place she used to trade information.'
+  entity_ids: [kristin, michelle, memory_card]
+  aliases:
+  - hidden memory card
+  - Michelle's research
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: continuity_initiative_known
+    value: true
+  - op: assert
+    fact_id: michelle_abduction_suspicion
+    value: true
+  - op: assert
+    fact_id: michelle_lead_actionable
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-D
+    realization_id: SL-1A-D-R1
+  relevance:
+    entity_ids: [memory_card]
+    priority: 10
+- id: k_sl_1a_d_r2
+  statement: 'Only fragments of Michelle''s files survive, but they still name the exchange point she was using.'
+  entity_ids: [kristin, michelle, memory_card]
+  aliases:
+  - recovered fragments
+  - exchange point
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: continuity_initiative_known
+    value: true
+  - op: assert
+    fact_id: michelle_lead_actionable
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-D
+    realization_id: SL-1A-D-R2
+  relevance:
+    entity_ids: [memory_card]
+    priority: 0
 - id: k_sl_1a_c_r1
   statement: 'The patrol’s interest in Michelle’s research makes Kristin doubt that its welfare check is innocent.'
   entity_ids: []

@@ -30,7 +30,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 29
+    assert len(package.storylets) == 30
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)

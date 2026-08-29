@@ -148,7 +148,10 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
         {"k_sl_1a_a_r1", "k_sl_1a_a_r2"},
         set(),
         {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
-        {"k_sl_1a_c_r1", "k_sl_1a_c_r2"},
+        # This run took the damaged recording before Michelle's files, which used to
+        # consume Scene 1A's only source of the actionable lead. The memory card
+        # recovery now appears alongside the patrol beat so the scene stays winnable.
+        {"k_sl_1a_c_r1", "k_sl_1a_c_r2", "k_sl_1a_d_r1", "k_sl_1a_d_r2"},
     )
     for player_input, expected in zip(
         (
