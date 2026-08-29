@@ -225,7 +225,7 @@ test("advances declared pressure with the opt-in E2E clock instead of wall-clock
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I call Brandon Corfman and ask what he knows about Michelle's disappearance.",
+    "I try calling Michelle again and listen for anything her phone still tells me about where she went.",
     "I review Michelle's message and ask only what the current evidence supports.",
   ];
   const narrations = [];
