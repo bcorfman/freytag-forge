@@ -21,7 +21,9 @@ def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
 def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
-    engine = RuntimeEngine(state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"]))
+    engine = RuntimeEngine(
+        state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
+    )
 
     proposal = engine.turn("I search the desk drawer and play the damaged recording.")
 
