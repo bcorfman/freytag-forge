@@ -177,19 +177,11 @@ class CloudflareTurnProvider:
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         try:
             response = self._request(fallback_payload)
-            self._parse_eligible_proposal(response)
-            return response
         except HTTPError as error:
             raise self._narration_error(error) from error
-        except RuntimeContractError as error:
-            summary = contract_error_summary(error) or getattr(error, "summary", "") or "invalid proposal"
-            raise NarrationProviderError(
-                f"narration service returned an invalid proposal ({summary})",
-                502,
-                "INVALID_PROPOSAL",
-            ) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
+        return self._eligible_or_narration_only(response)
 
     def _recover_malformed_response(self, payload: dict[str, object], hint: str = "") -> object:
         correction = f" {hint}" if hint else ""
@@ -203,19 +195,46 @@ class CloudflareTurnProvider:
         }
         try:
             response = self._request(recovery_payload)
-            self._parse_eligible_proposal(response)
-            return response
         except HTTPError as error:
             raise self._narration_error(error) from error
+        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            raise NarrationProviderError("narration service is unavailable") from error
+        return self._eligible_or_narration_only(response)
+
+    def _eligible_or_narration_only(self, response: object) -> object:
+        """Accept the reply, or keep only its narration when it still names knowledge it may not use.
+
+        A provider that will not correct its selection after one guided retry
+        would otherwise cost the player the turn. Returning the narration with
+        no selection and no grounding cannot commit an unearned fact: the
+        runtime only ever commits through an eligible package route, and the
+        projection never showed this provider the ineligible unit's statement.
+        A reply that cannot be parsed at all is still refused.
+        """
+
+        try:
+            self._parse_eligible_proposal(response)
+        except _EligibilityError:
+            proposal = parse_turn_proposal(response)
+            return {
+                "segments": [
+                    {
+                        "kind": segment.kind,
+                        "text": segment.text,
+                        **({"speaker_id": segment.speaker_id} if segment.speaker_id else {}),
+                    }
+                    for segment in proposal.segments
+                ],
+                "selected_knowledge_ids": [],
+            }
         except RuntimeContractError as error:
-            summary = contract_error_summary(error) or getattr(error, "summary", "") or "invalid proposal"
+            summary = contract_error_summary(error) or "invalid proposal"
             raise NarrationProviderError(
                 f"narration service returned an invalid proposal ({summary})",
                 502,
                 "INVALID_PROPOSAL",
             ) from error
-        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
-            raise NarrationProviderError("narration service is unavailable") from error
+        return response
 
     def _parse_eligible_proposal(self, response: object) -> TurnProposal:
         proposal = parse_turn_proposal(response)
