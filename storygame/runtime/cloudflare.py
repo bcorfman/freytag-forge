@@ -201,6 +201,14 @@ class CloudflareTurnProvider:
         proposal = parse_turn_proposal(response)
         if self.last_projection is None:
             raise RuntimeContractError("knowledge projection is unavailable")
+        # This pre-check must mirror every provider-facing rule in SelectedRevealResolver.resolve;
+        # a rule missing here becomes a hard turn failure in the browser instead of one recovery.
+        if len(proposal.selected_knowledge_ids) > 1:
+            raise _EligibilityError(
+                "at most one knowledge selection is allowed per turn",
+                f"You selected {', '.join(sorted(proposal.selected_knowledge_ids))}. Choose exactly one of those "
+                "IDs and drop the rest; a turn may reveal at most one candidate.",
+            )
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
         ineligible = sorted(
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}

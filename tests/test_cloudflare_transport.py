@@ -10,7 +10,10 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
+from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -279,6 +282,48 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> N
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 1, "grounding on the selected candidate must not spend a recovery"
+
+
+@pytest.mark.parametrize(
+    ("segments", "selected"),
+    [
+        pytest.param(
+            [{"kind": "narration", "text": "Two reveals at once."}],
+            ["k_sl_1a_b_r1", "k_sl_1a_b_r2"],
+            id="more than one selection",
+        ),
+        pytest.param(
+            [{"kind": "narration", "text": "An unearned reveal."}],
+            ["k_future_unavailable"],
+            id="selection outside this turn's candidates",
+        ),
+        pytest.param(
+            [{"kind": "narration", "text": "A grounded claim.", "grounding_ids": ["k_sl_1a_b_r2"]}],
+            [],
+            id="grounding that is neither committed nor selected",
+        ),
+    ],
+)
+def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> None:
+    """Every provider-facing rule the resolver enforces must also fail the transport pre-check.
+
+    A rule the resolver rejects but the transport accepts reaches the player as a
+    hard turn failure instead of spending the transport's one recovery attempt.
+    """
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    projector = KnowledgeProjector()
+    projection = projector.project(state, "player", "I search the drawer.")
+    provider_proposal = parse_turn_proposal({"segments": segments, "selected_knowledge_ids": selected})
+
+    with pytest.raises(ProposalValidationError):
+        SelectedRevealResolver(PACKAGE).resolve(state, projection, provider_proposal, projector, "I search the drawer.")
+
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider.last_projection = projection
+    with pytest.raises(RuntimeContractError):
+        provider._parse_eligible_proposal({"segments": segments, "selected_knowledge_ids": selected})
 
 
 def test_repeated_ineligible_selection_reports_the_rule_without_leaking_ids(monkeypatch) -> None:
