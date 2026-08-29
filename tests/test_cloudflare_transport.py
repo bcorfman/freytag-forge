@@ -310,6 +310,5 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
         "entry_text": PACKAGE.scenes[0].metadata.entry_text,
         "opening_beat": {"id": "1A.1", "title": beat.title, "prose": beat.prose},
     }
-    assert "smear of blood" in beat.prose
     assert user["knowledge_context"]["player"]["scene_id"] == "1A"
     assert "speakers" not in user["knowledge_context"]

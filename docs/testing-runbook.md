@@ -312,6 +312,39 @@ Last verified: 2026-08-26 — 3 passing tests, exit code 0.
 **Notes:** This is a renderer-only smoke test. It does not call FastAPI,
 Cloudflare, or Workers AI.
 
+## Fast unit and component feedback
+
+**Purpose:** Verify the deterministic unit and component contracts used by the
+CI fast-feedback job without invoking the repository-wide coverage gate.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies installed with `uv sync --group dev`.
+- Run from the repository root with pytest temporary files under `/tmp`.
+
+**Safe actions:** Tests use local fixtures and injected transport responses.
+
+**Destructive or external actions:** None; no live provider credentials are
+required.
+
+**Steps:**
+
+1. Run the marker-selected fast-feedback suite from the repository root.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q --no-cov -m "unit or component"
+```
+
+Expected: all selected tests pass; quality-suite collection counts remain
+informational.
+
+**Cleanup:** None; pytest temporary files are under `/tmp`.
+
+**Notes:** Last verified 2026-08-29 — 65 passed and 39 deselected. This suite
+includes the Cloudflare opening-prompt transport contract.
+
 ## Full Markdown scene-runtime suite
 
 **Purpose:** Verify package loading, context scoping, fact-backed progression,

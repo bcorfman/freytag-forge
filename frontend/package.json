@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test src/*.test.js e2e/roleplay-judge.test.js",
+    "test": "node --test src/*.test.js e2e/*.test.js",
     "test:e2e": "playwright test",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "yaml": "^2.9.0"
   }
 }

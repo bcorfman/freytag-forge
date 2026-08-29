@@ -66,7 +66,9 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     state.apply_proposal(
         ResolvedTurnProposal(
             segments=(
-                NarrationSegment(kind="narration", text="The damaged recording begins with Michelle's breath catching."),
+                NarrationSegment(
+                    kind="narration", text="The damaged recording begins with Michelle's breath catching."
+                ),
             ),
             events=(
                 StoryEventProposal(

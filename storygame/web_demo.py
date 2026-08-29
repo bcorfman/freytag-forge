@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 from collections import deque
 from collections.abc import Callable
 from os import getenv
@@ -35,6 +36,7 @@ class TurnRequest(_Request):
     player_input: str | None = Field(default=None, min_length=1, max_length=12000)
     command: str | None = Field(default=None, min_length=1, max_length=12000)
     test_clock_seconds: int | None = Field(default=None, ge=0, le=3600)
+    test_clock_token: str | None = None
 
     @model_validator(mode="after")
     def has_one_player_input(self) -> TurnRequest:
@@ -140,6 +142,7 @@ def create_demo_app(
     allowed_headers = ["Content-Type", "Authorization"]
     if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") == "1":
         allowed_headers.append("X-Freytag-Test-Clock-Seconds")
+        allowed_headers.append("X-Freytag-Test-Clock-Token")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[item for item in getenv("FREYTAG_CORS_ORIGINS", "*").split(",") if item],
@@ -253,6 +256,16 @@ def _test_clock_seconds(body: TurnRequest, request: Request) -> int | None:
         value = request.headers.get("X-Freytag-Test-Clock-Seconds")
     if value is None:
         return None
+    configured_secret = getenv("FREYTAG_TEST_CLOCK_TOKEN", "")
+    if not configured_secret:
+        raise HTTPException(status_code=503, detail="test clock is enabled but no shared secret is configured")
+    supplied_secret = body.test_clock_token
+    if supplied_secret is None:
+        supplied_secret = request.headers.get("X-Freytag-Test-Clock-Token")
+    if supplied_secret is None:
+        supplied_secret = ""
+    if not hmac.compare_digest(supplied_secret.encode("utf-8"), configured_secret.encode("utf-8")):
+        raise HTTPException(status_code=403, detail="test clock token is invalid")
     try:
         seconds = int(value)
     except ValueError as error:
