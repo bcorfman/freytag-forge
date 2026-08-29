@@ -568,45 +568,127 @@ Expected: every reached scene receives a passing verdict for canon consistency, 
 
 **Cleanup:** Remove generated ignored E2E artifacts if they are no longer useful.
 
-**Notes:** This is intentionally separate from deterministic state assertions. It skips when `OPENAI_API_KEY` or `E2E_TEST_CLOCK_SECONDS` is absent. Start the local API with `FREYTAG_ALLOW_TEST_CLOCK=1`, then use `E2E_TEST_CLOCK_SECONDS=120`; Vite adds this value to the ordinary JSON turn body, avoiding a CORS preflight. Each turn is bounded to 30 seconds (override with `E2E_TURN_TIMEOUT_MS`) and partial progress is written to `artifacts/e2e-llm-canon-progress.{json,md}`.
+**Notes:** This is intentionally separate from deterministic state assertions. It
+skips when `OPENAI_API_KEY` is absent. Use the package-driven clock recipe
+below; each turn is bounded by `E2E_TURN_TIMEOUT_MS` (default 30000) and
+partial progress is written to
+`artifacts/e2e-llm-canon-progress.{json,md}`. This recipe creates a disposable
+session and makes billed narration and judge calls; it is not part of ordinary
+CI.
 
 Last verified: 2026-08-27 — after staging reported runtime `scene-v1` for the merged SHA, `source .env && cd frontend && npm run test:e2e -- --grep @llm-canon` completed all eight turns and reached the independent judge. The judge failed scene `1A`: narration leaked JANUS and broader system purpose, rushed into later-scene beats, and did not consistently respond to the player action from the Thomas home. Treat this as a scene-context/prompt safety defect, not a transport or fact-validation failure. Preserve freeform LLM-proposed new facts; canonical package facts remain route-authorized, and repeated identical canonical assertions are no-ops.
 
 On 2026-08-27, the same command again reached the judge but failed at scene `1A`. Its eight recorded turns remained in `1A` while accepting future-scene player requests, including a dead drop, facility entry, JANUS, a purge clock, and a relay. The source prompt now states that the scene object is exhaustive and that player input cannot authorize future names, places, objectives, or plot beats; deploy that revision before treating the live acceptance check as resolved.
 
-## Deterministic E2E pacing clock
+## Hosted E2E pacing clock — timed events
 
-**Purpose:** Trigger declared pacing pressure in browser tests without waiting for wall-clock time.
+**Purpose:** Trigger declared pacing pressure in the hosted staging browser
+test without waiting for wall-clock time.
 
 **Setup / seed:**
 
-- Start only a local/API test server with `FREYTAG_ALLOW_TEST_CLOCK=1`.
-- Start Vite with `E2E_TEST_CLOCK_SECONDS=120`; this adds `test_clock_seconds` to JSON turn requests.
+- Source the repository-root `.env` before changing into `frontend/`; it sets
+  `E2E_API_BASE_URL` to the deployed staging service and
+  `E2E_DEPLOYMENT_CHANNEL=staging`.
+- Staging deliberately enables the gated test clock with
+  `FREYTAG_ALLOW_TEST_CLOCK=1`. Production does not enable it.
+- The staging service must have `FREYTAG_TEST_CLOCK_TOKEN` configured before
+  this change is deployed. Never enable the clock anywhere without this shared
+  secret; do not write its value into this runbook.
 
 **Safe actions:**
 
-- The test-clock body field is ignored unless the API process explicitly opted in.
+- The scalar opt-in is Playwright-side and exercises the ordinary application
+  request path; it does not start a local API.
 
 **Destructive or external actions:**
 
-- None; do not enable this environment variable on a deployed API.
+- A real E2E run creates a disposable staging session and may make billed
+  narration calls.
 
 **Steps:**
 
-1. Start the opted-in local API and Vite test server.
-2. Run the tagged Playwright test.
+1. Confirm the root `.env` points the browser at staging.
+2. Run this recipe alone; do not combine it with the package-driven recipe.
 
 **Verify:**
 
 ```bash
-cd frontend && E2E_TEST_CLOCK_SECONDS=120 npm run test:e2e -- --grep @timed-events
+source .env && cd frontend && E2E_TEST_CLOCK_SECONDS=120 npm run test:e2e -- --grep @timed-events
 ```
 
-Expected: the turn response reports `pressure_1a` in `fired_pacing_event_ids` without a two-minute wait.
+Expected: `pressure_1a` fires without a two-minute wait. The harness refuses a
+run with both clock opt-ins set.
 
-**Cleanup:** Unset `FREYTAG_ALLOW_TEST_CLOCK` after local testing.
+**Cleanup:** Delete ignored `artifacts/e2e-*.{json,md}` and Playwright trace
+artifacts when they are no longer needed; the remote session is disposable.
 
-**Notes:** The application accepts `test_clock_seconds` only with explicit server-side opt-in and bounds it to 0–3600 seconds. The legacy header remains supported for non-browser harnesses.
+**Notes:** The API accepts `test_clock_seconds` only while
+`FREYTAG_ALLOW_TEST_CLOCK=1` is set. A correct `FREYTAG_TEST_CLOCK_TOKEN`, sent
+as the `test_clock_token` JSON field or the
+`X-Freytag-Test-Clock-Token` header, advances story time. A wrong or missing
+token returns HTTP 403. If the clock is enabled but
+`FREYTAG_TEST_CLOCK_TOKEN` is not configured, the request fails closed with
+HTTP 503. A turn without a clock request is unaffected. If
+`FREYTAG_ALLOW_TEST_CLOCK` is absent, the clock field is ignored entirely and
+does not produce an error. The staging secret must exist before deployment or
+every clock request returns 503 and this recipe fails.
+
+## Hosted E2E pacing clock — package-driven canon
+
+**Purpose:** Exercise authored pacing milestones at their exact irregular
+timestamps during the hosted `@llm-canon` browser acceptance test.
+
+**Setup / seed:**
+
+- Source the repository-root `.env` before changing into `frontend/`; it sets
+  `E2E_API_BASE_URL` to the deployed staging service and
+  `E2E_DEPLOYMENT_CHANNEL=staging`.
+- Staging deliberately enables the gated test clock with
+  `FREYTAG_ALLOW_TEST_CLOCK=1`; production does not.
+- Configure `FREYTAG_TEST_CLOCK_TOKEN` on staging before deployment. Clients
+  send the shared secret as `test_clock_token` or
+  `X-Freytag-Test-Clock-Token`; never write the secret value here.
+
+**Safe actions:**
+
+- `E2E_PACKAGE_CLOCK=1` is a Playwright-side opt-in. Playwright reads the story
+  package's `pacing.yaml`, names authored milestones semantically, and computes
+  each delta from the last elapsed value returned by the API. It is not
+  forwarded to Vite and does not affect application bundles.
+
+**Destructive or external actions:**
+
+- This command creates a disposable staging session and makes billed narration
+  and judge calls. It is not part of ordinary CI.
+
+**Steps:**
+
+1. Confirm the root `.env` points the browser at staging.
+2. Run this recipe alone; do not combine it with the scalar recipe.
+
+**Verify:**
+
+```bash
+source .env && cd frontend && E2E_PACKAGE_CLOCK=1 npm run test:e2e -- --grep @llm-canon
+```
+
+Expected: the package-driven clock hits each authored milestone without
+waiting for wall-clock time. A wrong or missing clock token returns HTTP 403;
+an enabled staging clock with no configured `FREYTAG_TEST_CLOCK_TOKEN` fails
+closed with HTTP 503. Without `FREYTAG_ALLOW_TEST_CLOCK`, the clock field is
+ignored and does not error. The harness refuses a run with both clock opt-ins
+set.
+
+**Cleanup:** Delete ignored `artifacts/e2e-llm-canon-progress.{json,md}` and
+`artifacts/e2e-llm-canon.{json,md}` when the evidence is no longer needed; the
+remote session is disposable.
+
+**Notes:** Partial progress is written to
+`artifacts/e2e-llm-canon-progress.{json,md}` and final evidence to
+`artifacts/e2e-llm-canon.{json,md}`. Each turn is bounded by
+`E2E_TURN_TIMEOUT_MS` (default 30000). Run this separately from the scalar
+`@timed-events` recipe.
 
 ## Story Feed root page — local Playwright QA
 

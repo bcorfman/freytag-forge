@@ -1,28 +1,25 @@
 import { expect, test } from "@playwright/test";
 
-import { resolveWarningIfPresent, startSceneSession, submitTurn, writeCategoryReport } from "./helpers.js";
+import {
+  installPackageClock,
+  resolveWarningIfPresent,
+  startSceneSession,
+  submitTurn,
+  writeCategoryReport,
+} from "./helpers.js";
+import { loadPackagePacing } from "./package-clock.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
+import { canonJourney } from "./canon-journey.js";
 
 const spineActions = [
-  "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
-  "I pursue the dead drop and ask Gabriel for the evidence needed to move forward.",
+  "I search for concrete evidence of Michelle's disappearance and follow the strongest lead.",
+  "I pursue the dead drop and ask Brandon for the evidence needed to move forward.",
   "I prepare false identities and enter the facility without delaying the mission.",
   "I secure proof of JANUS and act on the current objective.",
-  "I respond to the purge clock, reach Sarah, and preserve the rescue and evidence mission.",
+  "I respond to the purge clock, reach Michelle, and preserve the rescue and evidence mission.",
   "I use the relay and broadcast the evidence before the network can recover.",
   "I finish the current objective and protect the route to the climax.",
   "I bring the story to a responsible resolution.",
-];
-
-const canonActions = [
-  "I search for concrete evidence of Sarah's disappearance and follow the strongest lead.",
-  "I examine the forced back door, the blood by its frame, and anything an intruder left behind.",
-  "I study Sarah's phone for its last call, message, or damage without leaving the kitchen.",
-  "I search the desk and drawer for Sarah's research, notes, or a hidden recording.",
-  "I compare the missing work bag with the rest of the room and look for a route the abductor used.",
-  "I photograph the evidence and listen at the windows for anyone returning to the house.",
-  "I check the front gate and prepare a careful response if the federal patrol comes back.",
-  "I gather the house evidence into one actionable lead while keeping Sarah's warning in mind.",
 ];
 
 function narrationText(payload) {
@@ -36,8 +33,8 @@ function narrationText(payload) {
 async function exerciseDistinctFreeTextActions(page) {
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
-  const phoneAction = "I look carefully at Sarah's phone.";
-  const bagAction = "I search for Sarah's work bag and any clue to where she went.";
+  const phoneAction = "I look carefully at Michelle's phone.";
+  const bagAction = "I search for Michelle's work bag and any clue to where she went.";
   const phoneTurn = await submitTurn(page, phoneAction);
   const phoneNarration = narrationText(phoneTurn);
   const bagTurn = await submitTurn(page, bagAction);
@@ -99,21 +96,64 @@ test("drives the main spine and reports reachability and pressure @spine", async
 
 test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
-  test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the opt-in accelerated E2E game clock");
+  test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
   test.setTimeout(5 * 60_000);
+  const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
+  const controller = await installPackageClock(page, {
+    pacing,
+    token: process.env.FREYTAG_TEST_CLOCK_TOKEN,
+  });
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   let sceneId = "1A";
-  for (const [index, playerInput] of canonActions.entries()) {
-    await test.step(`turn ${index + 1}: scene ${sceneId}`, async () => {
-      const payload = await submitTurn(page, playerInput);
+  const progress = [];
+  for (const [index, step] of canonJourney.entries()) {
+    await test.step(`turn ${index + 1}: scene ${sceneId} to ${step.expectedSceneId}`, async () => {
+      const milestone = step.clock.eventId
+        ? pacing.eventPoint(step.clock.eventId)
+        : pacing.scenePoint(step.clock.sceneId, step.clock.point);
+      controller.arm(milestone);
+      const sourceSceneId = sceneId;
+      const payload = await submitTurn(page, step.input);
+      const warningResolved = await resolveWarningIfPresent(page);
+      const timing = controller.history().at(-1);
+      const observedElapsed = payload.state?.story_elapsed_seconds;
+      if (!timing?.reached) {
+        throw new Error(
+          `Package clock missed ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${step.clock.point || "event"}`}; observed elapsed ${String(observedElapsed)} (pending game break: ${String(payload.state?.pending_game_break === true)}, warning resolved: ${String(warningResolved)}).`,
+        );
+      }
+
       const narration = narrationText(payload);
-      byScene.get(sceneId).turns.push({ player_input: playerInput, narration });
-      await resolveWarningIfPresent(page);
-      sceneId = payload.state?.scene_id || sceneId;
-      if (!byScene.has(sceneId)) byScene.set(sceneId, { opening: "", turns: [] });
-      await writeCategoryReport("llm-canon-progress", { completed_turn: index + 1, current_scene: sceneId, by_scene: [...byScene] });
+      expect(payload.state?.scene_id, `Turn ${index + 1} did not end in the authored scene.`).toBe(step.expectedSceneId);
+      expect(payload.state?.story_elapsed_seconds, `Turn ${index + 1} missed its package milestone.`).toBe(
+        milestone.target_seconds,
+      );
+      for (const eventId of step.expectedEventIds) {
+        expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
+      }
+
+      if (!byScene.has(step.expectedSceneId)) byScene.set(step.expectedSceneId, { opening: "", turns: [] });
+      byScene.get(step.expectedSceneId).turns.push({
+        player_input: step.input,
+        narration,
+        source_scene_id: sourceSceneId,
+      });
+      sceneId = step.expectedSceneId;
+      progress.push({
+        turn: index + 1,
+        input: step.input,
+        requested_milestone: milestone,
+        observed_timing: timing,
+        state: payload.state,
+      });
+      await writeCategoryReport("llm-canon-progress", {
+        completed_turn: index + 1,
+        current_scene: sceneId,
+        by_scene: [...byScene],
+        progress,
+      });
     });
   }
   const judgments = [];
@@ -130,7 +170,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   test.skip(!process.env.E2E_KNOWLEDGE_TIMELINE, "requires an explicitly selected staged knowledge-timeline run");
   await startSceneSession(page);
   const turns = [];
-  const forbiddenBeforeRecording = /sarah(?:'s)? warning|do not trust.*broadcast|janus/i;
+  const forbiddenBeforeRecording = /michelle(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
     const payload = await submitTurn(page, input);
     const narration = narrationText(payload);
@@ -139,11 +179,11 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
     return narration;
   };
 
-  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Sarah's disappearance.");
+  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Michelle's disappearance.");
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
-  const phone = await record("I examine Sarah's phone carefully without leaving the kitchen.");
+  const phone = await record("I examine Michelle's phone carefully without leaving the kitchen.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("I search the desk and drawer for Sarah's research or a damaged recording.");
+  const investigation = await record("I search the desk and drawer for Michelle's research or a damaged recording.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
   const gate = await record("I check the front gate and listen for a patrol arriving or searching the house.");
   if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
@@ -185,8 +225,8 @@ test("advances declared pressure with the opt-in E2E clock instead of wall-clock
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I call Gabriel Dexter and ask what he knows about Sarah's disappearance.",
-    "I review Sarah's message and ask only what the current evidence supports.",
+    "I try calling Michelle again and listen for anything her phone still tells me about where she went.",
+    "I review Michelle's message and ask only what the current evidence supports.",
   ];
   const narrations = [];
   for (const prompt of prompts) {
@@ -200,8 +240,8 @@ test("keeps NPC interaction and reveals bounded to the current scene @npc", asyn
 
 test("preserves legal world-state changes across follow-up turns @world-state", async ({ page }) => {
   await startSceneSession(page);
-  const pickup = await submitTurn(page, "I pick up Sarah's phone and keep it with me.");
-  const followUp = await submitTurn(page, "I check that I still have Sarah's phone and use only what I carry.");
+  const pickup = await submitTurn(page, "I pick up Michelle's phone and keep it with me.");
+  const followUp = await submitTurn(page, "I check that I still have Michelle's phone and use only what I carry.");
   await resolveWarningIfPresent(page);
   await writeCategoryReport("world-state", {
     pickup_state: pickup.state,
