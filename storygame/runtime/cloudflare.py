@@ -74,15 +74,7 @@ class CloudflareTurnProvider:
         self.last_projection = self.projector.project(self.state, "player", player_input)
         speaker_contexts = self._speaker_contexts(player_input)
         return self._dispatch(
-            (
-                "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
-                "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
-                "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
-                "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
-                "applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
-                "sayable context. Select at most one candidate by its ID in selected_knowledge_ids. Never return "
-                "source IDs, events, operations, facts, or transitions."
-            ),
+            self._turn_instruction(),
             {
                 "player_input": player_input,
                 "knowledge_context": {
@@ -90,6 +82,34 @@ class CloudflareTurnProvider:
                     "speakers": speaker_contexts,
                 },
             },
+        )
+
+    def _turn_instruction(self) -> str:
+        """State the selection rule that actually applies to this turn.
+
+        Most turns offer nothing new to reveal. Telling the model to "select at
+        most one candidate" when the list is empty invites it to invent an ID,
+        which the runtime then rejects, so the player loses the turn over a
+        quiet beat that should simply narrate.
+        """
+
+        offers_candidates = bool(self.last_projection and self.last_projection.candidates)
+        selection_rule = (
+            "Select at most one candidate by its ID in selected_knowledge_ids."
+            if offers_candidates
+            else (
+                "This turn offers no candidates: selected_knowledge_ids MUST be an empty list. Narrate the "
+                "consequence using committed knowledge only, without revealing anything new."
+            )
+        )
+        return (
+            "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
+            "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
+            "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
+            "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
+            f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
+            f"sayable context. {selection_rule} Never return "
+            "source IDs, events, operations, facts, or transitions."
         )
 
     def opening(self) -> object:
@@ -214,10 +234,14 @@ class CloudflareTurnProvider:
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}
         )
         if ineligible:
+            available = (
+                f"Select exactly one of [{', '.join(sorted(candidate_ids))}] or select nothing."
+                if candidate_ids
+                else "This turn offers no candidates at all: return selected_knowledge_ids as an empty list."
+            )
             raise _EligibilityError(
                 "selected knowledge is not eligible for this turn",
-                f"You selected {', '.join(ineligible)}, which this turn does not offer. Select exactly one of "
-                f"[{', '.join(sorted(candidate_ids)) or 'no candidates are available'}] or select nothing.",
+                f"You selected {', '.join(ineligible)}, which this turn does not offer. {available}",
             )
         # The runtime rejects a turn whose grounding is neither committed nor selected; catching it
         # here spends the transport's single recovery instead of failing the player's turn.
