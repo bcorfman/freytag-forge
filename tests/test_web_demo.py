@@ -187,6 +187,7 @@ def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
 
 def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: _provider("The patrol's radios crackle outside."),
@@ -195,7 +196,12 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I wait and listen.", "test_clock_seconds": 120},
+            json={
+                "session_id": session_id,
+                "player_input": "I wait and listen.",
+                "test_clock_seconds": 120,
+                "test_clock_token": "clock-secret",
+            },
         )
 
     assert response.status_code == 200
@@ -274,6 +280,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
 
 def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: _provider("The room stays tense."),
@@ -283,12 +290,18 @@ def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> N
         invalid = client.post(
             "/api/v1/turn",
             json={"session_id": session_id, "player_input": "I listen."},
-            headers={"X-Freytag-Test-Clock-Seconds": "later"},
+            headers={
+                "X-Freytag-Test-Clock-Seconds": "later",
+                "X-Freytag-Test-Clock-Token": "clock-secret",
+            },
         )
         unsafe = client.post(
             "/api/v1/turn",
             json={"session_id": session_id, "player_input": "I listen."},
-            headers={"X-Freytag-Test-Clock-Seconds": "3601"},
+            headers={
+                "X-Freytag-Test-Clock-Seconds": "3601",
+                "X-Freytag-Test-Clock-Token": "clock-secret",
+            },
         )
 
     assert invalid.status_code == 422
@@ -304,9 +317,128 @@ def test_test_clock_cors_header_is_available_only_with_local_opt_in(monkeypatch,
             headers={
                 "Origin": "http://127.0.0.1:4173",
                 "Access-Control-Request-Method": "POST",
-                "Access-Control-Request-Headers": "X-Freytag-Test-Clock-Seconds",
+                "Access-Control-Request-Headers": ("X-Freytag-Test-Clock-Seconds, X-Freytag-Test-Clock-Token"),
             },
         )
 
     assert preflight.status_code == 200
     assert "x-freytag-test-clock-seconds" in preflight.headers["access-control-allow-headers"].lower()
+    assert "x-freytag-test-clock-token" in preflight.headers["access-control-allow-headers"].lower()
+
+
+def test_test_clock_accepts_a_correct_header_token(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The patrol's radios crackle outside."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I wait and listen."},
+            headers={
+                "X-Freytag-Test-Clock-Seconds": "120",
+                "X-Freytag-Test-Clock-Token": "clock-secret",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["state"]["story_elapsed_seconds"] == 120
+
+
+def test_test_clock_rejects_a_wrong_token_without_disclosing_secrets(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The room stays tense."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={
+                "session_id": session_id,
+                "player_input": "I listen.",
+                "test_clock_seconds": 120,
+                "test_clock_token": "wrong-secret",
+            },
+        )
+
+    assert response.status_code == 403
+    assert "clock-secret" not in response.text
+    assert "wrong-secret" not in response.text
+
+
+def test_test_clock_rejects_a_missing_token(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The room stays tense."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
+        )
+
+    assert response.status_code == 403
+
+
+def test_test_clock_fails_closed_without_a_configured_secret(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.delenv("FREYTAG_TEST_CLOCK_TOKEN", raising=False)
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The room stays tense."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "test clock is enabled but no shared secret is configured"
+
+
+def test_test_clock_allows_an_ordinary_turn_without_a_configured_secret(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.delenv("FREYTAG_TEST_CLOCK_TOKEN", raising=False)
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The room stays tense."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+
+    assert response.status_code == 200
+
+
+def test_test_clock_field_is_ignored_without_opt_in_even_with_a_wrong_token(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("FREYTAG_ALLOW_TEST_CLOCK", raising=False)
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The room stays tense."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={
+                "session_id": session_id,
+                "player_input": "I listen.",
+                "test_clock_seconds": 120,
+                "test_clock_token": "wrong-secret",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["state"]["story_elapsed_seconds"] == 60

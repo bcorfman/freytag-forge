@@ -2,11 +2,11 @@ import { expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
+import { applyTestClock, isTurnRequest } from "./package-clock-request.js";
+import { createPackageClockController } from "./package-clock-controller.js";
 
-function isTurnRequest(candidate) {
-  return candidate.method() === "POST" && candidate.url().endsWith("/api/v1/turn");
-}
+const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
+const packageClockControllers = new WeakMap();
 
 function waitForTurnOutcome(page) {
   return new Promise((resolve, reject) => {
@@ -20,12 +20,13 @@ function waitForTurnOutcome(page) {
       page.off("requestfailed", onFailure);
     };
     const onResponse = (response) => {
-      if (!isTurnRequest(response.request())) return;
+      const request = response.request();
+      if (!isTurnRequest(request.url(), request.method())) return;
       cleanup();
       resolve(response);
     };
     const onFailure = (request) => {
-      if (!isTurnRequest(request)) return;
+      if (!isTurnRequest(request.url(), request.method())) return;
       cleanup();
       reject(
         new Error(
@@ -38,9 +39,87 @@ function waitForTurnOutcome(page) {
   });
 }
 
+function sessionResponseFor(page, controller) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => page.off("response", onResponse);
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback(value);
+    };
+    const onResponse = async (response) => {
+      const request = response.request();
+      let pathname;
+      try {
+        pathname = new URL(response.url()).pathname;
+      } catch {
+        return;
+      }
+      if (request.method() !== "POST" || pathname !== "/api/v1/session") return;
+
+      try {
+        const payload = await response.json();
+        if (!response.ok()) {
+          finish(reject, new Error(`Package clock could not observe session state: HTTP ${response.status()}.`));
+          return;
+        }
+        controller.observeState(payload.state);
+        finish(resolve, payload);
+      } catch (error) {
+        finish(
+          reject,
+          new Error(
+            `Package clock could not observe session state: ${error instanceof Error ? error.message : String(error)}.`,
+          ),
+        );
+      }
+    };
+    page.on("response", onResponse);
+  });
+}
+
+export async function installPackageClock(page, { pacing, token, controller } = {}) {
+  const packageClockController = controller ?? createPackageClockController();
+  packageClockControllers.set(page, packageClockController);
+
+  await page.route("**/api/v1/turn*", async (route) => {
+    const request = route.request();
+    if (!isTurnRequest(request.url(), request.method())) {
+      await route.continue();
+      return;
+    }
+
+    try {
+      if (packageClockController.armed() === null) {
+        await route.continue();
+        return;
+      }
+      const deltaSeconds = packageClockController.deltaForRequest();
+      const postData = applyTestClock(request.postData() ?? "", { deltaSeconds, token });
+      await route.continue({
+        url: request.url(),
+        method: request.method(),
+        headers: request.headers(),
+        postData,
+      });
+    } catch (error) {
+      throw new Error(
+        `Package clock could not rewrite turn request: ${error instanceof Error ? error.message : String(error)}.`,
+      );
+    }
+  });
+
+  return packageClockController;
+}
+
 export async function startSceneSession(page) {
   await page.goto("/");
+  const controller = packageClockControllers.get(page);
+  const sessionState = controller ? sessionResponseFor(page, controller) : null;
   await page.getByRole("button", { name: "New Session" }).click();
+  if (sessionState) await sessionState;
   await expect(page.locator("#status-line")).toContainText("Scene 1A");
   await expect(page.locator("#transcript")).not.toBeEmpty();
 }
@@ -71,6 +150,16 @@ export async function submitTurn(page, action) {
   if (!apiResponse.ok()) {
     const detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload);
     throw new Error(`Turn API returned HTTP ${apiResponse.status()}: ${detail}`);
+  }
+  const controller = packageClockControllers.get(page);
+  if (controller) {
+    try {
+      controller.observeTurnResponse(payload);
+    } catch (error) {
+      throw new Error(
+        `Package clock could not observe turn response: ${error instanceof Error ? error.message : String(error)}.`,
+      );
+    }
   }
   await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
   return payload;

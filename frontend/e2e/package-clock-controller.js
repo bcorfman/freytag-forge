@@ -1,8 +1,3 @@
-const elapsedField = ["story", "elapsed", "seconds"].join("_");
-const sceneField = ["scene", "id"].join("_");
-const eventField = ["event", "id"].join("_");
-const firedEventsField = ["fired", "pacing", "event", "ids"].join("_");
-
 const MAX_DELTA_SECONDS = 3600;
 
 function readElapsed(state, description) {
@@ -10,19 +5,19 @@ function readElapsed(state, description) {
     state === null ||
     typeof state !== "object" ||
     Array.isArray(state) ||
-    !Number.isInteger(state[elapsedField]) ||
-    state[elapsedField] < 0
+    !Number.isInteger(state.story_elapsed_seconds) ||
+    state.story_elapsed_seconds < 0
   ) {
     throw new Error(
       `${description}: missing or malformed elapsed time; expected a non-negative integer story elapsed value.`,
     );
   }
-  return state[elapsedField];
+  return state.story_elapsed_seconds;
 }
 
 function milestoneIdentity(milestone) {
-  const scene = milestone[sceneField];
-  const event = milestone[eventField];
+  const scene = milestone.scene_id;
+  const event = milestone.event_id;
   const eventDescription = event === undefined ? "" : `, event ${String(event)}`;
   return `scene ${String(scene)}${eventDescription}`;
 }
@@ -33,10 +28,10 @@ function validateMilestone(milestone) {
     typeof milestone !== "object" ||
     Array.isArray(milestone) ||
     (milestone.kind !== "scene_point" && milestone.kind !== "pacing_event") ||
-    typeof milestone[sceneField] !== "string" ||
+    typeof milestone.scene_id !== "string" ||
     !Number.isInteger(milestone.target_seconds) ||
     milestone.target_seconds < 0 ||
-    (milestone.kind === "pacing_event" && typeof milestone[eventField] !== "string")
+    (milestone.kind === "pacing_event" && typeof milestone.event_id !== "string")
   ) {
     throw new Error("Cannot arm milestone: malformed milestone target or identity.");
   }
@@ -129,9 +124,9 @@ export function createPackageClockController() {
         prior_elapsed_seconds: priorElapsedSeconds,
         sent_delta_seconds: sentDeltaSeconds,
         returned_elapsed_seconds: returnedElapsedSeconds,
-        [sceneField]: state[sceneField] ?? null,
-        [firedEventsField]: Array.isArray(state[firedEventsField])
-          ? [...state[firedEventsField]]
+        scene_id: state.scene_id ?? null,
+        fired_pacing_event_ids: Array.isArray(state.fired_pacing_event_ids)
+          ? [...state.fired_pacing_event_ids]
           : [],
         reached,
       });
@@ -148,7 +143,7 @@ export function createPackageClockController() {
       return records.map((record) => ({
         ...record,
         requested_milestone: { ...record.requested_milestone },
-        [firedEventsField]: [...record[firedEventsField]],
+        fired_pacing_event_ids: [...record.fired_pacing_event_ids],
       }));
     },
   };
