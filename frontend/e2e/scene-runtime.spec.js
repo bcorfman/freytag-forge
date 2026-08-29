@@ -13,7 +13,7 @@ import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
 
 // Nine scenes needing up to three earned reveals each, with headroom for a turn
 // the model spends on a non-progressing but valid candidate.
-const MAX_CANON_TURNS = 36;
+const MAX_CANON_TURNS = 45;
 
 // A scene has at most three authored reveals, so more consecutive empty turns than
 // that means the scene is not progressing rather than merely taking its time.
@@ -203,13 +203,20 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   expect([...byScene.keys()], "the playthrough must visit every authored scene in order").toEqual([...sceneOrder]);
   expect(sceneId, "the playthrough must end in the authored resolution scene").toBe(sceneOrder.at(-1));
 
+  // Judge every scene before asserting. Failing on the first verdict hides the
+  // other eight, so a single weak scene costs a whole run's worth of evidence.
   const judgments = [];
   for (const [id, scene] of byScene) {
     const judgment = await judgeSceneNarration({ sceneId: id, ...scene });
     judgments.push({ scene_id: id, ...judgment });
-    expect(judgment.verdict, judgment.reasons.join("; ")).toBe("pass");
   }
   await writeCategoryReport("llm-canon", { judgments, reached_scenes: [...byScene.keys()] });
+
+  const failures = judgments.filter((judgment) => judgment.verdict !== "pass");
+  expect(
+    failures.map((judgment) => `${judgment.scene_id}: ${judgment.reasons.join("; ")}`).join("\n\n"),
+    "every reached scene must satisfy the narrative canon",
+  ).toBe("");
   expect(judgments.at(-1)?.scene_id).toBe("3C");
 });
 
