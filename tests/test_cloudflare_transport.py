@@ -11,6 +11,7 @@ import pytest
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
@@ -536,3 +537,44 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     }
     assert user["knowledge_context"]["player"]["scene_id"] == "1A"
     assert "speakers" not in user["knowledge_context"]
+
+
+def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
+    """A late-game turn must not carry a multiple of an early turn's context.
+
+    Context grew three ways at once: committed knowledge accumulated for the whole
+    story, the identical list was repeated as sayable_knowledge, and every speaker
+    carried another full projection. Together they timed out Act 3 turns.
+    """
+
+    captured: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        captured.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"ok"}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    def context_bytes(scene_id: str, established: bool) -> int:
+        state = RuntimeState.bootstrap(PACKAGE)
+        state.current_scene_id = scene_id
+        state.phase = next(
+            scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id
+        )
+        if established:
+            for fact_id in sorted(PACKAGE.world.facts):
+                state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("I act.")
+        context = json.loads(captured[-1]["user"])["knowledge_context"]
+        return len(json.dumps(context).encode())
+
+    opening = context_bytes("1A", established=False)
+    endgame = context_bytes("3C", established=True)
+
+    assert endgame < 12_000, f"late-game context grew to {endgame} bytes"
+    assert endgame < opening * 12, "late-game context must not balloon relative to the opening"
+
+    # The player context must not repeat the speakers' dialogue basis.
+    context = json.loads(captured[-1]["user"])["knowledge_context"]
+    assert "sayable_knowledge" not in context["player"]
+    assert all(set(speaker) == {"sayable_knowledge"} for speaker in context["speakers"].values())
