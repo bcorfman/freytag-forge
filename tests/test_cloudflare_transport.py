@@ -610,3 +610,40 @@ def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
     assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
     assert "never echo" in payloads[0]["system"]
     assert "echoed back" in payloads[1]["system"]
+
+
+def test_one_transient_connection_failure_does_not_lose_the_turn(monkeypatch) -> None:
+    """A momentary connection failure ended a thirty-turn playthrough on its third turn."""
+
+    attempts: list[int] = []
+
+    def open_request(request, timeout):
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise URLError("connection reset")
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The corridor holds."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "The corridor holds."}]}
+    assert len(attempts) == 2
+
+
+def test_a_sustained_outage_still_fails_closed(monkeypatch) -> None:
+    attempts: list[int] = []
+
+    def open_request(request, timeout):
+        attempts.append(1)
+        raise URLError("offline")
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with pytest.raises(NarrationProviderError, match="unavailable"):
+        provider("I listen.")
+    assert len(attempts) == 2, "exactly one retry, never an unbounded loop"

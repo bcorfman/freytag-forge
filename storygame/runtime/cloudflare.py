@@ -172,7 +172,7 @@ class CloudflareTurnProvider:
             "response_format": {"type": "json_object"},
         }
         try:
-            response = self._request(payload)
+            response = self._request_allowing_one_transient_retry(payload)
         except HTTPError as error:
             if self._worker_error_code(error) != "AI_JSON_MODE_REJECTED":
                 raise self._narration_error(error) from error
@@ -187,7 +187,7 @@ class CloudflareTurnProvider:
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         try:
-            response = self._request(fallback_payload)
+            response = self._request_allowing_one_transient_retry(fallback_payload)
         except HTTPError as error:
             raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
@@ -206,7 +206,7 @@ class CloudflareTurnProvider:
             ),
         }
         try:
-            response = self._request(recovery_payload)
+            response = self._request_allowing_one_transient_retry(recovery_payload)
         except HTTPError as error:
             raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
@@ -331,6 +331,28 @@ class CloudflareTurnProvider:
 
     def _scene(self) -> Scene:
         return next(item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id)
+
+    def _request_allowing_one_transient_retry(self, payload: dict[str, object]) -> object:
+        """Retry once when the connection itself fails, never on an answered request.
+
+        A momentary connection failure is not the provider refusing the turn, but
+        it reached the player as a lost turn all the same, and it ended a
+        thirty-turn playthrough on its third turn. An answered request - any
+        HTTPError, or a body that is not JSON - is left alone, because those are
+        handled by the typed-error and recovery paths above.
+        """
+
+        try:
+            return self._request(payload)
+        except HTTPError:
+            raise
+        except (TimeoutError, URLError, OSError) as first_failure:
+            try:
+                return self._request(payload)
+            except HTTPError:
+                raise
+            except (TimeoutError, URLError, OSError) as error:
+                raise error from first_failure
 
     def _request(self, payload: dict[str, object]) -> object:
         headers = {
