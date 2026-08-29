@@ -142,3 +142,59 @@ def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
     _drive(engine, provider, None, clock_seconds=15)
     # At 270 seconds the authored window opens and the committed triggers carry Kristin out.
     assert state.current_scene_id == "1C"
+
+
+def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -> set[str]:
+    """Every fact still committable from this state, ignoring turn order."""
+
+    pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
+    facts = set(seed_facts) | pacing_facts
+    changed = True
+    while changed:
+        changed = False
+        for route in package.storylet_routes.storylets:
+            if route.id in fired_storylets:
+                continue
+            eligible = all(
+                (predicate.fact_id in facts) if predicate.equals is not False else (predicate.fact_id not in seed_facts)
+                for predicate in route.activation_conditions
+            )
+            if not eligible:
+                continue
+            for realization in route.realizations:
+                for operation in realization.operations:
+                    if operation.op == "assert" and operation.fact_id not in facts:
+                        facts.add(operation.fact_id)
+                        changed = True
+        for event in package.storylet_routes.bridge_events:
+            if all(predicate.fact_id in facts for predicate in event.activation_conditions):
+                for operation in event.operations:
+                    if operation.op == "assert" and operation.fact_id not in facts:
+                        facts.add(operation.fact_id)
+                        changed = True
+    return facts
+
+
+def test_no_single_reveal_can_strand_a_scene_exit() -> None:
+    """No realization may consume the only route to its own scene's exit.
+
+    A storylet fires once. When two authored beats share a storylet and only one
+    of them establishes the outgoing trigger, choosing the other permanently
+    strands the player: recovering Michelle's damaged recording used to consume
+    Scene 1A's only source of `michelle_lead_actionable`, leaving the game
+    unwinnable in the opening scene.
+    """
+
+    stranded = []
+    for transition in PACKAGE.pacing.transitions:
+        required = {trigger.fact_id for trigger in transition.triggers}
+        for route in PACKAGE.storylet_routes.storylets:
+            if route.scene_id != transition.source_scene_id:
+                continue
+            for realization in route.realizations:
+                committed = {op.fact_id for op in realization.operations if op.op == "assert"}
+                missing = required - _reachable_facts(PACKAGE, committed, {route.id})
+                if missing:
+                    stranded.append(f"{route.id}/{realization.id} strands {sorted(missing)} needed by {transition.id}")
+
+    assert not stranded, "a single reveal made a scene exit unreachable:\n" + "\n".join(stranded)
