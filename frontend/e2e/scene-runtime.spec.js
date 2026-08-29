@@ -9,18 +9,7 @@ import {
 } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
-import { canonJourney } from "./canon-journey.js";
-
-const spineActions = [
-  "I search for concrete evidence of Michelle's disappearance and follow the strongest lead.",
-  "I pursue the dead drop and ask Brandon for the evidence needed to move forward.",
-  "I prepare false identities and enter the facility without delaying the mission.",
-  "I secure proof of JANUS and act on the current objective.",
-  "I respond to the purge clock, reach Michelle, and preserve the rescue and evidence mission.",
-  "I use the relay and broadcast the evidence before the network can recover.",
-  "I finish the current objective and protect the route to the climax.",
-  "I bring the story to a responsible resolution.",
-];
+import { canonJourney, spineJourney } from "./canon-journey.js";
 
 function narrationText(payload) {
   const turnText = (payload.segments || [])
@@ -74,10 +63,10 @@ test("judges free-text roleplay quality with OpenAI @llm-judge", async ({ page }
 });
 
 test("drives the main spine and reports reachability and pressure @spine", async ({ page }) => {
-  test.setTimeout(12 * 60_000);
+  test.setTimeout(20 * 60_000);
   await startSceneSession(page);
   const turns = [];
-  for (const action of spineActions) {
+  for (const action of spineJourney) {
     const payload = await submitTurn(page, action);
     turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
     await resolveWarningIfPresent(page);
@@ -97,7 +86,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
 test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
   test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
-  test.setTimeout(5 * 60_000);
+  test.setTimeout(20 * 60_000);
   const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
   const controller = await installPackageClock(page, {
     pacing,

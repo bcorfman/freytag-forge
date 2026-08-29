@@ -228,7 +228,7 @@ def test_internal_dependency_analysis_honors_declared_fallbacks() -> None:
 def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="house_marked_for_return", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
     validator = ProgressionValidator(PACKAGE)
     proposal = ResolvedTurnProposal(
         segments=(NarrationSegment(kind="narration", text="The route out is ready."),),

@@ -208,7 +208,8 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
     assert response.json()["state"]["story_elapsed_seconds"] == 120
 
 
-def test_test_clock_header_is_ignored_without_local_opt_in(tmp_path) -> None:
+def test_test_clock_header_is_ignored_without_local_opt_in(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("FREYTAG_ALLOW_TEST_CLOCK", raising=False)
     app = create_demo_app(
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: _provider("The room stays tense."),

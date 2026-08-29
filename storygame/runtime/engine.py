@@ -74,6 +74,12 @@ class RuntimeEngine:
         self._activate_pacing()
         self._apply_canonical_route_events()
         self._activate_pacing()
+        entry_text = self._apply_authored_transition()
+        self._activate_pacing()
+        if entry_text:
+            return proposal.model_copy(
+                update={"segments": (*proposal.segments, NarrationSegment(kind="narration", text=entry_text))}
+            )
         return proposal
 
     def _record_turn(self, proposal: ResolvedTurnProposal) -> None:
@@ -120,6 +126,38 @@ class RuntimeEngine:
         if decision == "proceed":
             self._apply_canonical_route_events()
             self._activate_pacing()
+            self._apply_authored_transition()
+            self._activate_pacing()
+
+    def _apply_authored_transition(self) -> str | None:
+        """Advance along the highest-priority authored transition once its declared triggers hold.
+
+        The target scene's earliest_seconds is a hard pacing floor so committed
+        triggers cannot rush the story ahead of its authored 20-minute budget.
+        Returns the entered scene's authored entry text so the turn can open the
+        new scene with the package's own words.
+        """
+
+        if self.state.has_pending_break:
+            return None
+        elapsed = self._elapsed_seconds()
+        windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
+        for transition in self.validator.eligible_transitions(self.state):
+            if elapsed < windows[transition.target_scene_id].earliest_seconds:
+                continue
+            if not self.validator.transition_dependencies_available(transition, self.state.facts):
+                continue
+            scene = next(
+                item for item in self.state.package.scenes if item.metadata.scene_id == transition.target_scene_id
+            )
+            self.state.apply_proposal(
+                ResolvedTurnProposal(
+                    segments=(NarrationSegment(kind="narration", text=scene.metadata.entry_text),),
+                    transition={"transition_id": transition.id},
+                )
+            )
+            return scene.metadata.entry_text
+        return None
 
     def _activate_pacing(self) -> None:
         """Activate only package-declared, scene-bound optional storylets."""
@@ -128,7 +166,7 @@ class RuntimeEngine:
         for storylet in self.state.package.storylet_routes.storylets:
             if (
                 storylet.scene_id == self.state.current_scene_id
-                and storylet.earliest_seconds <= elapsed <= storylet.latest_seconds
+                and storylet.earliest_seconds <= elapsed
                 and all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions)
                 and storylet.id not in self.state.fired_event_ids
             ):
