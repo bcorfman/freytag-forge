@@ -382,18 +382,25 @@ def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatc
     assert "offers no candidates at all" in payloads[1]["system"]
 
 
-def test_repeated_ineligible_selection_reports_the_rule_without_leaking_ids(monkeypatch) -> None:
-    """A twice-failing provider must say which rule broke, and never echo a story ID."""
+def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothing(monkeypatch) -> None:
+    """A provider that will not correct itself must not cost the player the turn.
 
+    The narration is kept, the selection and grounding are dropped, so the runtime
+    can commit nothing unearned and the player still gets a story beat.
+    """
+
+    payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"An invalid reveal."}],'
+                    '{"segments":[{"kind":"narration","text":"The drawer scrapes open.",'
+                    '"grounding_ids":["k_future_unavailable"]}],'
                     '"selected_knowledge_ids":["k_future_unavailable"]}'
                 )
             }
@@ -401,12 +408,35 @@ def test_repeated_ineligible_selection_reports_the_rule_without_leaking_ids(monk
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    with pytest.raises(NarrationProviderError) as error:
-        provider("I reach for something I have not earned.")
+    proposal = provider("I reach for something I have not earned.")
 
-    assert "selected knowledge is not eligible for this turn" in error.value.message
-    assert "k_future_unavailable" not in error.value.message
-    assert error.value.status_code == 502
+    assert len(payloads) == 2, "the provider still gets exactly one guided recovery"
+    assert proposal["selected_knowledge_ids"] == []
+    assert proposal["segments"] == [{"kind": "narration", "text": "The drawer scrapes open."}]
+
+    # The sanitized shape must satisfy the runtime rule that rejected it.
+    projector = KnowledgeProjector()
+    projection = projector.project(state, "player", "I reach for something I have not earned.")
+    resolved, _ = SelectedRevealResolver(PACKAGE).resolve(
+        state, projection, parse_turn_proposal(proposal), projector, "I reach for something I have not earned."
+    )
+    assert resolved.selected_knowledge_ids == ()
+    assert resolved.events == ()
+
+
+def test_unparseable_reply_is_still_refused(monkeypatch) -> None:
+    """Sanitizing an ineligible selection must not soften a reply we cannot read at all."""
+
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"narration": '{"segments":[]}'}),
+    )
+
+    with pytest.raises(NarrationProviderError, match="invalid proposal"):
+        provider("I listen.")
 
 
 def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch) -> None:
