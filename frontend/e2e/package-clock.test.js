@@ -39,48 +39,51 @@ function assertFixtureError(source, identifier, expectedText = identifier) {
 }
 
 const validScene = `
+budget_seconds: 60
 scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 10
-    latest_seconds: 20
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 events:
   - id: event_a
     scene_id: A
-    at_seconds: 15
+    at_turn: 2
 `;
 
-test("loads the real package and resolves irregular scene and event milestones", () => {
+test("loads the real package and resolves turn milestones", () => {
   const projection = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
 
   assert.deepEqual(projection.sceneOrder, ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"]);
-  assert.deepEqual(projection.scenePoint("1B", "earliest"), {
+  assert.deepEqual(projection.scenePoint("1B", "min"), {
     kind: "scene_point",
     scene_id: "1B",
-    point: "earliest",
-    target_seconds: 120,
+    point: "min",
+    target_turn: 2,
   });
-  assert.deepEqual(projection.scenePoint("1B", "target"), {
+  assert.deepEqual(projection.scenePoint("1B", "nudge"), {
     kind: "scene_point",
     scene_id: "1B",
-    point: "target",
-    target_seconds: 195,
+    point: "nudge",
+    target_turn: 3,
   });
-  assert.deepEqual(projection.scenePoint("1B", "latest"), {
+  assert.deepEqual(projection.scenePoint("1B", "handoff"), {
     kind: "scene_point",
     scene_id: "1B",
-    point: "latest",
-    target_seconds: 270,
+    point: "handoff",
+    target_turn: 4,
   });
   assert.deepEqual(projection.eventPoint("purge_2c"), {
     kind: "pacing_event",
     scene_id: "2C",
     event_id: "purge_2c",
-    target_seconds: 690,
+    target_turn: 2,
   });
+  assert.equal(Object.hasOwn(projection.scenePoint("1B", "min"), "target_seconds"), false);
+  assert.equal(Object.hasOwn(projection.eventPoint("purge_2c"), "target_seconds"), false);
   assert.equal(Object.isFrozen(projection), true);
   assert.equal(Object.isFrozen(projection.sceneOrder), true);
-  assert.equal(Object.isFrozen(projection.scenePoint("1B", "target")), true);
+  assert.equal(Object.isFrozen(projection.scenePoint("1B", "handoff")), true);
   assert.equal(Object.isFrozen(projection.eventPoint("purge_2c")), true);
   assert.deepEqual(Object.keys(projection), [
     "storyId",
@@ -100,8 +103,8 @@ test("reports unknown story, scene, event, and point identifiers", () => {
   );
 
   const projection = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
-  assert.throws(() => projection.scenePoint("9Z", "target"), /9Z/);
-  assert.throws(() => projection.scenePoint("1A", "midpoint"), /midpoint/);
+  assert.throws(() => projection.scenePoint("9Z", "handoff"), /9Z/);
+  assert.throws(() => projection.scenePoint("1A", "target"), /target/);
   assert.throws(() => projection.eventPoint("no_such_event"), /no_such_event/);
 });
 
@@ -123,13 +126,13 @@ test("reports duplicate scene and event identifiers", () => {
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 1
-    latest_seconds: 2
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
   - scene_id: A
-    earliest_seconds: 2
-    target_seconds: 3
-    latest_seconds: 4
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 `,
     "A",
     "duplicate scene id",
@@ -137,7 +140,7 @@ test("reports duplicate scene and event identifiers", () => {
   assertFixtureError(
     `${validScene}  - id: event_a
     scene_id: A
-    at_seconds: 16
+    at_turn: 1
 `,
     "event_a",
     "duplicate event id",
@@ -147,9 +150,9 @@ test("reports duplicate scene and event identifiers", () => {
 test("reports missing scene and event identifier fields", () => {
   assertFixtureError(
     `scenes:
-  - earliest_seconds: 0
-    target_seconds: 1
-    latest_seconds: 2
+  - min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 `,
     "scene_id",
     "missing scene scene_id field",
@@ -157,89 +160,115 @@ test("reports missing scene and event identifier fields", () => {
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 1
-    latest_seconds: 2
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 events:
   - scene_id: A
-    at_seconds: 1
+    at_turn: 1
 `,
     "event id",
     "missing event id field",
   );
 });
 
-test("reports timestamps that are not non-negative integers", () => {
+test("reports turn counts that are not non-negative integers", () => {
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0.5
-    target_seconds: 1
-    latest_seconds: 2
+    min_turns: 0.5
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 `,
     "A",
-    "earliest_seconds must be a non-negative integer",
+    "min_turns must be a non-negative integer",
   );
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 1.0
-    latest_seconds: 2
+    min_turns: 0
+    nudge_after_turns: 2.0
+    handoff_after_turns: 2
 `,
     "A",
-    "target_seconds must be a non-negative integer",
+    "nudge_after_turns must be a non-negative integer",
   );
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: -1
-    latest_seconds: 2
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: -1
 `,
     "A",
-    "target_seconds must be a non-negative integer",
+    "handoff_after_turns must be a non-negative integer",
   );
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 1
-    latest_seconds: 2
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 events:
   - id: event_a
     scene_id: A
-    at_seconds: 1.5
+    at_turn: 1.5
 `,
     "event_a",
-    "at_seconds must be a non-negative integer",
+    "at_turn must be a non-negative integer",
   );
 });
 
-test("reports scene and event timestamps outside their declared windows", () => {
+test("rejects the old absolute-seconds schema", () => {
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 10
-    target_seconds: 9
-    latest_seconds: 20
+    earliest_seconds: 0
+    target_seconds: 1
+    latest_seconds: 2
 `,
     "A",
-    "target_seconds must fall within",
+    "min_turns must be a non-negative integer",
+  );
+});
+
+test("reports scene turn points outside their declared order", () => {
+  assertFixtureError(
+    `scenes:
+  - scene_id: A
+    min_turns: 2
+    nudge_after_turns: 1
+    handoff_after_turns: 3
+`,
+    "A",
+    "turn points must be ordered",
   );
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 10
-    target_seconds: 15
-    latest_seconds: 20
+    min_turns: 0
+    nudge_after_turns: 3
+    handoff_after_turns: 2
+`,
+    "A",
+    "turn points must be ordered",
+  );
+});
+
+test("reports events outside their scene handoff window", () => {
+  assertFixtureError(
+    `scenes:
+  - scene_id: A
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 events:
   - id: event_a
     scene_id: A
-    at_seconds: 21
+    at_turn: 3
 `,
     "event_a",
-    "at_seconds must fall within",
+    "at_turn must fall within",
   );
 });
 
@@ -247,13 +276,13 @@ test("reports events that name undeclared scenes", () => {
   assertFixtureError(
     `scenes:
   - scene_id: A
-    earliest_seconds: 0
-    target_seconds: 10
-    latest_seconds: 20
+    min_turns: 0
+    nudge_after_turns: 1
+    handoff_after_turns: 2
 events:
   - id: event_missing_scene
     scene_id: B
-    at_seconds: 10
+    at_turn: 1
 `,
     "event_missing_scene",
     "undeclared scene",

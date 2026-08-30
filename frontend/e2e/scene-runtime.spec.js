@@ -111,33 +111,39 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
   test.setTimeout(20 * 60_000);
   const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
-  const controller = await installPackageClock(page, {
-    pacing,
-    token: process.env.FREYTAG_TEST_CLOCK_TOKEN,
-  });
+  const controller = await installPackageClock(page);
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
   const byScene = new Map([["1A", { opening, turns: [] }]]);
   const sceneOrder = pacing.sceneOrder;
   let sceneId = "1A";
-  let elapsed = 0;
+  let turnIndex = 0;
+  let turnsSinceSceneEntry = 0;
   let stalledTurns = 0;
   let lastCommittedCount = 0;
   const promptsUsed = new Map();
   const progress = [];
+  const firedPacingEventIds = new Set();
 
-  // The clock follows the story, never the other way round. A scene needs
-  // several turns to earn its outgoing bridge, so time advances only as far as
-  // the next scene's authored entry window and then holds until the story is
-  // ready. Advancing on every turn instead lets the clock outrun the spine and
-  // strands scene-bound pacing events in a scene the story has not reached.
-  const clockTargetFor = (currentSceneId, currentElapsed) => {
-    const next = sceneOrder[sceneOrder.indexOf(currentSceneId) + 1];
-    const goal = next
-      ? pacing.scenePoint(next, "earliest")
-      : pacing.scenePoint(currentSceneId, "target");
-    if (goal.target_seconds > currentElapsed) return goal;
-    return { kind: "scene_point", scene_id: currentSceneId, point: "hold", target_seconds: currentElapsed };
+  const turnMilestoneFor = (currentSceneId, currentTurns) => {
+    const pendingEvent = pacing.eventOrder
+      .map((eventId) => pacing.eventPoint(eventId))
+      .find(
+        (event) =>
+          event.scene_id === currentSceneId &&
+          !firedPacingEventIds.has(event.event_id) &&
+          event.target_turn >= currentTurns,
+      );
+    if (pendingEvent) return pendingEvent;
+
+    const min = pacing.scenePoint(currentSceneId, "min");
+    const nudge = pacing.scenePoint(currentSceneId, "nudge");
+    const handoff = pacing.scenePoint(currentSceneId, "handoff");
+    if (currentTurns < min.target_turn) return min;
+    if (currentTurns < nudge.target_turn) return nudge;
+    if (currentTurns < handoff.target_turn) return handoff;
+    if (currentSceneId === sceneOrder.at(-1)) return null;
+    throw new Error(`Scene ${currentSceneId} exceeded its handoff turn ${String(handoff.target_turn)}.`);
   };
 
   for (let index = 0; index < MAX_CANON_TURNS; index += 1) {
@@ -145,25 +151,25 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
     const sourceSceneId = sceneId;
     const used = promptsUsed.get(sourceSceneId) || 0;
     const input = promptFor(sourceSceneId, used);
-    const milestone = clockTargetFor(sourceSceneId, elapsed);
-    await test.step(`turn ${index + 1}: scene ${sourceSceneId} at ${milestone.target_seconds}s`, async () => {
-      controller.arm(milestone);
+    const milestone = turnMilestoneFor(sourceSceneId, turnsSinceSceneEntry);
+    await test.step(`turn ${index + 1}: scene ${sourceSceneId} at turn ${turnsSinceSceneEntry}`, async () => {
+      if (milestone) controller.arm(milestone);
+      const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
       const payload = await submitTurn(page, input);
-      const warningResolved = await resolveWarningIfPresent(page);
-      const timing = controller.history().at(-1);
-      const observedElapsed = payload.state?.story_elapsed_seconds;
-      if (!timing?.reached) {
+      await resolveWarningIfPresent(page);
+      const timing = milestone ? controller.history().at(-1) : null;
+      const observedTurns = payload.state?.turns_since_scene_entry;
+      const reachedSameScene = payload.state?.scene_id === sourceSceneId;
+      if (milestone && reachedSameScene && observedTurns > milestone.target_turn) {
         throw new Error(
-          `Package clock missed ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${milestone.point}`}; observed elapsed ${String(observedElapsed)} (pending game break: ${String(payload.state?.pending_game_break === true)}, warning resolved: ${String(warningResolved)}).`,
+          `Turn milestone ${milestone.kind} ${milestone.event_id || `${milestone.scene_id} ${milestone.point}`} was overshot: observed scene-relative turn ${String(observedTurns)} after ${String(turnsUntilMilestone)} turns were needed.`,
         );
       }
 
       const narration = narrationText(payload);
       const reachedSceneId = payload.state?.scene_id;
       promptsUsed.set(sourceSceneId, used + 1);
-      expect(payload.state?.story_elapsed_seconds, `Turn ${index + 1} missed its package milestone.`).toBe(
-        milestone.target_seconds,
-      );
+      expect(payload.state?.turn_index).toBe(turnIndex + 1);
 
       // The spine may pause in a scene or step forward exactly one scene, never
       // backward and never skipping an authored scene.
@@ -179,9 +185,10 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
       for (const eventId of pacing.eventOrder) {
         const event = pacing.eventPoint(eventId);
         const eventScene = sceneOrder.indexOf(event.scene_id);
-        const inScenePastDue = eventScene === to && observedElapsed >= event.target_seconds;
+        const inScenePastDue = eventScene === to && observedTurns >= event.target_turn;
         if (!inScenePastDue && eventScene >= to) continue;
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
+        firedPacingEventIds.add(eventId);
       }
 
       // A scene that commits nothing several turns running is stalled: the reveals
@@ -215,7 +222,8 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
         byScene.set(reachedSceneId, { opening: segments.at(-1).text.trim(), turns: [] });
       }
       sceneId = reachedSceneId;
-      elapsed = observedElapsed;
+      turnIndex = payload.state?.turn_index;
+      turnsSinceSceneEntry = payload.state?.turns_since_scene_entry;
       progress.push({
         turn: index + 1,
         input,
@@ -299,12 +307,14 @@ test("samples optional storylets without presenting a menu @storylets", async ({
   expect(fired.size).toBeGreaterThan(0);
 });
 
-test("advances declared pressure with the opt-in E2E clock instead of wall-clock waiting @timed-events", async ({ page }) => {
+test("keeps the display budget clock independent from turn-based pressure @timed-events", async ({ page }) => {
   test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the local test clock");
   await startSceneSession(page);
-  const payload = await submitTurn(page, "I pause long enough for the house's pressure to build.");
+  await submitTurn(page, "I pause long enough for the house's pressure to build.");
+  const payload = await submitTurn(page, "I listen for the pressure that follows.");
   await writeCategoryReport("timed-events", { state: payload.state });
   expect(payload.state?.story_elapsed_seconds).toBeGreaterThanOrEqual(120);
+  expect(payload.state?.turn_index).toBe(2);
   expect(payload.state?.fired_pacing_event_ids).toContain("pressure_1a");
 });
 

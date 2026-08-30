@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-import { applyTestClock, isTurnRequest } from "./package-clock-request.js";
+import { isTurnRequest } from "./package-clock-request.js";
 import { createPackageClockController } from "./package-clock-controller.js";
 
 const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
@@ -80,37 +80,9 @@ function sessionResponseFor(page, controller) {
   });
 }
 
-export async function installPackageClock(page, { pacing, token, controller } = {}) {
+export async function installPackageClock(page, { controller } = {}) {
   const packageClockController = controller ?? createPackageClockController();
   packageClockControllers.set(page, packageClockController);
-
-  await page.route("**/api/v1/turn*", async (route) => {
-    const request = route.request();
-    if (!isTurnRequest(request.url(), request.method())) {
-      await route.continue();
-      return;
-    }
-
-    try {
-      if (packageClockController.armed() === null) {
-        await route.continue();
-        return;
-      }
-      const deltaSeconds = packageClockController.deltaForRequest();
-      const postData = applyTestClock(request.postData() ?? "", { deltaSeconds, token });
-      await route.continue({
-        url: request.url(),
-        method: request.method(),
-        headers: request.headers(),
-        postData,
-      });
-    } catch (error) {
-      throw new Error(
-        `Package clock could not rewrite turn request: ${error instanceof Error ? error.message : String(error)}.`,
-      );
-    }
-  });
-
   return packageClockController;
 }
 

@@ -1,25 +1,26 @@
-const MAX_DELTA_SECONDS = 3600;
-
-function readElapsed(state, description) {
+function readState(state, description) {
   if (
     state === null ||
     typeof state !== "object" ||
     Array.isArray(state) ||
-    !Number.isInteger(state.story_elapsed_seconds) ||
-    state.story_elapsed_seconds < 0
+    typeof state.scene_id !== "string" ||
+    state.scene_id.length === 0 ||
+    !Number.isSafeInteger(state.turn_index) ||
+    state.turn_index < 0 ||
+    !Number.isSafeInteger(state.turns_since_scene_entry) ||
+    state.turns_since_scene_entry < 0 ||
+    state.turns_since_scene_entry > state.turn_index
   ) {
     throw new Error(
-      `${description}: missing or malformed elapsed time; expected a non-negative integer story elapsed value.`,
+      `${description}: missing or malformed turn state; expected a scene ID, a non-negative integer turn index, and a non-negative integer scene-relative turn value.`,
     );
   }
-  return state.story_elapsed_seconds;
+  return state;
 }
 
 function milestoneIdentity(milestone) {
-  const scene = milestone.scene_id;
-  const event = milestone.event_id;
-  const eventDescription = event === undefined ? "" : `, event ${String(event)}`;
-  return `scene ${String(scene)}${eventDescription}`;
+  const eventDescription = milestone.event_id === undefined ? "" : `, event ${String(milestone.event_id)}`;
+  return `scene ${String(milestone.scene_id)}${eventDescription}`;
 }
 
 function validateMilestone(milestone) {
@@ -29,24 +30,25 @@ function validateMilestone(milestone) {
     Array.isArray(milestone) ||
     (milestone.kind !== "scene_point" && milestone.kind !== "pacing_event") ||
     typeof milestone.scene_id !== "string" ||
-    !Number.isInteger(milestone.target_seconds) ||
-    milestone.target_seconds < 0 ||
-    (milestone.kind === "pacing_event" && typeof milestone.event_id !== "string")
+    milestone.scene_id.length === 0 ||
+    !Number.isSafeInteger(milestone.target_turn) ||
+    milestone.target_turn < 0 ||
+    (milestone.kind === "scene_point" && !new Set(["min", "nudge", "handoff"]).has(milestone.point)) ||
+    (milestone.kind === "pacing_event" && typeof milestone.event_id !== "string") ||
+    Object.hasOwn(milestone, "target_seconds")
   ) {
-    throw new Error("Cannot arm milestone: malformed milestone target or identity.");
+    throw new Error("Cannot arm milestone: malformed milestone target or identity; expected target_turn.");
   }
 }
 
 export function createPackageClockController() {
-  let lastObservedElapsedSeconds = null;
+  let observedState = null;
   let armedMilestone = null;
-  let sentDeltaSeconds = null;
   const records = [];
 
   return {
     observeState(state) {
-      lastObservedElapsedSeconds = readElapsed(state, "Cannot observe state");
-      sentDeltaSeconds = null;
+      observedState = readState(state, "Cannot observe state");
     },
 
     arm(milestone) {
@@ -57,59 +59,50 @@ export function createPackageClockController() {
         );
       }
       armedMilestone = milestone;
-      sentDeltaSeconds = null;
     },
 
     armed() {
       return armedMilestone;
     },
 
-    deltaForRequest() {
-      if (lastObservedElapsedSeconds === null) {
+    turnsUntilMilestone() {
+      if (observedState === null) {
         throw new Error(
-          "Cannot compute clock delta: no elapsed session state has been observed.",
+          "Cannot compute turns until milestone: no session or turn state has been observed.",
         );
       }
       if (armedMilestone === null) {
-        throw new Error("Cannot compute clock delta: no milestone is armed.");
+        throw new Error("Cannot compute turns until milestone: no milestone is armed.");
       }
-
-      const targetSeconds = armedMilestone.target_seconds;
-      const deltaSeconds = targetSeconds - lastObservedElapsedSeconds;
-      if (deltaSeconds < 0) {
+      if (observedState.scene_id !== armedMilestone.scene_id) {
         throw new Error(
-          `Cannot compute clock delta for ${milestoneIdentity(armedMilestone)}: observed elapsed ${lastObservedElapsedSeconds} is later than requested target_seconds ${targetSeconds}.`,
-        );
-      }
-      if (deltaSeconds > MAX_DELTA_SECONDS) {
-        throw new Error(
-          `Cannot compute clock delta for ${milestoneIdentity(armedMilestone)}: requested delta ${deltaSeconds} exceeds the 3600-second limit.`,
+          `Cannot compute turns until milestone for ${milestoneIdentity(armedMilestone)}: observed scene ${observedState.scene_id} does not match the requested scene.`,
         );
       }
 
-      sentDeltaSeconds = deltaSeconds;
-      return deltaSeconds;
+      const turns = armedMilestone.target_turn - observedState.turns_since_scene_entry;
+      if (turns < 0) {
+        throw new Error(
+          `Cannot compute turns until milestone for ${milestoneIdentity(armedMilestone)}: observed turns_since_scene_entry ${observedState.turns_since_scene_entry} is later than requested target_turn ${armedMilestone.target_turn}.`,
+        );
+      }
+      return turns;
     },
 
     observeTurnResponse(payload) {
       if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
-        throw new Error(
-          "Cannot observe turn response: missing or malformed elapsed state.",
-        );
+        throw new Error("Cannot observe turn response: missing or malformed turn state.");
       }
-      const state = payload.state;
-      const returnedElapsedSeconds = readElapsed(
-        state,
-        "Cannot observe turn response",
-      );
-      const priorElapsedSeconds = lastObservedElapsedSeconds;
-      lastObservedElapsedSeconds = returnedElapsedSeconds;
+      const state = readState(payload.state, "Cannot observe turn response");
+      const priorState = observedState;
+      observedState = state;
 
       if (armedMilestone === null) {
-        sentDeltaSeconds = null;
         return {
           reached: false,
-          elapsed_seconds: returnedElapsedSeconds,
+          scene_id: state.scene_id,
+          turn_index: state.turn_index,
+          turns_since_scene_entry: state.turns_since_scene_entry,
           requested_milestone: null,
         };
       }
@@ -118,23 +111,27 @@ export function createPackageClockController() {
       armedMilestone = null;
       const reached =
         state.pending_game_break !== true &&
-        returnedElapsedSeconds === requestedMilestone.target_seconds;
+        state.scene_id === requestedMilestone.scene_id &&
+        state.turns_since_scene_entry === requestedMilestone.target_turn;
       records.push({
         requested_milestone: requestedMilestone,
-        prior_elapsed_seconds: priorElapsedSeconds,
-        sent_delta_seconds: sentDeltaSeconds,
-        returned_elapsed_seconds: returnedElapsedSeconds,
-        scene_id: state.scene_id ?? null,
+        prior_scene_id: priorState?.scene_id ?? null,
+        prior_turn_index: priorState?.turn_index ?? null,
+        prior_turns_since_scene_entry: priorState?.turns_since_scene_entry ?? null,
+        scene_id: state.scene_id,
+        turn_index: state.turn_index,
+        turns_since_scene_entry: state.turns_since_scene_entry,
         fired_pacing_event_ids: Array.isArray(state.fired_pacing_event_ids)
           ? [...state.fired_pacing_event_ids]
           : [],
         reached,
       });
-      sentDeltaSeconds = null;
 
       return {
         reached,
-        elapsed_seconds: returnedElapsedSeconds,
+        scene_id: state.scene_id,
+        turn_index: state.turn_index,
+        turns_since_scene_entry: state.turns_since_scene_entry,
         requested_milestone: requestedMilestone,
       };
     },
@@ -147,16 +144,4 @@ export function createPackageClockController() {
       }));
     },
   };
-}
-
-export function assertExclusiveClockMode(environment) {
-  const packageClock = environment?.E2E_PACKAGE_CLOCK;
-  const scalarClock = environment?.E2E_TEST_CLOCK_SECONDS;
-  const packageClockSet = packageClock !== undefined && packageClock !== null && String(packageClock).length > 0;
-  const scalarClockSet = scalarClock !== undefined && scalarClock !== null && String(scalarClock).length > 0;
-  if (packageClockSet && scalarClockSet) {
-    throw new Error(
-      "E2E_PACKAGE_CLOCK and E2E_TEST_CLOCK_SECONDS are mutually exclusive clock modes; set only one.",
-    );
-  }
 }
