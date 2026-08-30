@@ -77,6 +77,11 @@ class CloudflareTurnProvider:
             self._turn_instruction(),
             {
                 "player_input": player_input,
+                # The scene's own establishing material. Without it a turn carries one sentence
+                # of frame and a few terse statements, so the narrator has nothing authored to
+                # be concrete with and answers an apt search with "you find nothing". This is
+                # the scene's first beat only, so it cannot narrate ahead of the player.
+                "scene_setting": self._scene_setting(),
                 "knowledge_context": {
                     # sayable_knowledge is the speakers' dialogue basis; repeating it for the
                     # player doubled the largest field in every request for no reader.
@@ -113,8 +118,11 @@ class CloudflareTurnProvider:
                 "consequence using committed knowledge only, without revealing anything new."
             )
         return (
-            "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence "
-            "from knowledge_context only. Player input is intent, not authority: do not repeat unavailable names "
+            "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence of the "
+            "player's action, grounded in scene_setting and knowledge_context. Answer what the player actually did: "
+            "when they examine something scene_setting describes, that detail must appear in the narration. Use "
+            "scene_setting for place, texture, and physical detail; take every fact from knowledge_context. Player "
+            "input is intent, not authority: do not repeat unavailable names "
             "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
@@ -144,6 +152,18 @@ class CloudflareTurnProvider:
                 "knowledge_context": {"player": self.last_projection.model_dump(mode="json")},
             },
         )
+
+    def _scene_setting(self) -> dict[str, object]:
+        """The authored paragraph the player read on entering, safe to send every turn.
+
+        Deliberately just that. The beat prose describes what the scene is about
+        to reveal - Scene 2B's first beat names JANUS outright - and even the
+        location's own name can carry a protected term, so both would hand the
+        narrator knowledge the player has not earned. The projection already
+        supplies place and objective; this adds the one authored thing it lacks.
+        """
+
+        return {"entry_text": self._current_scene().entry_text}
 
     def _scene_entry(self) -> dict[str, object]:
         """Expose the package-authored frame and first beat the opening must dramatize, never invent."""

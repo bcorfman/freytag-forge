@@ -647,3 +647,34 @@ def test_a_sustained_outage_still_fails_closed(monkeypatch) -> None:
     with pytest.raises(NarrationProviderError, match="unavailable"):
         provider("I listen.")
     assert len(attempts) == 2, "exactly one retry, never an unbounded loop"
+
+
+def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypatch) -> None:
+    """A turn needs authored place detail, but not the reveal the scene is built around.
+
+    Without any authored setting the narrator answered an apt search with "you find
+    nothing". With the beat prose or the location's own name, Scene 2B would hand it
+    JANUS before the player earns it - the archive is literally named "JANUS archive".
+    """
+
+    captured: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        captured.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"ok"}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    for scene_id in ("1A", "2B", "3C"):
+        state = RuntimeState.bootstrap(PACKAGE)
+        state.current_scene_id = scene_id
+        state.phase = next(
+            scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id
+        )
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("I act.")
+        user = captured[-1]["user"]
+        scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
+
+        assert json.loads(user)["scene_setting"] == {"entry_text": scene.metadata.entry_text}
+        assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
+        assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
