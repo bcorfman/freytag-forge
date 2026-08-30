@@ -39,13 +39,29 @@ def unconveyed_terms(groups: tuple[tuple[str, ...], ...], text: str) -> tuple[st
     def normalize(value: str) -> str:
         return re.sub(r"\s+", " ", value.translate(replacements).casefold()).strip()
 
-    normalized_text = normalize(text)
+    def words(value: str) -> tuple[str, ...]:
+        return tuple(re.findall(r"[^\W_]+(?:'[^\W_]+)*", normalize(value)))
+
+    def word_matches(authored: str, prose: str) -> bool:
+        return prose == authored or any(prose == authored + suffix for suffix in ("s", "es", "ed", "d", "ing"))
+
+    def phrase_matches(phrasing: str, prose_words: tuple[str, ...]) -> bool:
+        phrasing_words = words(phrasing)
+        if not phrasing_words or len(phrasing_words) > len(prose_words):
+            return False
+        width = len(phrasing_words)
+        return any(
+            all(
+                word_matches(authored, prose)
+                for authored, prose in zip(phrasing_words, prose_words[start : start + width], strict=True)
+            )
+            for start in range(len(prose_words) - width + 1)
+        )
+
+    normalized_text = words(text)
     missing: list[str] = []
     for group in groups:
-        normalized_group = tuple((phrasing, normalize(phrasing)) for phrasing in group)
-        if not any(
-            normalized_phrase and normalized_phrase in normalized_text for _, normalized_phrase in normalized_group
-        ):
+        if not any(phrase_matches(phrasing, normalized_text) for phrasing in group):
             missing.append(group[0] if group else "")
     return tuple(missing)
 
