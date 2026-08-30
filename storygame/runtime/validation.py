@@ -74,13 +74,21 @@ class SelectedRevealResolver:
             selected_knowledge_ids=selected,
             events=events,
         )
+        allowed = {item.id for item in projection.committed_knowledge} | set(selected)
+        if any(grounding_id not in allowed for segment in resolved.segments for grounding_id in segment.grounding_ids):
+            raise ProposalValidationError("segment grounding is not committed or selected knowledge")
+        # A reveal the player never reads is worse than one that does not commit: the
+        # fact silently unlocks the scene's exit, so the story moves on to a place the
+        # player was given no reason to go. Requiring the selected ID to ground one of
+        # this turn's own segments keeps the commit and the telling in the same breath.
+        grounded = {grounding_id for segment in resolved.segments for grounding_id in segment.grounding_ids}
+        undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
+        if undelivered:
+            raise ProposalValidationError("selected knowledge must be grounded in the segment that reveals it")
         self._validator.validate(state, resolved)
         candidate_state = deepcopy(state)
         candidate_state.apply_proposal(resolved)
         post_projection = projector.project(candidate_state, "player", player_input)
-        allowed = {item.id for item in projection.committed_knowledge} | set(selected)
-        if any(grounding_id not in allowed for segment in resolved.segments for grounding_id in segment.grounding_ids):
-            raise ProposalValidationError("segment grounding is not committed or selected knowledge")
         return resolved, post_projection
 
 

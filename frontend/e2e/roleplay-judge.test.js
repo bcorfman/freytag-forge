@@ -53,7 +53,7 @@ test("scene canon judge sends only the current scene canon and parses its verdic
       canon: { scene_id: "1A", plot: "canon", storylets: "guidance", routes: "routes", pacing: "pace", world: "world" },
       fetchImpl: async (_url, options) => {
         request = JSON.parse(options.body);
-        return new Response(JSON.stringify({ output_text: JSON.stringify({ verdict: "pass", canon_consistent: true, scene_local: true, progressive: true, rich: true, protected_safe: true, missing_or_wrong: [], reasons: [] }) }), { status: 200 });
+        return new Response(JSON.stringify({ output_text: JSON.stringify({ verdict: "pass", canon_consistent: true, scene_local: true, progressive: true, rich: true, protected_safe: true, exit_motivated: true, rewards_investigation: true, missing_or_wrong: [], reasons: [] }) }), { status: 200 });
       },
     },
   );

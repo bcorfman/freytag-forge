@@ -204,7 +204,8 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s damaged recording crackles."}],'
+                    '{"segments":[{"kind":"narration","text":"Michelle\'s damaged recording crackles.",'
+                    '"grounding_ids":["k_sl_1a_b_r2"]}],'
                     '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -261,6 +262,73 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
     # The retry must name the offending ID; a blind retry repeats the same mistake.
     assert "k_sl_1a_b_r2" in payloads[1]["system"]
     assert "grounding_ids" in payloads[1]["system"]
+
+
+def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) -> None:
+    """Selecting a candidate without telling it must cost a guided retry, not the player's turn."""
+
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"A faint scratch and a few loose screws."}],'
+                        '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                    )
+                }
+            )
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"Taped under the drawer, a card and a recording.",'
+                    '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I look under the workstation.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert len(payloads) == 2
+    assert "k_sl_1a_b_r2" in payloads[1]["system"]
+    # The correction must say what is missing: the telling, not just the ID.
+    assert "would never learn it" in payloads[1]["system"]
+
+
+def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(monkeypatch) -> None:
+    """A provider that never delivers the reveal loses the selection, not the turn."""
+
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"A faint scratch and a few loose screws."}],'
+                    '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I look under the workstation.")
+
+    assert proposal["selected_knowledge_ids"] == []
+    assert proposal["segments"][0]["text"] == "A faint scratch and a few loose screws."
+    assert len(payloads) == 2
 
 
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:

@@ -83,7 +83,9 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     }
     opening = session.json()["opening"]
     entry_text = PACKAGE.scenes[0].metadata.entry_text
-    assert opening["text"] == f"{entry_text} Kristin steps into a house that has already been searched."
+    # The browser renders opening["text"] as one block, so the authored paragraph break must
+    # carry through without a space indenting the continuation that follows it.
+    assert opening["text"] == f"{entry_text.rstrip()}\n\nKristin steps into a house that has already been searched."
     assert opening["segments"] == [
         {"kind": "narration", "text": entry_text, "speaker_id": None, "grounding_ids": []},
         {

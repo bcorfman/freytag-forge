@@ -15,7 +15,11 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
 def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
-    return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": selected or []}
+    # The runtime requires a selection to ground the segment that reveals it.
+    segment: dict[str, object] = {"kind": "narration", "text": text}
+    if selected:
+        segment["grounding_ids"] = list(selected)
+    return {"segments": [segment], "selected_knowledge_ids": selected or []}
 
 
 def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
@@ -63,6 +67,34 @@ def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
     with pytest.raises(ProposalValidationError, match="grounding"):
         engine.turn("I recover the damaged recording.")
     assert not state.facts.has("michelle_warning_known", "story", value="true")
+
+
+def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene() -> None:
+    """A silent commit strands the player in the next scene with no reason to be there.
+
+    Selecting Scene 1A's memory-card reveal while narrating only a scratch and a
+    few loose screws used to commit `continuity_initiative_known`, fire the
+    canonical bridge, and carry Kristin to the park bench the player had never
+    been told about. Nothing the player read explained the move.
+    """
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(
+        state,
+        lambda _: {
+            "segments": [{"kind": "narration", "text": "A faint scratch and a few loose screws, nothing more."}],
+            "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+        },
+    )
+
+    with pytest.raises(ProposalValidationError, match="grounded"):
+        engine.turn("I look under the workstation.")
+
+    assert not state.facts.has("continuity_initiative_known", "story", value="true")
+    assert not state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert "SL-1A-B" not in state.fired_event_ids
+    assert state.current_scene_id == "1A", "the story may not leave the house on a reveal the player never read"
 
 
 def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:

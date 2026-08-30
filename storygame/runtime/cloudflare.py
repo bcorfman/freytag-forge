@@ -109,8 +109,10 @@ class CloudflareTurnProvider:
             selection_rule = (
                 f"This turn offers these candidate reveals: [{offered}]. If the player's action earns one of them, "
                 "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
-                "moment without selecting it leaves the story unable to move on. Leave the list empty only when "
-                "none of them fits what just happened."
+                "moment without selecting it leaves the story unable to move on. You must also tell it: one of your "
+                "segments has to state, in the narration the player reads, what that candidate's statement says, and "
+                "that segment must list the ID in its grounding_ids. Selecting a reveal the narration never delivers "
+                "is rejected. Leave the list empty only when none of them fits what just happened."
             )
         else:
             selection_rule = (
@@ -318,6 +320,20 @@ class CloudflareTurnProvider:
                 f"You grounded a segment on {', '.join(ungroundable)}, which is neither committed knowledge nor a "
                 "candidate you selected. Resend the same narration with an empty grounding_ids list; only if that ID "
                 "is one of this turn's candidates may you instead place it in selected_knowledge_ids.",
+            )
+        # Selecting a reveal without telling it commits the fact silently: the scene's exit
+        # unlocks and the player is moved somewhere the narration gave them no reason to go.
+        # The ID on a segment is the model's own claim that this is the sentence that reveals it.
+        grounded = {grounding_id for segment in proposal.segments for grounding_id in segment.grounding_ids}
+        undelivered = sorted(
+            {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in grounded}
+        )
+        if undelivered:
+            raise _EligibilityError(
+                "selected knowledge must be grounded in the segment that reveals it",
+                f"You selected {', '.join(undelivered)} but no segment is grounded on it, so the player would never "
+                "learn it. Resend with a segment whose text actually states what that reveal says, listing that ID "
+                "in its grounding_ids - or, if the player has not earned it yet, with selected_knowledge_ids empty.",
             )
         return proposal
 
