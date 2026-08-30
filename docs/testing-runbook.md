@@ -37,7 +37,9 @@ display name, not a Markdown tag name; it can inform the model's generated
 opening continuation. “Eerie silence” is not verbatim package prose: the
 opening's `knowledge_context.player.scene_frame` supplies “The house is quiet,”
 so it is a model embellishment of the validated Scene 1A frame rather than a
-location label or tag.
+location label or tag. The opening-payload test derives the expected location
+display name from the package rather than pinning `McGehee home`; verified on
+2026-08-29 with `TMPDIR=/tmp uv run pytest -q` (123 passed; 90.97% coverage).
 
 ## Full-journey acceptance — verified state (2026-08-29)
 

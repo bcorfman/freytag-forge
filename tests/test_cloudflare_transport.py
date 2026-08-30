@@ -534,9 +534,10 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     user = json.loads(captured["payload"]["user"])
     assert "player_input" not in user
     beat = PACKAGE.scenes[0].opening_beat
+    location = next(item for item in PACKAGE.world.locations if item.id == PACKAGE.scenes[0].metadata.location_id)
     assert user["scene_entry"] == {
         "protagonist": "Kristin Schweitzer",
-        "location": "McGehee home",
+        "location": location.name,
         "phase": "exposition",
         "objective": PACKAGE.scenes[0].metadata.objective,
         "entry_text": PACKAGE.scenes[0].metadata.entry_text,
