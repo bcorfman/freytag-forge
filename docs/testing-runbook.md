@@ -1,5 +1,44 @@
 # Testing runbook
 
+## Opening narration location-name leakage
+
+**Purpose:** Determine whether a location label can appear in the generated
+opening continuation, rather than in the authored opening paragraph.
+
+**Setup / seed:** Load the `continuity_initiative` package; Scene 1A uses the
+`mcgehee_home` location entity.
+
+**Safe actions:** Read the package data, transport payload construction, and
+transport-payload tests only.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Inspect `world.yaml` for the location entity's human-facing `name`.
+2. Inspect `CloudflareTurnProvider._scene_entry` and the opening payload test.
+3. Contrast `_scene_entry` with `_scene_setting`, which is used for ordinary
+   player turns.
+
+**Verify:**
+
+```bash
+rg -n -C 4 'name: McGehee home|"location": location.name|scene_setting' \
+  data/stories/continuity-initiative/world.yaml storygame/runtime/cloudflare.py
+```
+
+Expected: the opening payload assigns `location.name` to `scene_entry.location`;
+ordinary turns send only the authored `entry_text` in `scene_setting`.
+
+**Cleanup:** None.
+
+**Notes:** Verified 2026-08-29. `McGehee home` is the package location entity's
+display name, not a Markdown tag name; it can inform the model's generated
+opening continuation. “Eerie silence” is not verbatim package prose: the
+opening's `knowledge_context.player.scene_frame` supplies “The house is quiet,”
+so it is a model embellishment of the validated Scene 1A frame rather than a
+location label or tag.
+
 ## Full-journey acceptance — verified state (2026-08-29)
 
 **Purpose:** Record what the hosted canon playthrough proves and what it does
