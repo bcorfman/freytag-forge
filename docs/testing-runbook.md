@@ -269,6 +269,13 @@ Expected: all tests pass with repository coverage at or above 90%.
 tests on 2026-08-27 but exited nonzero solely because the global 90% coverage
 gate measured 31.67%; use the full suite for a passing verification.
 
+Verified 2026-08-29: `TMPDIR=/tmp uv run pytest -q --no-cov
+tests/test_markdown_story_package.py::test_a_scene_without_a_first_beat_fails_to_load`
+passed. The fixture removes the `### Scene 1A.1` heading by stable beat ID so
+renaming the authored beat title does not invalidate the test setup. After
+Ruff check and formatting passed, `TMPDIR=/tmp uv run pytest -q --no-cov -m
+authoring_quality` passed 33 tests with 90 deselected.
+
 After merged SHA `fb49aea9a7bcae79c20c53bb6f13f7fc72b647b4` completed the
 staging deployment, the opt-in browser gate passed: `source .env && cd
 frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep
