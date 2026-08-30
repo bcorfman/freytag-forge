@@ -308,7 +308,6 @@ test("samples optional storylets without presenting a menu @storylets", async ({
 });
 
 test("keeps the display budget clock independent from turn-based pressure @timed-events", async ({ page }) => {
-  test.skip(!process.env.E2E_TEST_CLOCK_SECONDS, "requires the local test clock");
   await startSceneSession(page);
   await submitTurn(page, "I pause long enough for the house's pressure to build.");
   const payload = await submitTurn(page, "I listen for the pressure that follows.");

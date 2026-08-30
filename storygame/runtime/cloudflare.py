@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from os import getenv
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from storygame.runtime.contracts import (
@@ -18,6 +20,8 @@ from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -64,7 +68,18 @@ class CloudflareTurnProvider:
     def from_environment(cls, state: RuntimeState) -> CloudflareTurnProvider:
         worker_url = getenv("CLOUDFLARE_WORKER_URL", "").strip()
         if not worker_url:
-            raise NarrationProviderError("narration service is unavailable")
+            configuration_error = ValueError("CLOUDFLARE_WORKER_URL is not configured")
+            try:
+                raise configuration_error
+            except ValueError as error:
+                logger.warning(
+                    "Narration service unavailable (worker host=unconfigured; "
+                    "underlying exception type=%s; message=%s)",
+                    type(error).__name__,
+                    str(error),
+                    exc_info=True,
+                )
+                raise NarrationProviderError("narration service is unavailable") from error
         return cls(
             worker_url=worker_url,
             token=getenv("CLOUDFLARE_WORKER_TOKEN", "").strip(),
@@ -221,15 +236,18 @@ class CloudflareTurnProvider:
         payload = {
             "system": system,
             "user": json.dumps({**user, "response_schema": TurnProposal.model_json_schema()}, separators=(",", ":")),
-            "max_tokens": 2048,
+            "max_tokens": 1024,
             "response_format": {"type": "json_object"},
         }
         try:
             response = self._request_allowing_one_transient_retry(payload)
         except HTTPError as error:
-            if self._worker_error_code(error) != "AI_JSON_MODE_REJECTED":
+            worker_error_code = self._worker_error_code(error)
+            self._log_typed_worker_error(error, worker_error_code)
+            if worker_error_code != "AI_JSON_MODE_REJECTED":
                 raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            self._log_unavailable(error)
             raise NarrationProviderError("narration service is unavailable") from error
         else:
             try:
@@ -243,8 +261,10 @@ class CloudflareTurnProvider:
         try:
             response = self._request_allowing_one_transient_retry(fallback_payload)
         except HTTPError as error:
+            self._log_typed_worker_error(error, self._worker_error_code(error))
             raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            self._log_unavailable(error)
             raise NarrationProviderError("narration service is unavailable") from error
         return self._eligible_or_narration_only(response)
 
@@ -263,8 +283,10 @@ class CloudflareTurnProvider:
         try:
             response = self._request_allowing_one_transient_retry(recovery_payload)
         except HTTPError as error:
+            self._log_typed_worker_error(error, self._worker_error_code(error))
             raise self._narration_error(error) from error
         except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            self._log_unavailable(error)
             raise NarrationProviderError("narration service is unavailable") from error
         return self._eligible_or_narration_only(response)
 
@@ -505,6 +527,32 @@ class CloudflareTurnProvider:
         if isinstance(body, dict) and isinstance(body.get("narration"), str):
             return json.loads(body["narration"])
         return body
+
+    def _log_unavailable(self, error: BaseException) -> None:
+        logger.warning(
+            "Narration service unavailable (worker host=%s; underlying exception type=%s; message=%s)",
+            urlsplit(self.worker_url).hostname,
+            type(error).__name__,
+            self._safe_error_message(error),
+            exc_info=True,
+        )
+
+    def _log_typed_worker_error(self, error: HTTPError, worker_error_code: str) -> None:
+        logger.warning(
+            "Narration worker returned a typed error (worker host=%s; underlying exception type=%s; message=%s; "
+            "worker error code=%s)",
+            urlsplit(self.worker_url).hostname,
+            type(error).__name__,
+            self._safe_error_message(error),
+            worker_error_code or "UNKNOWN",
+            exc_info=True,
+        )
+
+    @staticmethod
+    def _safe_error_message(error: BaseException) -> str:
+        if isinstance(error, (HTTPError, URLError)):
+            return str(error.reason)
+        return str(error)
 
     @staticmethod
     def _worker_error_code(error: HTTPError) -> str:

@@ -19,7 +19,6 @@ export default defineConfig({
       ...process.env,
       VITE_API_BASE_URL: apiBaseUrl,
       VITE_DEPLOYMENT_CHANNEL: process.env.E2E_DEPLOYMENT_CHANNEL || "production",
-      VITE_E2E_TEST_CLOCK_SECONDS: process.env.E2E_TEST_CLOCK_SECONDS || "",
     },
   },
 });
