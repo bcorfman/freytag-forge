@@ -388,8 +388,20 @@ def _validate(package: StoryPackage) -> None:
     for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events):
         if event.scene_id not in scenes:
             raise StoryPackageError(f"canonical route event '{event.id}' references an unknown scene")
-        if {item.fact_id for item in event.activation_conditions} - set(package.world.facts):
+        activation_facts = set(event.activation.all_facts_true) | set(event.activation.any_of)
+        if activation_facts - set(package.world.facts):
             raise StoryPackageError(f"canonical route event '{event.id}' has an unknown activation fact")
+        if event.activation.any_of and not 1 <= event.activation.at_least <= len(event.activation.any_of):
+            raise StoryPackageError(
+                f"canonical route event '{event.id}' has an activation threshold outside "
+                f"1..{len(event.activation.any_of)}"
+            )
+        if not event.activation.any_of and event.activation.at_least > 0:
+            raise StoryPackageError(
+                f"canonical route event '{event.id}' has an activation threshold without a fact pool"
+            )
+        if not event.activation.all_facts_true and not event.activation.any_of:
+            raise StoryPackageError(f"canonical route event '{event.id}' has a vacuous activation rule")
         if {operation.fact_id for operation in event.operations} - set(package.world.facts):
             raise StoryPackageError(f"canonical route event '{event.id}' has an unknown operation fact")
     visiting: set[str] = set()
@@ -431,9 +443,11 @@ def load_story_package(root: Path) -> StoryPackage:
             return {
                 "id": item["id"],
                 "scene_id": item["scene_id"],
-                "activation_conditions": tuple(
-                    {"fact_id": fact_id, "equals": True} for fact_id in activation.get("all_facts_true", ())
-                ),
+                "activation": {
+                    "all_facts_true": activation.get("all_facts_true", ()),
+                    "any_of": activation.get("any_of", ()),
+                    "at_least": activation.get("at_least", 0),
+                },
                 "operations": item["produces"],
             }
 

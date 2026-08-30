@@ -22,6 +22,17 @@ class FactPredicate(_Model):
     equals: str | bool | int | None = None
 
 
+class ActivationRule(_Model):
+    all_facts_true: tuple[str, ...] = ()
+    any_of: tuple[str, ...] = ()
+    at_least: int = 0
+
+    def is_satisfied(self, true_facts):
+        return all(fact_id in true_facts for fact_id in self.all_facts_true) and (
+            not self.any_of or sum(fact_id in true_facts for fact_id in self.any_of) >= self.at_least
+        )
+
+
 class FactDefinition(_Model):
     """A named world predicate and its authoring purpose."""
 
@@ -249,7 +260,7 @@ class StoryletRoute(_Model):
 class CanonicalRouteEvent(_Model):
     id: str = Field(min_length=1)
     scene_id: str = Field(pattern=_SCENE_ID)
-    activation_conditions: tuple[FactPredicate, ...] = ()
+    activation: ActivationRule
     operations: tuple[RouteOperation, ...] = Field(min_length=1)
 
 

@@ -2107,10 +2107,12 @@ canonical_bridge_events:
   scene_id: 1B
   activation:
     all_facts_true:
+    - park_pursuit_resolved
+    any_of:
     - transport_route_identified
     - brandon_identified
     - missing_may_be_alive
-    - park_pursuit_resolved
+    at_least: 2
   produces:
   - op: assert
     fact_id: transport_route_departure_ready
@@ -2119,8 +2121,9 @@ canonical_bridge_events:
   - SL-1B-A
   - SL-1B-B
   - SL-1B-C
-  fallback_realization: The transit clue/Brandon explanation and a validated resolution of the park pursuit may
-    establish departure toward the freight terminal without requiring a particular escape action.
+  fallback_realization: Any two of the transit clue, Brandon explanation, or evidence that May may be alive, together
+    with a validated resolution of the park pursuit, may establish departure toward the freight terminal without
+    requiring a particular escape action.
 - id: bridge_1c_infiltration_needed
   scene_id: 1C
   activation:
@@ -2156,9 +2159,11 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - janus_evidence
+    any_of:
     - brandon_janus_role_known
     - brandon_claimed_reform_motive
     - michelle_resistance_known
+    at_least: 2
   produces:
   - op: assert
     fact_id: archive_crisis_understood
@@ -2167,8 +2172,8 @@ canonical_bridge_events:
   - SL-2B-A
   - SL-2B-B
   - SL-2B-C
-  fallback_realization: Free-text archive investigation and confrontation may establish the same JANUS, bait, Brandon,
-    and Michelle-resistance revelations without selecting a storylet.
+  fallback_realization: Free-text archive investigation and confrontation may establish JANUS evidence plus any two of
+    Brandon’s JANUS role, his claimed reform motive, and Michelle’s resistance without selecting a storylet.
 - id: bridge_2c_combined_plan
   scene_id: 2C
   activation:
@@ -2203,11 +2208,13 @@ canonical_bridge_events:
   scene_id: 3B
   activation:
     all_facts_true:
+    - relay_open
+    any_of:
     - human_security_control
     - charles_abandoned_rebecca
     - detention_locations_secured
     - brandon_confession_available
-    - relay_open
+    at_least: 3
   produces:
   - op: assert
     fact_id: broadcast_started
@@ -2216,8 +2223,8 @@ canonical_bridge_events:
   - SL-3B-A
   - SL-3B-B
   - SL-3B-C
-  fallback_realization: After JANUS loses predictive control, Rebecca’s location data is secured, Charles betrays
-    her, and Brandon opens the relay with his confession, Michelle/Kristin begin the transmission.
+  fallback_realization: After the relay is open and any three of human security control, Rebecca’s location data,
+    Charles abandoning her, or Brandon’s confession are established, Michelle/Kristin begin the transmission.
 canonical_resolution_events:
 - id: resolution_exposure_holds
   scene_id: 3C

@@ -202,7 +202,10 @@ class RuntimeEngine:
         for event in events:
             if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
                 continue
-            if not all(self._predicate_matches(predicate) for predicate in event.activation_conditions):
+            true_facts = frozenset(
+                fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
+            )
+            if not event.activation.is_satisfied(true_facts):
                 continue
             operations = tuple(
                 FactOperation(

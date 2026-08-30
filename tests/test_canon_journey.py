@@ -28,8 +28,8 @@ CLOCKED_JOURNEY = [
     ("k_sl_2a_b_r1", 510, "2A"),
     ("k_sl_2a_c_r2", 570, "2B"),
     ("k_sl_2b_a_r2", 630, "2B"),
-    ("k_sl_2b_b_r1", 630, "2B"),
-    ("k_sl_2b_c_r1", 705, "2C"),
+    ("k_sl_2b_c_r1", 630, "2B"),
+    ("k_sl_2b_b_r1", 705, "2C"),
     ("k_sl_2c_a_r2", 780, "2C"),
     ("k_sl_2c_c_r1", 840, "3A"),
     ("k_sl_3a_a_r1", 870, "3A"),
@@ -53,8 +53,8 @@ UNCLOCKED_JOURNEY = [
     ("k_sl_2a_b_r1", "2A"),
     ("k_sl_2a_c_r2", "2B"),
     ("k_sl_2b_a_r1", "2B"),
-    ("k_sl_2b_b_r2", "2B"),
-    ("k_sl_2b_c_r2", "2C"),
+    ("k_sl_2b_c_r2", "2B"),
+    ("k_sl_2b_b_r2", "2C"),
     ("k_sl_2c_a_r2", "2C"),
     ("k_sl_2c_c_r2", "3A"),
     ("k_sl_3a_a_r2", "3A"),
@@ -178,7 +178,7 @@ def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -
                         facts.add(operation.fact_id)
                         changed = True
         for event in package.storylet_routes.bridge_events:
-            if all(predicate.fact_id in facts for predicate in event.activation_conditions):
+            if event.activation.is_satisfied(frozenset(facts)):
                 for operation in event.operations:
                     if operation.op == "assert" and operation.fact_id not in facts:
                         facts.add(operation.fact_id)
