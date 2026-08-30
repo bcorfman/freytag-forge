@@ -202,6 +202,11 @@ def _validate_knowledge(package: StoryPackage) -> None:
         event.id: event
         for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)
     }
+    transition_trigger_facts = {
+        (transition.source_scene_id, trigger.fact_id)
+        for transition in package.pacing.transitions
+        for trigger in transition.triggers
+    }
     scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
     produced_by: dict[str, set[str]] = {}
     for known in catalog.knowledge:
@@ -222,6 +227,18 @@ def _validate_knowledge(package: StoryPackage) -> None:
         established_facts = {effect.fact_id for effect in item.establishes}
         if required_facts - facts or established_facts - facts:
             raise StoryPackageError(f"knowledge '{item.id}' references an unknown fact")
+        if (
+            item.source.kind == "storylet_realization"
+            and any(
+                effect.op == "assert" and (scene_id, effect.fact_id) in transition_trigger_facts
+                for scene_id in item.available_in_scenes
+                for effect in item.establishes
+            )
+            and not item.must_convey
+        ):
+            raise StoryPackageError(
+                f"selectable knowledge '{item.id}' establishes a scene-transition trigger but has no must_convey"
+            )
         if item.audience.kind == "characters" and set(item.audience.character_ids) - {
             entity.id for entity in package.world.npcs
         }:

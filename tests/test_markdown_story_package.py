@@ -194,6 +194,18 @@ def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> Non
     assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["michelle_abduction_suspicion"]
 
 
+def test_loader_rejects_selectable_transition_trigger_without_must_convey(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_d_r1")
+    candidate.pop("must_convey")
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="must_convey"):
+        load_story_package(root)
+
+
 @pytest.mark.parametrize(("field", "message"), [("facts", "facts must define"), ("scene_frames", "safe scene frame")])
 def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str, message: str) -> None:
     root = copied_package(tmp_path)

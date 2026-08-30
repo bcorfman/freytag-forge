@@ -24,6 +24,7 @@ class ProjectedKnowledge(_KnowledgeModel):
 class RevealCandidate(_KnowledgeModel):
     id: str
     statement: str
+    must_convey: tuple[tuple[str, ...], ...]
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
@@ -195,4 +196,4 @@ class KnowledgeProjector:
     def _candidate(item: KnowledgeDefinition) -> RevealCandidate:
         """Expose only the player-safe selection affordance to the provider."""
 
-        return RevealCandidate(id=item.id, statement=item.statement)
+        return RevealCandidate(id=item.id, statement=item.statement, must_convey=item.must_convey)

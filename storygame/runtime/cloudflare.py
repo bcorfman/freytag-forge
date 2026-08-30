@@ -16,6 +16,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 
@@ -111,8 +112,10 @@ class CloudflareTurnProvider:
                 "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
                 "moment without selecting it leaves the story unable to move on. You must also tell it: one of your "
                 "segments has to state, in the narration the player reads, what that candidate's statement says, and "
-                "that segment must list the ID in its grounding_ids. Selecting a reveal the narration never delivers "
-                "is rejected. Leave the list empty only when none of them fits what just happened."
+                "that segment must list the ID in its grounding_ids. Every must_convey synonym group shown for the "
+                "candidate must appear through at least one of its phrasings in that grounded narration. Selecting a "
+                "reveal the narration never delivers is rejected. Leave the list empty only when none of them fits "
+                "what just happened."
             )
         else:
             selection_rule = (
@@ -335,6 +338,21 @@ class CloudflareTurnProvider:
                 "learn it. Resend with a segment whose text actually states what that reveal says, listing that ID "
                 "in its grounding_ids - or, if the player has not earned it yet, with selected_knowledge_ids empty.",
             )
+        candidates = {candidate.id: candidate for candidate in self.last_projection.candidates}
+        for knowledge_id in proposal.selected_knowledge_ids:
+            candidate = candidates[knowledge_id]
+            grounded_text = " ".join(
+                segment.text for segment in proposal.segments if knowledge_id in segment.grounding_ids
+            )
+            missing = unconveyed_terms(candidate.must_convey, grounded_text)
+            if missing:
+                missing_text = ", ".join(missing)
+                raise _EligibilityError(
+                    f"selected knowledge does not convey: {missing_text}",
+                    f"You selected {knowledge_id}, but its grounded narration is missing: {missing_text}. "
+                    "Resend with a segment whose text conveys every must_convey group for that candidate and lists "
+                    f"{knowledge_id} in its grounding_ids, or use an empty selected_knowledge_ids list.",
+                )
         return proposal
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:

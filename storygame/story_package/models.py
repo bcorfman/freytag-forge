@@ -87,6 +87,7 @@ class KnowledgeDefinition(_Model):
     establishes: tuple[RouteOperation, ...] = Field(min_length=1)
     source: RevealSource
     relevance: Relevance = Field(default_factory=Relevance)
+    must_convey: tuple[tuple[str, ...], ...] = ()
 
 
 class SceneFrame(_Model):

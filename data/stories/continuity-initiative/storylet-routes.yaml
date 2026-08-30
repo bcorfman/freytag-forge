@@ -428,7 +428,7 @@ storylets:
     her disappearance to a deliberate threat rather than require a specific search command.
   realization_options:
   - id: SL-1A-B-R1
-    dramatic_intent: Discover or securely recover Michelle’s research and infer that she expected targeted danger.
+    dramatic_intent: Recover Michelle's hidden memory card and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
     operations:
     - op: assert
       fact_id: continuity_initiative_known
@@ -1352,8 +1352,8 @@ storylets:
     combined mission and focuses urgency.
   realization_options:
   - id: SL-2C-C-R1
-    dramatic_intent: Michelle’s coded message establishes that broadcast and detention access can be combined through
-      Rebecca’s secured office.
+    dramatic_intent: Michelle's coded message establishes that evidence can be broadcast and detention cells opened
+      through Rebecca's secured office.
     operations:
     - op: assert
       fact_id: evidence_ready_to_transmit

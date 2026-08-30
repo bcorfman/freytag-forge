@@ -76,11 +76,14 @@ class _ScriptedProvider:
     def __call__(self, _player_input: str) -> dict[str, object]:
         # A selection must be grounded in the segment that tells it, exactly as the
         # runtime requires of a live provider; an ungrounded selection is rejected.
+        text = "A concrete authored consequence lands."
+        if self.selected:
+            text = PACKAGE.knowledge_indexes.by_id[self.selected[0]].statement
         return {
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "A concrete authored consequence lands.",
+                    "text": text,
                     "grounding_ids": list(self.selected),
                 }
             ],
