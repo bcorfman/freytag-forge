@@ -66,27 +66,27 @@ freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
-entry_text: "Michelle's text buzzed came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible.\n\n"
+entry_text: "Michelle's text buzzed came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
 transition_ids: [t_1a_1b]
 ---
 
-**Setting:** Michelle’s home in Los Angeles
+**Setting:** Michelle’s home 
 
 **Characters:**
 
 * Kristin Schweitzer
 * Dr. Michelle McGehee
 
-**Plot:** Kristin returns home shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she was taken rather than simply vanishing with the others.
+**Plot:** Kristin returns home shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
 
-### Scene 1A.1 — The Empty House
+### Scene 1A.1 — Michelle Is Gone
 
-Kristin reaches her neighborhood after navigating abandoned vehicles, stalled public transportation, and frightened crowds. Michelle is gone, but several details seem inconsistent with a sudden supernatural or unexplained disappearance:
+Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
 * Her phone remains on the kitchen floor.
-* Her laptop and work bag are missing.
-* A chair has been overturned.
-* The back door shows signs of forced entry.
+* Her laptop and work bag are missing and not in their normal spots.
+* The chair at Shelly's workstation has been overturned.
+* The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 

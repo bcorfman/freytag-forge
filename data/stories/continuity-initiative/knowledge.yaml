@@ -1,7 +1,7 @@
 schema_version: '2.0'
 facts:
 - id: michelle_abduction_suspicion
-  purpose: Kristin has enough signs of forced entry, blood, and missing work materials to reasonably suspect Michelle was abducted.
+  purpose: Kristin has enough signs of forced entry and missing work materials to reasonably suspect Michelle might have been abducted.
 - id: facility_proof
   purpose: Kristin has confirmed that the supposedly abandoned terminal conceals an active underground detention facility.
 - id: false_identities_ready
@@ -207,7 +207,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: 'The house is too quiet. Michelle''s phone lies facedown on the kitchen floor beside an overturned chair, her laptop and work bag are gone, and the back door frame is splintered where someone forced the lock. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
+  situation: 'The house is quiet. Michelle''s phone lies facedown on the kitchen floor beside an overturned chair, her laptop and work bag are gone, and the back door frame is splintered where someone forced the lock. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: 'A damaged public park holding Michelle''s dead drop: an ordinary bench with a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
