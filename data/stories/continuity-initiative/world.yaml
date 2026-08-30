@@ -2,7 +2,7 @@ story_id: continuity_initiative
 protagonist_id: kristin
 locations:
 - id: mcgehee_home
-  name: McGehee home
+  name: Shelly's house
 - id: los_angeles_park
   name: Los Angeles park
 - id: regional_facility
