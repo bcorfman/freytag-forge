@@ -1,5 +1,56 @@
 # Testing runbook
 
+## Full-journey acceptance — verified state (2026-08-29)
+
+**Purpose:** Record what the hosted canon playthrough proves and what it does
+not, so the next session does not re-derive it.
+
+**Deterministic evidence (no model calls, runs in CI):**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+```
+
+- `tests/test_canon_journey.py` drives two complete 1A→3C playthroughs with a
+  scripted provider — one on the package clock, one at the default 60-second
+  cadence — and asserts `resolution_complete`, every pacing event, and the
+  20-minute budget.
+- `test_no_single_reveal_can_strand_a_scene_exit` audits every transition
+  against every realization. It exists because playing Michelle's damaged
+  recording before finding her memory card used to consume Scene 1A's only
+  source of `michelle_lead_actionable`, leaving the opening scene unwinnable.
+- `test_request_size_stays_flat_as_the_story_accumulates` caps the narration
+  request, which grew to 44 KB by Scene 3C and timed out Act 3 turns.
+
+**Hosted evidence (billed, staging):**
+
+```bash
+source .env && cd frontend && E2E_PACKAGE_CLOCK=1 npm run test:e2e -- --grep @llm-canon
+```
+
+Observed on 2026-08-29 against staging: the playthrough walks all nine scenes
+in authored order, fires all four pacing events in their own scenes, commits a
+reveal on close to every turn, and reaches the independent judge. Runs vary
+between roughly 22 and 28 turns.
+
+**Known open items:**
+
+- The canon judge fails every scene on narration quality. Its recurring
+  criticisms are thin sensory establishment and narration that does not answer
+  the player's specific action; it separately confirms on each scene that
+  protected knowledge is correctly withheld and that beat ordering is right.
+  An ordinary turn now carries the scene's authored entry paragraph, but not
+  its beat prose, because Scene 2B's first beat and the `JANUS archive`
+  location name both carry knowledge the player has not yet earned. Widening
+  that further needs an authoring decision about the trade.
+- Staging intermittently returns HTTP 503 for a single turn, which ends a run.
+  The transport already retries once on a connection failure; a repeat means
+  the Worker was unavailable for both attempts. Rerun before investigating.
+- `SL-3C-D` and `SL-3C-E` are unreachable: the canonical resolution events set
+  every fact they establish on the turn the player enters 3C, so the projector
+  always filters them as already established. The game completes correctly
+  without them.
+
 ## Phase 3 provider knowledge-context cutover
 
 **Purpose:** Verify the Worker receives only fact-derived player and speaker
