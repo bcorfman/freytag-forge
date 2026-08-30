@@ -83,14 +83,18 @@ transition_ids: [t_1a_1b]
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
-* Her phone remains on the kitchen floor.
+* Her phone remains on the kitchen floor undamaged, but the battery is dead.
 * Her laptop and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
+Kristin notices one of the drawers on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
+
 ### Scene 1A.2 — Michelle’s Last Investigation
 
-Kristin finds a hidden memory card taped beneath a drawer. It contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
+Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into her laptop out in her truck. 
+
+The memory card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 
 The files show that private contractors constructed dozens of enormous “population stabilization centers” before the disappearances. Officially, the centers were designed as shelters for natural disasters and biological attacks.
 
@@ -100,7 +104,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-Kristin recovers a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, she says that government officials have been tracking her and that a planned “activation event” is imminent.
+On the memory card, Kristin also finds a voice recording Michelle attempted to send shortly before she disappeared. In it, she says that government officials have been tracking her and that a planned “activation event” is imminent.
 
 Before naming her source, Michelle hears someone enter the house. The recording ends after she whispers:
 
@@ -110,7 +114,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 ### Scene 1A.4 — The First Threat
 
-A federal emergency patrol arrives at Kristin’s house unusually quickly. The officers claim they are conducting welfare checks, but they search Michelle’s office and ask specifically about her research and findings.
+A federal emergency patrol arrives at Michelle’s house unusually quickly. The officers claim they are conducting welfare checks, but they search Michelle’s office and ask specifically about her research and findings.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked her front gate with a strip of reflective tape.
 
