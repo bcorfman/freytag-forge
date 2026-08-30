@@ -10,6 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from storygame.story_package.models import (
+    FactDelivery,
     KnowledgeCatalog,
     KnowledgeIndexes,
     PacingSource,
@@ -74,6 +75,8 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
             raise StoryPackageError(f"invalid frontmatter for scene {match.group(1)}: {exc}") from exc
         if metadata.scene_id != match.group(1):
             raise StoryPackageError(f"heading and frontmatter disagree for scene {match.group(1)}")
+        if set(metadata.bridge_text) != set(metadata.transition_ids):
+            raise StoryPackageError(f"scene {match.group(1)} bridge_text keys must match transition_ids exactly")
         prose = body[frontmatter.end() :].strip()
         scenes.append(Scene(metadata=metadata, prose=prose, opening_beat=_parse_opening_beat(metadata.scene_id, prose)))
     return tuple(scenes)
@@ -430,6 +433,65 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"transitions from {source_id} have ambiguous priority")
 
 
+def _validate_deliveries(package: StoryPackage) -> None:
+    """Fail closed when a canonical bridge cannot safely carry a fact."""
+
+    from storygame.runtime.validation import unconveyed_terms
+
+    scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
+    facts = package.fact_ids
+    canonical_events = package.storylet_routes.bridge_events
+    required_facts = {
+        fact_id
+        for event in canonical_events
+        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
+    }
+    player_visible_facts = {
+        effect.fact_id
+        for known in package.knowledge.knowledge
+        if known.audience.player_visible
+        for effect in known.establishes
+    }
+    deliveries_by_fact: dict[str, FactDelivery] = {}
+    for delivery in package.deliveries:
+        if delivery.fact_id not in facts:
+            raise StoryPackageError(f"delivery for fact '{delivery.fact_id}' references an unknown fact")
+        if delivery.fact_id in deliveries_by_fact:
+            raise StoryPackageError(f"fact '{delivery.fact_id}' has more than one delivery")
+        deliveries_by_fact[delivery.fact_id] = delivery
+        scene = scenes.get(delivery.scene_id)
+        if scene is None:
+            raise StoryPackageError(f"delivery for fact '{delivery.fact_id}' references an unknown scene")
+        if delivery.source_entity_id and delivery.source_entity_id not in scene.metadata.participant_ids:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' names source entity '{delivery.source_entity_id}' "
+                f"absent from scene {delivery.scene_id} participants"
+            )
+        unknown_costs = {cost.fact_id for cost in delivery.costs} - facts
+        if unknown_costs:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' has unknown cost fact(s): {sorted(unknown_costs)}"
+            )
+        missing = unconveyed_terms(delivery.must_convey, delivery.fallback_text)
+        if missing:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' fallback_text does not convey: {', '.join(missing)}"
+            )
+        player_safe = any(
+            known.audience.player_visible
+            for known in package.knowledge.knowledge
+            if any(effect.fact_id == delivery.fact_id for effect in known.establishes)
+        )
+        if not player_safe:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' has no player-visible knowledge definition"
+            )
+    missing_deliveries = sorted((required_facts & player_visible_facts) - set(deliveries_by_fact))
+    if missing_deliveries:
+        fact_id = missing_deliveries[0]
+        raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
+
+
 def load_story_package(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
     try:
@@ -442,6 +504,11 @@ def load_story_package(root: Path) -> StoryPackage:
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
         knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))
+        handoffs_raw = _yaml(root / "handoffs.yaml")
+        raw_deliveries = handoffs_raw.get("deliveries")
+        if not isinstance(raw_deliveries, list):
+            raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
+        deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
 
         def event_source(item: dict[str, Any]) -> dict[str, Any]:
             activation = item.get("activation", {})
@@ -493,7 +560,9 @@ def load_story_package(root: Path) -> StoryPackage:
         storylet_routes=routes,
         knowledge=knowledge,
         knowledge_indexes=_compile_knowledge_indexes(knowledge),
+        deliveries=deliveries,
     )
     _validate(package)
     _validate_knowledge(package)
+    _validate_deliveries(package)
     return package

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
 
 PACKAGE = Path("data/stories/continuity-initiative")
@@ -314,4 +315,100 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):
+        load_story_package(root)
+
+
+def _handoffs(root: Path) -> tuple[Path, dict[str, object]]:
+    source = root / "handoffs.yaml"
+    return source, yaml.safe_load(source.read_text(encoding="utf-8"))
+
+
+def test_bridge_required_player_safe_facts_have_one_self_conveying_delivery() -> None:
+    package = load_story_package(PACKAGE)
+    required = {
+        fact_id
+        for event in package.storylet_routes.bridge_events
+        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
+    }
+    player_safe = {
+        effect.fact_id
+        for knowledge in package.knowledge.knowledge
+        if knowledge.audience.player_visible
+        for effect in knowledge.establishes
+    }
+    deliveries = {delivery.fact_id: delivery for delivery in package.deliveries}
+
+    assert set(deliveries) == required & player_safe
+    assert len(package.deliveries) == len(deliveries)
+    assert all(not unconveyed_terms(delivery.must_convey, delivery.fallback_text) for delivery in deliveries.values())
+
+
+def test_loader_rejects_missing_bridge_delivery(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    handoffs["deliveries"].pop(0)  # type: ignore[index]
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="continuity_initiative_known.*no FactDelivery"):
+        load_story_package(root)
+
+
+def test_loader_rejects_duplicate_fact_delivery(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    handoffs["deliveries"].append(dict(handoffs["deliveries"][0]))  # type: ignore[index]
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="continuity_initiative_known.*more than one"):
+        load_story_package(root)
+
+
+def test_loader_rejects_delivery_source_outside_scene_participants(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "brandon_identified")  # type: ignore[index]
+    delivery["source_entity_id"] = "rebecca"
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="brandon_identified.*source entity.*rebecca.*absent"):
+        load_story_package(root)
+
+
+def test_loader_rejects_delivery_fallback_that_misses_a_required_phrase(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "facility_proof")  # type: ignore[index]
+    delivery["fallback_text"] = "The terminal is quiet and empty."
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="facility_proof.*fallback_text.*fresh tire tracks"):
+        load_story_package(root)
+
+
+def test_loader_rejects_delivery_for_world_only_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    handoffs["deliveries"].append(  # type: ignore[index]
+        {
+            "fact_id": "rebecca_observing_infiltrators",
+            "scene_id": "2A",
+            "source_kind": "observation",
+            "must_convey": [["security alert"], ["Rebecca is watching"]],
+            "fallback_text": "The security alert makes clear that Rebecca is watching.",
+        }
+    )
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="rebecca_observing_infiltrators.*no player-visible"):
+        load_story_package(root)
+
+
+def test_loader_rejects_bridge_text_keys_that_do_not_match_transition_ids(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "plot.md"
+    contents = source.read_text(encoding="utf-8")
+    contents = contents.replace("transition_ids: [t_1a_1b]", "transition_ids: []", 1)
+    source.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A bridge_text keys must match transition_ids exactly"):
         load_story_package(root)

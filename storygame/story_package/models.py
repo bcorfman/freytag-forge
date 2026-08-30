@@ -158,6 +158,7 @@ class SceneMetadata(_Model):
     item_ids: tuple[str, ...] = ()
     entry_text: str = Field(min_length=1)
     transition_ids: tuple[str, ...] = ()
+    bridge_text: Mapping[str, str] = {}
 
 
 class SceneBeat(_Model):
@@ -237,6 +238,18 @@ class RouteOperation(_Model):
     value: str | bool | int | None = None
 
 
+class FactDelivery(_Model):
+    """A diegetic, player-safe way to carry an unearned fact forward."""
+
+    fact_id: str = Field(pattern=_ID)
+    scene_id: str = Field(pattern=_SCENE_ID)
+    source_kind: Literal["message", "npc", "broadcast", "observation", "inference"]
+    source_entity_id: str | None = None
+    must_convey: tuple[tuple[str, ...], ...] = Field(min_length=2)
+    fallback_text: str = Field(min_length=1)
+    costs: tuple[RouteOperation, ...] = ()
+
+
 class RouteRealization(_Model):
     id: str = Field(min_length=1)
     dramatic_intent: str = Field(min_length=1)
@@ -292,6 +305,7 @@ class StoryPackage(_Model):
     storylet_routes: StoryletRoutesSource
     knowledge: KnowledgeCatalog
     knowledge_indexes: KnowledgeIndexes
+    deliveries: tuple[FactDelivery, ...]
 
     @property
     def fact_ids(self) -> frozenset[str]:
