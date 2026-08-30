@@ -108,19 +108,23 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
-        lambda _: {
-            "segments": [
-                {
-                    "kind": "narration",
-                    "text": (
-                        "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
-                        "dead drop at a bench in the park."
-                    ),
-                    "grounding_ids": ["k_sl_1a_b_r1"],
-                }
-            ],
-            "selected_knowledge_ids": ["k_sl_1a_b_r1"],
-        },
+        lambda _: (
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": (
+                            "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
+                            "dead drop at a bench in the park."
+                        ),
+                        "grounding_ids": ["k_sl_1a_b_r1"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+            }
+            if not state.fired_event_ids
+            else _turn("The house holds its breath while Kristin decides what to do next.")
+        ),
     )
 
     engine.turn("I look under the workstation.", clock_seconds=120)
@@ -128,6 +132,10 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     assert state.facts.has("continuity_initiative_known", "story", value="true")
     assert state.facts.has("michelle_lead_actionable", "story", value="true")
     assert "SL-1A-B" in state.fired_event_ids
+    assert state.current_scene_id == "1A"
+
+    engine.turn("I take the lead and leave the house.")
+
     assert state.current_scene_id == "1B"
 
 

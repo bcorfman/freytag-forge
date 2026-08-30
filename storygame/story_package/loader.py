@@ -93,14 +93,11 @@ def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
     return SceneBeat(id=first.group(1), title=first.group(2).strip(), prose=body)
 
 
-def _clock(value: str) -> int:
-    match = re.fullmatch(r"(\d{2}):(\d{2}):(\d{2})", value.strip())
+def _turn(value: str) -> int:
+    match = re.fullmatch(r"turn\s+(\d+)", value.strip(), re.IGNORECASE)
     if not match:
-        raise StoryPackageError(f"invalid timestamp '{value}' (use HH:MM:SS)")
-    hour, minute, second = map(int, match.groups())
-    if minute > 59 or second > 59:
-        raise StoryPackageError(f"invalid timestamp '{value}'")
-    return hour * 3600 + minute * 60 + second
+        raise StoryPackageError(f"invalid turn offset '{value}' (use 'turn N')")
+    return int(match.group(1))
 
 
 def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
@@ -122,7 +119,7 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
             raise StoryPackageError(f"storylet {match.group(1)} lacks plot.md source links")
         if any(not any(link.startswith(anchor) for anchor in plot_anchors) for link in links):
             raise StoryPackageError(f"storylet {match.group(1)} links to an unknown plot heading")
-        window = dict(re.findall(r"(earliest|target|latest):\s*`?([0-9:]+)`?", sections["Pacing window"]))
+        window = dict(re.findall(r"-\s*(earliest|target|latest):\s*`([^`]+)`", sections["Pacing window"]))
         if set(window) != {"earliest", "target", "latest"}:
             raise StoryPackageError(f"storylet {match.group(1)} has an invalid pacing window")
         impact = sections["Pacing impact"].strip("` \n")
@@ -133,9 +130,9 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
                 title=match.group(3),
                 source_links=links,
                 sections=sections,
-                earliest_seconds=_clock(window["earliest"]),
-                target_seconds=_clock(window["target"]),
-                latest_seconds=_clock(window["latest"]),
+                earliest_turn=_turn(window["earliest"]),
+                target_turn=_turn(window["target"]),
+                latest_turn=_turn(window["latest"]),
                 pacing_impact=impact,
             )
         )
@@ -344,6 +341,11 @@ def _validate(package: StoryPackage) -> None:
     if len(pacing_scene_ids) != len(package.pacing.scenes) or pacing_scene_ids != set(scenes):
         raise StoryPackageError("pacing must declare exactly one window per scene")
     windows = {p.scene_id: p for p in package.pacing.scenes}
+    handoff_seconds = sum(window.handoff_after_turns for window in package.pacing.scenes) * 60
+    if handoff_seconds > package.pacing.budget_seconds:
+        raise StoryPackageError(
+            f"pacing handoff sum {handoff_seconds} seconds exceeds budget_seconds {package.pacing.budget_seconds}"
+        )
     event_ids: set[str] = set()
     for event in package.pacing.events:
         if event.id in event_ids:
@@ -356,15 +358,15 @@ def _validate(package: StoryPackage) -> None:
         if {effect.fact_id for effect in event.effects} - set(package.world.facts):
             raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
         window = windows[event.scene_id]
-        if not window.earliest_seconds <= event.at_seconds <= window.latest_seconds:
+        if not 0 <= event.at_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")
     for storylet in package.storylets:
         if storylet.scene_id not in scenes:
             raise StoryPackageError(f"storylet '{storylet.id}' references unknown scene")
         window = windows[storylet.scene_id]
         within_scene_window = (
-            window.earliest_seconds <= storylet.earliest_seconds <= storylet.target_seconds
-            and storylet.latest_seconds <= window.latest_seconds
+            0 <= storylet.earliest_turn <= storylet.target_turn <= storylet.latest_turn
+            and storylet.latest_turn <= window.handoff_after_turns
         )
         if not within_scene_window:
             raise StoryPackageError(f"storylet '{storylet.id}' escapes its scene pacing window")
@@ -378,6 +380,9 @@ def _validate(package: StoryPackage) -> None:
     for route in package.storylet_routes.storylets:
         if route.scene_id not in scenes or route.id not in route_ids:
             raise StoryPackageError("storylet route references unknown scene")
+        window = windows[route.scene_id]
+        if not 0 <= route.earliest_turn <= route.target_turn <= route.latest_turn <= window.handoff_after_turns:
+            raise StoryPackageError(f"storylet '{route.id}' escapes its scene pacing window")
         if {item.fact_id for item in route.activation_conditions} - set(package.world.facts):
             raise StoryPackageError(f"storylet route '{route.id}' has an unknown activation fact")
         for realization in route.realizations:
@@ -462,9 +467,9 @@ def load_story_package(root: Path) -> StoryPackage:
                         "scene_id": item["scene_id"],
                         "title": item["title"],
                         "activation_conditions": item["activation"].get("conditions", ()),
-                        "earliest_seconds": item["activation"]["pacing"]["earliest_seconds"],
-                        "target_seconds": item["activation"]["pacing"]["target_seconds"],
-                        "latest_seconds": item["activation"]["pacing"]["latest_seconds"],
+                        "earliest_turn": item["activation"]["pacing"]["earliest_turn"],
+                        "target_turn": item["activation"]["pacing"]["target_turn"],
+                        "latest_turn": item["activation"]["pacing"]["latest_turn"],
                         "pressure_role": item["pressure_role"],
                         "realizations": item["realization_options"],
                     }

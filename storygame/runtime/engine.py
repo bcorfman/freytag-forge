@@ -52,6 +52,7 @@ class RuntimeEngine:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.state.require_turn_allowed()
+        self.state.turn_index += 1
         self._activate_pacing()
         self.last_projection = self.projector.project(self.state, "player", player_input)
         provider_proposal = parse_turn_proposal(self.provider(player_input))
@@ -132,18 +133,18 @@ class RuntimeEngine:
     def _apply_authored_transition(self) -> str | None:
         """Advance along the highest-priority authored transition once its declared triggers hold.
 
-        The target scene's earliest_seconds is a hard pacing floor so committed
-        triggers cannot rush the story ahead of its authored 20-minute budget.
+        The source scene's min_turns is a hard pacing floor so committed
+        triggers cannot rush the player out before the scene has had its minimum play.
         Returns the entered scene's authored entry text so the turn can open the
         new scene with the package's own words.
         """
 
         if self.state.has_pending_break:
             return None
-        elapsed = self._elapsed_seconds()
+        turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         for transition in self.validator.eligible_transitions(self.state):
-            if elapsed < windows[transition.target_scene_id].earliest_seconds:
+            if turns_since_entry < windows[transition.source_scene_id].min_turns:
                 continue
             if not self.validator.transition_dependencies_available(transition, self.state.facts):
                 continue
@@ -162,11 +163,11 @@ class RuntimeEngine:
     def _activate_pacing(self) -> None:
         """Activate only package-declared, scene-bound optional storylets."""
 
-        elapsed = self._elapsed_seconds()
+        turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         for storylet in self.state.package.storylet_routes.storylets:
             if (
                 storylet.scene_id == self.state.current_scene_id
-                and storylet.earliest_seconds <= elapsed
+                and storylet.earliest_turn <= turns_since_entry
                 and all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions)
                 and storylet.id not in self.state.fired_event_ids
             ):
@@ -175,7 +176,7 @@ class RuntimeEngine:
             if (
                 event.scene_id == self.state.current_scene_id
                 and event.id not in self.state.fired_event_ids
-                and elapsed >= event.at_seconds
+                and turns_since_entry >= event.at_turn
             ):
                 for effect in event.effects:
                     self.state.facts.assert_fact(

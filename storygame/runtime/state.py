@@ -10,7 +10,7 @@ from storygame.runtime.contracts import FactOperation, GameBreakWarning, Resolve
 from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import StoryPackage
 
-SNAPSHOT_VERSION = 1
+SNAPSHOT_VERSION = 2
 
 
 class RuntimeStateError(ValueError):
@@ -37,6 +37,8 @@ class RuntimeSnapshot(BaseModel):
     active_event_ids: tuple[str, ...]
     fired_event_ids: tuple[str, ...]
     facts: FactStore
+    turn_index: int = Field(ge=0)
+    scene_entered_at_turn: int = Field(ge=0)
     narrative_history: tuple[str, ...] = ()
     turn_records: tuple[TurnRecord, ...] = ()
 
@@ -51,6 +53,8 @@ class RuntimeState(BaseModel):
     active_event_ids: set[str] = Field(default_factory=set)
     fired_event_ids: set[str] = Field(default_factory=set)
     facts: FactStore = Field(default_factory=FactStore)
+    turn_index: int = Field(default=0, ge=0)
+    scene_entered_at_turn: int = Field(default=0, ge=0)
     narrative_history: list[str] = Field(default_factory=list)
     turn_records: list[TurnRecord] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
@@ -92,6 +96,8 @@ class RuntimeState(BaseModel):
             active_event_ids=tuple(sorted(self.active_event_ids)),
             fired_event_ids=tuple(sorted(self.fired_event_ids)),
             facts=self.facts.clone(),
+            turn_index=self.turn_index,
+            scene_entered_at_turn=self.scene_entered_at_turn,
             narrative_history=tuple(self.narrative_history),
             turn_records=tuple(self.turn_records),
         )
@@ -161,6 +167,7 @@ class RuntimeState(BaseModel):
     def _assert_scene_entry_fact(self, scene_id: str) -> None:
         """Commit the typed scene-entry reveal before any opening can render."""
 
+        self.scene_entered_at_turn = self.turn_index
         self.facts.assert_fact(Fact(predicate=f"scene_{scene_id.lower()}_entry_known", subject="story", value="true"))
 
     @staticmethod
@@ -180,6 +187,8 @@ class RuntimeState(BaseModel):
             self.active_event_ids = set(snapshot.active_event_ids)
             self.fired_event_ids = set(snapshot.fired_event_ids)
             self.facts = snapshot.facts.clone()
+            self.turn_index = snapshot.turn_index
+            self.scene_entered_at_turn = snapshot.scene_entered_at_turn
             self.narrative_history = list(snapshot.narrative_history)
             self.turn_records = list(snapshot.turn_records)
         elif decision != "proceed":

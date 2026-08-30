@@ -185,14 +185,14 @@ class Transition(_Model):
 
 class ScenePacing(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    min_turns: int = Field(ge=0)
+    nudge_after_turns: int = Field(ge=1)
+    handoff_after_turns: int = Field(ge=1)
 
     @model_validator(mode="after")
     def ordered(self) -> ScenePacing:
-        if not self.earliest_seconds <= self.target_seconds <= self.latest_seconds:
-            raise ValueError("pacing timestamps must be ordered")
+        if not self.min_turns <= self.nudge_after_turns <= self.handoff_after_turns:
+            raise ValueError("pacing turn allocations must be ordered")
         return self
 
 
@@ -201,12 +201,13 @@ class PacingEvent(_Model):
 
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
-    at_seconds: int = Field(ge=0)
+    at_turn: int = Field(ge=0)
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
 
 
 class PacingSource(_Model):
+    budget_seconds: int = Field(ge=0)
     scenes: tuple[ScenePacing, ...]
     transitions: tuple[Transition, ...]
     events: tuple[PacingEvent, ...] = ()
@@ -218,15 +219,15 @@ class Storylet(_Model):
     title: str = Field(min_length=1)
     source_links: tuple[str, ...] = Field(min_length=1)
     sections: dict[str, str]
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    earliest_turn: int = Field(ge=0)
+    target_turn: int = Field(ge=0)
+    latest_turn: int = Field(ge=0)
     pacing_impact: Literal["none", "brief_delay", "pressure_increase", "advance_readiness"]
 
     @model_validator(mode="after")
     def ordered(self) -> Storylet:
-        if not self.earliest_seconds <= self.target_seconds <= self.latest_seconds:
-            raise ValueError("storylet timestamps must be ordered")
+        if not self.earliest_turn <= self.target_turn <= self.latest_turn:
+            raise ValueError("storylet turn offsets must be ordered")
         return self
 
 
@@ -250,11 +251,17 @@ class StoryletRoute(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     title: str = Field(min_length=1)
     activation_conditions: tuple[FactPredicate, ...] = ()
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    earliest_turn: int = Field(ge=0)
+    target_turn: int = Field(ge=0)
+    latest_turn: int = Field(ge=0)
     pressure_role: str = Field(min_length=1)
     realizations: tuple[RouteRealization, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def ordered(self) -> StoryletRoute:
+        if not self.earliest_turn <= self.target_turn <= self.latest_turn:
+            raise ValueError("storylet route turn offsets must be ordered")
+        return self
 
 
 class CanonicalRouteEvent(_Model):

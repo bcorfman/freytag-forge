@@ -223,7 +223,12 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
         ("plot.md", "scene_id: 1A", "scene_id: 9Z", "heading and frontmatter"),
         ("plot.md", "---\nscene_id: 1A", "scene_id: 1A", "lacks YAML frontmatter"),
         ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
-        ("pacing.yaml", "latest_seconds: 120", "latest_seconds: 30", "pacing timestamps"),
+        (
+            "pacing.yaml",
+            "min_turns: 2\n  nudge_after_turns: 2",
+            "min_turns: 3\n  nudge_after_turns: 2",
+            "turn allocations",
+        ),
         ("storylets.md", "**Pacing impact**", "**Impact**", "lacks sections"),
         ("storylets.md", "plot.md#scene-1a1", "plot.md#missing", "unknown plot heading"),
     ],
@@ -239,7 +244,7 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `00:05:00`", "latest: `00:05:01`", 1))
+    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 4`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 
@@ -278,7 +283,7 @@ def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -
     [
         ("plot.md", "## Scene", "### Scene", "unknown scene"),
         ("storylets.md", "**Allowed scene:** `1A`", "**Allowed scene:** `1B`", "invalid allowed scene"),
-        ("storylets.md", "earliest: `00:00:00`", "earliest: `00:99:00`", "invalid timestamp"),
+        ("storylets.md", "earliest: `turn 0`", "earliest: `later`", "invalid turn offset"),
         (
             "pacing.yaml",
             "  - memory_card",
