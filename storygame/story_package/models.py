@@ -32,6 +32,25 @@ class ActivationRule(_Model):
             not self.any_of or sum(fact_id in true_facts for fact_id in self.any_of) >= self.at_least
         )
 
+    def minimal_undelivered_facts(self, true_facts):
+        """Return the smallest stable set of facts which completes this rule."""
+
+        known = set(true_facts)
+        selected: list[str] = []
+        for fact_id in self.all_facts_true:
+            if fact_id not in known and fact_id not in selected:
+                selected.append(fact_id)
+        pool_count = sum(fact_id in known for fact_id in self.any_of)
+        pool_count += sum(fact_id in self.any_of for fact_id in selected)
+        needed = max(0, self.at_least - pool_count)
+        for fact_id in self.any_of:
+            if needed == 0:
+                break
+            if fact_id not in known and fact_id not in selected:
+                selected.append(fact_id)
+                needed -= 1
+        return tuple(selected)
+
 
 class FactDefinition(_Model):
     """A named world predicate and its authoring purpose."""

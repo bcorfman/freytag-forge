@@ -441,12 +441,12 @@ def _validate_deliveries(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
     facts = package.fact_ids
     canonical_events = package.storylet_routes.bridge_events
-    required_facts = {
+    exit_prerequisite_facts = {
         fact_id
         for event in canonical_events
         for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
     }
-    player_visible_facts = {
+    player_safe_facts = {
         effect.fact_id
         for known in package.knowledge.knowledge
         if known.audience.player_visible
@@ -486,7 +486,10 @@ def _validate_deliveries(package: StoryPackage) -> None:
             raise StoryPackageError(
                 f"delivery for fact '{delivery.fact_id}' has no player-visible knowledge definition"
             )
-    missing_deliveries = sorted((required_facts & player_visible_facts) - set(deliveries_by_fact))
+    # World-only prerequisites, such as Rebecca's observation, are deliberately
+    # absent from this audit: they arrive from declared world actions rather
+    # than from a player-visible handoff.
+    missing_deliveries = sorted((exit_prerequisite_facts & player_safe_facts) - set(deliveries_by_fact))
     if missing_deliveries:
         fact_id = missing_deliveries[0]
         raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
