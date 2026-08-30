@@ -180,7 +180,17 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
         `Scene ${sourceSceneId} committed nothing for ${stalledTurns} turns running; its outgoing reveals are not landing.`,
       ).toBeLessThan(MAX_STALLED_TURNS);
 
-      if (!byScene.has(reachedSceneId)) byScene.set(reachedSceneId, { opening: "", turns: [] });
+      if (!byScene.has(reachedSceneId)) {
+        // Entering a scene emits its authored entry_text as the turn's final segment.
+        // Recording it as that scene's opening stops the judge from grading every scene
+        // after 1A as though it had established itself from nothing.
+        const entered = reachedSceneId !== sourceSceneId;
+        const segments = (payload.segments || []).filter((segment) => segment.kind === "narration");
+        byScene.set(reachedSceneId, {
+          opening: entered && segments.length ? segments.at(-1).text.trim() : "",
+          turns: [],
+        });
+      }
       byScene.get(reachedSceneId).turns.push({ player_input: input, narration, source_scene_id: sourceSceneId });
       sceneId = reachedSceneId;
       elapsed = observedElapsed;
