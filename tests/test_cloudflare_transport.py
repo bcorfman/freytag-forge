@@ -346,6 +346,9 @@ def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
     assert len(payloads) == 2
     assert "memory card" in payloads[1]["system"]
     assert "must_convey" in payloads[1]["system"]
+    assert state.last_turn_delivery.must_convey_misses == ("k_sl_1a_b_r1",)
+    assert state.last_turn_delivery.recovery_used is True
+    assert state.last_turn_delivery.fallback_used is False
 
 
 def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(monkeypatch) -> None:

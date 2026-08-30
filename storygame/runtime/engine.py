@@ -14,7 +14,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
-from storygame.runtime.state import RuntimeState, TurnRecord
+from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
 from storygame.runtime.validation import (
     ProgressionValidator,
     SelectedRevealResolver,
@@ -59,8 +59,15 @@ class RuntimeEngine:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.state.require_turn_allowed()
+        self.state.last_turn_delivery = TurnDelivery()
         self.state.turn_index += 1
         self._activate_pacing()
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={
+                "hint_staged": bool(self.state.staged_hint_fact_ids),
+                "handoff_staged": bool(self.state.staged_handoff_fact_ids),
+            }
+        )
         self.last_projection = self.projector.project(self.state, "player", player_input)
         provider_proposal = parse_turn_proposal(self.provider(player_input))
         proposal, self.last_post_selection_projection = self.reveal_resolver.resolve(

@@ -74,18 +74,33 @@ test("drives the main spine and reports reachability and pressure @spine", async
   test.setTimeout(20 * 60_000);
   await startSceneSession(page);
   const turns = [];
+  const deliveryRecords = [];
   for (const action of spineJourney) {
     const payload = await submitTurn(page, action);
     turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
+    deliveryRecords.push(payload.delivery || {});
     await resolveWarningIfPresent(page);
   }
   const sceneOrder = turns.map((turn) => turn.scene_id).filter(Boolean);
+  const delivery = {
+    total_turns: deliveryRecords.length,
+    turns_with_misses: deliveryRecords.filter((record) => (record.must_convey_misses || []).length > 0).length,
+    recovery_turns: deliveryRecords.filter((record) => record.recovery_used === true).length,
+    fallback_turns: deliveryRecords.filter((record) => record.fallback_used === true).length,
+    miss_tally: {},
+  };
+  for (const record of deliveryRecords) {
+    for (const factId of record.must_convey_misses || []) {
+      delivery.miss_tally[factId] = (delivery.miss_tally[factId] || 0) + 1;
+    }
+  }
   await writeCategoryReport("spine", {
     ending_reachable: sceneOrder.at(-1) === "3C",
     dead_end: !sceneOrder.length,
     revelation_order: sceneOrder,
     pressure_trajectory: turns,
     distinct_paths_to_climax: [sceneOrder.join(">")],
+    delivery,
   });
   expect(sceneOrder.every((scene) => /^[123][ABC]$/.test(scene))).toBe(true);
   expect(sceneOrder.at(-1)).toBe("3C");

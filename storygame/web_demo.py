@@ -97,6 +97,7 @@ def _turn_payload(
         "segments": segments,
         "lines": [narration],
         "game_break": game_break,
+        "delivery": state.last_turn_delivery.model_dump(mode="json"),
         "state": _state_summary(state),
     }
 

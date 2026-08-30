@@ -29,6 +29,16 @@ class TurnRecord(BaseModel):
     fact_keys: tuple[str, ...] = ()
 
 
+class TurnDelivery(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    must_convey_misses: tuple[str, ...] = ()
+    recovery_used: bool = False
+    fallback_used: bool = False
+    hint_staged: bool = False
+    handoff_staged: bool = False
+
+
 class RuntimeSnapshot(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     version: int = Field(default=SNAPSHOT_VERSION, ge=1)
@@ -64,6 +74,7 @@ class RuntimeState(BaseModel):
     pending_proposal: ResolvedTurnProposal | None = None
     staged_hint_fact_ids: tuple[str, ...] = ()
     staged_handoff_fact_ids: tuple[str, ...] = ()
+    last_turn_delivery: TurnDelivery = TurnDelivery()
 
     @model_validator(mode="after")
     def scene_and_phase_match_package(self) -> RuntimeState:

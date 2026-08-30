@@ -98,6 +98,13 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
+    assert turn.json()["delivery"] == {
+        "must_convey_misses": [],
+        "recovery_used": False,
+        "fallback_used": False,
+        "hint_staged": False,
+        "handoff_staged": False,
+    }
 
 
 def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_path) -> None:

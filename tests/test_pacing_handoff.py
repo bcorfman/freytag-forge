@@ -9,7 +9,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
-from storygame.runtime.state import RuntimeState
+from storygame.runtime.state import RuntimeState, TurnDelivery
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ActivationRule
 
@@ -47,6 +47,16 @@ def _fallback_delivery_text(state: RuntimeState) -> str:
     return " ".join(deliveries[fact_id].fallback_text for fact_id in state.staged_handoff_fact_ids)
 
 
+def test_ordinary_turn_records_no_delivery_recovery_or_fallback() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.last_turn_delivery = TurnDelivery(must_convey_misses=("previous_fact",), recovery_used=True)
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "I listen."}]})
+
+    engine.turn("I listen.")
+
+    assert state.last_turn_delivery == TurnDelivery()
+
+
 def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repeating() -> None:
     rule = ActivationRule(
         all_facts_true=("mandatory_a", "mandatory_b"),
@@ -80,6 +90,8 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert state.staged_handoff_fact_ids == ()
     assert not state.facts.has("transport_route_identified", "story", value="true")
     assert hint.segments[0].text == "A clue catches my attention."
+    assert state.last_turn_delivery.hint_staged is True
+    assert state.last_turn_delivery.handoff_staged is False
 
     handoff = engine.turn("I keep watching the park.")
     assert state.current_scene_id == "1C"
@@ -89,6 +101,8 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert state.facts.has("transport_route_departure_ready", "story", value="true")
     assert state.staged_hint_fact_ids == ()
     assert state.staged_handoff_fact_ids == ()
+    assert state.last_turn_delivery.hint_staged is True
+    assert state.last_turn_delivery.handoff_staged is True
     texts = [segment.text for segment in handoff.segments]
     source_bridge = next(
         scene.metadata.bridge_text["t_1b_1c"] for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B"
@@ -122,6 +136,30 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert "this is a hint turn" in captured["payload"]["system"].casefold()
 
 
+def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:
+    state = _state_1b()
+    state.staged_handoff_fact_ids = ("transport_route_identified",)
+    payloads: list[dict[str, object]] = []
+    delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "transport_route_identified")
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        payloads.append(json.loads(request.data))
+        return _Response(
+            {"narration": json.dumps({"segments": [{"kind": "narration", "text": delivery.fallback_text}]})}
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    response = provider("I keep watching the park.")
+
+    assert len(payloads) == 1
+    assert response["segments"][0]["text"] == delivery.fallback_text
+    assert state.last_turn_delivery.must_convey_misses == ()
+    assert state.last_turn_delivery.recovery_used is False
+    assert state.last_turn_delivery.fallback_used is False
+    assert state.last_turn_delivery.handoff_staged is True
+
+
 def test_handoff_recovery_names_missed_groups_and_falls_back_to_authored_text(monkeypatch) -> None:
     state = _state_1b()
     state.staged_handoff_fact_ids = ("transport_route_identified",)
@@ -138,6 +176,10 @@ def test_handoff_recovery_names_missed_groups_and_falls_back_to_authored_text(mo
     assert len(payloads) == 2
     assert delivery.must_convey[0][0] in payloads[1]["system"]
     assert response["segments"][0]["text"] == delivery.fallback_text
+    assert state.last_turn_delivery.must_convey_misses == (delivery.fact_id,)
+    assert state.last_turn_delivery.recovery_used is True
+    assert state.last_turn_delivery.fallback_used is True
+    assert state.last_turn_delivery.handoff_staged is True
 
 
 def test_valid_handoff_recovery_is_accepted_once_and_keeps_direct_response(monkeypatch) -> None:

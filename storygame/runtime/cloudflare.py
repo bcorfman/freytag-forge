@@ -73,6 +73,13 @@ class CloudflareTurnProvider:
 
     def __call__(self, player_input: str) -> object:
         self.last_projection = self.projector.project(self.state, "player", player_input)
+        handoff_staged = bool(self.last_projection.handoff_deliveries)
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={
+                "hint_staged": bool(self.last_projection.hinted_deliveries),
+                "handoff_staged": handoff_staged,
+            }
+        )
         speaker_contexts = self._speaker_contexts(player_input)
         return self._dispatch(
             self._turn_instruction(),
@@ -232,6 +239,7 @@ class CloudflareTurnProvider:
             return response
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
+        self._record_recovery()
         try:
             response = self._request_allowing_one_transient_retry(fallback_payload)
         except HTTPError as error:
@@ -251,6 +259,7 @@ class CloudflareTurnProvider:
                 "groundable, omit grounding_ids entirely."
             ),
         }
+        self._record_recovery()
         try:
             response = self._request_allowing_one_transient_retry(recovery_payload)
         except HTTPError as error:
@@ -371,6 +380,7 @@ class CloudflareTurnProvider:
             )
             missing = unconveyed_terms(candidate.must_convey, grounded_text)
             if missing:
+                self._record_misses((knowledge_id,))
                 missing_text = ", ".join(missing)
                 raise _EligibilityError(
                     f"selected knowledge does not convey: {missing_text}",
@@ -380,6 +390,14 @@ class CloudflareTurnProvider:
                 )
         missing_handoff = self._missing_handoff_terms(proposal.narration)
         if missing_handoff:
+            deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()
+            self._record_misses(
+                tuple(
+                    delivery.fact_id
+                    for delivery in deliveries
+                    if unconveyed_terms(delivery.must_convey, proposal.narration)
+                )
+            )
             missing_text = ", ".join(missing_handoff)
             raise _EligibilityError(
                 f"handoff narration does not convey: {missing_text}",
@@ -398,10 +416,22 @@ class CloudflareTurnProvider:
 
     def _fallback_handoff(self) -> dict[str, object]:
         deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"fallback_used": True})
         return {
             "segments": [{"kind": "narration", "text": delivery.fallback_text} for delivery in deliveries],
             "selected_knowledge_ids": [],
         }
+
+    def _record_misses(self, ids: tuple[str, ...]) -> None:
+        existing = self.state.last_turn_delivery.must_convey_misses
+        additions = tuple(item for item in ids if item not in existing)
+        if additions:
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={"must_convey_misses": (*existing, *additions)}
+            )
+
+    def _record_recovery(self) -> None:
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"recovery_used": True})
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
         """Send each speaker only what bounds their dialogue.
