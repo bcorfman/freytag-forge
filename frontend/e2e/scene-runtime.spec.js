@@ -180,18 +180,25 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
         `Scene ${sourceSceneId} committed nothing for ${stalledTurns} turns running; its outgoing reveals are not landing.`,
       ).toBeLessThan(MAX_STALLED_TURNS);
 
-      if (!byScene.has(reachedSceneId)) {
-        // Entering a scene emits its authored entry_text as the turn's final segment.
-        // Recording it as that scene's opening stops the judge from grading every scene
-        // after 1A as though it had established itself from nothing.
-        const entered = reachedSceneId !== sourceSceneId;
-        const segments = (payload.segments || []).filter((segment) => segment.kind === "narration");
-        byScene.set(reachedSceneId, {
-          opening: entered && segments.length ? segments.at(-1).text.trim() : "",
-          turns: [],
-        });
+      // Entering a scene emits its authored entry_text as the turn's final segment.
+      // Recording it as that scene's opening stops the judge from grading every scene
+      // after 1A as though it had established itself from nothing.
+      const entered = reachedSceneId !== sourceSceneId;
+      const segments = (payload.segments || []).filter((segment) =>
+        ["narration", "action", "dialogue"].includes(segment.kind),
+      );
+      // The turn belongs to the scene the player acted in, not the one it ended in.
+      // Filing a departure turn under the destination hid it from the scene that had to
+      // earn it: a turn that revealed nothing could carry the player out of the house,
+      // and the judge only ever read it as the park's odd first line.
+      const departure = entered ? segments.slice(0, -1) : segments;
+      const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
+      if (sceneNarration) {
+        byScene.get(sourceSceneId).turns.push({ player_input: input, narration: sceneNarration, left_scene: entered });
       }
-      byScene.get(reachedSceneId).turns.push({ player_input: input, narration, source_scene_id: sourceSceneId });
+      if (entered && !byScene.has(reachedSceneId)) {
+        byScene.set(reachedSceneId, { opening: segments.at(-1).text.trim(), turns: [] });
+      }
       sceneId = reachedSceneId;
       elapsed = observedElapsed;
       progress.push({

@@ -28,7 +28,13 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
         calls.append(player_input)
         assert state.current_scene_id == "1A"
         return {
-            "segments": [{"kind": "narration", "text": "The current scene gains a concrete lead."}],
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": "The current scene gains a concrete lead.",
+                    "grounding_ids": ["k_sl_1a_b_r1"],
+                }
+            ],
             "selected_knowledge_ids": ["k_sl_1a_b_r1"],
         }
 
@@ -57,7 +63,13 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
     state.active_event_ids.add("SL-1A-B")
     knowledge_id = "k_sl_1a_b_r2"
     event_payload = {
-        "segments": [{"kind": "narration", "text": "A bounded scene situation changes the pressure."}],
+        "segments": [
+            {
+                "kind": "narration",
+                "text": "A bounded scene situation changes the pressure.",
+                "grounding_ids": [knowledge_id],
+            }
+        ],
         "selected_knowledge_ids": [knowledge_id],
     }
 
@@ -96,7 +108,10 @@ def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() ->
 
     assert requests == [SCENE_ENTRY_REQUEST]
     assert opening.segments[0].text == entry_text
-    assert opening.narration == f"{entry_text} Kristin steps into a house that answers nothing."
+    # The authored entry text already ends its paragraph, so the continuation follows the
+    # break it wrote rather than being pushed one space to the right of the margin.
+    assert opening.narration == f"{entry_text.rstrip()}\n\nKristin steps into a house that answers nothing."
+    assert " Kristin steps into" not in opening.narration
     assert state.snapshot() == before
 
 
@@ -112,5 +127,6 @@ def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> 
 
     opening = RuntimeEngine(state, _OpeningProvider()).opening()
 
-    assert opening.narration == f"{PACKAGE.scenes[0].metadata.entry_text} The kitchen light is still on."
+    entry_text = PACKAGE.scenes[0].metadata.entry_text
+    assert opening.narration == f"{entry_text.rstrip()}\n\nThe kitchen light is still on."
     assert opening.selected_knowledge_ids == ()

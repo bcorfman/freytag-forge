@@ -66,7 +66,7 @@ freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
-entry_text: "Michelle's text buzzed came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
 transition_ids: [t_1a_1b]
 ---
 

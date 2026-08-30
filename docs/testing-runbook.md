@@ -62,6 +62,14 @@ TMPDIR=/tmp uv run pytest -q
   source of `michelle_lead_actionable`, leaving the opening scene unwinnable.
 - `test_request_size_stays_flat_as_the_story_accumulates` caps the narration
   request, which grew to 44 KB by Scene 3C and timed out Act 3 turns.
+- `test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene`
+  holds the rule that a selected reveal must ground the segment that tells it.
+  A play session selected Scene 1A's memory-card reveal while narrating only
+  "a faint scratch on the floor and a few loose screws": the fact committed
+  silently, the canonical bridge fired, and Kristin arrived at the park bench
+  the player had never been told about. The scripted providers in
+  `tests/test_canon_journey.py` now ground their selections for the same
+  reason, so the canonical journey exercises the rule on every turn.
 
 **Hosted evidence (billed, staging):**
 
@@ -91,6 +99,12 @@ between roughly 22 and 28 turns.
   every fact they establish on the turn the player enters 3C, so the projector
   always filters them as already established. The game completes correctly
   without them.
+- The canon judge used to file a departure turn under the scene it arrived in,
+  so no scene was ever graded on the turn that left it. Turns are now recorded
+  against the scene the player acted in, and only the appended authored
+  `entry_text` opens the scene it entered. The judge grades `exit_motivated`
+  and `rewards_investigation` alongside its existing criteria. Both are new and
+  have not yet been observed against staging.
 
 ## Phase 3 provider knowledge-context cutover
 

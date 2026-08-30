@@ -52,6 +52,27 @@ class NarrationSegment(_StrictModel):
     grounding_ids: tuple[str, ...] = ()
 
 
+def join_narration(segments: tuple[NarrationSegment, ...]) -> str:
+    """Join segment texts without indenting a paragraph the previous segment already ended.
+
+    A scene's authored entry text ends in a blank line so the provider's
+    continuation starts its own paragraph. Joining on a plain space then put a
+    stray space in front of that paragraph in the browser, because the break was
+    already there. Only add the separator when the running text does not end in
+    whitespace of its own.
+    """
+
+    joined = ""
+    for segment in segments:
+        if not joined:
+            joined = segment.text
+        elif joined[-1].isspace():
+            joined += segment.text.lstrip()
+        else:
+            joined += f" {segment.text}"
+    return joined.strip()
+
+
 class TurnProposal(_StrictModel):
     """The complete untrusted normal-turn provider contract.
 
@@ -70,7 +91,7 @@ class TurnProposal(_StrictModel):
 
     @property
     def narration(self) -> str:
-        return " ".join(segment.text for segment in self.segments)
+        return join_narration(self.segments)
 
 
 class ResolvedTurnProposal(_StrictModel):
@@ -92,7 +113,7 @@ class ResolvedTurnProposal(_StrictModel):
 
     @property
     def narration(self) -> str:
-        return " ".join(segment.text for segment in self.segments)
+        return join_narration(self.segments)
 
 
 def parse_turn_proposal(envelope: object) -> TurnProposal:

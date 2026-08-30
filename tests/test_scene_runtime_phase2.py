@@ -14,6 +14,7 @@ from storygame.runtime.contracts import (
     RuntimeContractError,
     SceneTransitionProposal,
     StoryEventProposal,
+    join_narration,
     parse_turn_proposal,
 )
 from storygame.runtime.facts import Fact
@@ -24,6 +25,30 @@ from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def test_narration_join_respects_a_paragraph_break_the_previous_segment_wrote() -> None:
+    """Authored entry text ends its own paragraph; the join must not indent what follows."""
+
+    joined = join_narration(
+        (
+            NarrationSegment(kind="narration", text="Her drive took forever.\n\n"),
+            NarrationSegment(kind="narration", text="The kitchen was in disarray."),
+        )
+    )
+
+    assert joined == "Her drive took forever.\n\nThe kitchen was in disarray."
+    assert "\n\n " not in joined
+    # Two ordinary segments still read as one paragraph with a single space between them.
+    assert (
+        join_narration(
+            (
+                NarrationSegment(kind="narration", text="She knelt."),
+                NarrationSegment(kind="narration", text="The bench was cold."),
+            )
+        )
+        == "She knelt. The bench was cold."
+    )
 
 
 def test_provider_envelope_is_normalized_but_invalid_json_fails_closed() -> None:

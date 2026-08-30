@@ -20,10 +20,25 @@ const CANON_SCHEMA = {
     progressive: { type: "boolean" },
     rich: { type: "boolean" },
     protected_safe: { type: "boolean" },
+    // The player must be able to read why the story left this scene, and apt searching
+    // must actually turn something up. Both failed silently before they were graded.
+    exit_motivated: { type: "boolean" },
+    rewards_investigation: { type: "boolean" },
     missing_or_wrong: { type: "array", items: { type: "string" } },
     reasons: { type: "array", items: { type: "string" } },
   },
-  required: ["verdict", "canon_consistent", "scene_local", "progressive", "rich", "protected_safe", "missing_or_wrong", "reasons"],
+  required: [
+    "verdict",
+    "canon_consistent",
+    "scene_local",
+    "progressive",
+    "rich",
+    "protected_safe",
+    "exit_motivated",
+    "rewards_investigation",
+    "missing_or_wrong",
+    "reasons",
+  ],
   additionalProperties: false,
 };
 
@@ -128,7 +143,11 @@ export async function judgeSceneNarration(
             "Require characters, items, plot events, dialogue, and setting to remain consistent with the five source files. " +
             "When an opening is supplied, require substantial sensory scene establishment; always require responsive consequences on ordinary turns, " +
             "and progressive revelation rather than dumping future beats or racing a transition. Protected knowledge must " +
-            "never be revealed early. Do not require every optional storylet or every beat in a single turn.",
+            "never be revealed early. Do not require every optional storylet or every beat in a single turn. " +
+            "A turn marked left_scene is the one the story departed on: fail unless the narration the player actually " +
+            "read gives them a reason to go, naming in prose what was found and where it points. A discovery the " +
+            "player is never told has not happened, however plainly the canon implies it. Fail too when repeated apt " +
+            "searching of what this scene's canon says is here keeps returning nothing the player can act on.",
         },
         { role: "user", content: JSON.stringify({ canon, opening, turns }) },
       ],
