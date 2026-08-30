@@ -3,7 +3,6 @@ import { turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
-const E2E_TEST_CLOCK_SECONDS = (import.meta.env.VITE_E2E_TEST_CLOCK_SECONDS || "").trim();
 const DEFAULT_SESSION_PAYLOAD = { story_id: "continuity_initiative" };
 
 const transcriptElement = document.querySelector("#transcript");
@@ -173,7 +172,6 @@ async function runCommand(command, echoInput = true) {
     const payload = await apiRequest("/api/v1/turn", {
       session_id: sessionId,
       player_input: command,
-      ...(E2E_TEST_CLOCK_SECONDS ? { test_clock_seconds: Number(E2E_TEST_CLOCK_SECONDS) } : {}),
     });
     renderTurn(payload);
     setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
