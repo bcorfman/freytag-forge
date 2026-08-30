@@ -71,9 +71,9 @@ Each entry below is authoring data, not a player action menu.
 - Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
 
 **Pacing window**
-- earliest: `00:00:00`
-- target: `00:01:00`
-- latest: `00:01:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 1`
 
 **Pacing impact**
 `brief_delay`
@@ -123,9 +123,9 @@ Each entry below is authoring data, not a player action menu.
 - “Continuity Initiative” may be known as Michelle’s suspicious emergency program, but its actual national purpose remains protected.
 
 **Pacing window**
-- earliest: `00:02:00`
-- target: `00:02:00`
-- latest: `00:02:00`
+- earliest: `turn 2`
+- target: `turn 2`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -171,9 +171,9 @@ Each entry below is authoring data, not a player action menu.
 - “Continuity Initiative” may be known as Michelle’s suspicious emergency program, but its actual national purpose remains protected.
 
 **Pacing window**
-- earliest: `00:00:00`
-- target: `00:02:00`
-- latest: `00:05:00`
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 3`
 
 **Pacing impact**
 `brief_delay`
@@ -226,9 +226,9 @@ Each entry below is authoring data, not a player action menu.
 - Patrol officers do not know or disclose the later JANUS bait revelation.
 
 **Pacing window**
-- earliest: `00:00:00`
-- target: `00:03:00`
-- latest: `00:05:00`
+- earliest: `turn 0`
+- target: `turn 3`
+- latest: `turn 3`
 
 **Pacing impact**
 `brief_delay`
@@ -281,9 +281,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon is not yet established as trustworthy or as a JANUS developer.
 
 **Pacing window**
-- earliest: `00:02:00`
-- target: `00:03:15`
-- latest: `00:04:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -333,9 +333,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon may admit prior Continuity Initiative work, but not yet the full JANUS-development history.
 
 **Pacing window**
-- earliest: `00:02:00`
-- target: `00:03:15`
-- latest: `00:04:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -385,9 +385,9 @@ Each entry below is authoring data, not a player action menu.
 - The access proves deeper involvement, not the exact nature of Brandon’s guilt.
 
 **Pacing window**
-- earliest: `00:02:00`
-- target: `00:03:15`
-- latest: `00:04:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -437,9 +437,9 @@ Each entry below is authoring data, not a player action menu.
 - Does not reveal the full national network before the logistics evidence is reached.
 
 **Pacing window**
-- earliest: `00:04:30`
-- target: `00:05:30`
-- latest: `00:06:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -491,9 +491,9 @@ Each entry below is authoring data, not a player action menu.
 - Michelle’s exact position and resistance network remain protected.
 
 **Pacing window**
-- earliest: `00:04:30`
-- target: `00:05:30`
-- latest: `00:06:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -545,9 +545,9 @@ Each entry below is authoring data, not a player action menu.
 - JANUS itself, Kristin-as-bait, Brandon’s development role, and Michelle’s resistance network remain protected for Scene 2B.
 
 **Pacing window**
-- earliest: `00:04:30`
-- target: `00:05:30`
-- latest: `00:06:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -601,9 +601,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s direct work on JANUS remains protected.
 
 **Pacing window**
-- earliest: `00:06:30`
-- target: `00:07:30`
-- latest: `00:08:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -653,9 +653,9 @@ Each entry below is authoring data, not a player action menu.
 - Does not grant knowledge of later archive discoveries or Rebecca’s surveillance decision.
 
 **Pacing window**
-- earliest: `00:06:30`
-- target: `00:07:30`
-- latest: `00:08:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -706,9 +706,9 @@ Each entry below is authoring data, not a player action menu.
 - Kristin and Brandon do not learn that Rebecca is observing them merely because the state flag exists.
 
 **Pacing window**
-- earliest: `00:06:30`
-- target: `00:07:30`
-- latest: `00:08:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -758,9 +758,9 @@ Each entry below is authoring data, not a player action menu.
 - The exact reason Charles expected Kristin to expose Brandon may emerge only as supported by the authored records; no new hidden motives are invented.
 
 **Pacing window**
-- earliest: `00:08:30`
-- target: `00:09:30`
-- latest: `00:10:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -810,9 +810,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s later sacrifice/confession is not foreshadowed as guaranteed.
 
 **Pacing window**
-- earliest: `00:08:30`
-- target: `00:09:30`
-- latest: `00:10:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -862,9 +862,9 @@ Each entry below is authoring data, not a player action menu.
 - The exact uprising plan and broadcast solution remain protected until later scenes.
 
 **Pacing window**
-- earliest: `00:08:30`
-- target: `00:09:30`
-- latest: `00:10:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -915,9 +915,9 @@ Each entry below is authoring data, not a player action menu.
 - Rebecca’s later claim that she opposed killing captives is not treated as verified truth.
 
 **Pacing window**
-- earliest: `00:10:30`
-- target: `00:11:45`
-- latest: `00:13:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -966,9 +966,9 @@ Each entry below is authoring data, not a player action menu.
 - Does not reveal the later exact broadcast-system solution before Michelle provides it.
 
 **Pacing window**
-- earliest: `00:10:30`
-- target: `00:11:45`
-- latest: `00:13:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1021,9 +1021,9 @@ Each entry below is authoring data, not a player action menu.
 - Exact events of the uprising, Brandon’s sacrifice, facility destruction, and final broadcast outcome remain protected.
 
 **Pacing window**
-- earliest: `00:10:30`
-- target: `00:11:45`
-- latest: `00:13:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1080,9 +1080,9 @@ Each entry below is authoring data, not a player action menu.
 - The final outcome of the broadcast and Brandon’s fate remain unknown.
 
 **Pacing window**
-- earliest: `00:13:00`
-- target: `00:14:00`
-- latest: `00:15:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1135,9 +1135,9 @@ Each entry below is authoring data, not a player action menu.
 - The codes do not automatically solve the facility fight or national conspiracy.
 
 **Pacing window**
-- earliest: `00:13:00`
-- target: `00:14:00`
-- latest: `00:15:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1184,9 +1184,9 @@ Each entry below is authoring data, not a player action menu.
 - The uprising does not by itself defeat JANUS, seize the broadcast, or resolve the national conspiracy.
 
 **Pacing window**
-- earliest: `00:13:00`
-- target: `00:14:00`
-- latest: `00:15:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1237,9 +1237,9 @@ Each entry below is authoring data, not a player action menu.
 - The disruption does not itself disconnect the external relay; that remains Brandon’s later task.
 
 **Pacing window**
-- earliest: `00:15:00`
-- target: `00:16:15`
-- latest: `00:17:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1292,9 +1292,9 @@ Each entry below is authoring data, not a player action menu.
 - Rebecca’s offer is not automatically trusted; later archive evidence remains independently valuable.
 
 **Pacing window**
-- earliest: `00:15:00`
-- target: `00:16:15`
-- latest: `00:17:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1347,9 +1347,9 @@ Each entry below is authoring data, not a player action menu.
 - Brandon’s final survival/fate remains unresolved until the authored escape/collapse outcome permits it.
 
 **Pacing window**
-- earliest: `00:15:00`
-- target: `00:16:15`
-- latest: `00:17:30`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1404,9 +1404,9 @@ Each entry below is authoring data, not a player action menu.
 - Phase Two remains protected until the resolution discovery.
 
 **Pacing window**
-- earliest: `00:17:30`
-- target: `00:19:00`
-- latest: `00:20:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1455,9 +1455,9 @@ Each entry below is authoring data, not a player action menu.
 - The archive does not automatically contain or reveal Phase Two unless that is explicitly declared elsewhere in the package.
 
 **Pacing window**
-- earliest: `00:17:30`
-- target: `00:19:00`
-- latest: `00:20:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1510,9 +1510,9 @@ Each entry below is authoring data, not a player action menu.
 - The final Phase Two revelation is delivered only by the authored recovered-JANUS resolution event, not by this escape storylet.
 
 **Pacing window**
-- earliest: `00:17:30`
-- target: `00:19:00`
-- latest: `00:20:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1563,9 +1563,9 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - Off-scene facilities are described only through public/currently-known reports.
 
 **Pacing window**
-- earliest: `00:17:30`
-- target: `00:19:00`
-- latest: `00:20:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`
@@ -1610,9 +1610,9 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - Do not invent Phase Two mechanisms beyond the source statement that it was designed to provoke conflict among those who remained.
 
 **Pacing window**
-- earliest: `00:17:30`
-- target: `00:19:00`
-- latest: `00:20:00`
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
 
 **Pacing impact**
 `brief_delay`

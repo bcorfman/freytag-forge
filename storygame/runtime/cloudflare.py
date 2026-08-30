@@ -16,6 +16,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 
@@ -72,6 +73,13 @@ class CloudflareTurnProvider:
 
     def __call__(self, player_input: str) -> object:
         self.last_projection = self.projector.project(self.state, "player", player_input)
+        handoff_staged = bool(self.last_projection.handoff_deliveries)
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={
+                "hint_staged": bool(self.last_projection.hinted_deliveries),
+                "handoff_staged": handoff_staged,
+            }
+        )
         speaker_contexts = self._speaker_contexts(player_input)
         return self._dispatch(
             self._turn_instruction(),
@@ -111,14 +119,37 @@ class CloudflareTurnProvider:
                 "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
                 "moment without selecting it leaves the story unable to move on. You must also tell it: one of your "
                 "segments has to state, in the narration the player reads, what that candidate's statement says, and "
-                "that segment must list the ID in its grounding_ids. Selecting a reveal the narration never delivers "
-                "is rejected. Leave the list empty only when none of them fits what just happened."
+                "that segment must list the ID in its grounding_ids. Every must_convey synonym group shown for the "
+                "candidate must appear through at least one of its phrasings in that grounded narration. Selecting a "
+                "reveal the narration never delivers is rejected. Leave the list empty only when none of them fits "
+                "what just happened."
             )
         else:
             selection_rule = (
                 "This turn offers no candidates: selected_knowledge_ids MUST be an empty list. Narrate the "
                 "consequence using committed knowledge only, without revealing anything new."
             )
+        hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
+        handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
+        if handoffs:
+            handoff_rule = (
+                "This is a HANDOFF turn. Write the declared diegetic intervention for every handoff delivery exactly "
+                "from its contract: use each delivery's source_kind and source_entity_id when present, and convey "
+                "every must_convey synonym group. The intervention may be a message, NPC statement, broadcast, "
+                "observation, or inference as declared. Do not claim that the player took an action they did not "
+                "take. Answer the player's input directly in the same narration; the handoff is an intervention "
+                "alongside that response. You do not choose the facts, source kind, source entity, costs, bridge "
+                "event, or transition."
+            )
+        elif hinted:
+            handoff_rule = (
+                "This is a HINT turn. Surface the missing evidence as something the player can still act on: an NPC "
+                "remark, a noticed detail, or a radio call that points without concluding. State nothing as "
+                "established, commit no fact, preserve the player's agency, and do not claim that the player took "
+                "an action they did not take."
+            )
+        else:
+            handoff_rule = "This is neither a hint nor a handoff turn."
         return (
             "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence of the "
             "player's action, grounded in scene_setting and knowledge_context. Answer what the player actually did: "
@@ -128,7 +159,7 @@ class CloudflareTurnProvider:
             "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
-            f"sayable context. {selection_rule} Never return "
+            f"sayable context. {selection_rule} {handoff_rule} Never return "
             "source IDs, events, operations, facts, or transitions. Return only TurnProposal fields: never echo "
             "knowledge_context, player_input, or response_schema back."
         )
@@ -208,6 +239,7 @@ class CloudflareTurnProvider:
             return response
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
+        self._record_recovery()
         try:
             response = self._request_allowing_one_transient_retry(fallback_payload)
         except HTTPError as error:
@@ -227,6 +259,7 @@ class CloudflareTurnProvider:
                 "groundable, omit grounding_ids entirely."
             ),
         }
+        self._record_recovery()
         try:
             response = self._request_allowing_one_transient_retry(recovery_payload)
         except HTTPError as error:
@@ -250,6 +283,8 @@ class CloudflareTurnProvider:
             self._parse_eligible_proposal(response)
         except _EligibilityError:
             proposal = parse_turn_proposal(response)
+            if self.last_projection and self.last_projection.handoff_deliveries:
+                return self._fallback_handoff()
             return {
                 "segments": [
                     {
@@ -262,6 +297,8 @@ class CloudflareTurnProvider:
                 "selected_knowledge_ids": [],
             }
         except RuntimeContractError as error:
+            if self.last_projection and self.last_projection.handoff_deliveries:
+                return self._fallback_handoff()
             summary = contract_error_summary(error) or "invalid proposal"
             raise NarrationProviderError(
                 f"narration service returned an invalid proposal ({summary})",
@@ -335,7 +372,66 @@ class CloudflareTurnProvider:
                 "learn it. Resend with a segment whose text actually states what that reveal says, listing that ID "
                 "in its grounding_ids - or, if the player has not earned it yet, with selected_knowledge_ids empty.",
             )
+        candidates = {candidate.id: candidate for candidate in self.last_projection.candidates}
+        for knowledge_id in proposal.selected_knowledge_ids:
+            candidate = candidates[knowledge_id]
+            grounded_text = " ".join(
+                segment.text for segment in proposal.segments if knowledge_id in segment.grounding_ids
+            )
+            missing = unconveyed_terms(candidate.must_convey, grounded_text)
+            if missing:
+                self._record_misses((knowledge_id,))
+                missing_text = ", ".join(missing)
+                raise _EligibilityError(
+                    f"selected knowledge does not convey: {missing_text}",
+                    f"You selected {knowledge_id}, but its grounded narration is missing: {missing_text}. "
+                    "Resend with a segment whose text conveys every must_convey group for that candidate and lists "
+                    f"{knowledge_id} in its grounding_ids, or use an empty selected_knowledge_ids list.",
+                )
+        missing_handoff = self._missing_handoff_terms(proposal.narration)
+        if missing_handoff:
+            deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()
+            self._record_misses(
+                tuple(
+                    delivery.fact_id
+                    for delivery in deliveries
+                    if unconveyed_terms(delivery.must_convey, proposal.narration)
+                )
+            )
+            missing_text = ", ".join(missing_handoff)
+            raise _EligibilityError(
+                f"handoff narration does not convey: {missing_text}",
+                "This is a HANDOFF turn. Your narration must convey every missed handoff group: "
+                f"{missing_text}. Keep the player's direct response and write the declared intervention; do not "
+                "select facts or a transition.",
+            )
         return proposal
+
+    def _missing_handoff_terms(self, narration: str) -> tuple[str, ...]:
+        deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()
+        missing: list[str] = []
+        for delivery in deliveries:
+            missing.extend(unconveyed_terms(delivery.must_convey, narration))
+        return tuple(missing)
+
+    def _fallback_handoff(self) -> dict[str, object]:
+        deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"fallback_used": True})
+        return {
+            "segments": [{"kind": "narration", "text": delivery.fallback_text} for delivery in deliveries],
+            "selected_knowledge_ids": [],
+        }
+
+    def _record_misses(self, ids: tuple[str, ...]) -> None:
+        existing = self.state.last_turn_delivery.must_convey_misses
+        additions = tuple(item for item in ids if item not in existing)
+        if additions:
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={"must_convey_misses": (*existing, *additions)}
+            )
+
+    def _record_recovery(self) -> None:
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"recovery_used": True})
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
         """Send each speaker only what bounds their dialogue.

@@ -41,6 +41,77 @@ location label or tag. The opening-payload test derives the expected location
 display name from the package rather than pinning `McGehee home`; verified on
 2026-08-29 with `TMPDIR=/tmp uv run pytest -q` (123 passed; 90.97% coverage).
 
+## Scene 1A reveal-to-transition continuity — fixed 2026-08-30
+
+**Purpose:** Record why a move to Scene 1B could follow a drawer search without
+the player being shown the memory-card files or any reason to visit the park,
+and what now prevents it.
+
+**Setup / seed:** A Scene 1A session, investigating Michelle's workstation
+through free-text drawer searches until a reveal is selected.
+
+**Safe actions:** Inspect package routes, knowledge statements, and the
+resolver/engine code. The regression is covered by the local suite, so no
+hosted session is needed to exercise it.
+
+**Destructive or external actions:** None.
+
+**Diagnosis (2026-08-30, from a player transcript).** Two independent defects
+produced one symptom. `SelectedRevealResolver.resolve` proved only that the
+selected knowledge ID appeared in some segment's `grounding_ids`; it never
+compared the segment prose with the knowledge statement, so a model could
+select the memory-card reveal, narrate only its broadcast-warning half, and
+still commit `michelle_lead_actionable`. Separately, `k_sl_1a_b_r1` asserted
+that fact while its own statement named no lead and no place, so even a
+faithful narration of it told the player nothing about where to go. The
+reported transcript was a correct rendering of a defective statement.
+
+**Fix.** Knowledge definitions now carry authored `must_convey` synonym groups,
+and both commit paths check the narration against them before anything is
+applied: `SelectedRevealResolver.resolve` raises before validation and before
+`apply_proposal`, and `CloudflareTurnProvider._parse_eligible_proposal` mirrors
+the rule so a miss spends the transport's one guided recovery instead of the
+player's turn. The loader refuses to load a package in which a selectable,
+trigger-establishing reveal declares no groups. `k_sl_1a_b_r1` was rewritten to
+name the memory card, the damaged recording, and the dead drop at the park
+bench, and `SL-1A-B-R1`'s `dramatic_intent` was brought into agreement.
+
+The investigation behind the fix found three further defects that would have
+made the obvious repair fail elsewhere; all are now addressed. Bridge events
+activated on a full conjunction of facts, so a player who explored differently
+could be permanently stuck — they now support a threshold rule. Pacing was
+measured in absolute story-seconds against a global clock, so an ordinary player
+entered every scene from 2B onward already overdue — it is now counted in turns
+since scene entry. And a player short of a scene's exit had no way forward — a
+declared `FactDelivery` per player-safe fact now lets the runtime hint first and
+then stage an in-world handoff, which is committed atomically with its costs and
+the transition.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+npm --prefix frontend test
+```
+
+Expected on 2026-08-30: 177 passed, 91.29% coverage; frontend 30 passed, 0
+failed. `tests/test_must_convey.py` covers the matcher,
+`tests/test_scene_progression_phase4.py` holds the reported transcript's exact
+shape — select `k_sl_1a_b_r1`, ground it, narrate only the broadcast-warning
+half, and assert nothing commits and the scene does not move — and
+`tests/test_pacing_handoff.py` covers the hint, the handoff, the guided
+recovery, and the authored fallback.
+
+**Cleanup:** None.
+
+**Notes:** This entry records local evidence only. Nothing here has been
+re-run against a deployment since the fix landed, and the hosted observations
+recorded elsewhere in this runbook predate it. Replaying the reported
+transcript against staging — searching the drawer in 1A and confirming the
+narration names the memory card *and* the bench before the park paragraph, and
+that a partial narration is retried rather than silently advancing — is still
+outstanding.
+
 ## Full-journey acceptance — verified state (2026-08-29)
 
 **Purpose:** Record what the hosted canon playthrough proves and what it does
@@ -55,7 +126,9 @@ TMPDIR=/tmp uv run pytest -q
 - `tests/test_canon_journey.py` drives two complete 1A→3C playthroughs with a
   scripted provider — one on the package clock, one at the default 60-second
   cadence — and asserts `resolution_complete`, every pacing event, and the
-  20-minute budget.
+  30-minute budget. The budget was raised from 20 minutes on 2026-08-30 when
+  pacing became turn-based: the per-scene handoff allowance sums to 30 turns,
+  which at 60 story-seconds per turn is exactly 1800 seconds.
 - `test_no_single_reveal_can_strand_a_scene_exit` audits every transition
   against every realization. It exists because playing Michelle's damaged
   recording before finding her memory card used to consume Scene 1A's only
@@ -81,6 +154,14 @@ Observed on 2026-08-29 against staging: the playthrough walks all nine scenes
 in authored order, fires all four pacing events in their own scenes, commits a
 reveal on close to every turn, and reaches the independent judge. Runs vary
 between roughly 22 and 28 turns.
+
+**That observation is stale as of 2026-08-30 and has not been repeated.** It
+was taken before pacing became turn-based, so its turn counts were measured
+against the old absolute-seconds windows and the old 20-minute budget. The
+`E2E_PACKAGE_CLOCK` harness was rewritten to arm turn milestones rather than
+inject a clock value, and those Playwright specs have been changed but not
+executed, because they need a live deployment. Re-run this section before
+trusting any number in it.
 
 **Known open items:**
 

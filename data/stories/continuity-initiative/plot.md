@@ -68,6 +68,10 @@ participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
 entry_text: "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
 transition_ids: [t_1a_1b]
+bridge_text:
+  t_1a_1b: >-
+    Michelle's files reference an ordinary park bench where she exchanged information with a confidential source.
+    Kristin travels there while avoiding checkpoints and emergency patrols.
 ---
 
 **Setting:** Michelle’s home 
@@ -130,6 +134,11 @@ participant_ids: [kristin, brandon, michelle]
 item_ids: [memory_card, transit_card]
 entry_text: "The park was quieter than the streets around it. Michelle's files pointed to an ordinary bench near the service path - the dead drop where she traded information with a source she never named. Kristin crossed the damaged grounds, keeping clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
+bridge_text:
+  t_1b_1c: >-
+    The transit card from Michelle's dead drop granted access to a supposedly abandoned freight terminal. Fresh tire
+    tracks, air vents, and unusually heavy electrical service said the site remained active, so Kristin and Brandon
+    followed the transport route beneath the loading docks.
 ---
 
 **Setting:** Kristin’s neighborhood and a damaged public park in Los Angeles
@@ -192,6 +201,11 @@ participant_ids: [kristin, brandon, michelle]
 item_ids: [transit_card]
 entry_text: "The transit card led to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. Kristin and Brandon slipped into the service level beneath the loading docks, where an observation shaft overlooked something much larger below.\n\n"
 transition_ids: [t_1c_2a]
+bridge_text:
+  t_1c_2a: >-
+    The observation shaft showed them living captives in an active regional command center, but the main facility could
+    not be reached from the service level without triggering security. Kristin and Brandon withdrew to prepare a way
+    inside.
 ---
 
 **Setting:** Industrial outskirts of Los Angeles and an underground Continuity Initiative installation
@@ -270,6 +284,11 @@ participant_ids: [kristin, brandon]
 item_ids: [transit_card]
 entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its overstressed cooling and support columns were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
 transition_ids: [t_2a_2b]
+bridge_text:
+  t_2a_2b: >-
+    Their false credentials survived the initial checks, and Kristin's warning about a progressive underground collapse
+    won them access to restricted infrastructure corridors. Beyond those corridors, the records archive waited behind
+    another layer of security.
 ---
 
 **Setting:** Brandon’s hidden operations base and the secret facility
@@ -330,6 +349,11 @@ participant_ids: [kristin, brandon, michelle]
 item_ids: [memory_card]
 entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
+bridge_text:
+  t_2b_2c: >-
+    JANUS had chosen Michelle, left Kristin behind as bait, and carried Brandon's name in its original development
+    records. With Michelle's coded resistance already corrupting prisoner files, Kristin and Brandon understood that the
+    archive held both the proof and the betrayal.
 ---
 
 **Setting:** The facility’s records archive, medical levels, and Brandon’s hideout through a remote connection
@@ -403,6 +427,11 @@ participant_ids: [kristin, brandon]
 item_ids: [memory_card]
 entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count.\n\n"
 transition_ids: [t_2c_3a]
+bridge_text:
+  t_2c_3a: >-
+    Michelle's coded message offered a way to transmit the evidence while opening the detention sectors, but the
+    broadcast could only be activated from Rebecca's secured office. The combined mission was the only chance left
+    before Charles's purge began.
 ---
 
 **Setting:** The facility’s command levels and detention sectors
@@ -480,6 +509,10 @@ participant_ids: [kristin, michelle, brandon]
 item_ids: [override_codes]
 entry_text: "The detention sector doors opened onto rows of holding blocks. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
 transition_ids: [t_3a_3b]
+bridge_text:
+  t_3a_3b: >-
+    Michelle's uprising disabled cameras and seized checkpoints, while Charles sealed the primary exits and sent armed
+    teams downward. Kristin, Michelle, and Brandon fought upward toward Rebecca's office and the broadcast levels.
 ---
 
 **Setting:** Detention sectors and experimental laboratories within the facility
@@ -540,6 +573,10 @@ participant_ids: [kristin, brandon, rebecca]
 item_ids: [override_codes]
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
+bridge_text:
+  t_3b_3c: >-
+    Brandon disconnected the relay from JANUS and held it open through the electrical surge while Kristin and Michelle
+    began the broadcast. The evidence was moving beyond Charles's control as the facility started to fail.
 ---
 
 **Setting:** Security corridors, command center, and Rebecca Jenkins’s executive office

@@ -66,7 +66,8 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
     assert "damaged recording" in candidate["statement"]
-    assert set(candidate) == {"id", "statement"}
+    assert set(candidate) == {"id", "statement", "must_convey"}
+    assert candidate["must_convey"] == []
     assert provider.last_projection is not None
 
 
@@ -303,6 +304,53 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
     assert "would never learn it" in payloads[1]["system"]
 
 
+def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"Michelle fears the emergency broadcasts.",'
+                        '"grounding_ids":["k_sl_1a_b_r1"]}],"selected_knowledge_ids":["k_sl_1a_b_r1"]}'
+                    )
+                }
+            )
+        return _Response(
+            {
+                "narration": json.dumps(
+                    {
+                        "segments": [
+                            {
+                                "kind": "narration",
+                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r1"].statement,
+                                "grounding_ids": ["k_sl_1a_b_r1"],
+                            }
+                        ],
+                        "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+                    }
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I search Michelle's workstation.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
+    assert len(payloads) == 2
+    assert "memory card" in payloads[1]["system"]
+    assert "must_convey" in payloads[1]["system"]
+    assert state.last_turn_delivery.must_convey_misses == ("k_sl_1a_b_r1",)
+    assert state.last_turn_delivery.recovery_used is True
+    assert state.last_turn_delivery.fallback_used is False
+
+
 def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(monkeypatch) -> None:
     """A provider that never delivers the reveal loses the selection, not the turn."""
 
@@ -428,6 +476,7 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     # narrate the earned moment without committing it, stalling the scene.
     assert "MUST reveal it" in offered_prompt
     assert "k_sl_1a_b_r2" in offered_prompt, "the offered candidate IDs must be named"
+    assert "must_convey" in offered_prompt
     assert "MUST be an empty list" not in offered_prompt
 
 

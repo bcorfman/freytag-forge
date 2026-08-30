@@ -1,106 +1,119 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  assertExclusiveClockMode,
-  createPackageClockController,
-} from "./package-clock-controller.js";
+import { createPackageClockController } from "./package-clock-controller.js";
 
-function state(elapsed, overrides = {}) {
+function state(turnIndex, turnsSinceSceneEntry, overrides = {}) {
   return {
     scene_id: "1A",
-    story_elapsed_seconds: elapsed,
+    turn_index: turnIndex,
+    turns_since_scene_entry: turnsSinceSceneEntry,
     pending_game_break: false,
     fired_pacing_event_ids: [],
     ...overrides,
   };
 }
 
-test("computes a forward package-clock delta from the observed elapsed time", () => {
+test("reports the further turns needed for an armed milestone", () => {
   const controller = createPackageClockController();
-  controller.observeState(state(120));
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
+  controller.observeState(state(1, 1));
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "nudge", target_turn: 3 });
 
-  assert.equal(controller.deltaForRequest(), 75);
+  assert.equal(controller.turnsUntilMilestone(), 2);
 });
 
-test("allows a zero delta when the observed time equals the target", () => {
+test("allows zero further turns when the observed scene-relative turn equals the target", () => {
   const controller = createPackageClockController();
-  controller.observeState(state(195));
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
+  controller.observeState(state(3, 3));
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "handoff", target_turn: 3 });
 
-  assert.equal(controller.deltaForRequest(), 0);
+  assert.equal(controller.turnsUntilMilestone(), 0);
 });
 
-test("rejects a target earlier than the observed elapsed time", () => {
+test("rejects a milestone for a different scene", () => {
   const controller = createPackageClockController();
-  controller.observeState(state(195));
-  controller.arm({ kind: "pacing_event", scene_id: "2C", event_id: "purge_2c", target_seconds: 150 });
+  controller.observeState(state(2, 2));
+  controller.arm({ kind: "pacing_event", scene_id: "2C", event_id: "purge_2c", target_turn: 2 });
 
   assert.throws(
-    () => controller.deltaForRequest(),
+    () => controller.turnsUntilMilestone(),
     (error) =>
       error instanceof Error &&
-      error.message.includes("195") &&
-      error.message.includes("150") &&
+      error.message.includes("1A") &&
       error.message.includes("2C") &&
       error.message.includes("purge_2c"),
   );
 });
 
-test("requires an observed session or turn state before computing a delta", () => {
+test("requires an observed session or turn state before computing remaining turns", () => {
   const controller = createPackageClockController();
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "min", target_turn: 2 });
 
   assert.throws(
-    () => controller.deltaForRequest(),
-    /elapsed|session|state|observed/i,
+    () => controller.turnsUntilMilestone(),
+    /session|state|observed/i,
+  );
+});
+
+test("rejects a target earlier than the observed scene-relative turn", () => {
+  const controller = createPackageClockController();
+  controller.observeState(state(3, 3));
+  controller.arm({ kind: "pacing_event", scene_id: "1A", event_id: "pressure_1a", target_turn: 2 });
+
+  assert.throws(
+    () => controller.turnsUntilMilestone(),
+    (error) => error instanceof Error && error.message.includes("3") && error.message.includes("2"),
   );
 });
 
 test("rejects arming a second milestone", () => {
   const controller = createPackageClockController();
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "min", target_turn: 2 });
 
   assert.throws(
-    () => controller.arm({ kind: "scene_point", scene_id: "1C", point: "target", target_seconds: 240 }),
+    () => controller.arm({ kind: "scene_point", scene_id: "1A", point: "nudge", target_turn: 3 }),
     /arm/i,
   );
 });
 
-test("enforces the upper delta bound while allowing exactly 3600 seconds", () => {
-  const tooLarge = createPackageClockController();
-  tooLarge.observeState(state(0));
-  tooLarge.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 3601 });
-  assert.throws(() => tooLarge.deltaForRequest(), /3600/);
-
-  const exactLimit = createPackageClockController();
-  exactLimit.observeState(state(0));
-  exactLimit.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 3600 });
-  assert.equal(exactLimit.deltaForRequest(), 3600);
+test("rejects malformed milestones and obsolete absolute targets", () => {
+  const controller = createPackageClockController();
+  for (const milestone of [
+    null,
+    { kind: "scene_point", scene_id: "1A", point: "target", target_turn: 2 },
+    { kind: "scene_point", scene_id: "1A", point: "min", target_turn: "2" },
+    { kind: "scene_point", scene_id: "1A", point: "min", target_seconds: 120 },
+    { kind: "pacing_event", scene_id: "1A", target_turn: 2 },
+  ]) {
+    assert.throws(() => controller.arm(milestone), /malformed|target_turn/i);
+  }
 });
 
-test("records an accepted turn that reaches the requested target exactly", () => {
+test("records a turn that reaches the requested target exactly", () => {
   const controller = createPackageClockController();
-  const milestone = { kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 };
-  controller.observeState(state(120));
+  const milestone = { kind: "scene_point", scene_id: "1A", point: "nudge", target_turn: 2 };
+  controller.observeState(state(1, 1));
   controller.arm(milestone);
-  assert.equal(controller.deltaForRequest(), 75);
+  assert.equal(controller.turnsUntilMilestone(), 1);
 
-  const outcome = controller.observeTurnResponse({ state: state(195, { scene_id: "1B" }) });
+  const outcome = controller.observeTurnResponse({ state: state(2, 2) });
 
   assert.deepEqual(outcome, {
     reached: true,
-    elapsed_seconds: 195,
+    scene_id: "1A",
+    turn_index: 2,
+    turns_since_scene_entry: 2,
     requested_milestone: milestone,
   });
   assert.deepEqual(controller.history(), [
     {
       requested_milestone: milestone,
-      prior_elapsed_seconds: 120,
-      sent_delta_seconds: 75,
-      returned_elapsed_seconds: 195,
-      scene_id: "1B",
+      prior_scene_id: "1A",
+      prior_turn_index: 1,
+      prior_turns_since_scene_entry: 1,
+      scene_id: "1A",
+      turn_index: 2,
+      turns_since_scene_entry: 2,
       fired_pacing_event_ids: [],
       reached: true,
     },
@@ -108,80 +121,78 @@ test("records an accepted turn that reaches the requested target exactly", () =>
   assert.equal(controller.armed(), null);
 });
 
-test("reports an accepted turn landing short of its milestone", () => {
+test("reports a valid turn landing short of its milestone", () => {
   const controller = createPackageClockController();
-  controller.observeState(state(120));
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
-  controller.deltaForRequest();
+  controller.observeState(state(1, 1));
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "handoff", target_turn: 3 });
+  assert.equal(controller.turnsUntilMilestone(), 2);
 
-  const outcome = controller.observeTurnResponse({ state: state(180) });
+  const outcome = controller.observeTurnResponse({ state: state(2, 2) });
 
   assert.equal(outcome.reached, false);
-  assert.equal(outcome.elapsed_seconds, 180);
-  assert.equal(controller.history()[0].returned_elapsed_seconds, 180);
+  assert.equal(outcome.turns_since_scene_entry, 2);
+  assert.equal(controller.history()[0].turns_since_scene_entry, 2);
 });
 
-test("keeps a pending game break anchored to its actual elapsed time", () => {
+test("does not mark a pending game break as reaching a milestone", () => {
   const controller = createPackageClockController();
-  const milestone = { kind: "pacing_event", scene_id: "2C", event_id: "purge_2c", target_seconds: 690 };
-  controller.observeState(state(600));
+  const milestone = { kind: "pacing_event", scene_id: "1A", event_id: "pressure_1a", target_turn: 2 };
+  controller.observeState(state(1, 1));
   controller.arm(milestone);
-  assert.equal(controller.deltaForRequest(), 90);
+  assert.equal(controller.turnsUntilMilestone(), 1);
 
   const outcome = controller.observeTurnResponse({
-    state: state(600, { pending_game_break: true, scene_id: "2C" }),
+    state: state(2, 2, { pending_game_break: true }),
   });
 
   assert.equal(outcome.reached, false);
-  assert.equal(outcome.elapsed_seconds, 600);
-  assert.equal(controller.history()[0].returned_elapsed_seconds, 600);
+  assert.equal(controller.history()[0].reached, false);
   assert.equal(controller.armed(), null);
 });
 
-test("uses the real elapsed value for a subsequent delta after a game break", () => {
-  const controller = createPackageClockController();
-  controller.observeState(state(600));
-  controller.arm({ kind: "pacing_event", scene_id: "2C", event_id: "purge_2c", target_seconds: 690 });
-  controller.deltaForRequest();
-  controller.observeTurnResponse({ state: state(600, { pending_game_break: true }) });
-
-  controller.arm({ kind: "scene_point", scene_id: "2D", point: "target", target_seconds: 650 });
-  assert.equal(controller.deltaForRequest(), 50);
-});
-
-test("rejects a malformed turn response state", () => {
+test("updates the observed state for an unarmed turn without fabricating history", () => {
   const controller = createPackageClockController();
 
-  assert.throws(
-    () => controller.observeTurnResponse({ state: { scene_id: "1A" } }),
-    /elapsed|missing|malformed/i,
-  );
-});
+  const outcome = controller.observeTurnResponse({ state: state(1, 1) });
 
-test("updates the anchor for an unarmed turn without fabricating history", () => {
-  const controller = createPackageClockController();
-
-  const outcome = controller.observeTurnResponse({ state: state(120) });
-
-  assert.equal(outcome.reached, false);
-  assert.equal(outcome.elapsed_seconds, 120);
-  assert.equal(outcome.requested_milestone, null);
+  assert.deepEqual(outcome, {
+    reached: false,
+    scene_id: "1A",
+    turn_index: 1,
+    turns_since_scene_entry: 1,
+    requested_milestone: null,
+  });
   assert.deepEqual(controller.history(), []);
 
-  controller.arm({ kind: "scene_point", scene_id: "1B", point: "target", target_seconds: 195 });
-  assert.equal(controller.deltaForRequest(), 75);
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "handoff", target_turn: 3 });
+  assert.equal(controller.turnsUntilMilestone(), 2);
 });
 
-test("rejects mixing package and scalar clock modes", () => {
-  assert.throws(
-    () =>
-      assertExclusiveClockMode({
-        E2E_PACKAGE_CLOCK: "package.json",
-        E2E_TEST_CLOCK_SECONDS: "120",
-      }),
-    /E2E_PACKAGE_CLOCK.*E2E_TEST_CLOCK_SECONDS|E2E_TEST_CLOCK_SECONDS.*E2E_PACKAGE_CLOCK/,
-  );
-  assert.doesNotThrow(() => assertExclusiveClockMode({ E2E_PACKAGE_CLOCK: "package.json" }));
-  assert.doesNotThrow(() => assertExclusiveClockMode({ E2E_TEST_CLOCK_SECONDS: "120" }));
-  assert.doesNotThrow(() => assertExclusiveClockMode({}));
+test("accepts a scene transition and records that the old milestone was not reached", () => {
+  const controller = createPackageClockController();
+  controller.observeState(state(2, 2));
+  controller.arm({ kind: "scene_point", scene_id: "1A", point: "handoff", target_turn: 3 });
+
+  const outcome = controller.observeTurnResponse({
+    state: state(3, 0, { scene_id: "1B" }),
+  });
+
+  assert.equal(outcome.reached, false);
+  assert.equal(controller.history()[0].scene_id, "1B");
+  assert.equal(controller.history()[0].turns_since_scene_entry, 0);
+});
+
+test("rejects malformed reported turn state", () => {
+  const controller = createPackageClockController();
+
+  for (const reportedState of [
+    { scene_id: "1A", turn_index: 1 },
+    { scene_id: "1A", turn_index: 1, turns_since_scene_entry: 1.5 },
+    { scene_id: "1A", turn_index: 1, turns_since_scene_entry: 2 },
+  ]) {
+    assert.throws(
+      () => controller.observeTurnResponse({ state: reportedState }),
+      /turn state|missing|malformed/i,
+    );
+  }
 });

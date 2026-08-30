@@ -279,7 +279,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1a_b_r1
-  statement: 'Kristin finds Michelle’s hidden card and damaged recording, learning that Michelle feared the emergency broadcasts.'
+  statement: "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a dead drop at a bench in the park."
   entity_ids: []
   aliases:
   - continuity initiative known
@@ -311,6 +311,12 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  must_convey:
+  - [memory card, hidden card, card, Michelle's card, hidden memory card, the card]
+  - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
+  - [dead drop, exchange point, place to trade information, the dead-drop, park exchange, drop at the bench]
+  - [bench in the park, park bench, bench, park, the park bench, bench near the park]
 - id: k_sl_1a_b_r2
   statement: "Kristin recovers Michelle's damaged recording: do not trust emergency broadcasts."
   entity_ids: []
@@ -366,6 +372,11 @@ knowledge:
   relevance:
     entity_ids: [memory_card]
     priority: 10
+  must_convey:
+  - [memory card, hidden card, card, the memory card, Michelle's card, card beneath the drawer]
+  - [research, research files, files, research material, Michelle's files, work files]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
+  - [place she used to trade information, exchange point, place to trade, the exchange point, her information drop, where she traded information]
 - id: k_sl_1a_d_r2
   statement: 'Only fragments of Michelle''s files survive, but they still name the exchange point she was using.'
   entity_ids: [kristin, michelle, memory_card]
@@ -392,6 +403,10 @@ knowledge:
   relevance:
     entity_ids: [memory_card]
     priority: 0
+  must_convey:
+  - [fragments, files, research files, research fragments, file fragments, partial files]
+  - [exchange point, place she was using, place to trade information, the exchange point, her information drop, where she traded information]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
 - id: k_sl_1a_c_r1
   statement: 'The patrol’s interest in Michelle’s research makes Kristin doubt that its welfare check is innocent.'
   entity_ids: []
@@ -448,6 +463,10 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  must_convey:
+  - [reflective tape, gate marker, marker, reflective gate tape, tape marker, strip of reflective tape]
+  - [gate, house, home, front gate, the house gate, marked home]
+  - [patrol, officers, federal emergency patrol, welfare patrol, emergency officers, federal patrol]
 - id: k_sl_1b_a_r1
   statement: 'Kristin matches the transit card and number sequence to a freight route leading out of the city.'
   entity_ids: []
@@ -890,6 +909,11 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  must_convey:
+  - [support-column failure, cooling-system risk, structural failure, support column problem, cooling failure, structural risk]
+  - [collapse the facility, facility collapse, facility, bring down the facility, underground collapse, collapse below]
+  - [corridor access, restricted corridor, access, restricted access, infrastructure access, corridor entrance]
+  - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
 - id: k_sl_2a_c_r2
   statement: Kristin and Brandon have opened a restricted infrastructure corridor.
   entity_ids: [kristin, brandon, regional_facility]
@@ -915,6 +939,10 @@ knowledge:
   relevance:
     entity_ids: [regional_facility]
     priority: 10
+  must_convey:
+  - [opened, open, access, gained access, opened access, corridor opened]
+  - [restricted infrastructure corridor, restricted corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
+  - [Kristin and Brandon, Kristin, Brandon, the pair, both inspectors, the inspectors]
 - id: k_sl_2a_c_r2_rebecca_observes
   statement: Rebecca has ordered the infiltrators watched.
   entity_ids: [rebecca, kristin, brandon, regional_facility]
@@ -1198,7 +1226,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_c_r1
-  statement: 'Kristin refuses to choose evidence over the prisoners when Michelle’s message offers a way to do both.'
+  statement: "Michelle's message offers a way to transmit the evidence and open the detention cells through Rebecca's secured office."
   entity_ids: []
   aliases:
   - combined broadcast rescue plan known
@@ -1231,6 +1259,11 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  must_convey:
+  - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
+  - [open the detention cells, open the cells, rescue the prisoners, free the cells, release the prisoners, open detention blocks]
+  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office, office under Rebecca's control, secured room]
+  - [Michelle's message, coded message, message, Michelle's coded note, her message, message from Michelle]
 - id: k_sl_2c_c_r2
   statement: 'Michelle’s coded message reveals that Rebecca’s office can open the cells and broadcast the evidence at once.'
   entity_ids: []
@@ -1259,6 +1292,11 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  must_convey:
+  - [coded message, Michelle's message, message, coded note, message from Michelle, Michelle's note]
+  - [Rebecca's office, secured office, office, Rebecca's locked office, office under Rebecca's control, Rebecca's room]
+  - [open the cells, open detention cells, cells, free the cells, release the captives, open detention blocks]
+  - [broadcast the evidence, transmit the evidence, broadcast, send the evidence, evidence broadcast, broadcast proof]
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
   entity_ids: []

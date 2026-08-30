@@ -1,65 +1,66 @@
+budget_seconds: 1800
 events:
 - id: pressure_1a
   scene_id: 1A
-  at_seconds: 120
+  at_turn: 2
   effects:
   - fact_id: patrol_return_pressure
     equals: true
 - id: purge_2c
   scene_id: 2C
-  at_seconds: 690
+  at_turn: 2
   effects:
   - fact_id: purge_clock_started
     equals: true
 - id: override_deadline_3a
   scene_id: 3A
-  at_seconds: 870
+  at_turn: 3
   effects:
   - fact_id: override_codes_deadline_known
     equals: true
 - id: destruction_3b
   scene_id: 3B
-  at_seconds: 1020
+  at_turn: 4
   effects:
   - fact_id: facility_destruction_threat
     equals: true
 scenes:
 - scene_id: 1A
-  earliest_seconds: 0
-  target_seconds: 180
-  latest_seconds: 300
+  min_turns: 2
+  nudge_after_turns: 2
+  handoff_after_turns: 3
 - scene_id: 1B
-  earliest_seconds: 120
-  target_seconds: 195
-  latest_seconds: 270
+  min_turns: 2
+  nudge_after_turns: 3
+  handoff_after_turns: 4
 - scene_id: 1C
-  earliest_seconds: 270
-  target_seconds: 330
-  latest_seconds: 390
+  min_turns: 1
+  nudge_after_turns: 2
+  handoff_after_turns: 3
 - scene_id: 2A
-  earliest_seconds: 390
-  target_seconds: 450
-  latest_seconds: 510
+  min_turns: 1
+  nudge_after_turns: 2
+  handoff_after_turns: 3
 - scene_id: 2B
-  earliest_seconds: 510
-  target_seconds: 570
-  latest_seconds: 630
+  min_turns: 2
+  nudge_after_turns: 3
+  handoff_after_turns: 4
 - scene_id: 2C
-  earliest_seconds: 630
-  target_seconds: 705
-  latest_seconds: 780
+  min_turns: 1
+  nudge_after_turns: 2
+  handoff_after_turns: 3
 - scene_id: 3A
-  earliest_seconds: 780
-  target_seconds: 840
-  latest_seconds: 900
+  min_turns: 1
+  nudge_after_turns: 2
+  handoff_after_turns: 3
 - scene_id: 3B
-  earliest_seconds: 900
-  target_seconds: 975
-  latest_seconds: 1050
+  min_turns: 2
+  nudge_after_turns: 4
+  handoff_after_turns: 5
 - scene_id: 3C
-  earliest_seconds: 1050
-  target_seconds: 1140
-  latest_seconds: 1200
+  min_turns: 1
+  nudge_after_turns: 2
+  handoff_after_turns: 2
 transitions:
 - id: t_1a_1b
   source_scene_id: 1A

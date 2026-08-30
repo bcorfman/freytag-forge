@@ -3,8 +3,8 @@
 These tests drive the runtime with a scripted provider so CI proves the story
 package and engine support a complete 1A -> 3C playthrough without any model
 call. The clocked variant mirrors the hosted Playwright package-clock recipe;
-the unclocked variant mirrors default 60-second turns and lands exactly on the
-authored 1200-second (20-minute) budget.
+the unclocked variant mirrors default 60-second turns and stays within the
+authored 1800-second (30-minute) budget.
 """
 
 from __future__ import annotations
@@ -12,33 +12,44 @@ from __future__ import annotations
 from pathlib import Path
 
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
-# (selected knowledge id or None, armed elapsed target, expected scene at turn end)
+# (selected knowledge id or None, elapsed target, expected scene at turn end)
 CLOCKED_JOURNEY = [
-    ("k_sl_1a_a_r1", 120, "1A"),
-    ("k_sl_1a_b_r1", 195, "1B"),
-    ("k_sl_1b_b_r1", 270, "1B"),
-    ("k_sl_1b_c_r1", 330, "1C"),
-    ("k_sl_1c_a_r2", 390, "1C"),
-    ("k_sl_1c_b_r1", 450, "2A"),
-    ("k_sl_2a_b_r1", 510, "2A"),
-    ("k_sl_2a_c_r2", 570, "2B"),
-    ("k_sl_2b_a_r2", 630, "2B"),
-    ("k_sl_2b_b_r1", 630, "2B"),
-    ("k_sl_2b_c_r1", 705, "2C"),
-    ("k_sl_2c_a_r2", 780, "2C"),
-    ("k_sl_2c_c_r1", 840, "3A"),
-    ("k_sl_3a_a_r1", 870, "3A"),
-    ("k_sl_3a_b_r2", 900, "3A"),
-    ("k_sl_3a_c_r1", 975, "3B"),
-    ("k_sl_3b_a_r1", 1020, "3B"),
-    ("k_sl_3b_b_r1", 1050, "3B"),
-    ("k_sl_3b_c_r1", 1140, "3C"),
-    ("k_sl_3c_a_r1", 1200, "3C"),
+    ("k_sl_1a_a_r1", 60, "1A"),
+    (None, 120, "1A"),
+    ("k_sl_1a_b_r1", 180, "1B"),
+    ("k_sl_1b_b_r1", 240, "1B"),
+    (None, 300, "1B"),
+    (None, 360, "1B"),
+    ("k_sl_1b_c_r1", 420, "1C"),
+    ("k_sl_1c_a_r2", 480, "1C"),
+    (None, 540, "1C"),
+    ("k_sl_1c_b_r1", 600, "2A"),
+    ("k_sl_2a_b_r1", 660, "2A"),
+    (None, 720, "2A"),
+    ("k_sl_2a_c_r2", 780, "2B"),
+    ("k_sl_2b_a_r2", 840, "2B"),
+    ("k_sl_2b_c_r1", 900, "2B"),
+    (None, 960, "2B"),
+    ("k_sl_2b_b_r1", 1020, "2C"),
+    ("k_sl_2c_a_r2", 1080, "2C"),
+    (None, 1140, "2C"),
+    ("k_sl_2c_c_r1", 1200, "3A"),
+    ("k_sl_3a_a_r1", 1260, "3A"),
+    ("k_sl_3a_b_r2", 1320, "3A"),
+    ("k_sl_3a_c_r1", 1380, "3B"),
+    ("k_sl_3b_a_r1", 1440, "3B"),
+    ("k_sl_3b_b_r1", 1500, "3B"),
+    (None, 1560, "3B"),
+    (None, 1620, "3B"),
+    ("k_sl_3b_c_r1", 1680, "3C"),
+    ("k_sl_3c_a_r1", 1740, "3C"),
+    (None, 1800, "3C"),
 ]
 
 # Alternate-realization coverage at the default 60-second turn cadence.
@@ -47,21 +58,29 @@ UNCLOCKED_JOURNEY = [
     (None, "1A"),
     ("k_sl_1a_b_r1", "1B"),
     ("k_sl_1b_b_r1", "1B"),
+    (None, "1B"),
+    (None, "1B"),
     ("k_sl_1b_c_r1", "1C"),
     ("k_sl_1c_a_r2", "1C"),
+    (None, "1C"),
     ("k_sl_1c_b_r2", "2A"),
     ("k_sl_2a_b_r1", "2A"),
+    (None, "2A"),
     ("k_sl_2a_c_r2", "2B"),
     ("k_sl_2b_a_r1", "2B"),
-    ("k_sl_2b_b_r2", "2B"),
-    ("k_sl_2b_c_r2", "2C"),
+    ("k_sl_2b_c_r2", "2B"),
+    (None, "2B"),
+    ("k_sl_2b_b_r2", "2C"),
     ("k_sl_2c_a_r2", "2C"),
+    (None, "2C"),
     ("k_sl_2c_c_r2", "3A"),
     ("k_sl_3a_a_r2", "3A"),
     ("k_sl_3a_b_r1", "3A"),
     ("k_sl_3a_c_r2", "3B"),
     ("k_sl_3b_a_r2", "3B"),
     ("k_sl_3b_b_r2", "3B"),
+    (None, "3B"),
+    (None, "3B"),
     ("k_sl_3b_c_r2", "3C"),
     ("k_sl_3c_a_r2", "3C"),
 ]
@@ -76,11 +95,14 @@ class _ScriptedProvider:
     def __call__(self, _player_input: str) -> dict[str, object]:
         # A selection must be grounded in the segment that tells it, exactly as the
         # runtime requires of a live provider; an ungrounded selection is rejected.
+        text = "A concrete authored consequence lands."
+        if self.selected:
+            text = PACKAGE.knowledge_indexes.by_id[self.selected[0]].statement
         return {
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "A concrete authored consequence lands.",
+                    "text": text,
                     "grounding_ids": list(self.selected),
                 }
             ],
@@ -115,7 +137,7 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
     assert state.facts.has("resolution_complete", "story", value="true")
 
 
-def test_unclocked_canon_journey_fits_the_twenty_minute_budget() -> None:
+def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = _ScriptedProvider()
     engine = RuntimeEngine(state, provider)
@@ -131,7 +153,7 @@ def test_unclocked_canon_journey_fits_the_twenty_minute_budget() -> None:
 
 
 def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
-    """A committed transition trigger must wait for the target scene's earliest window."""
+    """A committed transition trigger must wait for the source scene's minimum turns."""
 
     state = RuntimeState.bootstrap(PACKAGE)
     provider = _ScriptedProvider()
@@ -141,14 +163,13 @@ def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
     _drive(engine, provider, "k_sl_1a_b_r1", clock_seconds=75)
     assert state.current_scene_id == "1B"
 
-    # Commit every bridge_1b fact well before scene 1C's earliest window (270s).
-    _drive(engine, provider, "k_sl_1b_b_r1", clock_seconds=40)
-    _drive(engine, provider, "k_sl_1b_c_r1", clock_seconds=20)
-    assert state.facts.has("park_pursuit_resolved", "story", value="true")
-    assert state.current_scene_id == "1B", "the transition must wait for 1C's authored earliest window"
+    # Commit the next trigger before the first turn in 1B; its two-turn floor
+    # keeps the committed trigger in the source scene until the next turn.
+    state.facts.assert_fact(Fact(predicate="transport_route_departure_ready", subject="story", value="true"))
+    _drive(engine, provider, None, clock_seconds=40)
+    assert state.current_scene_id == "1B", "the source scene must receive its minimum two turns"
 
     _drive(engine, provider, None, clock_seconds=15)
-    # At 270 seconds the authored window opens and the committed triggers carry Kristin out.
     assert state.current_scene_id == "1C"
 
 
@@ -175,7 +196,7 @@ def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -
                         facts.add(operation.fact_id)
                         changed = True
         for event in package.storylet_routes.bridge_events:
-            if all(predicate.fact_id in facts for predicate in event.activation_conditions):
+            if event.activation.is_satisfied(frozenset(facts)):
                 for operation in event.operations:
                     if operation.op == "assert" and operation.fact_id not in facts:
                         facts.add(operation.fact_id)

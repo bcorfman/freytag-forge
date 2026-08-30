@@ -83,18 +83,60 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
     engine = RuntimeEngine(
         state,
         lambda _: {
-            "segments": [{"kind": "narration", "text": "A faint scratch and a few loose screws, nothing more."}],
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": "Michelle fears the emergency broadcasts.",
+                    "grounding_ids": ["k_sl_1a_b_r1"],
+                }
+            ],
             "selected_knowledge_ids": ["k_sl_1a_b_r1"],
         },
     )
 
-    with pytest.raises(ProposalValidationError, match="grounded"):
-        engine.turn("I look under the workstation.")
+    with pytest.raises(ProposalValidationError, match="memory card"):
+        engine.turn("I look under the workstation.", clock_seconds=120)
 
     assert not state.facts.has("continuity_initiative_known", "story", value="true")
     assert not state.facts.has("michelle_lead_actionable", "story", value="true")
     assert "SL-1A-B" not in state.fired_event_ids
     assert state.current_scene_id == "1A", "the story may not leave the house on a reveal the player never read"
+
+
+def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(
+        state,
+        lambda _: (
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": (
+                            "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
+                            "dead drop at a bench in the park."
+                        ),
+                        "grounding_ids": ["k_sl_1a_b_r1"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+            }
+            if not state.fired_event_ids
+            else _turn("The house holds its breath while Kristin decides what to do next.")
+        ),
+    )
+
+    engine.turn("I look under the workstation.", clock_seconds=120)
+
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert "SL-1A-B" in state.fired_event_ids
+    assert state.current_scene_id == "1A"
+
+    engine.turn("I take the lead and leave the house.")
+
+    assert state.current_scene_id == "1B"
 
 
 def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:

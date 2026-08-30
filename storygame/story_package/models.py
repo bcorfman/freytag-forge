@@ -22,6 +22,36 @@ class FactPredicate(_Model):
     equals: str | bool | int | None = None
 
 
+class ActivationRule(_Model):
+    all_facts_true: tuple[str, ...] = ()
+    any_of: tuple[str, ...] = ()
+    at_least: int = 0
+
+    def is_satisfied(self, true_facts):
+        return all(fact_id in true_facts for fact_id in self.all_facts_true) and (
+            not self.any_of or sum(fact_id in true_facts for fact_id in self.any_of) >= self.at_least
+        )
+
+    def minimal_undelivered_facts(self, true_facts):
+        """Return the smallest stable set of facts which completes this rule."""
+
+        known = set(true_facts)
+        selected: list[str] = []
+        for fact_id in self.all_facts_true:
+            if fact_id not in known and fact_id not in selected:
+                selected.append(fact_id)
+        pool_count = sum(fact_id in known for fact_id in self.any_of)
+        pool_count += sum(fact_id in self.any_of for fact_id in selected)
+        needed = max(0, self.at_least - pool_count)
+        for fact_id in self.any_of:
+            if needed == 0:
+                break
+            if fact_id not in known and fact_id not in selected:
+                selected.append(fact_id)
+                needed -= 1
+        return tuple(selected)
+
+
 class FactDefinition(_Model):
     """A named world predicate and its authoring purpose."""
 
@@ -87,6 +117,7 @@ class KnowledgeDefinition(_Model):
     establishes: tuple[RouteOperation, ...] = Field(min_length=1)
     source: RevealSource
     relevance: Relevance = Field(default_factory=Relevance)
+    must_convey: tuple[tuple[str, ...], ...] = ()
 
 
 class SceneFrame(_Model):
@@ -146,6 +177,7 @@ class SceneMetadata(_Model):
     item_ids: tuple[str, ...] = ()
     entry_text: str = Field(min_length=1)
     transition_ids: tuple[str, ...] = ()
+    bridge_text: Mapping[str, str] = {}
 
 
 class SceneBeat(_Model):
@@ -173,14 +205,14 @@ class Transition(_Model):
 
 class ScenePacing(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    min_turns: int = Field(ge=0)
+    nudge_after_turns: int = Field(ge=1)
+    handoff_after_turns: int = Field(ge=1)
 
     @model_validator(mode="after")
     def ordered(self) -> ScenePacing:
-        if not self.earliest_seconds <= self.target_seconds <= self.latest_seconds:
-            raise ValueError("pacing timestamps must be ordered")
+        if not self.min_turns <= self.nudge_after_turns <= self.handoff_after_turns:
+            raise ValueError("pacing turn allocations must be ordered")
         return self
 
 
@@ -189,12 +221,13 @@ class PacingEvent(_Model):
 
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
-    at_seconds: int = Field(ge=0)
+    at_turn: int = Field(ge=0)
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
 
 
 class PacingSource(_Model):
+    budget_seconds: int = Field(ge=0)
     scenes: tuple[ScenePacing, ...]
     transitions: tuple[Transition, ...]
     events: tuple[PacingEvent, ...] = ()
@@ -206,15 +239,15 @@ class Storylet(_Model):
     title: str = Field(min_length=1)
     source_links: tuple[str, ...] = Field(min_length=1)
     sections: dict[str, str]
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    earliest_turn: int = Field(ge=0)
+    target_turn: int = Field(ge=0)
+    latest_turn: int = Field(ge=0)
     pacing_impact: Literal["none", "brief_delay", "pressure_increase", "advance_readiness"]
 
     @model_validator(mode="after")
     def ordered(self) -> Storylet:
-        if not self.earliest_seconds <= self.target_seconds <= self.latest_seconds:
-            raise ValueError("storylet timestamps must be ordered")
+        if not self.earliest_turn <= self.target_turn <= self.latest_turn:
+            raise ValueError("storylet turn offsets must be ordered")
         return self
 
 
@@ -222,6 +255,18 @@ class RouteOperation(_Model):
     op: Literal["assert", "retract"]
     fact_id: str = Field(pattern=_ID)
     value: str | bool | int | None = None
+
+
+class FactDelivery(_Model):
+    """A diegetic, player-safe way to carry an unearned fact forward."""
+
+    fact_id: str = Field(pattern=_ID)
+    scene_id: str = Field(pattern=_SCENE_ID)
+    source_kind: Literal["message", "npc", "broadcast", "observation", "inference"]
+    source_entity_id: str | None = None
+    must_convey: tuple[tuple[str, ...], ...] = Field(min_length=2)
+    fallback_text: str = Field(min_length=1)
+    costs: tuple[RouteOperation, ...] = ()
 
 
 class RouteRealization(_Model):
@@ -238,17 +283,23 @@ class StoryletRoute(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     title: str = Field(min_length=1)
     activation_conditions: tuple[FactPredicate, ...] = ()
-    earliest_seconds: int = Field(ge=0)
-    target_seconds: int = Field(ge=0)
-    latest_seconds: int = Field(ge=0)
+    earliest_turn: int = Field(ge=0)
+    target_turn: int = Field(ge=0)
+    latest_turn: int = Field(ge=0)
     pressure_role: str = Field(min_length=1)
     realizations: tuple[RouteRealization, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def ordered(self) -> StoryletRoute:
+        if not self.earliest_turn <= self.target_turn <= self.latest_turn:
+            raise ValueError("storylet route turn offsets must be ordered")
+        return self
 
 
 class CanonicalRouteEvent(_Model):
     id: str = Field(min_length=1)
     scene_id: str = Field(pattern=_SCENE_ID)
-    activation_conditions: tuple[FactPredicate, ...] = ()
+    activation: ActivationRule
     operations: tuple[RouteOperation, ...] = Field(min_length=1)
 
 
@@ -273,6 +324,7 @@ class StoryPackage(_Model):
     storylet_routes: StoryletRoutesSource
     knowledge: KnowledgeCatalog
     knowledge_indexes: KnowledgeIndexes
+    deliveries: tuple[FactDelivery, ...]
 
     @property
     def fact_ids(self) -> frozenset[str]:

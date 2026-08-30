@@ -22,7 +22,7 @@ contract:
 pacing_event_review:
 - event_id: pressure_1a
   scene_id: 1A
-  at_seconds: 120
+  at_turn: 2
   effect:
     op: assert
     fact_id: patrol_return_pressure
@@ -369,9 +369,9 @@ storylets:
     - fact_id: michelle_abduction_suspicion
       equals: false
     pacing:
-      earliest_seconds: 0
-      target_seconds: 60
-      latest_seconds: 60
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin searches slowly or treats the disappearance as generic chaos, foreground contradictory
     physical evidence so curiosity naturally tightens into abduction suspicion.
@@ -420,15 +420,15 @@ storylets:
     - fact_id: continuity_initiative_known
       equals: false
     pacing:
-      earliest_seconds: 120
-      target_seconds: 120
-      latest_seconds: 120
+      earliest_turn: 2
+      target_turn: 2
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player lingers in Michelle’s work area, let her preparation reward investigation and connect
     her disappearance to a deliberate threat rather than require a specific search command.
   realization_options:
   - id: SL-1A-B-R1
-    dramatic_intent: Discover or securely recover Michelle’s research and infer that she expected targeted danger.
+    dramatic_intent: Recover Michelle's hidden memory card and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
     operations:
     - op: assert
       fact_id: continuity_initiative_known
@@ -483,9 +483,9 @@ storylets:
     - fact_id: michelle_warning_known
       equals: true
     pacing:
-      earliest_seconds: 0
-      target_seconds: 180
-      latest_seconds: 300
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin stalls after finding evidence, official scrutiny raises urgency and makes staying costly
     without dictating whether she hides, lies, argues, or leaves.
@@ -542,9 +542,9 @@ storylets:
     - fact_id: michelle_warning_known
       equals: true
     pacing:
-      earliest_seconds: 0
-      target_seconds: 120
-      latest_seconds: 300
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When Kristin reached the damaged recording before the files, the card is still under the drawer;
     the warning tells her Michelle hid something deliberately, so keep searching for what it points to.
@@ -601,9 +601,9 @@ storylets:
     scene_id: 1B
     conditions: []
     pacing:
-      earliest_seconds: 120
-      target_seconds: 195
-      latest_seconds: 270
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn lingering investigation into several converging leads—tests, a man in Michelle’s photo, and physical
     transport infrastructure—without making one clue the required interaction.
@@ -650,9 +650,9 @@ storylets:
     scene_id: 1B
     conditions: []
     pacing:
-      earliest_seconds: 120
-      target_seconds: 195
-      latest_seconds: 270
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player resists trusting Brandon, let behavior under pressure earn only provisional cooperation
     while keeping his deeper history unresolved.
@@ -715,9 +715,9 @@ storylets:
     - fact_id: missing_may_be_alive
       equals: true
     pacing:
-      earliest_seconds: 120
-      target_seconds: 195
-      latest_seconds: 270
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Convert pursuit into both forward motion and suspicion: Brandon can solve the immediate escape
     problem, but doing so exposes unexplained retained access.'
@@ -775,9 +775,9 @@ storylets:
     scene_id: 1C
     conditions: []
     pacing:
-      earliest_seconds: 270
-      target_seconds: 330
-      latest_seconds: 390
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Use Kristin’s Army infrastructure and operations background to reward free-form inspection and turn hesitation into accumulating
     physical proof of an active hidden installation.
@@ -830,9 +830,9 @@ storylets:
     - fact_id: facility_proof
       equals: true
     pacing:
-      earliest_seconds: 270
-      target_seconds: 330
-      latest_seconds: 390
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Michelle sighting
     to heighten urgency while preserving the need for broader understanding.
@@ -888,9 +888,9 @@ storylets:
     - fact_id: captives_confirmed_alive
       equals: true
     pacing:
-      earliest_seconds: 270
-      target_seconds: 330
-      latest_seconds: 390
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player is ready to treat the site as the whole conspiracy, widen the scale through logistics
     and recordings so the next phase feels necessary.
@@ -939,9 +939,9 @@ storylets:
     scene_id: 2A
     conditions: []
     pacing:
-      earliest_seconds: 390
-      target_seconds: 450
-      latest_seconds: 510
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If planning becomes static, make Brandon’s long preparation useful but suspicious, encouraging
     questioning while keeping his JANUS role protected.
@@ -987,9 +987,9 @@ storylets:
     - fact_id: facility_infiltration_needed
       equals: true
     pacing:
-      earliest_seconds: 390
-      target_seconds: 450
-      latest_seconds: 510
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Give the player many ways to contribute expertise to infiltration preparation; any plausible cover
     built around the real defect can converge on readiness.
@@ -1037,9 +1037,9 @@ storylets:
     - fact_id: false_identities_ready
       equals: true
     pacing:
-      earliest_seconds: 390
-      target_seconds: 450
-      latest_seconds: 510
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If the player hesitates at security or challenges the cover, make the supervisor a free-form social/technical
     pressure test rather than a fixed dialogue puzzle.
@@ -1092,9 +1092,9 @@ storylets:
     scene_id: 2B
     conditions: []
     pacing:
-      earliest_seconds: 510
-      target_seconds: 570
-      latest_seconds: 630
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player explores the archive, let Michelle’s record, Kristin’s record, or classification
     categories independently reveal the selection mechanism.
@@ -1149,9 +1149,9 @@ storylets:
     - fact_id: janus_evidence
       equals: true
     pacing:
-      earliest_seconds: 510
-      target_seconds: 570
-      latest_seconds: 630
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation,
     without forcing forgiveness or hostility.
@@ -1203,9 +1203,9 @@ storylets:
     - fact_id: janus_evidence
       equals: true
     pacing:
-      earliest_seconds: 510
-      target_seconds: 570
-      latest_seconds: 630
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Michelle’s
     agency in corrupted files and maintenance messages.
@@ -1252,9 +1252,9 @@ storylets:
     scene_id: 2C
     conditions: []
     pacing:
-      earliest_seconds: 630
-      target_seconds: 705
-      latest_seconds: 780
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Use antagonist fracture to create pressure and possible executive access without making Rebecca
     trustworthy or requiring Kristin to accept Brandon’s performance.
@@ -1299,9 +1299,9 @@ storylets:
     scene_id: 2C
     conditions: []
     pacing:
-      earliest_seconds: 630
-      target_seconds: 705
-      latest_seconds: 780
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'If the player lingers over strategy, convert delay into an explicit worsening deadline: transfers
     accelerate and safe options narrow.'
@@ -1344,16 +1344,16 @@ storylets:
     - fact_id: purge_clock_started
       equals: true
     pacing:
-      earliest_seconds: 630
-      target_seconds: 705
-      latest_seconds: 780
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let argument, refusal, or hesitation play naturally until Michelle’s coded message creates the authored
     combined mission and focuses urgency.
   realization_options:
   - id: SL-2C-C-R1
-    dramatic_intent: Michelle’s coded message establishes that broadcast and detention access can be combined through
-      Rebecca’s secured office.
+    dramatic_intent: Michelle's coded message establishes that evidence can be broadcast and detention cells opened
+      through Rebecca's secured office.
     operations:
     - op: assert
       fact_id: evidence_ready_to_transmit
@@ -1396,9 +1396,9 @@ storylets:
     scene_id: 3A
     conditions: []
     pacing:
-      earliest_seconds: 780
-      target_seconds: 840
-      latest_seconds: 900
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin focuses narrowly on extracting Michelle, her visible leadership reframes the objective
     and turns reunion into immediate coordinated action.
@@ -1447,9 +1447,9 @@ storylets:
     - fact_id: michelle_reached
       equals: true
     pacing:
-      earliest_seconds: 780
-      target_seconds: 840
-      latest_seconds: 900
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player wants to rush upward, make the medical level evidence matter by showing why exposure
     must include the conditioning program, and let the imprisoned official's expiring codes reward the documentation
@@ -1509,9 +1509,9 @@ storylets:
     - fact_id: uprising_prepared
       equals: true
     pacing:
-      earliest_seconds: 780
-      target_seconds: 840
-      latest_seconds: 900
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Convert the expiring authorization into forward motion: once the codes lose value with Charles’s
     new authority, Michelle’s prepared disturbances become the only viable route upward.'
@@ -1558,9 +1558,9 @@ storylets:
     scene_id: 3B
     conditions: []
     pacing:
-      earliest_seconds: 900
-      target_seconds: 975
-      latest_seconds: 1050
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When predictive security blocks obvious routes, reward irrational, operations-driven disruption;
     failed attempts can worsen local pressure without prescribing a single puzzle answer.
@@ -1604,9 +1604,9 @@ storylets:
     - fact_id: human_security_control
       equals: true
     pacing:
-      earliest_seconds: 900
-      target_seconds: 975
-      latest_seconds: 1050
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'If the player stalls in Rebecca’s office, force antagonist conflict into the open: her information
     remains useful even as Charles strips her control.'
@@ -1673,9 +1673,9 @@ storylets:
     - fact_id: detention_locations_secured
       equals: true
     pacing:
-      earliest_seconds: 900
-      target_seconds: 975
-      latest_seconds: 1050
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Brandon’s
     accountability and danger create climax pressure without scripting Kristin’s response.
@@ -1727,9 +1727,9 @@ storylets:
     - fact_id: broadcast_started
       equals: true
     pacing:
-      earliest_seconds: 1050
-      target_seconds: 1140
-      latest_seconds: 1200
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Once transmission begins, prevent the climax from becoming a passive upload: Charles contests
     credibility, and accumulated verifiable evidence lets Michelle answer him.'
@@ -1776,9 +1776,9 @@ storylets:
     - fact_id: truth_no_longer_containable
       equals: true
     pacing:
-      earliest_seconds: 1050
-      target_seconds: 1140
-      latest_seconds: 1200
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn Rebecca’s attempted escape into an information-custody dilemma so destruction is not an easy
     moral shortcut.
@@ -1850,9 +1850,9 @@ storylets:
     - fact_id: rebecca_captured
       equals: true
     pacing:
-      earliest_seconds: 1050
-      target_seconds: 1140
-      latest_seconds: 1200
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves
     people, but no single maneuver guarantees every section survives.'
@@ -1904,9 +1904,9 @@ storylets:
     - fact_id: captives_reaching_surface
       equals: true
     pacing:
-      earliest_seconds: 1050
-      target_seconds: 1140
-      latest_seconds: 1200
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color
     without creating a new playable scene or new ending.
@@ -1952,9 +1952,9 @@ storylets:
     - fact_id: captives_reaching_surface
       equals: true
     pacing:
-      earliest_seconds: 1050
-      target_seconds: 1140
-      latest_seconds: 1200
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Only after the sole ending is secure, deliver the final unresolved-threat reversal; this is sequel-scale
     context, not an alternate ending.
@@ -2107,10 +2107,12 @@ canonical_bridge_events:
   scene_id: 1B
   activation:
     all_facts_true:
+    - park_pursuit_resolved
+    any_of:
     - transport_route_identified
     - brandon_identified
     - missing_may_be_alive
-    - park_pursuit_resolved
+    at_least: 2
   produces:
   - op: assert
     fact_id: transport_route_departure_ready
@@ -2119,8 +2121,9 @@ canonical_bridge_events:
   - SL-1B-A
   - SL-1B-B
   - SL-1B-C
-  fallback_realization: The transit clue/Brandon explanation and a validated resolution of the park pursuit may
-    establish departure toward the freight terminal without requiring a particular escape action.
+  fallback_realization: Any two of the transit clue, Brandon explanation, or evidence that May may be alive, together
+    with a validated resolution of the park pursuit, may establish departure toward the freight terminal without
+    requiring a particular escape action.
 - id: bridge_1c_infiltration_needed
   scene_id: 1C
   activation:
@@ -2156,9 +2159,11 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - janus_evidence
+    any_of:
     - brandon_janus_role_known
     - brandon_claimed_reform_motive
     - michelle_resistance_known
+    at_least: 2
   produces:
   - op: assert
     fact_id: archive_crisis_understood
@@ -2167,8 +2172,8 @@ canonical_bridge_events:
   - SL-2B-A
   - SL-2B-B
   - SL-2B-C
-  fallback_realization: Free-text archive investigation and confrontation may establish the same JANUS, bait, Brandon,
-    and Michelle-resistance revelations without selecting a storylet.
+  fallback_realization: Free-text archive investigation and confrontation may establish JANUS evidence plus any two of
+    Brandon’s JANUS role, his claimed reform motive, and Michelle’s resistance without selecting a storylet.
 - id: bridge_2c_combined_plan
   scene_id: 2C
   activation:
@@ -2203,11 +2208,13 @@ canonical_bridge_events:
   scene_id: 3B
   activation:
     all_facts_true:
+    - relay_open
+    any_of:
     - human_security_control
     - charles_abandoned_rebecca
     - detention_locations_secured
     - brandon_confession_available
-    - relay_open
+    at_least: 3
   produces:
   - op: assert
     fact_id: broadcast_started
@@ -2216,8 +2223,8 @@ canonical_bridge_events:
   - SL-3B-A
   - SL-3B-B
   - SL-3B-C
-  fallback_realization: After JANUS loses predictive control, Rebecca’s location data is secured, Charles betrays
-    her, and Brandon opens the relay with his confession, Michelle/Kristin begin the transmission.
+  fallback_realization: After the relay is open and any three of human security control, Rebecca’s location data,
+    Charles abandoning her, or Brandon’s confession are established, Michelle/Kristin begin the transmission.
 canonical_resolution_events:
 - id: resolution_exposure_holds
   scene_id: 3C

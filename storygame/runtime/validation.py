@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from copy import deepcopy
 
@@ -19,6 +20,50 @@ from storygame.story_package.models import FactPredicate, StoryPackage, Transiti
 
 class ProposalValidationError(RuntimeStateError):
     """An untrusted provider proposal violates the loaded package contract."""
+
+
+def unconveyed_terms(groups: tuple[tuple[str, ...], ...], text: str) -> tuple[str, ...]:
+    """Return the first phrasing from each synonym group absent from ``text``."""
+
+    replacements = str.maketrans(
+        {
+            "“": '"',
+            "”": '"',
+            "‘": "'",
+            "’": "'",
+            "–": "-",
+            "—": "-",
+        }
+    )
+
+    def normalize(value: str) -> str:
+        return re.sub(r"\s+", " ", value.translate(replacements).casefold()).strip()
+
+    def words(value: str) -> tuple[str, ...]:
+        return tuple(re.findall(r"[^\W_]+(?:'[^\W_]+)*", normalize(value)))
+
+    def word_matches(authored: str, prose: str) -> bool:
+        return prose == authored or any(prose == authored + suffix for suffix in ("s", "es", "ed", "d", "ing"))
+
+    def phrase_matches(phrasing: str, prose_words: tuple[str, ...]) -> bool:
+        phrasing_words = words(phrasing)
+        if not phrasing_words or len(phrasing_words) > len(prose_words):
+            return False
+        width = len(phrasing_words)
+        return any(
+            all(
+                word_matches(authored, prose)
+                for authored, prose in zip(phrasing_words, prose_words[start : start + width], strict=True)
+            )
+            for start in range(len(prose_words) - width + 1)
+        )
+
+    normalized_text = words(text)
+    missing: list[str] = []
+    for group in groups:
+        if not any(phrase_matches(phrasing, normalized_text) for phrasing in group):
+            missing.append(group[0] if group else "")
+    return tuple(missing)
 
 
 def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
@@ -85,6 +130,16 @@ class SelectedRevealResolver:
         undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
         if undelivered:
             raise ProposalValidationError("selected knowledge must be grounded in the segment that reveals it")
+        for knowledge_id in selected:
+            knowledge = self.package.knowledge_indexes.by_id[knowledge_id]
+            grounded_text = " ".join(
+                segment.text for segment in resolved.segments if knowledge_id in segment.grounding_ids
+            )
+            missing = unconveyed_terms(knowledge.must_convey, grounded_text)
+            if missing:
+                raise ProposalValidationError(
+                    f"selected knowledge '{knowledge_id}' does not convey: {', '.join(missing)}"
+                )
         self._validator.validate(state, resolved)
         candidate_state = deepcopy(state)
         candidate_state.apply_proposal(resolved)

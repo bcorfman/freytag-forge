@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import YAML from "yaml";
 
-const PACING_POINTS = new Set(["earliest", "target", "latest"]);
+const PACING_POINTS = new Set(["min", "nudge", "handoff"]);
 
 function pacingError(storyId, pacingPath, identifier, detail) {
   return new Error(
@@ -31,7 +31,7 @@ function sequenceItems(node) {
   return Array.isArray(node?.items) ? node.items : [];
 }
 
-function timestamp(entry, field, identifier, storyId, pacingPath, entryNode) {
+function turnCount(entry, field, identifier, storyId, pacingPath, entryNode) {
   const valueNode = mappingValue(entryNode, field);
   const isDecimalInteger =
     valueNode == null ||
@@ -111,48 +111,40 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
     }
 
     const entryNode = sceneNodes[index];
-    const earliest = timestamp(
+    const min = turnCount(
       entry,
-      "earliest_seconds",
+      "min_turns",
       sceneId,
       storyId,
       resolvedPacingPath,
       entryNode,
     );
-    const target = timestamp(
+    const nudge = turnCount(
       entry,
-      "target_seconds",
+      "nudge_after_turns",
       sceneId,
       storyId,
       resolvedPacingPath,
       entryNode,
     );
-    const latest = timestamp(
+    const handoff = turnCount(
       entry,
-      "latest_seconds",
+      "handoff_after_turns",
       sceneId,
       storyId,
       resolvedPacingPath,
       entryNode,
     );
-    if (earliest > latest) {
+    if (!(min <= nudge && nudge <= handoff)) {
       throw pacingError(
         storyId,
         resolvedPacingPath,
         sceneId,
-        "earliest_seconds must not exceed latest_seconds",
-      );
-    }
-    if (target < earliest || target > latest) {
-      throw pacingError(
-        storyId,
-        resolvedPacingPath,
-        sceneId,
-        "target_seconds must fall within earliest_seconds..latest_seconds",
+        "scene turn points must be ordered min_turns <= nudge_after_turns <= handoff_after_turns",
       );
     }
 
-    sceneRecords.set(sceneId, { earliest, target, latest });
+    sceneRecords.set(sceneId, { min, nudge, handoff });
     sceneOrder.push(sceneId);
   }
 
@@ -171,20 +163,20 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
       throw pacingError(storyId, resolvedPacingPath, eventId, `event names undeclared scene "${sceneId}"`);
     }
 
-    const at = timestamp(
+    const at = turnCount(
       entry,
-      "at_seconds",
+      "at_turn",
       eventId,
       storyId,
       resolvedPacingPath,
       eventNodes[index],
     );
-    if (at < scene.earliest || at > scene.latest) {
+    if (at > scene.handoff) {
       throw pacingError(
         storyId,
         resolvedPacingPath,
         eventId,
-        `at_seconds must fall within scene "${sceneId}" earliest_seconds..latest_seconds`,
+        `at_turn must fall within scene "${sceneId}" 0..handoff_after_turns`,
       );
     }
     eventRecords.set(eventId, { sceneId, at });
@@ -196,9 +188,9 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
     sceneMilestones.set(
       sceneId,
       new Map([
-        ["earliest", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "earliest", target_seconds: scene.earliest })],
-        ["target", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "target", target_seconds: scene.target })],
-        ["latest", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "latest", target_seconds: scene.latest })],
+        ["min", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "min", target_turn: scene.min })],
+        ["nudge", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "nudge", target_turn: scene.nudge })],
+        ["handoff", Object.freeze({ kind: "scene_point", scene_id: sceneId, point: "handoff", target_turn: scene.handoff })],
       ]),
     );
   }
@@ -206,7 +198,7 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
   const eventMilestones = new Map(
     [...eventRecords].map(([eventId, event]) => [
       eventId,
-      Object.freeze({ kind: "pacing_event", scene_id: event.sceneId, event_id: eventId, target_seconds: event.at }),
+      Object.freeze({ kind: "pacing_event", scene_id: event.sceneId, event_id: eventId, target_turn: event.at }),
     ]),
   );
 

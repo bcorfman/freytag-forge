@@ -10,6 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from storygame.story_package.models import (
+    FactDelivery,
     KnowledgeCatalog,
     KnowledgeIndexes,
     PacingSource,
@@ -74,6 +75,8 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
             raise StoryPackageError(f"invalid frontmatter for scene {match.group(1)}: {exc}") from exc
         if metadata.scene_id != match.group(1):
             raise StoryPackageError(f"heading and frontmatter disagree for scene {match.group(1)}")
+        if set(metadata.bridge_text) != set(metadata.transition_ids):
+            raise StoryPackageError(f"scene {match.group(1)} bridge_text keys must match transition_ids exactly")
         prose = body[frontmatter.end() :].strip()
         scenes.append(Scene(metadata=metadata, prose=prose, opening_beat=_parse_opening_beat(metadata.scene_id, prose)))
     return tuple(scenes)
@@ -93,14 +96,11 @@ def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
     return SceneBeat(id=first.group(1), title=first.group(2).strip(), prose=body)
 
 
-def _clock(value: str) -> int:
-    match = re.fullmatch(r"(\d{2}):(\d{2}):(\d{2})", value.strip())
+def _turn(value: str) -> int:
+    match = re.fullmatch(r"turn\s+(\d+)", value.strip(), re.IGNORECASE)
     if not match:
-        raise StoryPackageError(f"invalid timestamp '{value}' (use HH:MM:SS)")
-    hour, minute, second = map(int, match.groups())
-    if minute > 59 or second > 59:
-        raise StoryPackageError(f"invalid timestamp '{value}'")
-    return hour * 3600 + minute * 60 + second
+        raise StoryPackageError(f"invalid turn offset '{value}' (use 'turn N')")
+    return int(match.group(1))
 
 
 def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
@@ -122,7 +122,7 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
             raise StoryPackageError(f"storylet {match.group(1)} lacks plot.md source links")
         if any(not any(link.startswith(anchor) for anchor in plot_anchors) for link in links):
             raise StoryPackageError(f"storylet {match.group(1)} links to an unknown plot heading")
-        window = dict(re.findall(r"(earliest|target|latest):\s*`?([0-9:]+)`?", sections["Pacing window"]))
+        window = dict(re.findall(r"-\s*(earliest|target|latest):\s*`([^`]+)`", sections["Pacing window"]))
         if set(window) != {"earliest", "target", "latest"}:
             raise StoryPackageError(f"storylet {match.group(1)} has an invalid pacing window")
         impact = sections["Pacing impact"].strip("` \n")
@@ -133,9 +133,9 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
                 title=match.group(3),
                 source_links=links,
                 sections=sections,
-                earliest_seconds=_clock(window["earliest"]),
-                target_seconds=_clock(window["target"]),
-                latest_seconds=_clock(window["latest"]),
+                earliest_turn=_turn(window["earliest"]),
+                target_turn=_turn(window["target"]),
+                latest_turn=_turn(window["latest"]),
                 pacing_impact=impact,
             )
         )
@@ -202,6 +202,11 @@ def _validate_knowledge(package: StoryPackage) -> None:
         event.id: event
         for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)
     }
+    transition_trigger_facts = {
+        (transition.source_scene_id, trigger.fact_id)
+        for transition in package.pacing.transitions
+        for trigger in transition.triggers
+    }
     scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
     produced_by: dict[str, set[str]] = {}
     for known in catalog.knowledge:
@@ -222,6 +227,18 @@ def _validate_knowledge(package: StoryPackage) -> None:
         established_facts = {effect.fact_id for effect in item.establishes}
         if required_facts - facts or established_facts - facts:
             raise StoryPackageError(f"knowledge '{item.id}' references an unknown fact")
+        if (
+            item.source.kind == "storylet_realization"
+            and any(
+                effect.op == "assert" and (scene_id, effect.fact_id) in transition_trigger_facts
+                for scene_id in item.available_in_scenes
+                for effect in item.establishes
+            )
+            and not item.must_convey
+        ):
+            raise StoryPackageError(
+                f"selectable knowledge '{item.id}' establishes a scene-transition trigger but has no must_convey"
+            )
         if item.audience.kind == "characters" and set(item.audience.character_ids) - {
             entity.id for entity in package.world.npcs
         }:
@@ -327,6 +344,11 @@ def _validate(package: StoryPackage) -> None:
     if len(pacing_scene_ids) != len(package.pacing.scenes) or pacing_scene_ids != set(scenes):
         raise StoryPackageError("pacing must declare exactly one window per scene")
     windows = {p.scene_id: p for p in package.pacing.scenes}
+    handoff_seconds = sum(window.handoff_after_turns for window in package.pacing.scenes) * 60
+    if handoff_seconds > package.pacing.budget_seconds:
+        raise StoryPackageError(
+            f"pacing handoff sum {handoff_seconds} seconds exceeds budget_seconds {package.pacing.budget_seconds}"
+        )
     event_ids: set[str] = set()
     for event in package.pacing.events:
         if event.id in event_ids:
@@ -339,15 +361,15 @@ def _validate(package: StoryPackage) -> None:
         if {effect.fact_id for effect in event.effects} - set(package.world.facts):
             raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
         window = windows[event.scene_id]
-        if not window.earliest_seconds <= event.at_seconds <= window.latest_seconds:
+        if not 0 <= event.at_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")
     for storylet in package.storylets:
         if storylet.scene_id not in scenes:
             raise StoryPackageError(f"storylet '{storylet.id}' references unknown scene")
         window = windows[storylet.scene_id]
         within_scene_window = (
-            window.earliest_seconds <= storylet.earliest_seconds <= storylet.target_seconds
-            and storylet.latest_seconds <= window.latest_seconds
+            0 <= storylet.earliest_turn <= storylet.target_turn <= storylet.latest_turn
+            and storylet.latest_turn <= window.handoff_after_turns
         )
         if not within_scene_window:
             raise StoryPackageError(f"storylet '{storylet.id}' escapes its scene pacing window")
@@ -361,6 +383,9 @@ def _validate(package: StoryPackage) -> None:
     for route in package.storylet_routes.storylets:
         if route.scene_id not in scenes or route.id not in route_ids:
             raise StoryPackageError("storylet route references unknown scene")
+        window = windows[route.scene_id]
+        if not 0 <= route.earliest_turn <= route.target_turn <= route.latest_turn <= window.handoff_after_turns:
+            raise StoryPackageError(f"storylet '{route.id}' escapes its scene pacing window")
         if {item.fact_id for item in route.activation_conditions} - set(package.world.facts):
             raise StoryPackageError(f"storylet route '{route.id}' has an unknown activation fact")
         for realization in route.realizations:
@@ -371,8 +396,20 @@ def _validate(package: StoryPackage) -> None:
     for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events):
         if event.scene_id not in scenes:
             raise StoryPackageError(f"canonical route event '{event.id}' references an unknown scene")
-        if {item.fact_id for item in event.activation_conditions} - set(package.world.facts):
+        activation_facts = set(event.activation.all_facts_true) | set(event.activation.any_of)
+        if activation_facts - set(package.world.facts):
             raise StoryPackageError(f"canonical route event '{event.id}' has an unknown activation fact")
+        if event.activation.any_of and not 1 <= event.activation.at_least <= len(event.activation.any_of):
+            raise StoryPackageError(
+                f"canonical route event '{event.id}' has an activation threshold outside "
+                f"1..{len(event.activation.any_of)}"
+            )
+        if not event.activation.any_of and event.activation.at_least > 0:
+            raise StoryPackageError(
+                f"canonical route event '{event.id}' has an activation threshold without a fact pool"
+            )
+        if not event.activation.all_facts_true and not event.activation.any_of:
+            raise StoryPackageError(f"canonical route event '{event.id}' has a vacuous activation rule")
         if {operation.fact_id for operation in event.operations} - set(package.world.facts):
             raise StoryPackageError(f"canonical route event '{event.id}' has an unknown operation fact")
     visiting: set[str] = set()
@@ -396,6 +433,68 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"transitions from {source_id} have ambiguous priority")
 
 
+def _validate_deliveries(package: StoryPackage) -> None:
+    """Fail closed when a canonical bridge cannot safely carry a fact."""
+
+    from storygame.runtime.validation import unconveyed_terms
+
+    scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
+    facts = package.fact_ids
+    canonical_events = package.storylet_routes.bridge_events
+    exit_prerequisite_facts = {
+        fact_id
+        for event in canonical_events
+        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
+    }
+    player_safe_facts = {
+        effect.fact_id
+        for known in package.knowledge.knowledge
+        if known.audience.player_visible
+        for effect in known.establishes
+    }
+    deliveries_by_fact: dict[str, FactDelivery] = {}
+    for delivery in package.deliveries:
+        if delivery.fact_id not in facts:
+            raise StoryPackageError(f"delivery for fact '{delivery.fact_id}' references an unknown fact")
+        if delivery.fact_id in deliveries_by_fact:
+            raise StoryPackageError(f"fact '{delivery.fact_id}' has more than one delivery")
+        deliveries_by_fact[delivery.fact_id] = delivery
+        scene = scenes.get(delivery.scene_id)
+        if scene is None:
+            raise StoryPackageError(f"delivery for fact '{delivery.fact_id}' references an unknown scene")
+        if delivery.source_entity_id and delivery.source_entity_id not in scene.metadata.participant_ids:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' names source entity '{delivery.source_entity_id}' "
+                f"absent from scene {delivery.scene_id} participants"
+            )
+        unknown_costs = {cost.fact_id for cost in delivery.costs} - facts
+        if unknown_costs:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' has unknown cost fact(s): {sorted(unknown_costs)}"
+            )
+        missing = unconveyed_terms(delivery.must_convey, delivery.fallback_text)
+        if missing:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' fallback_text does not convey: {', '.join(missing)}"
+            )
+        player_safe = any(
+            known.audience.player_visible
+            for known in package.knowledge.knowledge
+            if any(effect.fact_id == delivery.fact_id for effect in known.establishes)
+        )
+        if not player_safe:
+            raise StoryPackageError(
+                f"delivery for fact '{delivery.fact_id}' has no player-visible knowledge definition"
+            )
+    # World-only prerequisites, such as Rebecca's observation, are deliberately
+    # absent from this audit: they arrive from declared world actions rather
+    # than from a player-visible handoff.
+    missing_deliveries = sorted((exit_prerequisite_facts & player_safe_facts) - set(deliveries_by_fact))
+    if missing_deliveries:
+        fact_id = missing_deliveries[0]
+        raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
+
+
 def load_story_package(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
     try:
@@ -408,15 +507,22 @@ def load_story_package(root: Path) -> StoryPackage:
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
         knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))
+        handoffs_raw = _yaml(root / "handoffs.yaml")
+        raw_deliveries = handoffs_raw.get("deliveries")
+        if not isinstance(raw_deliveries, list):
+            raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
+        deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
 
         def event_source(item: dict[str, Any]) -> dict[str, Any]:
             activation = item.get("activation", {})
             return {
                 "id": item["id"],
                 "scene_id": item["scene_id"],
-                "activation_conditions": tuple(
-                    {"fact_id": fact_id, "equals": True} for fact_id in activation.get("all_facts_true", ())
-                ),
+                "activation": {
+                    "all_facts_true": activation.get("all_facts_true", ()),
+                    "any_of": activation.get("any_of", ()),
+                    "at_least": activation.get("at_least", 0),
+                },
                 "operations": item["produces"],
             }
 
@@ -431,9 +537,9 @@ def load_story_package(root: Path) -> StoryPackage:
                         "scene_id": item["scene_id"],
                         "title": item["title"],
                         "activation_conditions": item["activation"].get("conditions", ()),
-                        "earliest_seconds": item["activation"]["pacing"]["earliest_seconds"],
-                        "target_seconds": item["activation"]["pacing"]["target_seconds"],
-                        "latest_seconds": item["activation"]["pacing"]["latest_seconds"],
+                        "earliest_turn": item["activation"]["pacing"]["earliest_turn"],
+                        "target_turn": item["activation"]["pacing"]["target_turn"],
+                        "latest_turn": item["activation"]["pacing"]["latest_turn"],
                         "pressure_role": item["pressure_role"],
                         "realizations": item["realization_options"],
                     }
@@ -457,7 +563,9 @@ def load_story_package(root: Path) -> StoryPackage:
         storylet_routes=routes,
         knowledge=knowledge,
         knowledge_indexes=_compile_knowledge_indexes(knowledge),
+        deliveries=deliveries,
     )
     _validate(package)
     _validate_knowledge(package)
+    _validate_deliveries(package)
     return package

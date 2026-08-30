@@ -78,6 +78,8 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
             event.id for event in state.package.pacing.events if event.id in state.fired_event_ids
         ),
         "story_elapsed_seconds": int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0,
+        "turn_index": state.turn_index,
+        "turns_since_scene_entry": state.turn_index - state.scene_entered_at_turn,
     }
 
 
@@ -97,6 +99,7 @@ def _turn_payload(
         "segments": segments,
         "lines": [narration],
         "game_break": game_break,
+        "delivery": state.last_turn_delivery.model_dump(mode="json"),
         "state": _state_summary(state),
     }
 

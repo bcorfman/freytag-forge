@@ -31,7 +31,10 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "The current scene gains a concrete lead.",
+                    "text": (
+                        "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
+                        "dead drop at a bench in the park."
+                    ),
                     "grounding_ids": ["k_sl_1a_b_r1"],
                 }
             ],

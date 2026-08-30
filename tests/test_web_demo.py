@@ -80,6 +80,8 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "fired_storylet_ids": [],
         "fired_pacing_event_ids": [],
         "story_elapsed_seconds": 0,
+        "turn_index": 0,
+        "turns_since_scene_entry": 0,
     }
     opening = session.json()["opening"]
     entry_text = PACKAGE.scenes[0].metadata.entry_text
@@ -98,6 +100,29 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
+    assert turn.json()["delivery"] == {
+        "must_convey_misses": [],
+        "recovery_used": False,
+        "fallback_used": False,
+        "hint_staged": False,
+        "handoff_staged": False,
+    }
+
+
+def test_hosted_adapter_reports_turn_index_and_scene_relative_turns(tmp_path) -> None:
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _provider("The lead sharpens."),
+    )
+    with TestClient(app) as client:
+        session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+        session_id = session.json()["session_id"]
+        turn = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+
+    assert session.json()["state"]["turn_index"] == 0
+    assert session.json()["state"]["turns_since_scene_entry"] == 0
+    assert turn.json()["state"]["turn_index"] == 1
+    assert turn.json()["state"]["turns_since_scene_entry"] == 1
 
 
 def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_path) -> None:

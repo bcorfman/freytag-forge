@@ -10,7 +10,7 @@ from storygame.runtime.contracts import FactOperation, GameBreakWarning, Resolve
 from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import StoryPackage
 
-SNAPSHOT_VERSION = 1
+SNAPSHOT_VERSION = 2
 
 
 class RuntimeStateError(ValueError):
@@ -29,6 +29,16 @@ class TurnRecord(BaseModel):
     fact_keys: tuple[str, ...] = ()
 
 
+class TurnDelivery(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    must_convey_misses: tuple[str, ...] = ()
+    recovery_used: bool = False
+    fallback_used: bool = False
+    hint_staged: bool = False
+    handoff_staged: bool = False
+
+
 class RuntimeSnapshot(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     version: int = Field(default=SNAPSHOT_VERSION, ge=1)
@@ -37,8 +47,12 @@ class RuntimeSnapshot(BaseModel):
     active_event_ids: tuple[str, ...]
     fired_event_ids: tuple[str, ...]
     facts: FactStore
+    turn_index: int = Field(ge=0)
+    scene_entered_at_turn: int = Field(ge=0)
     narrative_history: tuple[str, ...] = ()
     turn_records: tuple[TurnRecord, ...] = ()
+    staged_hint_fact_ids: tuple[str, ...] = ()
+    staged_handoff_fact_ids: tuple[str, ...] = ()
 
 
 class RuntimeState(BaseModel):
@@ -51,11 +65,16 @@ class RuntimeState(BaseModel):
     active_event_ids: set[str] = Field(default_factory=set)
     fired_event_ids: set[str] = Field(default_factory=set)
     facts: FactStore = Field(default_factory=FactStore)
+    turn_index: int = Field(default=0, ge=0)
+    scene_entered_at_turn: int = Field(default=0, ge=0)
     narrative_history: list[str] = Field(default_factory=list)
     turn_records: list[TurnRecord] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
     pending_proposal: ResolvedTurnProposal | None = None
+    staged_hint_fact_ids: tuple[str, ...] = ()
+    staged_handoff_fact_ids: tuple[str, ...] = ()
+    last_turn_delivery: TurnDelivery = TurnDelivery()
 
     @model_validator(mode="after")
     def scene_and_phase_match_package(self) -> RuntimeState:
@@ -92,8 +111,12 @@ class RuntimeState(BaseModel):
             active_event_ids=tuple(sorted(self.active_event_ids)),
             fired_event_ids=tuple(sorted(self.fired_event_ids)),
             facts=self.facts.clone(),
+            turn_index=self.turn_index,
+            scene_entered_at_turn=self.scene_entered_at_turn,
             narrative_history=tuple(self.narrative_history),
             turn_records=tuple(self.turn_records),
+            staged_hint_fact_ids=self.staged_hint_fact_ids,
+            staged_handoff_fact_ids=self.staged_handoff_fact_ids,
         )
 
     def set_pending_break(
@@ -112,7 +135,7 @@ class RuntimeState(BaseModel):
             segments=({"kind": "narration", "text": "Pending game-break candidate."},)
         )
 
-    def apply_proposal(self, proposal: ResolvedTurnProposal) -> None:
+    def apply_proposal(self, proposal: ResolvedTurnProposal, *, canonical_event_ids: tuple[str, ...] = ()) -> None:
         """Validate a complete candidate before replacing canonical session state.
 
         A warning intentionally commits no candidate facts: only the explicit
@@ -124,6 +147,15 @@ class RuntimeState(BaseModel):
         candidate_facts = self.facts.clone()
         candidate_active = set(self.active_event_ids)
         candidate_fired = set(self.fired_event_ids)
+        canonical_events = {
+            event.id: event
+            for event in (*self.package.storylet_routes.bridge_events, *self.package.storylet_routes.resolution_events)
+        }
+        for event_id in canonical_event_ids:
+            event = canonical_events.get(event_id)
+            if event is None or event.scene_id != self.current_scene_id or event_id in candidate_fired:
+                raise RuntimeStateError("canonical event is not eligible")
+            candidate_fired.add(event_id)
         for operation in proposal.operations:
             self._apply_operation(candidate_facts, operation)
         for event in proposal.events:
@@ -161,6 +193,9 @@ class RuntimeState(BaseModel):
     def _assert_scene_entry_fact(self, scene_id: str) -> None:
         """Commit the typed scene-entry reveal before any opening can render."""
 
+        self.scene_entered_at_turn = self.turn_index
+        self.staged_hint_fact_ids = ()
+        self.staged_handoff_fact_ids = ()
         self.facts.assert_fact(Fact(predicate=f"scene_{scene_id.lower()}_entry_known", subject="story", value="true"))
 
     @staticmethod
@@ -180,8 +215,12 @@ class RuntimeState(BaseModel):
             self.active_event_ids = set(snapshot.active_event_ids)
             self.fired_event_ids = set(snapshot.fired_event_ids)
             self.facts = snapshot.facts.clone()
+            self.turn_index = snapshot.turn_index
+            self.scene_entered_at_turn = snapshot.scene_entered_at_turn
             self.narrative_history = list(snapshot.narrative_history)
             self.turn_records = list(snapshot.turn_records)
+            self.staged_hint_fact_ids = snapshot.staged_hint_fact_ids
+            self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
         elif decision != "proceed":
             raise RuntimeStateError("game break decision must be proceed or return_to_scene")
         else:
