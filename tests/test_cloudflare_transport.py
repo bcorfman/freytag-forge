@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from io import BytesIO
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -50,7 +51,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
-    assert captured["payload"]["max_tokens"] == 2048
+    assert captured["payload"]["max_tokens"] == 1024
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
@@ -585,7 +586,7 @@ def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch
     assert len(payloads) == 2
 
 
-def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None:
+def test_transport_preserves_worker_capacity_classification(monkeypatch, caplog) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
@@ -600,10 +601,14 @@ def test_transport_preserves_worker_capacity_classification(monkeypatch) -> None
     )
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
 
-    with pytest.raises(NarrationProviderError) as caught:
+    with (
+        caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"),
+        pytest.raises(NarrationProviderError) as caught,
+    ):
         provider("I listen.")
     assert caught.value.status_code == 429
     assert caught.value.message == "narration service is at capacity"
+    assert any("AI_CAPACITY_EXCEEDED" in record.getMessage() for record in caplog.records)
 
 
 def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> None:
@@ -618,6 +623,27 @@ def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> Non
     with pytest.raises(NarrationProviderError) as caught:
         provider("I listen.")
     assert caught.value.error_code == "UNKNOWN"
+
+
+def test_truncated_worker_response_fails_closed_and_logs_decode_cause(monkeypatch, caplog) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=RuntimeState.bootstrap(PACKAGE),
+    )
+    response = _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]}'})
+    response.body = response.body[:-1]
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: response)
+
+    with (
+        caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"),
+        pytest.raises(NarrationProviderError, match="unavailable"),
+    ):
+        provider("I listen.")
+
+    assert any(
+        record.levelno >= logging.WARNING and "JSONDecodeError" in record.getMessage() for record in caplog.records
+    )
 
 
 @pytest.mark.parametrize(("status", "expected"), ((429, 429), (500, 502)))
