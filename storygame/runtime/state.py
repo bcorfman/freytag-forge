@@ -32,6 +32,7 @@ class TurnRecord(BaseModel):
 class TurnDelivery(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    beats_projected: tuple[str, ...] = ()
     must_convey_misses: tuple[str, ...] = ()
     recovery_used: bool = False
     fallback_used: bool = False

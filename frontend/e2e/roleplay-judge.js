@@ -129,6 +129,10 @@ export async function judgeSceneNarration(
   { environment = process.env, fetchImpl = fetch, canon = sceneCanon(sceneId) } = {},
 ) {
   const { apiKey, model } = judgeConfiguration(environment);
+  const turnsWithBeatContext = turns.map((turn) => ({
+    ...turn,
+    beats_projected: turn.beats_projected || [],
+  }));
   const response = await fetchImpl("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -144,12 +148,14 @@ export async function judgeSceneNarration(
             "When an opening is supplied, require substantial sensory scene establishment; always require responsive consequences on ordinary turns, " +
             "and progressive revelation rather than dumping future beats or racing a transition. Protected knowledge must " +
             "never be revealed early. Do not require every optional storylet or every beat in a single turn. " +
+            "Judge each TURN against the beat it was actually given. A turn that dramatises its assigned beat poorly still fails; being given a beat is not credit for using it. " +
+            "Judge the SCENE on whether its authored beats were covered in order across its turns. A scene that skips beats entirely still fails. " +
             "A turn marked left_scene is the one the story departed on: fail unless the narration the player actually " +
             "read gives them a reason to go, naming in prose what was found and where it points. A discovery the " +
             "player is never told has not happened, however plainly the canon implies it. Fail too when repeated apt " +
             "searching of what this scene's canon says is here keeps returning nothing the player can act on.",
         },
-        { role: "user", content: JSON.stringify({ canon, opening, turns }) },
+        { role: "user", content: JSON.stringify({ canon, opening, turns: turnsWithBeatContext }) },
       ],
       text: { format: { type: "json_schema", name: "scene_canon_judgment", strict: true, schema: CANON_SCHEMA } },
     }),

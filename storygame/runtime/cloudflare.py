@@ -214,9 +214,10 @@ class CloudflareTurnProvider:
         """
 
         setting: dict[str, object] = {"entry_text": self._current_scene().entry_text}
-        if not self.last_projection or not self.last_projection.candidates:
-            return setting
-        beats = self._candidate_beats()
+        beats = self._candidate_beats() if self.last_projection and self.last_projection.candidates else ()
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={"beats_projected": tuple(beat.anchor for beat in beats)}
+        )
         if beats:
             setting["beats"] = [{"title": beat.title, "prose": beat.prose} for beat in beats]
         return setting

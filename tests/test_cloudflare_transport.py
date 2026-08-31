@@ -52,6 +52,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
 
     assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
     assert len(attempts) == 1
+    assert state.last_turn_delivery.beats_projected == ()
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 1024
@@ -102,6 +103,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
     expected_beats = [{"title": beats[link].title, "prose": beats[link].prose} for link in storylet.source_links]
     assert scene_setting["beats"] == expected_beats
+    assert state.last_turn_delivery.beats_projected == storylet.source_links
     assert len(scene_setting["beats"]) < len(PACKAGE.scenes[0].beats)
 
 

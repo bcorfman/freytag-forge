@@ -216,7 +216,12 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
       const departure = entered ? segments.slice(0, -1) : segments;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
       if (sceneNarration) {
-        byScene.get(sourceSceneId).turns.push({ player_input: input, narration: sceneNarration, left_scene: entered });
+        byScene.get(sourceSceneId).turns.push({
+          player_input: input,
+          narration: sceneNarration,
+          left_scene: entered,
+          beats_projected: payload.delivery?.beats_projected || [],
+        });
       }
       if (entered && !byScene.has(reachedSceneId)) {
         byScene.set(reachedSceneId, { opening: segments.at(-1).text.trim(), turns: [] });
