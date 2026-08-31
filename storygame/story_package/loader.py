@@ -363,6 +363,11 @@ def _validate(package: StoryPackage) -> None:
         window = windows[event.scene_id]
         if not 0 <= event.at_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")
+        if event.at_turn > window.min_turns:
+            raise StoryPackageError(
+                f"pacing event '{event.id}' at turn {event.at_turn} in scene {event.scene_id} "
+                f"exceeds its min_turns floor {window.min_turns}"
+            )
     for storylet in package.storylets:
         if storylet.scene_id not in scenes:
             raise StoryPackageError(f"storylet '{storylet.id}' references unknown scene")

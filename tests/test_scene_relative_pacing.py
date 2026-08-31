@@ -60,11 +60,20 @@ def test_each_scene_entry_starts_with_a_full_relative_turn_allowance() -> None:
         window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == transition.source_scene_id)
         for _ in range(window.min_turns):
             engine.turn("I take another careful turn.")
-        for trigger in transition.triggers:
-            state.facts.assert_fact(Fact(predicate=trigger.fact_id, subject="story", value=str(trigger.equals).lower()))
-        engine.turn("I follow the opening.")
+        if state.current_scene_id != transition.target_scene_id:
+            for trigger in transition.triggers:
+                state.facts.assert_fact(
+                    Fact(predicate=trigger.fact_id, subject="story", value=str(trigger.equals).lower())
+                )
+            engine.turn("I follow the opening.")
         assert state.current_scene_id == transition.target_scene_id
         assert state.turn_index == state.scene_entered_at_turn
+
+
+def test_every_declared_pacing_event_lands_by_its_scene_floor() -> None:
+    windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
+
+    assert all(event.at_turn <= windows[event.scene_id].min_turns for event in PACKAGE.pacing.events)
 
 
 def test_storylet_activation_uses_scene_relative_turns_after_a_late_clock() -> None:

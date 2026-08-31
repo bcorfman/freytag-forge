@@ -46,15 +46,15 @@ scenes:
   nudge_after_turns: 3
   handoff_after_turns: 4
 - scene_id: 2C
-  min_turns: 1
+  min_turns: 2
   nudge_after_turns: 2
   handoff_after_turns: 3
 - scene_id: 3A
-  min_turns: 1
-  nudge_after_turns: 2
+  min_turns: 3
+  nudge_after_turns: 3
   handoff_after_turns: 3
 - scene_id: 3B
-  min_turns: 2
+  min_turns: 4
   nudge_after_turns: 4
   handoff_after_turns: 5
 - scene_id: 3C
