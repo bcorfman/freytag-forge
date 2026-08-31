@@ -112,6 +112,83 @@ narration names the memory card *and* the bench before the park paragraph, and
 that a partial narration is retried rather than silently advancing — is still
 outstanding.
 
+## Hosted canon judge — verified state (2026-08-31)
+
+**Purpose:** Record what a full hosted playthrough now proves, and what it does
+not, so the next session does not re-derive it.
+
+**Setup / seed:** Staging on the merged SHA, verified through
+`/api/v1/health` before running. `.env` supplies `E2E_API_BASE_URL`,
+`OPENAI_API_KEY` and the worker credentials.
+
+**Safe actions:** Read-only against staging, plus the billed judge calls named
+below.
+
+**Destructive or external actions:** The `@llm-canon` run makes one OpenAI
+judge call per reached scene — nine on this run. It is the only billed step.
+
+**Steps:**
+
+```bash
+source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine
+source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @llm-canon
+```
+
+`E2E_TURN_TIMEOUT_MS=90000` is required. The default is 30 seconds, and a turn
+that spends its recovery makes two model calls, which legitimately exceeds it.
+
+**Verify:** `@spine` passed in 1.8 minutes. `@llm-canon` traversed all nine
+scenes in order — 1A through 3C — and judged every one.
+
+**Observed 2026-08-31.** Every scene FAILS the canon judge on narration
+quality. Passing counts across the nine judged scenes:
+
+| Criterion | Passing |
+| --- | --- |
+| `protected_safe` | 9/9 |
+| `exit_motivated` | 3/9 |
+| `rewards_investigation` | 2/9 |
+| `scene_local` | 1/9 |
+| `progressive` | 1/9 |
+| `canon_consistent` | 0/9 |
+| `rich` | 0/9 |
+
+`protected_safe` passing on every scene is the load-bearing result: no scene
+leaked JANUS, Brandon's role, or any phase-two secret. The state machine holds.
+The failures are prose, not plumbing.
+
+The judge's Scene 1A criticisms are representative and actionable: the canon
+calls for concrete physical evidence — the phone on the kitchen floor, the
+missing laptop and work bag, the overturned chair, the forced back door, the
+carved KMS drawer — and the narration only glances at it; an apt second search
+dead-ended on an invented empty compartment when the memory card was
+canonically available; and one turn collapsed the card discovery, the Continuity
+Initiative exposition, the park-bench lead and the scene exit into a single
+abrupt summary.
+
+**Delivery telemetry from the same session's `@spine` run**, written to
+`artifacts/e2e-spine.json`:
+
+```
+total_turns 37 | turns_with_misses 7 | recovery_turns 17 | fallback_turns 6
+```
+
+Six fallback turns means six turns where a player read authored fallback prose
+instead of narration shaped to what they did. That is the delivery system's
+health metric, and it is the number to watch when widening `must_convey` groups.
+The report also carries a per-fact miss tally naming which reveals missed.
+
+**Cleanup:** None.
+
+**Notes.** Measured narration runs about 350 characters, roughly 60 words,
+against a plan that assumed about 100 words per turn. The model is bimodal in
+length as well as in behaviour: usually far thinner than the game wants, and
+occasionally rambling past 4,000 characters, which is what the 3,600-character
+budget in the turn instruction now bounds. There is a ceiling on narration
+length and no floor, and the judge's `rich` criterion fails on all nine scenes.
+That is the most likely single cause of the quality verdicts and the first thing
+to try.
+
 ## Full-journey acceptance — verified state (2026-08-29)
 
 **Purpose:** Record what the hosted canon playthrough proves and what it does
@@ -155,13 +232,9 @@ in authored order, fires all four pacing events in their own scenes, commits a
 reveal on close to every turn, and reaches the independent judge. Runs vary
 between roughly 22 and 28 turns.
 
-**That observation is stale as of 2026-08-30 and has not been repeated.** It
+**That observation was superseded on 2026-08-31 by the run recorded below.** It
 was taken before pacing became turn-based, so its turn counts were measured
-against the old absolute-seconds windows and the old 20-minute budget. The
-`E2E_PACKAGE_CLOCK` harness was rewritten to arm turn milestones rather than
-inject a clock value, and those Playwright specs have been changed but not
-executed, because they need a live deployment. Re-run this section before
-trusting any number in it.
+against the old absolute-seconds windows and the old 20-minute budget.
 
 **Known open items:**
 
