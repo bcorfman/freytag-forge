@@ -97,6 +97,13 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     )
     assert any(candidate["id"] == "k_sl_1a_b_r2" for candidate in contexts[2]["candidates"])
 
+    scene_setting = json.loads(captured[2]["user"])["scene_setting"]
+    storylet = next(storylet for storylet in PACKAGE.storylets if storylet.id == "SL-1A-B")
+    beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
+    expected_beats = [{"title": beats[link].title, "prose": beats[link].prose} for link in storylet.source_links]
+    assert scene_setting["beats"] == expected_beats
+    assert len(scene_setting["beats"]) < len(PACKAGE.scenes[0].beats)
+
 
 def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
