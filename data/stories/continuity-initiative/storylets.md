@@ -29,7 +29,7 @@ Each entry below is authoring data, not a player action menu.
 
 ### SL-1A-A — The House Does Not Look Abandoned
 
-**Source beats:** [1A.1 — The Empty House](plot.md#scene-1a1--the-empty-house), [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
+**Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone), [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
 
 **Allowed scene:** `1A`
 
@@ -292,7 +292,7 @@ Each entry below is authoring data, not a player action menu.
 
 ### SL-1B-B — Is Brandon Hunter or Rescuer?
 
-**Source beats:** [1B.2 — The Man Following Him](plot.md#scene-1b2--the-man-following-him), [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
+**Source beats:** [1B.2 — The Man Following Her](plot.md#scene-1b2--the-man-following-her), [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
 
 **Allowed scene:** `1B`
 

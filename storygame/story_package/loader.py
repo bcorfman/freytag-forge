@@ -30,7 +30,7 @@ class StoryPackageError(ValueError):
 
 
 _SCENE = re.compile(r"^## Scene ([1-9][A-Z]) .*$", re.MULTILINE)
-_SCENE_BEAT = re.compile(r"^### Scene ([1-9][A-Z]\.[1-9])\s+[—-]\s+(.+)$", re.MULTILINE)
+_SCENE_BEAT = re.compile(r"^### (?P<heading>Scene (?P<id>[1-9][A-Z]\.[1-9])\s+[—-]\s+(?P<title>.+))$", re.MULTILINE)
 _STORYLET = re.compile(r"^### (SL-([1-9][A-Z])-[A-Z]) — (.+)$", re.MULTILINE)
 _SECTION = re.compile(r"^\*\*([^*]+)\*\*\s*(.*?)(?=^\*\*|^---\s*$|\Z)", re.MULTILINE | re.DOTALL)
 _REQUIRED_STORYLET_SECTIONS = {
@@ -78,22 +78,64 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
         if set(metadata.bridge_text) != set(metadata.transition_ids):
             raise StoryPackageError(f"scene {match.group(1)} bridge_text keys must match transition_ids exactly")
         prose = body[frontmatter.end() :].strip()
-        scenes.append(Scene(metadata=metadata, prose=prose, opening_beat=_parse_opening_beat(metadata.scene_id, prose)))
+        scenes.append(
+            Scene(
+                metadata=metadata,
+                prose=prose,
+                beats=_parse_scene_beats(metadata.scene_id, prose),
+                opening_beat=_parse_opening_beat(metadata.scene_id, prose),
+            )
+        )
     return tuple(scenes)
+
+
+def _beat_anchor(heading: str) -> str:
+    """Convert an authored beat heading to the exact anchor used by source links."""
+
+    filtered = (character for character in heading.lower() if character.isalnum() or character in " -")
+    return "".join("-" if character == " " else character for character in filtered)
+
+
+def _parse_scene_beats(scene_id: str, prose: str) -> dict[str, SceneBeat]:
+    matches = [match for match in _SCENE_BEAT.finditer(prose) if match.group("id").startswith(f"{scene_id}.")]
+    beats: dict[str, SceneBeat] = {}
+    for match in matches:
+        end = next((other.start() for other in matches if other.start() > match.start()), len(prose))
+        beat_prose = prose[match.end() : end].strip()
+        beat_id = match.group("id")
+        if not beat_prose:
+            raise StoryPackageError(f"scene {scene_id} beat {beat_id} has no prose")
+        anchor = _beat_anchor(match.group("heading"))
+        if anchor in beats:
+            raise StoryPackageError(f"scene {scene_id} has duplicate beat anchor '{anchor}'")
+        beats[anchor] = SceneBeat(
+            id=beat_id,
+            anchor=anchor,
+            title=match.group("title").strip(),
+            prose=beat_prose,
+        )
+    if not beats:
+        raise StoryPackageError(f"scene {scene_id} contains no beat headings")
+    return beats
 
 
 def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
     """Isolate the scene's first authored beat so an opening embellishes canon instead of inventing it."""
 
     matches = list(_SCENE_BEAT.finditer(prose))
-    first = next((match for match in matches if match.group(1) == f"{scene_id}.1"), None)
+    first = next((match for match in matches if match.group("id") == f"{scene_id}.1"), None)
     if first is None:
         raise StoryPackageError(f"scene {scene_id} lacks an opening beat heading '### Scene {scene_id}.1'")
     end = next((match.start() for match in matches if match.start() > first.start()), len(prose))
     body = prose[first.end() : end].strip()
     if not body:
         raise StoryPackageError(f"scene {scene_id} opening beat has no prose")
-    return SceneBeat(id=first.group(1), title=first.group(2).strip(), prose=body)
+    return SceneBeat(
+        id=first.group("id"),
+        anchor=_beat_anchor(first.group("heading")),
+        title=first.group("title").strip(),
+        prose=body,
+    )
 
 
 def _turn(value: str) -> int:
@@ -103,7 +145,7 @@ def _turn(value: str) -> int:
     return int(match.group(1))
 
 
-def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
+def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set[str]) -> tuple[Storylet, ...]:
     matches = list(_STORYLET.finditer(text))
     if not matches:
         raise StoryPackageError("storylets.md contains no SL-* headings")
@@ -117,11 +159,16 @@ def _parse_storylets(text: str, plot_anchors: set[str]) -> tuple[Storylet, ...]:
         allowed = re.search(r"`([1-9][A-Z])`", sections["Allowed scene:"])
         if not allowed or allowed.group(1) != match.group(2):
             raise StoryPackageError(f"storylet {match.group(1)} has invalid allowed scene")
+        if match.group(2) not in plot_scene_ids:
+            raise StoryPackageError(f"storylet {match.group(1)} references an unknown scene")
         links = tuple(re.findall(r"\]\(plot\.md#([^)]+)\)", sections["Source beats:"]))
         if not links:
             raise StoryPackageError(f"storylet {match.group(1)} lacks plot.md source links")
-        if any(not any(link.startswith(anchor) for anchor in plot_anchors) for link in links):
-            raise StoryPackageError(f"storylet {match.group(1)} links to an unknown plot heading")
+        unresolved = next((link for link in links if link not in plot_beat_anchors), None)
+        if unresolved is not None:
+            raise StoryPackageError(
+                f"storylet {match.group(1)} links to an unknown plot heading; unresolved beat anchor '{unresolved}'"
+            )
         window = dict(re.findall(r"-\s*(earliest|target|latest):\s*`([^`]+)`", sections["Pacing window"]))
         if set(window) != {"earliest", "target", "latest"}:
             raise StoryPackageError(f"storylet {match.group(1)} has an invalid pacing window")
@@ -505,9 +552,11 @@ def load_story_package(root: Path) -> StoryPackage:
     try:
         plot_text = (root / "plot.md").read_text(encoding="utf-8")
         scenes = _parse_scenes(plot_text)
-        scene_ids = re.findall(r"^### Scene ([1-9][A-Z])\.\d+", plot_text, re.MULTILINE)
-        plot_anchors = {f"scene-{scene.lower()}" for scene in scene_ids}
-        storylets = _parse_storylets((root / "storylets.md").read_text(encoding="utf-8"), plot_anchors)
+        plot_beat_anchors = {anchor for scene in scenes for anchor in scene.beats}
+        plot_scene_ids = {scene.metadata.scene_id for scene in scenes}
+        storylets = _parse_storylets(
+            (root / "storylets.md").read_text(encoding="utf-8"), plot_beat_anchors, plot_scene_ids
+        )
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")

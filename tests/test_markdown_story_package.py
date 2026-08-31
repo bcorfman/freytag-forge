@@ -48,6 +48,41 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
             assert effects == set(realization.operations)
 
 
+def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
+    package = load_story_package(PACKAGE)
+    scene = package.scenes[0]
+
+    assert list(scene.beats) == [
+        "scene-1a1--michelle-is-gone",
+        "scene-1a2--michelles-last-investigation",
+        "scene-1a3--the-interrupted-message",
+        "scene-1a4--the-first-threat",
+    ]
+    assert [beat.id for beat in scene.beats.values()] == ["1A.1", "1A.2", "1A.3", "1A.4"]
+    assert [beat.anchor for beat in scene.beats.values()] == list(scene.beats)
+    assert scene.opening_beat == scene.beats["scene-1a1--michelle-is-gone"]
+    assert all(beat.title and beat.prose for beat in scene.beats.values())
+
+
+def test_every_shipped_storylet_source_link_resolves_to_a_scene_beat() -> None:
+    package = load_story_package(PACKAGE)
+    beats = {anchor for scene in package.scenes for anchor in scene.beats}
+    links = [link for storylet in package.storylets for link in storylet.source_links]
+
+    assert len(set(links)) == 36
+    assert all(link in beats for link in set(links))
+
+
+def test_loader_rejects_a_storylet_linking_to_a_nonexistent_beat_anchor(tmp_path: Path) -> None:
+    package = copied_package(tmp_path)
+    storylets = package / "storylets.md"
+    contents = storylets.read_text(encoding="utf-8")
+    storylets.write_text(contents.replace("scene-1a2--michelles-last-investigation", "scene-1a2--missing-beat", 1))
+
+    with pytest.raises(StoryPackageError, match="SL-1A-A.*scene-1a2--missing-beat"):
+        load_story_package(package)
+
+
 def test_a_scene_without_a_first_beat_fails_to_load(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
     plot = package / "plot.md"

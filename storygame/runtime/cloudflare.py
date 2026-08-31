@@ -205,14 +205,43 @@ class CloudflareTurnProvider:
     def _scene_setting(self) -> dict[str, object]:
         """The authored paragraph the player read on entering, safe to send every turn.
 
-        Deliberately just that. The beat prose describes what the scene is about
-        to reveal - Scene 2B's first beat names JANUS outright - and even the
-        location's own name can carry a protected term, so both would hand the
-        narrator knowledge the player has not earned. The projection already
-        supplies place and objective; this adds the one authored thing it lacks.
+        Beat prose is added only for storylets whose reveals are candidates on
+        this turn. The scene's beats describe what later reveals contain - Scene
+        2B's first beat names JANUS outright - so sending all of them would hand
+        the narrator knowledge the player has not earned. The projection already
+        supplies place and objective; this adds only the authored material the
+        player can earn now.
         """
 
-        return {"entry_text": self._current_scene().entry_text}
+        setting: dict[str, object] = {"entry_text": self._current_scene().entry_text}
+        beats = self._candidate_beats() if self.last_projection and self.last_projection.candidates else ()
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={"beats_projected": tuple(beat.anchor for beat in beats)}
+        )
+        if beats:
+            setting["beats"] = [{"title": beat.title, "prose": beat.prose} for beat in beats]
+        return setting
+
+    def _candidate_beats(self) -> tuple[SceneBeat, ...]:
+        """Return only the beats belonging to storylets offered this turn."""
+
+        package = self.state.package
+        storylets = {storylet.id: storylet for storylet in package.storylets}
+        beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
+        seen: set[str] = set()
+        selected: list[SceneBeat] = []
+        for candidate in self.last_projection.candidates if self.last_projection else ():
+            knowledge = package.knowledge_indexes.by_id[candidate.id]
+            if knowledge.source.kind != "storylet_realization" or knowledge.source.storylet_id is None:
+                continue
+            storylet = storylets.get(knowledge.source.storylet_id)
+            if storylet is None:
+                continue
+            for anchor in storylet.source_links:
+                if anchor not in seen and anchor in beats_by_anchor:
+                    seen.add(anchor)
+                    selected.append(beats_by_anchor[anchor])
+        return tuple(selected)
 
     def _scene_entry(self) -> dict[str, object]:
         """Expose the package-authored frame and first beat the opening must dramatize, never invent."""
@@ -397,9 +426,7 @@ class CloudflareTurnProvider:
                 proposal = proposal.model_copy(
                     update={
                         "segments": tuple(
-                            segment.model_copy(
-                                update={"grounding_ids": (*segment.grounding_ids, *undelivered)}
-                            )
+                            segment.model_copy(update={"grounding_ids": (*segment.grounding_ids, *undelivered)})
                             if any(segment is derived_segment for derived_segment in derived_segments)
                             else segment
                             for segment in proposal.segments

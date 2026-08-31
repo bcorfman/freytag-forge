@@ -184,6 +184,7 @@ class SceneBeat(_Model):
     """One authored sub-beat of a scene, quoted verbatim as narration context."""
 
     id: str = Field(pattern=r"^[1-9][A-Z]\.[1-9]$")
+    anchor: str = Field(pattern=r"^[a-z0-9-]+$")
     title: str = Field(min_length=1)
     prose: str = Field(min_length=1)
 
@@ -191,6 +192,7 @@ class SceneBeat(_Model):
 class Scene(_Model):
     metadata: SceneMetadata
     prose: str = Field(min_length=1)
+    beats: Mapping[str, SceneBeat]
     opening_beat: SceneBeat
 
 
