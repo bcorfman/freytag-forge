@@ -37,8 +37,10 @@ class _Response:
 
 def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None:
     captured: dict[str, object] = {}
+    attempts: list[int] = []
 
     def open_request(request, timeout):
+        attempts.append(1)
         captured["headers"] = dict(request.header_items())
         captured["payload"] = json.loads(request.data)
         captured["timeout"] = timeout
@@ -49,6 +51,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
     assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
+    assert len(attempts) == 1
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 1024
@@ -56,6 +59,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
+    assert "The entire JSON response must stay under 3,600 characters." in captured["payload"]["system"]
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
     assert context["player"]["candidates"] == []
@@ -184,6 +188,25 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
 
     assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
     assert len(payloads) == 2
+
+
+def test_transport_recovers_once_from_a_truncated_first_reply(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Recovered."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "Recovered."}]}
+    assert len(payloads) == 2
+    assert "Your previous response was invalid." in payloads[1]["system"]
 
 
 def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
@@ -652,15 +675,19 @@ def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> Non
     assert caught.value.error_code == "UNKNOWN"
 
 
-def test_truncated_worker_response_fails_closed_and_logs_decode_cause(monkeypatch, caplog) -> None:
+def test_truncated_worker_response_fails_closed_after_one_recovery_and_logs_decode_cause(monkeypatch, caplog) -> None:
+    payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
         state=RuntimeState.bootstrap(PACKAGE),
     )
-    response = _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]}'})
-    response.body = response.body[:-1]
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: response)
+
+    def open_request(request, **_kwargs):
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
     with (
         caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"),
@@ -668,6 +695,8 @@ def test_truncated_worker_response_fails_closed_and_logs_decode_cause(monkeypatc
     ):
         provider("I listen.")
 
+    assert len(payloads) == 2
+    assert "Your previous response was invalid." in payloads[1]["system"]
     assert any(
         record.levelno >= logging.WARNING and "JSONDecodeError" in record.getMessage() for record in caplog.records
     )
