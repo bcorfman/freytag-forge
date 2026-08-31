@@ -175,7 +175,8 @@ class CloudflareTurnProvider:
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
             f"sayable context. {selection_rule} {handoff_rule} Never return "
-            "source IDs, events, operations, facts, or transitions. Return only TurnProposal fields: never echo "
+            "source IDs, events, operations, facts, or transitions. The entire JSON response must stay under 3,600 "
+            "characters. Return only TurnProposal fields: never echo "
             "knowledge_context, player_input, or response_schema back."
         )
 
@@ -246,7 +247,9 @@ class CloudflareTurnProvider:
             self._log_typed_worker_error(error, worker_error_code)
             if worker_error_code != "AI_JSON_MODE_REJECTED":
                 raise self._narration_error(error) from error
-        except (URLError, OSError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+        except json.JSONDecodeError:
+            return self._recover_malformed_response(payload)
+        except (URLError, OSError, TimeoutError, ValueError) as error:
             self._log_unavailable(error)
             raise NarrationProviderError("narration service is unavailable") from error
         else:
