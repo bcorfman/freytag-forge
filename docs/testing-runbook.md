@@ -124,8 +124,31 @@ not, so the next session does not re-derive it.
 **Safe actions:** Read-only against staging, plus the billed judge calls named
 below.
 
-**Destructive or external actions:** The `@llm-canon` run makes one OpenAI
-judge call per reached scene — nine on this run. It is the only billed step.
+**Destructive or external actions:** The `@llm-canon` run spends TWO independent
+budgets, and only the first is obvious from the command.
+
+- **OpenAI**, one judge call per reached scene — nine on a full traversal.
+- **Cloudflare Workers AI neurons**, one narration call per turn, plus another
+  for every turn that spends its recovery. This is the budget that runs out
+  first in practice.
+
+The Workers AI free allocation is 10,000 neurons per day and **resets at 00:00
+UTC** — 8:00 PM Eastern during daylight time, 7:00 PM Eastern in winter.
+
+Exhausting it does not look like a quota problem from the outside. The turn
+endpoint answers `HTTP 429` with `{"detail": "narration service is at capacity"}`
+and the header `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`. Check that header
+before assuming a request-rate limit: the app's own
+`FREYTAG_RATE_LIMIT_PER_MINUTE` limiter returns `{"detail": "rate limit
+exceeded"}` instead, and `/api/v1/health` keeps answering either way, so a green
+health check proves nothing here.
+
+On 2026-08-31 a day of debugging exhausted the allocation, because narration was
+occasionally rambling past 4,000 characters and output costs 34,868 neurons per
+million tokens against 4,119 for input — a rambling turn ran roughly 50 to 70
+neurons where a well-behaved one costs about 11. With the 3,600-character budget
+now in the turn instruction, a full 30-turn playthrough is around 330 neurons, so
+the free allocation covers roughly thirty of them a day.
 
 **Steps:**
 
