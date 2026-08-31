@@ -5,9 +5,11 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from copy import deepcopy
+from itertools import combinations
 
 from storygame.runtime.contracts import (
     FactOperation,
+    NarrationSegment,
     ResolvedTurnProposal,
     SceneTransitionProposal,
     StoryEventProposal,
@@ -64,6 +66,22 @@ def unconveyed_terms(groups: tuple[tuple[str, ...], ...], text: str) -> tuple[st
         if not any(phrase_matches(phrasing, normalized_text) for phrasing in group):
             missing.append(group[0] if group else "")
     return tuple(missing)
+
+
+def derive_grounding(
+    groups: tuple[tuple[str, ...], ...], segments: tuple[NarrationSegment, ...]
+) -> tuple[NarrationSegment, ...]:
+    """Return the smallest ordered evidence set whose text conveys every group."""
+
+    if not groups:
+        return ()
+    for size in range(1, len(segments) + 1):
+        for indexes in combinations(range(len(segments)), size):
+            selected = tuple(segments[index] for index in indexes)
+            combined_text = " ".join(segment.text for segment in selected)
+            if not unconveyed_terms(groups, combined_text):
+                return selected
+    return ()
 
 
 def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
@@ -129,7 +147,25 @@ class SelectedRevealResolver:
         grounded = {grounding_id for segment in resolved.segments for grounding_id in segment.grounding_ids}
         undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
         if undelivered:
-            raise ProposalValidationError("selected knowledge must be grounded in the segment that reveals it")
+            knowledge = self.package.knowledge_indexes.by_id[undelivered[0]]
+            derived_segments = derive_grounding(knowledge.must_convey, resolved.segments)
+            if derived_segments:
+                resolved = resolved.model_copy(
+                    update={
+                        "segments": tuple(
+                            segment.model_copy(
+                                update={"grounding_ids": (*segment.grounding_ids, *undelivered)}
+                            )
+                            if any(segment is derived_segment for derived_segment in derived_segments)
+                            else segment
+                            for segment in resolved.segments
+                        )
+                    }
+                )
+            grounded = {grounding_id for segment in resolved.segments for grounding_id in segment.grounding_ids}
+            undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
+            if undelivered:
+                raise ProposalValidationError("selected knowledge must be grounded in the segment that reveals it")
         for knowledge_id in selected:
             knowledge = self.package.knowledge_indexes.by_id[knowledge_id]
             grounded_text = " ".join(
