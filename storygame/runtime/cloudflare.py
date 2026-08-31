@@ -18,7 +18,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import unconveyed_terms
+from storygame.runtime.validation import derive_grounding, unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
@@ -380,13 +380,33 @@ class CloudflareTurnProvider:
                 "candidate you selected. Resend the same narration with an empty grounding_ids list; only if that ID "
                 "is one of this turn's candidates may you instead place it in selected_knowledge_ids.",
             )
+        candidates = {candidate.id: candidate for candidate in self.last_projection.candidates}
         # Selecting a reveal without telling it commits the fact silently: the scene's exit
         # unlocks and the player is moved somewhere the narration gave them no reason to go.
-        # The ID on a segment is the model's own claim that this is the sentence that reveals it.
+        # When the prose proves the reveal, derive the missing bookkeeping from that evidence.
         grounded = {grounding_id for segment in proposal.segments for grounding_id in segment.grounding_ids}
         undelivered = sorted(
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in grounded}
         )
+        if undelivered:
+            derived_segments = derive_grounding(candidates[undelivered[0]].must_convey, proposal.segments)
+            if derived_segments:
+                proposal = proposal.model_copy(
+                    update={
+                        "segments": tuple(
+                            segment.model_copy(
+                                update={"grounding_ids": (*segment.grounding_ids, *undelivered)}
+                            )
+                            if any(segment is derived_segment for derived_segment in derived_segments)
+                            else segment
+                            for segment in proposal.segments
+                        )
+                    }
+                )
+            grounded = {grounding_id for segment in proposal.segments for grounding_id in segment.grounding_ids}
+            undelivered = sorted(
+                {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in grounded}
+            )
         if undelivered:
             raise _EligibilityError(
                 "selected knowledge must be grounded in the segment that reveals it",
@@ -394,7 +414,6 @@ class CloudflareTurnProvider:
                 "learn it. Resend with a segment whose text actually states what that reveal says, listing that ID "
                 "in its grounding_ids - or, if the player has not earned it yet, with selected_knowledge_ids empty.",
             )
-        candidates = {candidate.id: candidate for candidate in self.last_projection.candidates}
         for knowledge_id in proposal.selected_knowledge_ids:
             candidate = candidates[knowledge_id]
             grounded_text = " ".join(

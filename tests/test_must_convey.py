@@ -4,10 +4,59 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.runtime.validation import unconveyed_terms
+from storygame.runtime.contracts import NarrationSegment
+from storygame.runtime.validation import derive_grounding, unconveyed_terms
 from storygame.story_package import load_story_package
 
 PACKAGE = Path("data/stories/continuity-initiative")
+
+REVEAL_GROUPS = (
+    ("memory card", "card"),
+    ("damaged recording", "recording"),
+    ("Michelle's",),
+    ("dead drop",),
+    ("park bench", "bench in the park"),
+)
+
+
+def test_derive_grounding_returns_the_smallest_segment_set_that_tells_the_reveal() -> None:
+    segments = (
+        NarrationSegment(kind="narration", text="A drawer sticks."),
+        NarrationSegment(
+            kind="narration",
+            text="Kristin finds Michelle's memory card and damaged recording at a dead drop by the park bench.",
+        ),
+        NarrationSegment(kind="narration", text="The room goes quiet."),
+    )
+
+    assert derive_grounding(REVEAL_GROUPS, segments) == (segments[1],)
+
+
+def test_derive_grounding_returns_nothing_when_prose_tells_none_of_the_reveal() -> None:
+    segments = (NarrationSegment(kind="narration", text="The drawer sticks."),)
+
+    assert derive_grounding(REVEAL_GROUPS, segments) == ()
+
+
+def test_derive_grounding_returns_nothing_when_prose_tells_only_part_of_the_reveal() -> None:
+    segments = (NarrationSegment(kind="narration", text="Kristin finds Michelle's memory card."),)
+
+    assert derive_grounding(REVEAL_GROUPS, segments) == ()
+
+
+def test_derive_grounding_can_span_segments_in_narration_order() -> None:
+    segments = (
+        NarrationSegment(kind="narration", text="Kristin finds Michelle's memory card and damaged recording."),
+        NarrationSegment(kind="narration", text="It points to a dead drop at the park bench."),
+    )
+
+    assert derive_grounding(REVEAL_GROUPS, segments) == segments
+
+
+def test_derive_grounding_never_derives_an_empty_requirement() -> None:
+    segments = (NarrationSegment(kind="narration", text="Anything at all."),)
+
+    assert derive_grounding((), segments) == ()
 
 
 def test_unconveyed_terms_normalizes_case_curly_punctuation_dashes_and_spacing() -> None:

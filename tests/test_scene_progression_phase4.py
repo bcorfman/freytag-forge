@@ -139,6 +139,49 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     assert state.current_scene_id == "1B"
 
 
+def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(
+        state,
+        lambda _: {
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": (
+                        "Kristin finds Michelle's memory card and damaged recording; the card points to a dead drop "
+                        "at a bench in the park."
+                    ),
+                }
+            ],
+            "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+        },
+    )
+
+    proposal = engine.turn("I look under the workstation.", clock_seconds=120)
+
+    assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r1",)
+    assert proposal.segments[0].grounding_ids == ("k_sl_1a_b_r1",)
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+
+
+def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(
+        state,
+        lambda _: {
+            "segments": [{"kind": "narration", "text": "Kristin finds Michelle's memory card."}],
+            "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+        },
+    )
+
+    with pytest.raises(ProposalValidationError, match="grounded"):
+        engine.turn("I look under the workstation.", clock_seconds=120)
+
+    assert not state.facts.has("continuity_initiative_known", "story", value="true")
+
+
 def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))

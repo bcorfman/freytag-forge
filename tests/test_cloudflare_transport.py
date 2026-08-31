@@ -266,6 +266,33 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
     assert "grounding_ids" in payloads[1]["system"]
 
 
+def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"Kristin finds Michelle\'s memory card and '
+                    'damaged recording; the card points to a dead drop at the park bench."}],'
+                    '"selected_knowledge_ids":["k_sl_1a_b_r1"]}'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("I look under the workstation.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
+    assert len(payloads) == 1
+    assert state.last_turn_delivery.recovery_used is False
+
+
 def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) -> None:
     """Selecting a candidate without telling it must cost a guided retry, not the player's turn."""
 
