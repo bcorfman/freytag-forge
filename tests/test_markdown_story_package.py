@@ -250,6 +250,30 @@ def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> 
         load_story_package(root)
 
 
+def test_loader_rejects_pacing_event_past_scene_floor(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "pacing.yaml"
+    pacing = yaml.safe_load(source.read_text())
+    event = next(item for item in pacing["events"] if item["id"] == "pressure_1a")
+    event["at_turn"] = 3
+    source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="pressure_1a.*turn 3.*scene 1A.*floor 2"):
+        load_story_package(root)
+
+
+def test_loader_rejects_scene_floor_below_its_pacing_event(tmp_path: Path) -> None:
+    root = copied_package(tmp_path / "lowered-floor")
+    source = root / "pacing.yaml"
+    pacing = yaml.safe_load(source.read_text())
+    scene = next(item for item in pacing["scenes"] if item["scene_id"] == "2C")
+    scene["min_turns"] = 1
+    source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="purge_2c.*turn 2.*scene 2C.*floor 1"):
+        load_story_package(root)
+
+
 def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "pacing.yaml"
