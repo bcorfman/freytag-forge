@@ -42,6 +42,14 @@ def _state_1b() -> RuntimeState:
     return state
 
 
+def _state_2a() -> RuntimeState:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    state._assert_scene_entry_fact("2A")
+    return state
+
+
 def _fallback_delivery_text(state: RuntimeState) -> str:
     deliveries = {delivery.fact_id: delivery for delivery in PACKAGE.deliveries}
     return " ".join(deliveries[fact_id].fallback_text for fact_id in state.staged_handoff_fact_ids)
@@ -109,6 +117,27 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     )
     target_entry = next(scene.metadata.entry_text for scene in PACKAGE.scenes if scene.metadata.scene_id == "1C")
     assert texts.index(source_bridge) < texts.index(target_entry)
+
+
+def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
+    state = _state_2a()
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "I wait."}]})
+
+    engine.turn("I wait at the facility entrance.")
+    engine.turn("I keep watching the security desk.")
+    handoff = engine.turn("I wait for an opening.")
+
+    assert state.current_scene_id == "2B"
+    assert state.facts.has("false_identities_ready", "story", value="true")
+    assert state.facts.has("rebecca_observing_infiltrators", "story", value="true")
+    assert "bridge_2a_restricted_access" in state.fired_event_ids
+    assert state.last_turn_delivery.handoff_staged is True
+    assert any("false credentials" in segment.text.casefold() for segment in handoff.segments)
+
+    projection = KnowledgeProjector().project(state, "player", "I look around.")
+    projected_ids = {item.id for item in (*projection.committed_knowledge, *projection.candidates)}
+    assert "k_sl_2a_c_r2_rebecca_observes" not in projected_ids
+    assert "rebecca_observing_infiltrators" not in projection.model_dump_json()
 
 
 def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(monkeypatch) -> None:

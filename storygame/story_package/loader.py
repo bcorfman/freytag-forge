@@ -486,7 +486,12 @@ def _validate(package: StoryPackage) -> None:
 
 
 def _validate_deliveries(package: StoryPackage) -> None:
-    """Fail closed when a canonical bridge cannot safely carry a fact."""
+    """Fail closed when a canonical bridge cannot safely carry a fact.
+
+    Together, the delivery-direction and missing-delivery checks make the
+    bridge invariant explicit: every required fact is either deliverable or
+    has no player-visible knowledge definition and is therefore world-only.
+    """
 
     from storygame.runtime.validation import unconveyed_terms
 

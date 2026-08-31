@@ -291,6 +291,23 @@ class RuntimeEngine:
         for event in proposal.events:
             for operation in event.operations:
                 self.state._apply_operation(candidate_facts, operation)
+        pending_bridge_event = next(
+            (
+                event
+                for event in self.state.package.storylet_routes.bridge_events
+                if event.scene_id == self.state.current_scene_id
+                and event.id not in self.state.fired_event_ids
+                and not event.activation.is_satisfied(self._true_facts(self.state.facts))
+            ),
+            None,
+        )
+        world_only_operations = (
+            self._world_only_bridge_operations(pending_bridge_event, candidate_facts)
+            if pending_bridge_event is not None
+            else ()
+        )
+        for operation in world_only_operations:
+            self.state._apply_operation(candidate_facts, operation)
         world_operations = self._world_action_operations(candidate_facts)
         for operation in world_operations:
             self.state._apply_operation(candidate_facts, operation)
@@ -333,7 +350,13 @@ class RuntimeEngine:
         combined = proposal.model_copy(
             update={
                 "segments": segments,
-                "operations": (*proposal.operations, *delivery_operations, *world_operations, *bridge_operations),
+                "operations": (
+                    *proposal.operations,
+                    *delivery_operations,
+                    *world_only_operations,
+                    *world_operations,
+                    *bridge_operations,
+                ),
                 "transition": SceneTransitionProposal(transition_id=transition.id) if transition else None,
             }
         )
@@ -356,6 +379,23 @@ class RuntimeEngine:
             for cost in delivery.costs
         )
         return tuple(operations)
+
+    def _world_only_bridge_operations(self, event, facts) -> tuple[FactOperation, ...]:
+        player_safe_fact_ids = {
+            effect.fact_id
+            for knowledge in self.state.package.knowledge.knowledge
+            if knowledge.audience.player_visible
+            for effect in knowledge.establishes
+        }
+        missing_fact_ids = event.activation.minimal_undelivered_facts(self._true_facts(facts))
+        return tuple(
+            FactOperation(
+                operation="assert",
+                fact=Fact(predicate=fact_id, subject="story", value="true"),
+            )
+            for fact_id in missing_fact_ids
+            if fact_id not in player_safe_fact_ids
+        )
 
     def _world_action_operations(self, facts) -> tuple[FactOperation, ...]:
         operations: list[FactOperation] = []
