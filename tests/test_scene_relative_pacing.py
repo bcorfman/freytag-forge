@@ -70,10 +70,58 @@ def test_each_scene_entry_starts_with_a_full_relative_turn_allowance() -> None:
         assert state.turn_index == state.scene_entered_at_turn
 
 
-def test_every_declared_pacing_event_lands_by_its_scene_floor() -> None:
+def test_every_declared_pacing_event_lands_inside_its_scene_window() -> None:
     windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
 
-    assert all(event.at_turn <= windows[event.scene_id].min_turns for event in PACKAGE.pacing.events)
+    assert all(event.at_turn <= windows[event.scene_id].handoff_after_turns for event in PACKAGE.pacing.events)
+
+
+def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
+    expected_windows = {
+        "1A": (2, 4, 5),
+        "1B": (2, 3, 4),
+        "1C": (2, 3, 4),
+        "2A": (2, 3, 4),
+        "2B": (2, 3, 4),
+        "2C": (2, 3, 4),
+        "3A": (3, 4, 5),
+        "3B": (4, 4, 5),
+        "3C": (2, 4, 5),
+    }
+    windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
+
+    assert {
+        scene_id: (window.min_turns, window.nudge_after_turns, window.handoff_after_turns)
+        for scene_id, window in windows.items()
+    } == expected_windows
+    assert sum(window.handoff_after_turns for window in windows.values()) * 45 == PACKAGE.pacing.budget_seconds
+    for scene_id, window in windows.items():
+        storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
+        targets = [storylet.target_turn for storylet in storylets]
+        assert targets == sorted(set(targets))
+        assert all(
+            storylet.earliest_turn <= storylet.target_turn <= window.handoff_after_turns for storylet in storylets
+        )
+
+
+def test_every_scene_has_at_least_as_many_turns_as_it_has_beats() -> None:
+    """A scene with fewer turns than beats cannot cover them, whatever the narrator does.
+
+    This shipped once: 36 authored beats against a 30-turn budget, six scenes
+    short, and 3C given two turns for four beats. The handoff then dumped the
+    undelivered beats as flat exposition and a player reported it. The hosted
+    judge had been complaining in every scene, but its prose is stochastic and
+    the cause was misread as narration quality for three rounds. The property is
+    static, so it belongs here rather than in an LLM's opinion.
+    """
+
+    windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
+    short = {
+        scene.metadata.scene_id: (len(scene.beats), windows[scene.metadata.scene_id].handoff_after_turns)
+        for scene in PACKAGE.scenes
+        if windows[scene.metadata.scene_id].handoff_after_turns < len(scene.beats)
+    }
+    assert not short, f"scenes with fewer turns than beats (beats, turns): {short}"
 
 
 def test_storylet_activation_uses_scene_relative_turns_after_a_late_clock() -> None:
@@ -89,11 +137,31 @@ def test_storylet_activation_uses_scene_relative_turns_after_a_late_clock() -> N
     assert "SL-1A-B" in state.active_event_ids
 
 
+def test_storylet_activation_earns_forward_after_an_earlier_same_scene_beat() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.fired_event_ids.add("SL-1A-A")
+    engine = RuntimeEngine(state, _quiet_turn)
+
+    engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
+
+    assert "SL-1A-B" in state.active_event_ids
+
+
+def test_earned_forward_activation_never_crosses_scene_boundaries() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.fired_event_ids.update({"SL-1A-A", "SL-1A-B", "SL-1A-C", "SL-1A-D"})
+    engine = RuntimeEngine(state, _quiet_turn)
+
+    engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
+
+    assert not any(event_id.startswith("SL-1B-") for event_id in state.active_event_ids)
+
+
 def test_loader_rejects_out_of_order_scene_turn_allocation(tmp_path: Path) -> None:
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
-    old = "min_turns: 2\n  nudge_after_turns: 2"
+    old = "min_turns: 2\n  nudge_after_turns: 4"
     new = "min_turns: 3\n  nudge_after_turns: 2"
     source.write_text(source.read_text().replace(old, new, 1))
 

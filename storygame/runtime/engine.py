@@ -186,9 +186,16 @@ class RuntimeEngine:
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         for storylet in self.state.package.storylet_routes.storylets:
+            earlier_storylets = tuple(
+                earlier
+                for earlier in self.state.package.storylet_routes.storylets
+                if earlier.scene_id == self.state.current_scene_id and earlier.target_turn < storylet.target_turn
+            )
+            clock_opened = storylet.earliest_turn <= turns_since_entry
+            earned_forward = all(earlier.id in self.state.fired_event_ids for earlier in earlier_storylets)
             if (
                 storylet.scene_id == self.state.current_scene_id
-                and storylet.earliest_turn <= turns_since_entry
+                and (clock_opened or earned_forward)
                 and all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions)
                 and storylet.id not in self.state.fired_event_ids
             ):

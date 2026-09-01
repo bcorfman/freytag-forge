@@ -543,8 +543,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 2
-      latest_turn: 3
+      target_turn: 4
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When Kristin reached the damaged recording before the files, the card is still under the drawer;
     the warning tells her Michelle hid something deliberately, so keep searching for what it points to.
@@ -603,7 +603,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn lingering investigation into several converging leads—tests, a man in Michelle’s photo, and physical
     transport infrastructure—without making one clue the required interaction.
@@ -651,7 +651,7 @@ storylets:
     conditions: []
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player resists trusting Brandon, let behavior under pressure earn only provisional cooperation
@@ -716,8 +716,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Convert pursuit into both forward motion and suspicion: Brandon can solve the immediate escape
     problem, but doing so exposes unexplained retained access.'
@@ -777,7 +777,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Use Kristin’s Army infrastructure and operations background to reward free-form inspection and turn hesitation into accumulating
     physical proof of an active hidden installation.
@@ -831,7 +831,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Michelle sighting
@@ -889,8 +889,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player is ready to treat the site as the whole conspiracy, widen the scale through logistics
     and recordings so the next phase feels necessary.
@@ -941,7 +941,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If planning becomes static, make Brandon’s long preparation useful but suspicious, encouraging
     questioning while keeping his JANUS role protected.
@@ -988,7 +988,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Give the player many ways to contribute expertise to infiltration preparation; any plausible cover
@@ -1038,8 +1038,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If the player hesitates at security or challenges the cover, make the supervisor a free-form social/technical
     pressure test rather than a fixed dialogue puzzle.
@@ -1094,7 +1094,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player explores the archive, let Michelle’s record, Kristin’s record, or classification
     categories independently reveal the selection mechanism.
@@ -1150,7 +1150,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation,
@@ -1204,8 +1204,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Michelle’s
     agency in corrupted files and maintenance messages.
@@ -1254,7 +1254,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Use antagonist fracture to create pressure and possible executive access without making Rebecca
     trustworthy or requiring Kristin to accept Brandon’s performance.
@@ -1300,7 +1300,7 @@ storylets:
     conditions: []
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'If the player lingers over strategy, convert delay into an explicit worsening deadline: transfers
@@ -1345,8 +1345,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let argument, refusal, or hesitation play naturally until Michelle’s coded message creates the authored
     combined mission and focuses urgency.
@@ -1398,7 +1398,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin focuses narrowly on extracting Michelle, her visible leadership reframes the objective
     and turns reunion into immediate coordinated action.
@@ -1448,7 +1448,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the player wants to rush upward, make the medical level evidence matter by showing why exposure
@@ -1510,8 +1510,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Convert the expiring authorization into forward motion: once the codes lose value with Charles’s
     new authority, Michelle’s prepared disturbances become the only viable route upward.'
@@ -1560,7 +1560,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When predictive security blocks obvious routes, reward irrational, operations-driven disruption;
     failed attempts can worsen local pressure without prescribing a single puzzle answer.
@@ -1605,7 +1605,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'If the player stalls in Rebecca’s office, force antagonist conflict into the open: her information
@@ -1674,8 +1674,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Brandon’s
     accountability and danger create climax pressure without scripting Kristin’s response.
@@ -1729,7 +1729,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 1
-      latest_turn: 2
+      latest_turn: 1
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Once transmission begins, prevent the climax from becoming a passive upload: Charles contests
     credibility, and accumulated verifiable evidence lets Michelle answer him.'
@@ -1777,7 +1777,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
+      target_turn: 2
       latest_turn: 2
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Turn Rebecca’s attempted escape into an information-custody dilemma so destruction is not an easy
@@ -1851,8 +1851,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 3
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves
     people, but no single maneuver guarantees every section survives.'
@@ -1905,8 +1905,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 4
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color
     without creating a new playable scene or new ending.
@@ -1953,8 +1953,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 1
-      latest_turn: 2
+      target_turn: 5
+      latest_turn: 5
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Only after the sole ending is secure, deliver the final unresolved-threat reversal; this is sequel-scale
     context, not an alternate ending.

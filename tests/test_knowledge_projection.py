@@ -146,7 +146,7 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
 
     expected_candidates = (
         {"k_sl_1a_a_r1", "k_sl_1a_a_r2"},
-        set(),
+        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
         {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
         # This run took the damaged recording before Michelle's files, which used to
         # consume Scene 1A's only source of the actionable lead. The memory card
@@ -218,9 +218,7 @@ def test_committed_projection_stays_bounded_as_the_story_accumulates() -> None:
     projector = KnowledgeProjector()
     projection = projector.project(state, "player", "I act.")
 
-    scene_local = [
-        item for item in package.knowledge.knowledge if "3C" in item.available_in_scenes
-    ]
+    scene_local = [item for item in package.knowledge.knowledge if "3C" in item.available_in_scenes]
     assert len(projection.committed_knowledge) == min(projector.max_committed_knowledge, len(scene_local))
     assert projection.payload_size() < 8000, "a late-game turn must not approach the narration timeout"
 

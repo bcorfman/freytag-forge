@@ -176,10 +176,15 @@ class CloudflareTurnProvider:
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
             f"sayable context. {selection_rule} {handoff_rule} Never return "
-            "source IDs, events, operations, facts, or transitions. Return at most three segments, each at most two "
-            "sentences, and write the JSON on one line with no indentation. Return only TurnProposal fields: never "
+            "source IDs, events, operations, facts, or transitions. Return several paragraphs as separate segments, "
+            "with each segment containing one paragraph of roughly 30 to 55 words. Return at most five segments so "
+            "the turn stays bounded, and write the JSON on one line with no indentation. Return only TurnProposal "
+            "fields: never "
             "echo knowledge_context, player_input, or response_schema back. Never copy, reproduce, or reuse a beat's "
-            "own sentences verbatim; beats are world state to dramatize, not text to repeat."
+            "own sentences verbatim; beats are world state to dramatize, not text to repeat. authored entry_text and "
+            "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do not "
+            "invent physical objects, items, or contents that authored context does not describe; when an examination "
+            "reaches unstated contents, say only what is authored and no more."
         )
 
     def opening(self) -> object:
@@ -195,8 +200,11 @@ class CloudflareTurnProvider:
                 "concrete details as the protagonist encounters them. Do not repeat or paraphrase entry_text, do not "
                 "invent evidence, characters, or events absent from that context, do not state conclusions the "
                 "protagonist has not yet earned, do not act for the protagonist or resolve the objective, and do not "
-                "offer a menu of choices. Leave selected_knowledge_ids empty. Never return source IDs, events, "
-                "operations, facts, or transitions."
+                "offer a menu of choices. Return several paragraphs as separate segments, with each segment containing "
+                "one paragraph of roughly 30 to 55 words; return at most five segments. authored entry_text and "
+                "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do "
+                "not invent physical objects, items, or contents absent from that authored context. Leave "
+                "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
             ),
             {
                 "scene_entry": self._scene_entry(),
@@ -241,9 +249,7 @@ class CloudflareTurnProvider:
         if self.last_projection is None:
             return {}
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
-        beat_anchors = {
-            beat["anchor"] for beat in scene_setting.get("beats", []) if isinstance(beat, dict)
-        }
+        beat_anchors = {beat["anchor"] for beat in scene_setting.get("beats", []) if isinstance(beat, dict)}
         covered_ids = self._beat_covered_candidate_ids(beat_anchors)
         context["candidates"] = [
             (
