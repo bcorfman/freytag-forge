@@ -181,10 +181,7 @@ class CloudflareTurnProvider:
             "the turn stays bounded, and write the JSON on one line with no indentation. Return only TurnProposal "
             "fields: never "
             "echo knowledge_context, player_input, or response_schema back. Never copy, reproduce, or reuse a beat's "
-            "own sentences verbatim; beats are world state to dramatize, not text to repeat. authored entry_text and "
-            "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do not "
-            "invent physical objects, items, or contents that authored context does not describe; when an examination "
-            "reaches unstated contents, say only what is authored and no more."
+            "own sentences verbatim; beats are world state to dramatize, not text to repeat."
         )
 
     def opening(self) -> object:
@@ -201,9 +198,7 @@ class CloudflareTurnProvider:
                 "invent evidence, characters, or events absent from that context, do not state conclusions the "
                 "protagonist has not yet earned, do not act for the protagonist or resolve the objective, and do not "
                 "offer a menu of choices. Return several paragraphs as separate segments, with each segment containing "
-                "one paragraph of roughly 30 to 55 words; return at most five segments. authored entry_text and "
-                "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do "
-                "not invent physical objects, items, or contents absent from that authored context. Leave "
+                "one paragraph of roughly 30 to 55 words; return at most five segments. Leave "
                 "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
             ),
             {
@@ -233,11 +228,8 @@ class CloudflareTurnProvider:
                 {
                     "title": beat.title,
                     "anchor": beat.anchor,
-                    "already_true_in_the_world": beat.prose,
-                    "your_job": (
-                        "Dramatize this world state only as far as the player's action reaches; "
-                        "never reproduce its wording."
-                    ),
+                    "details": list(beat.details),
+                    "your_job": ("Cover these concrete details as far as the player's action reaches."),
                 }
                 for beat in beats
             ]
@@ -312,7 +304,7 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
-            "opening_beat": {"id": beat.id, "title": beat.title, "prose": beat.prose},
+            "opening_beat": {"id": beat.id, "title": beat.title, "details": list(beat.details)},
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:

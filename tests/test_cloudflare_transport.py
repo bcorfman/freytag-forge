@@ -63,8 +63,8 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     instruction = captured["payload"]["system"]
     assert "several paragraphs as separate segments" in instruction
     assert "roughly 30 to 55 words" in instruction
-    assert "contradict" in instruction and "authored entry_text" in instruction
-    assert "invent physical objects, items, or contents" in instruction
+    assert "authored entry_text and authored beat details are already true" not in instruction
+    assert "invent physical objects, items, or contents" not in instruction
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert "Never copy, reproduce, or reuse a beat's own sentences verbatim" in captured["payload"]["system"]
@@ -133,10 +133,8 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
         {
             "title": beats[link].title,
             "anchor": beats[link].anchor,
-            "already_true_in_the_world": beats[link].prose,
-            "your_job": (
-                "Dramatize this world state only as far as the player's action reaches; never reproduce its wording."
-            ),
+            "details": list(beats[link].details),
+            "your_job": "Cover these concrete details as far as the player's action reaches.",
         }
         for link in storylet.source_links
     ]
@@ -807,8 +805,8 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     opening_instruction = captured["payload"]["system"]
     assert "several paragraphs as separate segments" in opening_instruction
     assert "roughly 30 to 55 words" in opening_instruction
-    assert "contradict" in opening_instruction and "authored entry_text" in opening_instruction
-    assert "invent physical objects, items, or contents" in opening_instruction
+    assert "authored entry_text and authored beat details are already true" not in opening_instruction
+    assert "invent physical objects, items, or contents" not in opening_instruction
     user = json.loads(captured["payload"]["user"])
     assert "player_input" not in user
     beat = PACKAGE.scenes[0].opening_beat
@@ -819,7 +817,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
         "phase": "exposition",
         "objective": PACKAGE.scenes[0].metadata.objective,
         "entry_text": PACKAGE.scenes[0].metadata.entry_text,
-        "opening_beat": {"id": "1A.1", "title": beat.title, "prose": beat.prose},
+        "opening_beat": {"id": "1A.1", "title": beat.title, "details": list(beat.details)},
     }
     assert user["knowledge_context"]["player"]["scene_id"] == "1A"
     assert "speakers" not in user["knowledge_context"]
