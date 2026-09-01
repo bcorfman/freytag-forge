@@ -17,7 +17,17 @@ class FakeAsker:
 
 
 def test_extract_frame_details_surfaces_orientation() -> None:
-    assert "facedown" in extract_frame_details("The phone is facedown on the kitchen floor.")
+    assert any("facedown" in detail for detail in extract_frame_details("The phone is facedown on the kitchen floor."))
+
+
+def test_extract_frame_details_keeps_modifier_after_object() -> None:
+    details = extract_frame_details("Her phone remains on the kitchen floor undamaged.")
+    assert any("phone remains on the kitchen floor undamaged" in detail for detail in details)
+
+
+def test_extract_frame_details_drops_bare_nouns_and_intent() -> None:
+    details = extract_frame_details("A laptop is missing. Kristin needs to find her friend.")
+    assert details == ("a laptop is missing",)
 
 
 def test_unattested_details_make_one_call_for_all_details() -> None:

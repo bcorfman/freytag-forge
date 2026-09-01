@@ -18,13 +18,23 @@ import yaml
 from storygame.audit import _finding, _plot_scenes
 
 Ask = Callable[[str], str]
-_PHYSICAL_NOUNS = (
-    "archive|bag|battery|bench|blood|bottle|box|card|chair|door|drawer|file|floor|gate|hardware|"
-    "laptop|memory|phone|radio|recording|server|terminal|track|vent|water|workstation"
+_CLAUSE_BOUNDARY = re.compile(r"\s*(?:[,;:]|\b(?:but|while|although|whereas)\b)\s*", re.IGNORECASE)
+_CONJUNCTION = re.compile(r"\s+and\s+", re.IGNORECASE)
+_ASSERTION = re.compile(
+    r"\b(?:is|are|was|were|remains?|lies?|sits?|stands?|holds?|contains?|shows?|glows?|"
+    r"opens?|overlooks?|marks?|bears?|bearing|stocked|hidden|threaded|located|positioned|"
+    r"rests?|hangs?|leads?|runs?|extends?|surrounds?|covers?|blocks?|guards?)\b",
+    re.IGNORECASE,
 )
-_DETAIL = re.compile(
-    rf"(?:(?:undamaged|damaged|dead|gone|missing|overturned|forced|open|closed|unattended|recent)\s+){{0,2}}"
-    rf"(?:{_PHYSICAL_NOUNS})\b|\b(?:face[- ]?down|face[- ]?up|facedown|faceup)\b",
+_RELATION = re.compile(
+    r"\b(?:above|across|around|at|behind|beneath|beside|between|beyond|down|inside|near|"
+    r"on|over|through|under|within|with)\b",
+    re.IGNORECASE,
+)
+_INTENT = re.compile(
+    r"\b(?:need(?:s|ed)?|want(?:s|ed)?|try(?:ies|ing|ied)?|must|should|could|would|will|"
+    r"find out|follow|survive|judge|judging|choose|confirm|secure|reach|enter|expose|"
+    r"escape|exploit|requires?|purpose|mission|reached|answered|drive|driving)\b",
     re.IGNORECASE,
 )
 
@@ -32,15 +42,27 @@ _DETAIL = re.compile(
 def extract_frame_details(frame_text: str) -> tuple[str, ...]:
     """Extract concise observable physical details from a frame.
 
-    This is intentionally a small phrase matcher, not a general noun or
-    event parser.  It can miss unfamiliar objects and relations, but avoids
-    sending every abstraction in a frame to the model.
+    The extractor splits sentences into shallow comma/conjunction clauses and
+    keeps multi-word fragments, including state predicates, spatial relations,
+    and coordinated physical noun phrases. It is intentionally not a parser:
+    it can miss a physical description expressed only as an unmodified noun,
+    nest clauses incorrectly, or retain a concrete action that resembles a
+    state. Explicit goal and motivation language is discarded so the model is
+    asked about observable details rather than intent.
     """
     details: list[str] = []
-    for match in _DETAIL.finditer(frame_text):
-        detail = " ".join(match.group(0).split()).casefold()
-        if detail not in details:
-            details.append(detail)
+    sentences = re.split(r"(?<=[.!?])\s+", frame_text.strip())
+    for sentence in sentences:
+        for clause in _CLAUSE_BOUNDARY.split(sentence):
+            for fragment in _CONJUNCTION.split(clause):
+                detail = " ".join(fragment.strip(" \t\n\r\"'.,!?-").split()).casefold()
+                detail = re.sub(r"^(?:and|or)\s+", "", detail)
+                if (
+                    len(detail.split()) > 1
+                    and not _INTENT.search(detail)
+                    and detail not in details
+                ):
+                    details.append(detail)
     return tuple(details)
 
 
@@ -127,19 +149,19 @@ LABELLED_CASES = (
     {
         "frame": "A phone is facedown on the floor.",
         "beats": "A phone lies on the floor.",
-        "expected": ("facedown",),
+        "expected": ("a phone is facedown on the floor",),
         "unattested": True,
     },
     {
         "frame": "Blood marks the chair.",
         "beats": "The chair is overturned.",
-        "expected": ("blood",),
+        "expected": ("blood marks the chair",),
         "unattested": True,
     },
     {
         "frame": "An open drawer holds a card.",
         "beats": "The drawer is closed and empty.",
-        "expected": ("open drawer", "card"),
+        "expected": ("an open drawer holds a card",),
         "unattested": True,
     },
     {
