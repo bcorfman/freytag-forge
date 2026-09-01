@@ -118,9 +118,8 @@ class KnowledgeProjector:
 
         Committed knowledge accumulates for the whole playthrough, so an unbounded
         projection makes every later turn slower than the last until the narration
-        call times out and the player loses the turn. Scene-local knowledge is kept
-        first, then the most recently authored, so the current scene stays fully
-        grounded while distant history is what gives way.
+        call times out and the player loses the turn. Only knowledge available in
+        the current scene is projected, then the numeric cap keeps that scene bounded.
 
         The resolver validates segment grounding against this same projection, so
         the provider is never asked to ground on knowledge it was not shown.
@@ -129,16 +128,13 @@ class KnowledgeProjector:
         established = [
             item
             for item in state.package.knowledge.knowledge
-            if self._established(item, state) and self._visible_to(item, audience_id)
+            if state.current_scene_id in item.available_in_scenes
+            and self._established(item, state)
+            and self._visible_to(item, audience_id)
         ]
         if len(established) <= limit:
             return tuple(self._projected(item) for item in established)
-        ranked = sorted(
-            enumerate(established),
-            key=lambda pair: (state.current_scene_id not in pair[1].available_in_scenes, -pair[0]),
-        )
-        keep = {index for index, _ in ranked[:limit]}
-        return tuple(self._projected(item) for index, item in enumerate(established) if index in keep)
+        return tuple(self._projected(item) for item in established[-limit:])
 
     @staticmethod
     def _projected(item: KnowledgeDefinition) -> ProjectedKnowledge:
