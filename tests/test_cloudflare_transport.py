@@ -60,7 +60,12 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
-    assert "at most three segments, each at most two sentences" in captured["payload"]["system"]
+    instruction = captured["payload"]["system"]
+    assert "several paragraphs as separate segments" in instruction
+    assert "roughly 30 to 55 words" in instruction
+    assert "contradict" in instruction and "authored entry_text" in instruction
+    assert "invent physical objects, items, or contents" in instruction
+    assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert "Never copy, reproduce, or reuse a beat's own sentences verbatim" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
@@ -130,8 +135,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
             "anchor": beats[link].anchor,
             "already_true_in_the_world": beats[link].prose,
             "your_job": (
-                "Dramatize this world state only as far as the player's action reaches; "
-                "never reproduce its wording."
+                "Dramatize this world state only as far as the player's action reaches; never reproduce its wording."
             ),
         }
         for link in storylet.source_links
@@ -800,6 +804,11 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
     assert "write only what follows it" in captured["payload"]["system"]
+    opening_instruction = captured["payload"]["system"]
+    assert "several paragraphs as separate segments" in opening_instruction
+    assert "roughly 30 to 55 words" in opening_instruction
+    assert "contradict" in opening_instruction and "authored entry_text" in opening_instruction
+    assert "invent physical objects, items, or contents" in opening_instruction
     user = json.loads(captured["payload"]["user"])
     assert "player_input" not in user
     beat = PACKAGE.scenes[0].opening_beat

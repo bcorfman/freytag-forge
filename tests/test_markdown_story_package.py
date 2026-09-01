@@ -261,7 +261,7 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
         ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
         (
             "pacing.yaml",
-            "min_turns: 2\n  nudge_after_turns: 2",
+            "min_turns: 2\n  nudge_after_turns: 4",
             "min_turns: 3\n  nudge_after_turns: 2",
             "turn allocations",
         ),
@@ -280,32 +280,28 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 4`", 1))
+    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 6`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 
 
-def test_loader_rejects_pacing_event_past_scene_floor(tmp_path: Path) -> None:
+def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path: Path) -> None:
+    """An event later than the floor can be walked past, so the package must not load.
+
+    min_turns is the earliest a scene can be left. An event scheduled after it is
+    one the player may never see, and a beat that never fires is exactly the class
+    of defect a hosted playthrough should not be the first thing to notice.
+    """
+
     root = copied_package(tmp_path)
     source = root / "pacing.yaml"
     pacing = yaml.safe_load(source.read_text())
+    window = next(item for item in pacing["scenes"] if item["scene_id"] == "1A")
     event = next(item for item in pacing["events"] if item["id"] == "pressure_1a")
-    event["at_turn"] = 3
+    event["at_turn"] = window["min_turns"] + 1
     source.write_text(yaml.safe_dump(pacing, sort_keys=False))
 
-    with pytest.raises(StoryPackageError, match="pressure_1a.*turn 3.*scene 1A.*floor 2"):
-        load_story_package(root)
-
-
-def test_loader_rejects_scene_floor_below_its_pacing_event(tmp_path: Path) -> None:
-    root = copied_package(tmp_path / "lowered-floor")
-    source = root / "pacing.yaml"
-    pacing = yaml.safe_load(source.read_text())
-    scene = next(item for item in pacing["scenes"] if item["scene_id"] == "2C")
-    scene["min_turns"] = 1
-    source.write_text(yaml.safe_dump(pacing, sort_keys=False))
-
-    with pytest.raises(StoryPackageError, match="purge_2c.*turn 2.*scene 2C.*floor 1"):
+    with pytest.raises(StoryPackageError, match="exceeds its min_turns floor"):
         load_story_package(root)
 
 

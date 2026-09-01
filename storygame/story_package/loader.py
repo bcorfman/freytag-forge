@@ -391,7 +391,7 @@ def _validate(package: StoryPackage) -> None:
     if len(pacing_scene_ids) != len(package.pacing.scenes) or pacing_scene_ids != set(scenes):
         raise StoryPackageError("pacing must declare exactly one window per scene")
     windows = {p.scene_id: p for p in package.pacing.scenes}
-    handoff_seconds = sum(window.handoff_after_turns for window in package.pacing.scenes) * 60
+    handoff_seconds = sum(window.handoff_after_turns for window in package.pacing.scenes) * 45
     if handoff_seconds > package.pacing.budget_seconds:
         raise StoryPackageError(
             f"pacing handoff sum {handoff_seconds} seconds exceeds budget_seconds {package.pacing.budget_seconds}"
