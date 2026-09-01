@@ -955,3 +955,35 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         assert json.loads(user)["scene_setting"] == {"entry_text": scene.metadata.entry_text}
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
+
+
+def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monkeypatch) -> None:
+    """A reveal with no must_convey groups must still be deliverable.
+
+    Fifty-three of the story's sixty-one reveals declare no groups. An earlier
+    instruction told the model to convey a candidate "through the beat plus its
+    must_convey groups", which names nothing at all for those reveals, and
+    scene 3C - whose ten reveals all declare no groups - stalled twice in
+    hosted playthroughs because nothing ever committed.
+    """
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    captured: dict[str, object] = {}
+
+    def open_request(request, *_args, **_kwargs):
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"A reply."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider("I search the desk drawer for Michelle's recording.")
+
+    system = captured["payload"]["system"]
+    assert "statement" in system, "the instruction must name the statement as a delivery source"
+    candidates = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]["candidates"]
+    groupless = [item for item in candidates if not item.get("must_convey")]
+    assert groupless, "the fixture must offer a candidate that declares no must_convey groups"
+    assert all((item.get("statement") or "").strip() for item in groupless), (
+        "a candidate with no groups must carry a statement, or the model is told to deliver nothing"
+    )
