@@ -60,7 +60,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
-    assert "The entire JSON response must stay under 3,600 characters." in captured["payload"]["system"]
+    assert "at most three segments, each at most two sentences" in captured["payload"]["system"]
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
     assert context["player"]["candidates"] == []
@@ -199,7 +199,32 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
     assert len(payloads) == 2
 
 
-def test_transport_recovers_once_from_a_truncated_first_reply(monkeypatch) -> None:
+def test_transport_keeps_the_finished_segments_of_a_truncated_reply(monkeypatch) -> None:
+    """A reply cut off mid-word still costs the player nothing but its unfinished tail."""
+
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response(
+            {
+                "narration": (
+                    '{"segments":[{"kind":"narration","text":"She opens the drawer."},'
+                    '{"kind":"narration","text":"The card is co'
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "She opens the drawer."}]}
+    assert len(payloads) == 1
+    assert state.last_turn_delivery.recovery_used
+
+
+def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
@@ -208,7 +233,7 @@ def test_transport_recovers_once_from_a_truncated_first_reply(monkeypatch) -> No
     def open_request(request, timeout):
         payloads.append(json.loads(request.data))
         if len(payloads) == 1:
-            return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]'})
+            return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off befo'})
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"Recovered."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
@@ -684,7 +709,9 @@ def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> Non
     assert caught.value.error_code == "UNKNOWN"
 
 
-def test_truncated_worker_response_fails_closed_after_one_recovery_and_logs_decode_cause(monkeypatch, caplog) -> None:
+def test_unsalvageable_worker_response_fails_closed_after_one_recovery_and_logs_decode_cause(
+    monkeypatch, caplog
+) -> None:
     payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
@@ -694,7 +721,7 @@ def test_truncated_worker_response_fails_closed_after_one_recovery_and_logs_deco
 
     def open_request(request, **_kwargs):
         payloads.append(json.loads(request.data))
-        return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off"}]'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"cut off befo'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 

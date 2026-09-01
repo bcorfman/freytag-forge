@@ -175,9 +175,9 @@ class CloudflareTurnProvider:
             "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
             f"sayable context. {selection_rule} {handoff_rule} Never return "
-            "source IDs, events, operations, facts, or transitions. The entire JSON response must stay under 3,600 "
-            "characters. Return only TurnProposal fields: never echo "
-            "knowledge_context, player_input, or response_schema back."
+            "source IDs, events, operations, facts, or transitions. Return at most three segments, each at most two "
+            "sentences, and write the JSON on one line with no indentation. Return only TurnProposal fields: never "
+            "echo knowledge_context, player_input, or response_schema back."
         )
 
     def opening(self) -> object:
@@ -574,8 +574,52 @@ class CloudflareTurnProvider:
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
         if isinstance(body, dict) and isinstance(body.get("narration"), str):
-            return json.loads(body["narration"])
+            return self._decode_narration(body["narration"])
         return body
+
+    def _decode_narration(self, narration: str) -> object:
+        """Parse the reply, keeping its finished segments when the model was cut off mid-word.
+
+        A reply that overruns max_tokens arrives as usable prose inside invalid
+        JSON, and re-asking costs a second overrun as often as it buys a shorter
+        one: that is how a turn became a 503 rather than a turn. The segments the
+        model did finish are worth keeping, and keeping them commits nothing on
+        its own - selection, grounding and must_convey are all still judged
+        afterwards on whatever survives.
+        """
+
+        try:
+            return json.loads(narration)
+        except json.JSONDecodeError:
+            salvaged = self._salvage_truncated_json(narration)
+            if salvaged is None:
+                raise
+            logger.warning(
+                "Narration reply was truncated; kept %d finished segment(s) (worker host=%s)",
+                len(salvaged["segments"]),
+                urlsplit(self.worker_url).hostname,
+            )
+            self._record_recovery()
+            return salvaged
+
+    @staticmethod
+    def _salvage_truncated_json(narration: str) -> dict[str, object] | None:
+        """Close the reply at its last finished segment, or give up.
+
+        Truncation lands inside the segments array, so every candidate cut point
+        is the end of an object. Walking those backwards finds the longest
+        prefix that closes into a whole TurnProposal.
+        """
+
+        for end in reversed([index for index, char in enumerate(narration) if char == "}"]):
+            for suffix in ("]}", "}]}"):
+                try:
+                    candidate = json.loads(narration[: end + 1] + suffix)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(candidate, dict) and candidate.get("segments"):
+                    return candidate
+        return None
 
     def _log_unavailable(self, error: BaseException) -> None:
         logger.warning(
