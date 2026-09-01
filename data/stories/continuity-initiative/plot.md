@@ -89,7 +89,7 @@ bridge_text:
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
-* Her phone remains on the kitchen floor undamaged, but the battery is dead.
+* Her phone remains on the kitchen floor undamaged.
 * Her laptop and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from os import getenv
 from urllib.error import HTTPError, URLError
@@ -22,6 +23,119 @@ from storygame.runtime.validation import derive_grounding, unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
+
+# Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
+# before a request can reach the Worker at all, so every caller must send this.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+)
+
+
+_PROVIDER_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "segments": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "kind": {"type": "string", "enum": ["narration", "dialogue", "action"]},
+                    "text": {"type": "string"},
+                    "speaker_id": {"type": ["string", "null"]},
+                    "grounding_ids": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["kind", "text"],
+                "additionalProperties": False,
+            },
+        },
+        "selected_knowledge_ids": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["segments"],
+    "additionalProperties": False,
+}
+
+_PRESENCE_ACTIONS = frozenset(
+    [
+        "act",
+        "acts",
+        "arrive",
+        "arrives",
+        "begins",
+        "coordinate",
+        "coordinates",
+        "coordinating",
+        "enters",
+        "enter",
+        "finds",
+        "find",
+        "follows",
+        "follow",
+        "reaches",
+        "helps",
+        "help",
+        "leads",
+        "lead",
+        "notices",
+        "notice",
+        "explains",
+        "explain",
+        "says",
+        "speaks",
+        "speak",
+        "speaking",
+        "saves",
+        "save",
+        "stops",
+        "stop",
+        "triggers",
+        "trigger",
+        "organizes",
+        "organized",
+        "moves",
+        "move",
+        "fights",
+        "fight",
+        "escapes",
+        "escape",
+        "identifies",
+        "identify",
+        "reveals",
+        "reveal",
+        "works",
+        "work",
+    ]
+)
+_ABSENCE_OR_EVIDENCE = frozenset(
+    [
+        "absent",
+        "missing",
+        "taken",
+        "captive",
+        "recording",
+        "recordings",
+        "evidence",
+        "files",
+        "file",
+        "photo",
+        "photograph",
+        "notes",
+        "note",
+        "phone",
+        "research",
+        "possession",
+        "possessions",
+        "through",
+        "resembling",
+        "resembles",
+        "memory",
+        "card",
+        "contains",
+        "fragments",
+        "disappeared",
+        "source",
+        "hears",
+    ]
+)
 
 
 @dataclass(frozen=True)
@@ -133,7 +247,7 @@ class CloudflareTurnProvider:
             selection_rule = (
                 f"This turn offers these candidate reveals: [{offered}]. If the player's action earns one of them, "
                 "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
-                "moment without selecting it leaves the story unable to move on. You must also tell it: one of your "
+                "moment without selecting it leaves the story unable to move on. One of your "
                 "segments has to convey that candidate in the narration the player reads, using whatever the "
                 "candidate actually carries: its statement when one is shown, its must_convey groups when they are "
                 "shown, and the beat it was given. A candidate that shows neither a statement nor groups cannot be "
@@ -221,7 +335,7 @@ class CloudflareTurnProvider:
         player can earn now.
         """
 
-        setting: dict[str, object] = {"entry_text": self._current_scene().entry_text}
+        setting: dict[str, object] = {"entry_text": self._current_scene().entry_text.rstrip()}
         beats = self._candidate_beats() if self.last_projection and self.last_projection.candidates else ()
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={"beats_projected": tuple(beat.anchor for beat in beats)}
@@ -287,11 +401,61 @@ class CloudflareTurnProvider:
             storylet = storylets.get(knowledge.source.storylet_id)
             if storylet is None:
                 continue
+            candidate_terms = self._candidate_terms(candidate)
             for anchor in storylet.source_links:
-                if anchor not in seen and anchor in beats_by_anchor:
+                beat = beats_by_anchor.get(anchor)
+                if (
+                    anchor not in seen
+                    and beat is not None
+                    and len(candidate_terms & self._content_terms(beat.prose)) >= 2
+                ):
                     seen.add(anchor)
-                    selected.append(beats_by_anchor[anchor])
+                    selected.append(beat)
         return tuple(selected)
+
+    @staticmethod
+    def _content_terms(text: str) -> set[str]:
+        """Return meaningful authored words for conservative statement/beat matching."""
+
+        stopwords = {
+            "a",
+            "an",
+            "and",
+            "as",
+            "at",
+            "but",
+            "by",
+            "for",
+            "from",
+            "her",
+            "his",
+            "in",
+            "is",
+            "it",
+            "of",
+            "on",
+            "or",
+            "the",
+            "their",
+            "that",
+            "to",
+            "with",
+        }
+        return {word for word in re.findall(r"[a-z0-9]+", text.casefold()) if len(word) > 2 and word not in stopwords}
+
+    def _candidate_terms(self, candidate: object) -> set[str]:
+        values = [candidate.statement, *(term for group in candidate.must_convey for term in group)]
+        entity_terms = {
+            term
+            for entity in (
+                *self.state.package.world.npcs,
+                *self.state.package.world.items,
+                *self.state.package.world.locations,
+            )
+            for value in (entity.name, *entity.aliases)
+            for term in self._content_terms(value)
+        }
+        return set().union(*(self._content_terms(value) for value in values)) - entity_terms
 
     def _scene_entry(self) -> dict[str, object]:
         """Expose the package-authored frame and first beat the opening must dramatize, never invent."""
@@ -315,7 +479,7 @@ class CloudflareTurnProvider:
 
         payload = {
             "system": system,
-            "user": json.dumps({**user, "response_schema": TurnProposal.model_json_schema()}, separators=(",", ":")),
+            "user": json.dumps({**user, "response_schema": _PROVIDER_RESPONSE_SCHEMA}, separators=(",", ":")),
             "max_tokens": 1024,
             "response_format": {"type": "json_object"},
         }
@@ -560,7 +724,12 @@ class CloudflareTurnProvider:
         A speaker context exists so an NPC says nothing it could not know. A
         second full projection per speaker - scene frame, candidates, entity
         lists and all - multiplies the request without telling the model
-        anything it cannot already read in the player context.
+        anything it cannot already read in the player context. Participants
+        are offered only when the authored scene beats portray them acting or
+        speaking in person; mentions limited to absence, captivity, evidence,
+        possessions, or recordings do not establish presence. The protagonist
+        is always present. This derives presence from authored prose and
+        package entity aliases, rather than a character-name allowlist.
         """
 
         scene = self._current_scene()
@@ -573,8 +742,34 @@ class CloudflareTurnProvider:
                 ]
             }
             for speaker_id in scene.participant_ids
-            if speaker_id in npc_ids
+            if speaker_id in npc_ids and self._is_present(speaker_id)
         }
+
+    def _is_present(self, speaker_id: str) -> bool:
+        """Infer on-stage presence from authored beat prose and entity aliases."""
+
+        if speaker_id == self.state.package.protagonist_id:
+            return True
+        entity = next(item for item in self.state.package.world.npcs if item.id == speaker_id)
+        aliases = (entity.name, *entity.aliases)
+        prose = " ".join(beat.prose for beat in self._scene().beats.values())
+        for sentence in re.split(r"(?<=[.!?])\s+", prose):
+            folded = sentence.casefold()
+            if not any(re.search(rf"\b{re.escape(alias.casefold())}\b", folded) for alias in aliases):
+                continue
+            words = set(re.findall(r"[a-z]+", folded))
+            if words & _ABSENCE_OR_EVIDENCE:
+                continue
+            action_pattern = "|".join(sorted(_PRESENCE_ACTIONS, key=len, reverse=True))
+            if any(
+                re.search(
+                    rf"\b{re.escape(alias.casefold())}(?!['’]s)\b(?:\s+\w+){{0,2}}\s+(?:{action_pattern})\b",
+                    folded,
+                )
+                for alias in aliases
+            ):
+                return True
+        return False
 
     def _current_scene(self) -> SceneMetadata:
         return self._scene().metadata
@@ -610,11 +805,7 @@ class CloudflareTurnProvider:
     def _request(self, payload: dict[str, object]) -> object:
         headers = {
             "Content-Type": "application/json",
-            # Cloudflare Browser Integrity Check rejects urllib's default bot-like
-            # signature before this request can reach the Worker.
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
-            ),
+            "User-Agent": BROWSER_USER_AGENT,
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"

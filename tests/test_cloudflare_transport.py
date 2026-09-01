@@ -21,6 +21,16 @@ from storygame.story_package.loader import load_story_package
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
+def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "1A")
+    reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"]
+
+    assert "facedown" not in frame.situation.casefold()
+    assert "blood" not in reveal.statement.casefold()
+    for detail in ("forced entry", "overturned chair", "missing laptop", "work bag"):
+        assert detail in reveal.statement.casefold()
+
+
 class _Response:
     def __init__(self, body: object) -> None:
         self.body = json.dumps(body).encode()
@@ -57,7 +67,17 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 1024
     assert captured["payload"]["response_format"] == {"type": "json_object"}
+    response_schema = json.loads(captured["payload"]["user"])["response_schema"]
+    assert len(json.dumps(response_schema)) <= 700
+    assert set(response_schema["properties"]) == {"segments", "selected_knowledge_ids"}
+    assert set(response_schema["properties"]["segments"]["items"]["properties"]) == {
+        "kind",
+        "text",
+        "speaker_id",
+        "grounding_ids",
+    }
     context = json.loads(captured["payload"]["user"])["knowledge_context"]
+    assert "michelle" not in context["speakers"]
     assert "response_schema" in captured["payload"]["user"]
     assert "concrete immediate consequence" in captured["payload"]["system"]
     instruction = captured["payload"]["system"]
@@ -136,10 +156,10 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
             "details": list(beats[link].details),
             "your_job": "Cover these concrete details as far as the player's action reaches.",
         }
-        for link in storylet.source_links
+        for link in storylet.source_links[1:]
     ]
     assert scene_setting["beats"] == expected_beats
-    assert state.last_turn_delivery.beats_projected == storylet.source_links
+    assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
     assert len(scene_setting["beats"]) < len(PACKAGE.scenes[0].beats)
 
 
@@ -952,7 +972,7 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         user = captured[-1]["user"]
         scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
 
-        assert json.loads(user)["scene_setting"] == {"entry_text": scene.metadata.entry_text}
+        assert json.loads(user)["scene_setting"] == {"entry_text": scene.metadata.entry_text.rstrip()}
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
