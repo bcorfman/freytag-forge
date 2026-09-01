@@ -34,7 +34,7 @@ A 31-year-old molecular biology and biotechnology researcher and author whose re
 
 ### Brandon Corfman
 
-A 54-year-old former software developer who now lives as an isolated conspiracy researcher estranged from his family. His warnings about a shadow emergency program were widely dismissed before the disappearances. He helps Kristin but conceals his own past involvement in the program: writing AI software to identify threats.
+A 54-year-old former software developer who now lives as an isolated conspiracy researcher estranged from his family. His warnings about a shadow emergency program were widely dismissed before the disappearances. He helps Kristin but conceals his own past involvement in the program: writing AI software to identify threats to the conspiracy.
 
 ### Charles Jenkins
 
