@@ -72,15 +72,32 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     provider("I search the desk drawer for Michelle's recording.")
     drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
-    assert "statement" not in candidate
-    assert set(candidate) == {"id", "must_convey"}
+    assert "statement" in candidate
+    assert set(candidate) == {"id", "statement", "must_convey"}
     assert candidate["must_convey"] == []
+    grouped_candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r1")
+    assert "statement" not in grouped_candidate
+    assert set(grouped_candidate) == {"id", "must_convey"}
     assert provider.last_projection is not None
     assert "damaged recording" in next(
         item.statement for item in provider.last_projection.candidates if item.id == candidate["id"]
     )
     unbeat_context = provider._serialized_player_context({"beats": []})
     assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == candidate["id"])
+
+
+def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider.last_projection = provider.projector.project(state, "player", "I search the desk drawer.")
+
+    scene_setting = provider._scene_setting()
+    context = provider._serialized_player_context(scene_setting)
+    candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_b_r2")
+
+    assert candidate["must_convey"] == []
+    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].statement
 
 
 def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:

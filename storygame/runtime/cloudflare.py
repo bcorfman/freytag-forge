@@ -247,8 +247,10 @@ class CloudflareTurnProvider:
         covered_ids = self._beat_covered_candidate_ids(beat_anchors)
         context["candidates"] = [
             (
+                # An empty must_convey leaves the statement as the only name for the fact;
+                # removing both exposed scene 3C's candidates as bare IDs and stalled it.
                 {key: value for key, value in candidate.items() if key != "statement"}
-                if candidate["id"] in covered_ids
+                if candidate["id"] in covered_ids and candidate["must_convey"]
                 else candidate
             )
             for candidate in context["candidates"]
