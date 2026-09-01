@@ -70,7 +70,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     details = (
-        "**Details:** kitchen floor phone; dead battery; missing laptop and work bag; overturned workstation chair; "
+        "**Details:** kitchen floor phone; missing laptop and work bag; overturned workstation chair; "
         "forced back door; KMS initials in drawer\n"
     )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
