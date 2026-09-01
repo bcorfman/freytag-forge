@@ -207,7 +207,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and her phone lies facedown on the kitchen floor beside an overturned chair. Her laptop and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
+  situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and her phone remains on the kitchen floor undamaged, but the battery is dead. Her laptop and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: 'A damaged public park holding Michelle''s dead drop: an ordinary bench with a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
@@ -235,7 +235,7 @@ scene_frames:
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
-  statement: 'Kristin traces the forced entry, blood, and missing work bag to a removal too deliberate to be looting.'
+  statement: 'Kristin traces the forced entry, overturned chair, missing laptop and work bag, and undamaged phone with a dead battery to a removal too deliberate to be looting.'
   entity_ids: []
   aliases:
   - michelle abduction suspicion
