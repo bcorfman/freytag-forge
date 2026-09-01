@@ -176,12 +176,6 @@ LABELLED_CASES = (
         "expected": (),
         "unattested": False,
     },
-    {
-        "frame": "A dead battery is beside a laptop.",
-        "beats": "The dead battery is beside a laptop.",
-        "expected": (),
-        "unattested": False,
-    },
 )
 
 

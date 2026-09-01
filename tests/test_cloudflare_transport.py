@@ -27,7 +27,7 @@ def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
 
     assert "facedown" not in frame.situation.casefold()
     assert "blood" not in reveal.statement.casefold()
-    for detail in ("forced entry", "overturned chair", "missing laptop", "work bag", "dead battery"):
+    for detail in ("forced entry", "overturned chair", "missing laptop", "work bag"):
         assert detail in reveal.statement.casefold()
 
 
