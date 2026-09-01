@@ -104,3 +104,43 @@ def test_markdown_report_is_grouped_by_scene(tmp_path: Path) -> None:
     root = _package(tmp_path)
     markdown = _markdown(audit_package(root))
     assert markdown.index("## Scene 1A") < markdown.index("No findings.")
+
+
+def test_concrete_detail_filter_keeps_blood_and_drops_abstractions(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        **{
+            "knowledge.yaml": {
+                "knowledge": [
+                    {"id": "physical", "statement": "Blood stains the floor."},
+                    {"id": "abstract", "statement": "Deliberate doubt proves the solution is a match."},
+                ]
+            }
+        },
+    )
+    findings = audit_package(root)["findings"]
+    assert any("blood" in item["detail"] for item in findings)
+    assert not any(word in str(findings) for word in ("deliberate", "doubt", "solution", "match"))
+
+
+def test_package_prompt_finding_is_emitted_once(tmp_path: Path) -> None:
+    runtime = tmp_path.parent.parent.parent / "storygame" / "runtime" / "cloudflare.py"
+    del runtime
+    root = _package(tmp_path)
+    findings = audit_package(root)["findings"]
+    prompt_findings = [item for item in findings if "boilerplate" in item["detail"]]
+    assert len(prompt_findings) <= 1
+
+
+def test_present_protagonist_and_authored_participant_are_not_absent(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        plot="participant_ids: [kristin, brandon]\nBrandon meets Kristin and helps her; Brandon is not missing.",
+        **{
+            "world.yaml": {
+                "protagonist_id": "kristin",
+                "npcs": [{"id": "kristin", "name": "Kristin"}, {"id": "brandon", "name": "Brandon"}],
+            }
+        },
+    )
+    assert "absent_speaker" not in _checks(audit_package(root))

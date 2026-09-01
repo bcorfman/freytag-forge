@@ -52,6 +52,54 @@ _STATE_WORDS = {
     "shut": {"open", "closed", "shut"},
 }
 
+# This is intentionally a conservative vocabulary rather than a pretend POS
+# tagger.  It catches named physical things that are useful to this audit,
+# including an injected ``blood`` detail and fixture words such as ``ziggurat``;
+# it cannot catch every concrete noun, compounds not listed here, or distinguish
+# a physical sense from an abstract sense in ambiguous words such as ``mark``.
+_CONCRETE_MATTER = {
+    "archive",
+    "bag",
+    "battery",
+    "bench",
+    "blood",
+    "bottle",
+    "box",
+    "card",
+    "chair",
+    "door",
+    "drawer",
+    "file",
+    "floor",
+    "gate",
+    "hardware",
+    "laptop",
+    "mark",
+    "memory",
+    "number",
+    "phone",
+    "photograph",
+    "radio",
+    "recording",
+    "server",
+    "terminal",
+    "track",
+    "transit",
+    "vent",
+    "water",
+    "workstation",
+    "ziggurat",
+}
+_ABSTRACT_DETAIL_WORDS = {
+    "absence",
+    "deliberate",
+    "doubt",
+    "face",
+    "match",
+    "prove",
+    "solution",
+}
+
 
 def _read_yaml(path: Path) -> dict[str, Any]:
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -68,6 +116,20 @@ def _stem(word: str) -> str:
 
 def _words(text: str) -> set[str]:
     return {_stem(word) for word in _WORD.findall(text.casefold()) if word.casefold() not in _STOPWORDS}
+
+
+def _concrete_unknowns(text: str, plot_words: set[str]) -> set[str]:
+    """Return absent words likely to name physical, observable matter.
+
+    Without a POS tagger this deliberately favors precision: only a small
+    matter vocabulary is considered.  It catches concrete details such as
+    ``blood`` but can miss unlisted objects and cannot resolve ambiguous words
+    (for example, ``mark``) perfectly; abstract words are explicitly excluded.
+    """
+    tokens = _WORD.findall(text)
+    words = {_stem(word) for word in tokens if word.casefold() not in _STOPWORDS}
+    candidates = words & _CONCRETE_MATTER
+    return {word for word in candidates if word not in plot_words}
 
 
 def _finding(check: str, scene_id: str, detail: str) -> dict[str, str]:
@@ -115,7 +177,7 @@ def audit_package(root: Path) -> dict[str, Any]:
     plot_words = _words(plot)
     for item in knowledge.get("knowledge", []):
         text = str(item.get("statement", ""))
-        unknown = sorted({word for word in _words(text) if word not in plot_words})
+        unknown = sorted(_concrete_unknowns(text, plot_words))
         if unknown:
             scene_id = (item.get("available_in_scenes") or [scene_ids[0]])[0]
             findings.append(
@@ -126,7 +188,7 @@ def audit_package(root: Path) -> dict[str, Any]:
                 )
             )
     for frame in knowledge.get("scene_frames", []):
-        unknown = sorted({word for word in _words(str(frame.get("situation", ""))) if word not in plot_words})
+        unknown = sorted(_concrete_unknowns(str(frame.get("situation", "")), plot_words))
         if unknown:
             findings.append(
                 _finding(
@@ -172,6 +234,19 @@ def audit_package(root: Path) -> dict[str, Any]:
             if not entity:
                 continue
             names = [str(entity.get("name", "")), *map(str, entity.get("aliases", []))]
+            if participant == world.get("protagonist_id"):
+                continue
+            authored_presence = any(
+                re.search(
+                    rf"\b{re.escape(name)}\b[^.\n]{{0,80}}\b(?:arrive|enter|find|follow|help|meet|say|save|speak|stop|tell|watch|work)\w*\b",
+                    body,
+                    re.I,
+                )
+                for name in names
+                if name
+            )
+            if authored_presence:
+                continue
             if any(
                 re.search(
                     rf"(?:{re.escape(name)})[^.\n]{{0,70}}(?:missing|gone|absent|disappeared|not present)", body, re.I
@@ -245,12 +320,12 @@ def audit_package(root: Path) -> dict[str, Any]:
                     f"Estimated turn payload is {estimate} characters, exceeding the 12000-character budget.",
                 )
             )
-        if len(runtime_text) > 18000:
-            findings.append(
-                _finding(
-                    "prompt_hygiene", scene_id, "Prompt boilerplate is oversized at more than 18000 source characters."
-                )
+    if len(runtime_text) > 18000:
+        findings.append(
+            _finding(
+                "prompt_hygiene", "package", "Prompt boilerplate is oversized at more than 18000 source characters."
             )
+        )
 
     handoff = {item.get("scene_id"): item.get("handoff_after_turns", 0) for item in pacing.get("scenes", [])}
     for scene_id, body in scenes.items():
@@ -273,6 +348,11 @@ def _markdown(report: dict[str, Any]) -> str:
         lines.extend([f"## Scene {scene_id}", ""])
         scene_findings = [item for item in findings if item["scene_id"] == scene_id]
         lines.extend([f"- **{item['check']}** — {item['detail']}" for item in scene_findings] or ["No findings."])
+        lines.append("")
+    package_findings = [item for item in findings if item["scene_id"] not in report["scenes"]]
+    if package_findings:
+        lines.extend(["## Package", ""])
+        lines.extend(f"- **{item['check']}** — {item['detail']}" for item in package_findings)
         lines.append("")
     return "\n".join(lines)
 

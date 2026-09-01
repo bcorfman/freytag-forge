@@ -24,6 +24,12 @@ from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
+# Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
+# before a request can reach the Worker at all, so every caller must send this.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+)
+
 
 _PROVIDER_RESPONSE_SCHEMA = {
     "type": "object",
@@ -807,11 +813,7 @@ class CloudflareTurnProvider:
     def _request(self, payload: dict[str, object]) -> object:
         headers = {
             "Content-Type": "application/json",
-            # Cloudflare Browser Integrity Check rejects urllib's default bot-like
-            # signature before this request can reach the Worker.
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
-            ),
+            "User-Agent": BROWSER_USER_AGENT,
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
