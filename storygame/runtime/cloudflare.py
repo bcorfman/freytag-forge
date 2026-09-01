@@ -96,6 +96,7 @@ class CloudflareTurnProvider:
             }
         )
         speaker_contexts = self._speaker_contexts(player_input)
+        scene_setting = self._scene_setting()
         return self._dispatch(
             self._turn_instruction(),
             {
@@ -104,11 +105,11 @@ class CloudflareTurnProvider:
                 # of frame and a few terse statements, so the narrator has nothing authored to
                 # be concrete with and answers an apt search with "you find nothing". This is
                 # the scene's first beat only, so it cannot narrate ahead of the player.
-                "scene_setting": self._scene_setting(),
+                "scene_setting": scene_setting,
                 "knowledge_context": {
                     # sayable_knowledge is the speakers' dialogue basis; repeating it for the
                     # player doubled the largest field in every request for no reader.
-                    "player": self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"}),
+                    "player": self._serialized_player_context(scene_setting),
                     "speakers": speaker_contexts,
                 },
             },
@@ -133,8 +134,8 @@ class CloudflareTurnProvider:
                 f"This turn offers these candidate reveals: [{offered}]. If the player's action earns one of them, "
                 "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
                 "moment without selecting it leaves the story unable to move on. You must also tell it: one of your "
-                "segments has to state, in the narration the player reads, what that candidate's statement says, and "
-                "that segment must list the ID in its grounding_ids. Every must_convey synonym group shown for the "
+                "segments has to convey that candidate through the beat it was given plus its must_convey groups, "
+                "and that segment must list the ID in its grounding_ids. Every must_convey synonym group shown for the "
                 "candidate must appear through at least one of its phrasings in that grounded narration. Selecting a "
                 "reveal the narration never delivers is rejected. Leave the list empty only when none of them fits "
                 "what just happened."
@@ -177,7 +178,8 @@ class CloudflareTurnProvider:
             f"sayable context. {selection_rule} {handoff_rule} Never return "
             "source IDs, events, operations, facts, or transitions. Return at most three segments, each at most two "
             "sentences, and write the JSON on one line with no indentation. Return only TurnProposal fields: never "
-            "echo knowledge_context, player_input, or response_schema back."
+            "echo knowledge_context, player_input, or response_schema back. Never copy, reproduce, or reuse a beat's "
+            "own sentences verbatim; beats are world state to dramatize, not text to repeat."
         )
 
     def opening(self) -> object:
@@ -219,8 +221,53 @@ class CloudflareTurnProvider:
             update={"beats_projected": tuple(beat.anchor for beat in beats)}
         )
         if beats:
-            setting["beats"] = [{"title": beat.title, "prose": beat.prose} for beat in beats]
+            setting["beats"] = [
+                {
+                    "title": beat.title,
+                    "anchor": beat.anchor,
+                    "already_true_in_the_world": beat.prose,
+                    "your_job": (
+                        "Dramatize this world state only as far as the player's action reaches; "
+                        "never reproduce its wording."
+                    ),
+                }
+                for beat in beats
+            ]
         return setting
+
+    def _serialized_player_context(self, scene_setting: dict[str, object]) -> dict[str, object]:
+        """Serialize candidate context without repeating facts already carried by beats."""
+
+        if self.last_projection is None:
+            return {}
+        context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
+        beat_anchors = {
+            beat["anchor"] for beat in scene_setting.get("beats", []) if isinstance(beat, dict)
+        }
+        covered_ids = self._beat_covered_candidate_ids(beat_anchors)
+        context["candidates"] = [
+            (
+                {key: value for key, value in candidate.items() if key != "statement"}
+                if candidate["id"] in covered_ids
+                else candidate
+            )
+            for candidate in context["candidates"]
+        ]
+        return context
+
+    def _beat_covered_candidate_ids(self, beat_anchors: set[object]) -> set[str]:
+        """Find offered facts whose authored storylet beat is already serialized."""
+
+        package = self.state.package
+        storylets = {storylet.id: storylet for storylet in package.storylets}
+        covered: set[str] = set()
+        for candidate in self.last_projection.candidates if self.last_projection else ():
+            knowledge = package.knowledge_indexes.by_id[candidate.id]
+            source = knowledge.source
+            storylet = storylets.get(source.storylet_id) if source.storylet_id else None
+            if source.kind == "storylet_realization" and storylet and beat_anchors & set(storylet.source_links):
+                covered.add(candidate.id)
+        return covered
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
         """Return only the beats belonging to storylets offered this turn."""

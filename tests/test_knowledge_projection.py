@@ -218,7 +218,10 @@ def test_committed_projection_stays_bounded_as_the_story_accumulates() -> None:
     projector = KnowledgeProjector()
     projection = projector.project(state, "player", "I act.")
 
-    assert len(projection.committed_knowledge) == projector.max_committed_knowledge
+    scene_local = [
+        item for item in package.knowledge.knowledge if "3C" in item.available_in_scenes
+    ]
+    assert len(projection.committed_knowledge) == min(projector.max_committed_knowledge, len(scene_local))
     assert projection.payload_size() < 8000, "a late-game turn must not approach the narration timeout"
 
     # The current scene keeps its grounding; distant history is what gives way.

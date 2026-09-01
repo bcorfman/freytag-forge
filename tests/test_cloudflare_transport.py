@@ -62,6 +62,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "concrete immediate consequence" in captured["payload"]["system"]
     assert "at most three segments, each at most two sentences" in captured["payload"]["system"]
     assert "selected_knowledge_ids" in captured["payload"]["system"]
+    assert "Never copy, reproduce, or reuse a beat's own sentences verbatim" in captured["payload"]["system"]
     assert context["player"]["scene_id"] == "1A"
     assert context["player"]["candidates"] == []
     serialized = json.dumps(context).casefold()
@@ -71,10 +72,15 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     provider("I search the desk drawer for Michelle's recording.")
     drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
     candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
-    assert "damaged recording" in candidate["statement"]
-    assert set(candidate) == {"id", "statement", "must_convey"}
+    assert "statement" not in candidate
+    assert set(candidate) == {"id", "must_convey"}
     assert candidate["must_convey"] == []
     assert provider.last_projection is not None
+    assert "damaged recording" in next(
+        item.statement for item in provider.last_projection.candidates if item.id == candidate["id"]
+    )
+    unbeat_context = provider._serialized_player_context({"beats": []})
+    assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == candidate["id"])
 
 
 def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
@@ -101,7 +107,18 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     scene_setting = json.loads(captured[2]["user"])["scene_setting"]
     storylet = next(storylet for storylet in PACKAGE.storylets if storylet.id == "SL-1A-B")
     beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
-    expected_beats = [{"title": beats[link].title, "prose": beats[link].prose} for link in storylet.source_links]
+    expected_beats = [
+        {
+            "title": beats[link].title,
+            "anchor": beats[link].anchor,
+            "already_true_in_the_world": beats[link].prose,
+            "your_job": (
+                "Dramatize this world state only as far as the player's action reaches; "
+                "never reproduce its wording."
+            ),
+        }
+        for link in storylet.source_links
+    ]
     assert scene_setting["beats"] == expected_beats
     assert state.last_turn_delivery.beats_projected == storylet.source_links
     assert len(scene_setting["beats"]) < len(PACKAGE.scenes[0].beats)
