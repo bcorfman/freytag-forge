@@ -342,9 +342,9 @@ class CloudflareTurnProvider:
             "act for the protagonist, or offer choices.",
             f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Keep selected_knowledge_ids empty.",
-            "Do not contradict authored entry_text or beat details.",
-            "Do not invent physical objects, items, or contents the authored context does not describe.",
             "Never write source IDs, events, operations, facts, or transitions as prose.",
+            "Do not contradict authored entry_text or beat details, and do not invent physical objects, items, or "
+            "contents.",
         ]
         return self._dispatch(
             "\n".join(
@@ -384,7 +384,7 @@ class CloudflareTurnProvider:
                 {
                     "title": beat.title,
                     "anchor": beat.anchor,
-                    "details": list(beat.details),
+                    "already_true_in_the_world": beat.prose,
                     "your_job": (
                         "Dramatize this world state only as far as the player's action reaches; "
                         "never reproduce its wording."
@@ -504,7 +504,7 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
-            "opening_beat": {"id": beat.id, "title": beat.title, "details": list(beat.details)},
+            "opening_beat": {"id": beat.id, "title": beat.title, "prose": beat.prose},
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:
@@ -637,8 +637,7 @@ class CloudflareTurnProvider:
             add("entry_text", _plain(scene_entry["entry_text"]))
             beat = scene_entry["opening_beat"]
             add("beat_title", beat["title"])
-            for detail in beat.get("details", []):
-                add("beat_detail", _plain(detail))
+            add("beat", _plain(beat["prose"]))
             add(
                 "beat_job",
                 "Dramatize this world state only as far as the protagonist's arrival reaches; never reproduce its "
@@ -658,8 +657,7 @@ class CloudflareTurnProvider:
                 for beat in scene_setting.get("beats", []):
                     if isinstance(beat, dict):
                         add("beat_title", beat["title"])
-                        for detail in beat.get("details", []):
-                            add("beat_detail", _plain(detail))
+                        add("beat", _plain(beat["already_true_in_the_world"]))
                         add("beat_job", beat["your_job"])
             for item in player.get("committed_knowledge", []):
                 add("known", item["statement"], id=item["id"])

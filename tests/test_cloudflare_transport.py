@@ -75,10 +75,8 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "one paragraph per segment" in instruction
     assert "roughly 30 to 55 words" in instruction
     assert f"at most {MAX_TURN_SEGMENTS} segments" in instruction
-    # Arm C keeps Arm B's subtraction of beat prose AND Arm A's prohibitions.
     assert "contradict authored text" in instruction
     assert "<rule>Never invent durable evidence, physical objects, items, or container contents.</rule>" in instruction
-    assert "already true" in instruction
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert "Never reuse a beat's sentences" in captured["payload"]["system"]
@@ -243,11 +241,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     def _bare(value: str) -> str:
         return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
 
-    assert all(
-        all(f"<beat_detail>{d}</beat_detail>" in contexts[2] for d in beats[link].details)
-        for link in storylet.source_links[1:]
-    )
-    assert all(_bare(beats[link].prose) not in _bare(contexts[2]) for link in storylet.source_links[1:])
+    assert all(_bare(beats[link].prose) in _bare(contexts[2]) for link in storylet.source_links[1:])
     assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
     assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
 
@@ -969,7 +963,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     assert "one paragraph per segment" in opening_instruction
     assert "roughly 30 to 55 words" in opening_instruction
     assert f"at most {MAX_TURN_SEGMENTS} segments" in opening_instruction
-    assert "contradict" in opening_instruction
+    assert "contradict" in opening_instruction and "authored entry_text" in opening_instruction
     assert "invent physical objects, items, or contents" in opening_instruction
     user = captured["payload"]["user"]
     assert "<player_input>" not in user
@@ -984,8 +978,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     def _bare_beat(value: str) -> str:
         return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
 
-    assert all(f"<beat_detail>{d}</beat_detail>" in user for d in beat.details)
-    assert _bare_beat(beat.prose) not in _bare_beat(user)
+    assert _bare_beat(beat.prose) in _bare_beat(user)
     assert "<scene_id>1A</scene_id>" in user
 
 
