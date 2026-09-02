@@ -38,6 +38,7 @@ class TurnDelivery(BaseModel):
     fallback_used: bool = False
     hint_staged: bool = False
     handoff_staged: bool = False
+    segments_truncated: bool = False
 
 
 class RuntimeSnapshot(BaseModel):
