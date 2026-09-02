@@ -181,12 +181,13 @@ class SceneMetadata(_Model):
 
 
 class SceneBeat(_Model):
-    """One authored sub-beat of a scene, quoted verbatim as narration context."""
+    """One authored sub-beat of a scene and its concrete delivery details."""
 
     id: str = Field(pattern=r"^[1-9][A-Z]\.[1-9]$")
     anchor: str = Field(pattern=r"^[a-z0-9-]+$")
     title: str = Field(min_length=1)
     prose: str = Field(min_length=1)
+    details: tuple[str, ...] = Field(min_length=3, max_length=7)
 
 
 class Scene(_Model):

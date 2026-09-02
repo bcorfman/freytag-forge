@@ -31,6 +31,7 @@ class StoryPackageError(ValueError):
 
 _SCENE = re.compile(r"^## Scene ([1-9][A-Z]) .*$", re.MULTILINE)
 _SCENE_BEAT = re.compile(r"^### (?P<heading>Scene (?P<id>[1-9][A-Z]\.[1-9])\s+[—-]\s+(?P<title>.+))$", re.MULTILINE)
+_DETAILS = re.compile(r"^\*\*Details:\*\*\s*(?P<items>.+?)\s*$", re.MULTILINE)
 _STORYLET = re.compile(r"^### (SL-([1-9][A-Z])-[A-Z]) — (.+)$", re.MULTILINE)
 _SECTION = re.compile(r"^\*\*([^*]+)\*\*\s*(.*?)(?=^\*\*|^---\s*$|\Z)", re.MULTILINE | re.DOTALL)
 _REQUIRED_STORYLET_SECTIONS = {
@@ -96,13 +97,24 @@ def _beat_anchor(heading: str) -> str:
     return "".join("-" if character == " " else character for character in filtered)
 
 
+def _beat_content(scene_id: str, beat_id: str, body: str) -> tuple[str, tuple[str, ...]]:
+    details_match = _DETAILS.search(body)
+    if details_match is None:
+        raise StoryPackageError(f"scene {scene_id} beat {beat_id} lacks a Details line")
+    details = tuple(item.strip() for item in details_match.group("items").split(";") if item.strip())
+    if len(details) < 3 or len(details) > 7:
+        raise StoryPackageError(f"scene {scene_id} beat {beat_id} Details line must contain 3 to 7 items")
+    prose = _DETAILS.sub("", body, count=1).strip()
+    return prose, details
+
+
 def _parse_scene_beats(scene_id: str, prose: str) -> dict[str, SceneBeat]:
     matches = [match for match in _SCENE_BEAT.finditer(prose) if match.group("id").startswith(f"{scene_id}.")]
     beats: dict[str, SceneBeat] = {}
     for match in matches:
         end = next((other.start() for other in matches if other.start() > match.start()), len(prose))
-        beat_prose = prose[match.end() : end].strip()
         beat_id = match.group("id")
+        beat_prose, details = _beat_content(scene_id, beat_id, prose[match.end() : end].strip())
         if not beat_prose:
             raise StoryPackageError(f"scene {scene_id} beat {beat_id} has no prose")
         anchor = _beat_anchor(match.group("heading"))
@@ -113,6 +125,7 @@ def _parse_scene_beats(scene_id: str, prose: str) -> dict[str, SceneBeat]:
             anchor=anchor,
             title=match.group("title").strip(),
             prose=beat_prose,
+            details=details,
         )
     if not beats:
         raise StoryPackageError(f"scene {scene_id} contains no beat headings")
@@ -127,7 +140,7 @@ def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
     if first is None:
         raise StoryPackageError(f"scene {scene_id} lacks an opening beat heading '### Scene {scene_id}.1'")
     end = next((match.start() for match in matches if match.start() > first.start()), len(prose))
-    body = prose[first.end() : end].strip()
+    body, details = _beat_content(scene_id, first.group("id"), prose[first.end() : end].strip())
     if not body:
         raise StoryPackageError(f"scene {scene_id} opening beat has no prose")
     return SceneBeat(
@@ -135,6 +148,7 @@ def _parse_opening_beat(scene_id: str, prose: str) -> SceneBeat:
         anchor=_beat_anchor(first.group("heading")),
         title=first.group("title").strip(),
         prose=body,
+        details=details,
     )
 
 
