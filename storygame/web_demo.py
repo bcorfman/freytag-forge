@@ -84,7 +84,10 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
 
 
 def _turn_payload(
-    state: RuntimeState, proposal: ResolvedTurnProposal | str, game_break: object | None = None
+    state: RuntimeState,
+    proposal: ResolvedTurnProposal | str,
+    game_break: object | None = None,
+    prompt: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Keep structured segments primary while retaining migration-era lines."""
     if isinstance(proposal, str):
@@ -95,13 +98,16 @@ def _turn_payload(
         segments = [item.model_dump(mode="json") for item in proposal.segments] or [
             {"kind": "narration", "text": narration}
         ]
-    return {
+    payload = {
         "segments": segments,
         "lines": [narration],
         "game_break": game_break,
         "delivery": state.last_turn_delivery.model_dump(mode="json"),
         "state": _state_summary(state),
     }
+    if prompt is not None:
+        payload["prompt"] = prompt
+    return payload
 
 
 def _narration_http_error(error: NarrationProviderError) -> HTTPException:
@@ -195,7 +201,8 @@ def create_demo_app(
             raise HTTPException(status_code=404, detail="story does not exist")
         state = RuntimeState.bootstrap(package)
         try:
-            opening = RuntimeEngine(state, provider_for(state)).opening()
+            provider = provider_for(state)
+            opening = RuntimeEngine(state, provider).opening()
         except NarrationProviderError as error:
             raise _narration_http_error(error) from error
         except RuntimeContractError as error:
@@ -203,7 +210,7 @@ def create_demo_app(
         session_id = uuid4().hex
         store.save(session_id, state)
         scene = package.scenes[0].metadata
-        return {
+        payload = {
             "session_id": session_id,
             "state": _state_summary(state),
             "opening": {
@@ -213,14 +220,20 @@ def create_demo_app(
                 "segments": [item.model_dump(mode="json") for item in opening.segments],
             },
         }
+        if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+            prompt = getattr(provider, "last_prompt", None)
+            if prompt is not None:
+                payload["prompt"] = prompt
+        return payload
 
     @app.post("/api/v1/turn")
     def turn(body: TurnRequest, request: Request) -> dict[str, object]:
         require_rate_limit(request)
         state = load_state(body.session_id)
         try:
+            provider = provider_for(state)
             test_clock = _test_clock_seconds(body, request)
-            proposal = RuntimeEngine(state, provider_for(state)).turn(body.input_text, clock_seconds=test_clock)
+            proposal = RuntimeEngine(state, provider).turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             raise _narration_http_error(error) from error
         except RuntimeContractError as error:
@@ -229,7 +242,8 @@ def create_demo_app(
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
-        return _turn_payload(state, proposal, warning)
+        prompt = getattr(provider, "last_prompt", None) if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1" else None
+        return _turn_payload(state, proposal, warning, prompt)
 
     @app.post("/api/v1/game-break")
     def resolve_game_break(body: BreakResolutionRequest) -> dict[str, object]:
