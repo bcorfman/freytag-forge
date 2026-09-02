@@ -85,6 +85,8 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
+**Details:** kitchen floor phone; missing laptop and work bag; overturned workstation chair; forced back door; KMS initials in drawer
+
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
 * Her phone remains on the kitchen floor undamaged.
@@ -95,6 +97,8 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 Kristin notices one of the drawers on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
+
+**Details:** hidden memory card; taped drawer; truck laptop; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
 Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into her laptop out in her truck. 
 
@@ -108,6 +112,8 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe
+
 On the memory card, Kristin also finds a voice recording Michelle attempted to send shortly before she disappeared. In it, she says that government officials have been tracking her and that a planned “activation event” is imminent.
 
 Before naming her source, Michelle hears someone enter the house. The recording ends after she whispers:
@@ -117,6 +123,8 @@ Before naming her source, Michelle hears someone enter the house. The recording 
 This becomes the story’s **inciting incident**. Kristin realizes Michelle’s disappearance may be connected to the national catastrophe.
 
 ### Scene 1A.4 — The First Threat
+
+**Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; concealed memory card; marked front gate; reflective tape
 
 A federal emergency patrol arrives at Michelle’s house unusually quickly. The officers claim they are conducting welfare checks, but they search Michelle’s office and ask specifically about her research and findings.
 
@@ -153,6 +161,8 @@ bridge_text:
 
 ### Scene 1B.1 — Michelle’s Dead Drop
 
+**Details:** ordinary park bench; transit access card; handwritten number sequence; Michelle photograph; unidentified man; disappearance dates
+
 Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols.
 
 Beneath the bench, she finds:
@@ -166,6 +176,8 @@ The records suggest that the mass disappearance was preceded by years of secret 
 
 ### Scene 1B.2 — The Man Following Her
 
+**Details:** watching man; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative
+
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park.
 
 The man follows but saves Kristin when an emergency patrol corners her. He identifies himself as Brandon Corfman, the person in Michelle’s photograph.
@@ -173,6 +185,8 @@ The man follows but saves Kristin when an emergency patrol corners her. He ident
 Brandon says Michelle contacted him because he had once worked on the Continuity Initiative.
 
 ### Scene 1B.3 — Brandon’s Warning
+
+**Details:** contaminated emergency water; disguised response teams; evacuation tunnels; missing registrations; communications outages; falsified casualty data
 
 Brandon explains that the disappearances were not instantaneous. During the hours before the public became aware of the event, selected people were:
 
@@ -186,6 +200,8 @@ The scale was hidden by communications outages, manufactured panic, and falsifie
 Brandon claims the missing are still alive, but he refuses to explain how he knows.
 
 ### Scene 1B.4 — The Park Ambush
+
+**Details:** tactical team; storm-drain system; specialized codes; secured maintenance gate; government systems; Brandon’s hidden involvement
 
 A tactical team arrives, proving Kristin was tracked from her house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured maintenance gate.
 
@@ -221,6 +237,8 @@ bridge_text:
 
 ### Scene 1C.1 — Following the Transport Route
 
+**Details:** transit card; abandoned freight terminal; structural modifications; underground complex; fresh tire tracks; humming air vents
+
 The transit card from Michelle’s dead drop grants access to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal a large underground complex.
 
 Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
@@ -229,6 +247,8 @@ Kristin and Brandon enter a service level but cannot reach the main facility wit
 
 ### Scene 1C.2 — Proof of the Captives
 
+**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle
+
 From an observation shaft, Kristin sees rows of sedated prisoners being moved through a processing area. Their identification numbers correspond to missing-person reports stored in Michelle’s files.
 
 She briefly sees a woman resembling Michelle among a group being transferred, but the view is obscured before she can confirm her identity.
@@ -236,6 +256,8 @@ She briefly sees a woman resembling Michelle among a group being transferred, bu
 Kristin wants to enter immediately. Brandon stops her, arguing that a reckless rescue attempt would cause the prisoners to be relocated or killed.
 
 ### Scene 1C.3 — The Nationwide Network
+
+**Details:** logistics terminal; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
 
 Brandon accesses a logistics terminal and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
 
@@ -251,6 +273,8 @@ The missing have been divided into categories:
 The conspiracy did not simply remove random citizens. It removed people who might either help control the country or resist that control.
 
 ### Scene 1C.4 — The Architects Revealed
+
+**Details:** recorded conference; Charles Jenkins; Rebecca Jenkins; overcrowded facilities; resisting prisoners; emergency authority
 
 A recorded conference shows Charles and Rebecca Jenkins discussing the next phase of the Continuity Initiative.
 
@@ -302,6 +326,8 @@ bridge_text:
 
 ### Scene 2A.1 — Brandon’s Hideout
 
+**Details:** fortified hideout; abandoned communications center; servers; salvaged hardware; emergency supplies; leaked code
+
 Brandon takes Kristin to a fortified hideout inside an abandoned communications center. It contains servers, salvaged hardware, emergency supplies, and years of leaked code and internal documents on the Continuity Initiative.
 
 Kristin discovers that Brandon has been preparing for the disappearance event for a long time.
@@ -309,6 +335,8 @@ Kristin discovers that Brandon has been preparing for the disappearance event fo
 Brandon explains that he tried to expose the program but was discredited, dismissed, and labeled unstable.
 
 ### Scene 2A.2 — The Infiltration Plan
+
+**Details:** cooling flaw; structural-monitoring systems; underground installation; false credentials; support-column failure; command center records
 
 Kristin identifies a flaw in the facility’s cooling and structural-monitoring systems. Because the underground installation was expanded too quickly, parts of it require constant inspection.
 
@@ -325,6 +353,8 @@ Their objectives are:
 
 ### Scene 2A.3 — Entering the Facility
 
+**Details:** security layers; initial identity checks; unscheduled inspection; underground collapse warning; technical explanation; infrastructure corridors
+
 Kristin and Brandon pass through several layers of security. Their identities survive the initial checks, but a supervisor questions why their inspection was not scheduled.
 
 Kristin improvises, warning that the facility could suffer a progressive underground collapse. Her technical explanation is convincing enough that the supervisor reluctantly permits them to continue.
@@ -332,6 +362,8 @@ Kristin improvises, warning that the facility could suffer a progressive undergr
 This gives Kristin access to restricted infrastructure corridors that bypass the main security checkpoints.
 
 ### Scene 2A.4 — The First Complication
+
+**Details:** facial-recognition system; former developer; Continuity Initiative contractor; quiet security alert; Rebecca Jenkins; compromised infiltration
 
 A facial-recognition system identifies Brandon as a former Continuity Initiative developer and contractor. Instead of triggering a general alarm, the system quietly alerts Rebecca Jenkins.
 
@@ -370,6 +402,8 @@ bridge_text:
 
 ### Scene 2B.1 — The Selection Algorithm
 
+**Details:** records archive; JANUS files; government data; financial data; organized resistance; Michelle’s research
+
 Inside the records archive, Kristin discovers files describing an artificial-intelligence system called **JANUS**.
 
 JANUS analyzed government, financial, medical, employment, education, and communications data to classify every American according to:
@@ -387,6 +421,8 @@ Kristin was deliberately left behind because the system predicted she would lead
 
 ### Scene 2B.2 — Kristin Was Bait
 
+**Details:** facility discovery; Michelle’s evidence; Brandon’s hidden network; anticipated journey; accessible evidence; security access
+
 The revelation transforms Kristin’s understanding of her journey. Her discovery of the facility was not entirely accidental.
 
 Charles expected Kristin to seek Brandon. Security allowed portions of Michelle’s evidence to remain accessible so Kristin would expose Brandon’s hidden network.
@@ -394,6 +430,8 @@ Charles expected Kristin to seek Brandon. Security allowed portions of Michelle�
 Kristin realizes that every step she has taken may have been anticipated.
 
 ### Scene 2B.3 — Brandon’s Role
+
+**Details:** JANUS development records; AI software; national emergencies; mass detention; political control; Michelle’s access
 
 Kristin finds Brandon’s name in the original JANUS development records. Brandon admits that he helped write the AI software used to identify people at risk during national emergencies.
 
@@ -404,6 +442,8 @@ Michelle knew about Brandon’s involvement but believed his access was the only
 Kristin feels betrayed. She suspects Brandon may still be manipulating her to erase evidence of his own guilt.
 
 ### Scene 2B.4 — Michelle’s Hidden Resistance
+
+**Details:** equipment failures; corrupted prisoner files; medical terminal; altered classifications; delayed transfers; maintenance reports
 
 The records reveal unusual equipment failures and corrupted prisoner files throughout the facility. Kristin recognizes phrases in the corrupted data that Michelle used in her private notes.
 
@@ -448,6 +488,8 @@ bridge_text:
 
 ### Scene 2C.1 — Rebecca’s Offer
 
+**Details:** Brandon contact; safe passage; unstable Charles; executive level; release Michelle; Continuity Initiative control
+
 Rebecca contacts Brandon privately and offers him safe passage. She claims Charles has become unstable and intends to eliminate both prisoners and lower-level conspirators once the new government is established.
 
 She asks Brandon to help her remove Charles and take control of the Continuity Initiative.
@@ -458,6 +500,8 @@ Brandon pretends to consider the offer so he can gain access to the executive le
 
 ### Scene 2C.2 — The Purge Order
 
+**Details:** corrupted JANUS records; valuable captives; full transfer; destruction order; national broadcast; selected survivors
+
 Charles discovers that Michelle’s resistance network has corrupted JANUS records. Fearing that evidence will escape, he orders a full transfer of the most valuable captives and the destruction of everyone else.
 
 The purge will begin within hours.
@@ -465,6 +509,8 @@ The purge will begin within hours.
 At the same time, Charles prepares a national broadcast in which he will claim to have located survivors of the catastrophe. He plans to release a small number of carefully selected captives and use their return to legitimize his new emergency government.
 
 ### Scene 2C.3 — Evidence or Rescue
+
+**Details:** conspiracy evidence; exposed position; sealed detention sectors; transmitting evidence; thousands of captives; crisis choice
 
 Kristin and Brandon obtain enough evidence to expose the conspiracy, but transmitting it will reveal their position and seal the detention sectors.
 
@@ -478,6 +524,8 @@ Their disagreement creates the story’s central **crisis choice**:
 * Attempt a rescue and risk losing both the evidence and their lives
 
 ### Scene 2C.4 — Michelle Changes the Choice
+
+**Details:** coded message; maintenance network; emergency broadcast system; detention sectors; Rebecca’s secured office; combined mission
 
 Michelle sends a coded message through the maintenance network. She has discovered a way to use the facility’s emergency broadcast system to transmit the evidence while simultaneously opening the detention sectors.
 
@@ -527,6 +575,8 @@ bridge_text:
 
 ### Scene 3A.1 — The Detention Block
 
+**Details:** detention sector; rows of captives; stolen radios; coded announcements; sympathetic facility workers; purge countdown
+
 Kristin enters the detention sector expecting rows of helpless captives. Instead, she finds Michelle coordinating prisoners through stolen radios, coded announcements, and sympathetic facility workers.
 
 The reunion between Kristin and Michelle is brief because the purge countdown has begun.
@@ -534,6 +584,8 @@ The reunion between Kristin and Michelle is brief because the purge countdown ha
 Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites.
 
 ### Scene 3A.2 — The Experiments
+
+**Details:** medical level; neurological experiments; behavioral experiments; short-term memory; targeted stimulation; false recollections
 
 Michelle leads Kristin through a medical level where prisoners have been subjected to neurological and behavioral experiments.
 
@@ -549,6 +601,8 @@ The people Charles intends to “rescue” during his broadcast have already bee
 
 ### Scene 3A.3 — The Unexpected Prisoner
 
+**Details:** senior official; government prisoners; fabricated evidence; authorization codes; emergency military orders; Charles’s broadcast
+
 Among the captives is a senior official publicly blamed for causing the catastrophe. He reveals that Charles imprisoned members of his own government and fabricated evidence against them.
 
 He possesses authorization codes capable of overriding emergency military orders, but the codes will expire once Charles’s new authority is formally activated.
@@ -556,6 +610,8 @@ He possesses authorization codes capable of overriding emergency military orders
 The rescue now has a strict deadline tied to Charles’s broadcast.
 
 ### Scene 3A.4 — The Uprising Begins
+
+**Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams
 
 Michelle triggers coordinated disturbances across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
 
@@ -593,6 +649,8 @@ bridge_text:
 
 ### Scene 3B.1 — The Facility Fights Back
 
+**Details:** JANUS movement predictions; opened doors; disabled cameras; structural alarms; flooded corridors; conflicting emergencies
+
 JANUS begins predicting the resistance group’s movements by analyzing doors opened, cameras disabled, and power systems disrupted.
 
 Kristin realizes the only way to defeat the system is to behave irrationally. She deliberately creates structural alarms, floods unused corridors, and cuts power to areas that appear unrelated to their route.
@@ -600,6 +658,8 @@ Kristin realizes the only way to defeat the system is to behave irrationally. Sh
 These actions overload JANUS with conflicting emergencies and force human operators to take control.
 
 ### Scene 3B.2 — Rebecca’s Office
+
+**Details:** Rebecca’s office; security forces; failing systems; facility collapse; approved experiments; detention site locations
 
 Kristin and Michelle reach Rebecca’s office while Brandon holds off security forces.
 
@@ -611,6 +671,8 @@ Rebecca attempts to bargain by offering the locations of every detention site.
 
 ### Scene 3B.3 — Charles’s Betrayal
 
+**Details:** Charles appears; locked office; national network; Los Angeles facility; anti-government terrorists; remote command site
+
 Charles appears remotely and locks down Rebecca’s office. He reveals that he has already transferred control of the national network away from her.
 
 He intends to destroy the Los Angeles facility, killing the captives, Rebecca, and the infiltrators. He will blame the destruction on anti-government terrorists and proceed with his broadcast from another command site.
@@ -618,6 +680,8 @@ He intends to destroy the Los Angeles facility, killing the captives, Rebecca, a
 Rebecca finally understands that Charles always considered her expendable.
 
 ### Scene 3B.4 — Brandon’s Sacrifice
+
+**Details:** broadcast system; communications relay; relay chamber; lethal electrical surge; JANUS confession; electrical override
 
 The broadcast system cannot operate while Charles controls the external communications relay. Brandon reaches the relay chamber and manually disconnects it from JANUS.
 
@@ -653,6 +717,8 @@ transition_ids: []
 
 ### Scene 3C.1 — The National Transmission
 
+**Details:** captive video; JANUS selection records; detention network locations; planning sessions; behavioral experiments; Brandon’s confession
+
 Michelle broadcasts:
 
 * Video of the captives
@@ -671,6 +737,8 @@ The truth can no longer be contained by controlling a single broadcast.
 
 ### Scene 3C.2 — The Final Confrontation
 
+**Details:** portable archive; corporate conspirators; prisoner locations; independent networks; captured Rebecca; remote command site
+
 Rebecca attempts to escape with a portable archive containing the identities of corporate and political conspirators.
 
 Kristin stops her, but she warns that destroying or surrendering the archive may leave innocent people trapped because it also contains prisoner locations.
@@ -683,6 +751,8 @@ Charles escapes from his remote command site before authorities can locate him, 
 
 ### Scene 3C.3 — The Collapse
 
+**Details:** destruction sequence; facility infrastructure; redirected power; maintenance tunnels; emergency supports; surface gates
+
 Charles activates the facility’s destruction sequence. Kristin uses her knowledge of facility infrastructure and operations to redirect power and prevent a complete underground collapse, but she cannot save every section.
 
 Michelle leads the prisoners toward maintenance tunnels while Kristin keeps the emergency supports functioning.
@@ -692,6 +762,8 @@ Brandon’s final action opens the surface gates moments before the relay chambe
 Thousands of captives emerge into Los Angeles as news drones, civilians, and local responders begin arriving.
 
 ### Scene 3C.4 — Resolution and New Direction
+
+**Details:** surrendered facilities; released prisoners; Charles’s control; rogue officials; rescue efforts; partially recovered JANUS file
 
 The national detention network begins to fracture:
 

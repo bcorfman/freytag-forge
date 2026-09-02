@@ -61,7 +61,22 @@ def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
     assert [beat.id for beat in scene.beats.values()] == ["1A.1", "1A.2", "1A.3", "1A.4"]
     assert [beat.anchor for beat in scene.beats.values()] == list(scene.beats)
     assert scene.opening_beat == scene.beats["scene-1a1--michelle-is-gone"]
-    assert all(beat.title and beat.prose for beat in scene.beats.values())
+    assert all(beat.title and beat.prose and 3 <= len(beat.details) <= 7 for beat in scene.beats.values())
+    assert "**Details:**" not in scene.opening_beat.prose
+
+
+def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
+    package = copied_package(tmp_path)
+    plot = package / "plot.md"
+    contents = plot.read_text(encoding="utf-8")
+    details = (
+        "**Details:** kitchen floor phone; missing laptop and work bag; overturned workstation chair; "
+        "forced back door; KMS initials in drawer\n"
+    )
+    plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A beat 1A.1 lacks a Details line"):
+        load_story_package(package)
 
 
 def test_every_shipped_storylet_source_link_resolves_to_a_scene_beat() -> None:
