@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from storygame.runtime.contracts import NarrationSegment
-from storygame.runtime.validation import derive_grounding, unconveyed_terms
+from storygame.runtime.validation import derive_grounding, derive_statement_grounding, unconveyed_terms
 from storygame.story_package import load_story_package
 
 PACKAGE = Path("data/stories/continuity-initiative")
@@ -57,6 +57,23 @@ def test_derive_grounding_never_derives_an_empty_requirement() -> None:
     segments = (NarrationSegment(kind="narration", text="Anything at all."),)
 
     assert derive_grounding((), segments) == ()
+
+
+def test_derive_statement_grounding_picks_the_segment_that_delivers_the_statement() -> None:
+    segments = (
+        NarrationSegment(kind="narration", text="The corridor waits in silence."),
+        NarrationSegment(kind="narration", text="Michelle broadcasts the captives and records to the networks."),
+    )
+
+    assert derive_statement_grounding("Michelle broadcasts captives and records to networks.", segments) == (
+        segments[1],
+    )
+
+
+def test_derive_statement_grounding_rejects_unrelated_narration() -> None:
+    segments = (NarrationSegment(kind="narration", text="She waits in the corridor and listens to the vents."),)
+
+    assert derive_statement_grounding("Michelle broadcasts captives to networks.", segments) == ()
 
 
 def test_unconveyed_terms_normalizes_case_curly_punctuation_dashes_and_spacing() -> None:

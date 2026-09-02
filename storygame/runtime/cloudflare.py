@@ -20,7 +20,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import derive_grounding, unconveyed_terms
+from storygame.runtime.validation import derive_grounding, derive_statement_grounding, unconveyed_terms
 from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
@@ -164,7 +164,6 @@ class _EligibilityError(RuntimeContractError):
         self.hint = hint
 
 
-
 def _plain(text: str) -> str:
     """Render authored markdown as plain prose without breaking a sentence.
 
@@ -185,6 +184,7 @@ def _plain(text: str) -> str:
         lines.append(stripped)
     return "\n".join(lines).strip()
 
+
 class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
@@ -201,6 +201,7 @@ class CloudflareTurnProvider:
         self.state = state
         self.projector = projector or KnowledgeProjector()
         self.last_projection: TurnKnowledgeContext | None = None
+        self.grounding_attributions: tuple[str, ...] = ()
 
     @classmethod
     def from_environment(cls, state: RuntimeState) -> CloudflareTurnProvider:
@@ -307,19 +308,23 @@ class CloudflareTurnProvider:
         ]
         if handoff_rule:
             rules.append(handoff_rule)
-        return "\n".join(
-            [
-                *(f"<rule>{rule}</rule>" for rule in rules),
+        # The example is not the place to teach grounding. Showing a grounded
+        # selection here made the model ground on IDs it had not selected, and a
+        # live sample went from no failures in sixteen turns to six in eighteen -
+        # five of them HTTP 409 for grounding on knowledge that was neither
+        # committed nor selected. The engine attributes the delivering segment
+        # itself, so the model never needs to be shown how.
+        example = (
                 '<output_example>{"segments":['
                 '{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
-                'her fingers find the flat edge of something that was never meant to be seen from above, and the '
+                "her fingers find the flat edge of something that was never meant to be seen from above, and the "
                 'kitchen behind her goes very quiet."},'
                 '{"kind":"narration","text":"She works it loose and turns it over in the light from the window. '
-                'The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and '
+                "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
                 'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
-                '"selected_knowledge_ids":[]}</output_example>',
-            ]
-        )
+                '"selected_knowledge_ids":[]}</output_example>'
+            )
+        return "\n".join([*(f"<rule>{rule}</rule>" for rule in rules), example])
 
     def opening(self) -> object:
         """Continue the authored entry text, before any player input exists."""
@@ -342,10 +347,10 @@ class CloudflareTurnProvider:
                     *(f"<rule>{rule}</rule>" for rule in rules),
                     '<output_example>{"segments":['
                     '{"kind":"narration","text":"The gate stands open on a driveway that has not been swept in '
-                    'days, and the house beyond it keeps the particular stillness of a place someone left in the '
+                    "days, and the house beyond it keeps the particular stillness of a place someone left in the "
                     'middle of doing something ordinary."},'
                     '{"kind":"narration","text":"She goes up the steps slowly, listening for the sounds a lived-in '
-                    'house makes and hearing none of them, and the front door gives under her hand without her '
+                    "house makes and hearing none of them, and the front door gives under her hand without her "
                     'having to reach for a key."}],'
                     '"selected_knowledge_ids":[]}</output_example>',
                 ]
@@ -671,7 +676,7 @@ class CloudflareTurnProvider:
     def _cap_accepted_response(self, response: object, proposal: TurnProposal) -> object:
         """Bound accepted narration while retaining an out-of-band reveal segment."""
 
-        if len(proposal.segments) <= MAX_TURN_SEGMENTS:
+        if len(proposal.segments) <= MAX_TURN_SEGMENTS and not self.grounding_attributions:
             return response
         kept = list(proposal.segments[:MAX_TURN_SEGMENTS])
         if proposal.selected_knowledge_ids:
@@ -756,6 +761,7 @@ class CloudflareTurnProvider:
         )
 
     def _parse_eligible_proposal(self, response: object) -> TurnProposal:
+        self.grounding_attributions = ()
         proposal = parse_turn_proposal(response)
         if self.last_projection is None:
             raise RuntimeContractError("knowledge projection is unavailable")
@@ -815,8 +821,14 @@ class CloudflareTurnProvider:
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in grounded}
         )
         if undelivered:
-            derived_segments = derive_grounding(candidates[undelivered[0]].must_convey, proposal.segments)
+            candidate = candidates[undelivered[0]]
+            derived_segments = (
+                derive_grounding(candidate.must_convey, proposal.segments)
+                if candidate.must_convey
+                else derive_statement_grounding(candidate.statement, proposal.segments)
+            )
             if derived_segments:
+                self.grounding_attributions = tuple(undelivered)
                 proposal = proposal.model_copy(
                     update={
                         "segments": tuple(
