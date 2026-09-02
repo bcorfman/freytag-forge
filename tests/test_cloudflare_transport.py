@@ -748,8 +748,14 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     assert "must_convey" in offered_prompt
     assert "offers no candidates" not in offered_prompt
     offered_id = provider.last_projection.candidates[0].id
-    assert f'"grounding_ids":["{offered_id}"]' in offered_prompt
-    assert f'"selected_knowledge_ids":["{offered_id}"]' in offered_prompt
+    assert offered_id in payloads[-1]["user"], "the offered candidate must still reach the model"
+    # The example deliberately does NOT ground. Showing a grounded selection here
+    # taught the model to ground on IDs it had not selected: a live sample went
+    # from no failures in sixteen turns to six in eighteen, five of them HTTP 409
+    # for grounding on knowledge neither committed nor selected. The engine
+    # attributes the delivering segment itself.
+    assert '"grounding_ids":[' not in offered_prompt
+    assert '"selected_knowledge_ids":[]' in offered_prompt
 
 
 def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatch) -> None:
