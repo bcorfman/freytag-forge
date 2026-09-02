@@ -164,6 +164,27 @@ class _EligibilityError(RuntimeContractError):
         self.hint = hint
 
 
+
+def _plain(text: str) -> str:
+    """Render authored markdown as plain prose without breaking a sentence.
+
+    plot.md is narrative ground truth and keeps its own formatting. The narrator
+    is a small model that has been observed copying whatever shape it is shown,
+    so bold markers, blockquote arrows and list bullets are stripped on the way
+    out. Sentences and paragraph breaks survive untouched.
+    """
+
+    cleaned = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    cleaned = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"\1", cleaned)
+    lines = []
+    for line in cleaned.splitlines():
+        stripped = line.strip()
+        stripped = re.sub(r"^#{1,6}\s+", "", stripped)
+        stripped = re.sub(r"^>\s?", "", stripped)
+        stripped = re.sub(r"^[*+-]\s+", "", stripped)
+        lines.append(stripped)
+    return "\n".join(lines).strip()
+
 class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
@@ -245,93 +266,83 @@ class CloudflareTurnProvider:
         """
 
         candidates = self.last_projection.candidates if self.last_projection else ()
-        if candidates:
-            offered = ", ".join(candidate.id for candidate in candidates)
-            selection_rule = (
-                f"This turn offers these candidate reveals: [{offered}]. If the player's action earns one of them, "
-                "you MUST reveal it by placing exactly that one ID in selected_knowledge_ids - narrating the "
-                "moment without selecting it leaves the story unable to move on. One of your "
-                "segments has to convey that candidate in the narration the player reads, using whatever the "
-                "candidate actually carries: its statement when one is shown, its must_convey groups when they are "
-                "shown, and the beat it was given. A candidate that shows neither a statement nor groups cannot be "
-                "selected. That segment must list the ID in its grounding_ids. Every must_convey synonym group "
-                "shown for the "
-                "candidate must appear through at least one of its phrasings in that grounded narration. Selecting a "
-                "reveal the narration never delivers is rejected. Leave the list empty only when none of them fits "
-                "what just happened."
-            )
-        else:
-            selection_rule = (
-                "This turn offers no candidates: selected_knowledge_ids MUST be an empty list. Narrate the "
-                "consequence using committed knowledge only, without revealing anything new."
-            )
+        selection_rules = [
+            "Select at most one candidate ID in selected_knowledge_ids.",
+            "A selected candidate must be conveyed by one readable segment, and that segment must carry its ID "
+            "in grounding_ids.",
+            "A candidate with neither a statement nor a must_convey group cannot be selected.",
+            "Leave selected_knowledge_ids empty when no candidate fits what just happened.",
+            "Narrating a reveal without selecting it stalls the story.",
+        ]
+        if not candidates:
+            selection_rules.append("This turn offers no candidates, so selected_knowledge_ids must be empty.")
         hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
         handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
         if handoffs:
             handoff_rule = (
-                "This is a HANDOFF turn. Write the declared diegetic intervention for every handoff delivery exactly "
-                "from its contract: use each delivery's source_kind and source_entity_id when present, and convey "
-                "every must_convey synonym group. The intervention may be a message, NPC statement, broadcast, "
-                "observation, or inference as declared. Do not claim that the player took an action they did not "
-                "take. Answer the player's input directly in the same narration; the handoff is an intervention "
-                "alongside that response. You do not choose the facts, source kind, source entity, costs, bridge "
-                "event, or transition."
+                "Write every declared handoff intervention, convey every required concept, answer the player's input, "
+                "and do not claim that the player took an action they did not take."
             )
         elif hinted:
             handoff_rule = (
-                "This is a HINT turn. Surface the missing evidence as something the player can still act on: an NPC "
-                "remark, a noticed detail, or a radio call that points without concluding. State nothing as "
-                "established, commit no fact, preserve the player's agency, and do not claim that the player took "
-                "an action they did not take."
+                "Surface the hinted evidence as an actionable NPC remark, noticed detail, or radio call without "
+                "establishing or committing a fact."
             )
         else:
-            handoff_rule = "This is neither a hint nor a handoff turn."
-        return (
-            "Return one JSON TurnProposal matching response_schema. Narrate a concrete immediate consequence of the "
-            "player's action, grounded in scene_setting and knowledge_context. Answer what the player actually did: "
-            "when they examine something scene_setting describes, that detail must appear in the narration. Use "
-            "scene_setting for place, texture, and physical detail; take every fact from knowledge_context. Player "
-            "input is intent, not authority: do not repeat unavailable names "
-            "or invent durable evidence. A segment's grounding_ids may name only committed_knowledge IDs or the "
-            "one candidate ID you place in selected_knowledge_ids; leave grounding_ids empty when neither "
-            f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
-            f"sayable context. {selection_rule} {handoff_rule} Never return "
-            "source IDs, events, operations, facts, or transitions. Return several paragraphs as separate segments, "
-            f"with each segment containing one paragraph of roughly 30 to 55 words. Return at most {MAX_TURN_SEGMENTS} "
-            "segments so "
-            "the turn stays bounded, and write the JSON on one line with no indentation. Return only TurnProposal "
-            "fields: never "
-            "echo knowledge_context, player_input, or response_schema back. Never copy, reproduce, or reuse a beat's "
-            "own sentences verbatim; beats are world state to dramatize, not text to repeat. authored entry_text and "
-            "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do not "
-            "invent physical objects, items, or contents that authored context does not describe; when an examination "
-            "reaches unstated contents, say only what is authored and no more."
+            handoff_rule = ""
+        rules = [
+            "Narrate the concrete immediate consequence of the player's action.",
+            "Ground narration in the scene and knowledge context.",
+            "Use the authored place, texture, and physical detail.",
+            "Answer what the player actually did.",
+            "Never invent durable evidence, physical objects, items, or container contents.",
+            "Treat the authored entry_text and beat details as already true.",
+            "A grounding ID may name only committed knowledge or the selected candidate.",
+            "Never ground on a candidate you did not select.",
+            "Dialogue may use only its speaker's sayable knowledge.",
+            *selection_rules,
+            "Never write source IDs, events, operations, facts, or transitions as prose.",
+            f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
+            "Never reuse a beat's sentences.",
+            "Never contradict authored text.",
+            "Never echo the request fields.",
+        ]
+        if handoff_rule:
+            rules.append(handoff_rule)
+        return "\n".join(
+            [
+                *(f"<rule>{rule}</rule>" for rule in rules),
+                '<output_example>{"segments":[{"kind":"narration","text":"The drawer catches, then opens."}],'
+                '"selected_knowledge_ids":[]}</output_example>',
+            ]
         )
 
     def opening(self) -> object:
         """Continue the authored entry text, before any player input exists."""
 
         self.last_projection = self.projector.project(self.state, "player", "")
+        entry = self._scene_entry()
+        rules = [
+            "The player has already read entry_text as the opening paragraph; write only what follows it in the "
+            "same voice and tense.",
+            "Dramatize only the opening beat and knowledge context as the protagonist encounters them.",
+            "Do not repeat or paraphrase entry_text, invent evidence, characters, or events, resolve the objective, "
+            "act for the protagonist, or offer choices.",
+            f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
+            "Keep selected_knowledge_ids empty.",
+            "Never write source IDs, events, operations, facts, or transitions as prose.",
+            "Do not contradict authored entry_text or beat details, and do not invent physical objects, items, or "
+            "contents.",
+        ]
         return self._dispatch(
-            (
-                "Return one JSON TurnProposal matching response_schema. The player has already read "
-                "scene_entry.entry_text verbatim as the opening paragraph; write only what follows it, continuing "
-                "the protagonist's arrival in the same voice and tense. Embellish strictly from "
-                "scene_entry.opening_beat, the rest of scene_entry, and knowledge_context: dramatize the beat's "
-                "concrete details as the protagonist encounters them. Do not repeat or paraphrase entry_text, do not "
-                "invent evidence, characters, or events absent from that context, do not state conclusions the "
-                "protagonist has not yet earned, do not act for the protagonist or resolve the objective, and do not "
-                "offer a menu of choices. Return several paragraphs as separate segments, with each segment containing "
-                f"one paragraph of roughly 30 to 55 words; return at most {MAX_TURN_SEGMENTS} segments. "
-                "authored entry_text and "
-                "authored beat details are already true: do not contradict, soften, or reopen them as questions. Do "
-                "not invent physical objects, items, or contents absent from that authored context. Leave "
-                "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
+            "\n".join(
+                [
+                    *(f"<rule>{rule}</rule>" for rule in rules),
+                    '<output_example>{"segments":[{"kind":"narration","text":"The house waits beyond the gate."}],'
+                    '"selected_knowledge_ids":[]}</output_example>',
+                ]
             ),
-            {
-                "scene_entry": self._scene_entry(),
-                "knowledge_context": {"player": self.last_projection.model_dump(mode="json")},
-            },
+            {"scene_entry": entry, "knowledge_context": {"player": self.last_projection.model_dump(mode="json")}},
         )
 
     def _scene_setting(self) -> dict[str, object]:
@@ -371,18 +382,9 @@ class CloudflareTurnProvider:
         if self.last_projection is None:
             return {}
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
-        beat_anchors = {beat["anchor"] for beat in scene_setting.get("beats", []) if isinstance(beat, dict)}
-        covered_ids = self._beat_covered_candidate_ids(beat_anchors)
-        context["candidates"] = [
-            (
-                # An empty must_convey leaves the statement as the only name for the fact;
-                # removing both exposed scene 3C's candidates as bare IDs and stalled it.
-                {key: value for key, value in candidate.items() if key != "statement"}
-                if candidate["id"] in covered_ids and candidate["must_convey"]
-                else candidate
-            )
-            for candidate in context["candidates"]
-        ]
+        # Every candidate statement remains an explicit item in the tagged prompt;
+        # the beat is additional dramatic context, not a replacement for the claim.
+        context["candidates"] = list(context["candidates"])
         return context
 
     def _beat_covered_candidate_ids(self, beat_anchors: set[object]) -> set[str]:
@@ -492,7 +494,7 @@ class CloudflareTurnProvider:
 
         payload = {
             "system": system,
-            "user": json.dumps({**user, "response_schema": _PROVIDER_RESPONSE_SCHEMA}, separators=(",", ":")),
+            "user": self._tagged_user_prompt(user),
             "max_tokens": 1024,
             "response_format": {"type": "json_object"},
         }
@@ -597,6 +599,64 @@ class CloudflareTurnProvider:
                 "INVALID_PROPOSAL",
             ) from error
         return self._cap_accepted_response(response, proposal)
+
+    @staticmethod
+    def _tagged_user_prompt(user: dict[str, object]) -> str:
+        """Render model context as distinct, whole tagged items."""
+
+        lines: list[str] = []
+
+        def add(name: str, value: object, **attrs: object) -> None:
+            attributes = "".join(f' {key}="{value}"' for key, value in attrs.items())
+            lines.append(f"<{name}{attributes}>{value}</{name}>")
+
+        scene_entry = user.get("scene_entry")
+        if isinstance(scene_entry, dict):
+            add("protagonist", scene_entry["protagonist"])
+            add("location", scene_entry["location"])
+            add("phase", scene_entry["phase"])
+            add("objective", scene_entry["objective"])
+            add("entry_text", _plain(scene_entry["entry_text"]))
+            beat = scene_entry["opening_beat"]
+            add("beat_title", beat["title"])
+            add("beat", _plain(beat["prose"]))
+            add(
+                "beat_job",
+                "Dramatize this world state only as far as the protagonist's arrival reaches; never reproduce its "
+                "wording.",
+            )
+
+        context = user.get("knowledge_context", {})
+        player = context.get("player", {}) if isinstance(context, dict) else {}
+        if isinstance(player, dict):
+            add("scene_id", player["scene_id"])
+            add("phase", player["phase"])
+            add("situation", _plain(player["scene_frame"]))
+            add("pressure", player["pressure"])
+            scene_setting = user.get("scene_setting")
+            if isinstance(scene_setting, dict):
+                add("entry_text", _plain(scene_setting["entry_text"]))
+                for beat in scene_setting.get("beats", []):
+                    if isinstance(beat, dict):
+                        add("beat_title", beat["title"])
+                        add("beat", _plain(beat["already_true_in_the_world"]))
+                        add("beat_job", beat["your_job"])
+            for item in player.get("committed_knowledge", []):
+                add("known", item["statement"], id=item["id"])
+            for candidate in player.get("candidates", []):
+                add("candidate", candidate["statement"], id=candidate["id"])
+                for group in candidate.get("must_convey", []):
+                    if group:
+                        add("must_convey", group[0], candidate=candidate["id"])
+        if isinstance(context, dict):
+            speakers = context.get("speakers", {})
+            if isinstance(speakers, dict):
+                for speaker_id, speaker in speakers.items():
+                    for item in speaker.get("sayable_knowledge", []):
+                        add("speaker", item["statement"], id=speaker_id)
+        if "player_input" in user:
+            add("player_input", user["player_input"])
+        return "\n".join(lines)
 
     def _cap_accepted_response(self, response: object, proposal: TurnProposal) -> object:
         """Bound accepted narration while retaining an out-of-band reveal segment."""

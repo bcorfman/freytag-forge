@@ -159,11 +159,11 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert [item.fact_id for item in projection.handoff_deliveries] == ["transport_route_identified"]
     serialized = json.dumps(captured["payload"]).casefold()
     assert "rebecca_observing_infiltrators" not in serialized
-    assert "this is a handoff turn" in captured["payload"]["system"].casefold()
+    assert "declared handoff intervention" in captured["payload"]["system"].casefold()
     assert "do not claim that the player took an action they did not take" in captured["payload"]["system"].casefold()
     state.staged_handoff_fact_ids = ()
     provider("I keep watch.")
-    assert "this is a hint turn" in captured["payload"]["system"].casefold()
+    assert "hinted evidence" in captured["payload"]["system"].casefold()
 
 
 def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:
