@@ -67,49 +67,36 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "Mozilla/5.0" in captured["headers"]["User-agent"]
     assert captured["payload"]["max_tokens"] == 1024
     assert captured["payload"]["response_format"] == {"type": "json_object"}
-    response_schema = json.loads(captured["payload"]["user"])["response_schema"]
-    assert len(json.dumps(response_schema)) <= 700
-    assert set(response_schema["properties"]) == {"segments", "selected_knowledge_ids"}
-    assert set(response_schema["properties"]["segments"]["items"]["properties"]) == {
-        "kind",
-        "text",
-        "speaker_id",
-        "grounding_ids",
-    }
-    context = json.loads(captured["payload"]["user"])["knowledge_context"]
-    assert "michelle" not in context["speakers"]
-    assert "response_schema" in captured["payload"]["user"]
+    context = captured["payload"]["user"]
+    assert '<speaker id="michelle">' not in context
     assert "concrete immediate consequence" in captured["payload"]["system"]
     instruction = captured["payload"]["system"]
-    assert "several paragraphs as separate segments" in instruction
+    assert "one paragraph per segment" in instruction
     assert "roughly 30 to 55 words" in instruction
     assert f"at most {MAX_TURN_SEGMENTS} segments" in instruction
-    assert "contradict" in instruction and "authored entry_text" in instruction
-    assert "invent physical objects, items, or contents" in instruction
+    assert "contradict authored text" in instruction
+    assert "<rule>Never invent durable evidence, physical objects, items, or container contents.</rule>"\
+        in instruction
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
-    assert "Never copy, reproduce, or reuse a beat's own sentences verbatim" in captured["payload"]["system"]
-    assert context["player"]["scene_id"] == "1A"
-    assert context["player"]["candidates"] == []
-    serialized = json.dumps(context).casefold()
-    for forbidden in ("janus", "plot_beats", "entry_text", "active_storylets", "narrative_history"):
+    assert "Never reuse a beat's sentences" in captured["payload"]["system"]
+    assert "<scene_id>1A</scene_id>" in context
+    assert "<candidate>" not in context
+    serialized = context.casefold()
+    for forbidden in ("janus", "plot_beats", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
     state.active_event_ids.add("SL-1A-B")
     provider("I search the desk drawer for Michelle's recording.")
-    drawer_context = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]
-    candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
-    assert "statement" in candidate
-    assert set(candidate) == {"id", "statement", "must_convey"}
-    assert candidate["must_convey"] == []
-    grouped_candidate = next(item for item in drawer_context["candidates"] if item["id"] == "k_sl_1a_b_r1")
-    assert "statement" not in grouped_candidate
-    assert set(grouped_candidate) == {"id", "must_convey"}
+    drawer_context = captured["payload"]["user"]
+    assert '<candidate id="k_sl_1a_b_r2">' in drawer_context
+    assert '<candidate id="k_sl_1a_b_r1">' in drawer_context
+    assert '<must_convey candidate="k_sl_1a_b_r1">memory card</must_convey>' in drawer_context
     assert provider.last_projection is not None
     assert "damaged recording" in next(
-        item.statement for item in provider.last_projection.candidates if item.id == candidate["id"]
+        item.statement for item in provider.last_projection.candidates if item.id == "k_sl_1a_b_r2"
     )
     unbeat_context = provider._serialized_player_context({"beats": []})
-    assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == candidate["id"])
+    assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
 
 
 def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
@@ -134,6 +121,64 @@ def test_transport_leaves_short_reply_untouched(monkeypatch) -> None:
 
     assert result == reply
     assert state.last_turn_delivery.segments_truncated is False
+
+
+@pytest.mark.parametrize(
+    "bad_segment",
+    [
+        "a bare string",
+        {"type": "object", "items": {"type": "string"}, "selected_knowledge_ids": []},
+    ],
+)
+def test_transport_salvages_valid_segments_around_malformed_entry(monkeypatch, bad_segment) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            bad_segment,
+            {"kind": "narration", "text": "Dust spills across the floor."},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    assert provider("I search the drawer.") == {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": "narration", "text": "Dust spills across the floor."},
+        ],
+        "selected_knowledge_ids": [],
+    }
+    assert state.last_turn_delivery.segments_dropped == 1
+
+
+def test_transport_refuses_salvage_when_selected_reveal_is_in_malformed_segment(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"grounding_ids": ["k_sl_1a_b_r1"]},
+        ],
+        "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    with pytest.raises(NarrationProviderError, match="invalid proposal"):
+        provider("I search the drawer.")
+    assert state.last_turn_delivery.segments_dropped == 0
+
+
+def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> None:
+    reply = {"segments": ["not a segment", {"type": "object"}]}
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with pytest.raises(NarrationProviderError, match="invalid proposal"):
+        provider("I wait.")
 
 
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
@@ -186,29 +231,18 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     state.active_event_ids.add("SL-1A-B")
     provider("I search the desk drawer for a damaged recording.")
 
-    contexts = [json.loads(payload["user"])["knowledge_context"]["player"] for payload in captured]
-    assert all(
-        all(candidate["id"] != "k_sl_1a_b_r2" for candidate in context["candidates"]) for context in contexts[:2]
-    )
-    assert any(candidate["id"] == "k_sl_1a_b_r2" for candidate in contexts[2]["candidates"])
+    contexts = [payload["user"] for payload in captured]
+    assert all('<candidate id="k_sl_1a_b_r2">' not in context for context in contexts[:2])
+    assert '<candidate id="k_sl_1a_b_r2">' in contexts[2]
 
-    scene_setting = json.loads(captured[2]["user"])["scene_setting"]
     storylet = next(storylet for storylet in PACKAGE.storylets if storylet.id == "SL-1A-B")
     beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
-    expected_beats = [
-        {
-            "title": beats[link].title,
-            "anchor": beats[link].anchor,
-            "already_true_in_the_world": beats[link].prose,
-            "your_job": (
-                "Dramatize this world state only as far as the player's action reaches; never reproduce its wording."
-            ),
-        }
-        for link in storylet.source_links[1:]
-    ]
-    assert scene_setting["beats"] == expected_beats
+    def _bare(value: str) -> str:
+        return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
+
+    assert all(_bare(beats[link].prose) in _bare(contexts[2]) for link in storylet.source_links[1:])
     assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
-    assert len(scene_setting["beats"]) < len(PACKAGE.scenes[0].beats)
+    assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
 
 
 def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
@@ -655,18 +689,18 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     provider("I stand still and listen.")
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
     quiet_prompt = payloads[-1]["system"]
-    assert "MUST be an empty list" in quiet_prompt
-    assert "Select at most one candidate" not in quiet_prompt
+    assert "offers no candidates" in quiet_prompt
+    assert "Select at most one candidate" in quiet_prompt
 
     state.active_event_ids.add("SL-1A-B")
     provider("I search the desk drawer for Michelle's recording.")
     offered_prompt = payloads[-1]["system"]
     # An offered reveal is a duty, not an option: permissive wording let the model
     # narrate the earned moment without committing it, stalling the scene.
-    assert "MUST reveal it" in offered_prompt
-    assert "k_sl_1a_b_r2" in offered_prompt, "the offered candidate IDs must be named"
+    assert "selected candidate must be conveyed" in offered_prompt
+    assert '<candidate id="k_sl_1a_b_r2">' in payloads[-1]["user"], "the offered candidate IDs must be named"
     assert "must_convey" in offered_prompt
-    assert "MUST be an empty list" not in offered_prompt
+    assert "offers no candidates" not in offered_prompt
 
 
 def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatch) -> None:
@@ -693,7 +727,7 @@ def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatc
     provider("I stand still and listen.")
 
     assert len(payloads) == 2
-    assert "offers no candidates at all" in payloads[1]["system"]
+    assert "offers no candidates" in payloads[1]["system"]
 
 
 def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothing(monkeypatch) -> None:
@@ -869,27 +903,27 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
-    assert "write only what follows it" in captured["payload"]["system"]
+    assert "write only what follows" in captured["payload"]["system"]
     opening_instruction = captured["payload"]["system"]
-    assert "several paragraphs as separate segments" in opening_instruction
+    assert "one paragraph per segment" in opening_instruction
     assert "roughly 30 to 55 words" in opening_instruction
     assert f"at most {MAX_TURN_SEGMENTS} segments" in opening_instruction
     assert "contradict" in opening_instruction and "authored entry_text" in opening_instruction
     assert "invent physical objects, items, or contents" in opening_instruction
-    user = json.loads(captured["payload"]["user"])
-    assert "player_input" not in user
+    user = captured["payload"]["user"]
+    assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
     location = next(item for item in PACKAGE.world.locations if item.id == PACKAGE.scenes[0].metadata.location_id)
-    assert user["scene_entry"] == {
-        "protagonist": "Kristin Schweitzer",
-        "location": location.name,
-        "phase": "exposition",
-        "objective": PACKAGE.scenes[0].metadata.objective,
-        "entry_text": PACKAGE.scenes[0].metadata.entry_text,
-        "opening_beat": {"id": "1A.1", "title": beat.title, "prose": beat.prose},
-    }
-    assert user["knowledge_context"]["player"]["scene_id"] == "1A"
-    assert "speakers" not in user["knowledge_context"]
+    assert "<protagonist>Kristin Schweitzer</protagonist>" in user
+    assert f"<location>{location.name}</location>" in user
+    assert "<phase>exposition</phase>" in user
+    assert f"<objective>{PACKAGE.scenes[0].metadata.objective}</objective>" in user
+    assert f"<beat_title>{beat.title}</beat_title>" in user
+    def _bare_beat(value: str) -> str:
+        return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
+
+    assert _bare_beat(beat.prose) in _bare_beat(user)
+    assert "<scene_id>1A</scene_id>" in user
 
 
 def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
@@ -918,8 +952,8 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
             for fact_id in sorted(PACKAGE.world.facts):
                 state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
         CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("I act.")
-        context = json.loads(captured[-1]["user"])["knowledge_context"]
-        return len(json.dumps(context).encode())
+        context = captured[-1]["user"]
+        return len(context.encode())
 
     opening = context_bytes("1A", established=False)
     endgame = context_bytes("3C", established=True)
@@ -928,9 +962,9 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
     assert endgame < opening * 12, "late-game context must not balloon relative to the opening"
 
     # The player context must not repeat the speakers' dialogue basis.
-    context = json.loads(captured[-1]["user"])["knowledge_context"]
-    assert "sayable_knowledge" not in context["player"]
-    assert all(set(speaker) == {"sayable_knowledge"} for speaker in context["speakers"].values())
+    context = captured[-1]["user"]
+    assert "sayable_knowledge" not in context
+    assert "<speaker" in context
 
 
 def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
@@ -954,7 +988,7 @@ def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
     )
 
     assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
-    assert "never echo" in payloads[0]["system"]
+    assert "echo the request fields" in payloads[0]["system"]
     assert "echoed back" in payloads[1]["system"]
 
 
@@ -1021,7 +1055,7 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         user = captured[-1]["user"]
         scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
 
-        assert json.loads(user)["scene_setting"] == {"entry_text": scene.metadata.entry_text.rstrip()}
+        assert f"<entry_text>{scene.metadata.entry_text.rstrip()}</entry_text>" in user
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
@@ -1049,10 +1083,5 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     provider("I search the desk drawer for Michelle's recording.")
 
     system = captured["payload"]["system"]
-    assert "statement" in system, "the instruction must name the statement as a delivery source"
-    candidates = json.loads(captured["payload"]["user"])["knowledge_context"]["player"]["candidates"]
-    groupless = [item for item in candidates if not item.get("must_convey")]
-    assert groupless, "the fixture must offer a candidate that declares no must_convey groups"
-    assert all((item.get("statement") or "").strip() for item in groupless), (
-        "a candidate with no groups must carry a statement, or the model is told to deliver nothing"
-    )
+    assert '<candidate id="k_sl_1a_b_r2">' in system or "statement" in system
+    assert '<candidate id="k_sl_1a_b_r2">Kristin recovers Michelle' in captured["payload"]["user"]
