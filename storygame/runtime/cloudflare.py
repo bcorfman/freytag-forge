@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from storygame.runtime.contracts import (
+    NarrationSegment,
     RuntimeContractError,
     TurnProposal,
     contract_error_summary,
@@ -511,6 +512,13 @@ class CloudflareTurnProvider:
             try:
                 proposal = self._parse_eligible_proposal(response)
             except RuntimeContractError as error:
+                salvaged = self._salvage_malformed_segments(response, error)
+                if salvaged is not None:
+                    try:
+                        proposal = self._parse_eligible_proposal(salvaged)
+                    except RuntimeContractError as salvage_error:
+                        return self._recover_malformed_response(payload, getattr(salvage_error, "hint", ""))
+                    return self._cap_accepted_response(salvaged, proposal)
                 return self._recover_malformed_response(payload, getattr(error, "hint", ""))
             return self._cap_accepted_response(response, proposal)
 
@@ -609,6 +617,73 @@ class CloudflareTurnProvider:
             "segments": [segment.model_dump(mode="json") for segment in kept],
             "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
         }
+
+    def _salvage_malformed_segments(self, response: object, error: RuntimeContractError) -> dict[str, object] | None:
+        """Keep valid segment objects from a proposal with malformed array entries.
+
+        This is deliberately limited to the first provider reply.  A selected
+        reveal is only salvageable when its grounding survives in a valid
+        segment; otherwise retaining the selection would commit knowledge the
+        player never saw.
+        """
+
+        payload = response
+        if isinstance(payload, dict) and "response" in payload:
+            payload = payload["response"]
+        if isinstance(payload, dict) and "content" in payload:
+            payload = payload["content"]
+        if not isinstance(payload, dict) or not isinstance(payload.get("segments"), list):
+            return None
+
+        raw_segments = payload["segments"]
+        valid_segments: list[NarrationSegment] = []
+        valid_raw_segments: list[dict[str, object]] = []
+        dropped_shapes: list[str] = []
+        for segment in raw_segments:
+            try:
+                parsed_segment = NarrationSegment.model_validate(segment)
+            except Exception:  # noqa: BLE001 - provider values are untrusted
+                dropped_shapes.append(self._segment_shape(segment))
+            else:
+                valid_segments.append(parsed_segment)
+                valid_raw_segments.append(segment)
+        if not dropped_shapes or not valid_segments:
+            return None
+
+        selected = payload.get("selected_knowledge_ids", [])
+        if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
+            return None
+        grounded = {item for segment in valid_segments for item in segment.grounding_ids}
+        if any(knowledge_id not in grounded for knowledge_id in selected):
+            return None
+
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={"segments_dropped": len(dropped_shapes)}
+        )
+        self._log_segment_salvage(error, len(dropped_shapes), tuple(dropped_shapes))
+        return {
+            "segments": valid_raw_segments,
+            "selected_knowledge_ids": selected,
+        }
+
+    @staticmethod
+    def _segment_shape(value: object) -> str:
+        if isinstance(value, dict):
+            keys = ",".join(sorted(str(key) for key in value))
+            return f"object(keys={keys})"
+        return type(value).__name__
+
+    def _log_segment_salvage(self, error: RuntimeContractError, count: int, shapes: tuple[str, ...]) -> None:
+        cause = error.__cause__
+        logger.warning(
+            "Narration reply contained malformed segments; dropped %d segment(s) with shape(s)=%s "
+            "(worker host=%s; underlying exception type=%s; message=%s)",
+            count,
+            ",".join(shapes),
+            urlsplit(self.worker_url).hostname,
+            type(cause).__name__ if cause is not None else type(error).__name__,
+            contract_error_summary(error) or self._safe_error_message(error),
+        )
 
     def _parse_eligible_proposal(self, response: object) -> TurnProposal:
         proposal = parse_turn_proposal(response)

@@ -136,6 +136,64 @@ def test_transport_leaves_short_reply_untouched(monkeypatch) -> None:
     assert state.last_turn_delivery.segments_truncated is False
 
 
+@pytest.mark.parametrize(
+    "bad_segment",
+    [
+        "a bare string",
+        {"type": "object", "items": {"type": "string"}, "selected_knowledge_ids": []},
+    ],
+)
+def test_transport_salvages_valid_segments_around_malformed_entry(monkeypatch, bad_segment) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            bad_segment,
+            {"kind": "narration", "text": "Dust spills across the floor."},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    assert provider("I search the drawer.") == {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": "narration", "text": "Dust spills across the floor."},
+        ],
+        "selected_knowledge_ids": [],
+    }
+    assert state.last_turn_delivery.segments_dropped == 1
+
+
+def test_transport_refuses_salvage_when_selected_reveal_is_in_malformed_segment(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"grounding_ids": ["k_sl_1a_b_r1"]},
+        ],
+        "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    with pytest.raises(NarrationProviderError, match="invalid proposal"):
+        provider("I search the drawer.")
+    assert state.last_turn_delivery.segments_dropped == 0
+
+
+def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> None:
+    reply = {"segments": ["not a segment", {"type": "object"}]}
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with pytest.raises(NarrationProviderError, match="invalid proposal"):
+        provider("I wait.")
+
+
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
