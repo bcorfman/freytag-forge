@@ -24,6 +24,8 @@ from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
+MAX_TURN_SEGMENTS = 5
+
 # Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
 # before a request can reach the Worker at all, so every caller must send this.
 BROWSER_USER_AGENT = (
@@ -294,7 +296,8 @@ class CloudflareTurnProvider:
             f"applies, and never ground on a candidate you do not select. Dialogue may use only its speaker's "
             f"sayable context. {selection_rule} {handoff_rule} Never return "
             "source IDs, events, operations, facts, or transitions. Return several paragraphs as separate segments, "
-            "with each segment containing one paragraph of roughly 30 to 55 words. Return at most five segments so "
+            f"with each segment containing one paragraph of roughly 30 to 55 words. Return at most {MAX_TURN_SEGMENTS} "
+            "segments so "
             "the turn stays bounded, and write the JSON on one line with no indentation. Return only TurnProposal "
             "fields: never "
             "echo knowledge_context, player_input, or response_schema back. Never copy, reproduce, or reuse a beat's "
@@ -315,7 +318,7 @@ class CloudflareTurnProvider:
                 "invent evidence, characters, or events absent from that context, do not state conclusions the "
                 "protagonist has not yet earned, do not act for the protagonist or resolve the objective, and do not "
                 "offer a menu of choices. Return several paragraphs as separate segments, with each segment containing "
-                "one paragraph of roughly 30 to 55 words; return at most five segments. Leave "
+                f"one paragraph of roughly 30 to 55 words; return at most {MAX_TURN_SEGMENTS} segments. Leave "
                 "selected_knowledge_ids empty. Never return source IDs, events, operations, facts, or transitions."
             ),
             {
@@ -497,10 +500,10 @@ class CloudflareTurnProvider:
             raise NarrationProviderError("narration service is unavailable") from error
         else:
             try:
-                self._parse_eligible_proposal(response)
+                proposal = self._parse_eligible_proposal(response)
             except RuntimeContractError as error:
                 return self._recover_malformed_response(payload, getattr(error, "hint", ""))
-            return response
+            return self._cap_accepted_response(response, proposal)
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         self._record_recovery()
@@ -548,12 +551,12 @@ class CloudflareTurnProvider:
         """
 
         try:
-            self._parse_eligible_proposal(response)
+            proposal = self._parse_eligible_proposal(response)
         except _EligibilityError:
             proposal = parse_turn_proposal(response)
             if self.last_projection and self.last_projection.handoff_deliveries:
                 return self._fallback_handoff()
-            return {
+            narration_only = {
                 "segments": [
                     {
                         "kind": segment.kind,
@@ -564,6 +567,9 @@ class CloudflareTurnProvider:
                 ],
                 "selected_knowledge_ids": [],
             }
+            return self._cap_accepted_response(
+                narration_only, proposal.model_copy(update={"selected_knowledge_ids": ()})
+            )
         except RuntimeContractError as error:
             if self.last_projection and self.last_projection.handoff_deliveries:
                 return self._fallback_handoff()
@@ -573,7 +579,27 @@ class CloudflareTurnProvider:
                 502,
                 "INVALID_PROPOSAL",
             ) from error
-        return response
+        return self._cap_accepted_response(response, proposal)
+
+    def _cap_accepted_response(self, response: object, proposal: TurnProposal) -> object:
+        """Bound accepted narration while retaining an out-of-band reveal segment."""
+
+        if len(proposal.segments) <= MAX_TURN_SEGMENTS:
+            return response
+        kept = list(proposal.segments[:MAX_TURN_SEGMENTS])
+        if proposal.selected_knowledge_ids:
+            selected_id = proposal.selected_knowledge_ids[0]
+            delivering = next(
+                (segment for segment in proposal.segments if selected_id in segment.grounding_ids),
+                None,
+            )
+            if delivering is not None and delivering not in kept:
+                kept.append(delivering)
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"segments_truncated": True})
+        return {
+            "segments": [segment.model_dump(mode="json") for segment in kept],
+            "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+        }
 
     def _parse_eligible_proposal(self, response: object) -> TurnProposal:
         proposal = parse_turn_proposal(response)

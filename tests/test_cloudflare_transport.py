@@ -10,7 +10,7 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
-from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.cloudflare import MAX_TURN_SEGMENTS, CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -83,6 +83,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     instruction = captured["payload"]["system"]
     assert "several paragraphs as separate segments" in instruction
     assert "roughly 30 to 55 words" in instruction
+    assert f"at most {MAX_TURN_SEGMENTS} segments" in instruction
     assert "authored entry_text and authored beat details are already true" not in instruction
     assert "invent physical objects, items, or contents" not in instruction
     assert "at most two sentences" not in instruction
@@ -109,6 +110,51 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     )
     unbeat_context = provider._serialized_player_context({"beats": []})
     assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == candidate["id"])
+
+
+def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
+    reply = {"segments": [{"kind": "narration", "text": f"Opening {index}."} for index in range(9)]}
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    result = provider("I look around.")
+
+    assert [segment["text"] for segment in result["segments"]] == [f"Opening {i}." for i in range(5)]
+    assert state.last_turn_delivery.segments_truncated is True
+
+
+def test_transport_leaves_short_reply_untouched(monkeypatch) -> None:
+    reply = {"segments": [{"kind": "narration", "text": f"Paragraph {index}."} for index in range(3)]}
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    result = provider("I listen.")
+
+    assert result == reply
+    assert state.last_turn_delivery.segments_truncated is False
+
+
+def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    filler = [{"kind": "narration", "text": f"Filler {index}."} for index in range(MAX_TURN_SEGMENTS + 1)]
+    delivery = {
+        "kind": "narration",
+        "text": "Taped beneath the drawer she finds Michelle's hidden memory card and a damaged recording, "
+        "naming a dead drop at a bench in the park.",
+        "grounding_ids": ["k_sl_1a_b_r1"],
+    }
+    reply = {"segments": [*filler, delivery], "selected_knowledge_ids": ["k_sl_1a_b_r1"]}
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    result = provider("I search under the drawers.")
+
+    assert len(result["segments"]) == MAX_TURN_SEGMENTS + 1
+    assert result["segments"][-1]["grounding_ids"] == ["k_sl_1a_b_r1"]
+    assert "memory card" in result["segments"][-1]["text"]
 
 
 def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
@@ -825,6 +871,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     opening_instruction = captured["payload"]["system"]
     assert "several paragraphs as separate segments" in opening_instruction
     assert "roughly 30 to 55 words" in opening_instruction
+    assert f"at most {MAX_TURN_SEGMENTS} segments" in opening_instruction
     assert "authored entry_text and authored beat details are already true" not in opening_instruction
     assert "invent physical objects, items, or contents" not in opening_instruction
     user = json.loads(captured["payload"]["user"])
