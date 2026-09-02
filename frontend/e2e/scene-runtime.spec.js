@@ -112,9 +112,11 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   test.setTimeout(20 * 60_000);
   const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
   const controller = await installPackageClock(page);
-  await startSceneSession(page);
+  const sessionPayload = await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
-  const byScene = new Map([["1A", { opening, turns: [] }]]);
+  const byScene = new Map([
+    ["1A", { opening, turns: [], ...(sessionPayload?.prompt ? { opening_prompt: sessionPayload.prompt } : {}) }],
+  ]);
   const sceneOrder = pacing.sceneOrder;
   let sceneId = "1A";
   let turnIndex = 0;
@@ -221,10 +223,15 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
           narration: sceneNarration,
           left_scene: entered,
           beats_projected: payload.delivery?.beats_projected || [],
+          ...(payload.prompt ? { prompt: payload.prompt } : {}),
         });
       }
       if (entered && !byScene.has(reachedSceneId)) {
-        byScene.set(reachedSceneId, { opening: segments.at(-1).text.trim(), turns: [] });
+        byScene.set(reachedSceneId, {
+          opening: segments.at(-1).text.trim(),
+          turns: [],
+          ...(payload.prompt ? { opening_prompt: payload.prompt } : {}),
+        });
       }
       sceneId = reachedSceneId;
       turnIndex = payload.state?.turn_index;

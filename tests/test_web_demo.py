@@ -28,6 +28,14 @@ class _StubProvider:
         return {"segments": [{"kind": "narration", "text": self.turn_text}]}
 
 
+class _PromptProvider(_StubProvider):
+    last_prompt = {"system": "<system>verbatim system</system>", "user": "<user>verbatim user</user>"}
+
+
+def _prompt_provider(_state):
+    return _PromptProvider("The prompt is captured.", "The opening is captured.")
+
+
 class _TurnFailureProvider(_StubProvider):
     """Keep the scene opening valid so a test can isolate an ordinary-turn failure."""
 
@@ -112,6 +120,40 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "segments_dropped": 0,
     }
     json.dumps(turn.json())
+
+
+def test_prompt_is_absent_by_default(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("FREYTAG_EXPOSE_PROMPT", raising=False)
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=_prompt_provider)
+
+    with TestClient(app) as client:
+        session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+        turn = client.post(
+            "/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "I listen."}
+        )
+
+    assert "prompt" not in session.json()
+    assert "prompt" not in turn.json()
+
+
+def test_prompt_is_exposed_verbatim_on_session_and_turn(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_EXPOSE_PROMPT", "1")
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=_prompt_provider)
+    expected = _PromptProvider.last_prompt
+
+    with TestClient(app) as client:
+        session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+        turn = client.post(
+            "/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "I listen."}
+        )
+
+    assert session.json()["prompt"] == expected
+    assert turn.json()["prompt"] == expected
+    for response in (session, turn):
+        serialized = response.text
+        assert "Authorization" not in serialized
+        assert "Bearer" not in serialized
+        assert "CLOUDFLARE_WORKER_TOKEN" not in serialized
 
 
 def test_hosted_adapter_reports_turn_index_and_scene_relative_turns(tmp_path) -> None:

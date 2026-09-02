@@ -201,6 +201,7 @@ class CloudflareTurnProvider:
         self.state = state
         self.projector = projector or KnowledgeProjector()
         self.last_projection: TurnKnowledgeContext | None = None
+        self.last_prompt: dict[str, str] | None = None
         self.grounding_attributions: tuple[str, ...] = ()
 
     @classmethod
@@ -997,6 +998,7 @@ class CloudflareTurnProvider:
                 raise error from first_failure
 
     def _request(self, payload: dict[str, object]) -> object:
+        self.last_prompt = {"system": payload["system"], "user": payload["user"]}
         headers = {
             "Content-Type": "application/json",
             "User-Agent": BROWSER_USER_AGENT,
