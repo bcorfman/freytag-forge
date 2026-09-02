@@ -109,6 +109,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "hint_staged": False,
         "handoff_staged": False,
         "segments_truncated": False,
+        "segments_dropped": 0,
     }
     json.dumps(turn.json())
 
