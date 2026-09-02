@@ -296,7 +296,8 @@ class CloudflareTurnProvider:
             "Ground narration in the scene and knowledge context.",
             "Use the authored place, texture, and physical detail.",
             "Answer what the player actually did.",
-            "Never invent durable evidence.",
+            "Never invent durable evidence, physical objects, items, or container contents.",
+            "Treat the authored entry_text and beat details as already true.",
             "A grounding ID may name only committed knowledge or the selected candidate.",
             "Never ground on a candidate you did not select.",
             "Dialogue may use only its speaker's sayable knowledge.",
@@ -304,6 +305,7 @@ class CloudflareTurnProvider:
             "Never write source IDs, events, operations, facts, or transitions as prose.",
             f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Never reuse a beat's sentences.",
+            "Never contradict authored text.",
             "Never echo the request fields.",
         ]
         if handoff_rule:
@@ -339,6 +341,8 @@ class CloudflareTurnProvider:
             "act for the protagonist, or offer choices.",
             f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Keep selected_knowledge_ids empty.",
+            "Do not contradict authored entry_text or beat details.",
+            "Do not invent physical objects, items, or contents the authored context does not describe.",
             "Never write source IDs, events, operations, facts, or transitions as prose.",
         ]
         return self._dispatch(
