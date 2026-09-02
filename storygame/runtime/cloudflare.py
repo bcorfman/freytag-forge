@@ -297,8 +297,7 @@ class CloudflareTurnProvider:
             "Ground narration in the scene and knowledge context.",
             "Use the authored place, texture, and physical detail.",
             "Answer what the player actually did.",
-            "Never invent durable evidence, physical objects, items, or container contents.",
-            "Treat the authored entry_text and beat details as already true.",
+            "Never invent durable evidence.",
             "A grounding ID may name only committed knowledge or the selected candidate.",
             "Never ground on a candidate you did not select.",
             "Dialogue may use only its speaker's sayable knowledge.",
@@ -306,7 +305,6 @@ class CloudflareTurnProvider:
             "Never write source IDs, events, operations, facts, or transitions as prose.",
             f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Never reuse a beat's sentences.",
-            "Never contradict authored text.",
             "Never echo the request fields.",
         ]
         if handoff_rule:
@@ -343,8 +341,6 @@ class CloudflareTurnProvider:
             f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Keep selected_knowledge_ids empty.",
             "Never write source IDs, events, operations, facts, or transitions as prose.",
-            "Do not contradict authored entry_text or beat details, and do not invent physical objects, items, or "
-            "contents.",
         ]
         return self._dispatch(
             "\n".join(
@@ -384,7 +380,7 @@ class CloudflareTurnProvider:
                 {
                     "title": beat.title,
                     "anchor": beat.anchor,
-                    "already_true_in_the_world": beat.prose,
+                    "details": list(beat.details),
                     "your_job": (
                         "Dramatize this world state only as far as the player's action reaches; "
                         "never reproduce its wording."
@@ -504,7 +500,7 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
-            "opening_beat": {"id": beat.id, "title": beat.title, "prose": beat.prose},
+            "opening_beat": {"id": beat.id, "title": beat.title, "details": list(beat.details)},
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:
@@ -637,7 +633,8 @@ class CloudflareTurnProvider:
             add("entry_text", _plain(scene_entry["entry_text"]))
             beat = scene_entry["opening_beat"]
             add("beat_title", beat["title"])
-            add("beat", _plain(beat["prose"]))
+            for detail in beat.get("details", []):
+                add("beat_detail", _plain(detail))
             add(
                 "beat_job",
                 "Dramatize this world state only as far as the protagonist's arrival reaches; never reproduce its "
@@ -657,7 +654,8 @@ class CloudflareTurnProvider:
                 for beat in scene_setting.get("beats", []):
                     if isinstance(beat, dict):
                         add("beat_title", beat["title"])
-                        add("beat", _plain(beat["already_true_in_the_world"]))
+                        for detail in beat.get("details", []):
+                            add("beat_detail", _plain(detail))
                         add("beat_job", beat["your_job"])
             for item in player.get("committed_knowledge", []):
                 add("known", item["statement"], id=item["id"])
