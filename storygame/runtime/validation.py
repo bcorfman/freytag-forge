@@ -84,6 +84,62 @@ def derive_grounding(
     return ()
 
 
+def derive_statement_grounding(statement: str, segments: tuple[NarrationSegment, ...]) -> tuple[NarrationSegment, ...]:
+    """Return the first segment with meaningful lexical overlap with a statement."""
+
+    stopwords = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "by",
+        "for",
+        "from",
+        "has",
+        "her",
+        "his",
+        "in",
+        "is",
+        "it",
+        "of",
+        "on",
+        "or",
+        "that",
+        "the",
+        "their",
+        "this",
+        "to",
+        "with",
+    }
+
+    def terms(text: str) -> tuple[str, ...]:
+        return tuple(
+            word
+            for word in re.findall(r"[^\W_]+(?:'[^\W_]+)*", text.casefold())
+            if len(word) > 2 and word not in stopwords
+        )
+
+    def overlaps(statement_term: str, segment_term: str) -> bool:
+        return statement_term == segment_term or any(
+            segment_term == statement_term + suffix for suffix in ("s", "es", "ed", "d", "ing")
+        )
+
+    statement_terms = terms(statement)
+    if not statement_terms:
+        return ()
+    for segment in segments:
+        segment_terms = terms(segment.text)
+        if any(
+            overlaps(statement_term, segment_term)
+            for statement_term in statement_terms
+            for segment_term in segment_terms
+        ):
+            return (segment,)
+    return ()
+
+
 def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
     """Evaluate a declared predicate without deriving truth from narration."""
 
@@ -148,14 +204,16 @@ class SelectedRevealResolver:
         undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
         if undelivered:
             knowledge = self.package.knowledge_indexes.by_id[undelivered[0]]
-            derived_segments = derive_grounding(knowledge.must_convey, resolved.segments)
+            derived_segments = (
+                derive_grounding(knowledge.must_convey, resolved.segments)
+                if knowledge.must_convey
+                else derive_statement_grounding(knowledge.statement, resolved.segments)
+            )
             if derived_segments:
                 resolved = resolved.model_copy(
                     update={
                         "segments": tuple(
-                            segment.model_copy(
-                                update={"grounding_ids": (*segment.grounding_ids, *undelivered)}
-                            )
+                            segment.model_copy(update={"grounding_ids": (*segment.grounding_ids, *undelivered)})
                             if any(segment is derived_segment for derived_segment in derived_segments)
                             else segment
                             for segment in resolved.segments
