@@ -91,9 +91,10 @@ export async function startSceneSession(page) {
   const controller = packageClockControllers.get(page);
   const sessionState = controller ? sessionResponseFor(page, controller) : null;
   await page.getByRole("button", { name: "New Session" }).click();
-  if (sessionState) await sessionState;
+  const payload = sessionState ? await sessionState : undefined;
   await expect(page.locator("#status-line")).toContainText("Scene 1A");
   await expect(page.locator("#transcript")).not.toBeEmpty();
+  return payload;
 }
 
 export async function submitTurn(page, action) {
