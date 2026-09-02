@@ -312,7 +312,13 @@ class CloudflareTurnProvider:
         return "\n".join(
             [
                 *(f"<rule>{rule}</rule>" for rule in rules),
-                '<output_example>{"segments":[{"kind":"narration","text":"The drawer catches, then opens."}],'
+                '<output_example>{"segments":['
+                '{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
+                'her fingers find the flat edge of something that was never meant to be seen from above, and the '
+                'kitchen behind her goes very quiet."},'
+                '{"kind":"narration","text":"She works it loose and turns it over in the light from the window. '
+                'The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and '
+                'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
                 '"selected_knowledge_ids":[]}</output_example>',
             ]
         )
@@ -338,7 +344,13 @@ class CloudflareTurnProvider:
             "\n".join(
                 [
                     *(f"<rule>{rule}</rule>" for rule in rules),
-                    '<output_example>{"segments":[{"kind":"narration","text":"The house waits beyond the gate."}],'
+                    '<output_example>{"segments":['
+                    '{"kind":"narration","text":"The gate stands open on a driveway that has not been swept in '
+                    'days, and the house beyond it keeps the particular stillness of a place someone left in the '
+                    'middle of doing something ordinary."},'
+                    '{"kind":"narration","text":"She goes up the steps slowly, listening for the sounds a lived-in '
+                    'house makes and hearing none of them, and the front door gives under her hand without her '
+                    'having to reach for a key."}],'
                     '"selected_knowledge_ids":[]}</output_example>',
                 ]
             ),
