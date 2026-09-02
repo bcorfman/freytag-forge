@@ -310,20 +310,13 @@ class CloudflareTurnProvider:
         ]
         if handoff_rule:
             rules.append(handoff_rule)
-        if candidates:
-            offered_id = candidates[0].id
-            example = (
-                '<output_example>{"segments":['
-                '{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
-                "her fingers find the flat edge of something that was never meant to be seen from above, and the "
-                'kitchen behind her goes very quiet.","grounding_ids":["' + offered_id + '"]},'
-                '{"kind":"narration","text":"She works it loose and turns it over in the light from the window. '
-                "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
-                'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
-                '"selected_knowledge_ids":["' + offered_id + '"]}</output_example>'
-            )
-        else:
-            example = (
+        # The example is not the place to teach grounding. Showing a grounded
+        # selection here made the model ground on IDs it had not selected, and a
+        # live sample went from no failures in sixteen turns to six in eighteen -
+        # five of them HTTP 409 for grounding on knowledge that was neither
+        # committed nor selected. The engine attributes the delivering segment
+        # itself, so the model never needs to be shown how.
+        example = (
                 '<output_example>{"segments":['
                 '{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
                 "her fingers find the flat edge of something that was never meant to be seen from above, and the "
