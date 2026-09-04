@@ -6,6 +6,7 @@ import json
 import logging
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -1148,3 +1149,34 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     system = captured["payload"]["system"]
     assert '<candidate id="k_sl_1a_b_r2">' in system or "statement" in system
     assert '<candidate id="k_sl_1a_b_r2">Kristin recovers Michelle' in captured["payload"]["user"]
+
+
+def _instruction_for(prompt_variant, candidates) -> str:
+    """Build a turn instruction directly, without a worker or a live projection."""
+
+    provider = CloudflareTurnProvider.__new__(CloudflareTurnProvider)
+    provider.prompt_variant = prompt_variant
+    provider.last_projection = SimpleNamespace(
+        candidates=candidates, hinted_deliveries=(), handoff_deliveries=()
+    )
+    return CloudflareTurnProvider._turn_instruction(provider)
+
+
+NO_CANDIDATE_RULE = "This turn offers no candidates, so selected_knowledge_ids must be empty."
+
+
+def test_the_no_candidate_rule_is_stated_once_not_twice() -> None:
+    """The default rules already carry it; appending again repeated it to the narrator.
+
+    A prompt variant REPLACES the rules block, so that case still needs the
+    turn-specific rule appended - but the default path must not double it.
+    """
+
+    assert _instruction_for(None, ()).count(NO_CANDIDATE_RULE) == 1
+    assert _instruction_for(None, ("k_candidate",)).count(NO_CANDIDATE_RULE) == 0
+
+
+def test_a_replaced_rules_block_still_gets_the_turn_specific_no_candidate_rule() -> None:
+    variant = {"rules": ["Narrate the concrete immediate consequence."]}
+    assert _instruction_for(variant, ()).count(NO_CANDIDATE_RULE) == 1
+    assert _instruction_for(variant, ("k_candidate",)).count(NO_CANDIDATE_RULE) == 0
