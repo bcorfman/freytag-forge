@@ -1180,3 +1180,25 @@ def test_a_replaced_rules_block_still_gets_the_turn_specific_no_candidate_rule()
     variant = {"rules": ["Narrate the concrete immediate consequence."]}
     assert _instruction_for(variant, ()).count(NO_CANDIDATE_RULE) == 1
     assert _instruction_for(variant, ("k_candidate",)).count(NO_CANDIDATE_RULE) == 0
+
+
+def test_a_malformed_rules_block_is_rejected_rather_than_sent() -> None:
+    """A variation is authored by hand, so a typo must fail loudly, not reach the narrator."""
+
+    with pytest.raises(ValueError, match="non-empty strings"):
+        _instruction_for({"rules": ["Narrate the consequence.", ""]}, ())
+    with pytest.raises(ValueError, match="non-empty strings"):
+        _instruction_for({"rules": ["Narrate the consequence.", 7]}, ())
+
+
+def test_a_non_string_output_example_is_rejected() -> None:
+    with pytest.raises(ValueError, match="output_example must be a string"):
+        _instruction_for({"output_example": {"segments": []}}, ())
+
+
+def test_omitting_the_output_example_drops_only_that_block() -> None:
+    kept = _instruction_for(None, ("k_candidate",))
+    dropped = _instruction_for({"include_output_example": False}, ("k_candidate",))
+    assert "<output_example>" in kept
+    assert "<output_example>" not in dropped
+    assert dropped.splitlines() == [line for line in kept.splitlines() if "<output_example>" not in line]
