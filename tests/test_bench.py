@@ -27,11 +27,9 @@ PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
 VARIATION = ROOT / "bench" / "variations" / "arm-c.json"
 NO_EXAMPLE_VARIATION = ROOT / "bench" / "variations" / "arm-c-no-example.json"
 OVERLAY_VARIATION = ROOT / "bench" / "variations" / "arm-c-overlay.json"
-ARCHIVE = Path("/home/bcorfman/bakeoff-data/arm-c/run1")
-PLAYER_INPUT = (
-    "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, "
-    "the forced lock, her phone left on the floor."
-)
+FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "bench"
+ARCHIVE = FIXTURE_DIR / "arm-c" / "run1"
+PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="utf-8")
 
 
 def test_score_matches_archived_acceptance_fixture() -> None:
@@ -79,8 +77,10 @@ def test_arm_c_prompt_is_byte_identical_and_uses_details() -> None:
         text=True,
     )
     prompt = json.loads(result.stdout)
-    fixture = Path("/home/bcorfman/bakeoff-data/fixture_armc_system.txt").read_text()
+    fixture = (FIXTURE_DIR / "fixture_armc_system.txt").read_text(encoding="utf-8")
     assert prompt["system"].encode() == fixture.encode()
+    user_fixture = (FIXTURE_DIR / "fixture_armc_user.txt").read_text(encoding="utf-8")
+    assert prompt["user"].encode() == user_fixture.encode()
     assert prompt["user"].count("<beat_detail>") == 5
     assert "<beat>" not in prompt["user"]
 

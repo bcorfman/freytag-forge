@@ -1489,3 +1489,47 @@ the no-example run had 3 failed replicates, zero judge calls, and no score. The
 full suite reported `257 passed`; `check_bench.py --skip-live`,
 `check_ledger.py`, `check_coverage.py`, and `check_neutral.py` all reported
 `PASS`; Ruff reported `All checks passed!`.
+
+## Portable archived bench fixtures — 2026-09-03
+
+**Purpose:** Verify the archived Arm C scorer and prompt contracts without
+depending on the author's machine-specific bakeoff directory.
+
+**Setup / seed:** The repository fixtures live under
+`tests/fixtures/bench/`. The archived run includes `summary.json` with
+`scenes_scored: 9`, `max_score: 63`, and `replicate_scores: [12]` so baseline
+comparison preserves its real nine-scene refusal path.
+
+**Safe actions:** Run the deterministic suite, Ruff, and the repository checks
+below. No live model calls or external writes are needed.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the full pytest suite with the repository virtualenv interpreter.
+2. Run Ruff and all five bakeoff-data checks.
+
+**Verify:** The suite remains at or above the 90% coverage gate; the scorer
+returns the archived 12/63 result; the prompt fixture remains byte-identical;
+and the archived nine-scene baseline is rejected before live work.
+
+```bash
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -n 2
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench storygame tests
+python3 /home/bcorfman/bakeoff-data/check_bench.py --skip-live
+python3 /home/bcorfman/bakeoff-data/check_ledger.py
+python3 /home/bcorfman/bakeoff-data/check_coverage.py
+python3 /home/bcorfman/bakeoff-data/check_neutral.py
+python3 /home/bcorfman/bakeoff-data/check_legacy.py
+```
+
+**Cleanup:** None. Do not rewrite the tracked ledger.
+
+**Notes:** Tests resolve every archived path from `Path(__file__)`; the
+acceptance scripts under `/home/bcorfman/bakeoff-data` remain orchestrator
+tooling and are intentionally outside this portability boundary.
+Observed 2026-09-03: the full suite reported `262 passed in 39.86s` and
+`90.43%` coverage. Ruff and each of `check_bench.py --skip-live`,
+`check_ledger.py`, `check_coverage.py`, `check_neutral.py`, and
+`check_legacy.py` reported `PASS`.

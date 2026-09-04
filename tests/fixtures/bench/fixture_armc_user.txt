@@ -1,0 +1,17 @@
+<scene_id>1A</scene_id>
+<phase>exposition</phase>
+<situation>Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and her undamaged phone is lying on the kitchen floor. Her laptop and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.</situation>
+<pressure>Find evidence of Michelle's disappearance</pressure>
+<entry_text>Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.</entry_text>
+<beat_title>Michelle Is Gone</beat_title>
+<beat_detail>kitchen floor phone</beat_detail>
+<beat_detail>missing laptop and work bag</beat_detail>
+<beat_detail>overturned workstation chair</beat_detail>
+<beat_detail>forced back door</beat_detail>
+<beat_detail>KMS initials in drawer</beat_detail>
+<beat_job>Dramatize this world state only as far as the player's action reaches; never reproduce its wording.</beat_job>
+<known id="k_scene_1a_entry">The house is quiet, Michelle is missing, and her phone remains on the kitchen floor.</known>
+<candidate id="k_sl_1a_a_r1">Kristin traces the forced entry, overturned chair, missing laptop and work bag, and undamaged phone to a removal too deliberate to be looting.</candidate>
+<candidate id="k_sl_1a_a_r2">A hurried search leaves Kristin uncertain, but the broken door and overturned chair make Michelle’s absence feel staged.</candidate>
+<speaker id="kristin">The house is quiet, Michelle is missing, and her phone remains on the kitchen floor.</speaker>
+<player_input>I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.</player_input>
