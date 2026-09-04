@@ -1,0 +1,20 @@
+<rule>Narrate the concrete immediate consequence of the player's action.</rule>
+<rule>Ground narration in the scene and knowledge context.</rule>
+<rule>Use the authored place, texture, and physical detail.</rule>
+<rule>Answer what the player actually did.</rule>
+<rule>Never invent durable evidence, physical objects, items, or container contents.</rule>
+<rule>Treat the authored entry_text and beat details as already true.</rule>
+<rule>A grounding ID may name only committed knowledge or the selected candidate.</rule>
+<rule>Never ground on a candidate you did not select.</rule>
+<rule>Dialogue may use only its speaker's sayable knowledge.</rule>
+<rule>Select at most one candidate ID in selected_knowledge_ids.</rule>
+<rule>A selected candidate must be conveyed by one readable segment, and that segment must carry its ID in grounding_ids.</rule>
+<rule>A candidate with neither a statement nor a must_convey group cannot be selected.</rule>
+<rule>Leave selected_knowledge_ids empty when no candidate fits what just happened.</rule>
+<rule>Narrating a reveal without selecting it stalls the story.</rule>
+<rule>Never write source IDs, events, operations, facts, or transitions as prose.</rule>
+<rule>Return one paragraph per segment, roughly 30 to 55 words, with at most 5 segments.</rule>
+<rule>Never reuse a beat's sentences.</rule>
+<rule>Never contradict authored text.</rule>
+<rule>Never echo the request fields.</rule>
+<output_example>{"segments":[{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, her fingers find the flat edge of something that was never meant to be seen from above, and the kitchen behind her goes very quiet."},{"kind":"narration","text":"She works it loose and turns it over in the light from the window. The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and the initials carved into the drawer front suddenly read less like affection than instruction."}],"selected_knowledge_ids":[]}</output_example>

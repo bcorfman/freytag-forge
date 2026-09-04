@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from os import getenv
 from urllib.error import HTTPError, URLError
@@ -26,6 +27,16 @@ from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
 logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
+
+DEFAULT_OUTPUT_EXAMPLE = (
+    '{"segments":[{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
+    "her fingers find the flat edge of something that was never meant to be seen from above, and the "
+    'kitchen behind her goes very quiet."},{"kind":"narration","text":"She works it loose and turns it over in the '
+    'light from the window. '
+    "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
+    'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
+    '"selected_knowledge_ids":[]}'
+)
 
 # Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
 # before a request can reach the Worker at all, so every caller must send this.
@@ -195,6 +206,7 @@ class CloudflareTurnProvider:
         token: str,
         state: RuntimeState,
         projector: KnowledgeProjector | None = None,
+        prompt_variant: Mapping[str, object] | None = None,
     ) -> None:
         self.worker_url = worker_url
         self.token = token
@@ -203,9 +215,14 @@ class CloudflareTurnProvider:
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_prompt: dict[str, str] | None = None
         self.grounding_attributions: tuple[str, ...] = ()
+        self.prompt_variant = prompt_variant
+        self.request_count = 0
+        self.recovery_count = 0
 
     @classmethod
-    def from_environment(cls, state: RuntimeState) -> CloudflareTurnProvider:
+    def from_environment(
+        cls, state: RuntimeState, prompt_variant: Mapping[str, object] | None = None
+    ) -> CloudflareTurnProvider:
         worker_url = getenv("CLOUDFLARE_WORKER_URL", "").strip()
         if not worker_url:
             configuration_error = ValueError("CLOUDFLARE_WORKER_URL is not configured")
@@ -224,36 +241,40 @@ class CloudflareTurnProvider:
             worker_url=worker_url,
             token=getenv("CLOUDFLARE_WORKER_TOKEN", "").strip(),
             state=state,
+            prompt_variant=prompt_variant,
         )
 
     def __call__(self, player_input: str) -> object:
+        prompt = self.assemble_turn_prompt(player_input)
+        return self._dispatch(prompt["system"], prompt["context"])
+
+    def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
+        """Build the exact turn prompt without contacting the narration worker."""
+
         self.last_projection = self.projector.project(self.state, "player", player_input)
-        handoff_staged = bool(self.last_projection.handoff_deliveries)
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={
                 "hint_staged": bool(self.last_projection.hinted_deliveries),
-                "handoff_staged": handoff_staged,
+                "handoff_staged": bool(self.last_projection.handoff_deliveries),
             }
         )
         speaker_contexts = self._speaker_contexts(player_input)
         scene_setting = self._scene_setting()
-        return self._dispatch(
-            self._turn_instruction(),
-            {
-                "player_input": player_input,
-                # The scene's own establishing material. Without it a turn carries one sentence
-                # of frame and a few terse statements, so the narrator has nothing authored to
-                # be concrete with and answers an apt search with "you find nothing". This is
-                # the scene's first beat only, so it cannot narrate ahead of the player.
-                "scene_setting": scene_setting,
-                "knowledge_context": {
-                    # sayable_knowledge is the speakers' dialogue basis; repeating it for the
-                    # player doubled the largest field in every request for no reader.
-                    "player": self._serialized_player_context(scene_setting),
-                    "speakers": speaker_contexts,
-                },
+        context = {
+            "player_input": player_input,
+            # The scene's own establishing material. Without it a turn carries one sentence
+            # of frame and a few terse statements, so the narrator has nothing authored to
+            # be concrete with and answers an apt search with "you find nothing". This is
+            # the scene's first beat only, so it cannot narrate ahead of the player.
+            "scene_setting": scene_setting,
+            "knowledge_context": {
+                # sayable_knowledge is the speakers' dialogue basis; repeating it for the
+                # player doubled the largest field in every request for no reader.
+                "player": self._serialized_player_context(scene_setting),
+                "speakers": speaker_contexts,
             },
-        )
+        }
+        return {"system": self._turn_instruction(), "context": context}
 
     def _turn_instruction(self) -> str:
         """State the selection rule that actually applies to this turn.
@@ -276,8 +297,9 @@ class CloudflareTurnProvider:
             "Leave selected_knowledge_ids empty when no candidate fits what just happened.",
             "Narrating a reveal without selecting it stalls the story.",
         ]
+        no_candidate_rule = "This turn offers no candidates, so selected_knowledge_ids must be empty."
         if not candidates:
-            selection_rules.append("This turn offers no candidates, so selected_knowledge_ids must be empty.")
+            selection_rules.append(no_candidate_rule)
         hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
         handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
         if handoffs:
@@ -292,7 +314,7 @@ class CloudflareTurnProvider:
             )
         else:
             handoff_rule = ""
-        rules = [
+        default_rules = [
             "Narrate the concrete immediate consequence of the player's action.",
             "Ground narration in the scene and knowledge context.",
             "Use the authored place, texture, and physical detail.",
@@ -309,6 +331,14 @@ class CloudflareTurnProvider:
             "Never contradict authored text.",
             "Never echo the request fields.",
         ]
+        configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
+        rules = list(configured_rules) if isinstance(configured_rules, list) else default_rules
+        if not all(isinstance(rule, str) and rule for rule in rules):
+            raise ValueError("prompt variant rules must be a list of non-empty strings")
+        # default_rules already carries no_candidate_rule through *selection_rules; only a
+        # variation that REPLACED the rules block still needs this turn-specific one appended.
+        if configured_rules and not candidates:
+            rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
         # The example is not the place to teach grounding. Showing a grounded
@@ -317,17 +347,19 @@ class CloudflareTurnProvider:
         # five of them HTTP 409 for grounding on knowledge that was neither
         # committed nor selected. The engine attributes the delivering segment
         # itself, so the model never needs to be shown how.
-        example = (
-                '<output_example>{"segments":['
-                '{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
-                "her fingers find the flat edge of something that was never meant to be seen from above, and the "
-                'kitchen behind her goes very quiet."},'
-                '{"kind":"narration","text":"She works it loose and turns it over in the light from the window. '
-                "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
-                'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
-                '"selected_knowledge_ids":[]}</output_example>'
+        include_example = self.prompt_variant.get("include_output_example", True) if self.prompt_variant else True
+        blocks = [*(f"<rule>{rule}</rule>" for rule in rules)]
+        if include_example:
+            example_text = (
+                self.prompt_variant.get("output_example", DEFAULT_OUTPUT_EXAMPLE)
+                if self.prompt_variant
+                else DEFAULT_OUTPUT_EXAMPLE
             )
-        return "\n".join([*(f"<rule>{rule}</rule>" for rule in rules), example])
+            if not isinstance(example_text, str):
+                raise ValueError("prompt variant output_example must be a string")
+            example = f"<output_example>{example_text}</output_example>"
+            blocks.append(example)
+        return "\n".join(blocks)
 
     def opening(self) -> object:
         """Continue the authored entry text, before any player input exists."""
@@ -384,6 +416,7 @@ class CloudflareTurnProvider:
                 {
                     "title": beat.title,
                     "anchor": beat.anchor,
+                    "prose": beat.prose,
                     "details": list(beat.details),
                     "your_job": (
                         "Dramatize this world state only as far as the player's action reaches; "
@@ -618,8 +651,7 @@ class CloudflareTurnProvider:
             ) from error
         return self._cap_accepted_response(response, proposal)
 
-    @staticmethod
-    def _tagged_user_prompt(user: dict[str, object]) -> str:
+    def _tagged_user_prompt(self, user: dict[str, object]) -> str:
         """Render model context as distinct, whole tagged items."""
 
         lines: list[str] = []
@@ -658,8 +690,12 @@ class CloudflareTurnProvider:
                 for beat in scene_setting.get("beats", []):
                     if isinstance(beat, dict):
                         add("beat_title", beat["title"])
-                        for detail in beat.get("details", []):
-                            add("beat_detail", _plain(detail))
+                        beat_delivery = self.prompt_variant.get("beat_delivery") if self.prompt_variant else None
+                        if beat_delivery == "prose":
+                            add("beat", _plain(beat["prose"]))
+                        else:
+                            for detail in beat.get("details", []):
+                                add("beat_detail", _plain(detail))
                         add("beat_job", beat["your_job"])
             for item in player.get("committed_knowledge", []):
                 add("known", item["statement"], id=item["id"])
@@ -913,6 +949,7 @@ class CloudflareTurnProvider:
             )
 
     def _record_recovery(self) -> None:
+        self.recovery_count += 1
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(update={"recovery_used": True})
 
     def _speaker_contexts(self, player_input: str) -> dict[str, dict[str, object]]:
@@ -1000,6 +1037,7 @@ class CloudflareTurnProvider:
                 raise error from first_failure
 
     def _request(self, payload: dict[str, object]) -> object:
+        self.request_count += 1
         self.last_prompt = {"system": payload["system"], "user": payload["user"]}
         headers = {
             "Content-Type": "application/json",
@@ -1091,12 +1129,19 @@ class CloudflareTurnProvider:
         cached_code = getattr(error, "_freytag_worker_error_code", None)
         if isinstance(cached_code, str):
             return cached_code
+        header_code = CloudflareTurnProvider._error_header(error, "X-Narration-Error-Code")
+        if header_code:
+            error._freytag_worker_error_code = header_code
+            return header_code
         try:
             body = json.loads(error.read())
         except (OSError, ValueError, json.JSONDecodeError):
             code = ""
         else:
-            code = str(body.get("code", "")) if isinstance(body, dict) else ""
+            if isinstance(body, dict) and body.get("detail") == "rate limit exceeded":
+                code = "RATE_LIMITED"
+            else:
+                code = str(body.get("code", "")) if isinstance(body, dict) else ""
         error._freytag_worker_error_code = code
         return code
 

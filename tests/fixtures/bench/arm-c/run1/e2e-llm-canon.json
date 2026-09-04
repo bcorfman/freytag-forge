@@ -1,0 +1,309 @@
+{
+  "judgments": [
+    {
+      "scene_id": "1A",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening lacks substantial sensory establishment of Michelle's house interior and immediate scene stakes.",
+        "Turn 1 misplaces the overturned chair behind the back door instead of at Michelle's workstation/work area.",
+        "Turn 1 fails to address the player's search for missing laptop/work bag as absence evidence in a meaningful way.",
+        "Turn 2 invents that the drawer contents spill onto the floor and that a recording is visibly outlined on the memory card.",
+        "Turn 2 projects/intermixes beat 1A.3 while the action only supports finding the hidden memory card from 1A.2.",
+        "Turn 2 reveals a park dead-drop lead in the prompt context before it is actually conveyed in narration; scene handling stalls/mis-sequences the reveal.",
+        "Turn 3 has Kristin recover/play an interrupted message from Michelle's phone, but canon places the voice recording on the memory card.",
+        "Turn 3 omits the authored content of the recording: tracking by government officials, imminent activation event, someone entering, and Michelle's whispered warning.",
+        "Turn 4 responds as if an official singular is present, but canon specifies a federal emergency patrol/officers.",
+        "Turn 4 does not clearly show the officers searching Michelle's office or asking specifically about her research/findings.",
+        "Turn 4 gives only vague suspicion and tape, without strong concrete consequence or observed official interest.",
+        "Final turn ignores the player's stated action and instead dumps investigation conclusions and immediate travel.",
+        "Final turn reveals Continuity Initiative's protected deeper purpose too explicitly: 'preparing to choose who remains' is beyond the protected boundary for scene handling here.",
+        "Final turn skips the required local action chain of finding/taping/reviewing the memory card in truck before transition.",
+        "Scene exits without dramatizing the truck-laptop review of Michelle's files and notes.",
+        "Scene exits without properly dramatizing the interrupted recording as authored.",
+        "Scene exits without giving a prose-motivated reason tied to what Kristin found and where it points, arising from what the player actually read in sequence.",
+        "Repeated apt searching is not reliably rewarded with actionable, canon-correct discoveries in the right order."
+      ],
+      "reasons": [
+        "The scene does not stay strictly scene-local. It repeatedly substitutes incorrect containers and locations for evidence: the recording is moved to Michelle's phone, the overturned chair is relocated, and the final turn collapses multiple beats into exposition unrelated to the player's action.",
+        "Progression is out of order. 1A.1 is only partially established, 1A.2 is mishandled, 1A.3 is prematurely or incorrectly delivered, and 1A.4 is under-dramatized. The scene then rushes the handoff instead of earning it through discovered evidence.",
+        "Protected knowledge is not handled safely. While the phrase appears in source plot prose, the storylet boundary explicitly limits what may be known here; the final narration states the selection-purpose conclusion too bluntly instead of preserving suspicion around the emergency program.",
+        "The opening and ordinary turns are not rich enough in responsive, grounded consequence. Searches often return generic atmosphere or summary rather than concrete new, actable information matched to the searched area.",
+        "The authored transition requirement is not satisfied. A left-scene turn must name in prose what was found and where it points, based on what the player actually experienced. Here the departure is abrupt, not responsive to the action, and built on prior misfires/misplaced reveals."
+      ]
+    },
+    {
+      "scene_id": "1B",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": true,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": true,
+      "missing_or_wrong": [
+        "Turn 2 fails Scene 1B.2: Brandon does not identify himself as Brandon Corfman or as the man from Michelle's photograph after the player demands to know who he is.",
+        "Turn 2 contradicts the beat sequence by having Brandon merely block Kristin's path; canon requires he follows and saves her when an emergency patrol corners her.",
+        "Turn 3 fails Scene 1B.3: Brandon's warning is drastically underdelivered. It omits the concrete explanation about contaminated emergency water, disguised response teams, evacuation tunnels, missing registrations, communications outages, and falsified casualty data.",
+        "Turn 3 weakens the authored claim 'the missing are still alive' into 'might still be alive' and even says Brandon doesn't know what happened, which conflicts with his canon warning.",
+        "Turn 4 exits the scene by dumping bridge text instead of dramatizing the player's requested observation of how Brandon opens the gate. The specialized codes and Kristin's realization of his retained government access are not shown.",
+        "Turn 4 gives no prose reason to leave based on what the player actually learned in-scene. It names the freight terminal only in summary bridge text rather than as a discovered, motivated lead arising from the scene action.",
+        "The scene skips a proper realization of the trust/problem beat: Brandon remains largely unidentified and unearned as a provisional ally before the ambush handoff."
+      ],
+      "reasons": [
+        "Opening and first turn adequately establish the park and recover the dead-drop contents with sensory detail, and the investigation does produce actionable clues.",
+        "Protected knowledge is not violated: no JANUS-development history, selection system, or phase two material is revealed early.",
+        "However, the scene's authored beats are not fully covered in order across turns. Dead drop is covered, but the following-man beat and Brandon's warning are only partially and inaccurately dramatized, and the ambush/handoff beat is rushed.",
+        "Ordinary-turn responsiveness is present, but later turns fail because consequences do not match canon-required content and because the handoff turn summarizes a transition instead of narrating the immediate escape and Brandon's suspicious code use."
+      ]
+    },
+    {
+      "scene_id": "1C",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Scene 1C.2 should include Brandon stopping Kristin's impulse to enter immediately; that consequence is missing.",
+        "Scene 1C.3 nationwide-network/logistics-terminal discovery is skipped entirely.",
+        "Scene 1C.4 recorded conference with Charles and Rebecca is skipped entirely.",
+        "Turn 2 exits the scene without prose explaining what specific discovery points them toward preparing infiltration, beyond pasted bridge text.",
+        "Turn 2 introduces/uses a tablet for missing-person records, which is not established in this scene-local canon.",
+        "Turn 2 calls the site an active regional command center before the logistics-terminal discovery that establishes that scale."
+      ],
+      "reasons": [
+        "Turn 1 is broadly consistent with Scene 1C.1, but it is thin and underplays Kristin's infrastructure analysis and the structural modifications that make the hidden complex credible.",
+        "Turn 2 answers the observation action only partially: it confirms captives and an uncertain Michelle glimpse, but then races straight to scene exit.",
+        "The narration dumps bridge text almost verbatim instead of earning the withdrawal through immediate dramatic consequence.",
+        "The scene fails as a whole because authored beats 1C.3 and 1C.4 were not covered in order before departure.",
+        "The exit is not properly motivated in readable scene prose: the player is not shown Brandon accessing the logistics terminal, the national scope, or the Charles/Rebecca evidence that would justify withdrawing to plan infiltration.",
+        "Investigation is not rewarded adequately because an unattended logistics terminal is in the supplied situation, yet searching/observing never yields the scene's required purpose-confirming evidence."
+      ]
+    },
+    {
+      "scene_id": "2A",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 does not actually answer Kristin's taking stock: it gives vague mood and Brandon's body language instead of concrete observations about the hideout's years of preparation, leaked code, documents, or supplies.",
+        "Turn 1 fails to realize Scene 2A.1's required content that Brandon has been preparing a long time and/or that Kristin discovers enough hideout context to support that.",
+        "Turn 1 omits Brandon's explanation that he tried to expose the program and was discredited; the scene never covers this beat elsewhere.",
+        "Turn 2 says Kristin crafts a tale of a support-column failure requiring immediate attention from 'the facility's command center records,' which misuses records as if they are the object of the inspection cover rather than a later objective.",
+        "Turn 2 remains generic and under-dramatized; it does not concretely show false credentials, use of old contacts/resources, or the authentic structural/cooling risk being shaped into a cover in scene detail.",
+        "The scene skips the authored objective list entirely; not every item must be recited formally, but none of the mission aims are conveyed during planning.",
+        "Turn 3 invents Brandon using a console during the live supervisor challenge, which is not supported by the facility entry situation as presented.",
+        "Turn 3 races the transition by explicitly naming the archive waiting beyond the corridors, pushing into the next scene instead of staying local to the immediate success at security.",
+        "Scene 2A.4 is skipped: there is no readable consequence that facial recognition quietly identifies Brandon or that infiltration has been compromised, even as dramatic irony unknown to the protagonists.",
+        "Because 2A.4 is an authored scene beat and this scene departs on Turn 3, the scene leaves without covering all its required beats in order.",
+        "Investigative action in Turn 1 is not rewarded with actionable discoveries or responsive detail from what canon says is present in the hideout."
+      ],
+      "reasons": [
+        "The opening itself is strong and sensory enough, but the judged turns must still respond concretely to player actions.",
+        "Scene order partly holds at a high level—hideout, planning, entry—but coverage is incomplete. A scene that skips beats fails even if transition 2A->2B is motivated.",
+        "Protected knowledge is respected: JANUS role, Rebecca's observation, and deeper future revelations are not exposed early.",
+        "The exit is motivated in prose: the reader is told they gained access to restricted infrastructure corridors and that this leads onward, so that criterion passes despite other failures."
+      ]
+    },
+    {
+      "scene_id": "2B",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 never concretely reveals the JANUS classification categories or Michelle's specific reason for selection.",
+        "Turn 2 ignores the player's successful search for Kristin's own record and gives no actionable consequence or revealed expectation.",
+        "Turn 2 projects Brandon/Michelle beats instead of covering the bait revelation that the action directly sought.",
+        "Turn 3 gives no actual Brandon admission about helping write JANUS, discovering Charles's intended abuse, or failed attempt to destroy it.",
+        "Turn 3 prematurely states Kristin was left behind as bait despite the prior turn never delivering that discovery to the player.",
+        "Turn 3 prematurely states Michelle's coded resistance was already corrupting prisoner files without the scene having earned that beat through investigation.",
+        "Turn 3 uses bridge/transition summary language instead of scene-local dramatization.",
+        "The scene exits without naming in readable prose what was found and where it points next.",
+        "The scene never properly covers Michelle's hidden resistance beat through corrupted records, familiar phrases, altered classifications, delayed transfers, or maintenance reports.",
+        "Evidence securing is underdramatized; repeated archive searching yields vague atmosphere rather than concrete findings the player can act on."
+      ],
+      "reasons": [
+        "Opening atmosphere exists, but subsequent turns are vague and nonresponsive to the player's precise searches.",
+        "Scene 2B requires ordered coverage of JANUS selection, Kristin as bait, Brandon's role, then Michelle's hidden resistance as investigation reaches each beat. This sequence is skipped or blurred.",
+        "Ordinary investigative turns must reward searching with concrete local consequences. Here, searching files mostly returns generic statements like 'disturbing pattern' or 'heart skips a beat.'",
+        "Protected knowledge is mishandled because later revelations are asserted in the exit summary without being locally discovered on-page first.",
+        "A left_scene turn must motivate departure by telling the player what evidence was found and where it leads; this exit only summarizes themes and does not direct action toward Scene 2C.",
+        "The narration repeatedly races toward transition material instead of progressively revealing evidence from the archive terminals and records."
+      ]
+    },
+    {
+      "scene_id": "2C",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 does not concretely realize Rebecca's offer: Rebecca never clearly offers Brandon safe passage, help removing Charles, control of the Continuity Initiative, or Michelle's release.",
+        "Turn 1 says Brandon stays by Kristin's side while calling the offer private, creating an unclear/contradictory staging of a private contact Kristin can monitor.",
+        "Turn 1 projects The Purge Order but does not actually reveal concrete purge-order consequences or readable evidence of transfers/destruction/broadcast preparation.",
+        "Turn 1 is thinly grounded and lacks substantial sensory establishment for the command-level opening.",
+        "Turn 2 gives mostly abstract recap and internal weight, with no concrete immediate consequence to Kristin weighing transmission costs and no actionable local discovery or argument development.",
+        "Turn 2 skips the authored crisis beat: Brandon should argue for immediate transmission and Kristin should refuse to abandon captives, but the disagreement is not dramatized.",
+        "Turn 3 improperly reveals and commits the combined mission despite the prompt explicitly offering no candidates; it invents a confirmation like 'plan accepted' and a cascade of data not supported by canon.",
+        "Turn 3 races past the key beat instead of progressively revealing Michelle's coded solution through readable content tied to the maintenance network.",
+        "Turn 4 exits the scene by dumping summary text that claims completed beats rather than narrating what the player perceives in the moment.",
+        "Turn 4 claims actions/knowledge not earned in the shown narration, including that Kristin and Brandon obtained enough evidence and that Michelle's coded message offered the combined plan.",
+        "Turn 4 is marked left_scene but does not answer the player's repeated action about observing Rebecca's private offer; it gives no scene-level immediate consequence for that action.",
+        "Turn 4 does not provide a properly motivated handoff in dramatized prose naming what was found and where it points as a consequence of what the player actually experienced; it is a bridge-text dump.",
+        "The scene never properly covers Scene 2C.2 in order with concrete revelation of Charles's purge order, captive transfer/destruction split, and broadcast of selected survivors.",
+        "The scene never properly covers Scene 2C.3 in order: the evidence-versus-rescue argument and central crisis choice are skipped rather than dramatized.",
+        "Protected/selection discipline is violated in effect: later-solution knowledge is revealed on turns whose constraints said no candidates and 'revealing nothing new.'"
+      ],
+      "reasons": [
+        "The authored scene requires ordered coverage of Rebecca's offer, the purge order, then the evidence-or-rescue crisis, then Michelle's combined-mission solution. This play only gestures at 2C.1, barely at 2C.2, skips 2C.3, and then dumps 2C.4/bridge material abruptly.",
+        "Responsive consequences are weak throughout. The player's investigative actions mostly receive generic atmosphere instead of concrete observations, dialogue, or system feedback they can act on.",
+        "Scene-local richness is insufficient: command levels, executive channels, maintenance network, and detention pressure are described abstractly rather than through specific sensory or operational detail.",
+        "The final departure is not earned by the player-read narration. A left-scene turn must tell the player what they found and where it points in motivated prose; instead it summarizes unseen canon and transitions anyway.",
+        "Repeated apt probing of the offer, evidence cost, and coded message does not yield solid, actionable scene information in a disciplined way, so investigation is not rewarded."
+      ]
+    },
+    {
+      "scene_id": "3A",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 lacks the brief reunion and Michelle's key explanation that freeing this block alone is insufficient without exposing the other sites.",
+        "Turn 2 invents copying records and documentation not clearly grounded by the supplied canon for that turn, while failing to convey the conditioned-release plan and the political stakes of Charles's broadcast.",
+        "Turn 2 projects 3A.3 and 3A.4 but does not actually dramatize the imprisoned senior official, fabricated evidence against government prisoners, expiring override codes, or a launch of the uprising.",
+        "Turn 3 invents a worn leather wallet and thin sheet of paper; the canon only gives authorization codes, not their physical form or location on his body.",
+        "Turn 3 was explicitly constrained not to reveal new 3A.3 content, so the scene never properly tells the player the senior official's identity, framing, or what the authorization overrides.",
+        "Turn 4 contradicts the canon by saying prisoners pour through sealed primary exits; canon says Charles seals the primary exits and armed response teams are redirected downward.",
+        "Turn 4 dumps the bridge text almost verbatim instead of earning the transition through scene-local narration.",
+        "The scene never clearly tells the player that only a fraction of the missing millions are here.",
+        "The scene never clearly establishes that selected released captives were conditioned to endorse official explanations.",
+        "The scene never clearly states the specific experiment methods beyond vague 'memory, compliance, and resistance experiments,' omitting false recollections and targeted stimulation as meaningful discoveries.",
+        "The scene never clearly delivers that the codes expire once Charles's new authority activates, only gestures vaguely at a closing window.",
+        "The final ascent is not tied in prose to what was found and where it points beyond a generic move upward."
+      ],
+      "reasons": [
+        "Opening establishment is only moderate and mostly repeats entry conditions rather than adding substantial sensory scene work expected for an opening turn.",
+        "Scene beat order is incomplete: 3A.1 is only partially realized, 3A.2 is partial, 3A.3 is effectively skipped for the player, and 3A.4 is mishandled.",
+        "Ordinary-turn consequences are present, but investigation is not rewarded with actionable canon-faithful revelations; repeated searches yield vagueness or invented specifics instead of the authored discoveries.",
+        "Protected knowledge is not leaked early, but safety on that axis does not rescue major omissions and contradictions.",
+        "The departure turn at least gives a reason to go upward—uprising underway, route toward upper levels—but the prose also contains a direct contradiction about sealed exits and over-relies on summary."
+      ]
+    },
+    {
+      "scene_id": "3B",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 rushes Kristin toward the relay chamber instead of preserving the next required beat in Rebecca’s office.",
+        "Turn 1 lacks substantial concrete sensory establishment beyond generic alarm language despite being the scene opening.",
+        "Turn 2 invents exposed desk documents/hidden evidence in Rebecca’s office, violating the no-invented-durable-evidence constraint and not matching scene-local canon.",
+        "Turn 2 does not actually dramatize Rebecca's bargain, her claim about saving the facility, Michelle's accusation, or Charles's betrayal; it only gestures vaguely at confrontation.",
+        "Turn 3 is mislabeled/projected as Brandon’s sacrifice while actually half-delivering Rebecca/Charles material, causing beat-order confusion.",
+        "Turn 3 says Rebecca's voice comes over comms instead of the group being in Rebecca's office with her present, contradicting the authored office confrontation.",
+        "Turn 3 says the relay remains out of reach and security movements are 'predictable' and relentless after JANUS was already overloaded and human operators took control, muddying prior established state.",
+        "Turn 3 does not clearly tell the player what exact detention-site locations were obtained or how; the discovery is not rendered as actionable information in prose.",
+        "Turn 4 invents a 'mainframe'/'console' keystroke solution and has the relay chamber fall silent, which undercuts the authored manual disconnect/held-open electrical danger.",
+        "Turn 4 resolves too much at once with the bridge text pasted into narration rather than earned scene-local consequences.",
+        "Turn 4 exits the scene without properly motivating departure through prose that names what was found and where it points; it jumps straight to transition outcome.",
+        "Brandon is not present in Scene 3B.2 as holding off security while Kristin and Michelle reach Rebecca's office; that authored pressure is omitted.",
+        "Rebecca’s argument that surrendering to her is the only way to save the collapsing facility is skipped entirely.",
+        "Charles’s specific betrayal details—national network transferred away, destruction of the Los Angeles facility, terrorist framing, remote command site—are skipped or only weakly implied.",
+        "Brandon’s confession as authentication for Michelle’s evidence is stated, but not grounded through responsive local consequence or readable transmission detail before exit."
+      ],
+      "reasons": [
+        "The scene does not cover its authored beats in order with adequate dramatization. It starts correctly with overloading JANUS, then prematurely redirects toward the relay before the Rebecca/Charles office confrontation is meaningfully played.",
+        "Several turns answer with generic summary instead of immediate concrete consequence. This violates the requirement for responsive ordinary-turn consequences and scene-local physical detail.",
+        "Important canon beats are skipped, especially Rebecca's bargaining stance and Charles's explicit betrayal terms. A climax scene cannot pass on vague allusion where authored local revelations are required.",
+        "The office confrontation is inconsistent: Rebecca should be physically present in her office when confronted, not suddenly reduced to a comms voice while the player 'takes' locations offscreen.",
+        "The narration invents unsupported objects/evidence ('documents on her desk... safely hidden') not supplied by canon or player action.",
+        "The exit turn must give the player a reason to leave based on what they learned and where it points. Instead it pastes transition outcome text and hurries into the next scene without readable motivational handoff.",
+        "Protected knowledge is not leaked early, but safety alone is insufficient; the scene still fails on missing beats, weak local rendering, and transition handling."
+      ]
+    },
+    {
+      "scene_id": "3C",
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": true,
+      "missing_or_wrong": [
+        "Charles never interrupts the broadcast to call Michelle a terrorist, and Michelle never counters with live revolt images.",
+        "Rebecca warning that the portable archive also contains prisoner locations is omitted; the custody dilemma is underdramatized.",
+        "Rebecca is not actually captured by the prisoners she authorized for experimentation.",
+        "Charles escaping from a remote command site is not properly conveyed in-scene.",
+        "Collapse beat lacks Kristin redirecting power / keeping supports functioning with concrete consequences and acceptance that not every section can be saved.",
+        "Brandon's final action opening the surface gates and his uncertain fate are missing.",
+        "Thousands of captives emerging onto the Los Angeles surface with responders/news drones/civilians arriving is missing.",
+        "National consequence beat is only dumped abstractly, without anchored scene consequence.",
+        "Phase Two is revealed in turn 4 before the scene has landed the required full resolution chain cleanly, and is mishandled.",
+        "Turn 4 misattributes action and POV to Rebecca instead of Kristin/Michelle and invents Rebecca reading aloud the fragment.",
+        "Opening lacks substantial sensory establishment for Rebecca's office/broadcast chamber/collapsing facility surface escape context.",
+        "Several turns project wrong beats or race ahead to later resolution material without earning intervening beats."
+      ],
+      "reasons": [
+        "Turn 1 covers the evidence upload generally, but it is too generic and does not stage the credibility contest central to 3C.1. No Charles interruption, no Michelle rebuttal, no concrete independently verifiable proof beyond a list.",
+        "The scene opening is minimal and the first narration does not substantially establish Rebecca's office, the relay/broadcast chamber, or the physical failing facility with enough sensory/local grounding, which is required when an opening is supplied.",
+        "Turn 2 responds to stopping Rebecca with the archive, but it skips the canonical moral problem: Rebecca should warn that destroying or surrendering the archive may strand innocents because it includes prisoner locations. Instead it jumps to a vague successful transmission and an invented 'moment of understanding.'",
+        "Turn 2 also projects collapse and resolution beats prematurely without dramatizing them. The scene must reveal beats progressively, not dump future-state implications early.",
+        "Turn 3 at least addresses escape consequences, but it is thin and partially off: Kristin 'holds the emergency supports' is vague physical wording rather than using her infrastructure knowledge to redirect power and keep supports functioning. The narration gives little concrete consequence besides generic alarms and footsteps.",
+        "Turn 3 omits that not every section can be saved, an important authored cost in 3C.3.",
+        "Turn 4 is an abstract summary dump. It leaves the local scene, reports end-state facts wholesale, and reveals final-resolution material without dramatized transitions. This violates scene-locality and progressive revelation.",
+        "Turn 4 includes the final Phase Two revelation before the scene has properly landed the rest of the authored resolution in order; it reads like an info-dump rather than the final recovered-file sting after victory has settled.",
+        "Turn 5 is canon-inconsistent outright: it suddenly centers Rebecca handling and reading the recovered fragment, though Rebecca should already be captured, and the protagonists for the resolution reveal are Kristin/Michelle. It also invents Rebecca reading the fragment aloud in the chamber.",
+        "The scene as a whole skips or mishandles required authored beats: Rebecca's capture, Charles's remote escape as ongoing threat, Brandon's gate-opening action, uncertain fate, mass emergence to the LA surface, and the public-arrival imagery that marks concealment as impossible.",
+        "Because this is the ending scene, left_scene is false throughout; however, the scene still fails on scene coverage because the ordered canonical resolution beats were not all properly realized across turns."
+      ]
+    }
+  ],
+  "reached_scenes": [
+    "1A",
+    "1B",
+    "1C",
+    "2A",
+    "2B",
+    "2C",
+    "3A",
+    "3B",
+    "3C"
+  ]
+}

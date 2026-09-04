@@ -1,0 +1,72 @@
+{
+  "name": "arm-c-overlay",
+  "story_package": "data/stories/continuity-initiative",
+  "system_prompt": {
+    "rules": [
+      "Narrate the concrete immediate consequence of the player's action.",
+      "Ground narration in the scene and knowledge context.",
+      "Use the authored place, texture, and physical detail.",
+      "Answer what the player actually did.",
+      "Never invent durable evidence, physical objects, items, or container contents.",
+      "Treat the authored entry_text and beat details as already true.",
+      "A grounding ID may name only committed knowledge or the selected candidate.",
+      "Never ground on a candidate you did not select.",
+      "Dialogue may use only its speaker's sayable knowledge.",
+      "Select at most one candidate ID in selected_knowledge_ids.",
+      "A selected candidate must be conveyed by one readable segment, and that segment must carry its ID in grounding_ids.",
+      "A candidate with neither a statement nor a must_convey group cannot be selected.",
+      "Leave selected_knowledge_ids empty when no candidate fits what just happened.",
+      "Narrating a reveal without selecting it stalls the story.",
+      "Never write source IDs, events, operations, facts, or transitions as prose.",
+      "Return one paragraph per segment, roughly 30 to 55 words, with at most 5 segments.",
+      "Never reuse a beat's sentences.",
+      "Never contradict authored text.",
+      "Never echo the request fields."
+    ],
+    "include_output_example": true
+  },
+  "user_prompt": {
+    "beat_delivery": "details"
+  },
+  "overrides": {
+    "plot.md": {
+      "replacements": [
+        {
+          "old": "KMS initials in drawer",
+          "new": "KMS initials carved beneath the drawer"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "e2e",
+        "inputs": [
+          "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "I look for anything Michelle hid deliberately, checking under the drawers and behind her work area for materials she did not want found.",
+          "I try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+          "Someone official is at the door asking questions about her work; I keep what I found hidden, then watch what they do at the gate as they leave."
+        ]
+      },
+      {
+        "name": "oblique-investigation",
+        "inputs": [
+          "I do not disturb the obvious scene yet; I study what is out of place and follow the smallest signs of a deliberate departure.",
+          "I examine the workstation indirectly, checking its edges, dust, and wear for a place Michelle expected someone careful to notice.",
+          "I listen to the fragment without deciding what it means, noting every sound that might tell me who interrupted her.",
+          "I watch the officials from cover and compare their questions with the evidence the house is quietly giving me."
+        ]
+      },
+      {
+        "name": "unexpected-wander",
+        "inputs": [
+          "I make tea and search the pantry first, looking for anything ordinary that might explain why Michelle left in such a hurry.",
+          "I check the bathroom cabinet and the hallway photographs for a clue, then return to the room that feels most wrong.",
+          "I step outside and inspect the street, asking whether a neighbor saw anything before I come back to the house.",
+          "I sit in the truck and sort through my own emergency supplies before deciding what to investigate next."
+        ]
+      }
+    ]
+  }
+}

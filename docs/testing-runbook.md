@@ -1207,3 +1207,329 @@ turn then succeeded. This revision still needs Railway deployment before
 rerunning the staging smoke test.
 
 **Cleanup:** None.
+# Local narration prompt bench — verified 2026-09-03
+
+**Purpose:** Verify the development-only `bench` prompt assembly and archived
+judge scoring without spending Cloudflare or OpenAI budget, plus record the
+safe boundary for live runs.
+
+**Setup / seed:** Repository checkout on `prompt-bench`; use
+`/home/bcorfman/dev/freytag-forge/.venv/bin/python`. Archived fixtures are
+read-only under `/home/bcorfman/bakeoff-data/arm-c/run1` and the Arm C system
+prompt fixture. Live commands load `.env` and require the worker and judge
+environment variables; do not record their values.
+
+**Safe actions:** `bench --help`, `bench prompt`, `bench score`, unit tests, and
+ruff checks. These make no model calls and do not modify the archived fixtures.
+
+**Destructive or external actions:** `bench run` spends Workers AI neurons and
+OpenAI judge calls. Its default is four replicates; an explicitly requested
+single replicate is allowed for focused iteration but cannot estimate noise.
+Confirmation is required over the configured neuron threshold. The focused
+live check below spent one Scene 1A traversal and one judge call.
+
+**Steps:**
+
+1. Assemble the archived Arm C Scene 1A turn-1 prompt with `bench prompt`.
+2. Score the archived Arm C judgment with `bench score`.
+3. For the authorized low-cost live smoke, run one explicit replicate of one
+   scene and one input script:
+
+   ```bash
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/arm-c.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-live-single-scene --confirm
+   ```
+
+4. Run the focused bench tests and the requested static check.
+
+**Verify:**
+
+```bash
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --variation bench/variations/arm-c.json --scene 1A --turn 1 --player-input "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor."
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench score --run-dir /home/bcorfman/bakeoff-data/arm-c/run1
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q tests/test_bench.py --no-cov
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench storygame
+```
+
+Expected: the prompt system is 2,018 bytes and byte-identical to the archived
+fixture; the user has five `<beat_detail>` tags and no `<beat>` block; score is
+`{"total":12,...,"protected_safe":5}`; the live smoke completes with one
+judge call and `n=1`; focused tests pass; ruff passes.
+
+**Cleanup:** Temporary prompt output may be removed from `/tmp`; no repository
+or fixture cleanup is needed.
+
+**Notes:** The first live smoke attempt reached the judge bridge but failed
+with `ReferenceError: sceneCanon is not defined`; the bridge used the existing
+default-package `sceneCanon` export without importing it. Importing both
+existing judge exports fixed the failure, and the retry completed with one
+judge call, five narration turns, eight narration requests, and an estimated
+88 neurons. `AI_QUOTA_EXCEEDED` from the worker is a stop condition; the app
+body `{"detail":"rate limit exceeded"}` is retryable. Exact worker neuron
+billing is not exposed, so live summaries report exact request counts and a
+labeled estimate.
+
+## Prompt bench ledger and story-data overlays — 2026-09-03
+
+**Purpose:** Verify resolved prompt/package hashes, temporary story-package
+overlays, append-only ledger rows, and pooled comparison reporting while
+preserving the archived Arm C prompt.
+
+**Setup / seed:** Checkout `/home/bcorfman/dev/freytag-forge` on `prompt-bench`;
+use `/home/bcorfman/dev/freytag-forge/.venv/bin/python`. The live smoke requires
+the variables in `.env`; never print their values. The two requested runs use
+Scene 1A, one `e2e` script, and one replicate each.
+
+**Safe actions:** `bench describe`, `bench log`, `bench prompt`, archived
+`bench score`, unit tests, the deterministic acceptance checker, and ruff.
+
+**Destructive or external actions:** `bench run` spends one narrator traversal
+and one judge call per focused replicate and appends one real row to the tracked
+ledger. It never modifies the source story package. Stop immediately if the
+worker returns HTTP 429 with `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`.
+
+**Steps:**
+
+1. Check the overlay without a model call:
+
+   ```bash
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --variation bench/variations/arm-c-overlay.json --scene 1A --turn 1 --player-input "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor."
+   ```
+
+2. Source the environment and run the focused real arms:
+
+   ```bash
+   set -a && . /home/bcorfman/dev/freytag-forge/.env && set +a
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/arm-c.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-arm-c --confirm
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/arm-c-no-example.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-arm-c-no-example --confirm
+   ```
+
+3. Inspect and compare only the rows produced by those runs:
+
+   ```bash
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench log --json --variation arm-c --limit 1
+   /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare arm-c arm-c-no-example
+   ```
+
+**Verify:** The overlay prompt contains the replacement detail and not the old
+detail. On 2026-09-03 the final deterministic acceptance commands all passed:
+`pytest -q -n 2 --no-cov` reported 243 passed, `check_bench.py --skip-live`
+reported PASS, and `ruff check bench storygame` reported All checks passed.
+The Arm C live run appended one valid row: score 1/63, 5 narration turns, 8
+narration requests, 1 judge call, and an estimated 88 neurons. Three retries of
+the no-example `e2e` script and one alternate-script attempt all failed before
+scoring with the same non-quota invalid-proposal response, so no row was
+written for those failed invocations. This predates the coverage-aware failed
+row behavior recorded below.
+
+**Cleanup:** Keep the real ledger rows. Temporary effective package copies and
+run artifacts under `/tmp` may be removed after reporting.
+
+**Notes:** `package_hash` is the effective package hash, so package-mismatched
+comparisons require `--allow-package-mismatch` and emit a warning.
+`spend.neurons` is a request-based estimate because the Worker does not return
+billing telemetry.
+
+## Coverage-aware bench ledger and failed replicates — 2026-09-03
+
+**Purpose:** Verify that focused scene scores cannot be pooled with full-story
+scores, that alternate ledgers can exercise the guard, and that failed narrator
+replicates remain attributable experimental results.
+
+**Setup / seed:** Checkout `/home/bcorfman/dev/freytag-forge` on
+`prompt-bench`; use `/home/bcorfman/dev/freytag-forge/.venv/bin/python`.
+The tracked ledger is `bench/results/ledger.jsonl`; tests use temporary ledgers
+through `--ledger PATH`.
+
+**Safe actions:** Focused tests, `bench log`, `bench compare` against temporary
+JSONL, the archived baseline coverage check, acceptance scripts, and Ruff.
+
+**Destructive or external actions:** The two live runs append to the tracked
+ledger and spend narrator/judge budgets. Stop if the worker returns HTTP 429
+with `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`.
+
+**Steps:**
+
+1. Run the focused bench tests.
+2. Use `bench compare --ledger PATH` with matching and mismatched
+   `scenes_scored` rows; verify the mismatch names both coverage values and the
+   `--allow-coverage-mismatch` override permits the report.
+3. Run the authorized Arm C and no-example smoke commands from the preceding
+   entry and inspect the newest JSONL rows.
+
+**Verify:**
+
+```bash
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q tests/test_bench.py --no-cov
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -n 2 --no-cov
+python3 /home/bcorfman/bakeoff-data/check_bench.py --skip-live
+python3 /home/bcorfman/bakeoff-data/check_ledger.py
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench storygame
+```
+
+Observed 2026-09-03: the full suite reported `248 passed in 15.47s`,
+`check_bench.py --skip-live` and `check_ledger.py` both reported `PASS`, and
+Ruff reported `All checks passed!`. Successful rows carry `status: "ok"`, `scenes_scored`, `max_score`,
+and an actual denominator; failed rows carry `status: "failed"` and
+`failure_reason`, remain visible in `log`, and are absent from comparison
+statistics. `run --baseline` applies the same coverage guard to an archived
+nine-scene `e2e-llm-canon.json`.
+
+**Cleanup:** Keep the real append-only ledger rows and live artifacts; temporary
+test ledgers may be discarded. Do not rewrite existing ledger lines.
+
+**Notes:** The Arm C run on 2026-09-03 produced three Scene 1A script scores
+`[2, 1, 1]` (aggregate 4/7), 15 narration turns, 24 narration requests, and
+three judge calls. The no-example run produced three failed rows after repeated
+`INVALID_PROPOSAL` responses (`segments.0:model_type` through
+`segments.4:model_type` and `segments:too_short`), with zero judge calls. Neither
+run returned the quota-specific 429 header.
+
+## Unknown-scale narration bench ledger rows — 2026-09-03
+
+**Purpose:** Verify that ledger rows without an explicit `scenes_scored`
+denominator remain visible but are excluded from comparison statistics, while
+known coverage mismatches remain guarded.
+
+**Setup / seed:** Run from `/home/bcorfman/dev/freytag-forge` with
+`/home/bcorfman/dev/freytag-forge/.venv/bin/python`. Deterministic fixtures use
+temporary JSONL ledgers; the real-ledger comparison reads
+`bench/results/ledger.jsonl` and makes no model calls.
+
+**Safe actions:** Read-only tests, lint, deterministic checker scripts, and
+`bench compare` against the tracked ledger. No live narration or judge calls.
+
+**Destructive or external actions:** None. The repository and tracked ledger
+must remain unmodified; do not run a live `bench run` for this verification.
+
+**Steps:**
+
+1. Run the whole suite with `-n 2 --no-cov` using the project interpreter.
+2. Run the four deterministic bakeoff-data check scripts, then Ruff for
+   `bench storygame`.
+3. Compare `arm-c` with itself against the tracked ledger and inspect the
+   skip message and reported n.
+
+**Verify:**
+
+```bash
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -n 2 --no-cov
+python3 /home/bcorfman/bakeoff-data/check_bench.py --skip-live
+python3 /home/bcorfman/bakeoff-data/check_ledger.py
+python3 /home/bcorfman/bakeoff-data/check_coverage.py
+python3 /home/bcorfman/bakeoff-data/check_neutral.py
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench storygame
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare arm-c arm-c
+```
+
+Expected: rows missing or null `scenes_scored` are identified as unknown or
+legacy and reported as skipped; they contribute to neither arm's n or any
+statistic. Known rows with differing scene counts still fail unless the
+coverage override is supplied. The tracked ledger remains byte-for-byte
+unchanged.
+
+**Cleanup:** None.
+
+**Observed 2026-09-03:** The focused bench tests reported `20 passed in 1.11s`;
+the full suite reported `252 passed in 15.06s`. `check_legacy.py`,
+`check_bench.py --skip-live`, `check_ledger.py`, and `check_coverage.py` all
+reported `PASS`. `check_neutral.py` remains a pre-existing failure because
+`bench/variations/arm-c-neutral-example.json` and its ledger evidence are not
+present; this fix does not create a new variation, criterion, or live result.
+`ruff check bench storygame` reported `All checks passed!`. Against the real
+ledger, `bench compare arm-c arm-c` reported one skipped legacy row and
+`n=3 mean=1.33 sd=0.58` for each side, with Welch `p=1.0000` and minimum
+detectable effect `4.47`.
+
+**Cleanup:** None. The tracked ledger remained 5 lines and was not rewritten or
+appended to during verification.
+
+**Notes:** Do not rewrite or backfill the legacy ledger row.
+
+## Neutral output example and leakage metric — 2026-09-03
+
+**Purpose:** Verify that a custom output example preserves the narrator's JSON
+shape without carrying the drawer prose, and measure reuse of any configured
+example in successful narration turns.
+
+**Setup / seed:** Checkout `prompt-bench`; use
+`/home/bcorfman/dev/freytag-forge/.venv/bin/python`. The live runs require the
+environment variables in `.env` and spend Workers AI plus judge budget.
+
+**Safe actions:** Prompt assembly, variation description, unit tests, the full
+suite, acceptance scripts, and Ruff. Do not run the browser E2E suite locally.
+
+**Destructive or external actions:** The authorized neutral run uses three
+replicates and the declared Scene 1A scripts; the no-example run uses one
+replicate and the same scripts. Both append real rows to the tracked ledger.
+Stop if the narration endpoint returns HTTP 429 with
+`X-Narration-Error-Code: AI_QUOTA_EXCEEDED`; retain whatever real rows exist.
+
+**Steps:**
+
+1. Verify `arm-c` prompt byte identity and inspect all three resolved examples
+   with `bench prompt` and `bench describe --json`.
+2. Source `.env`, then run the exact neutral and no-example commands from the
+   task specification, without hand-writing ledger rows.
+3. Run the full suite, three bakeoff-data acceptance checks, and Ruff.
+
+**Verify:** Successful rows contain integer `example_leakage`; failed rows
+contain `status: "failed"` and `failure_reason`. The neutral system prompt
+contains `<output_example>` with `segments`, `kind`, and
+`selected_knowledge_ids`, but none of the drawer example's distinctive prose.
+
+**Cleanup:** Keep real ledger rows and requested run artifacts. Temporary
+test-ledger files may be removed; never rewrite existing ledger lines.
+
+**Notes:** The metric counts a turn when narration and the resolved example
+share at least eight consecutive words after case folding and whitespace
+normalisation. A no-example configuration scores zero by definition. Observed
+on 2026-09-03: the neutral run had 5 judgeable script-replicates and 4 failed
+replicates, scores `[0, 1, 1, 1, 1]`, total 4/7, leakage 0, and 5 judge calls;
+the no-example run had 3 failed replicates, zero judge calls, and no score. The
+full suite reported `257 passed`; `check_bench.py --skip-live`,
+`check_ledger.py`, `check_coverage.py`, and `check_neutral.py` all reported
+`PASS`; Ruff reported `All checks passed!`.
+
+## Portable archived bench fixtures — 2026-09-03
+
+**Purpose:** Verify the archived Arm C scorer and prompt contracts without
+depending on the author's machine-specific bakeoff directory.
+
+**Setup / seed:** The repository fixtures live under
+`tests/fixtures/bench/`. The archived run includes `summary.json` with
+`scenes_scored: 9`, `max_score: 63`, and `replicate_scores: [12]` so baseline
+comparison preserves its real nine-scene refusal path.
+
+**Safe actions:** Run the deterministic suite, Ruff, and the repository checks
+below. No live model calls or external writes are needed.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the full pytest suite with the repository virtualenv interpreter.
+2. Run Ruff and all five bakeoff-data checks.
+
+**Verify:** The suite remains at or above the 90% coverage gate; the scorer
+returns the archived 12/63 result; the prompt fixture remains byte-identical;
+and the archived nine-scene baseline is rejected before live work.
+
+```bash
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -n 2
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench storygame tests
+python3 /home/bcorfman/bakeoff-data/check_bench.py --skip-live
+python3 /home/bcorfman/bakeoff-data/check_ledger.py
+python3 /home/bcorfman/bakeoff-data/check_coverage.py
+python3 /home/bcorfman/bakeoff-data/check_neutral.py
+python3 /home/bcorfman/bakeoff-data/check_legacy.py
+```
+
+**Cleanup:** None. Do not rewrite the tracked ledger.
+
+**Notes:** Tests resolve every archived path from `Path(__file__)`; the
+acceptance scripts under `/home/bcorfman/bakeoff-data` remain orchestrator
+tooling and are intentionally outside this portability boundary.
+Observed 2026-09-03: the full suite reported `262 passed in 39.86s` and
+`90.43%` coverage. Ruff and each of `check_bench.py --skip-live`,
+`check_ledger.py`, `check_coverage.py`, `check_neutral.py`, and
+`check_legacy.py` reported `PASS`.
