@@ -184,7 +184,9 @@ def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path
     store.save("shadow", state)
     restored = store.load("shadow", PACKAGE)
     projector = KnowledgeProjector()
-    assert projector.project(restored, "player", "Wait.") == projector.project(state, "player", "Wait.")
+    assert projector.project(restored, "player", "Search the desk.") == projector.project(
+        state, "player", "Search the desk."
+    )
 
 
 def test_future_or_ambiguous_input_and_raw_history_do_not_expand_shadow_context() -> None:
@@ -263,7 +265,7 @@ def test_knowledge_outside_the_scene_arrives_only_when_the_player_reaches_for_it
     unmentioned = projector.project(state, "player", "Search the kitchen for signs of a struggle.")
     assert recalled_id not in _ids(unmentioned.committed_knowledge)
 
-    mentioned = projector.project(state, "player", "Think back to the transit card Brandon used.")
+    mentioned = projector.project(state, "player", "Examine Brandon's transit card.")
     assert recalled_id in _ids(mentioned.committed_knowledge)
 
     # The scene's own material is unconditional either way.
@@ -283,8 +285,8 @@ def test_incidental_words_do_not_recall_knowledge_aliases() -> None:
 
     for player_input in (
         "Park beside the curb.",
-        "Look around for evidence of a struggle.",
-        "Brace for the pursuit.",
+        "Photograph the evidence.",
+        "Record the pursuit.",
     ):
         projection = projector.project(state, "player", player_input)
         assert "k_scene_1b_entry" not in _ids(projection.committed_knowledge)
@@ -299,7 +301,7 @@ def test_entity_references_use_whole_words_and_authored_aliases() -> None:
     assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
     assert "memory_card" in _input_referenced_entity_ids(world, "Check Shelly's memory card.")
     assert "mcgehee_home" not in _input_referenced_entity_ids(world, "Inspect Shelly's housework.")
-    assert _input_referenced_entity_ids(world, "Stand still and listen.") == frozenset()
+    assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()
 
 
 def test_a_player_may_name_an_entity_by_its_alias_or_short_form() -> None:
@@ -310,4 +312,4 @@ def test_a_player_may_name_an_entity_by_its_alias_or_short_form() -> None:
     world = PACKAGE.world
     assert "michelle" in _input_referenced_entity_ids(world, "Call Shelly again.")
     assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
-    assert _input_referenced_entity_ids(world, "Stand still and listen.") == frozenset()
+    assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()

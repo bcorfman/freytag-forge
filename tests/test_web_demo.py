@@ -266,7 +266,7 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
             "/api/v1/turn",
             json={
                 "session_id": session_id,
-                "player_input": "Wait and listen.",
+                "player_input": "Search the room.",
                 "test_clock_seconds": 120,
                 "test_clock_token": "clock-secret",
             },
@@ -406,7 +406,7 @@ def test_test_clock_accepts_a_correct_header_token(monkeypatch, tmp_path) -> Non
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "Wait and listen."},
+            json={"session_id": session_id, "player_input": "Search the room."},
             headers={
                 "X-Freytag-Test-Clock-Seconds": "120",
                 "X-Freytag-Test-Clock-Token": "clock-secret",

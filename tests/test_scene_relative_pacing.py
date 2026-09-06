@@ -34,7 +34,7 @@ def test_turn_index_keeps_counting_and_scene_entry_resets_relative_turns() -> No
     assert state.scene_entered_at_turn == 2
     assert state.turn_index - state.scene_entered_at_turn == 0
 
-    engine.turn("Keep moving.")
+    engine.turn("Inspect the room.")
     assert state.turn_index == 3
     assert state.turn_index - state.scene_entered_at_turn == 1
 

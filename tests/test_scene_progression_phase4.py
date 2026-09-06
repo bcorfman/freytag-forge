@@ -186,8 +186,8 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
 
-    engine.turn("Wait.")
-    engine.turn("Continue waiting.")
+    engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
+    engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
 
     assert state.facts.has("patrol_return_pressure", "story", value="true")
     assert "pressure_1a" in state.fired_event_ids
@@ -206,7 +206,7 @@ def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
     )
 
     with pytest.raises(ValueError):
-        engine.turn("Imagine distant proof.")
+        engine.turn("Inspect the facility.")
     assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
 
 

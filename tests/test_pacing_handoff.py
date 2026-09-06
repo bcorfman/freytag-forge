@@ -93,7 +93,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
     engine = RuntimeEngine(state, provider)
 
-    hint = engine.turn("Wait and listen.")
+    hint = engine.turn("Search the desk.")
     assert state.staged_hint_fact_ids == ("transport_route_identified", "brandon_identified")
     assert state.staged_handoff_fact_ids == ()
     assert not state.facts.has("transport_route_identified", "story", value="true")
@@ -101,7 +101,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert state.last_turn_delivery.hint_staged is True
     assert state.last_turn_delivery.handoff_staged is False
 
-    handoff = engine.turn("Keep watching the park.")
+    handoff = engine.turn("Search the park.")
     assert state.current_scene_id == "1C"
     assert not state.facts.has("trust_brandon", "story", value="true")
     assert state.facts.has("transport_route_identified", "story", value="true")
@@ -124,7 +124,7 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
     engine.turn("Approach the facility entrance.")
-    engine.turn("Keep watching the security desk.")
+    engine.turn("Inspect the security desk.")
     engine.turn("Watch the security desk.")
     handoff = engine.turn("Watch the guard rotation.")
 
@@ -153,8 +153,8 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    provider("Keep watch.")
-    projection = KnowledgeProjector().project(state, "player", "Keep watch.")
+    provider("Inspect the security desk.")
+    projection = KnowledgeProjector().project(state, "player", "Inspect the security desk.")
     assert [item.fact_id for item in projection.hinted_deliveries] == ["transport_route_identified"]
     assert [item.fact_id for item in projection.handoff_deliveries] == ["transport_route_identified"]
     serialized = json.dumps(captured["payload"]).casefold()
@@ -162,7 +162,7 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert "declared handoff intervention" in captured["payload"]["user"].casefold()
     assert "do not claim that the player took an action they did not take" in captured["payload"]["user"].casefold()
     state.staged_handoff_fact_ids = ()
-    provider("Keep watch.")
+    provider("Inspect the security desk.")
     assert "hinted evidence" in captured["payload"]["user"].casefold()
 
 
@@ -180,7 +180,7 @@ def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    response = provider("Keep watching the park.")
+    response = provider("Search the park.")
 
     assert len(payloads) == 1
     assert response["segments"][0]["text"] == delivery.fallback_text
@@ -202,7 +202,7 @@ def test_handoff_recovery_names_missed_groups_and_falls_back_to_authored_text(mo
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    response = provider("Wait.")
+    response = provider("Search the route.")
     assert len(payloads) == 2
     assert delivery.must_convey[0][0] in payloads[1]["system"]
     assert response["segments"][0]["text"] == delivery.fallback_text

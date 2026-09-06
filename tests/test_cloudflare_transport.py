@@ -188,7 +188,7 @@ def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> No
     )
 
     with pytest.raises(NarrationProviderError, match="invalid proposal"):
-        provider("Wait.")
+        provider("Search the drawer.")
 
 
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
@@ -536,7 +536,7 @@ def test_transport_drops_an_ungrounded_groupless_selection(monkeypatch) -> None:
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Wait.")
+    result = provider("Inspect the corridor.")
 
     assert result["selected_knowledge_ids"] == []
     assert "grounding_ids" not in result["segments"][0]
@@ -741,7 +741,7 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    provider("Stand still and listen.")
+    provider("Inspect the room.")
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
     quiet_prompt = payloads[-1]["user"]
     assert "offers no candidates" in quiet_prompt
@@ -790,7 +790,7 @@ def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatc
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
     )
 
-    provider("Stand still and listen.")
+    provider("Inspect the room.")
 
     assert len(payloads) == 2
     assert "offers no candidates" in payloads[1]["user"]
