@@ -822,7 +822,7 @@ def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothi
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Reach for something the player has not earned.")
+    proposal = provider("Open the drawer under the workstation.")
 
     assert len(payloads) == 2, "the provider still gets exactly one guided recovery"
     assert proposal["selected_knowledge_ids"] == []
@@ -830,9 +830,9 @@ def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothi
 
     # The sanitized shape must satisfy the runtime rule that rejected it.
     projector = KnowledgeProjector()
-    projection = projector.project(state, "player", "Reach for something the player has not earned.")
+    projection = projector.project(state, "player", "Open the drawer under the workstation.")
     resolved, _ = SelectedRevealResolver(PACKAGE).resolve(
-        state, projection, parse_turn_proposal(proposal), projector, "Reach for something the player has not earned."
+        state, projection, parse_turn_proposal(proposal), projector, "Open the drawer under the workstation."
     )
     assert resolved.selected_knowledge_ids == ()
     assert resolved.events == ()

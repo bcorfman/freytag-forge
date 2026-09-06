@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict
@@ -62,16 +63,12 @@ class TurnKnowledgeContext(_KnowledgeModel):
 def _entity_surface_forms(entity) -> tuple[str, ...]:
     """Every written form by which a player might name one entity.
 
-    A player writes "the memory card", not "Hidden memory card", so the
-    trailing head phrase of a multi-word name is matchable too. Authored
-    aliases remain the reliable route: adding one to world.yaml is better than
-    making this matcher looser.
+    Surface forms come only from the authored world entity name and aliases.
+    If a shorter player-facing form is useful, it belongs in world.yaml rather
+    than being inferred from the name or from a knowledge item's aliases.
     """
 
     forms = {entity.name.casefold(), *(alias.casefold() for alias in entity.aliases)}
-    words = entity.name.casefold().split()
-    if len(words) > 2:
-        forms.add(" ".join(words[-2:]))
     return tuple(sorted(form for form in forms if form))
 
 
@@ -83,7 +80,7 @@ def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:
         entity.id
         for entities in (world.locations, world.npcs, world.items)
         for entity in entities
-        if any(form in folded_input for form in _entity_surface_forms(entity))
+        if any(re.search(rf"(?<!\w){re.escape(form)}(?!\w)", folded_input) for form in _entity_surface_forms(entity))
     )
 
 
@@ -190,22 +187,17 @@ class KnowledgeProjector:
         in_scene = [item for item in visible if state.current_scene_id in item.available_in_scenes]
         scene_ids = {item.id for item in in_scene}
         referenced_entity_ids = _input_referenced_entity_ids(state.package.world, player_input)
-        folded_input = player_input.casefold()
         recalled = [
-            item
-            for item in visible
-            if item.id not in scene_ids and self._player_refers_to(item, folded_input, referenced_entity_ids)
+            item for item in visible if item.id not in scene_ids and self._player_refers_to(item, referenced_entity_ids)
         ]
         selected = [*in_scene, *recalled][: self.max_committed_knowledge]
         return tuple(self._projected(item) for item in selected)
 
     @staticmethod
-    def _player_refers_to(item: KnowledgeDefinition, folded_input: str, referenced_entity_ids: frozenset[str]) -> bool:
+    def _player_refers_to(item: KnowledgeDefinition, referenced_entity_ids: frozenset[str]) -> bool:
         """Decide whether the player's own words reach for one out-of-scene claim."""
 
-        if referenced_entity_ids & {*item.entity_ids, *item.relevance.entity_ids}:
-            return True
-        return any(alias.casefold() in folded_input for alias in item.aliases)
+        return bool(referenced_entity_ids & {*item.entity_ids, *item.relevance.entity_ids})
 
     @staticmethod
     def _projected(item: KnowledgeDefinition) -> ProjectedKnowledge:

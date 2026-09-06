@@ -51,6 +51,8 @@ npcs:
 items:
 - id: memory_card
   name: Hidden memory card
+  aliases:
+  - memory card
   fallback_ids:
   - michelle_phone
 - id: michelle_phone

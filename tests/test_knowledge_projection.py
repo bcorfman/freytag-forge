@@ -275,6 +275,33 @@ def test_knowledge_outside_the_scene_arrives_only_when_the_player_reaches_for_it
     assert scene_local <= _ids(mentioned.committed_knowledge)
 
 
+def test_incidental_words_do_not_recall_knowledge_aliases() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    _establish(state, "k_scene_1b_entry")
+    _establish(state, "k_scene_2b_entry")
+    projector = KnowledgeProjector()
+
+    for player_input in (
+        "Park beside the curb.",
+        "Look around for evidence of a struggle.",
+        "Brace for the pursuit.",
+    ):
+        projection = projector.project(state, "player", player_input)
+        assert "k_scene_1b_entry" not in _ids(projection.committed_knowledge)
+        assert "k_scene_2b_entry" not in _ids(projection.committed_knowledge)
+
+
+def test_entity_references_use_whole_words_and_authored_aliases() -> None:
+    from storygame.runtime.knowledge import _input_referenced_entity_ids
+
+    world = PACKAGE.world
+    assert "michelle" in _input_referenced_entity_ids(world, "Call Shelly again.")
+    assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
+    assert "memory_card" in _input_referenced_entity_ids(world, "Check Shelly's memory card.")
+    assert "mcgehee_home" not in _input_referenced_entity_ids(world, "Inspect Shelly's housework.")
+    assert _input_referenced_entity_ids(world, "Stand still and listen.") == frozenset()
+
+
 def test_a_player_may_name_an_entity_by_its_alias_or_short_form() -> None:
     """A player writes "Shelly" or "the memory card", not the credited full name."""
 

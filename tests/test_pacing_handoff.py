@@ -123,10 +123,10 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
     state = _state_2a()
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    engine.turn("Wait at the facility entrance.")
+    engine.turn("Approach the facility entrance.")
     engine.turn("Keep watching the security desk.")
-    engine.turn("Wait for an opening.")
-    handoff = engine.turn("Keep waiting for an opening.")
+    engine.turn("Watch the security desk.")
+    handoff = engine.turn("Watch the guard rotation.")
 
     assert state.current_scene_id == "2B"
     assert state.facts.has("false_identities_ready", "story", value="true")
