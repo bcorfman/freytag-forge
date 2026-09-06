@@ -10,6 +10,8 @@ import yaml
 from pydantic import ValidationError
 
 from storygame.story_package.models import (
+    Character,
+    Entity,
     FactDelivery,
     KnowledgeCatalog,
     KnowledgeIndexes,
@@ -30,6 +32,11 @@ class StoryPackageError(ValueError):
 
 
 _SCENE = re.compile(r"^## Scene ([1-9][A-Z]) .*$", re.MULTILINE)
+_GENRE = re.compile(r"^\*\*Genre:\*\*\s*(?P<genre>.+?)\s*$", re.MULTILINE)
+_PRINCIPAL_CHARACTERS = re.compile(
+    r"^## Principal Characters\s*$(?P<body>.*?)(?=^#{1,2} (?!# )|\Z)", re.MULTILINE | re.DOTALL
+)
+_CHARACTER = re.compile(r"^### (?P<name>.+?)\s*$\s*\n(?P<bio>[^\n]+)", re.MULTILINE)
 _SCENE_BEAT = re.compile(r"^### (?P<heading>Scene (?P<id>[1-9][A-Z]\.[1-9])\s+[—-]\s+(?P<title>.+))$", re.MULTILINE)
 _DETAILS = re.compile(r"^\*\*Details:\*\*\s*(?P<items>.+?)\s*$", re.MULTILINE)
 _STORYLET = re.compile(r"^### (SL-([1-9][A-Z])-[A-Z]) — (.+)$", re.MULTILINE)
@@ -566,6 +573,36 @@ def _validate_deliveries(package: StoryPackage) -> None:
         raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
 
 
+def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ...]:
+    """Read the authored principal characters plot.md already defines.
+
+    The bios are narrative ground truth and are used verbatim, so the narrator
+    is given the same characterisation a reader gets. A heading that names no
+    world NPC is skipped rather than rejected: a package may introduce a
+    character in prose before it needs runtime identity for them.
+    """
+
+    section = _PRINCIPAL_CHARACTERS.search(plot_text)
+    if section is None:
+        return ()
+    by_form: dict[str, Entity] = {}
+    for npc in world.npcs:
+        for form in (npc.name, *npc.aliases):
+            by_form.setdefault(form.casefold(), npc)
+    characters: list[Character] = []
+    seen: set[str] = set()
+    for match in _CHARACTER.finditer(section.group("body")):
+        npc = by_form.get(match.group("name").casefold())
+        if npc is None or npc.id in seen:
+            continue
+        seen.add(npc.id)
+        # A bio can carry the character's own concealed history, which plot.md is
+        # entitled to state and the narrator must not be told; world.yaml may
+        # substitute a narrator-safe paragraph without editing narrative canon.
+        characters.append(Character(id=npc.id, name=npc.name, bio=npc.narrator_bio or match.group("bio").strip()))
+    return tuple(characters)
+
+
 def load_story_package(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
     try:
@@ -626,9 +663,12 @@ def load_story_package(root: Path) -> StoryPackage:
         )
     except (OSError, ValidationError) as exc:
         raise StoryPackageError(str(exc)) from exc
+    genre_match = _GENRE.search(plot_text)
     package = StoryPackage(
         story_id=world.story_id,
         protagonist_id=world.protagonist_id,
+        genre=genre_match.group("genre") if genre_match else "",
+        characters=_parse_characters(plot_text, world),
         scenes=scenes,
         world=world,
         pacing=pacing,

@@ -59,6 +59,34 @@ class TurnKnowledgeContext(_KnowledgeModel):
         }
 
 
+def _entity_surface_forms(entity) -> tuple[str, ...]:
+    """Every written form by which a player might name one entity.
+
+    A player writes "the memory card", not "Hidden memory card", so the
+    trailing head phrase of a multi-word name is matchable too. Authored
+    aliases remain the reliable route: adding one to world.yaml is better than
+    making this matcher looser.
+    """
+
+    forms = {entity.name.casefold(), *(alias.casefold() for alias in entity.aliases)}
+    words = entity.name.casefold().split()
+    if len(words) > 2:
+        forms.add(" ".join(words[-2:]))
+    return tuple(sorted(form for form in forms if form))
+
+
+def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:
+    """Find the world entities the player named in their own words."""
+
+    folded_input = player_input.casefold()
+    return frozenset(
+        entity.id
+        for entities in (world.locations, world.npcs, world.items)
+        for entity in entities
+        if any(form in folded_input for form in _entity_surface_forms(entity))
+    )
+
+
 class KnowledgeProjector:
     """Projects immutable package knowledge from the canonical fact store."""
 
@@ -85,7 +113,7 @@ class KnowledgeProjector:
         frame = next(
             frame for frame in state.package.knowledge.scene_frames if frame.scene_id == state.current_scene_id
         )
-        committed = self._established_for(state, audience_id, self.max_committed_knowledge)
+        committed = self._committed_for(state, audience_id, player_input)
         # What a speaker may say aloud is a tighter, scene-focused slice than the
         # grounding basis; they are not the same list.
         sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
@@ -136,6 +164,49 @@ class KnowledgeProjector:
             return tuple(self._projected(item) for item in established)
         return tuple(self._projected(item) for item in established[-limit:])
 
+    def _committed_for(
+        self, state: RuntimeState, audience_id: str, player_input: str
+    ) -> tuple[ProjectedKnowledge, ...]:
+        """Project the scene's own knowledge, plus outside knowledge the player asked about.
+
+        Nothing is scoped away. The whole store stays searchable on every turn:
+        what the current scene's beats describe is always sent, because it is
+        what the turn is about, and everything else reaches the narrator only
+        when the player's own words reach for it. An earlier scene nobody
+        mentions therefore costs no tokens, while a player who raises it gets
+        continuity instead of a blank. This is retrieval on reference, not a
+        ranked cut to a budget; the numeric bound below is only a backstop
+        against a pathological package, never the selection mechanism.
+
+        The resolver validates segment grounding against this same projection,
+        so the provider is never asked to ground on knowledge it was not shown.
+        """
+
+        visible = [
+            item
+            for item in state.package.knowledge.knowledge
+            if self._established(item, state) and self._visible_to(item, audience_id)
+        ]
+        in_scene = [item for item in visible if state.current_scene_id in item.available_in_scenes]
+        scene_ids = {item.id for item in in_scene}
+        referenced_entity_ids = _input_referenced_entity_ids(state.package.world, player_input)
+        folded_input = player_input.casefold()
+        recalled = [
+            item
+            for item in visible
+            if item.id not in scene_ids and self._player_refers_to(item, folded_input, referenced_entity_ids)
+        ]
+        selected = [*in_scene, *recalled][: self.max_committed_knowledge]
+        return tuple(self._projected(item) for item in selected)
+
+    @staticmethod
+    def _player_refers_to(item: KnowledgeDefinition, folded_input: str, referenced_entity_ids: frozenset[str]) -> bool:
+        """Decide whether the player's own words reach for one out-of-scene claim."""
+
+        if referenced_entity_ids & {*item.entity_ids, *item.relevance.entity_ids}:
+            return True
+        return any(alias.casefold() in folded_input for alias in item.aliases)
+
     @staticmethod
     def _projected(item: KnowledgeDefinition) -> ProjectedKnowledge:
         return ProjectedKnowledge(id=item.id, statement=item.statement, entity_ids=item.entity_ids)
@@ -163,14 +234,8 @@ class KnowledgeProjector:
     def _referenced_established_ids(
         self, state: RuntimeState, player_input: str, established_ids: Iterable[str]
     ) -> tuple[str, ...]:
-        world = state.package.world
-        names = {
-            entity.id: entity.name.casefold()
-            for entities in (world.locations, world.npcs, world.items)
-            for entity in entities
-        }
-        input_folded = player_input.casefold()
-        return tuple(sorted(entity_id for entity_id in established_ids if names.get(entity_id, "") in input_folded))
+        referenced = _input_referenced_entity_ids(state.package.world, player_input)
+        return tuple(sorted(entity_id for entity_id in established_ids if entity_id in referenced))
 
     def _candidates(
         self, state: RuntimeState, audience_id: str, referenced_ids: tuple[str, ...]

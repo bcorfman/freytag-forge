@@ -32,7 +32,7 @@ DEFAULT_OUTPUT_EXAMPLE = (
     '{"segments":[{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
     "her fingers find the flat edge of something that was never meant to be seen from above, and the "
     'kitchen behind her goes very quiet."},{"kind":"narration","text":"She works it loose and turns it over in the '
-    'light from the window. '
+    "light from the window. "
     "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
     'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
     '"selected_knowledge_ids":[]}'
@@ -274,9 +274,10 @@ class CloudflareTurnProvider:
                 "speakers": speaker_contexts,
             },
         }
-        return {"system": self._turn_instruction(), "context": context}
+        context["_rules"] = self._turn_rules()
+        return {"system": self._system_prompt(), "context": context}
 
-    def _turn_instruction(self) -> str:
+    def _turn_rules(self) -> list[str]:
         """State the selection rule that actually applies to this turn.
 
         The two cases pull in opposite directions and both have cost a
@@ -320,13 +321,12 @@ class CloudflareTurnProvider:
             "Use the authored place, texture, and physical detail.",
             "Answer what the player actually did.",
             "Never invent durable evidence, physical objects, items, or container contents.",
-            "Treat the authored entry_text and beat details as already true.",
+            "Treat the authored scene material as already true.",
             "A grounding ID may name only committed knowledge or the selected candidate.",
             "Never ground on a candidate you did not select.",
             "Dialogue may use only its speaker's sayable knowledge.",
             *selection_rules,
             "Never write source IDs, events, operations, facts, or transitions as prose.",
-            f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Never reuse a beat's sentences.",
             "Never contradict authored text.",
             "Never echo the request fields.",
@@ -347,19 +347,53 @@ class CloudflareTurnProvider:
         # five of them HTTP 409 for grounding on knowledge that was neither
         # committed nor selected. The engine attributes the delivering segment
         # itself, so the model never needs to be shown how.
-        include_example = self.prompt_variant.get("include_output_example", True) if self.prompt_variant else True
-        blocks = [*(f"<rule>{rule}</rule>" for rule in rules)]
-        if include_example:
-            example_text = (
-                self.prompt_variant.get("output_example", DEFAULT_OUTPUT_EXAMPLE)
-                if self.prompt_variant
-                else DEFAULT_OUTPUT_EXAMPLE
-            )
-            if not isinstance(example_text, str):
-                raise ValueError("prompt variant output_example must be a string")
-            example = f"<output_example>{example_text}</output_example>"
-            blocks.append(example)
-        return "\n".join(blocks)
+        return rules
+
+    def _output_example(self) -> str | None:
+        """Resolve the response example, or None when this variation omits it."""
+
+        if self.prompt_variant and not self.prompt_variant.get("include_output_example", True):
+            return None
+        example_text = (
+            self.prompt_variant.get("output_example", DEFAULT_OUTPUT_EXAMPLE)
+            if self.prompt_variant
+            else DEFAULT_OUTPUT_EXAMPLE
+        )
+        if not isinstance(example_text, str):
+            raise ValueError("prompt variant output_example must be a string")
+        return example_text
+
+    def _protagonist_name(self) -> str:
+        """The short name the player is called by, not the full credited name."""
+
+        package = self.state.package
+        npc = next((entity for entity in package.world.npcs if entity.id == package.protagonist_id), None)
+        if npc is None:
+            return package.protagonist_id
+        return min((*npc.aliases, npc.name), key=len)
+
+    def _system_prompt(self) -> str:
+        """The instructions that never vary: role, genre, player, and reply shape.
+
+        Everything that changes with the scene or the beat lives in the user
+        message, so this block is identical on every turn of every scene and
+        carries nothing the model has to reconcile against the story.
+        """
+
+        package = self.state.package
+        genre = f"{package.genre} " if package.genre else ""
+        lines = [
+            f"You are the narrator of an interactive {genre}roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS "
+            "sections in the message that follows.",
+            "Make the roleplay realistic, with realistic character behaviors, personalities and motivations.",
+            f"The player is {self._protagonist_name()}.",
+            "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.",
+        ]
+        example = self._output_example()
+        if example is not None:
+            lines.append("Write each paragraph as one segment and return only JSON in this form:")
+            lines.append(example)
+        return "\n".join(lines)
 
     def opening(self) -> object:
         """Continue the authored entry text, before any player input exists."""
@@ -372,27 +406,18 @@ class CloudflareTurnProvider:
             "Dramatize only the opening beat and knowledge context as the protagonist encounters them.",
             "Do not repeat or paraphrase entry_text, invent evidence, characters, or events, resolve the objective, "
             "act for the protagonist, or offer choices.",
-            f"Return one paragraph per segment, roughly 30 to 55 words, with at most {MAX_TURN_SEGMENTS} segments.",
             "Keep selected_knowledge_ids empty.",
             "Do not contradict authored entry_text or beat details.",
             "Do not invent physical objects, items, or contents the authored context does not describe.",
             "Never write source IDs, events, operations, facts, or transitions as prose.",
         ]
         return self._dispatch(
-            "\n".join(
-                [
-                    *(f"<rule>{rule}</rule>" for rule in rules),
-                    '<output_example>{"segments":['
-                    '{"kind":"narration","text":"The gate stands open on a driveway that has not been swept in '
-                    "days, and the house beyond it keeps the particular stillness of a place someone left in the "
-                    'middle of doing something ordinary."},'
-                    '{"kind":"narration","text":"She goes up the steps slowly, listening for the sounds a lived-in '
-                    "house makes and hearing none of them, and the front door gives under her hand without her "
-                    'having to reach for a key."}],'
-                    '"selected_knowledge_ids":[]}</output_example>',
-                ]
-            ),
-            {"scene_entry": entry, "knowledge_context": {"player": self.last_projection.model_dump(mode="json")}},
+            self._system_prompt(),
+            {
+                "scene_entry": entry,
+                "knowledge_context": {"player": self.last_projection.model_dump(mode="json")},
+                "_rules": rules,
+            },
         )
 
     def _scene_setting(self) -> dict[str, object]:
@@ -433,7 +458,7 @@ class CloudflareTurnProvider:
         if self.last_projection is None:
             return {}
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
-        # Every candidate statement remains an explicit item in the tagged prompt;
+        # Every candidate statement remains an explicit item in the CONSTRAINTS section;
         # the beat is additional dramatic context, not a replacement for the claim.
         context["candidates"] = list(context["candidates"])
         return context
@@ -545,7 +570,7 @@ class CloudflareTurnProvider:
 
         payload = {
             "system": system,
-            "user": self._tagged_user_prompt(user),
+            "user": self._section_user_prompt(user),
             "max_tokens": 1024,
             "response_format": {"type": "json_object"},
         }
@@ -651,68 +676,114 @@ class CloudflareTurnProvider:
             ) from error
         return self._cap_accepted_response(response, proposal)
 
-    def _tagged_user_prompt(self, user: dict[str, object]) -> str:
-        """Render model context as distinct, whole tagged items."""
+    def _character_lines(self) -> list[str]:
+        """Introduce only the characters this scene actually involves.
 
-        lines: list[str] = []
+        A package's cast is written for a reader who finishes the story, so
+        sending all of it would hand the narrator later characters and their
+        motives before the player has met them.
+        """
 
-        def add(name: str, value: object, **attrs: object) -> None:
-            attributes = "".join(f' {key}="{value}"' for key, value in attrs.items())
-            lines.append(f"<{name}{attributes}>{value}</{name}>")
+        package = self.state.package
+        scene = self._current_scene()
+        involved = {package.protagonist_id, *scene.participant_ids}
+        lines = []
+        for character in package.characters:
+            if character.id not in involved:
+                continue
+            bio = character.bio
+            article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
+            lines.append(
+                f"{character.name} is {article.lower()}{bio[len(article) :]}" if article else f"{character.name}: {bio}"
+            )
+        return lines
+
+    def _display_name(self, entity_id: str) -> str:
+        """Name a speaker the way the story names them, never by runtime id."""
+
+        npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
+        return npc.name if npc else entity_id
+
+    def _section_user_prompt(self, user: dict[str, object]) -> str:
+        """Render turn context as the authored roleplay sections.
+
+        Each item is one whole line: an authored paragraph is never split
+        across entries, and no section that has nothing to say is printed.
+        """
+
+        scene: list[str] = []
+        constraints: list[str] = []
+        player_lines: list[str] = []
+
+        def paragraphs(text: str) -> list[str]:
+            """One entry per authored line, each kept whole."""
+
+            return [line.strip() for line in _plain(text).splitlines() if line.strip()]
 
         scene_entry = user.get("scene_entry")
         if isinstance(scene_entry, dict):
-            add("protagonist", scene_entry["protagonist"])
-            add("location", scene_entry["location"])
-            add("phase", scene_entry["phase"])
-            add("objective", scene_entry["objective"])
-            add("entry_text", _plain(scene_entry["entry_text"]))
-            beat = scene_entry["opening_beat"]
-            add("beat_title", beat["title"])
-            for detail in beat.get("details", []):
-                add("beat_detail", _plain(detail))
-            add(
-                "beat_job",
-                "Dramatize this world state only as far as the protagonist's arrival reaches; never reproduce its "
-                "wording.",
-            )
+            scene.append(f"The scene takes place at {scene_entry['location']}.")
+            objective = str(scene_entry["objective"])
+            scene.append(f"{scene_entry['protagonist']}'s objective is to {objective[0].lower()}{objective[1:]}.")
+            scene.extend(paragraphs(scene_entry["entry_text"]))
+            for detail in scene_entry["opening_beat"].get("details", []):
+                scene.extend(paragraphs(detail))
 
         context = user.get("knowledge_context", {})
         player = context.get("player", {}) if isinstance(context, dict) else {}
-        if isinstance(player, dict):
-            add("scene_id", player["scene_id"])
-            add("phase", player["phase"])
-            add("situation", _plain(player["scene_frame"]))
-            add("pressure", player["pressure"])
+        if isinstance(player, dict) and player:
+            scene.extend(paragraphs(player["scene_frame"]))
+            scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
             scene_setting = user.get("scene_setting")
             if isinstance(scene_setting, dict):
-                add("entry_text", _plain(scene_setting["entry_text"]))
+                scene.extend(paragraphs(scene_setting["entry_text"]))
                 for beat in scene_setting.get("beats", []):
-                    if isinstance(beat, dict):
-                        add("beat_title", beat["title"])
-                        beat_delivery = self.prompt_variant.get("beat_delivery") if self.prompt_variant else None
-                        if beat_delivery == "prose":
-                            add("beat", _plain(beat["prose"]))
-                        else:
-                            for detail in beat.get("details", []):
-                                add("beat_detail", _plain(detail))
-                        add("beat_job", beat["your_job"])
+                    if not isinstance(beat, dict):
+                        continue
+                    if (self.prompt_variant or {}).get("beat_delivery") == "prose":
+                        scene.extend(paragraphs(beat["prose"]))
+                    else:
+                        for detail in beat.get("details", []):
+                            scene.extend(paragraphs(detail))
             for item in player.get("committed_knowledge", []):
-                add("known", item["statement"], id=item["id"])
+                scene.append(item["statement"])
             for candidate in player.get("candidates", []):
-                add("candidate", candidate["statement"], id=candidate["id"])
+                constraints.append(
+                    f"{candidate['statement']} The player does not know this yet; reveal it only if their action "
+                    f"earns it, and then put {candidate['id']} in selected_knowledge_ids."
+                )
                 for group in candidate.get("must_convey", []):
                     if group:
-                        add("must_convey", group[0], candidate=candidate["id"])
+                        constraints.append(f"Revealing {candidate['id']} must convey this: {group[0]}")
         if isinstance(context, dict):
             speakers = context.get("speakers", {})
             if isinstance(speakers, dict):
                 for speaker_id, speaker in speakers.items():
+                    # The protagonist's sayable knowledge mirrors what SCENE already
+                    # states, so listing it repeated every established statement
+                    # verbatim and grew with every beat. The narrator writes the
+                    # player character from the same SCENE material either way; what
+                    # genuinely constrains a turn is which NPC may say what aloud.
+                    if speaker_id == self.state.package.protagonist_id:
+                        continue
                     for item in speaker.get("sayable_knowledge", []):
-                        add("speaker", item["statement"], id=speaker_id)
-        if "player_input" in user:
-            add("player_input", user["player_input"])
-        return "\n".join(lines)
+                        constraints.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
+        rules = user.get("_rules", [])
+        constraints.extend(rule for rule in rules if isinstance(rule, str))
+        player_input = str(user.get("player_input", "")).strip()
+        if player_input:
+            player_lines.append(player_input)
+
+        blocks = []
+        for heading, items in (
+            ("CHARACTERS", self._character_lines()),
+            ("SCENE", scene),
+            ("CONSTRAINTS", constraints),
+            ("PLAYER", player_lines),
+        ):
+            if items:
+                blocks.append("\n".join([f"{heading}:", *(f"- {item}" for item in items)]))
+        return "\n\n".join(blocks)
 
     def _cap_accepted_response(self, response: object, proposal: TurnProposal) -> object:
         """Bound accepted narration while retaining an out-of-band reveal segment."""

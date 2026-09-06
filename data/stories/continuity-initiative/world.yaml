@@ -37,6 +37,13 @@ npcs:
   aliases:
   - Brandon
   - Brandon Corfman
+  # plot.md states that Brandon conceals his own past involvement in the program.
+  # That is brandon_history, which is protected_knowledge, so the narrator is given
+  # a bio that stops short of it. plot.md remains the canonical characterisation.
+  narrator_bio: A 54-year-old former software developer who now lives as an isolated
+    conspiracy researcher estranged from his family. His warnings about a shadow emergency
+    program were widely dismissed before the disappearances. He helps Kristin, though
+    he is guarded about his own past.
 - id: charles
   name: Charles Jenkins
 - id: rebecca

@@ -144,14 +144,17 @@ def predicate_matches(predicate: FactPredicate, facts: FactStore) -> bool:
     """Evaluate a declared predicate without deriving truth from narration."""
 
     expected = str(predicate.equals).lower() if isinstance(predicate.equals, bool) else predicate.equals
-    matched = False
-    for fact in facts.matching(predicate.fact_id):
-        actual = fact.value if fact.value is not None else fact.object
-        if predicate.equals is None or actual == expected:
-            matched = True
-            break
-    # Route activation uses an absent fact as the ordinary false state.
-    return not matched if predicate.equals is False else matched
+    present = list(facts.matching(predicate.fact_id))
+    if not present:
+        # Route activation uses an absent fact as the ordinary false state.
+        return predicate.equals is False
+    if predicate.equals is None:
+        return True
+    # A fact that is present and true does not satisfy "equals: false". The earlier
+    # form asked whether a fact valued "false" existed and negated that, so a fact
+    # set to "true" also passed, and a storylet gated on a rival's fact being unset
+    # stayed activatable after the rival had set it.
+    return any((fact.value if fact.value is not None else fact.object) == expected for fact in present)
 
 
 class SelectedRevealResolver:

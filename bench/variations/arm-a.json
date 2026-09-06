@@ -1,5 +1,5 @@
 {
-  "name": "arm-c-no-example",
+  "name": "arm-a",
   "story_package": "data/stories/continuity-initiative",
   "system_prompt": {
     "rules": [
@@ -23,38 +23,38 @@
       "Never contradict authored text.",
       "Never echo the request fields."
     ],
-    "include_output_example": false
+    "include_output_example": true
   },
   "user_prompt": {
-    "beat_delivery": "details"
+    "beat_delivery": "prose"
   },
   "scripts": {
     "1A": [
       {
         "name": "e2e",
         "inputs": [
-          "I search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
-          "I look for anything Michelle hid deliberately, checking under the drawers and behind her work area for materials she did not want found.",
-          "I try to recover the interrupted message she was recording, and listen to whatever survives of it.",
-          "Someone official is at the door asking questions about her work; I keep what I found hidden, then watch what they do at the gate as they leave."
+          "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+          "Try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+          "Hide what was found, answer the official at the door, then watch what they do at the gate as they leave."
         ]
       },
       {
         "name": "oblique-investigation",
         "inputs": [
-          "I do not disturb the obvious scene yet; I study what is out of place and follow the smallest signs of a deliberate departure.",
-          "I examine the workstation indirectly, checking its edges, dust, and wear for a place Michelle expected someone careful to notice.",
-          "I listen to the fragment without deciding what it means, noting every sound that might tell me who interrupted her.",
-          "I watch the officials from cover and compare their questions with the evidence the house is quietly giving me."
+          "Study what is out of place and follow the smallest signs of a deliberate departure.",
+          "Examine the workstation indirectly, checking its edges, dust, and wear for a place Michelle expected someone careful to notice.",
+          "Listen to the fragment, noting every sound that might tell who interrupted her.",
+          "Watch the officials from cover and compare their questions with the evidence the house is quietly giving up."
         ]
       },
       {
         "name": "unexpected-wander",
         "inputs": [
-          "I make tea and search the pantry first, looking for anything ordinary that might explain why Michelle left in such a hurry.",
-          "I check the bathroom cabinet and the hallway photographs for a clue, then return to the room that feels most wrong.",
-          "I step outside and inspect the street, asking whether a neighbor saw anything before I come back to the house.",
-          "I sit in the truck and sort through my own emergency supplies before deciding what to investigate next."
+          "Make tea and search the pantry first, looking for anything ordinary that might explain why Michelle left in such a hurry.",
+          "Check the bathroom cabinet and the hallway photographs for a clue, then return to the room that feels most wrong.",
+          "Step outside and inspect the street, asking whether a neighbor saw anything before coming back to the house.",
+          "Sit in the truck and sort through the emergency supplies, then decide what to investigate next."
         ]
       }
     ]

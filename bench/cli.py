@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from bench.core import (
+    DEFAULT_PACKAGE,
     LEDGER_PATH,
     REFERENCE_MDE_AT_FOUR,
     _stats,
@@ -17,11 +18,14 @@ from bench.core import (
     append_ledger_row,
     baseline_scenes_scored,
     baseline_scores,
+    beats_for,
+    default_variation,
     known_scale_ledger_rows,
     ledger_row,
     ledger_rows,
     load_dotenv,
     load_variation,
+    package_and_state,
     prompt_for,
     run_judges,
     run_scene,
@@ -79,11 +83,88 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--confirm-threshold-neurons", type=float)
     score = sub.add_parser("score", help="score an archived hosted run")
     score.add_argument("--run-dir", type=Path, required=True)
-    prompt = sub.add_parser("prompt", help="assemble a prompt without calling a model")
-    prompt.add_argument("--variation", type=Path, required=True)
-    prompt.add_argument("--scene", required=True)
-    prompt.add_argument("--turn", type=int, required=True)
-    prompt.add_argument("--player-input", required=True)
+    prompt = sub.add_parser(
+        "prompt",
+        help="show the system and user prompt for a scene and beat",
+        description=(
+            "Print the exact system and user prompt the narrator would receive, as JSON with 'system' "
+            "and 'user' keys. Contacts no model and spends nothing."
+        ),
+        epilog=(
+            "examples:\n"
+            "  # the prompt that establishes scene 1A, as the player enters it\n"
+            "  python -m bench prompt --scene 1A\n"
+            "\n"
+            "  # a specific beat of that scene, with the player's action\n"
+            "  python -m bench prompt --scene 1A --beat 1A.2 \\\n"
+            '      --player-input "Search the drawers under her workstation."\n'
+            "\n"
+            "  # read it as text instead of JSON\n"
+            "  python -m bench prompt --scene 1A --text\n"
+            "\n"
+            "  # compare against another prompt configuration\n"
+            "  python -m bench prompt --scene 1A --text --variation bench/variations/no-output-example.json"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    prompt.add_argument(
+        "--scene",
+        required=True,
+        help=(
+            "scene id as written in plot.md, e.g. 1A, 1B, 2A, 3C. The prompt is built as if the player just entered it."
+        ),
+    )
+    prompt.add_argument(
+        "--beat",
+        help=(
+            "which beat of the scene to establish, by id (1A.2), ordinal (2), or anchor slug. "
+            "Omit to show the beat the scene's own pacing makes live on entry. "
+            "Use --list-beats to see what a scene has."
+        ),
+    )
+    prompt.add_argument(
+        "--player-input",
+        default="",
+        help=(
+            "the player's typed action for this turn. Omit for the prompt as the scene is entered, with no action yet."
+        ),
+    )
+    prompt.add_argument(
+        "--storylet",
+        help=(
+            "show one storylet in isolation, by id (SL-1A-D), instead of every storylet that touches a beat. "
+            "Beats are shared between storylets, so this is the narrower view. Use --list-beats to see both."
+        ),
+    )
+    prompt.add_argument(
+        "--list-beats",
+        action="store_true",
+        help="print the scene's authored beats and storylets and exit, instead of assembling a prompt",
+    )
+    prompt.add_argument("--text", action="store_true", help="print the two prompts as readable text instead of JSON")
+    prompt.add_argument(
+        "--package",
+        default=DEFAULT_PACKAGE,
+        help=f"story package directory to load (default: {DEFAULT_PACKAGE}). Ignored when --variation is given.",
+    )
+    prompt.add_argument(
+        "--variation",
+        type=Path,
+        help=(
+            "optional variation JSON file, for comparing prompt configurations. Omit it to see what the "
+            "engine actually ships, which is usually what you want."
+        ),
+    )
+    prompt.add_argument(
+        "--turn",
+        type=int,
+        default=1,
+        help=(
+            "which turn of the scene to assemble. Only 1 is supported and it is the default: this command "
+            "builds a fresh scene entry, and a later turn's prompt depends on knowledge committed by the "
+            "turns before it. Reach a later turn with 'chat' or 'run' instead."
+        ),
+    )
     return command
 
 
@@ -101,10 +182,37 @@ def _score(args: argparse.Namespace) -> int:
 
 
 def _prompt(args: argparse.Namespace) -> int:
-    if args.turn < 1:
-        raise ValueError("--turn must be at least 1")
-    variation = load_variation(args.variation)
-    _json(prompt_for(variation, args.scene, args.player_input))
+    # This command builds a fresh scene entry, so every prompt it can assemble is
+    # turn 1. Accepting a larger number and printing the turn-1 prompt anyway told
+    # the caller they were looking at something they were not.
+    if args.turn != 1:
+        raise ValueError(
+            f"--turn {args.turn} is not available: 'prompt' assembles a fresh scene entry, which is always turn 1. "
+            "A later turn's prompt depends on the knowledge committed by earlier turns, so reach it with "
+            "'python -m bench chat' or 'python -m bench run' instead."
+        )
+    variation = load_variation(args.variation) if args.variation else default_variation(args.package)
+    if args.list_beats:
+        package, _ = package_and_state(variation, args.scene)
+        anchors = {beat.anchor: beat.id for beat in beats_for(package, args.scene)}
+        for beat in beats_for(package, args.scene):
+            print(f"{beat.id}  {beat.title}")
+        print()
+        for storylet in sorted(
+            (item for item in package.storylets if item.scene_id == args.scene), key=lambda item: item.id
+        ):
+            presents = ", ".join(anchors.get(link, link) for link in storylet.source_links)
+            print(f"{storylet.id}  {storylet.title}  (presents {presents})")
+        return 0
+    prompts = prompt_for(variation, args.scene, args.player_input, args.beat, args.storylet)
+    if args.text:
+        print("---------------- SYSTEM ----------------")
+        print(prompts["system"])
+        print()
+        print("---------------- USER ----------------")
+        print(prompts["user"])
+        return 0
+    _json(prompts)
     return 0
 
 
@@ -137,13 +245,12 @@ def _log(args: argparse.Namespace) -> int:
     if args.limit is not None:
         if args.limit < 1:
             raise ValueError("--limit must be at least 1")
-        rows = rows[-args.limit:]
+        rows = rows[-args.limit :]
     if args.json:
         _json(rows)
         return 0
     print(
-        "timestamp  variation  scene  coverage  status  replicates  mean  sd  scores  "
-        "example_leakage  failure_reason"
+        "timestamp  variation  scene  coverage  status  replicates  mean  sd  scores  example_leakage  failure_reason"
     )
     for row in rows:
         if "scenes_scored" not in row:
@@ -224,8 +331,7 @@ def _compare(args: argparse.Namespace) -> int:
         print(warning)
     if test.get("available"):
         print(
-            f"two-sided Welch t-test: t={test['t']:.3f}, df={test['degrees_of_freedom']:.2f}, "
-            f"p={test['p_value']:.4f}"
+            f"two-sided Welch t-test: t={test['t']:.3f}, df={test['degrees_of_freedom']:.2f}, p={test['p_value']:.4f}"
         )
         print(test["statement"])
     else:
@@ -293,9 +399,7 @@ def _run(args: argparse.Namespace) -> int:
     if args.baseline:
         baseline_coverage = baseline_scenes_scored(args.baseline)
         if baseline_coverage is None:
-            print(
-                f"skipped unknown-scale baseline {args.baseline}: no scenes_scored recorded, so its scale is unknown"
-            )
+            print(f"skipped unknown-scale baseline {args.baseline}: no scenes_scored recorded, so its scale is unknown")
         elif baseline_coverage != 1 and not args.allow_coverage_mismatch:
             raise RuntimeError(
                 "refusing baseline comparison: scene coverage differs "
@@ -367,9 +471,7 @@ def _run(args: argparse.Namespace) -> int:
         missing = judged_runs[len(judgments) :]
         for run in missing:
             run["status"] = "failed"
-            run["failure_reason"] = (
-                f"judge returned {len(judgments)} result(s) for {len(judged_runs)} completed run(s)"
-            )
+            run["failure_reason"] = f"judge returned {len(judgments)} result(s) for {len(judged_runs)} completed run(s)"
         failed_runs.extend(missing)
         judged_runs = judged_runs[: len(judgments)]
     if judgments:

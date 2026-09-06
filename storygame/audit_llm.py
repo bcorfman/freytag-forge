@@ -57,11 +57,7 @@ def extract_frame_details(frame_text: str) -> tuple[str, ...]:
             for fragment in _CONJUNCTION.split(clause):
                 detail = " ".join(fragment.strip(" \t\n\r\"'.,!?-").split()).casefold()
                 detail = re.sub(r"^(?:and|or)\s+", "", detail)
-                if (
-                    len(detail.split()) > 1
-                    and not _INTENT.search(detail)
-                    and detail not in details
-                ):
+                if len(detail.split()) > 1 and not _INTENT.search(detail) and detail not in details:
                     details.append(detail)
     return tuple(details)
 
