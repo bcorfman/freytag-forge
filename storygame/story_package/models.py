@@ -191,6 +191,7 @@ class SceneMetadata(_Model):
     entry_text: str = Field(min_length=1)
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
+    item_placements: Mapping[str, str] = {}
 
 
 class SceneBeat(_Model):

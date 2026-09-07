@@ -983,6 +983,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     assert "Do not say anything that goes against the entry text or the beat details." in captured["payload"]["user"]
     assert "Do not make up new objects, clues, or things inside containers." in captured["payload"]["user"]
     assert "Keep each object where the scene puts it." in captured["payload"]["user"]
+    assert "Michelle's phone is on the kitchen floor." in captured["payload"]["user"]
     user = captured["payload"]["user"]
     assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
@@ -1203,6 +1204,42 @@ def test_turn_rules_derive_owner_name_from_the_package() -> None:
     rules = provider._turn_rules()
 
     assert "Avery's handset" in next(rule for rule in rules if "Say who owns" in rule)
+
+
+def test_turn_rules_include_authored_item_placement() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Michelle's phone is on the kitchen floor." in provider._turn_rules()
+
+
+def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert not any("kitchen floor" in rule for rule in provider._turn_rules())
+
+
+def test_item_placement_rule_uses_package_name_and_placement() -> None:
+    phone = next(item for item in PACKAGE.world.items if item.id == "michelle_phone")
+    custom_phone = phone.model_copy(update={"name": "Avery's handset"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
+    )
+    scene = PACKAGE.scenes[0]
+    custom_metadata = scene.metadata.model_copy(
+        update={"item_placements": {"michelle_phone": "beneath the window"}}
+    )
+    custom_scene = scene.model_copy(update={"metadata": custom_metadata})
+    custom_package = PACKAGE.model_copy(
+        update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])}
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=RuntimeState.bootstrap(custom_package)
+    )
+
+    assert "Avery's handset is beneath the window." in provider._turn_rules()
 
 
 def test_turn_rules_sharpen_the_authored_place_rule() -> None:

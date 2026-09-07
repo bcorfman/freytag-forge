@@ -12,6 +12,16 @@ Freytag phase, objective, participant/item IDs, entry text, and transition IDs.
 Its metadata is descriptive; prose is scene-local model guidance, never runtime
 truth.
 
+The optional `item_placements` mapping gives the narrator a positive placement
+sentence for authored items whose location matters in a scene. Author it per
+scene as needed; it is not required to cover every item.
+
+```yaml
+item_ids: [memory_card, michelle_phone]
+item_placements:
+  michelle_phone: on the kitchen floor
+```
+
 `world.yaml` declares stable IDs for locations, NPCs, items, facts, protected
 knowledge, and explicit fallbacks. `knowledge.yaml` is currently schema `2.0`:
 it supplies typed fact purposes, one safe frame per scene, and audience-scoped

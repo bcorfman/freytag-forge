@@ -387,6 +387,12 @@ def _validate(package: StoryPackage) -> None:
     if package.protagonist_id not in {entity.id for entity in package.world.npcs}:
         raise StoryPackageError("protagonist_id must name an NPC")
     for scene in package.scenes:
+        invalid_placements = set(scene.metadata.item_placements) - set(scene.metadata.item_ids)
+        if invalid_placements:
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} item_placements reference items not listed in item_ids: "
+                f"{sorted(invalid_placements)}"
+            )
         unknown = set(scene.metadata.participant_ids + scene.metadata.item_ids) - entities
         if scene.metadata.location_id not in entities:
             unknown.add(scene.metadata.location_id)

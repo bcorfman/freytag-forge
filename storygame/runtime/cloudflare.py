@@ -342,6 +342,7 @@ class CloudflareTurnProvider:
         if handoff_rule:
             rules.append(handoff_rule)
         rules.extend(self._owner_rules())
+        rules.extend(self._placement_rules())
         # The example is not the place to teach grounding. Showing a grounded
         # selection here made the model ground on IDs it had not selected, and a
         # live sample went from no failures in sixteen turns to six in eighteen -
@@ -360,6 +361,14 @@ class CloudflareTurnProvider:
         if not possessive_items:
             return []
         return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
+
+    def _placement_rules(self) -> list[str]:
+        scene_items = {item.id: item for item in self.state.package.world.items}
+        return [
+            f"{scene_items[item_id].name} is {placement}."
+            for item_id, placement in self._current_scene().item_placements.items()
+            if item_id in scene_items
+        ]
 
     def _output_example(self) -> str | None:
         """Resolve the response example, or None when this variation omits it."""
@@ -426,6 +435,7 @@ class CloudflareTurnProvider:
             "Keep each object where the scene puts it.",
         ]
         rules.extend(self._owner_rules())
+        rules.extend(self._placement_rules())
         return self._dispatch(
             self._system_prompt(),
             {
