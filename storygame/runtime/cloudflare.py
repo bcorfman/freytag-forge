@@ -291,45 +291,45 @@ class CloudflareTurnProvider:
 
         candidates = self.last_projection.candidates if self.last_projection else ()
         selection_rules = [
-            "Select at most one candidate ID in selected_knowledge_ids.",
-            "A selected candidate must be conveyed by one readable segment, and that segment must carry its ID "
-            "in grounding_ids.",
-            "A candidate with neither a statement nor a must_convey group cannot be selected.",
-            "Leave selected_knowledge_ids empty when no candidate fits what just happened.",
-            "Narrating a reveal without selecting it stalls the story.",
+            "Pick at most one candidate. Put its ID in selected_knowledge_ids.",
+            "If you pick a candidate, tell it in one paragraph, and put its ID in that paragraph's grounding_ids.",
+            "Do not pick a candidate that has no text to tell.",
+            "If no candidate fits what just happened, leave selected_knowledge_ids empty.",
+            "If you tell a candidate but do not pick it, the story gets stuck.",
         ]
-        no_candidate_rule = "This turn offers no candidates, so selected_knowledge_ids must be empty."
+        no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
         if not candidates:
             selection_rules.append(no_candidate_rule)
         hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
         handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
         if handoffs:
             handoff_rule = (
-                "Write every declared handoff intervention, convey every required concept, answer the player's input, "
-                "and do not claim that the player took an action they did not take."
+                "Write each handoff event. Cover each required idea. Answer the player. "
+                "Do not say the player did something they did not do."
             )
         elif hinted:
             handoff_rule = (
-                "Surface the hinted evidence as an actionable NPC remark, noticed detail, or radio call without "
-                "establishing or committing a fact."
+                "Hint at the evidence with something a character says, notices, or hears on a radio. "
+                "Do not make it a fact yet."
             )
         else:
             handoff_rule = ""
         default_rules = [
-            "Narrate the concrete immediate consequence of the player's action.",
-            "Ground narration in the scene and knowledge context.",
-            "Use the authored place, texture, and physical detail.",
-            "Answer what the player actually did.",
-            "Never invent durable evidence, physical objects, items, or container contents.",
-            "Treat the authored scene material as already true.",
-            "A grounding ID may name only committed knowledge or the selected candidate.",
-            "Never ground on a candidate you did not select.",
-            "Dialogue may use only its speaker's sayable knowledge.",
+            "Show what happens right after the player acts.",
+            "Use only what the SCENE section tells you.",
+            "Use the places and details the story gives you.",
+            "Keep each object where the scene puts it.",
+            "Answer what the player did.",
+            "Do not make up new objects, clues, or things inside containers.",
+            "Everything in the SCENE section is already true.",
+            "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
+            "Do not put a candidate's ID in grounding_ids unless you picked it.",
+            "A character may only say what you were told that character can say.",
             *selection_rules,
-            "Never write source IDs, events, operations, facts, or transitions as prose.",
-            "Never reuse a beat's sentences.",
-            "Never contradict authored text.",
-            "Never echo the request fields.",
+            "Never write IDs or story bookkeeping into the prose.",
+            "Do not copy sentences from the SCENE section.",
+            "Do not say anything that goes against the SCENE section.",
+            "Do not repeat the request's labels back.",
         ]
         configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
         rules = list(configured_rules) if isinstance(configured_rules, list) else default_rules
@@ -341,6 +341,7 @@ class CloudflareTurnProvider:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
+        rules.extend(self._owner_rules())
         # The example is not the place to teach grounding. Showing a grounded
         # selection here made the model ground on IDs it had not selected, and a
         # live sample went from no failures in sixteen turns to six in eighteen -
@@ -348,6 +349,17 @@ class CloudflareTurnProvider:
         # committed nor selected. The engine attributes the delivering segment
         # itself, so the model never needs to be shown how.
         return rules
+
+    def _owner_rules(self) -> list[str]:
+        scene_items = {item.id: item for item in self.state.package.world.items}
+        possessive_items = [
+            scene_items[item_id].name
+            for item_id in self._current_scene().item_ids
+            if item_id in scene_items and re.fullmatch(r".+['’]s\s+.+", scene_items[item_id].name)
+        ]
+        if not possessive_items:
+            return []
+        return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
 
     def _output_example(self) -> str | None:
         """Resolve the response example, or None when this variation omits it."""
@@ -401,16 +413,19 @@ class CloudflareTurnProvider:
         self.last_projection = self.projector.project(self.state, "player", "")
         entry = self._scene_entry()
         rules = [
-            "The player has already read entry_text as the opening paragraph; write only what follows it in the "
-            "same voice and tense.",
-            "Dramatize only the opening beat and knowledge context as the protagonist encounters them.",
-            "Do not repeat or paraphrase entry_text, invent evidence, characters, or events, resolve the objective, "
-            "act for the protagonist, or offer choices.",
+            "The player already read the entry text. Write only what comes next. Keep the same voice and tense.",
+            "Show only the opening beat and what the SCENE section tells you.",
+            "Do not repeat or reword the entry text.",
+            "Do not make up clues, characters, or events.",
+            "Do not solve the goal for the player.",
+            "Do not act for the player. Do not offer choices.",
             "Keep selected_knowledge_ids empty.",
-            "Do not contradict authored entry_text or beat details.",
-            "Do not invent physical objects, items, or contents the authored context does not describe.",
-            "Never write source IDs, events, operations, facts, or transitions as prose.",
+            "Do not say anything that goes against the entry text or the beat details.",
+            "Do not make up new objects, clues, or things inside containers.",
+            "Never write IDs or story bookkeeping into the prose.",
+            "Keep each object where the scene puts it.",
         ]
+        rules.extend(self._owner_rules())
         return self._dispatch(
             self._system_prompt(),
             {
@@ -444,8 +459,7 @@ class CloudflareTurnProvider:
                     "prose": beat.prose,
                     "details": list(beat.details),
                     "your_job": (
-                        "Dramatize this world state only as far as the player's action reaches; "
-                        "never reproduce its wording."
+                        "Show this world state only as far as the player's action reaches. Do not copy its words."
                     ),
                 }
                 for beat in beats
@@ -617,10 +631,10 @@ class CloudflareTurnProvider:
         recovery_payload = {
             **payload,
             "system": (
-                f"{payload['system']} Your previous response was invalid.{correction} Return only a complete JSON "
-                "TurnProposal with non-empty segments and optional selected_knowledge_ids; include no markdown, no "
-                "explanation, and none of the request's own fields echoed back. If you are unsure whether an ID is "
-                "groundable, omit grounding_ids entirely."
+                f"{payload['system']} Your last answer was not valid.{correction} Send back only JSON. It must have "
+                "segments with text in them. selected_knowledge_ids is optional. Do not add markdown. Do not explain. "
+                "Do not repeat the request's labels. If you are not sure an ID belongs in grounding_ids, leave "
+                "grounding_ids out."
             ),
         }
         self._record_recovery()
@@ -749,12 +763,13 @@ class CloudflareTurnProvider:
                 scene.append(item["statement"])
             for candidate in player.get("candidates", []):
                 constraints.append(
-                    f"{candidate['statement']} The player does not know this yet; reveal it only if their action "
-                    f"earns it, and then put {candidate['id']} in selected_knowledge_ids."
+                    f"{candidate['statement']} The player does not know this yet. "
+                    "Reveal it only if the player earns it. "
+                    f"If you reveal it, put {candidate['id']} in selected_knowledge_ids."
                 )
                 for group in candidate.get("must_convey", []):
                     if group:
-                        constraints.append(f"Revealing {candidate['id']} must convey this: {group[0]}")
+                        constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
             speakers = context.get("speakers", {})
             if isinstance(speakers, dict):

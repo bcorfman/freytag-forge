@@ -41,6 +41,33 @@ def test_unattested_detail_fixture(tmp_path: Path) -> None:
     assert "ziggurat" in str(report["findings"])
 
 
+def test_ambiguous_owned_item_fixture(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        plot="### Scene 1A.1 — Arrival\n**Details:** kitchen floor phone; open drawer; back door\n",
+        **{"world.yaml": {"items": [{"id": "phone", "name": "Michelle's phone"}]}},
+    )
+    findings = audit_package(root)["findings"]
+    matching = [item for item in findings if item["check"] == "ambiguous_owned_item"]
+    assert matching
+    assert "phone" in matching[0]["detail"]
+    assert "Michelle" in matching[0]["detail"]
+
+
+def test_owned_item_detail_is_unambiguous(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        plot="### Scene 1A.1 — Arrival\n**Details:** Michelle's phone on the kitchen floor; open drawer; back door\n",
+        **{"world.yaml": {"items": [{"id": "phone", "name": "Michelle's phone"}]}},
+    )
+    assert "ambiguous_owned_item" not in _checks(audit_package(root))
+
+
+def test_real_package_has_no_ambiguous_owned_item() -> None:
+    report = audit_package(Path("data/stories/continuity-initiative"))
+    assert "ambiguous_owned_item" not in _checks(report)
+
+
 def test_frame_conflict_fixture(tmp_path: Path) -> None:
     root = _package(
         tmp_path,
