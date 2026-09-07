@@ -57,9 +57,8 @@ npcs:
   narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
 - id: rebecca
   name: Rebecca Jenkins
-  # plot.md gives Rebecca responsibility for the disappearances and private motives the narrator cannot observe.
-  # This narrator-safe bio preserves her role, competence, and relationship while withholding those revelations.
-  narrator_bio: A 56-year-old chief executive of a biotechnology and defense contractor who oversees the facility's technical operations. She is exacting, technically capable, and Charles Jenkins's wife.
+  # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
+  narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
 items:
 - id: memory_card
   name: Hidden memory card
