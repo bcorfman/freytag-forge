@@ -25,6 +25,9 @@ npcs:
   aliases:
   - Kristin
   - Kristin Schweitzer
+  # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
+  # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend and longtime roommate, Michelle.
 - id: michelle
   name: Dr. Michelle McGehee
   aliases:
@@ -49,8 +52,14 @@ npcs:
     he is guarded about his own past.
 - id: charles
   name: Charles Jenkins
+  # plot.md identifies Charles as the architect of the conspiracy and gives him future political aims.
+  # This narrator-safe bio keeps his public role, competence, temperament, and relationship to Rebecca without those revelations.
+  narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
 - id: rebecca
   name: Rebecca Jenkins
+  # plot.md gives Rebecca responsibility for the disappearances and private motives the narrator cannot observe.
+  # This narrator-safe bio preserves her role, competence, and relationship while withholding those revelations.
+  narrator_bio: A 56-year-old chief executive of a biotechnology and defense contractor who oversees the facility's technical operations. She is exacting, technically capable, and Charles Jenkins's wife.
 items:
 - id: memory_card
   name: Hidden memory card
