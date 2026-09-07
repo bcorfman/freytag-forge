@@ -65,9 +65,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         health = client.get("/api/v1/health")
         version = client.get("/api/v1/version")
         session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
-        turn = client.post(
-            "/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "I listen."}
-        )
+        turn = client.post("/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "Listen."})
 
     assert health.json() == {
         "status": "ok",
@@ -128,9 +126,7 @@ def test_prompt_is_absent_by_default(monkeypatch, tmp_path) -> None:
 
     with TestClient(app) as client:
         session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
-        turn = client.post(
-            "/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "I listen."}
-        )
+        turn = client.post("/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "Listen."})
 
     assert "prompt" not in session.json()
     assert "prompt" not in turn.json()
@@ -143,9 +139,7 @@ def test_prompt_is_exposed_verbatim_on_session_and_turn(monkeypatch, tmp_path) -
 
     with TestClient(app) as client:
         session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
-        turn = client.post(
-            "/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "I listen."}
-        )
+        turn = client.post("/api/v1/turn", json={"session_id": session.json()["session_id"], "player_input": "Listen."})
 
     assert session.json()["prompt"] == expected
     assert turn.json()["prompt"] == expected
@@ -164,7 +158,7 @@ def test_hosted_adapter_reports_turn_index_and_scene_relative_turns(tmp_path) ->
     with TestClient(app) as client:
         session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
         session_id = session.json()["session_id"]
-        turn = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+        turn = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Listen."})
 
     assert session.json()["state"]["turn_index"] == 0
     assert session.json()["state"]["turns_since_scene_entry"] == 0
@@ -177,14 +171,14 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
         store_path=tmp_path / "sessions.sqlite",
         provider_factory=lambda _state: _TurnFailureProvider(
             lambda _input: {
-                "segments": [{"kind": "narration", "text": "I incapacitate Brandon."}],
+                "segments": [{"kind": "narration", "text": "Incapacitate Brandon."}],
                 "operations": [{"operation": "assert", "fact": {"predicate": "incapacitated", "subject": "brandon"}}],
             }
         ),
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I attack Brandon."})
+        warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Attack Brandon."})
     assert warning.status_code == 422
     assert "operations" in warning.json()["detail"]
 
@@ -196,8 +190,8 @@ def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limi
     with TestClient(app) as client:
         missing_story = client.post("/api/v1/session", json={"story_id": "missing"})
         unavailable = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
-        allowed = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "I listen."})
-        limited = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "I try again."})
+        allowed = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "Listen."})
+        limited = client.post("/api/v1/turn", json={"session_id": "absent", "player_input": "Try again."})
 
     assert missing_story.status_code == 404
     assert unavailable.status_code == 503
@@ -217,7 +211,7 @@ def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:
     app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=rejected_provider)
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Listen."})
 
     assert response.status_code == 502
     assert response.headers["X-Narration-Error-Code"] == "WORKER_CONFIGURATION_ERROR"
@@ -237,7 +231,7 @@ def test_adapter_returns_cors_safe_invalid_provider_contract(tmp_path) -> None:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen."},
+            json={"session_id": session_id, "player_input": "Listen."},
             headers={"Origin": "http://127.0.0.1:4173"},
         )
 
@@ -253,7 +247,7 @@ def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "I listen."})
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "command": "Listen."})
 
     assert response.status_code == 200
     assert response.json()["segments"][0]["text"] == "The lead sharpens."
@@ -272,7 +266,7 @@ def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch
             "/api/v1/turn",
             json={
                 "session_id": session_id,
-                "player_input": "I wait and listen.",
+                "player_input": "Search the room.",
                 "test_clock_seconds": 120,
                 "test_clock_token": "clock-secret",
             },
@@ -292,7 +286,7 @@ def test_test_clock_header_is_ignored_without_local_opt_in(monkeypatch, tmp_path
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
+            json={"session_id": session_id, "player_input": "Listen.", "test_clock_seconds": 120},
         )
 
     assert response.json()["state"]["story_elapsed_seconds"] == 60
@@ -335,13 +329,13 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
     app = create_demo_app(store_path=store_path, provider_factory=provider_factory)
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        accepted = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I search the drawer."})
+        accepted = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Search the drawer."})
         invalid_session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()[
             "session_id"
         ]
         before_rejection = RuntimeStateSqliteStore(store_path).load(invalid_session_id, PACKAGE).snapshot()
         rejected = client.post(
-            "/api/v1/turn", json={"session_id": invalid_session_id, "player_input": "I check the gate."}
+            "/api/v1/turn", json={"session_id": invalid_session_id, "player_input": "Check the gate."}
         )
 
     restored = RuntimeStateSqliteStore(store_path).load(session_id, PACKAGE)
@@ -364,7 +358,7 @@ def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> N
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         invalid = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen."},
+            json={"session_id": session_id, "player_input": "Listen."},
             headers={
                 "X-Freytag-Test-Clock-Seconds": "later",
                 "X-Freytag-Test-Clock-Token": "clock-secret",
@@ -372,7 +366,7 @@ def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> N
         )
         unsafe = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen."},
+            json={"session_id": session_id, "player_input": "Listen."},
             headers={
                 "X-Freytag-Test-Clock-Seconds": "3601",
                 "X-Freytag-Test-Clock-Token": "clock-secret",
@@ -412,7 +406,7 @@ def test_test_clock_accepts_a_correct_header_token(monkeypatch, tmp_path) -> Non
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I wait and listen."},
+            json={"session_id": session_id, "player_input": "Search the room."},
             headers={
                 "X-Freytag-Test-Clock-Seconds": "120",
                 "X-Freytag-Test-Clock-Token": "clock-secret",
@@ -436,7 +430,7 @@ def test_test_clock_rejects_a_wrong_token_without_disclosing_secrets(monkeypatch
             "/api/v1/turn",
             json={
                 "session_id": session_id,
-                "player_input": "I listen.",
+                "player_input": "Listen.",
                 "test_clock_seconds": 120,
                 "test_clock_token": "wrong-secret",
             },
@@ -458,7 +452,7 @@ def test_test_clock_rejects_a_missing_token(monkeypatch, tmp_path) -> None:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
+            json={"session_id": session_id, "player_input": "Listen.", "test_clock_seconds": 120},
         )
 
     assert response.status_code == 403
@@ -475,7 +469,7 @@ def test_test_clock_fails_closed_without_a_configured_secret(monkeypatch, tmp_pa
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         response = client.post(
             "/api/v1/turn",
-            json={"session_id": session_id, "player_input": "I listen.", "test_clock_seconds": 120},
+            json={"session_id": session_id, "player_input": "Listen.", "test_clock_seconds": 120},
         )
 
     assert response.status_code == 503
@@ -491,7 +485,7 @@ def test_test_clock_allows_an_ordinary_turn_without_a_configured_secret(monkeypa
     )
     with TestClient(app) as client:
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
-        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "I listen."})
+        response = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Listen."})
 
     assert response.status_code == 200
 
@@ -509,7 +503,7 @@ def test_test_clock_field_is_ignored_without_opt_in_even_with_a_wrong_token(monk
             "/api/v1/turn",
             json={
                 "session_id": session_id,
-                "player_input": "I listen.",
+                "player_input": "Listen.",
                 "test_clock_seconds": 120,
                 "test_clock_token": "wrong-secret",
             },

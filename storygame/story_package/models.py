@@ -154,6 +154,19 @@ class Entity(_Model):
     name: str = Field(min_length=1)
     aliases: tuple[str, ...] = ()
     fallback_ids: tuple[str, ...] = ()
+    # plot.md biographies are written for a reader who already knows the ending, so a
+    # character's own concealed history can sit inside the paragraph that introduces
+    # them. Setting this replaces that paragraph for prompt purposes only; plot.md
+    # remains narrative ground truth and is never edited to accommodate the narrator.
+    narrator_bio: str | None = None
+
+
+class Character(_Model):
+    """One principal character and the biography the narrator may be told."""
+
+    id: str = Field(pattern=_ID)
+    name: str = Field(min_length=1)
+    bio: str = Field(min_length=1)
 
 
 class WorldSource(_Model):
@@ -320,6 +333,8 @@ class StoryPackage(_Model):
 
     story_id: str = Field(pattern=_ID)
     protagonist_id: str = Field(pattern=_ID)
+    genre: str = ""
+    characters: tuple[Character, ...] = ()
     scenes: tuple[Scene, ...]
     world: WorldSource
     pacing: PacingSource

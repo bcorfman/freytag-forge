@@ -26,11 +26,11 @@ Beyond public view, a network of government and corporate facilities operates be
 
 ### Kristin Schweitzer
 
-A 33-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend and longtime roommate. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
+A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend and longtime roommate. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
 
 ### Dr. Michelle McGehee
 
-A 31-year-old molecular biology and biotechnology researcher and author whose research into genetics led her into secret contracts that place her at the center of the conspiracy. Although initially treated as someone Kristin must rescue, she possesses crucial information and has continued investigating from inside captivity. Kristin, her closest friend, is the only person who calls her "Shelly"; everyone else addresses her as Dr. McGehee.
+A 48-year-old molecular biology and biotechnology researcher and author whose research into genetics led her into secret contracts that place her at the center of the conspiracy. Although initially treated as someone Kristin must rescue, she possesses crucial information and has continued investigating from inside captivity. Kristin, her closest friend, is the only person who calls her "Shelly"; everyone else addresses her as Dr. McGehee.
 
 ### Brandon Corfman
 
@@ -38,7 +38,7 @@ A 54-year-old former software developer who now lives as an isolated conspiracy 
 
 ### Charles Jenkins
 
-A 58-year-old former senior government official and the principal architect of the conspiracy. Charles believes democracy has become incapable of responding to national crises. He intends to replace it with a centralized system controlled by selected government and corporate leaders.
+A 58-year-old former senior government official and the principal architect of the conspiracy. Charles believes democracy has become incapable of responding to national crises, and he and his wife are the only ones with the fortitude to reshape the country properly. He intends to replace our democracy with a centralized system controlled by selected government and corporate leaders.
 
 ### Rebecca Jenkins
 

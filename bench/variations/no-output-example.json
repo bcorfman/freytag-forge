@@ -1,0 +1,10 @@
+{
+  "name": "no-output-example",
+  "story_package": "data/stories/continuity-initiative",
+  "system_prompt": {
+    "include_output_example": false
+  },
+  "user_prompt": {
+    "beat_delivery": "details"
+  }
+}

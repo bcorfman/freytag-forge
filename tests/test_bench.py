@@ -24,9 +24,9 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProvid
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
-VARIATION = ROOT / "bench" / "variations" / "arm-c.json"
-NO_EXAMPLE_VARIATION = ROOT / "bench" / "variations" / "arm-c-no-example.json"
-OVERLAY_VARIATION = ROOT / "bench" / "variations" / "arm-c-overlay.json"
+VARIATION = ROOT / "bench" / "variations" / "example.json"
+NO_EXAMPLE_VARIATION = ROOT / "bench" / "variations" / "no-output-example.json"
+OVERLAY_VARIATION = ROOT / "bench" / "variations" / "drawer-overlay.json"
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "bench"
 ARCHIVE = FIXTURE_DIR / "arm-c" / "run1"
 PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="utf-8")
@@ -55,45 +55,15 @@ def test_score_matches_archived_acceptance_fixture() -> None:
     assert result.stderr == ""
 
 
-def test_arm_c_prompt_is_byte_identical_and_uses_details() -> None:
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "bench",
-            "prompt",
-            "--variation",
-            str(VARIATION),
-            "--scene",
-            "1A",
-            "--turn",
-            "1",
-            "--player-input",
-            PLAYER_INPUT,
-        ],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    prompt = json.loads(result.stdout)
-    fixture = (FIXTURE_DIR / "fixture_armc_system.txt").read_text(encoding="utf-8")
-    assert prompt["system"].encode() == fixture.encode()
-    user_fixture = (FIXTURE_DIR / "fixture_armc_user.txt").read_text(encoding="utf-8")
-    assert prompt["user"].encode() == user_fixture.encode()
-    assert prompt["user"].count("<beat_detail>") == 5
-    assert "<beat>" not in prompt["user"]
-
-
 def test_resolved_variation_hashes_are_stable_and_distinguish_prompt_configs() -> None:
-    arm_c = load_variation(VARIATION)
-    arm_c_again = load_variation(VARIATION)
+    example = load_variation(VARIATION)
+    example_again = load_variation(VARIATION)
     no_example = load_variation(NO_EXAMPLE_VARIATION)
 
-    assert arm_c["_variation_hash"] == arm_c_again["_variation_hash"]
-    assert arm_c["_package_hash"] == arm_c_again["_package_hash"]
-    assert arm_c["_variation_hash"] != no_example["_variation_hash"]
-    assert arm_c["_package_hash"] == no_example["_package_hash"]
+    assert example["_variation_hash"] == example_again["_variation_hash"]
+    assert example["_package_hash"] == example_again["_package_hash"]
+    assert example["_variation_hash"] != no_example["_variation_hash"]
+    assert example["_package_hash"] == no_example["_package_hash"]
 
 
 def test_example_leakage_counts_only_distinctive_contiguous_spans() -> None:
@@ -122,11 +92,11 @@ def test_custom_output_example_is_resolved_described_and_hashed(tmp_path) -> Non
     path.write_text(json.dumps(source), encoding="utf-8")
 
     custom = load_variation(path)
-    arm_c = load_variation(VARIATION)
+    example = load_variation(VARIATION)
     assert custom["_resolved_output_example"] == source["system_prompt"]["output_example"]
-    assert custom["_variation_hash"] != arm_c["_variation_hash"]
+    assert custom["_variation_hash"] != example["_variation_hash"]
     prompt = prompt_for(custom, "1A", PLAYER_INPUT)
-    assert "<output_example>{\"segments\":[],\"selected_knowledge_ids\":[]}</output_example>" in prompt["system"]
+    assert '{"segments":[],"selected_knowledge_ids":[]}' in prompt["system"]
 
 
 def test_non_string_output_example_is_rejected(tmp_path) -> None:
@@ -140,25 +110,25 @@ def test_non_string_output_example_is_rejected(tmp_path) -> None:
 
 
 def test_overlay_changes_effective_package_hash_and_assembled_prompt() -> None:
-    arm_c = load_variation(VARIATION)
+    example = load_variation(VARIATION)
     overlay = load_variation(OVERLAY_VARIATION)
-    assert overlay["_package_hash"] != arm_c["_package_hash"]
+    assert overlay["_package_hash"] != example["_package_hash"]
     assert "KMS initials in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
 
     prompt = prompt_for(overlay, "1A", PLAYER_INPUT)
-    assert "<beat_detail>KMS initials carved beneath the drawer</beat_detail>" in prompt["user"]
-    assert "<beat_detail>KMS initials in drawer</beat_detail>" not in prompt["user"]
+    assert "- KMS initials carved beneath the drawer" in prompt["user"]
+    assert "- KMS initials in drawer" not in prompt["user"]
 
 
 def test_ledger_rows_round_trip_through_log(tmp_path, capsys) -> None:
     ledger = tmp_path / "ledger.jsonl"
-    row = {"variation_name": "arm-c", "scores": [12], "package_hash": "package"}
+    row = {"variation_name": "example", "scores": [12], "package_hash": "package"}
     append_ledger_row(row, ledger)
-    append_ledger_row({**row, "variation_name": "arm-c-no-example", "scores": [14]}, ledger)
-    args = bench_cli.parser().parse_args(["log", "--json", "--variation", "arm-c", "--ledger", str(ledger)])
+    append_ledger_row({**row, "variation_name": "no-output-example", "scores": [14]}, ledger)
+    args = bench_cli.parser().parse_args(["log", "--json", "--variation", "example", "--ledger", str(ledger)])
     assert bench_cli._log(args) == 0
     assert json.loads(capsys.readouterr().out) == [row]
-    assert ledger_rows(ledger) == [row, {**row, "variation_name": "arm-c-no-example", "scores": [14]}]
+    assert ledger_rows(ledger) == [row, {**row, "variation_name": "no-output-example", "scores": [14]}]
 
 
 def _comparison_row(name: str, coverage: int, score: int, *, status: str = "ok") -> dict:
@@ -262,7 +232,7 @@ def test_failed_replicate_is_recorded_and_excluded_from_compare(monkeypatch, tmp
         "_variation_hash": "variation-hash",
         "_package_hash": "package-hash",
     }
-    script = {"name": "e2e", "inputs": ["I investigate."]}
+    script = {"name": "e2e", "inputs": ["Investigate."]}
 
     monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
     monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
@@ -293,7 +263,7 @@ def test_run_baseline_refuses_archived_nine_scene_coverage_before_live_work(monk
         "_package_hash": "package-hash",
     }
     monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
-    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [{"name": "e2e", "inputs": ["I investigate."]}])
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [{"name": "e2e", "inputs": ["Investigate."]}])
     monkeypatch.setattr(bench_cli, "run_scene", lambda *_: pytest.fail("baseline guard ran live work"))
     args = bench_cli.parser().parse_args(
         [
@@ -325,7 +295,7 @@ def test_run_baseline_with_unknown_scale_skips_baseline_statistics(monkeypatch, 
     baseline = tmp_path / "baseline"
     baseline.mkdir()
     (baseline / "summary.json").write_text(json.dumps({"replicate_scores": [99]}), encoding="utf-8")
-    script = {"name": "e2e", "inputs": ["I look around."]}
+    script = {"name": "e2e", "inputs": ["Look around."]}
     judgment = {criterion: False for criterion in CRITERIA}
     judgment["missing_or_wrong"] = []
     record = {
@@ -434,7 +404,7 @@ def test_focused_run_allows_one_explicit_replicate_without_calling_live_services
         "_variation_hash": "variation-hash",
         "_package_hash": "package-hash",
     }
-    script = {"name": "e2e", "inputs": ["I look around."]}
+    script = {"name": "e2e", "inputs": ["Look around."]}
     judgment = {criterion: False for criterion in CRITERIA}
     judgment["missing_or_wrong"] = []
     record = {
@@ -504,3 +474,178 @@ def test_judge_bridge_imports_both_existing_judge_exports() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_a_prompt_can_be_inspected_without_writing_a_variation_file() -> None:
+    """A variation holds one side of a comparison; seeing the shipped prompt needs neither."""
+
+    from bench.core import default_variation, prompt_for
+
+    variation = default_variation()
+    prompts = prompt_for(variation, "1A", "Look around the kitchen.")
+
+    assert prompts["user"].startswith("CHARACTERS:")
+    assert "PLAYER:\n- Look around the kitchen." in prompts["user"]
+    assert variation["_prompt_variant"]["beat_delivery"] == "details"
+
+
+def test_entering_a_scene_with_no_action_yet_renders_no_player_section() -> None:
+    """The scene-entry prompt has no player action, so it must not show an empty heading."""
+
+    from bench.core import default_variation, prompt_for
+
+    prompts = prompt_for(default_variation(), "1A", "")
+
+    assert "PLAYER:" not in prompts["user"]
+    assert prompts["user"].startswith("CHARACTERS:")
+
+
+def test_a_named_beat_reaches_the_prompt() -> None:
+    """Naming a beat shows the turn that presents it, not the one pacing chose."""
+
+    from bench.core import default_variation, prompt_for
+
+    variation = default_variation()
+    entered = prompt_for(variation, "1A", "Search the drawers.")
+    with_beat = prompt_for(default_variation(), "1A", "Search the drawers.", "1A.2")
+
+    assert "taped drawer" not in entered["user"]
+    assert "taped drawer" in with_beat["user"]
+    assert "k_sl_1a_d_r1 in selected_knowledge_ids" in with_beat["user"]
+
+
+def test_a_beat_may_be_named_by_id_ordinal_or_anchor() -> None:
+    from bench.core import default_variation, package_and_state, resolve_beat
+
+    package, _ = package_and_state(default_variation(), "1A")
+
+    assert resolve_beat(package, "1A", "1A.2").id == "1A.2"
+    assert resolve_beat(package, "1A", "2").id == "1A.2"
+    assert resolve_beat(package, "1A", "scene-1a2--michelles-last-investigation").id == "1A.2"
+
+
+def test_an_unknown_beat_names_the_beats_the_scene_actually_has() -> None:
+    """A bad id must not send the caller reading plot.md to find the right one."""
+
+    from bench.core import default_variation, package_and_state, resolve_beat
+
+    package, _ = package_and_state(default_variation(), "1A")
+
+    with pytest.raises(ValueError, match=r"1A\.1 \(Michelle Is Gone\)"):
+        resolve_beat(package, "1A", "9Z")
+
+
+def test_a_beat_carries_the_progress_of_the_beats_before_it() -> None:
+    """Beat N must show beats 1..N-1 as knowledge already held, not reveals still owed.
+
+    Offering an earlier beat's reveal again tells the narrator the player has yet
+    to learn something they learned two beats ago, which is how a scene stalls.
+    """
+
+    from bench.core import default_variation, prompt_for
+
+    prompts = prompt_for(default_variation(), "1A", "Play back the recording.", "1A.3")
+    scene = prompts["user"].split("SCENE:")[1].split("CONSTRAINTS:")[0]
+    constraints = prompts["user"].split("CONSTRAINTS:")[1]
+
+    earlier = "to a removal too deliberate to be looting"
+    assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.3"
+    assert earlier not in constraints, "an established reveal must not still be offered"
+    assert "k_sl_1a_b_r1 in selected_knowledge_ids" in constraints, "1A.3's own reveal stays on offer"
+    # SL-1A-D is optional and gated on michelle_warning_known, which only the still
+    # live SL-1A-B supplies, so no player could hold its reveal at beat 1A.3.
+    assert "Taped beneath a drawer" not in scene
+
+
+def test_the_first_beat_of_a_scene_establishes_nothing_before_it() -> None:
+    from bench.core import beats_for, default_variation, establish_prior_beats, package_and_state
+
+    variation = default_variation()
+    package, state = package_and_state(variation, "1A")
+    first = beats_for(package, "1A")[0]
+
+    assert establish_prior_beats(package, state, "1A", first) == ()
+
+
+def test_a_storylet_spanning_into_the_named_beat_is_not_treated_as_finished() -> None:
+    """SL-1A-A presents both 1A.1 and 1A.2, so at 1A.2 it is still live."""
+
+    from bench.core import beats_for, default_variation, establish_prior_beats, package_and_state
+
+    variation = default_variation()
+    package, state = package_and_state(variation, "1A")
+    second = next(item for item in beats_for(package, "1A") if item.id == "1A.2")
+
+    assert "SL-1A-A" not in establish_prior_beats(package, state, "1A", second)
+
+
+def test_one_storylet_can_be_read_in_isolation() -> None:
+    """Beats are shared between storylets, so a narrower view has to exist."""
+
+    from bench.core import default_variation, prompt_for
+
+    narrow = prompt_for(default_variation(), "1A", "Feel under the drawer.", None, "SL-1A-D")
+    wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
+
+    assert "k_sl_1a_d_r1" in narrow["user"]
+    assert "kitchen floor phone" not in narrow["user"], "a neighbouring storylet's beat must not bleed in"
+    assert "kitchen floor phone" in wide["user"], "the beat view keeps every storylet that presents it"
+
+
+def test_a_beat_and_a_storylet_cannot_be_named_together() -> None:
+    from bench.core import default_variation, prompt_for
+
+    with pytest.raises(ValueError, match="name only one"):
+        prompt_for(default_variation(), "1A", "Look.", "1A.2", "SL-1A-D")
+
+
+def test_the_player_character_is_not_listed_as_a_speaker_of_scene_statements() -> None:
+    """The protagonist's sayable list mirrored SCENE and grew with every beat."""
+
+    from bench.core import default_variation, prompt_for
+
+    prompts = prompt_for(default_variation(), "1A", "Play back the recording.", "1A.3")
+
+    assert "Kristin Schweitzer may say this aloud" not in prompts["user"]
+
+
+def test_an_optional_storylet_is_excluded_once_its_rival_has_fired() -> None:
+    """SL-1A-B and SL-1A-D are both gated on continuity_initiative_known being unset.
+
+    Only one of them can ever fire in a real playthrough, so a reconstructed
+    history that contains both is a history no player could have had.
+    """
+
+    from bench.core import beats_for, default_variation, establish_prior_beats, package_and_state
+
+    package, state = package_and_state(default_variation(), "1A")
+    last = next(item for item in beats_for(package, "1A") if item.id == "1A.4")
+    fired = establish_prior_beats(package, state, "1A", last)
+
+    assert "SL-1A-B" in fired
+    assert "SL-1A-D" not in fired, "a storylet its rival excluded must not also fire"
+
+
+def test_a_fact_set_true_does_not_satisfy_a_gate_requiring_it_false() -> None:
+    """The engine gates storylet activation on these predicates (engine.py:199).
+
+    An absent fact is the ordinary false state, but a fact that is present and
+    true must fail 'equals: false' - otherwise a gate meant to exclude a rival
+    storylet never excludes anything.
+    """
+
+    from storygame.runtime.facts import Fact, FactStore
+    from storygame.runtime.validation import predicate_matches
+    from storygame.story_package.models import FactPredicate
+
+    wants_unset = FactPredicate(fact_id="continuity_initiative_known", equals=False)
+    wants_set = FactPredicate(fact_id="continuity_initiative_known", equals=True)
+    facts = FactStore()
+
+    assert predicate_matches(wants_unset, facts) is True
+    assert predicate_matches(wants_set, facts) is False
+
+    facts.assert_fact(Fact(predicate="continuity_initiative_known", subject="story", value="true"))
+
+    assert predicate_matches(wants_unset, facts) is False
+    assert predicate_matches(wants_set, facts) is True

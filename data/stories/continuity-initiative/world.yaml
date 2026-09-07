@@ -25,6 +25,9 @@ npcs:
   aliases:
   - Kristin
   - Kristin Schweitzer
+  # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
+  # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend and longtime roommate, Michelle.
 - id: michelle
   name: Dr. Michelle McGehee
   aliases:
@@ -32,18 +35,35 @@ npcs:
   - Dr. McGehee
   - Michelle McGehee
   - Shelly
+  # plot.md gives Michelle's concealed discoveries and captivity to the narrator before the player earns them.
+  # This narrator-safe bio preserves her characterisation while keeping those revelations in plot.md alone.
+  narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend and longtime roommate; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
 - id: brandon
   name: Brandon Corfman
   aliases:
   - Brandon
   - Brandon Corfman
+  # plot.md states that Brandon conceals his own past involvement in the program.
+  # That is brandon_history, which is protected_knowledge, so the narrator is given
+  # a bio that stops short of it. plot.md remains the canonical characterisation.
+  narrator_bio: A 54-year-old former software developer who now lives as an isolated
+    conspiracy researcher estranged from his family. His warnings about a shadow emergency
+    program were widely dismissed before the disappearances. He helps Kristin, though
+    he is guarded about his own past.
 - id: charles
   name: Charles Jenkins
+  # plot.md identifies Charles as the architect of the conspiracy and gives him future political aims.
+  # This narrator-safe bio keeps his public role, competence, temperament, and relationship to Rebecca without those revelations.
+  narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
 - id: rebecca
   name: Rebecca Jenkins
+  # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
+  narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
 items:
 - id: memory_card
   name: Hidden memory card
+  aliases:
+  - memory card
   fallback_ids:
   - michelle_phone
 - id: michelle_phone

@@ -23,18 +23,18 @@ def test_turn_index_keeps_counting_and_scene_entry_resets_relative_turns() -> No
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
-    engine.turn("I investigate.")
+    engine.turn("Investigate.")
     assert state.turn_index == 1
     assert state.current_scene_id == "1A"
     assert state.turn_index - state.scene_entered_at_turn == 1
 
-    engine.turn("I leave when the lead is ready.")
+    engine.turn("Leave when the lead is ready.")
     assert state.turn_index == 2
     assert state.current_scene_id == "1B"
     assert state.scene_entered_at_turn == 2
     assert state.turn_index - state.scene_entered_at_turn == 0
 
-    engine.turn("I keep moving.")
+    engine.turn("Inspect the room.")
     assert state.turn_index == 3
     assert state.turn_index - state.scene_entered_at_turn == 1
 
@@ -45,10 +45,10 @@ def test_min_turns_floor_blocks_a_committed_trigger_until_source_turns_are_playe
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
-    engine.turn("I rush toward the exit.", clock_seconds=3600)
+    engine.turn("Rush toward the exit.", clock_seconds=3600)
     assert state.current_scene_id == "1A"
 
-    engine.turn("I take the lead and go.", clock_seconds=0)
+    engine.turn("Take the lead and go.", clock_seconds=0)
     assert state.current_scene_id == "1B"
 
 
@@ -59,13 +59,13 @@ def test_each_scene_entry_starts_with_a_full_relative_turn_allowance() -> None:
     for transition in PACKAGE.pacing.transitions:
         window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == transition.source_scene_id)
         for _ in range(window.min_turns):
-            engine.turn("I take another careful turn.")
+            engine.turn("Take another careful turn.")
         if state.current_scene_id != transition.target_scene_id:
             for trigger in transition.triggers:
                 state.facts.assert_fact(
                     Fact(predicate=trigger.fact_id, subject="story", value=str(trigger.equals).lower())
                 )
-            engine.turn("I follow the opening.")
+            engine.turn("Follow the opening.")
         assert state.current_scene_id == transition.target_scene_id
         assert state.turn_index == state.scene_entered_at_turn
 

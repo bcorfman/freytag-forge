@@ -17,10 +17,16 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from storygame.runtime.cloudflare import DEFAULT_OUTPUT_EXAMPLE, CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.cloudflare import (
+    DEFAULT_OUTPUT_EXAMPLE,
+    CloudflareTurnProvider,
+    NarrationProviderError,
+)
 from storygame.runtime.contracts import join_narration
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import predicate_matches
 from storygame.story_package.loader import load_story_package
 
 CRITERIA = (
@@ -108,6 +114,9 @@ def load_dotenv() -> None:
         os.environ.setdefault(key, value)
 
 
+DEFAULT_PACKAGE = "data/stories/continuity-initiative"
+
+
 def read_json(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -119,7 +128,21 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def load_variation(path: Path) -> dict[str, Any]:
-    variation = read_json(path)
+    return resolve_variation(read_json(path), path)
+
+
+def default_variation(package: str = DEFAULT_PACKAGE) -> dict[str, Any]:
+    """Resolve the engine's shipped prompt configuration for one story package.
+
+    Inspecting a prompt does not require a variation file. A variation exists to
+    hold ONE side of a comparison; asking to see what the engine actually sends
+    should not make the caller invent an experiment first.
+    """
+
+    return resolve_variation({"name": "default", "story_package": package}, Path.cwd() / "default.json")
+
+
+def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     name = variation.get("name")
     if not isinstance(name, str) or not name:
         raise ValueError("variation must have a non-empty name")
@@ -263,13 +286,134 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
 
-def prompt_for(variation: dict[str, Any], scene_id: str, player_input: str) -> dict[str, str]:
-    _, state = package_and_state(variation, scene_id)
+def beats_for(package: Any, scene_id: str) -> list[Any]:
+    """The authored beats of one scene, in authored order."""
+
+    scene = next((item for item in package.scenes if item.metadata.scene_id == scene_id), None)
+    if scene is None:
+        raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
+    return sorted(scene.beats.values(), key=lambda beat: beat.id)
+
+
+def resolve_beat(package: Any, scene_id: str, beat: str) -> Any:
+    """Find one authored beat by its id, its ordinal, or its anchor slug."""
+
+    available = beats_for(package, scene_id)
+    wanted = beat.strip()
+    for item in available:
+        if wanted in (item.id, item.anchor) or wanted == item.id.split(".")[-1]:
+            return item
+    names = ", ".join(f"{item.id} ({item.title})" for item in available)
+    raise ValueError(f"beat {beat!r} is not in scene {scene_id}; available beats are: {names}")
+
+
+def establish_prior_beats(package: Any, state: RuntimeState, scene_id: str, beat: Any) -> tuple[str, ...]:
+    """Commit what the beats before this one in the same scene already established.
+
+    A prompt for beat N must show beats 1..N-1 as knowledge the player already
+    holds, not as reveals still on offer, or the narrator is told the player has
+    yet to learn something they learned two beats ago. A storylet counts as
+    earlier only when every beat it links to is earlier, so a storylet spanning
+    into the requested beat stays live and keeps offering its reveal.
+
+    Storylets are OPTIONAL, and some exclude each other: SL-1A-B and SL-1A-D are
+    both gated on continuity_initiative_known being false, so whichever fires
+    first blocks the other for good. Assuming every earlier storylet fired would
+    therefore assert a history no player could have had, and would pad the scene
+    with knowledge from paths not taken. Each candidate's activation conditions
+    are evaluated against the facts as they stand at that point, in beat order,
+    and only what genuinely qualifies fires. What does fire is permanent: an
+    optional storylet's effects are world knowledge from then on.
+
+    Where a storylet has several authored realizations the first is applied.
+    They are alternative dramatizations of the same fact effects, so the choice
+    changes the prose a player would have read, never the knowledge that stands.
+    """
+
+    ordered = beats_for(package, scene_id)
+    limit = ordered.index(beat)
+    if limit == 0:
+        return ()
+    routes = {route.id: route for route in package.storylet_routes.storylets}
+    prior_anchors: set[str] = set()
+    established: list[str] = []
+    for reached in ordered[:limit]:
+        prior_anchors.add(reached.anchor)
+        for storylet in package.storylets:
+            if storylet.id in state.fired_event_ids or storylet.scene_id != scene_id:
+                continue
+            if not set(storylet.source_links) <= prior_anchors:
+                continue
+            route = routes.get(storylet.id)
+            if route is None or not route.realizations:
+                continue
+            if not all(predicate_matches(item, state.facts) for item in route.activation_conditions):
+                continue
+            for operation in route.realizations[0].operations:
+                value = str(operation.value).lower() if isinstance(operation.value, bool) else str(operation.value)
+                state.facts.assert_fact(Fact(predicate=operation.fact_id, subject="story", value=value))
+            state.fired_event_ids.add(storylet.id)
+            established.append(storylet.id)
+    return tuple(established)
+
+
+def resolve_storylet(package: Any, scene_id: str, storylet_id: str) -> Any:
+    """Find one storylet of a scene by id, case-insensitively."""
+
+    available = [item for item in package.storylets if item.scene_id == scene_id]
+    wanted = storylet_id.strip().upper()
+    for item in available:
+        if item.id.upper() == wanted:
+            return item
+    names = ", ".join(f"{item.id} ({item.title})" for item in available)
+    raise ValueError(f"storylet {storylet_id!r} is not in scene {scene_id}; available storylets are: {names}")
+
+
+def prompt_for(
+    variation: dict[str, Any],
+    scene_id: str,
+    player_input: str,
+    beat: str | None = None,
+    storylet: str | None = None,
+) -> dict[str, str]:
+    package, state = package_and_state(variation, scene_id)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"])
     RuntimeEngine(state, provider)._activate_pacing()
+    if beat is not None and storylet is not None:
+        raise ValueError("--beat and --storylet select the turn in different ways; name only one")
+    if beat is not None:
+        selected = resolve_beat(package, scene_id, beat)
+        establish_prior_beats(package, state, scene_id, selected)
+        # Pacing decides which beat is live on turn 1. Naming a beat asks to see a
+        # different one, so its storylets are activated directly; the beat reaches
+        # the prompt through the reveals those storylets offer.
+        storylets = [item.id for item in package.storylets if selected.anchor in item.source_links]
+        if not storylets:
+            raise ValueError(
+                f"beat {selected.id} ({selected.title}) has no storylet, so no turn can present it. "
+                "Beats reach the narrator through the reveals their storylets offer."
+            )
+        state.active_event_ids.update(storylets)
+    if storylet is not None:
+        # One storylet in isolation, for reading a single reveal's own material.
+        # Its earliest beat still fixes what the player has already been through.
+        chosen = resolve_storylet(package, scene_id, storylet)
+        ordered = beats_for(package, scene_id)
+        by_anchor = {item.anchor: item for item in ordered}
+        entry = min(
+            (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
+            key=lambda item: item.id,
+            default=None,
+        )
+        if entry is not None:
+            establish_prior_beats(package, state, scene_id, entry)
+        # Exclusive by design: pacing may have made a neighbouring storylet live, and
+        # its beat details would then read as part of this one's material.
+        state.active_event_ids.clear()
+        state.active_event_ids.add(chosen.id)
     assembled = provider.assemble_turn_prompt(player_input)
     context = assembled["context"]
-    return {"system": str(assembled["system"]), "user": provider._tagged_user_prompt(context)}
+    return {"system": str(assembled["system"]), "user": provider._section_user_prompt(context)}
 
 
 _WORD_PATTERN = re.compile(r"\b[\w]+(?:[-'][\w]+)*\b", re.UNICODE)
@@ -304,7 +448,7 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
     if isinstance(scene_scripts, dict):
         scene_scripts = [scene_scripts]
     if not scene_scripts:
-        scene_scripts = [{"name": "default", "inputs": ["I investigate the immediate scene carefully."] * 8}]
+        scene_scripts = [{"name": "default", "inputs": ["Investigate the immediate scene carefully."] * 8}]
     output = []
     for index, script in enumerate(scene_scripts):
         if isinstance(script, list):
@@ -313,8 +457,11 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
             name, inputs = script.get("name", f"script-{index + 1}"), script.get("inputs", [])
         else:
             raise ValueError(f"script {index + 1} for {scene_id} must be an object or list")
-        if not isinstance(name, str) or not isinstance(inputs, list) or not inputs or not all(
-            isinstance(item, str) and item for item in inputs
+        if (
+            not isinstance(name, str)
+            or not isinstance(inputs, list)
+            or not inputs
+            or not all(isinstance(item, str) and item for item in inputs)
         ):
             raise ValueError(f"script {name!r} for {scene_id} must contain non-empty string inputs")
         output.append({"name": name, "inputs": inputs})
@@ -494,9 +641,7 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
     pooled_judgment = score_judgments(judgments)
     completed_replicates = len({run["replicate"] for run in runs})
     judged_scene_ids = {
-        judgment.get("scene_id")
-        for judgment in judgments
-        if isinstance(judgment, dict) and judgment.get("scene_id")
+        judgment.get("scene_id") for judgment in judgments if isinstance(judgment, dict) and judgment.get("scene_id")
     }
     scenes_scored = len(judged_scene_ids or {run["scene_id"] for run in paired if run.get("scene_id")})
     max_score = scenes_scored * len(CRITERIA)
@@ -645,9 +790,7 @@ def append_ledger_row(row: dict[str, Any], path: Path = LEDGER_PATH) -> None:
 
 def _git_provenance() -> tuple[str, bool]:
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    status = subprocess.check_output(
-        ["git", "status", "--porcelain", "--untracked-files=all"], text=True
-    ).strip()
+    status = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], text=True).strip()
     return sha, bool(status)
 
 

@@ -1,0 +1,23 @@
+{
+  "name": "example",
+  "story_package": "data/stories/continuity-initiative",
+  "system_prompt": {
+    "include_output_example": true
+  },
+  "user_prompt": {
+    "beat_delivery": "details"
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "e2e",
+        "inputs": [
+          "Search the kitchen and the back door for concrete signs of what happened here.",
+          "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+          "Try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+          "Hide what was found, then answer the official at the door."
+        ]
+      }
+    ]
+  }
+}

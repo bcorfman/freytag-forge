@@ -484,3 +484,33 @@ def test_loader_rejects_bridge_text_keys_that_do_not_match_transition_ids(tmp_pa
 
     with pytest.raises(StoryPackageError, match="scene 1A bridge_text keys must match transition_ids exactly"):
         load_story_package(root)
+
+
+def _world():
+    from storygame.story_package.loader import load_story_package
+
+    return load_story_package(PACKAGE).world
+
+
+def test_a_package_without_authored_character_biographies_still_loads() -> None:
+    """CHARACTERS is authored material, so a package may simply not have it."""
+
+    from storygame.story_package.loader import _parse_characters
+
+    assert _parse_characters("# Story\n\n## Premise\n\nSomething happens.\n", _world()) == ()
+
+
+def test_a_biography_for_someone_who_is_not_an_npc_is_skipped_not_rejected() -> None:
+    """Prose may introduce a character before the runtime needs identity for them."""
+
+    from storygame.story_package.loader import _parse_characters
+
+    plot_text = (
+        "## Principal Characters\n\n"
+        "### Kristin Schweitzer\n\nA 33-year-old former assessment lead.\n\n"
+        "### A Stranger On The Bus\n\nSomeone with no runtime identity at all.\n\n"
+        "# Expanded Scene Outline\n"
+    )
+    characters = _parse_characters(plot_text, _world())
+
+    assert [item.id for item in characters] == ["kristin"]

@@ -58,9 +58,9 @@ def _fallback_delivery_text(state: RuntimeState) -> str:
 def test_ordinary_turn_records_no_delivery_recovery_or_fallback() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.last_turn_delivery = TurnDelivery(must_convey_misses=("previous_fact",), recovery_used=True)
-    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "I listen."}]})
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Listen."}]})
 
-    engine.turn("I listen.")
+    engine.turn("Listen.")
 
     assert state.last_turn_delivery == TurnDelivery()
 
@@ -93,7 +93,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
     engine = RuntimeEngine(state, provider)
 
-    hint = engine.turn("I wait and listen.")
+    hint = engine.turn("Search the desk.")
     assert state.staged_hint_fact_ids == ("transport_route_identified", "brandon_identified")
     assert state.staged_handoff_fact_ids == ()
     assert not state.facts.has("transport_route_identified", "story", value="true")
@@ -101,7 +101,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert state.last_turn_delivery.hint_staged is True
     assert state.last_turn_delivery.handoff_staged is False
 
-    handoff = engine.turn("I keep watching the park.")
+    handoff = engine.turn("Search the park.")
     assert state.current_scene_id == "1C"
     assert not state.facts.has("trust_brandon", "story", value="true")
     assert state.facts.has("transport_route_identified", "story", value="true")
@@ -121,12 +121,12 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
 def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
     state = _state_2a()
-    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "I wait."}]})
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    engine.turn("I wait at the facility entrance.")
-    engine.turn("I keep watching the security desk.")
-    engine.turn("I wait for an opening.")
-    handoff = engine.turn("I keep waiting for an opening.")
+    engine.turn("Approach the facility entrance.")
+    engine.turn("Inspect the security desk.")
+    engine.turn("Watch the security desk.")
+    handoff = engine.turn("Watch the guard rotation.")
 
     assert state.current_scene_id == "2B"
     assert state.facts.has("false_identities_ready", "story", value="true")
@@ -135,7 +135,7 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
     assert state.last_turn_delivery.handoff_staged is True
     assert any("false credentials" in segment.text.casefold() for segment in handoff.segments)
 
-    projection = KnowledgeProjector().project(state, "player", "I look around.")
+    projection = KnowledgeProjector().project(state, "player", "Look around.")
     projected_ids = {item.id for item in (*projection.committed_knowledge, *projection.candidates)}
     assert "k_sl_2a_c_r2_rebecca_observes" not in projected_ids
     assert "rebecca_observing_infiltrators" not in projection.model_dump_json()
@@ -149,21 +149,21 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
 
     def open_request(request, **_kwargs: object) -> _Response:
         captured["payload"] = json.loads(request.data)
-        return _Response({"narration": '{"segments":[{"kind":"narration","text":"I keep watch."}]}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Keep watch."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    provider("I keep watch.")
-    projection = KnowledgeProjector().project(state, "player", "I keep watch.")
+    provider("Inspect the security desk.")
+    projection = KnowledgeProjector().project(state, "player", "Inspect the security desk.")
     assert [item.fact_id for item in projection.hinted_deliveries] == ["transport_route_identified"]
     assert [item.fact_id for item in projection.handoff_deliveries] == ["transport_route_identified"]
     serialized = json.dumps(captured["payload"]).casefold()
     assert "rebecca_observing_infiltrators" not in serialized
-    assert "declared handoff intervention" in captured["payload"]["system"].casefold()
-    assert "do not claim that the player took an action they did not take" in captured["payload"]["system"].casefold()
+    assert "declared handoff intervention" in captured["payload"]["user"].casefold()
+    assert "do not claim that the player took an action they did not take" in captured["payload"]["user"].casefold()
     state.staged_handoff_fact_ids = ()
-    provider("I keep watch.")
-    assert "hinted evidence" in captured["payload"]["system"].casefold()
+    provider("Inspect the security desk.")
+    assert "hinted evidence" in captured["payload"]["user"].casefold()
 
 
 def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:
@@ -180,7 +180,7 @@ def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    response = provider("I keep watching the park.")
+    response = provider("Search the park.")
 
     assert len(payloads) == 1
     assert response["segments"][0]["text"] == delivery.fallback_text
@@ -198,11 +198,11 @@ def test_handoff_recovery_names_missed_groups_and_falls_back_to_authored_text(mo
 
     def open_request(request, **_kwargs: object) -> _Response:
         payloads.append(json.loads(request.data))
-        return _Response({"narration": '{"segments":[{"kind":"narration","text":"I wait."}]}'})
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Wait."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    response = provider("I wait.")
+    response = provider("Search the route.")
     assert len(payloads) == 2
     assert delivery.must_convey[0][0] in payloads[1]["system"]
     assert response["segments"][0]["text"] == delivery.fallback_text
@@ -217,16 +217,16 @@ def test_valid_handoff_recovery_is_accepted_once_and_keeps_direct_response(monke
     state.staged_handoff_fact_ids = ("transport_route_identified",)
     payloads: list[dict[str, object]] = []
     delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "transport_route_identified")
-    text = "I search the route. " + delivery.fallback_text
+    text = "Search the route. " + delivery.fallback_text
 
     def open_request(request, **_kwargs: object) -> _Response:
         payloads.append(json.loads(request.data))
         if len(payloads) == 1:
-            return _Response({"narration": '{"segments":[{"kind":"narration","text":"I search the route."}]}'})
+            return _Response({"narration": '{"segments":[{"kind":"narration","text":"Search the route."}]}'})
         return _Response({"narration": json.dumps({"segments": [{"kind": "narration", "text": text}]})})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    response = provider("I search the route.")
+    response = provider("Search the route.")
     assert len(payloads) == 2
     assert response["segments"][0]["text"] == text

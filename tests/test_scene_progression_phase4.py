@@ -29,7 +29,7 @@ def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    proposal = engine.turn("I search the desk drawer and play the damaged recording.")
+    proposal = engine.turn("Search the desk drawer and play the damaged recording.")
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     assert [(event.event_id, event.realization_id) for event in proposal.events] == [("SL-1A-B", "SL-1A-B-R2")]
@@ -48,7 +48,7 @@ def test_invalid_or_duplicate_selection_is_atomic(selected: list[str]) -> None:
     engine = RuntimeEngine(state, lambda _: _turn("The room yields no unearned revelation.", selected))
 
     with pytest.raises((ProposalValidationError, ValueError)):
-        engine.turn("I inspect Michelle's phone.")
+        engine.turn("Inspect Michelle's phone.")
 
     assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
 
@@ -65,7 +65,7 @@ def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
     )
 
     with pytest.raises(ProposalValidationError, match="grounding"):
-        engine.turn("I recover the damaged recording.")
+        engine.turn("Recover the damaged recording.")
     assert not state.facts.has("michelle_warning_known", "story", value="true")
 
 
@@ -95,7 +95,7 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
     )
 
     with pytest.raises(ProposalValidationError, match="memory card"):
-        engine.turn("I look under the workstation.", clock_seconds=120)
+        engine.turn("Look under the workstation.", clock_seconds=120)
 
     assert not state.facts.has("continuity_initiative_known", "story", value="true")
     assert not state.facts.has("michelle_lead_actionable", "story", value="true")
@@ -127,14 +127,14 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
         ),
     )
 
-    engine.turn("I look under the workstation.", clock_seconds=120)
+    engine.turn("Look under the workstation.", clock_seconds=120)
 
     assert state.facts.has("continuity_initiative_known", "story", value="true")
     assert state.facts.has("michelle_lead_actionable", "story", value="true")
     assert "SL-1A-B" in state.fired_event_ids
     assert state.current_scene_id == "1A"
 
-    engine.turn("I take the lead and leave the house.")
+    engine.turn("Take the lead and leave the house.")
 
     assert state.current_scene_id == "1B"
 
@@ -158,7 +158,7 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
         },
     )
 
-    proposal = engine.turn("I look under the workstation.", clock_seconds=120)
+    proposal = engine.turn("Look under the workstation.", clock_seconds=120)
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r1",)
     assert proposal.segments[0].grounding_ids == ("k_sl_1a_b_r1",)
@@ -177,7 +177,7 @@ def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
     )
 
     with pytest.raises(ProposalValidationError, match="grounded"):
-        engine.turn("I look under the workstation.", clock_seconds=120)
+        engine.turn("Look under the workstation.", clock_seconds=120)
 
     assert not state.facts.has("continuity_initiative_known", "story", value="true")
 
@@ -186,8 +186,8 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
 
-    engine.turn("I wait.")
-    engine.turn("I continue waiting.")
+    engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
+    engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
 
     assert state.facts.has("patrol_return_pressure", "story", value="true")
     assert "pressure_1a" in state.fired_event_ids
@@ -206,7 +206,7 @@ def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
     )
 
     with pytest.raises(ValueError):
-        engine.turn("I imagine distant proof.")
+        engine.turn("Inspect the facility.")
     assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
 
 
@@ -215,7 +215,7 @@ def test_internal_game_break_path_keeps_the_resolved_candidate_pending_until_pro
     engine = RuntimeEngine(state, lambda _: _turn("The choice would strand a future dependency."))
     monkeypatch.setattr(engine.validator, "validate", lambda *_: ("brandon",))
 
-    proposal = engine.turn("I make the risky attempt.")
+    proposal = engine.turn("Make the risky attempt.")
 
     assert proposal.game_break is not None
     assert state.has_pending_break

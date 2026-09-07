@@ -9,10 +9,10 @@ Run these commands from the repository root. The CLI loads `.env` if present; it
 ```bash
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench --help
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt \
-  --variation bench/variations/arm-c.json --scene 1A --turn 1 \
-  --player-input "I search the kitchen and the back door for concrete signs of what happened here."
+  --scene 1A \
+  --player-input "Search the kitchen and the back door for concrete signs of what happened here."
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench score \
-  --run-dir /home/bcorfman/bakeoff-data/arm-c/run1
+  --run-dir /path/to/a/hosted/run
 ```
 
 The `prompt` command makes no model request and prints only `{"system": ..., "user": ...}`. `score` is a deliberately stable fixture adapter and prints only the seven equally weighted boolean counts and their total out of 63.
@@ -22,34 +22,43 @@ The `prompt` command makes no model request and prints only `{"system": ..., "us
 `chat` starts a live session at the first scene. Each response is followed by the exact system and user prompt that produced it:
 
 ```bash
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench chat --variation bench/variations/arm-c.json
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench chat --variation bench/variations/example.json
 ```
 
-`prompt` assembles a turn without contacting Cloudflare. `--turn` is validated for a positive turn number; the current prompt-fidelity seam is intended for turn 1. Later-turn prompt content depends on the prior committed runtime state, so a later turn should be reached with `chat` or `run` rather than pretending a fresh state is later in a scene.
-
-`run` plays one scene per command, then makes one judge call per completed replicate. The default is four replicates. An explicitly requested single replicate is allowed for the cheap iteration loop, but cannot estimate noise, so its standard deviation and confidence interval are reported as unavailable:
+`prompt` prints the exact system and user prompt the narrator would receive. It contacts no model and spends nothing, so it is the cheapest way to see what a prompt change actually did. It takes the story's own coordinates - a scene, optionally a beat, optionally the player's action - and needs no variation file:
 
 ```bash
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run \
-  --variation bench/variations/arm-c.json --scene 1A --replicates 4 \
-  --script e2e --out /tmp/bench-arm-c-1a
+# the prompt that establishes scene 1A, as the player enters it
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --scene 1A --text
+
+# a specific beat of that scene, with the player's action
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt \
+  --scene 1A --beat 1A.2 --text \
+  --player-input "Search the drawers under her workstation."
+
+# what beats does a scene have?
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --scene 1A --list-beats
 ```
 
-Without `--script`, every script declared for the scene is run `N` times. Use `--script` for a focused arm; the shipped Arm C variation has `e2e`, `oblique-investigation`, and `unexpected-wander` scripts for 1A. The scene is advanced until its authored transition or the runtime’s safe turn limit. A wandering script is retained as a valid result.
+The flags:
 
-Artifacts include:
+- `--scene` is a scene id as written in `plot.md` — `1A`, `1B`, `2A`, `3C`. The prompt is assembled as if the player had just entered that scene.
+- `--beat` selects which beat to establish, by id (`1A.2`), ordinal (`2`), or anchor slug. Omit it to see the beat the scene's own pacing makes live on entry.
 
-- `turn-records.json`: Python runtime records with exactly `player_input`, `narration`, `left_scene`, and `beats_projected` in each judge turn.
-- `judgment.json`: the first completed replicate’s raw judge verdict, with all seven booleans at top level.
-- `summary.json`: pooled and per-script means, sample standard deviations, 95% confidence intervals, empirical minimum detectable effect, comparison results, graded secondary metrics, and budget telemetry.
-
-Pass `--baseline DIR` to add a two-sided Welch t-test against another bench `summary.json` or an archived `e2e-llm-canon.json`. The report explicitly says `this changed nothing detectable (difference is inside the observed noise)` when the p-value is at least 0.05. No result is presented as a bare score.
+  Naming a beat reproduces the state a player would be in when they reach it: every earlier beat of that scene is **already established**, so its knowledge appears in `SCENE` rather than being offered again under `CONSTRAINTS`, and only the named beat's own reveals remain on offer. A storylet counts as earlier only when every beat it presents is earlier, so one spanning into the named beat stays live. Because beats are shared between storylets, naming a beat activates every storylet that presents it; use `--storylet` for the narrower view.
+- `--storylet` shows one storylet alone, by id (`SL-1A-D`). Its earliest beat still fixes what the player has already been through, but no neighbouring storylet's beat details bleed in.
+- `--player-input` is the player's typed action. Omit it for the prompt as the scene is entered, with no action yet; the `PLAYER` section is then absent rather than empty.
+- `--list-beats` prints the scene's authored beats and its storylets, with the beats each storylet presents, then exits.
+- `--text` prints the two prompts as readable text instead of one JSON line.
+- `--package` selects the story package directory, defaulting to `data/stories/continuity-initiative`.
+- `--variation` is optional and exists for comparing prompt configurations, e.g. `--variation bench/variations/no-output-example.json`. Omit it to see what the engine actually ships.
+- `--turn` defaults to `1` and only `1` is accepted, because this command builds a fresh scene entry. A later turn's prompt depends on knowledge committed by earlier turns; reach it with `chat` or `run`.
 
 `describe` resolves a variation, validates its effective story package, and prints its hashes and resolved prompt configuration without making model or network calls:
 
 ```bash
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe \
-  --variation bench/variations/arm-c-overlay.json --json
+  --variation bench/variations/drawer-overlay.json --json
 ```
 
 `log` reads `bench/results/ledger.jsonl` in append order. `--ledger PATH` selects an alternate JSONL ledger; the default is the tracked path. `--variation NAME` filters by variation name and `--limit N` keeps the newest N matching rows. `--json` prints only the JSON array; without it, a compact table is printed. Failed rows remain visible in both forms.
@@ -57,7 +66,7 @@ Pass `--baseline DIR` to add a two-sided Welch t-test against another bench `sum
 `compare` pools every `scores` entry from successful, known-scale ledger rows for each named variation and reports each arm's mean and sample standard deviation, the difference, the two-sided Welch t-test, and the minimum detectable effect at the smaller available arm size. `--ledger PATH` selects an alternate ledger:
 
 ```bash
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare arm-c arm-c-no-example
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare example no-output-example
 ```
 
 Comparison refuses to mix known-scale rows when their `scenes_scored` values differ, because a 1/7 scene score and a 9/63 traversal score are incommensurable. It also refuses to mix effective story packages when their `package_hash` values differ. Use `--allow-coverage-mismatch` or `--allow-package-mismatch` only when the corresponding confound is intentional; the output then warns that the relevant boundary was not held constant. Failed rows are excluded from these statistics. Rows with missing or null `scenes_scored` have an unknown scale: they remain visible in `log`, but `compare` and `run --baseline` exclude them from n, means, standard deviations, Welch tests, and minimum detectable effects, and print how many were skipped and why. The same scene-coverage guard applies to known-scale `run --baseline` data; an unknown-scale baseline is reported and omitted rather than guessed.
@@ -69,7 +78,7 @@ Every successful `bench run` appends a status-`ok` JSON object to the tracked, a
 ```json
 {
   "timestamp": "2026-09-03T18:20:00Z",
-  "variation_name": "arm-c",
+  "variation_name": "example",
   "variation_hash": "sha256 of resolved rules and prompt switches",
   "package_hash": "sha256 of effective package files",
   "git_sha": "repository HEAD",
@@ -118,7 +127,7 @@ Variations are JSON data, not engine edits. The supported shape is:
 }
 ```
 
-`beat_delivery` is `details` for `<beat_detail>` noun phrases or `prose` for the authored `<beat>` block. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
+`beat_delivery` is `details` for beat noun phrases or `prose` for the authored beat paragraph. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
 
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:
 
@@ -138,22 +147,21 @@ Whole-file replacement is also accepted by supplying a string as the file's over
 
 The three shipped example configurations are:
 
-- `variations/arm-c.json`: the measured Arm C, with beat details, all three prohibition rules, and today's drawer-imagery output example. Its first-turn system prompt is byte-identical to the archived Arm C fixture.
-- `variations/arm-c-no-example.json`: the same prompt configuration with the example omitted. Removing it entirely has been observed to break response validity: the narrator repeatedly returned `INVALID_PROPOSAL` and produced no score.
-- `variations/arm-c-neutral-example.json`: the same configuration with the JSON response shape retained but story-copyable prose replaced by neutral instructions. This separates the example's formatting job from its content leakage.
+- `variations/example.json`: the shipped configuration with beat details and the default output example, plus a Scene 1A script. Use it as the starting point for a new arm.
+- `variations/no-output-example.json`: the same configuration with the response example omitted. Removing it entirely has been observed to break response validity: the narrator repeatedly returned `INVALID_PROPOSAL` and produced no score.
+- `variations/drawer-overlay.json`: a package override, showing how a variation edits authored text in a temporary effective copy.
 
 The leakage metric is calculated against the resolved example actually sent in the turn system prompt, so it works for arbitrary custom examples rather than only the shipped drawer text.
 
 For example, run the two prompt-only experiment arms, then run one focused live replicate of each and compare their real ledger rows:
 
 ```bash
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe --variation bench/variations/arm-c.json --json
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe --variation bench/variations/arm-c-no-example.json --json
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe --variation bench/variations/arm-c-neutral-example.json --json
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe --variation bench/variations/example.json --json
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench describe --variation bench/variations/no-output-example.json --json
 set -a && . /home/bcorfman/dev/freytag-forge/.env && set +a
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/arm-c.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-arm-c --confirm
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/arm-c-no-example.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-arm-c-no-example --confirm
-/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare arm-c arm-c-no-example
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/example.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-example --confirm
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench run --variation bench/variations/no-output-example.json --scene 1A --replicates 1 --script e2e --out /tmp/bench-no-example --confirm
+/home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench compare example no-output-example
 ```
 
 ## Cost and safety
@@ -169,16 +177,6 @@ The Worker’s `429` quota response is distinguished by `X-Narration-Error-Code:
 
 The seven booleans remain the metric of record and are weighted equally despite differing enormously in difficulty. The judge’s `missing_or_wrong` entries are also counted as a graded leading indicator: fewer is better, with an unattributed total and per-criterion counts only where the judge supplies an attribution. This secondary metric is clearly separate from the 63-point score; it does not silently change the score.
 
-## Acceptance evidence
-
-Verified locally on 2026-09-03:
-
-- `bench score --run-dir /home/bcorfman/bakeoff-data/arm-c/run1` printed total **12**, `canon_consistent` **0**, and `protected_safe` **5**. The full count was `canon_consistent: 0`, `scene_local: 2`, `progressive: 0`, `rich: 1`, `protected_safe: 5`, `exit_motivated: 2`, `rewards_investigation: 2`.
-- Arm C `bench prompt` for archived Scene 1A turn 1 produced a system prompt of **2,018 bytes**, byte-for-byte equal to `fixture_armc_system.txt`. Its user prompt matched the archived user prompt, contained all **five** `<beat_detail>` lines, and contained no `<beat>` prose block.
-- The archived Arm C run itself contains 106 `missing_or_wrong` entries across nine scenes. `canon_consistent` is false in all 108 archived graded scenes, as expected; this is why the graded leading indicator is included.
-
-The supplied benchmark evidence is also the statistical guardrail: twelve hosted runs had within-arm standard deviation 2.24 on the 63-point scale; the three measured configurations scored means 13.75, 13.00, and 12.25 and were statistically indistinguishable. The four-run empirical minimum detectable effect is therefore reported as **3.87 points**, scaled as `3.87 * sqrt(4/N)` for the N actually used. A result below that noise floor must be described as nothing detectable.
-
 ## Package clock finding
 
 The in-process bench calls `RuntimeEngine.turn(input)` without injecting `clock_seconds`. That matches the runtime’s default: `clock_seconds=None` uses the proposal’s `narrative_seconds` (60 for the normal provider contract), while pacing gates themselves use `turn_index - scene_entered_at_turn`.
@@ -187,14 +185,3 @@ This was settled by deterministic local evidence against the archived Arm C timi
 
 What was not verified here is a fresh live, stochastic bench traversal against staging; that is intentionally out of scope and would spend both budgets. The archived hosted run proves the observed controller schedule, and the local runtime/clock tests prove the in-process schedule. Exact future model outputs, neuron billing telemetry, and a fresh hosted equivalence run remain unverified.
 
-## Neutral-example live result
-
-On 2026-09-03, the requested neutral run completed 9 script-replicates across
-the three declared Scene 1A scripts. Five produced judgeable output with scores
-`[0, 1, 1, 1, 1]` (4 total points on the 7-point scene scale), while four
-failed with `INVALID_PROPOSAL`; all five successful runs had
-`example_leakage: 0`. The no-example control produced three failed
-`INVALID_PROPOSAL` replicates, no judgeable output, and no score. Thus the
-neutral example did produce valid, judgeable output where removing the example
-did not, but it was not failure-free in this batch. No quota-specific 429 was
-returned.

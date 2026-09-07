@@ -14,12 +14,12 @@ from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 POLICY_INPUTS = (
-    "I pursue the immediate objective decisively.",
-    "I investigate every useful clue before I act.",
-    "I ask for help and make a shared plan.",
-    "I take the safest legal route forward.",
-    "I confront the obstacle without destroying a required dependency.",
-    "I improvise a strange but legal way to advance the current scene.",
+    "Pursue the immediate objective decisively.",
+    "Investigate every useful clue.",
+    "Ask for help and make a shared plan.",
+    "Take the safest legal route forward.",
+    "Confront the obstacle directly.",
+    "Improvise a strange but legal way to advance the current scene.",
 )
 
 
@@ -76,19 +76,19 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
         "selected_knowledge_ids": [knowledge_id],
     }
 
-    RuntimeEngine(state, lambda _: event_payload).turn("I recover Michelle's damaged recording.")
+    RuntimeEngine(state, lambda _: event_payload).turn("Recover Michelle's damaged recording.")
 
     assert "SL-1A-B" in state.fired_event_ids
     with pytest.raises(ProposalValidationError, match="not eligible"):
-        RuntimeEngine(state, lambda _: event_payload).turn("I try to repeat it.")
+        RuntimeEngine(state, lambda _: event_payload).turn("Try to repeat it.")
 
 
 def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "I wait."}]})
+    engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    engine.turn("I wait.")
-    engine.turn("I continue waiting.")
+    engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
+    engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
 
     assert state.facts.has("patrol_return_pressure", "story", value="true")
     assert "pressure_1a" in state.fired_event_ids

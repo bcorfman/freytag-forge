@@ -11,7 +11,12 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
-from storygame.runtime.cloudflare import MAX_TURN_SEGMENTS, CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.cloudflare import (
+    DEFAULT_OUTPUT_EXAMPLE,
+    MAX_TURN_SEGMENTS,
+    CloudflareTurnProvider,
+    NarrationProviderError,
+)
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -21,6 +26,13 @@ from storygame.runtime.validation import ProposalValidationError, SelectedReveal
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _rendered_character_line(character_id: str) -> str:
+    character = next(item for item in PACKAGE.characters if item.id == character_id)
+    bio = character.bio
+    article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
+    return f"{character.name} is {article.lower()}{bio[len(article) :]}" if article else f"{character.name}: {bio}"
 
 
 def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
@@ -62,7 +74,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
     assert len(attempts) == 1
     assert state.last_turn_delivery.beats_projected == ()
     assert captured["headers"]["Authorization"] == "Bearer secret"
@@ -70,30 +82,32 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert captured["payload"]["max_tokens"] == 1024
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     context = captured["payload"]["user"]
-    assert '<speaker id="michelle">' not in context
-    assert "concrete immediate consequence" in captured["payload"]["system"]
+    assert "Dr. Michelle McGehee may say this aloud" not in context
+    assert "concrete immediate consequence" in captured["payload"]["user"]
     instruction = captured["payload"]["system"]
-    assert "one paragraph per segment" in instruction
-    assert "roughly 30 to 55 words" in instruction
-    assert f"at most {MAX_TURN_SEGMENTS} segments" in instruction
+    assert "2-3 paragraphs of 2-3 short sentences" in instruction
+    assert "Write each paragraph as one segment" in instruction
     # Arm C keeps Arm B's subtraction of beat prose AND Arm A's prohibitions.
-    assert "contradict authored text" in instruction
-    assert "<rule>Never invent durable evidence, physical objects, items, or container contents.</rule>" in instruction
-    assert "already true" in instruction
+    assert "contradict authored text" in captured["payload"]["user"]
+    prohibition = "- Never invent durable evidence, physical objects, items, or container contents."
+    assert prohibition in captured["payload"]["user"]
+    assert "already true" in captured["payload"]["user"]
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
-    assert "Never reuse a beat's sentences" in captured["payload"]["system"]
-    assert "<scene_id>1A</scene_id>" in context
-    assert "<candidate>" not in context
+    assert "Never reuse a beat's sentences" in captured["payload"]["user"]
+    # The sections prompt carries the scene as authored situation, never as a runtime id.
+    assert "1A" not in context
+    assert context.startswith("CHARACTERS:")
+    assert "\n\nSCENE:\n" in context and "\n\nCONSTRAINTS:\n" in context
     serialized = context.casefold()
     for forbidden in ("janus", "plot_beats", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
     state.active_event_ids.add("SL-1A-B")
-    provider("I search the desk drawer for Michelle's recording.")
+    provider("Search the desk drawer for Michelle's recording.")
     drawer_context = captured["payload"]["user"]
-    assert '<candidate id="k_sl_1a_b_r2">' in drawer_context
-    assert '<candidate id="k_sl_1a_b_r1">' in drawer_context
-    assert '<must_convey candidate="k_sl_1a_b_r1">memory card</must_convey>' in drawer_context
+    assert "k_sl_1a_b_r2 in selected_knowledge_ids" in drawer_context
+    assert "k_sl_1a_b_r1 in selected_knowledge_ids" in drawer_context
+    assert "Revealing k_sl_1a_b_r1 must convey this: memory card" in drawer_context
     assert provider.last_projection is not None
     assert "damaged recording" in next(
         item.statement for item in provider.last_projection.candidates if item.id == "k_sl_1a_b_r2"
@@ -108,7 +122,7 @@ def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    result = provider("I look around.")
+    result = provider("Look around.")
 
     assert [segment["text"] for segment in result["segments"]] == [f"Opening {i}." for i in range(5)]
     assert state.last_turn_delivery.segments_truncated is True
@@ -120,7 +134,7 @@ def test_transport_leaves_short_reply_untouched(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    result = provider("I listen.")
+    result = provider("Listen.")
 
     assert result == reply
     assert state.last_turn_delivery.segments_truncated is False
@@ -145,7 +159,7 @@ def test_transport_salvages_valid_segments_around_malformed_entry(monkeypatch, b
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    assert provider("I search the drawer.") == {
+    assert provider("Search the drawer.") == {
         "segments": [
             {"kind": "narration", "text": "The drawer opens."},
             {"kind": "narration", "text": "Dust spills across the floor."},
@@ -169,7 +183,7 @@ def test_transport_refuses_salvage_when_selected_reveal_is_in_malformed_segment(
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     with pytest.raises(NarrationProviderError, match="invalid proposal"):
-        provider("I search the drawer.")
+        provider("Search the drawer.")
     assert state.last_turn_delivery.segments_dropped == 0
 
 
@@ -181,7 +195,7 @@ def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> No
     )
 
     with pytest.raises(NarrationProviderError, match="invalid proposal"):
-        provider("I wait.")
+        provider("Search the drawer.")
 
 
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
@@ -198,7 +212,7 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch)
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    result = provider("I search under the drawers.")
+    result = provider("Search under the drawers.")
 
     assert len(result["segments"]) == MAX_TURN_SEGMENTS + 1
     assert result["segments"][-1]["grounding_ids"] == ["k_sl_1a_b_r1"]
@@ -209,7 +223,7 @@ def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> Non
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    provider.last_projection = provider.projector.project(state, "player", "I search the desk drawer.")
+    provider.last_projection = provider.projector.project(state, "player", "Search the desk drawer.")
 
     scene_setting = provider._scene_setting()
     context = provider._serialized_player_context(scene_setting)
@@ -229,14 +243,14 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    provider("I inspect the back door.")
-    provider("I examine Michelle's phone.")
+    provider("Inspect the back door.")
+    provider("Examine Michelle's phone.")
     state.active_event_ids.add("SL-1A-B")
-    provider("I search the desk drawer for a damaged recording.")
+    provider("Search the desk drawer for a damaged recording.")
 
     contexts = [payload["user"] for payload in captured]
-    assert all('<candidate id="k_sl_1a_b_r2">' not in context for context in contexts[:2])
-    assert '<candidate id="k_sl_1a_b_r2">' in contexts[2]
+    assert all("k_sl_1a_b_r2" not in context for context in contexts[:2])
+    assert "k_sl_1a_b_r2 in selected_knowledge_ids" in contexts[2]
 
     storylet = next(storylet for storylet in PACKAGE.storylets if storylet.id == "SL-1A-B")
     beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
@@ -244,10 +258,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     def _bare(value: str) -> str:
         return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
 
-    assert all(
-        all(f"<beat_detail>{d}</beat_detail>" in contexts[2] for d in beats[link].details)
-        for link in storylet.source_links[1:]
-    )
+    assert all(all(f"- {d}" in contexts[2] for d in beats[link].details) for link in storylet.source_links[1:])
     assert all(_bare(beats[link].prose) not in _bare(contexts[2]) for link in storylet.source_links[1:])
     assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
     assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
@@ -270,7 +281,7 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
         ),
     )
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
 
 
 def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeypatch) -> None:
@@ -290,13 +301,13 @@ def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeyp
         "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"status": "error"})
     )
     with pytest.raises(NarrationProviderError, match="failed"):
-        provider("I listen.")
+        provider("Listen.")
 
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(URLError("offline"))
     )
     with pytest.raises(NarrationProviderError, match="unavailable"):
-        provider("I listen.")
+        provider("Listen.")
 
 
 def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeypatch) -> None:
@@ -322,7 +333,7 @@ def test_transport_retries_once_without_json_mode_after_worker_rejection(monkeyp
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
     assert payloads[0]["response_format"] == {"type": "json_object"}
     assert "response_format" not in payloads[1]
 
@@ -341,7 +352,7 @@ def test_transport_recovers_once_from_a_malformed_provider_envelope(monkeypatch)
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
     assert len(payloads) == 2
 
 
@@ -365,7 +376,7 @@ def test_transport_keeps_the_finished_segments_of_a_truncated_reply(monkeypatch)
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "She opens the drawer."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "She opens the drawer."}]}
     assert len(payloads) == 1
     assert state.last_turn_delivery.recovery_used
 
@@ -384,7 +395,7 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "Recovered."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "Recovered."}]}
     assert len(payloads) == 2
     assert "Your previous response was invalid." in payloads[1]["system"]
 
@@ -418,7 +429,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I search the desk drawer for Michelle's damaged recording.")
+    proposal = provider("Search the desk drawer for Michelle's damaged recording.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 2
@@ -459,7 +470,7 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I search the desk drawer.")
+    proposal = provider("Search the desk drawer.")
 
     assert proposal["segments"][0]["text"] == "The drawer sticks, then gives."
     assert len(payloads) == 2
@@ -489,7 +500,7 @@ def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> 
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I look under the workstation.")
+    proposal = provider("Look under the workstation.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
     assert len(payloads) == 1
@@ -532,7 +543,7 @@ def test_transport_drops_an_ungrounded_groupless_selection(monkeypatch) -> None:
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("I wait.")
+    result = provider("Inspect the corridor.")
 
     assert result["selected_knowledge_ids"] == []
     assert "grounding_ids" not in result["segments"][0]
@@ -569,7 +580,7 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I look under the workstation.")
+    proposal = provider("Look under the workstation.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 2
@@ -614,7 +625,7 @@ def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I search Michelle's workstation.")
+    proposal = provider("Search Michelle's workstation.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
     assert len(payloads) == 2
@@ -646,7 +657,7 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I look under the workstation.")
+    proposal = provider("Look under the workstation.")
 
     assert proposal["selected_knowledge_ids"] == []
     assert proposal["segments"][0]["text"] == "A faint scratch and a few loose screws."
@@ -672,7 +683,7 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> N
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I play the damaged recording.")
+    proposal = provider("Play the damaged recording.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 1, "grounding on the selected candidate must not spend a recovery"
@@ -708,11 +719,11 @@ def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> No
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
     projector = KnowledgeProjector()
-    projection = projector.project(state, "player", "I search the drawer.")
+    projection = projector.project(state, "player", "Search the drawer.")
     provider_proposal = parse_turn_proposal({"segments": segments, "selected_knowledge_ids": selected})
 
     with pytest.raises(ProposalValidationError):
-        SelectedRevealResolver(PACKAGE).resolve(state, projection, provider_proposal, projector, "I search the drawer.")
+        SelectedRevealResolver(PACKAGE).resolve(state, projection, provider_proposal, projector, "Search the drawer.")
 
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.last_projection = projection
@@ -737,22 +748,22 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    provider("I stand still and listen.")
+    provider("Inspect the room.")
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
-    quiet_prompt = payloads[-1]["system"]
+    quiet_prompt = payloads[-1]["user"]
     assert "offers no candidates" in quiet_prompt
     assert "Select at most one candidate" in quiet_prompt
-    assert '"grounding_ids":[' not in quiet_prompt
-    assert '"selected_knowledge_ids":[]' in quiet_prompt
+    assert '"grounding_ids":[' not in payloads[-1]["system"]
+    assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 
     state.active_event_ids.add("SL-1A-B")
-    provider("I search the desk drawer for Michelle's recording.")
-    offered_prompt = payloads[-1]["system"]
+    provider("Search the desk drawer for Michelle's recording.")
+    offered_prompt = payloads[-1]["user"]
     # An offered reveal is a duty, not an option: permissive wording let the model
     # narrate the earned moment without committing it, stalling the scene.
     assert "selected candidate must be conveyed" in offered_prompt
-    assert '<candidate id="k_sl_1a_b_r2">' in payloads[-1]["user"], "the offered candidate IDs must be named"
-    assert "must_convey" in offered_prompt
+    assert "k_sl_1a_b_r2" in payloads[-1]["user"], "the offered candidate IDs must be named"
+    assert "must convey this" in offered_prompt
     assert "offers no candidates" not in offered_prompt
     offered_id = provider.last_projection.candidates[0].id
     assert offered_id in payloads[-1]["user"], "the offered candidate must still reach the model"
@@ -762,7 +773,7 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     # for grounding on knowledge neither committed nor selected. The engine
     # attributes the delivering segment itself.
     assert '"grounding_ids":[' not in offered_prompt
-    assert '"selected_knowledge_ids":[]' in offered_prompt
+    assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 
 
 def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatch) -> None:
@@ -786,10 +797,10 @@ def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatc
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
     )
 
-    provider("I stand still and listen.")
+    provider("Inspect the room.")
 
     assert len(payloads) == 2
-    assert "offers no candidates" in payloads[1]["system"]
+    assert "offers no candidates" in payloads[1]["user"]
 
 
 def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothing(monkeypatch) -> None:
@@ -818,7 +829,7 @@ def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothi
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("I reach for something I have not earned.")
+    proposal = provider("Open the drawer under the workstation.")
 
     assert len(payloads) == 2, "the provider still gets exactly one guided recovery"
     assert proposal["selected_knowledge_ids"] == []
@@ -826,9 +837,9 @@ def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothi
 
     # The sanitized shape must satisfy the runtime rule that rejected it.
     projector = KnowledgeProjector()
-    projection = projector.project(state, "player", "I reach for something I have not earned.")
+    projection = projector.project(state, "player", "Open the drawer under the workstation.")
     resolved, _ = SelectedRevealResolver(PACKAGE).resolve(
-        state, projection, parse_turn_proposal(proposal), projector, "I reach for something I have not earned."
+        state, projection, parse_turn_proposal(proposal), projector, "Open the drawer under the workstation."
     )
     assert resolved.selected_knowledge_ids == ()
     assert resolved.events == ()
@@ -846,7 +857,7 @@ def test_unparseable_reply_is_still_refused(monkeypatch) -> None:
     )
 
     with pytest.raises(NarrationProviderError, match="invalid proposal"):
-        provider("I listen.")
+        provider("Listen.")
 
 
 def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch) -> None:
@@ -862,7 +873,7 @@ def test_transport_reports_safe_contract_shape_after_failed_recovery(monkeypatch
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
     with pytest.raises(NarrationProviderError) as caught:
-        provider("I listen.")
+        provider("Listen.")
 
     assert caught.value.status_code == 502
     assert caught.value.error_code == "INVALID_PROPOSAL"
@@ -889,7 +900,7 @@ def test_transport_preserves_worker_capacity_classification(monkeypatch, caplog)
         caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"),
         pytest.raises(NarrationProviderError) as caught,
     ):
-        provider("I listen.")
+        provider("Listen.")
     assert caught.value.status_code == 429
     assert caught.value.message == "narration service is at capacity"
     assert any("AI_CAPACITY_EXCEEDED" in record.getMessage() for record in caplog.records)
@@ -905,7 +916,7 @@ def test_transport_marks_untyped_worker_errors_for_diagnosis(monkeypatch) -> Non
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
 
     with pytest.raises(NarrationProviderError) as caught:
-        provider("I listen.")
+        provider("Listen.")
     assert caught.value.error_code == "UNKNOWN"
 
 
@@ -929,7 +940,7 @@ def test_unsalvageable_worker_response_fails_closed_after_one_recovery_and_logs_
         caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"),
         pytest.raises(NarrationProviderError, match="unavailable"),
     ):
-        provider("I listen.")
+        provider("Listen.")
 
     assert len(payloads) == 2
     assert "Your previous response was invalid." in payloads[1]["system"]
@@ -949,7 +960,7 @@ def test_transport_maps_http_failures(monkeypatch, status, expected) -> None:
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(error))
 
     with pytest.raises(NarrationProviderError) as caught:
-        provider("I listen.")
+        provider("Listen.")
     assert caught.value.status_code == expected
 
 
@@ -965,29 +976,27 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
-    assert "write only what follows" in captured["payload"]["system"]
+    assert "write only what follows" in captured["payload"]["user"]
     opening_instruction = captured["payload"]["system"]
-    assert "one paragraph per segment" in opening_instruction
-    assert "roughly 30 to 55 words" in opening_instruction
-    assert f"at most {MAX_TURN_SEGMENTS} segments" in opening_instruction
-    assert "contradict" in opening_instruction
-    assert "invent physical objects, items, or contents" in opening_instruction
+    assert "2-3 paragraphs of 2-3 short sentences" in opening_instruction
+    assert "Write each paragraph as one segment" in opening_instruction
+    assert "contradict" in captured["payload"]["user"]
+    assert "invent physical objects, items, or contents" in captured["payload"]["user"]
     user = captured["payload"]["user"]
     assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
     location = next(item for item in PACKAGE.world.locations if item.id == PACKAGE.scenes[0].metadata.location_id)
-    assert "<protagonist>Kristin Schweitzer</protagonist>" in user
-    assert f"<location>{location.name}</location>" in user
-    assert "<phase>exposition</phase>" in user
-    assert f"<objective>{PACKAGE.scenes[0].metadata.objective}</objective>" in user
-    assert f"<beat_title>{beat.title}</beat_title>" in user
+    assert _rendered_character_line("kristin") in user
+    assert f"The scene takes place at {location.name}." in user
+    objective = PACKAGE.scenes[0].metadata.objective
+    assert f"objective is to {objective[0].lower()}{objective[1:]}." in user
 
     def _bare_beat(value: str) -> str:
         return " ".join(value.replace("*", "").replace(">", "").replace("#", "").split())
 
-    assert all(f"<beat_detail>{d}</beat_detail>" in user for d in beat.details)
+    assert all(f"- {d}" in user for d in beat.details)
     assert _bare_beat(beat.prose) not in _bare_beat(user)
-    assert "<scene_id>1A</scene_id>" in user
+    assert "1A" not in user
 
 
 def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
@@ -1015,7 +1024,7 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
         if established:
             for fact_id in sorted(PACKAGE.world.facts):
                 state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("I act.")
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("Act.")
         context = captured[-1]["user"]
         return len(context.encode())
 
@@ -1028,7 +1037,7 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
     # The player context must not repeat the speakers' dialogue basis.
     context = captured[-1]["user"]
     assert "sayable_knowledge" not in context
-    assert "<speaker" in context
+    assert "may say this aloud" in context
 
 
 def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
@@ -1051,8 +1060,8 @@ def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
     )
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
-    assert "echo the request fields" in payloads[0]["system"]
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
+    assert "echo the request fields" in payloads[0]["user"]
     assert "echoed back" in payloads[1]["system"]
 
 
@@ -1072,7 +1081,7 @@ def test_one_transient_connection_failure_does_not_lose_the_turn(monkeypatch) ->
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
     )
 
-    assert provider("I listen.") == {"segments": [{"kind": "narration", "text": "The corridor holds."}]}
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "The corridor holds."}]}
     assert len(attempts) == 2
 
 
@@ -1089,7 +1098,7 @@ def test_a_sustained_outage_still_fails_closed(monkeypatch) -> None:
     )
 
     with pytest.raises(NarrationProviderError, match="unavailable"):
-        provider("I listen.")
+        provider("Listen.")
     assert len(attempts) == 2, "exactly one retry, never an unbounded loop"
 
 
@@ -1115,11 +1124,11 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         state.phase = next(
             scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id
         )
-        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("I act.")
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)("Act.")
         user = captured[-1]["user"]
         scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
 
-        assert f"<entry_text>{scene.metadata.entry_text.rstrip()}</entry_text>" in user
+        assert scene.metadata.entry_text.strip().splitlines()[0] in user
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
@@ -1144,22 +1153,20 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"A reply."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    provider("I search the desk drawer for Michelle's recording.")
+    provider("Search the desk drawer for Michelle's recording.")
 
     system = captured["payload"]["system"]
-    assert '<candidate id="k_sl_1a_b_r2">' in system or "statement" in system
-    assert '<candidate id="k_sl_1a_b_r2">Kristin recovers Michelle' in captured["payload"]["user"]
+    assert "k_sl_1a_b_r2" in captured["payload"]["user"] or "statement" in system
+    assert "Kristin recovers Michelle" in captured["payload"]["user"]
 
 
 def _instruction_for(prompt_variant, candidates) -> str:
-    """Build a turn instruction directly, without a worker or a live projection."""
+    """Build a turn's rule block directly, without a worker or a live projection."""
 
     provider = CloudflareTurnProvider.__new__(CloudflareTurnProvider)
     provider.prompt_variant = prompt_variant
-    provider.last_projection = SimpleNamespace(
-        candidates=candidates, hinted_deliveries=(), handoff_deliveries=()
-    )
-    return CloudflareTurnProvider._turn_instruction(provider)
+    provider.last_projection = SimpleNamespace(candidates=candidates, hinted_deliveries=(), handoff_deliveries=())
+    return "\n".join(CloudflareTurnProvider._turn_rules(provider))
 
 
 NO_CANDIDATE_RULE = "This turn offers no candidates, so selected_knowledge_ids must be empty."
@@ -1192,13 +1199,64 @@ def test_a_malformed_rules_block_is_rejected_rather_than_sent() -> None:
 
 
 def test_a_non_string_output_example_is_rejected() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=state, prompt_variant={"output_example": {"segments": []}}
+    )
+
     with pytest.raises(ValueError, match="output_example must be a string"):
-        _instruction_for({"output_example": {"segments": []}}, ())
+        provider._system_prompt()
 
 
 def test_omitting_the_output_example_drops_only_that_block() -> None:
-    kept = _instruction_for(None, ("k_candidate",))
-    dropped = _instruction_for({"include_output_example": False}, ("k_candidate",))
-    assert "<output_example>" in kept
-    assert "<output_example>" not in dropped
-    assert dropped.splitlines() == [line for line in kept.splitlines() if "<output_example>" not in line]
+    """The example is the last two lines of the system prompt; the rest must not move."""
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    kept = CloudflareTurnProvider(worker_url="", token="", state=state)._system_prompt()
+    dropped = CloudflareTurnProvider(
+        worker_url="", token="", state=state, prompt_variant={"include_output_example": False}
+    )._system_prompt()
+
+    assert DEFAULT_OUTPUT_EXAMPLE in kept
+    assert DEFAULT_OUTPUT_EXAMPLE not in dropped
+    assert "return only JSON" not in dropped
+    assert dropped.splitlines() == kept.splitlines()[: len(dropped.splitlines())]
+
+
+def test_sections_prompt_introduces_only_the_characters_this_scene_involves() -> None:
+    """A package's cast is written for a reader who finished the story.
+
+    Sending all of it would hand the narrator characters the player has not met
+    and motives the plot has not reached, so only the scene's own participants
+    are introduced.
+    """
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+    RuntimeEngine(state, provider)._activate_pacing()
+
+    user = provider._section_user_prompt(provider.assemble_turn_prompt("Look around the kitchen.")["context"])
+    characters = user.split("SCENE:")[0]
+
+    assert _rendered_character_line("kristin") in characters
+    assert _rendered_character_line("michelle") in characters
+    for absent in ("Charles Jenkins", "Rebecca Jenkins", "Brandon Corfman"):
+        assert absent not in characters, f"{absent} does not appear in Scene 1A"
+
+
+def test_a_characters_concealed_history_never_reaches_the_narrator() -> None:
+    """plot.md may state what a character hides; the narrator may not be told it.
+
+    Brandon Corfman's authored biography names the involvement he conceals, and
+    that is brandon_history, which world.yaml declares protected. Protected
+    knowledge is otherwise enforced only against fact mutation, so nothing but
+    this substitution keeps it out of the prompt.
+    """
+
+    brandon = next(item for item in PACKAGE.characters if item.id == "brandon")
+    plot_text = Path("data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
+
+    assert "conceals his own past involvement" in plot_text
+    assert "brandon_history" in PACKAGE.world.protected_knowledge
+    assert "conceals" not in brandon.bio
+    assert "AI software" not in brandon.bio

@@ -112,7 +112,7 @@ class _ScriptedProvider:
 
 def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | None, **kwargs) -> None:
     provider.selected = [selection] if selection else []
-    engine.turn("I act on the strongest available lead.", **kwargs)
+    engine.turn("Act on the strongest available lead.", **kwargs)
 
 
 def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
