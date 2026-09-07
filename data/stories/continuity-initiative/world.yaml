@@ -32,6 +32,9 @@ npcs:
   - Dr. McGehee
   - Michelle McGehee
   - Shelly
+  # plot.md gives Michelle's concealed discoveries and captivity to the narrator before the player earns them.
+  # This narrator-safe bio preserves her characterisation while keeping those revelations in plot.md alone.
+  narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend and longtime roommate; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
 - id: brandon
   name: Brandon Corfman
   aliases:

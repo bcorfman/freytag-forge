@@ -28,6 +28,13 @@ from storygame.story_package.loader import load_story_package
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
+def _rendered_character_line(character_id: str) -> str:
+    character = next(item for item in PACKAGE.characters if item.id == character_id)
+    bio = character.bio
+    article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
+    return f"{character.name} is {article.lower()}{bio[len(article) :]}" if article else f"{character.name}: {bio}"
+
+
 def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
     frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "1A")
     reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"]
@@ -979,7 +986,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
     location = next(item for item in PACKAGE.world.locations if item.id == PACKAGE.scenes[0].metadata.location_id)
-    assert "Kristin Schweitzer is a 33-year-old" in user
+    assert _rendered_character_line("kristin") in user
     assert f"The scene takes place at {location.name}." in user
     objective = PACKAGE.scenes[0].metadata.objective
     assert f"objective is to {objective[0].lower()}{objective[1:]}." in user
@@ -1231,8 +1238,8 @@ def test_sections_prompt_introduces_only_the_characters_this_scene_involves() ->
     user = provider._section_user_prompt(provider.assemble_turn_prompt("Look around the kitchen.")["context"])
     characters = user.split("SCENE:")[0]
 
-    assert "Kristin Schweitzer is a 33-year-old" in characters
-    assert "Dr. Michelle McGehee is a 31-year-old" in characters
+    assert _rendered_character_line("kristin") in characters
+    assert _rendered_character_line("michelle") in characters
     for absent in ("Charles Jenkins", "Rebecca Jenkins", "Brandon Corfman"):
         assert absent not in characters, f"{absent} does not appear in Scene 1A"
 
