@@ -22,6 +22,7 @@ import yaml
 
 CHECKS = (
     "unattested_detail",
+    "ambiguous_owned_item",
     "frame_beat_conflict",
     "absent_speaker",
     "beat_overprojection",
@@ -99,6 +100,8 @@ _ABSTRACT_DETAIL_WORDS = {
     "prove",
     "solution",
 }
+_OWNED_ITEM_NAME = re.compile(r"^([A-Za-z]+)['’]s\s+(.+?)\s*$")
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
@@ -156,6 +159,40 @@ def _source_links(storylets: str) -> dict[str, list[tuple[str, int]]]:
     return result
 
 
+def _owned_items(world: dict[str, Any]) -> list[tuple[str, str]]:
+    """Return owner/thing pairs; this heuristic only considers named items."""
+    owned: list[tuple[str, str]] = []
+    for item in world.get("items", []):
+        match = _OWNED_ITEM_NAME.fullmatch(str(item.get("name", "")))
+        if match:
+            owned.append((match.group(1), match.group(2)))
+    return owned
+
+
+def _ambiguous_owned_item_findings(
+    text: str, scene_id: str, label: str, owned_items: list[tuple[str, str]]
+) -> list[dict[str, str]]:
+    """Find units naming an owned thing without its owner in the same unit."""
+    findings = []
+    for owner, thing in owned_items:
+        if not re.search(rf"\b{re.escape(thing)}\b", text, re.I):
+            continue
+        if re.search(rf"\b{re.escape(owner)}\b", text, re.I):
+            continue
+        excerpt = text.strip()
+        if len(excerpt) > 120:
+            excerpt = f"{excerpt[:117].rstrip()}..."
+        findings.append(
+            _finding(
+                "ambiguous_owned_item",
+                scene_id,
+                f"{label} '{excerpt}' names the {thing} without naming {owner}, "
+                f"so the narrator cannot tell it from another {thing}.",
+            )
+        )
+    return findings
+
+
 def audit_package(root: Path) -> dict[str, Any]:
     """Return deterministic findings for every scene in *root*.
 
@@ -173,6 +210,22 @@ def audit_package(root: Path) -> dict[str, Any]:
     pacing = _read_yaml(root / "pacing.yaml")
     routes = _read_yaml(root / "storylet-routes.yaml")
     findings: list[dict[str, str]] = []
+
+    # This is deliberately lexical: it catches bare owned things, but cannot
+    # resolve pronouns, aliases, or ownership expressed outside the same unit.
+    owned_items = _owned_items(world)
+    for scene_id, body in scenes.items():
+        for match in re.finditer(r"^\*\*Details:\*\*\s*(.*?)\s*$", body, re.MULTILINE):
+            for detail in match.group(1).split(";"):
+                findings.extend(_ambiguous_owned_item_findings(detail, scene_id, "Beat detail", owned_items))
+    for item in knowledge.get("knowledge", []):
+        scene_id = (item.get("available_in_scenes") or [scene_ids[0]])[0]
+        for sentence in _SENTENCE_SPLIT.split(str(item.get("statement", ""))):
+            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Knowledge statement", owned_items))
+    for frame in knowledge.get("scene_frames", []):
+        scene_id = str(frame.get("scene_id"))
+        for sentence in _SENTENCE_SPLIT.split(str(frame.get("situation", ""))):
+            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Scene frame", owned_items))
 
     plot_words = _words(plot)
     for item in knowledge.get("knowledge", []):

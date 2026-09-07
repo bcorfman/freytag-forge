@@ -34,6 +34,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert len(package.storylets) == 30
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
+    assert package.scenes[0].metadata.item_placements == {"michelle_phone": "on the kitchen floor"}
     assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
@@ -46,6 +47,23 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
                 for effect in package.knowledge_indexes.by_id[knowledge_id].establishes
             }
             assert effects == set(realization.operations)
+
+
+def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Path) -> None:
+    package = copied_package(tmp_path)
+    plot = package / "plot.md"
+    contents = plot.read_text(encoding="utf-8")
+    contents = contents.replace("  michelle_phone: on the kitchen floor\n", "  transit_card: on the table\n", 1)
+    plot.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A.*transit_card"):
+        load_story_package(package)
+
+
+def test_scene_without_item_placements_loads_with_an_empty_mapping() -> None:
+    package = load_story_package(PACKAGE)
+
+    assert package.scenes[1].metadata.item_placements == {}
 
 
 def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
@@ -70,7 +88,8 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     details = (
-        "**Details:** kitchen floor phone; missing laptop and work bag; overturned workstation chair; "
+        "**Details:** Michelle's phone on the kitchen floor; missing laptop and work bag; overturned workstation "
+        "chair; "
         "forced back door; KMS initials in drawer\n"
     )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")

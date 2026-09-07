@@ -83,18 +83,18 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     context = captured["payload"]["user"]
     assert "Dr. Michelle McGehee may say this aloud" not in context
-    assert "concrete immediate consequence" in captured["payload"]["user"]
+    assert "Show what happens right after the player acts." in captured["payload"]["user"]
     instruction = captured["payload"]["system"]
-    assert "2-3 paragraphs of 2-3 short sentences" in instruction
-    assert "Write each paragraph as one segment" in instruction
+    assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in instruction
+    assert "Write each paragraph as one segment and return only JSON in this form:" in instruction
     # Arm C keeps Arm B's subtraction of beat prose AND Arm A's prohibitions.
-    assert "contradict authored text" in captured["payload"]["user"]
-    prohibition = "- Never invent durable evidence, physical objects, items, or container contents."
+    assert "Do not say anything that goes against the SCENE section." in captured["payload"]["user"]
+    prohibition = "- Do not make up new objects, clues, or things inside containers."
     assert prohibition in captured["payload"]["user"]
     assert "already true" in captured["payload"]["user"]
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
-    assert "Never reuse a beat's sentences" in captured["payload"]["user"]
+    assert "Do not copy sentences from the SCENE section." in captured["payload"]["user"]
     # The sections prompt carries the scene as authored situation, never as a runtime id.
     assert "1A" not in context
     assert context.startswith("CHARACTERS:")
@@ -107,7 +107,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     drawer_context = captured["payload"]["user"]
     assert "k_sl_1a_b_r2 in selected_knowledge_ids" in drawer_context
     assert "k_sl_1a_b_r1 in selected_knowledge_ids" in drawer_context
-    assert "Revealing k_sl_1a_b_r1 must convey this: memory card" in drawer_context
+    assert "If you reveal k_sl_1a_b_r1, you must say this: memory card" in drawer_context
     assert provider.last_projection is not None
     assert "damaged recording" in next(
         item.statement for item in provider.last_projection.candidates if item.id == "k_sl_1a_b_r2"
@@ -397,7 +397,7 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
 
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "Recovered."}]}
     assert len(payloads) == 2
-    assert "Your previous response was invalid." in payloads[1]["system"]
+    assert "Your last answer was not valid." in payloads[1]["system"]
 
 
 def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
@@ -433,7 +433,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert len(payloads) == 2
-    assert "previous response was invalid" in payloads[1]["system"]
+    assert "last answer was not valid" in payloads[1]["system"]
     assert "k_future_unavailable" in payloads[1]["system"]
     # The retry must lead with the response that always validates. Offering only a menu
     # lets the model keep reaching for the reveal the player's intent implies.
@@ -474,7 +474,7 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
 
     assert proposal["segments"][0]["text"] == "The drawer sticks, then gives."
     assert len(payloads) == 2
-    assert "previous response was invalid" in payloads[1]["system"]
+    assert "last answer was not valid" in payloads[1]["system"]
     # The retry must name the offending ID; a blind retry repeats the same mistake.
     assert "k_sl_1a_b_r2" in payloads[1]["system"]
     assert "grounding_ids" in payloads[1]["system"]
@@ -751,8 +751,8 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     provider("Inspect the room.")
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
     quiet_prompt = payloads[-1]["user"]
-    assert "offers no candidates" in quiet_prompt
-    assert "Select at most one candidate" in quiet_prompt
+    assert "This turn has no candidates." in quiet_prompt
+    assert "Pick at most one candidate." in quiet_prompt
     assert '"grounding_ids":[' not in payloads[-1]["system"]
     assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 
@@ -761,10 +761,10 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     offered_prompt = payloads[-1]["user"]
     # An offered reveal is a duty, not an option: permissive wording let the model
     # narrate the earned moment without committing it, stalling the scene.
-    assert "selected candidate must be conveyed" in offered_prompt
+    assert "If you pick a candidate, tell it in one paragraph" in offered_prompt
     assert "k_sl_1a_b_r2" in payloads[-1]["user"], "the offered candidate IDs must be named"
-    assert "must convey this" in offered_prompt
-    assert "offers no candidates" not in offered_prompt
+    assert "you must say this" in offered_prompt
+    assert "This turn has no candidates." not in offered_prompt
     offered_id = provider.last_projection.candidates[0].id
     assert offered_id in payloads[-1]["user"], "the offered candidate must still reach the model"
     # The example deliberately does NOT ground. Showing a grounded selection here
@@ -800,7 +800,7 @@ def test_recovery_hint_tells_the_provider_a_quiet_turn_offers_nothing(monkeypatc
     provider("Inspect the room.")
 
     assert len(payloads) == 2
-    assert "offers no candidates" in payloads[1]["user"]
+    assert "This turn has no candidates." in payloads[1]["user"]
 
 
 def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothing(monkeypatch) -> None:
@@ -943,7 +943,7 @@ def test_unsalvageable_worker_response_fails_closed_after_one_recovery_and_logs_
         provider("Listen.")
 
     assert len(payloads) == 2
-    assert "Your previous response was invalid." in payloads[1]["system"]
+    assert "Your last answer was not valid." in payloads[1]["system"]
     assert any(
         record.levelno >= logging.WARNING and "JSONDecodeError" in record.getMessage() for record in caplog.records
     )
@@ -976,12 +976,14 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
-    assert "write only what follows" in captured["payload"]["user"]
+    assert "The player already read the entry text. Write only what comes next. Keep the same voice and tense." in captured["payload"]["user"]
     opening_instruction = captured["payload"]["system"]
-    assert "2-3 paragraphs of 2-3 short sentences" in opening_instruction
-    assert "Write each paragraph as one segment" in opening_instruction
-    assert "contradict" in captured["payload"]["user"]
-    assert "invent physical objects, items, or contents" in captured["payload"]["user"]
+    assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in opening_instruction
+    assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
+    assert "Do not say anything that goes against the entry text or the beat details." in captured["payload"]["user"]
+    assert "Do not make up new objects, clues, or things inside containers." in captured["payload"]["user"]
+    assert "Keep each object where the scene puts it." in captured["payload"]["user"]
+    assert "Michelle's phone is on the kitchen floor." in captured["payload"]["user"]
     user = captured["payload"]["user"]
     assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
@@ -1061,8 +1063,8 @@ def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
     )
 
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A recovered proposal."}]}
-    assert "echo the request fields" in payloads[0]["user"]
-    assert "echoed back" in payloads[1]["system"]
+    assert "Do not repeat the request's labels back." in payloads[0]["user"]
+    assert "Do not repeat the request's labels." in payloads[1]["system"]
 
 
 def test_one_transient_connection_failure_does_not_lose_the_turn(monkeypatch) -> None:
@@ -1164,12 +1166,87 @@ def _instruction_for(prompt_variant, candidates) -> str:
     """Build a turn's rule block directly, without a worker or a live projection."""
 
     provider = CloudflareTurnProvider.__new__(CloudflareTurnProvider)
+    provider.state = RuntimeState.bootstrap(PACKAGE)
     provider.prompt_variant = prompt_variant
     provider.last_projection = SimpleNamespace(candidates=candidates, hinted_deliveries=(), handoff_deliveries=())
     return "\n".join(CloudflareTurnProvider._turn_rules(provider))
 
 
-NO_CANDIDATE_RULE = "This turn offers no candidates, so selected_knowledge_ids must be empty."
+NO_CANDIDATE_RULE = "This turn has no candidates. Leave selected_knowledge_ids empty."
+
+
+def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    rules = provider._turn_rules()
+
+    assert "Say who owns a thing the first time you name it: Michelle's phone." in rules
+
+
+def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert not any("owner" in rule for rule in provider._turn_rules())
+
+
+def test_turn_rules_derive_owner_name_from_the_package() -> None:
+    phone = next(item for item in PACKAGE.world.items if item.id == "michelle_phone")
+    custom_phone = phone.model_copy(update={"name": "Avery's handset"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": (*PACKAGE.world.items[:-3], custom_phone, *PACKAGE.world.items[-2:])}
+    )
+    custom_package = PACKAGE.model_copy(update={"world": custom_world})
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(custom_package))
+
+    rules = provider._turn_rules()
+
+    assert "Avery's handset" in next(rule for rule in rules if "Say who owns" in rule)
+
+
+def test_turn_rules_include_authored_item_placement() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Michelle's phone is on the kitchen floor." in provider._turn_rules()
+
+
+def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert not any("kitchen floor" in rule for rule in provider._turn_rules())
+
+
+def test_item_placement_rule_uses_package_name_and_placement() -> None:
+    phone = next(item for item in PACKAGE.world.items if item.id == "michelle_phone")
+    custom_phone = phone.model_copy(update={"name": "Avery's handset"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
+    )
+    scene = PACKAGE.scenes[0]
+    custom_metadata = scene.metadata.model_copy(
+        update={"item_placements": {"michelle_phone": "beneath the window"}}
+    )
+    custom_scene = scene.model_copy(update={"metadata": custom_metadata})
+    custom_package = PACKAGE.model_copy(
+        update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])}
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=RuntimeState.bootstrap(custom_package)
+    )
+
+    assert "Avery's handset is beneath the window." in provider._turn_rules()
+
+
+def test_turn_rules_sharpen_the_authored_place_rule() -> None:
+    rules = _instruction_for(None, ()).splitlines()
+
+    assert "Use the places and details the story gives you." in rules
+    assert "Keep each object where the scene puts it." in rules
 
 
 def test_the_no_candidate_rule_is_stated_once_not_twice() -> None:
@@ -1184,7 +1261,7 @@ def test_the_no_candidate_rule_is_stated_once_not_twice() -> None:
 
 
 def test_a_replaced_rules_block_still_gets_the_turn_specific_no_candidate_rule() -> None:
-    variant = {"rules": ["Narrate the concrete immediate consequence."]}
+    variant = {"rules": ["Show what happens right after the player acts."]}
     assert _instruction_for(variant, ()).count(NO_CANDIDATE_RULE) == 1
     assert _instruction_for(variant, ("k_candidate",)).count(NO_CANDIDATE_RULE) == 0
 
@@ -1219,7 +1296,7 @@ def test_omitting_the_output_example_drops_only_that_block() -> None:
 
     assert DEFAULT_OUTPUT_EXAMPLE in kept
     assert DEFAULT_OUTPUT_EXAMPLE not in dropped
-    assert "return only JSON" not in dropped
+    assert "Send back only JSON" not in dropped
     assert dropped.splitlines() == kept.splitlines()[: len(dropped.splitlines())]
 
 

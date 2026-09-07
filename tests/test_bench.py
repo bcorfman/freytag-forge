@@ -588,8 +588,12 @@ def test_one_storylet_can_be_read_in_isolation() -> None:
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
 
     assert "k_sl_1a_d_r1" in narrow["user"]
-    assert "kitchen floor phone" not in narrow["user"], "a neighbouring storylet's beat must not bleed in"
-    assert "kitchen floor phone" in wide["user"], "the beat view keeps every storylet that presents it"
+    assert "Michelle's phone on the kitchen floor" not in narrow["user"], (
+        "a neighbouring storylet's beat must not bleed in"
+    )
+    assert "Michelle's phone on the kitchen floor" in wide["user"], (
+        "the beat view keeps every storylet that presents it"
+    )
 
 
 def test_a_beat_and_a_storylet_cannot_be_named_together() -> None:
