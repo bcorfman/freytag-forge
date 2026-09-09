@@ -24,6 +24,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import ItemPlacement
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -976,7 +977,10 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
-    assert "The player already read the entry text. Write only what comes next. Keep the same voice and tense." in captured["payload"]["user"]
+    assert (
+        "The player already read the entry text. Write only what comes next. Keep the same voice and tense."
+        in captured["payload"]["user"]
+    )
     opening_instruction = captured["payload"]["system"]
     assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in opening_instruction
     assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
@@ -1228,18 +1232,38 @@ def test_item_placement_rule_uses_package_name_and_placement() -> None:
         update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
     )
     scene = PACKAGE.scenes[0]
-    custom_metadata = scene.metadata.model_copy(
-        update={"item_placements": {"michelle_phone": "beneath the window"}}
-    )
+    custom_metadata = scene.metadata.model_copy(update={"item_placements": {"michelle_phone": "beneath the window"}})
     custom_scene = scene.model_copy(update={"metadata": custom_metadata})
-    custom_package = PACKAGE.model_copy(
-        update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])}
-    )
-    provider = CloudflareTurnProvider(
-        worker_url="", token="", state=RuntimeState.bootstrap(custom_package)
-    )
+    custom_package = PACKAGE.model_copy(update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])})
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(custom_package))
 
     assert "Avery's handset is beneath the window." in provider._turn_rules()
+
+
+def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
+    scene = PACKAGE.scenes[0]
+    metadata = scene.metadata.model_copy(
+        update={
+            "item_placements": {
+                "memory_card": ItemPlacement(
+                    placement="taped beneath the workstation drawer",
+                    while_fact_false="michelle_abduction_suspicion",
+                )
+            }
+        }
+    )
+    custom_package = PACKAGE.model_copy(
+        update={"scenes": (scene.model_copy(update={"metadata": metadata}), *PACKAGE.scenes[1:])}
+    )
+    state = RuntimeState.bootstrap(custom_package)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
+
+    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="false"))
+    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
+    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="true"))
+    assert "Hidden memory card is taped beneath the workstation drawer." not in provider._turn_rules()
 
 
 def test_turn_rules_sharpen_the_authored_place_rule() -> None:

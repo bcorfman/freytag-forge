@@ -71,6 +71,8 @@ transitions:
     equals: true
   - fact_id: patrol_return_pressure
     equals: true
+  - fact_id: memory_card_in_kristins_custody
+    equals: true
   required_dependencies:
   - memory_card
 - id: t_1b_1c

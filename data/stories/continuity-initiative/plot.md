@@ -92,7 +92,7 @@ bridge_text:
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
 * Michelle's phone remains on the kitchen floor undamaged.
-* Her laptop and work bag are missing and not in their normal spots.
+* Michelle's laptop and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
@@ -128,7 +128,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; concealed memory card; marked front gate; reflective tape
 
-A federal emergency patrol arrives at Michelle’s house unusually quickly. The officers claim they are conducting welfare checks, but they search Michelle’s office and ask specifically about her research and findings.
+A federal emergency patrol arrives at Michelle's house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open drawers or search taped undersides, so the concealed card stays concealed; they discover and confiscate nothing.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked her front gate with a strip of reflective tape.
 

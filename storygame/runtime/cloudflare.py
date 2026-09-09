@@ -22,7 +22,7 @@ from storygame.runtime.contracts import (
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import derive_grounding, derive_statement_grounding, unconveyed_terms
-from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
+from storygame.story_package.models import ItemPlacement, Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -365,9 +365,17 @@ class CloudflareTurnProvider:
     def _placement_rules(self) -> list[str]:
         scene_items = {item.id: item for item in self.state.package.world.items}
         return [
-            f"{scene_items[item_id].name} is {placement}."
+            f"{scene_items[item_id].name} is {placement_text}."
             for item_id, placement in self._current_scene().item_placements.items()
             if item_id in scene_items
+            if not isinstance(placement, ItemPlacement)
+            or not placement.while_fact_false
+            or not any(
+                (fact.value if fact.value is not None else fact.object) is True
+                or str(fact.value if fact.value is not None else fact.object).lower() == "true"
+                for fact in self.state.facts.matching(placement.while_fact_false)
+            )
+            for placement_text in [placement if isinstance(placement, str) else placement.placement]
         ]
 
     def _output_example(self) -> str | None:

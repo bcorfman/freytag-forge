@@ -6,9 +6,11 @@ from pathlib import Path
 
 import pytest
 
+from storygame.runtime.contracts import ResolvedTurnProposal, SceneTransitionProposal
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.validation import ProgressionValidator, ProposalValidationError
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -22,21 +24,67 @@ def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
     return {"segments": [segment], "selected_knowledge_ids": selected or []}
 
 
-def test_selected_reveal_derives_its_exact_package_route_and_effects() -> None:
+def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    proposal = engine.turn("Search the desk drawer and play the damaged recording.")
+    with pytest.raises(ProposalValidationError, match="memory card"):
+        engine.turn("Play Michelle's damaged recording.")
 
-    assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
-    assert [(event.event_id, event.realization_id) for event in proposal.events] == [("SL-1A-B", "SL-1A-B-R2")]
+    assert not state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert not state.facts.has("michelle_warning_known", "story", value="true")
+
+
+def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    responses = iter(
+        (
+            _turn(
+                "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
+                "do not trust emergency broadcasts.",
+                ["k_sl_1a_b_r2"],
+            ),
+            _turn(
+                "Kristin reads the remaining files on Michelle's recovered memory card and learns the place she used "
+                "to trade information.",
+                ["k_sl_1a_d_r1"],
+            ),
+        )
+    )
+    engine = RuntimeEngine(state, lambda _: next(responses))
+
+    engine.turn("Search beneath the marked drawer for Michelle's memory card and play its damaged recording.")
+    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
     assert state.facts.has("michelle_warning_known", "story", value="true")
-    assert "SL-1A-B" in state.fired_event_ids
-    assert engine.last_post_selection_projection is not None
-    assert "k_sl_1a_b_r2" in {item.id for item in engine.last_post_selection_projection.committed_knowledge}
+
+    state.active_event_ids.add("SL-1A-D")
+    engine.turn("Read the remaining files on Michelle's recovered memory card.")
+
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert state.facts.has("michelle_lead_actionable", "story", value="true")
+
+
+def test_complete_path_secures_card_with_files_and_park_lead() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    engine = RuntimeEngine(
+        state,
+        lambda _: _turn(
+            "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; "
+            "the card points to a dead drop at a bench in the park.",
+            ["k_sl_1a_b_r1"],
+        ),
+    )
+
+    engine.turn("Search beneath the marked drawer for Michelle's memory card and read its files.")
+
+    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert state.facts.has("michelle_lead_actionable", "story", value="true")
 
 
 @pytest.mark.parametrize(
@@ -131,6 +179,7 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
 
     assert state.facts.has("continuity_initiative_known", "story", value="true")
     assert state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
     assert "SL-1A-B" in state.fired_event_ids
     assert state.current_scene_id == "1A"
 
@@ -186,12 +235,25 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
 
-    engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
-    engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
+    engine.turn("Inspect the marked front gate.")
+    engine.turn("Examine the patrol marker on the gate.")
 
     assert state.facts.has("patrol_return_pressure", "story", value="true")
     assert "pressure_1a" in state.fired_event_ids
     assert state.facts.has("story_elapsed_seconds", "story", value="120")
+
+
+def test_transition_rejects_lead_and_patrol_without_card_custody() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+    proposal = ResolvedTurnProposal(
+        segments=({"kind": "narration", "text": "Kristin leaves the house."},),
+        transition=SceneTransitionProposal(transition_id="t_1a_1b"),
+    )
+
+    with pytest.raises(ProposalValidationError, match="transition triggers"):
+        ProgressionValidator(PACKAGE).validate(state, proposal)
 
 
 def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:

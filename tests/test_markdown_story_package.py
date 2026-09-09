@@ -66,6 +66,65 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping() -> None:
     assert package.scenes[1].metadata.item_placements == {}
 
 
+def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8")
+    contents = contents.replace(
+        "  michelle_phone: on the kitchen floor\n",
+        "  michelle_phone: on the kitchen floor\n"
+        "  memory_card:\n"
+        "    placement: taped beneath the workstation drawer\n"
+        "    while_fact_false: michelle_abduction_suspicion\n",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    placement = load_story_package(root).scenes[0].metadata.item_placements["memory_card"]
+
+    assert placement.placement == "taped beneath the workstation drawer"
+    assert placement.while_fact_false == "michelle_abduction_suspicion"
+
+
+def test_bare_string_item_placement_remains_a_string() -> None:
+    placement = load_story_package(PACKAGE).scenes[0].metadata.item_placements["michelle_phone"]
+
+    assert placement == "on the kitchen floor"
+
+
+def test_loader_rejects_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        "  michelle_phone: on the kitchen floor\n",
+        "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A.*michelle_phone.*undeclared_fact"):
+        load_story_package(root)
+
+
+def test_loader_rejects_transition_trigger_that_can_never_fail(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    world_source = root / "world.yaml"
+    world = yaml.safe_load(world_source.read_text())
+    world["facts"].append("never_asserted_fact")
+    world_source.write_text(yaml.safe_dump(world, sort_keys=False))
+    knowledge_source = root / "knowledge.yaml"
+    knowledge = yaml.safe_load(knowledge_source.read_text())
+    knowledge["facts"].append({"id": "never_asserted_fact", "purpose": "test-only fact"})
+    knowledge_source.write_text(yaml.safe_dump(knowledge, sort_keys=False))
+    pacing_source = root / "pacing.yaml"
+    pacing = yaml.safe_load(pacing_source.read_text())
+    pacing["transitions"][0]["triggers"].append({"fact_id": "never_asserted_fact", "equals": False})
+    pacing_source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="t_1a_1b.*never_asserted_fact.*can never fail"):
+        load_story_package(root)
+
+
 def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
     package = load_story_package(PACKAGE)
     scene = package.scenes[0]
