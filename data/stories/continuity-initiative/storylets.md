@@ -43,7 +43,7 @@ Each entry below is authoring data, not a player action menu.
 - Dr. Michelle McGehee, only through her possessions and prior presence
 - Michelle’s phone
 - Hidden memory card
-- Michelle’s missing laptop/work bag as absence evidence
+- Michelle’s missing tablet/work bag as absence evidence
 
 **Dramatic purpose**
 - Turn the house from a generic post-disappearance loss into a physical crime scene.
@@ -51,7 +51,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin notices that the disorder is too localized to fit ordinary looting.
-- Handling Michelle’s phone makes the missing laptop and work bag stand out.
+- Handling Michelle’s phone makes the missing tablet and work bag stand out.
 - Inspecting the back door changes Kristin’s working theory.
 - A failed or hurried search can leave uncertainty while still increasing suspicion.
 

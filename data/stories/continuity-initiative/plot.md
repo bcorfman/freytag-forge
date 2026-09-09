@@ -91,12 +91,12 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing laptop and work bag; overturned workstation chair; forced back door; KMS initials in drawer
+**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
 * Michelle's phone remains on the kitchen floor undamaged.
-* Michelle's laptop and work bag are missing and not in their normal spots.
+* Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
@@ -104,9 +104,9 @@ Kristin notices one of the drawers on Michelle's workstation has Kristin's initi
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
-**Details:** hidden memory card; taped drawer; truck laptop; Continuity Initiative files; population stabilization centers; Michelle’s research notes
+**Details:** hidden memory card; taped drawer; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into her laptop out in her truck. 
+Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into Kristin's laptop out in her truck.
 
 The memory card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 

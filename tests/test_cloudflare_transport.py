@@ -46,7 +46,7 @@ def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
 
     assert "facedown" not in frame.situation.casefold()
     assert "blood" not in reveal.statement.casefold()
-    for detail in ("forced entry", "overturned chair", "missing laptop", "work bag"):
+    for detail in ("forced entry", "overturned chair", "missing tablet", "work bag"):
         assert detail in reveal.statement.casefold()
 
 
@@ -1204,7 +1204,7 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
-    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop computer." in rules
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
 
 
 def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
@@ -1240,7 +1240,7 @@ def test_turn_rules_include_kristins_laptop_placement() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
-    assert "Kristin's laptop computer is in Kristin's truck outside the house." in provider._turn_rules()
+    assert "Kristin's laptop is in Kristin's truck outside the house." in provider._turn_rules()
 
 
 def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:

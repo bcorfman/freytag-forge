@@ -69,7 +69,7 @@ items:
 - id: michelle_phone
   name: Michelle's phone
 - id: kristin_laptop
-  name: Kristin's laptop computer
+  name: Kristin's laptop
 - id: transit_card
   name: Transit access card
 - id: override_codes
