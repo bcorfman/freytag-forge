@@ -68,6 +68,9 @@ participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone]
 item_placements:
   michelle_phone: on the kitchen floor
+  memory_card:
+    placement: taped under a drawer in Michelle's workstation
+    while_fact_false: memory_card_in_kristins_custody
 entry_text: "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:

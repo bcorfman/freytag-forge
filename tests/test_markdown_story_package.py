@@ -8,6 +8,7 @@ import yaml
 
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package.models import ItemPlacement
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -34,7 +35,13 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert len(package.storylets) == 30
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
-    assert package.scenes[0].metadata.item_placements == {"michelle_phone": "on the kitchen floor"}
+    assert package.scenes[0].metadata.item_placements == {
+        "michelle_phone": "on the kitchen floor",
+        "memory_card": ItemPlacement(
+            placement="taped under a drawer in Michelle's workstation",
+            while_fact_false="memory_card_in_kristins_custody",
+        ),
+    }
     assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
@@ -71,8 +78,9 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
-        "  michelle_phone: on the kitchen floor\n",
-        "  michelle_phone: on the kitchen floor\n"
+        "  memory_card:\n"
+        "    placement: taped under a drawer in Michelle's workstation\n"
+        "    while_fact_false: memory_card_in_kristins_custody\n",
         "  memory_card:\n"
         "    placement: taped beneath the workstation drawer\n"
         "    while_fact_false: michelle_abduction_suspicion\n",

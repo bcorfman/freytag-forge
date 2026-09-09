@@ -1261,6 +1261,14 @@ def test_item_placement_rule_uses_package_name_and_placement() -> None:
 
 def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
     scene = PACKAGE.scenes[0]
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Hidden memory card is taped under a drawer in Michelle's workstation." in provider._turn_rules()
+
+    _assert_memory_card_in_custody(state)
+    assert "Hidden memory card is taped under a drawer in Michelle's workstation." not in provider._turn_rules()
+
     metadata = scene.metadata.model_copy(
         update={
             "item_placements": {
