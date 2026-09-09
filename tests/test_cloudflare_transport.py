@@ -1204,7 +1204,7 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
-    assert "Say who owns a thing the first time you name it: Michelle's phone." in rules
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop computer." in rules
 
 
 def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
@@ -1219,7 +1219,7 @@ def test_turn_rules_derive_owner_name_from_the_package() -> None:
     phone = next(item for item in PACKAGE.world.items if item.id == "michelle_phone")
     custom_phone = phone.model_copy(update={"name": "Avery's handset"})
     custom_world = PACKAGE.world.model_copy(
-        update={"items": (*PACKAGE.world.items[:-3], custom_phone, *PACKAGE.world.items[-2:])}
+        update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
     )
     custom_package = PACKAGE.model_copy(update={"world": custom_world})
     provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(custom_package))
@@ -1234,6 +1234,13 @@ def test_turn_rules_include_authored_item_placement() -> None:
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
     assert "Michelle's phone is on the kitchen floor." in provider._turn_rules()
+
+
+def test_turn_rules_include_kristins_laptop_placement() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Kristin's laptop computer is in Kristin's truck outside the house." in provider._turn_rules()
 
 
 def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:

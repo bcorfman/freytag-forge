@@ -65,9 +65,10 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone]
+item_ids: [memory_card, michelle_phone, kristin_laptop]
 item_placements:
   michelle_phone: on the kitchen floor
+  kristin_laptop: in Kristin's truck outside the house
   memory_card:
     placement: taped under a drawer in Michelle's workstation
     while_fact_false: memory_card_in_kristins_custody

@@ -37,6 +37,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
         "michelle_phone": "on the kitchen floor",
+        "kristin_laptop": "in Kristin's truck outside the house",
         "memory_card": ItemPlacement(
             placement="taped under a drawer in Michelle's workstation",
             while_fact_false="memory_card_in_kristins_custody",
