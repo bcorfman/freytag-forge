@@ -428,8 +428,11 @@ storylets:
     her disappearance to a deliberate threat rather than require a specific search command.
   realization_options:
   - id: SL-1A-B-R1
-    dramatic_intent: Recover Michelle's hidden memory card and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
+    dramatic_intent: Find and secure Michelle's hidden memory card first, then read its files and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
     operations:
+    - op: assert
+      fact_id: memory_card_in_kristins_custody
+      value: true
     - op: assert
       fact_id: continuity_initiative_known
       value: true
@@ -450,9 +453,12 @@ storylets:
     - brandon_history
     - phase_two
   - id: SL-1A-B-R2
-    dramatic_intent: Recover the damaged warning first; its interrupted ending plus the house evidence is enough
-      to support abduction suspicion even before every file is understood.
+    dramatic_intent: Find and secure Michelle's hidden memory card first, then play its damaged warning; its interrupted
+      ending plus the house evidence is enough to support abduction suspicion even before every file is understood.
     operations:
+    - op: assert
+      fact_id: memory_card_in_kristins_custody
+      value: true
     - op: assert
       fact_id: michelle_warning_known
       value: true
@@ -533,7 +539,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1A-D
   scene_id: 1A
-  title: The Memory Card Under the Drawer
+  title: The Rest of Michelle's Files
   activation:
     scene_id: 1A
     conditions:
@@ -541,16 +547,19 @@ storylets:
       equals: false
     - fact_id: michelle_warning_known
       equals: true
+    - fact_id: memory_card_in_kristins_custody
+      equals: true
     pacing:
       earliest_turn: 0
       target_turn: 4
       latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When Kristin reached the damaged recording before the files, the card is still under the drawer;
-    the warning tells her Michelle hid something deliberately, so keep searching for what it points to.
+  pressure_role: When Kristin reaches the damaged recording before the files, let her read the remaining files on the
+    memory card she is already carrying; the warning tells her Michelle hid something deliberately, so the files can
+    reveal what it points to without repeating the recovery.
   realization_options:
   - id: SL-1A-D-R1
-    dramatic_intent: Kristin finds the card taped beneath the drawer and reads enough of the files to know where
+    dramatic_intent: Kristin reads the remaining files on the memory card she is already carrying and learns where
       Michelle was pointing her.
     operations:
     - op: assert
@@ -570,8 +579,8 @@ storylets:
     - brandon_history
     - phase_two
   - id: SL-1A-D-R2
-    dramatic_intent: Only fragments of the research survive recovery, but they still name the exchange point Michelle
-      used, which is enough to move on.
+    dramatic_intent: Kristin reads the surviving fragments on the memory card she is already carrying; they still name
+      the exchange point Michelle used, which is enough to move on.
     operations:
     - op: assert
       fact_id: continuity_initiative_known

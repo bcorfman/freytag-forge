@@ -24,8 +24,13 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import ItemPlacement
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _assert_memory_card_in_custody(state: RuntimeState) -> None:
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
 
 
 def _rendered_character_line(character_id: str) -> str:
@@ -41,7 +46,7 @@ def test_scene_1a_context_uses_only_authored_physical_evidence() -> None:
 
     assert "facedown" not in frame.situation.casefold()
     assert "blood" not in reveal.statement.casefold()
-    for detail in ("forced entry", "overturned chair", "missing laptop", "work bag"):
+    for detail in ("forced entry", "overturned chair", "missing tablet", "work bag"):
         assert detail in reveal.statement.casefold()
 
 
@@ -102,6 +107,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     serialized = context.casefold()
     for forbidden in ("janus", "plot_beats", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider("Search the desk drawer for Michelle's recording.")
     drawer_context = captured["payload"]["user"]
@@ -221,16 +227,18 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch)
 
 def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _assert_memory_card_in_custody(state)
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.last_projection = provider.projector.project(state, "player", "Search the desk drawer.")
 
     scene_setting = provider._scene_setting()
     context = provider._serialized_player_context(scene_setting)
-    candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_b_r2")
+    candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_c_r1")
 
     assert candidate["must_convey"] == []
-    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].statement
+    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
 def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
@@ -245,6 +253,8 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("Inspect the back door.")
     provider("Examine Michelle's phone.")
+    _assert_memory_card_in_custody(state)
+    state.active_event_ids.clear()
     state.active_event_ids.add("SL-1A-B")
     provider("Search the desk drawer for a damaged recording.")
 
@@ -260,7 +270,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
 
     assert all(all(f"- {d}" in contexts[2] for d in beats[link].details) for link in storylet.source_links[1:])
     assert all(_bare(beats[link].prose) not in _bare(contexts[2]) for link in storylet.source_links[1:])
-    assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
+    assert state.last_turn_delivery.beats_projected == storylet.source_links
     assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
 
 
@@ -403,6 +413,7 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
 def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -420,7 +431,9 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s damaged recording crackles.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],'
                     '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
@@ -555,6 +568,7 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -572,7 +586,9 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Taped under the drawer, a card and a recording.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -667,6 +683,7 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -675,7 +692,9 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> N
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s warning crackles.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -976,7 +995,10 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     assert provider.opening() == {"segments": [{"kind": "narration", "text": "The house is silent."}]}
-    assert "The player already read the entry text. Write only what comes next. Keep the same voice and tense." in captured["payload"]["user"]
+    assert (
+        "The player already read the entry text. Write only what comes next. Keep the same voice and tense."
+        in captured["payload"]["user"]
+    )
     opening_instruction = captured["payload"]["system"]
     assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in opening_instruction
     assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
@@ -1146,6 +1168,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     """
 
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     captured: dict[str, object] = {}
@@ -1159,7 +1182,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
 
     system = captured["payload"]["system"]
     assert "k_sl_1a_b_r2" in captured["payload"]["user"] or "statement" in system
-    assert "Kristin recovers Michelle" in captured["payload"]["user"]
+    assert "Kristin finds and secures Michelle's hidden memory card" in captured["payload"]["user"]
 
 
 def _instruction_for(prompt_variant, candidates) -> str:
@@ -1181,7 +1204,7 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
-    assert "Say who owns a thing the first time you name it: Michelle's phone." in rules
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
 
 
 def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
@@ -1196,7 +1219,7 @@ def test_turn_rules_derive_owner_name_from_the_package() -> None:
     phone = next(item for item in PACKAGE.world.items if item.id == "michelle_phone")
     custom_phone = phone.model_copy(update={"name": "Avery's handset"})
     custom_world = PACKAGE.world.model_copy(
-        update={"items": (*PACKAGE.world.items[:-3], custom_phone, *PACKAGE.world.items[-2:])}
+        update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
     )
     custom_package = PACKAGE.model_copy(update={"world": custom_world})
     provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(custom_package))
@@ -1211,6 +1234,13 @@ def test_turn_rules_include_authored_item_placement() -> None:
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
     assert "Michelle's phone is on the kitchen floor." in provider._turn_rules()
+
+
+def test_turn_rules_include_kristins_laptop_placement() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Kristin's laptop is in Kristin's truck outside the house." in provider._turn_rules()
 
 
 def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:
@@ -1228,18 +1258,46 @@ def test_item_placement_rule_uses_package_name_and_placement() -> None:
         update={"items": tuple(custom_phone if item.id == phone.id else item for item in PACKAGE.world.items)}
     )
     scene = PACKAGE.scenes[0]
-    custom_metadata = scene.metadata.model_copy(
-        update={"item_placements": {"michelle_phone": "beneath the window"}}
-    )
+    custom_metadata = scene.metadata.model_copy(update={"item_placements": {"michelle_phone": "beneath the window"}})
     custom_scene = scene.model_copy(update={"metadata": custom_metadata})
-    custom_package = PACKAGE.model_copy(
-        update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])}
-    )
-    provider = CloudflareTurnProvider(
-        worker_url="", token="", state=RuntimeState.bootstrap(custom_package)
-    )
+    custom_package = PACKAGE.model_copy(update={"world": custom_world, "scenes": (custom_scene, *PACKAGE.scenes[1:])})
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(custom_package))
 
     assert "Avery's handset is beneath the window." in provider._turn_rules()
+
+
+def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
+    scene = PACKAGE.scenes[0]
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Hidden memory card is taped under a drawer in Michelle's workstation." in provider._turn_rules()
+
+    _assert_memory_card_in_custody(state)
+    assert "Hidden memory card is taped under a drawer in Michelle's workstation." not in provider._turn_rules()
+
+    metadata = scene.metadata.model_copy(
+        update={
+            "item_placements": {
+                "memory_card": ItemPlacement(
+                    placement="taped beneath the workstation drawer",
+                    while_fact_false="michelle_abduction_suspicion",
+                )
+            }
+        }
+    )
+    custom_package = PACKAGE.model_copy(
+        update={"scenes": (scene.model_copy(update={"metadata": metadata}), *PACKAGE.scenes[1:])}
+    )
+    state = RuntimeState.bootstrap(custom_package)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
+
+    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="false"))
+    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
+    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="true"))
+    assert "Hidden memory card is taped beneath the workstation drawer." not in provider._turn_rules()
 
 
 def test_turn_rules_sharpen_the_authored_place_rule() -> None:

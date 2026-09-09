@@ -161,6 +161,11 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class ItemPlacement(_Model):
+    placement: str = Field(min_length=1)
+    while_fact_false: str | None = Field(default=None, pattern=_ID)
+
+
 class Character(_Model):
     """One principal character and the biography the narrator may be told."""
 
@@ -191,7 +196,7 @@ class SceneMetadata(_Model):
     entry_text: str = Field(min_length=1)
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
-    item_placements: Mapping[str, str] = {}
+    item_placements: Mapping[str, str | ItemPlacement] = {}
 
 
 class SceneBeat(_Model):

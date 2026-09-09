@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
@@ -63,13 +64,17 @@ def test_route_package_has_the_fixed_canonical_scene_chain() -> None:
 
 def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     knowledge_id = "k_sl_1a_b_r2"
     event_payload = {
         "segments": [
             {
                 "kind": "narration",
-                "text": "A bounded scene situation changes the pressure.",
+                "text": (
+                    "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
+                    "do not trust emergency broadcasts."
+                ),
                 "grounding_ids": [knowledge_id],
             }
         ],

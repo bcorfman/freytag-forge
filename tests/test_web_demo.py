@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError
+from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
@@ -301,7 +302,11 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "The damaged recording crackles: Michelle warns Kristin not to trust broadcasts.",
+                        "text": (
+                            "Kristin finds and secures Michelle's hidden memory card, then plays its "
+                            "damaged recording: "
+                            "do not trust emergency broadcasts."
+                        ),
                         "grounding_ids": ["k_sl_1a_b_r2"],
                     }
                 ],
@@ -322,6 +327,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
             return next(responses)
 
     def provider_factory(state):
+        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         return _SequencedProvider()
 

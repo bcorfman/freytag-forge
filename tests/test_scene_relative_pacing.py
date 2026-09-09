@@ -21,6 +21,7 @@ def test_turn_index_keeps_counting_and_scene_entry_resets_relative_turns() -> No
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
     engine.turn("Investigate.")
@@ -43,6 +44,7 @@ def test_min_turns_floor_blocks_a_committed_trigger_until_source_turns_are_playe
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
     engine.turn("Rush toward the exit.", clock_seconds=3600)

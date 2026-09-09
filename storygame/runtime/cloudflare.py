@@ -21,8 +21,13 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import derive_grounding, derive_statement_grounding, unconveyed_terms
-from storygame.story_package.models import Scene, SceneBeat, SceneMetadata
+from storygame.runtime.validation import (
+    derive_grounding,
+    derive_statement_grounding,
+    predicate_matches,
+    unconveyed_terms,
+)
+from storygame.story_package.models import FactPredicate, ItemPlacement, Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -364,11 +369,17 @@ class CloudflareTurnProvider:
 
     def _placement_rules(self) -> list[str]:
         scene_items = {item.id: item for item in self.state.package.world.items}
-        return [
-            f"{scene_items[item_id].name} is {placement}."
-            for item_id, placement in self._current_scene().item_placements.items()
-            if item_id in scene_items
-        ]
+        rules = []
+        for item_id, placement in self._current_scene().item_placements.items():
+            if item_id not in scene_items:
+                continue
+            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
+                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
+                if predicate_matches(guard, self.state.facts):
+                    continue
+            placement_text = placement if isinstance(placement, str) else placement.placement
+            rules.append(f"{scene_items[item_id].name} is {placement_text}.")
+        return rules
 
     def _output_example(self) -> str | None:
         """Resolve the response example, or None when this variation omits it."""

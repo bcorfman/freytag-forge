@@ -43,7 +43,7 @@ Each entry below is authoring data, not a player action menu.
 - Dr. Michelle McGehee, only through her possessions and prior presence
 - Michelle’s phone
 - Hidden memory card
-- Michelle’s missing laptop/work bag as absence evidence
+- Michelle’s missing tablet/work bag as absence evidence
 
 **Dramatic purpose**
 - Turn the house from a generic post-disappearance loss into a physical crime scene.
@@ -51,7 +51,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin notices that the disorder is too localized to fit ordinary looting.
-- Handling Michelle’s phone makes the missing laptop and work bag stand out.
+- Handling Michelle’s phone makes the missing tablet and work bag stand out.
 - Inspecting the back door changes Kristin’s working theory.
 - A failed or hurried search can leave uncertainty while still increasing suspicion.
 
@@ -102,12 +102,13 @@ Each entry below is authoring data, not a player action menu.
 - Reinforce Michelle as an active researcher rather than merely a missing objective.
 
 **Possible realizations**
-- Kristin discovers the memory card through careful searching.
-- The damaged recording and card are encountered in either order.
+- Kristin discovers and secures the memory card through careful searching before reading its files.
+- Kristin then reads the damaged recording and card files in either authored order, but the recording is never heard before the card is secured.
 - Kristin may initially mistrust the material and only later connect it to the forced entry.
 - The recording can emotionally sharpen the danger without adding facts beyond Michelle’s authored warning.
 
 **Effects**
+- May set `memory_card_in_kristins_custody` when Kristin secures the card.
 - May set `continuity_initiative_known`.
 - May establish Kristin's distrust of the emergency broadcasts as part of the warning's emotional force.
 - May deepen the context for Michelle's investigation.
@@ -132,29 +133,30 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-1A-D — The Memory Card Under the Drawer
+### SL-1A-D — The Rest of Michelle's Files
 
 **Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
 
 **Allowed scene:** `1A`
 
 **Available when**
-- Kristin has recovered Michelle’s damaged warning but not yet her research files.
+- Kristin has recovered Michelle’s damaged warning but not yet read all of her research files.
+- Kristin is already carrying the recovered memory card.
 - Kristin remains able to search Michelle’s work area.
 - The memory card has not been destroyed or permanently lost.
 
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee through her research notes
-- Hidden memory card
+- Recovered memory card in Kristin's custody
 
 **Dramatic purpose**
-- Guarantee that the concrete lead away from the house stays earnable when Kristin reached the damaged recording before the research files.
-- Keep the memory card, not the damaged recording, as the thing that names where Michelle was working.
+- Guarantee that the concrete lead away from the house stays earnable when Kristin reads the damaged recording before the remaining research files.
+- Keep the already-recovered memory card's remaining files, not the damaged recording alone, as the thing that names where Michelle was working.
 
 **Possible realizations**
-- Kristin finds the card taped beneath the drawer and reads enough of the files to know where Michelle was pointing.
-- Kristin recovers only fragments of the research, but they still name the exchange point Michelle used.
+- Kristin reads enough of the remaining files on the card she is carrying to know where Michelle was pointing.
+- Kristin reads only fragments of the research on the card she is carrying, but they still name the exchange point Michelle used.
 
 **Effects**
 - Sets `continuity_initiative_known`.

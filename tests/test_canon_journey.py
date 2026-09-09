@@ -173,6 +173,20 @@ def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
     assert state.current_scene_id == "1C"
 
 
+def test_scene_1a_handoff_recovers_card_atomically_with_continuity_files() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+    provider = _ScriptedProvider()
+    engine = RuntimeEngine(state, provider)
+
+    for _ in range(5):
+        _drive(engine, provider, None)
+
+    assert state.current_scene_id == "1B"
+    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+
+
 def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -> set[str]:
     """Every fact still committable from this state, ignoring turn order."""
 
@@ -222,6 +236,12 @@ def test_no_single_reveal_can_strand_a_scene_exit() -> None:
                 continue
             for realization in route.realizations:
                 committed = {op.fact_id for op in realization.operations if op.op == "assert"}
+                # A realization can only be selected after its route activation
+                # predicates already hold; those prerequisites are not effects
+                # this realization must recreate for the outgoing transition.
+                committed.update(
+                    predicate.fact_id for predicate in route.activation_conditions if predicate.equals is True
+                )
                 missing = required - _reachable_facts(PACKAGE, committed, {route.id})
                 if missing:
                     stranded.append(f"{route.id}/{realization.id} strands {sorted(missing)} needed by {transition.id}")

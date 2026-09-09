@@ -8,6 +8,7 @@ import yaml
 
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package.models import ItemPlacement
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -34,7 +35,14 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert len(package.storylets) == 30
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
-    assert package.scenes[0].metadata.item_placements == {"michelle_phone": "on the kitchen floor"}
+    assert package.scenes[0].metadata.item_placements == {
+        "michelle_phone": "on the kitchen floor",
+        "kristin_laptop": "in Kristin's truck outside the house",
+        "memory_card": ItemPlacement(
+            placement="taped under a drawer in Michelle's workstation",
+            while_fact_false="memory_card_in_kristins_custody",
+        ),
+    }
     assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
@@ -66,6 +74,66 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping() -> None:
     assert package.scenes[1].metadata.item_placements == {}
 
 
+def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8")
+    contents = contents.replace(
+        "  memory_card:\n"
+        "    placement: taped under a drawer in Michelle's workstation\n"
+        "    while_fact_false: memory_card_in_kristins_custody\n",
+        "  memory_card:\n"
+        "    placement: taped beneath the workstation drawer\n"
+        "    while_fact_false: michelle_abduction_suspicion\n",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    placement = load_story_package(root).scenes[0].metadata.item_placements["memory_card"]
+
+    assert placement.placement == "taped beneath the workstation drawer"
+    assert placement.while_fact_false == "michelle_abduction_suspicion"
+
+
+def test_bare_string_item_placement_remains_a_string() -> None:
+    placement = load_story_package(PACKAGE).scenes[0].metadata.item_placements["michelle_phone"]
+
+    assert placement == "on the kitchen floor"
+
+
+def test_loader_rejects_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        "  michelle_phone: on the kitchen floor\n",
+        "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A.*michelle_phone.*undeclared_fact"):
+        load_story_package(root)
+
+
+def test_loader_rejects_transition_trigger_that_can_never_fail(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    world_source = root / "world.yaml"
+    world = yaml.safe_load(world_source.read_text())
+    world["facts"].append("never_asserted_fact")
+    world_source.write_text(yaml.safe_dump(world, sort_keys=False))
+    knowledge_source = root / "knowledge.yaml"
+    knowledge = yaml.safe_load(knowledge_source.read_text())
+    knowledge["facts"].append({"id": "never_asserted_fact", "purpose": "test-only fact"})
+    knowledge_source.write_text(yaml.safe_dump(knowledge, sort_keys=False))
+    pacing_source = root / "pacing.yaml"
+    pacing = yaml.safe_load(pacing_source.read_text())
+    pacing["transitions"][0]["triggers"].append({"fact_id": "never_asserted_fact", "equals": False})
+    pacing_source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="t_1a_1b.*never_asserted_fact.*can never fail"):
+        load_story_package(root)
+
+
 def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
     package = load_story_package(PACKAGE)
     scene = package.scenes[0]
@@ -88,7 +156,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     details = (
-        "**Details:** Michelle's phone on the kitchen floor; missing laptop and work bag; overturned workstation "
+        "**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation "
         "chair; "
         "forced back door; KMS initials in drawer\n"
     )
@@ -400,7 +468,8 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         + (
             "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
             "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
-            "{fact_id: patrol_return_pressure, equals: true}]}\n"
+            "{fact_id: patrol_return_pressure, equals: true}, "
+            "{fact_id: memory_card_in_kristins_custody, equals: true}]}\n"
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):

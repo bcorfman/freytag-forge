@@ -65,9 +65,13 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone]
+item_ids: [memory_card, michelle_phone, kristin_laptop]
 item_placements:
   michelle_phone: on the kitchen floor
+  kristin_laptop: in Kristin's truck outside the house
+  memory_card:
+    placement: taped under a drawer in Michelle's workstation
+    while_fact_false: memory_card_in_kristins_custody
 entry_text: "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
@@ -87,12 +91,12 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing laptop and work bag; overturned workstation chair; forced back door; KMS initials in drawer
+**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
 * Michelle's phone remains on the kitchen floor undamaged.
-* Her laptop and work bag are missing and not in their normal spots.
+* Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
@@ -100,9 +104,9 @@ Kristin notices one of the drawers on Michelle's workstation has Kristin's initi
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
-**Details:** hidden memory card; taped drawer; truck laptop; Continuity Initiative files; population stabilization centers; Michelle’s research notes
+**Details:** hidden memory card; taped drawer; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into her laptop out in her truck. 
+Kristin finds a hidden memory card taped beneath a drawer. Kristin plugs the memory card into her laptop out in her truck.
 
 The memory card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 
@@ -128,7 +132,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; concealed memory card; marked front gate; reflective tape
 
-A federal emergency patrol arrives at Michelle’s house unusually quickly. The officers claim they are conducting welfare checks, but they search Michelle’s office and ask specifically about her research and findings.
+A federal emergency patrol arrives at Michelle's house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open drawers or search taped undersides, so the concealed card stays concealed; they discover and confiscate nothing.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked her front gate with a strip of reflective tape.
 

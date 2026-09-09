@@ -393,6 +393,20 @@ def _validate(package: StoryPackage) -> None:
                 f"scene {scene.metadata.scene_id} item_placements reference items not listed in item_ids: "
                 f"{sorted(invalid_placements)}"
             )
+        unknown_placement_guards = {
+            item_id: placement.while_fact_false
+            for item_id, placement in scene.metadata.item_placements.items()
+            if (
+                not isinstance(placement, str)
+                and placement.while_fact_false is not None
+                and placement.while_fact_false not in package.fact_ids
+            )
+        }
+        if unknown_placement_guards:
+            item_id, fact_id = next(iter(unknown_placement_guards.items()))
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} item '{item_id}' item placement names unknown guard fact '{fact_id}'"
+            )
         unknown = set(scene.metadata.participant_ids + scene.metadata.item_ids) - entities
         if scene.metadata.location_id not in entities:
             unknown.add(scene.metadata.location_id)
@@ -400,6 +414,22 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"scene {scene.metadata.scene_id} references unknown entities: {sorted(unknown)}")
     transition_ids = set()
     outgoing: dict[str, list[str]] = {scene_id: [] for scene_id in scenes}
+    asserted_true_facts = {
+        effect.fact_id
+        for known in package.knowledge.knowledge
+        for effect in known.establishes
+        if effect.op == "assert" and effect.value is True
+    }
+    asserted_true_facts.update(
+        operation.fact_id
+        for route in package.storylet_routes.storylets
+        for realization in route.realizations
+        for operation in realization.operations
+        if operation.op == "assert" and operation.value is True
+    )
+    asserted_true_facts.update(
+        effect.fact_id for event in package.pacing.events for effect in event.effects if effect.equals is True
+    )
     for transition in package.pacing.transitions:
         if transition.id in transition_ids:
             raise StoryPackageError(f"duplicate transition ID '{transition.id}'")
@@ -408,6 +438,9 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"transition '{transition.id}' references an unknown scene")
         if {trigger.fact_id for trigger in transition.triggers} - set(package.world.facts):
             raise StoryPackageError(f"transition '{transition.id}' has an unknown trigger predicate")
+        for trigger in transition.triggers:
+            if trigger.equals is False and trigger.fact_id not in asserted_true_facts:
+                raise StoryPackageError(f"transition '{transition.id}' trigger fact '{trigger.fact_id}' can never fail")
         if set(transition.required_dependencies) - (entities | set(package.world.facts)):
             raise StoryPackageError(f"transition '{transition.id}' has unknown dependency")
         outgoing[transition.source_scene_id].append(transition.target_scene_id)
