@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 import pytest
 
 import bench.cli as bench_cli
+import bench.core as bench_core
 from bench.core import (
     CRITERIA,
     aggregate_runs,
@@ -21,6 +22,7 @@ from bench.core import (
     welch_t_test,
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.facts import Fact
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
@@ -30,6 +32,17 @@ OVERLAY_VARIATION = ROOT / "bench" / "variations" / "drawer-overlay.json"
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "bench"
 ARCHIVE = FIXTURE_DIR / "arm-c" / "run1"
 PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="utf-8")
+
+
+def _seed_bench_custody(monkeypatch) -> None:
+    original_package_and_state = bench_core.package_and_state
+
+    def package_and_state_with_custody(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        return package, state
+
+    monkeypatch.setattr(bench_core, "package_and_state", package_and_state_with_custody)
 
 
 def test_score_matches_archived_acceptance_fixture() -> None:
@@ -500,11 +513,12 @@ def test_entering_a_scene_with_no_action_yet_renders_no_player_section() -> None
     assert prompts["user"].startswith("CHARACTERS:")
 
 
-def test_a_named_beat_reaches_the_prompt() -> None:
+def test_a_named_beat_reaches_the_prompt(monkeypatch) -> None:
     """Naming a beat shows the turn that presents it, not the one pacing chose."""
 
     from bench.core import default_variation, prompt_for
 
+    _seed_bench_custody(monkeypatch)
     variation = default_variation()
     entered = prompt_for(variation, "1A", "Search the drawers.")
     with_beat = prompt_for(default_variation(), "1A", "Search the drawers.", "1A.2")
@@ -579,11 +593,12 @@ def test_a_storylet_spanning_into_the_named_beat_is_not_treated_as_finished() ->
     assert "SL-1A-A" not in establish_prior_beats(package, state, "1A", second)
 
 
-def test_one_storylet_can_be_read_in_isolation() -> None:
+def test_one_storylet_can_be_read_in_isolation(monkeypatch) -> None:
     """Beats are shared between storylets, so a narrower view has to exist."""
 
     from bench.core import default_variation, prompt_for
 
+    _seed_bench_custody(monkeypatch)
     narrow = prompt_for(default_variation(), "1A", "Feel under the drawer.", None, "SL-1A-D")
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
 

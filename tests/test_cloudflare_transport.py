@@ -29,6 +29,10 @@ from storygame.story_package.models import ItemPlacement
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
+def _assert_memory_card_in_custody(state: RuntimeState) -> None:
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+
+
 def _rendered_character_line(character_id: str) -> str:
     character = next(item for item in PACKAGE.characters if item.id == character_id)
     bio = character.bio
@@ -103,6 +107,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     serialized = context.casefold()
     for forbidden in ("janus", "plot_beats", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider("Search the desk drawer for Michelle's recording.")
     drawer_context = captured["payload"]["user"]
@@ -222,16 +227,18 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch)
 
 def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _assert_memory_card_in_custody(state)
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.last_projection = provider.projector.project(state, "player", "Search the desk drawer.")
 
     scene_setting = provider._scene_setting()
     context = provider._serialized_player_context(scene_setting)
-    candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_b_r2")
+    candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_c_r1")
 
     assert candidate["must_convey"] == []
-    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].statement
+    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
 def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
@@ -246,6 +253,8 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("Inspect the back door.")
     provider("Examine Michelle's phone.")
+    _assert_memory_card_in_custody(state)
+    state.active_event_ids.clear()
     state.active_event_ids.add("SL-1A-B")
     provider("Search the desk drawer for a damaged recording.")
 
@@ -261,7 +270,7 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
 
     assert all(all(f"- {d}" in contexts[2] for d in beats[link].details) for link in storylet.source_links[1:])
     assert all(_bare(beats[link].prose) not in _bare(contexts[2]) for link in storylet.source_links[1:])
-    assert state.last_turn_delivery.beats_projected == storylet.source_links[1:]
+    assert state.last_turn_delivery.beats_projected == storylet.source_links
     assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
 
 
@@ -404,6 +413,7 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
 def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -421,7 +431,9 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s damaged recording crackles.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],'
                     '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
@@ -556,6 +568,7 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -573,7 +586,9 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Taped under the drawer, a card and a recording.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -668,6 +683,7 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -676,7 +692,9 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> N
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s warning crackles.",'
+                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
+                    "Michelle's hidden memory card, "
+                    'then plays its damaged recording: do not trust emergency broadcasts.",'
                     '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
                 )
             }
@@ -1150,6 +1168,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     """
 
     state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     captured: dict[str, object] = {}
@@ -1163,7 +1182,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
 
     system = captured["payload"]["system"]
     assert "k_sl_1a_b_r2" in captured["payload"]["user"] or "statement" in system
-    assert "Kristin recovers Michelle" in captured["payload"]["user"]
+    assert "Kristin finds and secures Michelle's hidden memory card" in captured["payload"]["user"]
 
 
 def _instruction_for(prompt_variant, candidates) -> str:

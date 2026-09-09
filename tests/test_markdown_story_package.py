@@ -459,7 +459,8 @@ def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
         + (
             "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
             "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
-            "{fact_id: patrol_return_pressure, equals: true}]}\n"
+            "{fact_id: patrol_return_pressure, equals: true}, "
+            "{fact_id: memory_card_in_kristins_custody, equals: true}]}\n"
         )
     )
     with pytest.raises(StoryPackageError, match="ambiguous priority"):
