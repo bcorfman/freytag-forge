@@ -106,7 +106,7 @@ Kristin notices one of the drawers on Michelle's workstation has Kristin's initi
 
 **Details:** hidden memory card; taped drawer; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds a hidden memory card taped beneath a drawer. She plugs the memory card into Kristin's laptop out in her truck.
+Kristin finds a hidden memory card taped beneath a drawer. Kristin plugs the memory card into her laptop out in her truck.
 
 The memory card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 
