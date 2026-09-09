@@ -1,5 +1,110 @@
 # Testing runbook
 
+## Optional-storylet pacing permutation audit
+
+**Purpose:** Determine whether authored optional-storylet windows and pacing
+events remain playable when optional storylets are realized in different
+orders, and whether the resulting scene turn counts fit their scene-local
+windows.
+
+**Setup / seed:** The checked-in `continuity_initiative` package under
+`data/stories/continuity-initiative`; no model, credentials, or hosted session
+are required for the deterministic audit.
+
+**Safe actions:** Read package declarations and run local deterministic tests.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Inspect `tests/test_scene_relative_pacing.py` and
+   `tests/test_canon_journey.py` for existing timing and journey coverage.
+2. Run the focused pacing and canonical-journey tests.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q tests/test_scene_relative_pacing.py tests/test_canon_journey.py
+```
+
+Expected: the existing structural pacing checks and the two scripted journeys
+pass. This does not by itself prove all permutations of optional storylets are
+timing-safe; record any separate permutation-audit result here.
+
+**Observed 2026-09-07:** all 15 focused tests passed, but the command exited
+nonzero because the focused subset produced only 48% coverage and the
+repository enforces a 90% minimum. The full suite then passed with 294 tests
+and 90.72% coverage:
+
+```bash
+TMPDIR=/tmp uv run pytest -q
+```
+
+The checked-in package has 30 optional storylets. Their target/latest turns
+fit within the declared scene handoff windows, and the four declared pressure
+events occur at turns 2, 2, 3, and 4 in their respective scenes. Existing
+tests cover those static bounds, one fixed clocked journey, one fixed
+unclocked journey, activation after an earlier same-scene storylet, and
+single-reveal reachability. They do not enumerate different optional-storylet
+orders, simulate slow exploration against handoff, or assert a comfortable
+buffer between optional content and scheduled pressure.
+
+**Cleanup:** None.
+
+**Notes:** Added 2026-09-07 while evaluating the missed-obligation escalation
+plan. The audit specifically checks whether existing tests cover optional
+storylet order, pacing-event timing, and scene handoff thresholds. The global
+1,800-second budget was subsequently removed from the design; the checked-in
+package and tests still need that implementation update.
+
+## Remaining-scene physical continuity audit
+
+**Purpose:** Evaluate Scenes 1B through 3C against the Scene 1A continuity
+benchmarks: a slower player receives a visible pressure warning and response
+window; tools and physical evidence are introduced before use; and every
+supported optional-storylet order leaves the next scene's bridge facts and
+dependencies coherent.
+
+**Setup / seed:** The checked-in `continuity_initiative` package under
+`data/stories/continuity-initiative`; no model, credentials, or hosted session
+are required for the static audit.
+
+**Safe actions:** Read package declarations and run local deterministic tests.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Inspect each scene's Markdown frontmatter, entry/bridge text, beats,
+   storylet routes, pacing event, transition triggers, and required
+   dependencies.
+2. Compare each transition's bridge prose with the facts its activation rule
+   actually guarantees.
+3. Run the focused pacing and canonical-journey tests.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q tests/test_scene_relative_pacing.py tests/test_canon_journey.py
+```
+
+Expected: all 15 focused tests pass; the command may still exit nonzero because
+the focused subset produces less than the repository's 90% coverage threshold.
+
+**Observed 2026-09-08:** all 15 tests passed, with the expected 48% focused
+coverage failure. Existing tests do not enumerate optional-storylet orders,
+assert a two-turn response buffer after every timed pressure event, verify
+pre-use item/device cues, or prove that bridge prose matches the subset of
+facts delivered on a slow handoff. The remaining-scene findings and proposed
+fixes are recorded in `.plans/physical-continuity-fix.md`.
+
+**Cleanup:** None.
+
+**Notes:** The global 1,800-second budget was removed as a design decision on
+2026-09-08. Scene windows will be sized independently so Scenes 1B and 3B can
+provide at least two response turns after their pressure events. The package
+and its pacing tests still need the corresponding implementation update.
+
 ## Opening narration location-name leakage
 
 **Purpose:** Determine whether a location label can appear in the generated
