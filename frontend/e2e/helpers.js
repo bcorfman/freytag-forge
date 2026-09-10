@@ -138,6 +138,23 @@ export async function submitTurn(page, action) {
   return payload;
 }
 
+export async function submitTurnObserved(page, action) {
+  await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
+  await page.locator("#command-input").fill(action);
+  const responsePromise = waitForTurnOutcome(page);
+  await page.getByRole("button", { name: "Send" }).click({ timeout: TURN_TIMEOUT_MS });
+  const response = await responsePromise;
+  const body = await response.json().catch(() => ({}));
+  const result = {
+    ok: response.ok(),
+    status: response.status(),
+    headers: response.headers(),
+    body,
+  };
+  await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
+  return result;
+}
+
 export async function resolveWarningIfPresent(page) {
   const warning = page.locator("#game-break-panel");
   if (!(await warning.isVisible())) return false;

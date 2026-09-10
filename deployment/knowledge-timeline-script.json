@@ -1,0 +1,14 @@
+{
+  "opening": {
+    "segments": [{"kind": "narration", "text": "Rain beads on the quiet house.", "grounding_ids": []}],
+    "selected_knowledge_ids": []
+  },
+  "turns": [
+    {"segments": [{"kind": "narration", "text": "The back door and floor show ordinary signs of a hurried departure.", "grounding_ids": []}], "selected_knowledge_ids": []},
+    {"segments": [{"kind": "narration", "text": "Michelle's phone holds a drained battery and no immediate answer.", "grounding_ids": []}], "selected_knowledge_ids": []},
+    {"segments": [{"kind": "narration", "text": "The damaged voice recording on Michelle's memory card crackles with a warning not to trust emergency broadcasts.", "grounding_ids": ["k_sl_1a_b_r2"]}], "selected_knowledge_ids": ["k_sl_1a_b_r2"]},
+    {"segments": [{"kind": "narration", "text": "A patrol vehicle approaches the front gate and begins searching the property.", "grounding_ids": []}], "selected_knowledge_ids": []},
+    {"segments": [{"kind": "narration", "text": "The house evidence points toward a concrete local lead."}], "selected_knowledge_ids": []},
+    {"segments": [{"kind": "narration", "text": "The invalid probe leaves the local evidence unchanged.", "grounding_ids": []}], "selected_knowledge_ids": ["k_future_invalid"]}
+  ]
+}

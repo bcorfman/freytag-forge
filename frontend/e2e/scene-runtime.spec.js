@@ -5,9 +5,11 @@ import {
   resolveWarningIfPresent,
   startSceneSession,
   submitTurn,
+  submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
+import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
 
@@ -274,28 +276,47 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
 
 test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ page }) => {
   test.skip(!process.env.E2E_KNOWLEDGE_TIMELINE, "requires an explicitly selected staged knowledge-timeline run");
+  const versionResponse = page.waitForResponse((response) => {
+    try {
+      return response.request().method() === "GET" && new URL(response.url()).pathname === "/api/v1/version";
+    } catch {
+      return false;
+    }
+  });
   await startSceneSession(page);
-  const turns = [];
+  const version = await (await versionResponse).json();
+  const records = [];
   const forbiddenBeforeRecording = /michelle(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
-    const payload = await submitTurn(page, input);
-    const narration = narrationText(payload);
-    turns.push({ input, narration, state: payload.state });
+    const outcome = await submitTurnObserved(page, input);
+    expect(outcome.ok, `expected committed turn for ${input}`).toBe(true);
+    const narration = narrationText(outcome.body);
+    records.push(recordTurnOutcome({ input, status: outcome.status, headers: outcome.headers, body: outcome.body, version }));
     await resolveWarningIfPresent(page);
     return narration;
   };
 
-  const physicalSearch = await record("Inspect the back door and the room for concrete signs of Michelle's disappearance.");
+  const physicalSearch = await record("Search the back door and room for signs of Michelle's disappearance.");
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
-  const phone = await record("Examine Michelle's phone carefully.");
+  const phone = await record("Examine Michelle's phone for useful evidence.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("Search the desk and drawer for Michelle's research or a damaged recording.");
+  const investigation = await record("Search the drawer for Michelle's research and a damaged recording.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
-  const gate = await record("Check the front gate and listen for a patrol arriving or searching the house.");
+  const drawerRecord = records.at(-1);
+  expect(drawerRecord.provider_selected_ids).toHaveLength(1);
+  expect(drawerRecord.resolved_source_ids).toHaveLength(1);
+  const gate = await record("Check the front gate for an arriving patrol.");
   if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
-  const followUp = await record("Reassess the house evidence for the next concrete local consequence.");
+  const followUp = await record("Reassess the house evidence for a concrete local consequence.");
   expect(followUp).not.toMatch(/nothing but silence|someone is watching/i);
-  await writeCategoryReport("knowledge-timeline", { turns });
+  const invalidInput = "Probe the future lead for a response.";
+  const invalid = await submitTurnObserved(page, invalidInput);
+  const invalidRecord = recordTurnOutcome({ input: invalidInput, status: invalid.status, headers: invalid.headers, body: invalid.body, version });
+  records.push(invalidRecord);
+  expect(invalid.ok).toBe(false);
+  expect(invalid.headers["x-freytag-rejection-code"]).toBeTruthy();
+  expect(invalidRecord.rejection_code).toBeTruthy();
+  await writeCategoryReport("knowledge-timeline", buildKnowledgeTimelineReport(version, records));
 });
 
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {
