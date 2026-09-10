@@ -1,14 +1,18 @@
 """Hosted scene-runtime adapter contracts."""
 
 import json
+from hashlib import sha256
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeStateSqliteStore
+from storygame.runtime.scripted_provider import ScriptedTurnProvider
+from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
 
@@ -131,6 +135,42 @@ def test_prompt_is_absent_by_default(monkeypatch, tmp_path) -> None:
 
     assert "prompt" not in session.json()
     assert "prompt" not in turn.json()
+
+
+def test_knowledge_audit_is_off_by_default_and_redacted_when_enabled(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("FREYTAG_EXPOSE_KNOWLEDGE_AUDIT", raising=False)
+    app = create_demo_app(
+        store_path=tmp_path / "audit-off.sqlite",
+        provider_factory=lambda _state: _provider("The latch catches."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        off = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Inspect the back door."})
+    assert "knowledge_audit" not in off.json()
+
+    monkeypatch.setenv("FREYTAG_EXPOSE_KNOWLEDGE_AUDIT", "1")
+    app = create_demo_app(
+        store_path=tmp_path / "audit-on.sqlite",
+        provider_factory=lambda _state: _provider("The latch catches."),
+    )
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        on = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Inspect the back door."})
+    audit = on.json()["knowledge_audit"]
+    assert set(audit) == {
+        "context_candidate_ids",
+        "provider_selected_ids",
+        "resolved_source_ids",
+        "fact_keys_before",
+        "fact_keys_after",
+        "accepted_segments",
+        "result",
+        "rejection_code",
+        "recovery_used",
+    }
+    assert audit["accepted_segments"][0]["character_count"] == len("The latch catches.")
+    assert audit["accepted_segments"][0]["sha256"] == sha256(b"The latch catches.").hexdigest()
+    assert "The latch catches." not in json.dumps(audit)
 
 
 def test_prompt_is_exposed_verbatim_on_session_and_turn(monkeypatch, tmp_path) -> None:
@@ -350,7 +390,75 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
     assert accepted.json()["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert restored.facts.has("michelle_warning_known", "story", value="true")
     assert rejected.status_code == 409
+    assert rejected.headers["X-Freytag-Rejection-Code"] == "ineligible_selection"
     assert invalid_restored.snapshot() == before_rejection
+
+
+def test_scripted_provider_uses_persisted_turn_index_and_rejects_request_selection(monkeypatch, tmp_path) -> None:
+    script = tmp_path / "turns.json"
+    script.write_text(
+        json.dumps(
+            {
+                "opening": {"segments": [{"kind": "narration", "text": "The kitchen settles."}]},
+                "turns": [
+                    {"segments": [{"kind": "narration", "text": "The door opens."}]},
+                    {"segments": [{"kind": "narration", "text": "The drawer yields."}]},
+                ],
+            }
+        )
+    )
+    monkeypatch.setenv("FREYTAG_TURN_PROVIDER", "scripted")
+    monkeypatch.setenv("FREYTAG_SCRIPTED_TURNS", str(script))
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "staging")
+    app = create_demo_app(store_path=tmp_path / "scripted.sqlite")
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        first = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Inspect the back door."})
+        second = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Search the drawer."})
+        request_selected = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Inspect the back door.", "provider": "scripted"},
+            headers={"X-Freytag-Turn-Provider": "scripted", "X-Freytag-Scripted-Turns": str(script)},
+        )
+    assert first.json()["segments"][0]["text"] == "The door opens."
+    assert second.json()["segments"][0]["text"] == "The drawer yields."
+    assert request_selected.status_code == 422
+
+
+def test_scripted_provider_is_refused_on_production(monkeypatch, tmp_path) -> None:
+    script = tmp_path / "turns.json"
+    script.write_text(
+        json.dumps({"opening": {"segments": [{"kind": "narration", "text": "Never served."}]}, "turns": []})
+    )
+    monkeypatch.setenv("FREYTAG_TURN_PROVIDER", "scripted")
+    monkeypatch.setenv("FREYTAG_SCRIPTED_TURNS", str(script))
+    monkeypatch.setenv("FREYTAG_DEPLOYMENT_CHANNEL", "production")
+    app = create_demo_app(store_path=tmp_path / "production.sqlite")
+    with TestClient(app) as client:
+        response = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+    assert response.status_code == 503
+    assert response.headers["X-Narration-Error-Code"] == "SCRIPTED_PROVIDER_FORBIDDEN"
+
+
+def test_scripted_provider_fails_closed_for_missing_bad_or_exhausted_scripts(monkeypatch, tmp_path) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    monkeypatch.delenv("FREYTAG_SCRIPTED_TURNS", raising=False)
+    with pytest.raises(NarrationProviderError):
+        ScriptedTurnProvider.from_environment(state)
+
+    bad = tmp_path / "bad.json"
+    bad.write_text("not json")
+    with pytest.raises(NarrationProviderError):
+        ScriptedTurnProvider(state, str(bad))
+    bad.write_text(json.dumps({"opening": {}, "turns": "not a list"}))
+    with pytest.raises(NarrationProviderError):
+        ScriptedTurnProvider(state, str(bad))
+
+    bad.write_text(json.dumps({"opening": {}, "turns": []}))
+    provider = ScriptedTurnProvider(state, str(bad))
+    state.turn_index = 1
+    with pytest.raises(NarrationProviderError):
+        provider("Inspect the back door.")
 
 
 def test_test_clock_rejects_invalid_or_unsafe_values(monkeypatch, tmp_path) -> None:

@@ -18,8 +18,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.knowledge_audit import build_knowledge_audit
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
+from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
+from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 
@@ -171,6 +174,10 @@ def create_demo_app(
     def provider_for(state: RuntimeState) -> Callable[[str], object]:
         if provider_factory:
             return provider_factory(state)
+        if getenv("FREYTAG_TURN_PROVIDER", "") == "scripted":
+            if resolved_channel == "production":
+                raise NarrationProviderError("narration service is unavailable", 503, "SCRIPTED_PROVIDER_FORBIDDEN")
+            return ScriptedTurnProvider.from_environment(state)
         return CloudflareTurnProvider.from_environment(state)
 
     def require_rate_limit(request: Request) -> None:
@@ -230,20 +237,28 @@ def create_demo_app(
     def turn(body: TurnRequest, request: Request) -> dict[str, object]:
         require_rate_limit(request)
         state = load_state(body.session_id)
+        fact_keys_before = {fact.predicate for fact in state.facts.asserted}
         try:
             provider = provider_for(state)
             test_clock = _test_clock_seconds(body, request)
-            proposal = RuntimeEngine(state, provider).turn(body.input_text, clock_seconds=test_clock)
+            engine = RuntimeEngine(state, provider)
+            proposal = engine.turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             raise _narration_http_error(error) from error
         except RuntimeContractError as error:
             raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
+        except ProposalValidationError as error:
+            headers = {"X-Freytag-Rejection-Code": error.code} if error.code else {}
+            raise HTTPException(status_code=409, detail=str(error), headers=headers) from error
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
         prompt = getattr(provider, "last_prompt", None) if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1" else None
-        return _turn_payload(state, proposal, warning, prompt)
+        payload = _turn_payload(state, proposal, warning, prompt)
+        if getenv("FREYTAG_EXPOSE_KNOWLEDGE_AUDIT", "") == "1":
+            payload["knowledge_audit"] = build_knowledge_audit(engine, proposal, fact_keys_before)
+        return payload
 
     @app.post("/api/v1/game-break")
     def resolve_game_break(body: BreakResolutionRequest) -> dict[str, object]:
