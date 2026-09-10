@@ -46,9 +46,9 @@ test("QA: Story Feed initial, loaded, error, and responsive states @page-qa", as
   await expect(page.locator("#command-input")).toBeEnabled();
   await expect(page.locator("#transcript")).toContainText("A local QA opening.");
 
-  await page.locator("#command-input").fill("I inspect the evidence.");
+  await page.locator("#command-input").fill("Inspect the evidence.");
   await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.locator("#transcript")).toContainText("Accepted: I inspect the evidence.");
+  await expect(page.locator("#transcript")).toContainText("Accepted: Inspect the evidence.");
 
   await page.locator("#command-input").fill("   ");
   await page.getByRole("button", { name: "Send" }).click();

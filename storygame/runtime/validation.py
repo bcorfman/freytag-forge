@@ -23,6 +23,30 @@ from storygame.story_package.models import FactPredicate, StoryPackage, Transiti
 class ProposalValidationError(RuntimeStateError):
     """An untrusted provider proposal violates the loaded package contract."""
 
+    def __init__(self, message: str, *, code: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+PROPOSAL_REJECTION_CODES = frozenset(
+    {
+        "multiple_knowledge_selection",
+        "ineligible_selection",
+        "missing_package_source",
+        "invalid_grounding_reference",
+        "ungrounded_selection",
+        "missing_knowledge_content",
+        "protected_knowledge_mutation",
+        "canonical_fact_mutation",
+        "inactive_storylet_event",
+        "unavailable_storylet",
+        "invalid_storylet_realization",
+        "storylet_operation_mismatch",
+        "invalid_transition",
+        "unsatisfied_transition_triggers",
+    }
+)
+
 
 def unconveyed_terms(groups: tuple[tuple[str, ...], ...], text: str) -> tuple[str, ...]:
     """Return the first phrasing from each synonym group absent from ``text``."""
@@ -168,10 +192,14 @@ class SelectedRevealResolver:
     def resolve(self, state, projection, provider_proposal: TurnProposal, projector, player_input: str):
         selected = provider_proposal.selected_knowledge_ids
         if len(selected) > 1:
-            raise ProposalValidationError("at most one knowledge selection is allowed per turn")
+            raise ProposalValidationError(
+                "at most one knowledge selection is allowed per turn", code="multiple_knowledge_selection"
+            )
         candidate_ids = {item.id for item in projection.candidates}
         if any(item_id not in candidate_ids for item_id in selected):
-            raise ProposalValidationError("selected knowledge is not eligible for this turn")
+            raise ProposalValidationError(
+                "selected knowledge is not eligible for this turn", code="ineligible_selection"
+            )
         events: tuple[StoryEventProposal, ...] = ()
         if selected:
             knowledge = self.package.knowledge_indexes.by_id[selected[0]]
@@ -182,7 +210,9 @@ class SelectedRevealResolver:
                 else None
             )
             if route is None or realization is None:
-                raise ProposalValidationError("selected knowledge has no executable package source")
+                raise ProposalValidationError(
+                    "selected knowledge has no executable package source", code="missing_package_source"
+                )
             events = (
                 StoryEventProposal(
                     event_id=route.id,
@@ -198,7 +228,9 @@ class SelectedRevealResolver:
         )
         allowed = {item.id for item in projection.committed_knowledge} | set(selected)
         if any(grounding_id not in allowed for segment in resolved.segments for grounding_id in segment.grounding_ids):
-            raise ProposalValidationError("segment grounding is not committed or selected knowledge")
+            raise ProposalValidationError(
+                "segment grounding is not committed or selected knowledge", code="invalid_grounding_reference"
+            )
         # A reveal the player never reads is worse than one that does not commit: the
         # fact silently unlocks the scene's exit, so the story moves on to a place the
         # player was given no reason to go. Requiring the selected ID to ground one of
@@ -226,7 +258,9 @@ class SelectedRevealResolver:
             grounded = {grounding_id for segment in resolved.segments for grounding_id in segment.grounding_ids}
             undelivered = sorted(knowledge_id for knowledge_id in selected if knowledge_id not in grounded)
             if undelivered:
-                raise ProposalValidationError("selected knowledge must be grounded in the segment that reveals it")
+                raise ProposalValidationError(
+                    "selected knowledge must be grounded in the segment that reveals it", code="ungrounded_selection"
+                )
         for knowledge_id in selected:
             knowledge = self.package.knowledge_indexes.by_id[knowledge_id]
             grounded_text = " ".join(
@@ -235,7 +269,8 @@ class SelectedRevealResolver:
             missing = unconveyed_terms(knowledge.must_convey, grounded_text)
             if missing:
                 raise ProposalValidationError(
-                    f"selected knowledge '{knowledge_id}' does not convey: {', '.join(missing)}"
+                    f"selected knowledge '{knowledge_id}' does not convey: {', '.join(missing)}",
+                    code="missing_knowledge_content",
                 )
         self._validator.validate(state, resolved)
         candidate_state = deepcopy(state)
@@ -269,9 +304,13 @@ class ProgressionValidator:
         protected = set(self.package.world.protected_knowledge)
         for operation in proposal.operations:
             if operation.fact.predicate in protected or operation.fact.subject in protected:
-                raise ProposalValidationError("proposal attempts to mutate protected knowledge")
+                raise ProposalValidationError(
+                    "proposal attempts to mutate protected knowledge", code="protected_knowledge_mutation"
+                )
             if operation.fact.predicate in self.package.world.facts:
-                raise ProposalValidationError("canonical facts must use a validated storylet realization")
+                raise ProposalValidationError(
+                    "canonical facts must use a validated storylet realization", code="canonical_fact_mutation"
+                )
 
     def _validate_events(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> None:
         storylet_ids = {
@@ -280,17 +319,25 @@ class ProgressionValidator:
         for event in proposal.events:
             if event.event_id not in state.active_event_ids or event.event_id in state.fired_event_ids:
                 raise ProposalValidationError(
-                    f"storylet event '{event.event_id}' is not active in scene {state.current_scene_id}"
+                    f"storylet event '{event.event_id}' is not active in scene {state.current_scene_id}",
+                    code="inactive_storylet_event",
                 )
             if event.event_id not in storylet_ids:
-                raise ProposalValidationError("storylet is not available in the current scene")
+                raise ProposalValidationError(
+                    "storylet is not available in the current scene", code="unavailable_storylet"
+                )
             route = self._routes[event.event_id]
             realization = next((item for item in route.realizations if item.id == event.realization_id), None)
             if realization is None:
-                raise ProposalValidationError("storylet event must name a valid realization")
+                raise ProposalValidationError(
+                    "storylet event must name a valid realization", code="invalid_storylet_realization"
+                )
             expected = tuple(self._route_operation(operation) for operation in realization.operations)
             if event.operations != expected:
-                raise ProposalValidationError("storylet event operations do not match its validated realization")
+                raise ProposalValidationError(
+                    "storylet event operations do not match its validated realization",
+                    code="storylet_operation_mismatch",
+                )
 
     @staticmethod
     def _route_operation(operation: object) -> FactOperation:
@@ -309,9 +356,11 @@ class ProgressionValidator:
             return
         transition = self._transitions.get(proposal.transition_id)
         if transition is None or transition.source_scene_id != state.current_scene_id:
-            raise ProposalValidationError("transition is not valid from the current scene")
+            raise ProposalValidationError("transition is not valid from the current scene", code="invalid_transition")
         if not all(predicate_matches(trigger, facts) for trigger in transition.triggers):
-            raise ProposalValidationError("transition triggers are not satisfied")
+            raise ProposalValidationError(
+                "transition triggers are not satisfied", code="unsatisfied_transition_triggers"
+            )
 
     def eligible_transitions(self, state: RuntimeState) -> tuple[Transition, ...]:
         eligible = [

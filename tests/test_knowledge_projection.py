@@ -12,6 +12,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import PROPOSAL_REJECTION_CODES, ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
 
@@ -169,6 +170,31 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
         engine._activate_pacing()
         assert _ids(engine.projector.project(state, "player", player_input).candidates) == expected
         engine.turn(player_input)
+
+
+def test_turn_rejection_has_a_stable_registered_code() -> None:
+    payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": ["k_invented_source"]}],
+        "selected_knowledge_ids": [],
+    }
+
+    def provider(_: str) -> dict[str, object]:
+        return payload
+
+    def reject() -> ProposalValidationError:
+        state = RuntimeState.bootstrap(PACKAGE)
+        engine = RuntimeEngine(state, provider)
+        engine.opening()
+        with pytest.raises(ProposalValidationError) as caught:
+            engine.turn("Search the drawer.")
+        return caught.value
+
+    first = reject()
+    second = reject()
+    assert str(first) == "segment grounding is not committed or selected knowledge"
+    assert first.code == "invalid_grounding_reference"
+    assert first.code in PROPOSAL_REJECTION_CODES
+    assert second.code == first.code
 
 
 def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path) -> None:

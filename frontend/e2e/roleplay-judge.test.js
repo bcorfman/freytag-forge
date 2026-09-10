@@ -6,7 +6,7 @@ import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 test("roleplay judge sends the transcript and parses a passing structured verdict", async () => {
   let request;
   const verdict = await judgeRoleplayTurn(
-    { opening: "The room is quiet.", playerInput: "I inspect the desk.", narration: "You open the desk drawer." },
+    { opening: "The room is quiet.", playerInput: "Inspect the desk.", narration: "You open the desk drawer." },
     {
       environment: { OPENAI_API_KEY: "test-key" },
       fetchImpl: async (_url, options) => {
@@ -41,13 +41,13 @@ test("roleplay judge sends the transcript and parses a passing structured verdic
   assert.equal(request.model, "gpt-5.4");
   assert.equal(request.store, false);
   assert.match(request.input[0].content, /Creative additions are allowed/);
-  assert.equal(JSON.parse(request.input[1].content).player_input, "I inspect the desk.");
+  assert.equal(JSON.parse(request.input[1].content).player_input, "Inspect the desk.");
 });
 
 test("scene canon judge sends only the current scene canon and parses its verdict", async () => {
   let request;
   const verdict = await judgeSceneNarration(
-    { sceneId: "1A", opening: "A tense house.", turns: [{ player_input: "I search.", narration: "A clue." }] },
+    { sceneId: "1A", opening: "A tense house.", turns: [{ player_input: "Search the house.", narration: "A clue." }] },
     {
       environment: { OPENAI_API_KEY: "test-key" },
       canon: { scene_id: "1A", plot: "canon", storylets: "guidance", routes: "routes", pacing: "pace", world: "world" },
