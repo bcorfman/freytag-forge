@@ -461,6 +461,26 @@ research or a damaged recording. Its assertion accepts either authored
 `SL-1A-B` outcome, while the preceding turns still prove the warning cannot
 appear early.
 
+**Observed 2026-09-10.** The committed deterministic evidence implementation
+passed the focused Phase 3/API checks (`3 passed, 22 deselected`) and generated
+the ignored redacted artifact `artifacts/phase3-knowledge-evidence.json`. The
+artifact records the four required boundaries: the damaged-warning selection
+resolved to `SL-1A-B/SL-1A-B-R2` and committed `michelle_warning_known`, while
+future, duplicate, and unselected IDs were rejected with unchanged SQLite
+snapshots. The full Python suite passed with 310 tests and 90.92% coverage.
+The frontend unit/evidence suite passed with 33 tests. No staging browser run
+was performed, so this verifies the local deterministic evidence only; the
+staging command above remains outstanding for the deployed SHA.
+
+**Staging attempt 2026-09-10.** `/api/v1/version` reported staging SHA
+`b3a8823ce88c7899e47d8632e91d1d3ea1db55e5`. The browser probe reached the third
+drawer turn, but failed because the live provider returned only local
+phone/drawer/KMS observations and did not yet mention a recording, warning,
+research, evidence, continuity, or lead. The test therefore stopped before its
+selected-ID and resolved-source assertions, and did not produce a new
+`e2e-knowledge-timeline` report. This is a staging/live-provider acceptance
+failure, not evidence that the deterministic local fixture failed.
+
 
 A later staging attempt reported a browser CORS failure. Direct checks of the
 current staging revision's `OPTIONS /api/v1/turn` and cross-origin invalid
