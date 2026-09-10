@@ -30,8 +30,8 @@ function narrationText(payload) {
 async function exerciseDistinctFreeTextActions(page) {
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
-  const phoneAction = "I look carefully at Michelle's phone.";
-  const bagAction = "I search for Michelle's work bag and any clue to where she went.";
+  const phoneAction = "Look carefully at Michelle's phone.";
+  const bagAction = "Search for Michelle's work bag and any clue to where she went.";
   const phoneTurn = await submitTurn(page, phoneAction);
   const phoneNarration = narrationText(phoneTurn);
   const bagTurn = await submitTurn(page, bagAction);
@@ -285,15 +285,15 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
     return narration;
   };
 
-  const physicalSearch = await record("I inspect the back door and the room for concrete signs of Michelle's disappearance.");
+  const physicalSearch = await record("Inspect the back door and the room for concrete signs of Michelle's disappearance.");
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
-  const phone = await record("I examine Michelle's phone carefully without leaving the kitchen.");
+  const phone = await record("Examine Michelle's phone carefully.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("I search the desk and drawer for Michelle's research or a damaged recording.");
+  const investigation = await record("Search the desk and drawer for Michelle's research or a damaged recording.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
-  const gate = await record("I check the front gate and listen for a patrol arriving or searching the house.");
+  const gate = await record("Check the front gate and listen for a patrol arriving or searching the house.");
   if (/patrol tape/i.test(gate)) expect(gate).toMatch(/arriv|search|approach|reach/i);
-  const followUp = await record("I reassess the house evidence and wait for the next concrete local consequence.");
+  const followUp = await record("Reassess the house evidence for the next concrete local consequence.");
   expect(followUp).not.toMatch(/nothing but silence|someone is watching/i);
   await writeCategoryReport("knowledge-timeline", { turns });
 });
@@ -301,9 +301,9 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I inspect the interrupted message, the room, and any detail that might deepen this situation.",
-    "I follow an optional lead only if it remains relevant to the current scene.",
-    "I return to the central objective after exploring the immediate complication.",
+    "Inspect the interrupted message, the room, and any detail that might deepen this situation.",
+    "Follow an optional lead that remains relevant to the current scene.",
+    "Return to the central objective after exploring the immediate complication.",
   ];
   const fired = new Set();
   for (const prompt of prompts) {
@@ -321,8 +321,8 @@ test("samples optional storylets without presenting a menu @storylets", async ({
 
 test("keeps the display budget clock independent from turn-based pressure @timed-events", async ({ page }) => {
   await startSceneSession(page);
-  await submitTurn(page, "I pause long enough for the house's pressure to build.");
-  const payload = await submitTurn(page, "I listen for the pressure that follows.");
+  await submitTurn(page, "Inspect the house for signs of mounting pressure.");
+  const payload = await submitTurn(page, "Investigate the pressure that follows.");
   await writeCategoryReport("timed-events", { state: payload.state });
   expect(payload.state?.story_elapsed_seconds).toBeGreaterThanOrEqual(120);
   expect(payload.state?.turn_index).toBe(2);
@@ -332,8 +332,8 @@ test("keeps the display budget clock independent from turn-based pressure @timed
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I try calling Michelle again and listen for anything her phone still tells me about where she went.",
-    "I review Michelle's message and ask only what the current evidence supports.",
+    "Call Michelle again and listen for anything her phone still tells you about where she went.",
+    "Review Michelle's message and ask what the current evidence supports.",
   ];
   const narrations = [];
   for (const prompt of prompts) {
@@ -347,8 +347,8 @@ test("keeps NPC interaction and reveals bounded to the current scene @npc", asyn
 
 test("preserves legal world-state changes across follow-up turns @world-state", async ({ page }) => {
   await startSceneSession(page);
-  const pickup = await submitTurn(page, "I pick up Michelle's phone and keep it with me.");
-  const followUp = await submitTurn(page, "I check that I still have Michelle's phone and use only what I carry.");
+  const pickup = await submitTurn(page, "Pick up Michelle's phone and keep it with you.");
+  const followUp = await submitTurn(page, "Check that you still have Michelle's phone.");
   await resolveWarningIfPresent(page);
   await writeCategoryReport("world-state", {
     pickup_state: pickup.state,
@@ -361,8 +361,8 @@ test("preserves legal world-state changes across follow-up turns @world-state", 
 test("handles aggressive and chaotic-but-legal policies without an accidental dead end @safety", async ({ page }) => {
   await startSceneSession(page);
   const prompts = [
-    "I confront the obstacle firmly but do not harm an indispensable person or destroy a required item.",
-    "I improvise a strange but lawful move that preserves every required route forward.",
+    "Confront the obstacle firmly.",
+    "Improvise a strange move that preserves every required route forward.",
   ];
   let blockedActions = 0;
   const states = [];
