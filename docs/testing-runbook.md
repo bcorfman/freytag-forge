@@ -398,12 +398,20 @@ the runtime must derive the source and fact effects atomically.
 
 - Python 3.12 dependencies installed with `uv sync --group dev`.
 - Run from the repository root; pytest temporary files belong under `/tmp`.
+- Before the staged probe, set `RAILWAY_TOKEN`, `RAILWAY_PROJECT_ID`,
+  `RAILWAY_SERVICE_ID`, `RAILWAY_STAGING_ENVIRONMENT_ID`, and
+  `RAILWAY_PUBLIC_API_URL` in the shell, for example with `source .env`.
 
 **Safe actions:** Local transport tests intercept the Worker request; no
 network request is made.
 
 **Destructive or external actions:** The optional browser probe creates a
-disposable staging session and may make billed model calls.
+disposable staging session and may make billed model calls. The probe script
+temporarily switches the ENTIRE staging deployment to a fixed scripted
+narration response for its duration, so no one else should run manual staging
+checks such as `@llm-canon` or `@storylets` while it is running. It automatically
+reverts staging to live narration afterward, even if the probe fails, and polls
+for the live opening text to differ from the scripted one.
 
 **Steps:**
 
@@ -415,7 +423,7 @@ disposable staging session and may make billed model calls.
 
 ```bash
 TMPDIR=/tmp uv run pytest -q
-source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
+bash scripts/knowledge_timeline_probe.sh
 ```
 
 Expected: the intercepted request excludes plot prose, route prose, source IDs,
