@@ -459,35 +459,46 @@ valid, and a grounded recording reveal commits before it renders.
   scene against the committed reveal timeline rather than receiving all of
   `world.yaml`, all scene routes, and author-only source as undifferentiated
   canon. Keep the judge unable to authorize runtime output.
-- [ ] Deploy to staging and run `@smoke`, focused safety/NPC-knowledge cases,
+- [~] Deploy to staging and run `@smoke`, focused safety/NPC-knowledge cases,
   the full spine, and finally `@llm-canon`. Preserve artifacts from each gate;
-  stop rollout on the first knowledge leak or future-beat jump.
+  stop rollout on the first knowledge leak or future-beat jump. **Attempted
+  2026-09-11, blocked**: deployed to staging at the merged SHA and ran
+  `@smoke` and `@safety|@npc`; both failed identically on a live-model
+  narration-grounding citation gap (not a leak — see
+  `docs/testing-runbook.md`'s Phase 5 Notes). `@llm-canon` was not run to
+  avoid spending billed calls against a flow already failing structurally.
+  Stopped rollout per this item's own instruction, since the gate cannot pass
+  until the live provider reliably cites grounding it already has.
 - [x] Exercise player prompts that name every future character, place, system,
   and objective from Scene 1A. Verify the inputs reach the model unchanged but
   none of those names enter context or accepted narration before their reveal.
-- [ ] After final staging evidence, update `docs/testing-runbook.md` with the
+- [~] After final staging evidence, update `docs/testing-runbook.md` with the
   exact commands, environment, outcomes, artifacts, safety classification, and
   cleanup. Promote only the verified revision, then repeat the smoke and
-  knowledge-safety probes against production.
+  knowledge-safety probes against production. Runbook updated with the real,
+  blocked staging outcome; production promotion is out of scope for this pass
+  by explicit decision and remains undone.
 - [x] Remove legacy `protected_knowledge` string filtering,
   `_PRIVATE_PREDICATES`, raw narration memory, compatibility context fields, and
   temporary schema adapters after persisted-session policy is complete.
 
-Exit gate: [ ] deterministic leakage tests pass across all scenes and audiences
-(verified locally: `tests/test_knowledge_leakage_matrix.py`, 3/3 passing,
-full suite 327/327); staged `@llm-canon` passes progressive revelation and
-protected safety without rushing future beats (outstanding); the exact
-promoted revision passes production smoke and knowledge probes (deferred by
-explicit decision, production rollout not in scope for this pass); the focused
-runbook records only observed final evidence (outstanding — the runbook has a
-procedural section only, no staging results yet).
+Exit gate: [ ] not met. Deterministic leakage tests pass across all scenes and
+audiences (verified locally: `tests/test_knowledge_leakage_matrix.py`, 3/3
+passing, full suite 327/327). Staged `@llm-canon` has not passed — the staged
+rollout is blocked before it could even be attempted, by a live-model
+grounding-citation compliance gap exposed by Phase 4's `NarrationSafetyValidator`
+running against real traffic for what looks like the first time. Production
+promotion is out of scope for this pass by explicit decision. The runbook
+records the real, blocked evidence rather than a passing result.
 
 Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
 against staging, then production after promotion. Preserve JSON/Markdown
-artifacts and stop on the first failed assertion. **Outstanding** — requires a
-merge to `main`, the exact-SHA staging deploy, and the staged gate commands
-already documented in the new "Phase 5 knowledge leakage matrix and staging
-rollout" section of `docs/testing-runbook.md`.
+artifacts and stop on the first failed assertion. **Blocked** — the merge (PR
+#446, commit `0c7d4f228d758d24096c7d35786f251259686463`) and exact-SHA staging
+deploy both happened, but the earlier staged gates failed structurally before
+`@knowledge-timeline` was reached; see the "Phase 5 knowledge leakage matrix
+and staging rollout" section of `docs/testing-runbook.md` for the recorded
+evidence. Production is out of scope for this pass.
 
 ### Persistent Scene 1A knowledge-timeline acceptance harness
 
