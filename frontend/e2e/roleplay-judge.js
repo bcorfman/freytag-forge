@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
-
-import YAML from "yaml";
 
 const JUDGE_SCHEMA = {
   type: "object",
@@ -107,6 +106,8 @@ export async function judgeRoleplayTurn({ opening, playerInput, narration }, { e
 }
 
 export function sceneCanon(sceneId, revealedKnowledgeIds = [], root = resolve(import.meta.dirname, "../..")) {
+  const require = createRequire(import.meta.url);
+  const YAML = require("yaml");
   const storyRoot = resolve(root, "data/stories/continuity-initiative");
   const knowledgePackage = YAML.parse(readFileSync(resolve(storyRoot, "knowledge.yaml"), "utf8"));
   const sceneFrame = knowledgePackage.scene_frames.find((frame) => frame.scene_id === sceneId);
