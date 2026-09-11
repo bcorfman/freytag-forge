@@ -623,6 +623,35 @@ live-model grounding-citation compliance gap, which is outside Phase 5's scope
 to fix. Production promotion was out of scope for this pass by explicit
 decision.
 
+Staging verification 2026-09-11 (follow-up): after landing the deterministic
+auto-attribution fix (commit `b7d5d1d`) and a separately-discovered
+opening-narration-safety fix (commit `a46f6b9`, plus ripple-effect test fixes),
+staging redeployed to commit `bdc966d`. Staging's `/api/v1/version` was polled
+until it reported that exact SHA. With stale artifacts deleted, `@smoke` was
+re-run against staging and passed (1 passed). This is the exact test that
+previously failed 4/4 times with `uncited_knowledge: narration does not ground
+the knowledge term 'michelle's phone'` -- that failure is confirmed resolved.
+The focused `@safety|@npc` gate was then run and both of its two tests failed,
+but with DIFFERENT errors than before: `@npc` failed with `Turn API returned
+HTTP 409: narration mentions unavailable knowledge 'message from michelle'`,
+and `@safety` failed with `Turn API returned HTTP 409: narration mentions
+unavailable knowledge 'hidden memory card'`. Both are the deterministic
+`narration_known_term_leak` rejection code -- a genuine leak (the term's
+owning knowledge is not yet available/committed), not the `uncited_knowledge`
+citation-omission issue that was fixed. No artifact files were produced for
+these failures since Playwright failed before the test's own
+`writeCategoryReport` call ran. `@llm-canon` was NOT run after this, to avoid
+spending further billed OpenAI calls chasing a newly-surfaced, apparently
+unrelated leak in different scene content that `@npc`/`@safety` reach only once
+they get past the now-fixed Scene 1A opening blocker. Status: the
+grounding-citation and opening-narration-safety fixes are both confirmed
+working as intended (proven by `@smoke` passing and by the earlier deterministic
+unit tests). `@safety`/`@npc` are now blocked by a separate, newly-exposed
+`narration_known_term_leak` issue involving 'message from michelle' and 'hidden
+memory card', which is outside the scope of the grounding-citation-reliability
+plan and has not yet been investigated. Production promotion remains out of
+scope for this pass by earlier explicit decision.
+
 ## Phase 2 fact-derived shadow projection
 
 **Purpose:** Verify the legacy provider context remains unchanged while the
