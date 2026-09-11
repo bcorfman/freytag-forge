@@ -224,6 +224,34 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
     assert "operations" in warning.json()["detail"]
 
 
+def test_session_opening_rejection_returns_409_and_does_not_save_session(monkeypatch, tmp_path) -> None:
+    saves: list[str] = []
+    original_save = RuntimeStateSqliteStore.save
+
+    def tracking_save(self, session_id, state) -> None:
+        saves.append(session_id)
+        original_save(self, session_id, state)
+
+    monkeypatch.setattr(RuntimeStateSqliteStore, "save", tracking_save)
+
+    class _LeakingOpeningProvider:
+        def opening(self) -> object:
+            return {
+                "segments": [{"kind": "narration", "text": "JANUS watches from the shadows, already aware of Kristin."}]
+            }
+
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _LeakingOpeningProvider(),
+    )
+    with TestClient(app) as client:
+        response = client.post("/api/v1/session", json={"story_id": "continuity_initiative"})
+
+    assert response.status_code == 409
+    assert response.headers["X-Freytag-Rejection-Code"] == "protected_narration_leak"
+    assert saves == []
+
+
 def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limits(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)

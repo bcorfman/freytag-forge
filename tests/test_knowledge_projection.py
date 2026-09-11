@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.contracts import FactOperation, NarrationSegment, ResolvedTurnProposal, StoryEventProposal
-from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
@@ -178,8 +178,10 @@ def test_turn_rejection_has_a_stable_registered_code() -> None:
         "selected_knowledge_ids": [],
     }
 
-    def provider(_: str) -> dict[str, object]:
-        return payload
+    def provider(text: str) -> dict[str, object]:
+        return (
+            {"segments": [{"kind": "narration", "text": "A quiet house."}]} if text == SCENE_ENTRY_REQUEST else payload
+        )
 
     def reject() -> ProposalValidationError:
         state = RuntimeState.bootstrap(PACKAGE)

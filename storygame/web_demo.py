@@ -219,6 +219,9 @@ def create_demo_app(
             raise _narration_http_error(error) from error
         except RuntimeContractError as error:
             raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
+        except ProposalValidationError as error:
+            headers = {"X-Freytag-Rejection-Code": error.code} if error.code else {}
+            raise HTTPException(status_code=409, detail=str(error), headers=headers) from error
         session_id = uuid4().hex
         store.save(session_id, state)
         scene = package.scenes[0].metadata

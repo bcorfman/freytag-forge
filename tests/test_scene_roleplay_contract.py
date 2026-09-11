@@ -138,3 +138,20 @@ def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> 
     entry_text = PACKAGE.scenes[0].metadata.entry_text
     assert opening.narration == f"{entry_text.rstrip()}\n\nThe kitchen light is still on."
     assert opening.selected_knowledge_ids == ()
+
+
+def test_scene_opening_rejects_protected_future_term_without_mutating_state() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    before = state.snapshot()
+
+    class _LeakingOpeningProvider:
+        def opening(self) -> object:
+            return {
+                "segments": [{"kind": "narration", "text": "JANUS watches from the shadows, already aware of Kristin."}]
+            }
+
+    with pytest.raises(ProposalValidationError) as error_info:
+        RuntimeEngine(state, _LeakingOpeningProvider()).opening()
+
+    assert error_info.value.code == "protected_narration_leak"
+    assert state.snapshot() == before

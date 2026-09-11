@@ -278,6 +278,9 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
         request_count = 0
         recovery_count = 0
 
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
         def __call__(self, _: str) -> dict[str, object]:
             return payload
 

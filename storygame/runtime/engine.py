@@ -58,6 +58,10 @@ class RuntimeEngine(CanonicalEventMixin):
         )
         request = getattr(self.provider, "opening", None)
         proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
+        opening_proposal = ResolvedTurnProposal(segments=proposal.segments)
+        self.last_post_selection_projection = self.narration_validator.validate(
+            self.state, self.state, opening_proposal, self.projector, ""
+        )
         entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
         return ResolvedTurnProposal(segments=(entry, *proposal.segments))
 
