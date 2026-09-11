@@ -504,6 +504,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "narration": narration,
                     "left_scene": entered,
                     "beats_projected": list(state.last_turn_delivery.beats_projected),
+                    "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                    "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
+                    if provider.last_projection is not None
+                    else [],
                 }
             )
         if entered:

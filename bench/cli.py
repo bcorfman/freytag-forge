@@ -456,6 +456,15 @@ def _run(args: argparse.Namespace) -> int:
         + "\n",
         encoding="utf-8",
     )
+    (args.out / "all-turn-records.json").write_text(
+        json.dumps(
+            {"scene_id": args.scene, "package_path": variation["_package_path"], "runs": runs},
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     judged_path = args.out / "judgments.json"
     judged = {"judgments": [], "judge_calls": 0}
     judge_failure_reason = None
