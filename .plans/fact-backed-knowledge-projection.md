@@ -495,8 +495,14 @@ for the full investigation. Staging redeployed through commit `cbc427b`, and
 `@smoke`, `@safety`, and `@npc` all now pass — `@smoke` and the
 `@safety|@npc` pair are the exact tests that originally failed. Staged
 `@llm-canon`, the full nine-scene spine judge run this exit gate's own
-wording requires, still has not been run. Production promotion remains out
-of scope for this pass by explicit decision.
+wording requires, has been attempted twice and aborted both times at Scene
+1A turn 4/5 on a distinct, separate, and substantially larger issue: the
+model failing to select clearly-matching offered candidates across several
+consecutive turns, causing the scene to stall until its own narrative drift
+produced an ungrounded claim. This is not a leak-detection or alias problem
+and has been scoped as its own follow-up in
+`.plans/narration-candidate-selection-reliability.md`. Production promotion
+remains out of scope for this pass by explicit decision.
 
 Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
 against staging, then production after promotion. Preserve JSON/Markdown
