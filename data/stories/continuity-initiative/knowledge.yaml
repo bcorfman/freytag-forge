@@ -1244,7 +1244,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_c_r1
-  statement: "Michelle's message offers a way to transmit the evidence and open the detention cells through Rebecca's secured office."
+  statement: "Michelle's encrypted message offers a way to transmit the evidence and open the detention cells through Rebecca's secured office."
   entity_ids: []
   aliases:
   - combined broadcast rescue plan known
@@ -1281,7 +1281,7 @@ knowledge:
   - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
   - [open the detention cells, open the cells, rescue the prisoners, free the cells, release the prisoners, open detention blocks]
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office, office under Rebecca's control, secured room]
-  - [Michelle's message, coded message, message, Michelle's coded note, her message, message from Michelle]
+  - [Michelle's encrypted message, coded message, message, Michelle's coded note, her encrypted message, encrypted message from Michelle]
 - id: k_sl_2c_c_r2
   statement: 'Michelle’s coded message reveals that Rebecca’s office can open the cells and broadcast the evidence at once.'
   entity_ids: []
@@ -1311,7 +1311,7 @@ knowledge:
     entity_ids: []
     priority: 0
   must_convey:
-  - [coded message, Michelle's message, message, coded note, message from Michelle, Michelle's note]
+  - [coded message, Michelle's encrypted message, message, coded note, encrypted message from Michelle, Michelle's encrypted note]
   - [Rebecca's office, secured office, office, Rebecca's locked office, office under Rebecca's control, Rebecca's room]
   - [open the cells, open detention cells, cells, free the cells, release the captives, open detention blocks]
   - [broadcast the evidence, transmit the evidence, broadcast, send the evidence, evidence broadcast, broadcast proof]

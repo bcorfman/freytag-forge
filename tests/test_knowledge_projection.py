@@ -23,6 +23,25 @@ def _ids(items: object) -> set[str]:
     return {item.id for item in items}  # type: ignore[union-attr]
 
 
+def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
+    term_to_knowledge = PACKAGE.knowledge_indexes.term_to_knowledge
+
+    assert (
+        not {
+            "michelle's message",
+            "her message",
+            "message from michelle",
+            "michelle's note",
+        }
+        & term_to_knowledge.keys()
+    )
+    assert set(term_to_knowledge["michelle's encrypted message"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
+    assert set(term_to_knowledge["her encrypted message"]) == {"k_sl_2c_c_r1"}
+    assert set(term_to_knowledge["encrypted message from michelle"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
+    assert set(term_to_knowledge["michelle's encrypted note"]) == {"k_sl_2c_c_r2"}
+    assert set(term_to_knowledge["coded message"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
+
+
 @pytest.mark.parametrize(
     ("audience", "kind", "player_visible", "expected"),
     [
