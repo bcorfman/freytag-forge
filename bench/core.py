@@ -166,6 +166,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     include_output_example = prompt.get("include_output_example", True)
     if not isinstance(include_output_example, bool):
         raise ValueError("system_prompt.include_output_example must be a boolean")
+    cite_committed_knowledge_ids = prompt.get("cite_committed_knowledge_ids", False)
+    if not isinstance(cite_committed_knowledge_ids, bool):
+        raise ValueError("system_prompt.cite_committed_knowledge_ids must be a boolean")
     if "output_example" in prompt and not isinstance(prompt["output_example"], str):
         raise ValueError("system_prompt.output_example must be a string")
     resolved_output_example = prompt.get("output_example", DEFAULT_OUTPUT_EXAMPLE if include_output_example else None)
@@ -176,6 +179,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         "include_output_example": include_output_example,
         "output_example": resolved_output_example,
         "beat_delivery": beat_delivery,
+        "cite_committed_knowledge_ids": cite_committed_knowledge_ids,
     }
     variation["_resolved_rules"] = list(rules if rules is not None else DEFAULT_PROMPT_RULES)
     variation["_resolved_output_example"] = resolved_output_example
@@ -185,6 +189,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
             "include_output_example": include_output_example,
             "output_example": resolved_output_example,
             "beat_delivery": beat_delivery,
+            "cite_committed_knowledge_ids": cite_committed_knowledge_ids,
         }
     )
     variation["_story_package_value"] = package_value

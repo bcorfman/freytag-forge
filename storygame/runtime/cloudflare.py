@@ -346,6 +346,13 @@ class CloudflareTurnProvider:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
+        if self.prompt_variant and self.prompt_variant.get("cite_committed_knowledge_ids", False):
+            rules.extend(
+                [
+                    "Some SCENE lines end with an ID in parentheses.",
+                    "If you write about that line, put its ID in grounding_ids.",
+                ]
+            )
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
         # The example is not the place to teach grounding. Showing a grounded
@@ -781,7 +788,10 @@ class CloudflareTurnProvider:
                         for detail in beat.get("details", []):
                             scene.extend(paragraphs(detail))
             for item in player.get("committed_knowledge", []):
-                scene.append(item["statement"])
+                if self.prompt_variant and self.prompt_variant.get("cite_committed_knowledge_ids", False):
+                    scene.append(f"{item['statement']} ({item['id']})")
+                else:
+                    scene.append(item["statement"])
             for candidate in player.get("candidates", []):
                 constraints.append(
                     f"{candidate['statement']} The player does not know this yet. "

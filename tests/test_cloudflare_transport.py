@@ -1379,6 +1379,39 @@ def test_sections_prompt_introduces_only_the_characters_this_scene_involves() ->
         assert absent not in characters, f"{absent} does not appear in Scene 1A"
 
 
+def test_committed_knowledge_ids_are_exposed_and_required_when_enabled() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=state, prompt_variant={"cite_committed_knowledge_ids": True}
+    )
+
+    context = provider.assemble_turn_prompt("Look carefully at Michelle's phone.")["context"]
+    rendered = provider._section_user_prompt(context)
+    committed = context["knowledge_context"]["player"]["committed_knowledge"]
+
+    assert committed
+    assert all(f"{item['statement']} ({item['id']})" in rendered for item in committed)
+    rules = provider._turn_rules()
+    assert "Some SCENE lines end with an ID in parentheses." in rules
+    assert "If you write about that line, put its ID in grounding_ids." in rules
+
+
+def test_committed_knowledge_ids_remain_hidden_by_default() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    context = provider.assemble_turn_prompt("Look carefully at Michelle's phone.")["context"]
+    rendered = provider._section_user_prompt(context)
+    committed = context["knowledge_context"]["player"]["committed_knowledge"]
+
+    assert committed
+    assert all(item["statement"] in rendered for item in committed)
+    assert all(f"({item['id']})" not in rendered for item in committed)
+    rules = provider._turn_rules()
+    assert "Some SCENE lines end with an ID in parentheses." not in rules
+    assert "If you write about that line, put its ID in grounding_ids." not in rules
+
+
 def test_a_characters_concealed_history_never_reaches_the_narrator() -> None:
     """plot.md may state what a character hides; the narrator may not be told it.
 
