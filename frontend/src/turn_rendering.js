@@ -1,4 +1,5 @@
 export function turnBlocks(payload) {
+  if (payload && payload.game_break) return [];
   const lines = Array.isArray(payload.lines) ? payload.lines : [];
   const segments = Array.isArray(payload.segments) ? payload.segments : [];
   if (segments.length === 0) {

@@ -38,3 +38,14 @@ test("falls back to compatibility lines for non-interaction turns", () => {
     { kind: "narration", text: "The next choice is yours." },
   ]);
 });
+
+test("shows only the game-break warning, never its pending candidate prose", () => {
+  assert.deepEqual(
+    turnBlocks({
+      game_break: { warning_id: "future_dependency_at_risk", reason: "Choose how to continue." },
+      lines: ["The risky candidate must not render."],
+      segments: [{ kind: "narration", text: "The risky candidate must not render." }],
+    }),
+    [],
+  );
+});

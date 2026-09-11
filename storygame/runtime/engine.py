@@ -3,20 +3,25 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
 
+from storygame.runtime.canonical_events import CanonicalEventMixin
 from storygame.runtime.contracts import (
     FactOperation,
     GameBreakWarning,
     NarrationSegment,
     ResolvedTurnProposal,
+    RuntimeContractError,
     SceneTransitionProposal,
     parse_turn_proposal,
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
+from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
 from storygame.runtime.validation import (
     ProgressionValidator,
+    ProposalValidationError,
     SelectedRevealResolver,
     predicate_matches,
     unconveyed_terms,
@@ -26,7 +31,7 @@ from storygame.story_package.models import FactDelivery
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 
 
-class RuntimeEngine:
+class RuntimeEngine(CanonicalEventMixin):
     def __init__(
         self, state: RuntimeState, provider: Callable[[str], object], *, projector: KnowledgeProjector | None = None
     ) -> None:
@@ -35,6 +40,7 @@ class RuntimeEngine:
         self.validator = ProgressionValidator(state.package)
         self.reveal_resolver = SelectedRevealResolver(state.package)
         self.projector = projector or KnowledgeProjector()
+        self.narration_validator = NarrationSafetyValidator()
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_post_selection_projection: TurnKnowledgeContext | None = None
 
@@ -59,20 +65,33 @@ class RuntimeEngine:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.state.require_turn_allowed()
-        self.state.last_turn_delivery = TurnDelivery()
-        self.state.turn_index += 1
-        self._activate_pacing()
-        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-            update={
-                "hint_staged": bool(self.state.staged_hint_fact_ids),
-                "handoff_staged": bool(self.state.staged_handoff_fact_ids),
-            }
-        )
-        self.last_projection = self.projector.project(self.state, "player", player_input)
-        provider_proposal = parse_turn_proposal(self.provider(player_input))
-        proposal, self.last_post_selection_projection = self.reveal_resolver.resolve(
-            self.state, self.last_projection, provider_proposal, self.projector, player_input
-        )
+        before = self.state.snapshot()
+        try:
+            self.state.last_turn_delivery = TurnDelivery()
+            self.state.turn_index += 1
+            self._activate_pacing()
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={
+                    "hint_staged": bool(self.state.staged_hint_fact_ids),
+                    "handoff_staged": bool(self.state.staged_handoff_fact_ids),
+                }
+            )
+            self.last_projection = self.projector.project(self.state, "player", player_input)
+            provider_proposal = parse_turn_proposal(self.provider(player_input))
+            proposal, _ = self.reveal_resolver.resolve(
+                self.state, self.last_projection, provider_proposal, self.projector, player_input
+            )
+            self.validator.validate_effects(self.state, proposal)
+            candidate_state = deepcopy(self.state)
+            candidate_state.apply_proposal(proposal)
+            self.last_post_selection_projection = self.narration_validator.validate(
+                self.state, candidate_state, proposal, self.projector, player_input
+            )
+        except (ProposalValidationError, RuntimeContractError):
+            self.state.restore_snapshot(before)
+            raise
+        # Keep the package's existing future-dependency analysis as the final
+        # pre-commit check, after narration safety has accepted the candidate.
         at_risk = self.validator.validate(self.state, proposal)
         if at_risk:
             warning = GameBreakWarning(
@@ -81,7 +100,7 @@ class RuntimeEngine:
                 affected_ids=at_risk,
                 snapshot_id=self.state.new_snapshot_id(),
             )
-            self.state.set_pending_break(warning, proposal=proposal)
+            self.state.set_pending_break(warning, snapshot=before, proposal=proposal)
             return proposal.model_copy(update={"game_break": warning})
         canonical_event_id = None
         if self.state.staged_handoff_fact_ids and not provider_proposal.selected_knowledge_ids:
@@ -138,13 +157,21 @@ class RuntimeEngine:
         )
         del self.state.turn_records[:-24]
 
-    def resolve_break(self, decision: str) -> None:
+    def resolve_break(self, decision: str) -> ResolvedTurnProposal | None:
+        pending = self.state.pending_proposal
         self.state.resolve_break(decision)
-        if decision == "proceed":
-            self._apply_canonical_route_events()
-            self._activate_pacing()
-            self._apply_authored_transition()
-            self._activate_pacing()
+        if decision != "proceed" or pending is None:
+            return None
+        self._record_turn(pending)
+        self._advance_pacing(pending.narrative_seconds)
+        self._activate_pacing()
+        self._apply_canonical_route_events()
+        self._activate_pacing()
+        entry_segments = self._apply_authored_transition()
+        self._activate_pacing()
+        if entry_segments:
+            return pending.model_copy(update={"segments": (*pending.segments, *entry_segments)})
+        return pending
 
     def _apply_authored_transition(self) -> tuple[NarrationSegment, ...] | None:
         """Advance along the highest-priority authored transition once its declared triggers hold.
@@ -455,30 +482,6 @@ class RuntimeEngine:
             and self.validator.transition_dependencies_available(transition, facts)
         ]
         return max(eligible, key=lambda transition: transition.priority, default=None)
-
-    def _apply_canonical_route_events(self) -> None:
-        """Commit only route-authored bridge/resolution facts once their conditions hold."""
-
-        routes = self.state.package.storylet_routes
-        events = (*routes.bridge_events, *routes.resolution_events)
-        for event in events:
-            if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
-                continue
-            true_facts = frozenset(
-                fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
-            )
-            if not event.activation.is_satisfied(true_facts):
-                continue
-            operations = tuple(
-                FactOperation(
-                    operation=operation.op,
-                    fact=Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower()),
-                )
-                for operation in event.operations
-            )
-            for operation in operations:
-                self.state._apply_operation(self.state.facts, operation)
-            self.state.fired_event_ids.add(event.id)
 
     def _predicate_matches(self, predicate: object) -> bool:
         from storygame.runtime.validation import predicate_matches

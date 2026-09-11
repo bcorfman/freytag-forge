@@ -34,6 +34,15 @@ PROPOSAL_REJECTION_CODES = frozenset(
         "ineligible_selection",
         "missing_package_source",
         "invalid_grounding_reference",
+        "unknown_grounding_reference",
+        "invisible_grounding_reference",
+        "uncited_knowledge",
+        "narration_known_term_leak",
+        "protected_narration_leak",
+        "dialogue_speaker_missing",
+        "unknown_dialogue_speaker",
+        "dialogue_grounding_not_sayable",
+        "selection_source_mismatch",
         "ungrounded_selection",
         "missing_knowledge_content",
         "protected_knowledge_mutation",
@@ -272,7 +281,7 @@ class SelectedRevealResolver:
                     f"selected knowledge '{knowledge_id}' does not convey: {', '.join(missing)}",
                     code="missing_knowledge_content",
                 )
-        self._validator.validate(state, resolved)
+        self._validator.validate_effects(state, resolved)
         candidate_state = deepcopy(state)
         candidate_state.apply_proposal(resolved)
         post_projection = projector.project(candidate_state, "player", player_input)
@@ -289,6 +298,16 @@ class ProgressionValidator:
         self._routes = {route.id: route for route in package.storylet_routes.storylets}
 
     def validate(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> tuple[str, ...]:
+        candidate = self.validate_effects(state, proposal)
+        return self.unsatisfied_dependencies(state.current_scene_id, candidate)
+
+    def validate_effects(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> FactStore:
+        """Validate exact effects and return their hypothetical fact store.
+
+        Dependency analysis intentionally remains a later engine step so the
+        narration gate observes the same candidate facts first.
+        """
+
         self._validate_operations(proposal)
         candidate = state.facts.clone()
         for operation in proposal.operations:
@@ -298,7 +317,7 @@ class ProgressionValidator:
             for operation in event.operations:
                 self._apply(candidate, operation.operation, operation.fact)
         self._validate_transition(state, proposal.transition, candidate)
-        return self.unsatisfied_dependencies(state.current_scene_id, candidate)
+        return candidate
 
     def _validate_operations(self, proposal: ResolvedTurnProposal) -> None:
         protected = set(self.package.world.protected_knowledge)

@@ -24,6 +24,7 @@ from storygame.story_package.models import (
     StoryletRoutesSource,
     StoryPackage,
     WorldSource,
+    entity_surface_forms,
 )
 
 
@@ -210,7 +211,7 @@ def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set
     return tuple(storylets)
 
 
-def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
+def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) -> KnowledgeIndexes:
     """Compile deterministic indexes so runtime never interprets author prose."""
 
     by_id = {item.id: item for item in catalog.knowledge}
@@ -220,6 +221,7 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
     alias_to_knowledge: dict[str, list[str]] = {}
     audience_to_known_terms: dict[str, list[str]] = {}
     prerequisite_dependents: dict[str, list[str]] = {}
+    term_to_knowledge: dict[str, list[str]] = {}
     for item in catalog.knowledge:
         if item.source.kind == "storylet_realization":
             source_key = f"storylet:{item.source.storylet_id}:{item.source.realization_id}"
@@ -234,13 +236,38 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
             scene_to_candidates.setdefault(scene_id, []).append(item.id)
         for alias in item.aliases:
             alias_to_knowledge.setdefault(alias.casefold(), []).append(item.id)
+            term_to_knowledge.setdefault(alias.casefold(), []).append(item.id)
+        for phrasing in (term for group in item.must_convey for term in group if len(term.split()) > 1):
+            term_to_knowledge.setdefault(phrasing.casefold(), []).append(item.id)
         audience_key = item.audience.kind + ":" + ",".join(item.audience.character_ids)
-        audience_to_known_terms.setdefault(audience_key, []).extend((item.statement, *item.aliases))
+        audience_to_known_terms.setdefault(audience_key, []).extend(
+            (item.statement, *item.aliases, *(term for group in item.must_convey for term in group))
+        )
         for predicate in item.requires:
             prerequisite_dependents.setdefault(predicate.fact_id, []).append(item.id)
 
     def frozen(values: dict[str, list[str]]) -> dict[str, tuple[str, ...]]:
         return {key: tuple(sorted(set(value))) for key, value in values.items()}
+
+    entity_alias_to_entities: dict[str, list[str]] = {}
+    for entity in (*world.locations, *world.npcs, *world.items):
+        for form in entity_surface_forms(entity):
+            entity_alias_to_entities.setdefault(form, []).append(entity.id)
+
+    protected_terms: set[str] = set()
+    entity_forms = {
+        form for entity in (*world.locations, *world.npcs, *world.items) for form in entity_surface_forms(entity)
+    }
+    for protected in world.protected_knowledge:
+        spaced = protected.replace("_", " ").replace("-", " ").casefold()
+        protected_terms.add(spaced)
+        words = spaced.split()
+        if len(words) > 1:
+            for start in range(len(words)):
+                for end in range(start + 2, len(words) + 1):
+                    protected_terms.add(" ".join(words[start:end]))
+            if words[0] not in entity_forms:
+                protected_terms.add(words[0])
 
     return KnowledgeIndexes(
         by_id=by_id,
@@ -250,6 +277,9 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog) -> KnowledgeIndexes:
         alias_to_knowledge=frozen(alias_to_knowledge),
         audience_to_known_terms={key: tuple(sorted(set(value))) for key, value in audience_to_known_terms.items()},
         prerequisite_dependents=frozen(prerequisite_dependents),
+        entity_alias_to_entities=frozen(entity_alias_to_entities),
+        term_to_knowledge=frozen(term_to_knowledge),
+        protected_terms=tuple(sorted(protected_terms)),
     )
 
 
@@ -714,7 +744,7 @@ def load_story_package(root: Path) -> StoryPackage:
         storylets=storylets,
         storylet_routes=routes,
         knowledge=knowledge,
-        knowledge_indexes=_compile_knowledge_indexes(knowledge),
+        knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
     )
     _validate(package)
