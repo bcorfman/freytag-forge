@@ -192,53 +192,62 @@ not a prompt constraint, is fully deterministic, needs no live model calls to
 verify (a mocked-response unit test proves it directly), and does not depend
 on an 8B model's citation compliance at all.
 
-- [ ] In `CloudflareTurnProvider._parse_eligible_proposal` (or a small sibling
-  method called from it), after parsing the proposal and before the existing
-  `ungroundable` check, scan each segment's text for a multi-word known term
-  (reuse `indexes.term_to_knowledge`, mirroring `NarrationSafetyValidator`'s
-  own matching) whose owning ids intersect `self.last_projection.committed_knowledge`
-  ids in exactly one place (unambiguous) and are not already in that
-  segment's `grounding_ids`. Auto-attribute: return an amended proposal with
-  that id added to the segment's `grounding_ids`, the same way the existing
-  candidate-derivation path already amends segments via `segment.model_copy(...)`.
-  Deliberately scope this to committed knowledge only (never to a newly
-  selected-this-turn reveal — that path is already handled) and to
-  unambiguous single-owner terms only; leave a genuinely ambiguous or
-  ownerless term alone so `NarrationSafetyValidator` still rejects it exactly
-  as today.
-- [ ] Add a deterministic unit test (no live call): construct a
-  `CloudflareTurnProvider` with a stub/monkeypatched raw response shaped like
-  the real failing one (narration mentioning "Michelle's phone" with no
-  `grounding_ids` on any segment), call the parsing path directly, and assert
-  the returned proposal's segment now carries `k_scene_1a_entry` in
-  `grounding_ids`. Add a companion test proving an ambiguous or unknown term
-  is left unattributed (still rejected downstream).
-- [ ] Confirm the fix end to end with the full local suite, then one live
-  `bench run --variation bench/variations/grounding-citation-baseline.json
-  --scene 1A --replicates 4 --confirm` (no candidate variation needed — this
-  is unconditional runtime behavior, not a prompt variant) and confirm the
-  baseline's 4/4 failure rate is now resolved without any prompt change.
-- [ ] If auto-attribution alone resolves it, remove the now-unhelpful
-  `cite_committed_knowledge_ids` flag, its two rule sentences, and
-  `bench/variations/grounding-citation-candidate-1.json` as dead experimental
-  weight, per this project's stated preference against leaving unused
-  branches once a decision is made — keep only what the evidence supports.
+- [x] Implemented in `CloudflareTurnProvider._auto_attribute_committed_knowledge`,
+  called from `_parse_eligible_proposal` right after the selection-count
+  check. Scans each segment's text for a multi-word known term (reusing
+  `indexes.term_to_knowledge`, the same word-boundary matching
+  `NarrationSafetyValidator` uses) whose owning ids intersect
+  `self.last_projection.committed_knowledge` ids in exactly one place, and
+  are not already in that segment's `grounding_ids`; only then attributes.
+  Scoped to committed knowledge only (a newly selected-this-turn reveal keeps
+  using the existing, separate `derive_grounding` path); a genuinely
+  ambiguous or unavailable term is left untouched. Landed in commit
+  `b7d5d1d`, which also fixed a latent consistency bug in
+  `_cap_accepted_response`'s fast path that the new equality check exposed
+  (the ineligible-selection recovery path compared a stripped response
+  against an un-stripped proposal).
+- [x] Added three deterministic unit tests in `tests/test_cloudflare_transport.py`:
+  `test_transport_auto_attributes_a_committed_known_term` (the exact staging
+  scenario self-repairs), `test_transport_does_not_attribute_an_unavailable_future_term`
+  (safety boundary: a real future-scene term, verified not committed at
+  Scene 1A, is left unattributed), `test_transport_does_not_duplicate_existing_committed_grounding`.
+  Full suite: 333 passed.
+- [x] Confirmed live: `bench run --variation
+  bench/variations/grounding-citation-baseline.json --scene 1A --replicates 4
+  --confirm` against the real narrator. **Result: fixed.** Zero
+  `uncited_knowledge` failures across all 4 replicates (was 4/4 before);
+  `actual_narration_turns` rose from 0 to 16, meaning the first turn — and
+  several turns after it — now succeed. The run still shows
+  `completed_replicates: 0` because the single-line repro script repeats
+  "Look carefully at Michelle's phone." up to 12 times looking for a scene
+  exit that script was never going to reach, and on a later repetition the
+  live model invented an unrelated future reference ("the card"), which
+  `NarrationSafetyValidator` correctly rejected as a genuine leak — reassuring
+  evidence the fix did not loosen the safety boundary, not a regression in
+  the fix itself.
+- [x] `cite_committed_knowledge_ids` (the flag, its two rule sentences, and
+  `bench/variations/grounding-citation-candidate-1.json`) is proven
+  unhelpful and superseded by the deterministic fix; removal tracked as the
+  first Phase 3 item below rather than done inline mid-Phase-2.
 
-Exit gate: a deterministic, code-level fix (not a prompt rule) is shown by a
-free unit test to correctly and unambiguously repair the exact staging
-failure, and by one live bench run to actually resolve it against the real
-narrator, without depending on model compliance and without introducing a new
-failure code.
+Exit gate: met. The deterministic, code-level fix is shown by three free unit
+tests to correctly and unambiguously repair the exact staging failure, and by
+a live bench run to actually resolve it against the real narrator, without
+depending on model compliance and without introducing a new failure code.
 
 ### Phase 3: Land the fix and re-verify live
 
-- [ ] Make the validated combination unconditional in the shipped code path:
-  either flip `cite_committed_knowledge_ids`'s default to `true` and keep the
-  variation key only for a future A/B (documented as no-op for the shipped
-  provider), or remove the flag and make id-exposure plus the two rule
-  sentences the only behavior, per this project's stated preference against
-  leaving unused feature-flag branches around once a decision is made. Do not
-  leave the fix reachable only through a bench variation.
+- [ ] Remove the now-superseded `cite_committed_knowledge_ids` flag and its
+  two rule sentences from `storygame/runtime/cloudflare.py`, the matching
+  plumbing in `bench/core.py`'s `resolve_variation`, the two regression tests
+  in `tests/test_cloudflare_transport.py` that exercise the flag directly
+  (`test_committed_knowledge_ids_are_exposed_and_required_when_enabled` /
+  `test_committed_knowledge_ids_remain_hidden_by_default`), and
+  `bench/variations/grounding-citation-candidate-1.json` — the auto-attribution
+  fix already lives unconditionally in shipped code and needs no flag; keep
+  only what the evidence supports, per this project's stated preference
+  against unused branches. The auto-attribution fix and its own tests are
+  untouched by this cleanup.
 - [ ] Audit every other prompt-constructing path — `_system_prompt()`, the
   opening's own rule list, and `_recover_malformed_response`'s retry hint —
   for whether the same missing-id gap applies there too (an opening segment
