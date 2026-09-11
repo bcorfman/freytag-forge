@@ -119,46 +119,93 @@ produces a `failed` row whose `failure_reason` reproduces the staging
 `uncited_knowledge` rejection verbatim, using only local/dev-cost calls (no
 staging deploy, no Playwright).
 
-### Phase 2: Design and bench-validate a rule fix
+### Phase 2: Design and bench-validate a fix
 
-- [ ] Draft one candidate rule addition to `default_rules` stating the missing
-  duty at an 8th-grade level — for example in spirit (wording must be
-  iterated against real probes, not shipped as written here): "If you name a
-  thing the SCENE section already told you, put its ID in grounding_ids."
-  Keep it one short sentence, one idea, naming the concrete requirement
-  rather than describing a category.
-- [ ] Using `bench describe`/`bench prompt`, confirm the resolved prompt reads
-  the way intended before spending a model call.
-- [ ] Run the Phase 1 reproduction script against the candidate rule for
-  several replicates (`bench run --replicates N` or equivalent), and against
-  at least one other scene/script the shipped rules already cover, to check
-  for regressions elsewhere.
-- [ ] `bench compare` the baseline and candidate arms on both the existing
-  63-point canon-judge score and the new rejection-rate signal from Phase 1.
-  Require enough replicates per arm to be distinguishable from noise per the
-  tool's own Welch-test/minimum-detectable-effect output; do not report a
-  one- or two-run difference as conclusive.
-- [ ] If evidence from the reproduction script suggests the existing
-  restrictive framing is itself part of the problem (per constraint 4 above),
-  bench a second candidate that simplifies it, and compare that arm too
-  before deciding.
+**Root cause refined, 2026-09-11, before any candidate was built.** Reading
+`CloudflareTurnProvider._section_user_prompt` in `storygame/runtime/cloudflare.py`
+shows the actual bug is not primarily a missing instruction: a candidate
+reveal already gets its `id` embedded directly in its own sentence ("...put
+{candidate['id']} in selected_knowledge_ids."), but committed knowledge is
+rendered into the SCENE section as bare prose with no id at all —
+`scene.append(item["statement"])`. The model is never shown which ID
+corresponds to "Michelle's phone is on the kitchen floor"; no rule wording,
+however well phrased, can make it cite an identifier it was never given. This
+also means a pure prompt-rule fix cannot be bench-validated through a
+variation's `system_prompt.rules` override alone, because `_section_user_prompt`'s
+committed-knowledge rendering is not currently variation-configurable — the
+fix requires a small, reversible code change to make it so, done once as
+infrastructure, so every subsequent wording iteration stays a pure JSON
+variation with no further Ringer round-trips.
 
-Exit gate: one specific rule wording is selected with bench evidence that it
-measurably reduces the `uncited_knowledge`/`narration_known_term_leak`
-rejection rate on the reproducing script, does not regress the canon-judge
-score, and introduces no new failure code, across enough replicates to be
-distinguishable from noise.
+**Also discovered, deferred, noted so it is not silently trusted going
+forward:** `bench/core.py`'s `DEFAULT_PROMPT_RULES` constant (used by
+`bench describe`/`bench prompt` when a variation does not override rules) is
+stale — it holds an older experimental wording (matching
+`bench/variations/arm-a.json`), not the rules `cloudflare.py` actually ships
+today. Actual `bench run`/`chat` behavior is unaffected (it reads the live
+`CloudflareTurnProvider._turn_rules()` default when a variation's `rules` is
+unset), but `describe`/`prompt` previews are misleading for that case. Worked
+around in this task by always fully specifying `rules` in every experimental
+variation rather than relying on the unset-default preview. Fixing
+`DEFAULT_PROMPT_RULES` itself is a small, separate, low-priority follow-up,
+not required to complete this task.
+
+- [ ] Add one new `system_prompt` variation key, e.g.
+  `cite_committed_knowledge_ids: bool` (default `false`, so today's shipped
+  behavior and the Phase 1 baseline variation are both unchanged unless a
+  variation opts in). When true: (a) `_section_user_prompt` renders each
+  committed-knowledge SCENE line with its id visible, mirroring the existing
+  candidate pattern rather than inventing a new format — for example
+  `f"{item['statement']} ({item['id']})"`; (b) exactly two new rule sentences
+  are appended (regardless of whether `default_rules` or a variation's own
+  `rules` override is in effect, the same way `_owner_rules()`/`_placement_rules()`
+  are always appended today), each one short idea at an 8th-grade level, for
+  example in spirit: "Some SCENE lines end with an ID in parentheses." /
+  "If you write about that line, put its ID in grounding_ids." Wire this
+  variation key through `bench/core.py`'s `resolve_variation`/`_prompt_variant`
+  so it is bench-testable without further code changes.
+- [ ] Add `bench/variations/grounding-citation-candidate-1.json`: same Scene
+  1A `phone-grounding-repro` script as the Phase 1 baseline, shipped default
+  rules (no `rules` override, so the new sentences land on the real
+  `default_rules`), with `cite_committed_knowledge_ids: true`.
+- [ ] Using `bench describe`/`bench prompt --variation ... --text`, confirm
+  the resolved SCENE section actually shows the parenthetical id and the two
+  new rule sentences appear, before spending a model call.
+- [ ] Run the baseline and candidate-1 variations for several replicates each
+  (`bench run --replicates N`, default four per the tool's own guidance) on
+  the reproduction script, and on at least one other scene/script the shipped
+  rules already cover, to check for regressions elsewhere.
+- [ ] `bench compare` the two arms on both the existing 63-point canon-judge
+  score and the rejection-rate signal Phase 1 made measurable. Require enough
+  replicates per arm to be distinguishable from noise per the tool's own
+  Welch-test/minimum-detectable-effect output; do not report a one- or
+  two-run difference as conclusive.
+- [ ] If candidate-1 does not measurably help, iterate on the two rule
+  sentences' wording only (a pure JSON change, no further code edit needed
+  now that the structural id-exposure is variation-configurable) before
+  concluding the structural fix itself was insufficient.
+
+Exit gate: one specific combination (id-exposure plus rule wording) is
+selected with bench evidence that it measurably reduces the
+`uncited_knowledge`/`narration_known_term_leak` rejection rate on the
+reproducing script, does not regress the canon-judge score, and introduces no
+new failure code, across enough replicates to be distinguishable from noise.
 
 ### Phase 3: Land the fix and re-verify live
 
-- [ ] Apply the validated rule change to `cloudflare.py`'s actual default
-  `_turn_rules()` (not only a bench variation).
+- [ ] Make the validated combination unconditional in the shipped code path:
+  either flip `cite_committed_knowledge_ids`'s default to `true` and keep the
+  variation key only for a future A/B (documented as no-op for the shipped
+  provider), or remove the flag and make id-exposure plus the two rule
+  sentences the only behavior, per this project's stated preference against
+  leaving unused feature-flag branches around once a decision is made. Do not
+  leave the fix reachable only through a bench variation.
 - [ ] Audit every other prompt-constructing path — `_system_prompt()`, the
   opening's own rule list, and `_recover_malformed_response`'s retry hint —
-  for whether the same missing duty applies there too (an opening segment can
-  also name already-established knowledge without citing it). Apply the same
-  rule wherever it is needed; do not leave the turn path fixed while the
-  opening path still drifts, per constraint 3.
+  for whether the same missing-id gap applies there too (an opening segment
+  can also name already-established knowledge without ever having been shown
+  its id). Apply the same fix wherever it is needed; do not leave the turn
+  path fixed while the opening path still drifts, per constraint 3.
 - [ ] Deploy to staging (merge to `main`, wait for the exact-SHA redeploy, per
   this project's standing procedure) and re-run the exact gates that first
   caught this: `@smoke`, then `@safety|@npc`. Only after those pass, run
