@@ -95,24 +95,29 @@ frequent, not edge-case, failure mode in real play.
 
 ### Phase 1: Make the failure measurable locally
 
-- [ ] In `bench/core.py`, catch `ProposalValidationError` around the
-  `engine.turn(...)` call the same way `NarrationProviderError` is caught,
-  and record a `failed` ledger row with `failure_reason` carrying the
-  validator's `.code` (e.g. `uncited_knowledge`, `narration_known_term_leak`)
-  and enough context (scene, script name) to filter on later. Do not change
-  how a successful turn is scored.
-- [ ] Reproduce the staging finding locally and cheaply: run
-  `bench chat --variation bench/variations/example.json` (or a fresh
-  variation using the shipped rules unmodified) against Scene 1A with the
-  input "Look carefully at Michelle's phone.", and confirm it fails with the
-  same `uncited_knowledge` code the staged `@smoke` run observed.
-- [ ] Add this exact reproduction as a small script inside a new bench
-  variation file (e.g. `bench/variations/grounding-citation-baseline.json`)
-  so it can be rerun identically for every candidate rule.
+- [x] In `bench/core.py`, catch `ProposalValidationError` (and
+  `RuntimeContractError`, the sibling exception `RuntimeEngine.turn()` raises
+  the same way) around both `engine.opening()` and the turn loop's call, the
+  same way `NarrationProviderError` is caught, and record a `failed` ledger
+  row with `failure_reason` carrying the validator's `.code` (e.g.
+  `uncited_knowledge`) via a fallback in `_failed_scene_record`. Added a
+  deterministic unit test proving this with no live call. Landed in commit
+  `729fb0502fe9ef4e5f2e388f433b0fdfb2a3f332`.
+- [x] Reproduced the staging finding locally and cheaply via
+  `bench run --variation bench/variations/grounding-citation-baseline.json
+  --scene 1A --replicates 1 --confirm`: the resulting ledger row is
+  `status: "failed"` with `failure_reason: "uncited_knowledge: narration
+  does not ground the knowledge term 'michelle's phone'"` — the exact
+  staging failure text, for 22 Workers AI neurons. Model confirmed as
+  `@cf/meta/llama-3.1-8b-instruct-fast`.
+- [x] Added the reproduction as `bench/variations/grounding-citation-baseline.json`
+  (Scene 1A, script `phone-grounding-repro`, shipped default rules
+  unmodified) so it reruns identically for every candidate rule in Phase 2.
 
-Exit gate: a `bench run` replicate against the shipped, unmodified rules
+Exit gate: met. A `bench run` replicate against the shipped, unmodified rules
 produces a `failed` row whose `failure_reason` reproduces the staging
-`uncited_knowledge` rejection, using only local/dev-cost calls.
+`uncited_knowledge` rejection verbatim, using only local/dev-cost calls (no
+staging deploy, no Playwright).
 
 ### Phase 2: Design and bench-validate a rule fix
 
