@@ -1,5 +1,66 @@
 # Testing runbook
 
+## Narration candidate-selection baseline
+
+**Purpose:** Measure how often the narrator selects an offered Scene 1A reveal
+when the player's action clearly asks for it. This is a local bench baseline;
+it does not validate a prompt fix or a hosted deployment.
+
+**Setup / seed:** The checked-in `continuity-initiative` package and
+`bench/variations/candidate-selection-baseline.json`; live runs require the
+environment variables documented in `bench/README.md`.
+
+**Safe actions:** Inspect the assembled prompt and run the mechanical report
+against a saved bench record.
+
+**Destructive or external actions:** `bench run` calls Cloudflare Workers AI
+and the OpenAI judge. It is billed and writes an append-only ledger row. Use
+the default four replicates per batch; delete only disposable output under
+`/tmp`.
+
+**Steps:**
+
+1. Preview the configured Scene 1A prompt and confirm the effective rules.
+2. Run four replicates of the exact four-action sequence. Repeat the batch if
+   the clear target window is reached too few times. The bench repeats the
+   first action if the scene remains stuck on a fifth turn.
+3. Run `bench.candidate_selection_report` against `all-turn-records.json`,
+   which includes failed/stuck runs as well as completed runs.
+
+**Verify:**
+
+```bash
+uv run python -m bench prompt --variation bench/variations/candidate-selection-baseline.json --scene 1A --player-input "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor." --text
+uv run python -m bench run --variation bench/variations/candidate-selection-baseline.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/bench-candidate-selection-baseline --confirm
+uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-selection-baseline/all-turn-records.json --out-json /tmp/bench-candidate-selection-baseline/report.json --out-md /tmp/bench-candidate-selection-baseline/report.md
+```
+
+Expected: the report's `turn1_position0_match_rate` and
+`turn3_position2_match_rate` are the baseline measures for the two clear
+selection windows. Its `per_turn` list must retain the input, replicate,
+`selected_knowledge_ids`, and `candidates_offered` for every recorded turn,
+including failed runs, without storing narration text.
+
+**Cleanup:** None required. Keep the `/tmp` output while comparing a later
+candidate; do not add raw model transcripts to the repository.
+
+**Notes:** Added 2026-09-11 for Phase 1 of
+`.plans/narration-candidate-selection-reliability.md`. The report measures
+actual model selections mechanically; deciding that the two windows are clear
+matches is an authored benchmark judgment recorded by the plan.
+
+**Observed 2026-09-11:** Two four-replicate batches used 396 estimated
+Workers AI neurons across 36 narration requests and produced 8 failed runs,
+17 recorded turns, 17 offered-candidate turns, and 0 selections. The first
+clear window was 0/8; the third-turn clear window was 0/3. Every run hit a
+known-term safety rejection before scene completion, but the all-turn records
+preserved the selection observations. The focused verification command passed
+all 41 tests but exited on the repository coverage threshold (51.65% for the
+focused subset); the full suite is the coverage check of record.
+`TMPDIR=/tmp uv run pytest -q` passed 337 tests with 91.35% total coverage.
+From `frontend`, `npm test` passed 35 tests and `npm run build` completed
+successfully.
+
 ## Optional-storylet pacing permutation audit
 
 **Purpose:** Determine whether authored optional-storylet windows and pacing

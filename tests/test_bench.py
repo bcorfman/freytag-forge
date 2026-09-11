@@ -3,6 +3,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.error import HTTPError
 
 import pytest
@@ -304,6 +305,62 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
     assert "invalid_grounding_reference" in result["failure_reason"]
 
 
+def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None:
+    payload = {
+        "segments": [
+            {
+                "kind": "narration",
+                "text": "Michelle's damaged memory card recording warns Kristin not to trust emergency broadcasts.",
+                "grounding_ids": ["k_sl_1a_b_r2"],
+            }
+        ],
+        "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+        last_projection = None
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            self.last_projection = SimpleNamespace(
+                candidates=[SimpleNamespace(id="k_sl_1a_b_r2"), SimpleNamespace(id="k_sl_1a_b_r1")]
+            )
+            return payload
+
+    provider = FakeProvider()
+    variation = {
+        "name": "selection-recording",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+        "_prompt_variant": {
+            "include_output_example": True,
+            "output_example": '{"segments": [], "selected_knowledge_ids": []}',
+            "beat_delivery": "details",
+        },
+    }
+
+    def provider_for_with_active_storylet(state, _variation):
+        state.active_event_ids.add("SL-1A-B")
+        return provider
+
+    monkeypatch.setattr(core, "provider_for", provider_for_with_active_storylet)
+
+    result = core.run_scene(
+        variation,
+        "1A",
+        {"name": "repro", "inputs": ["Search the drawers under her workstation."]},
+        max_turns=1,
+    )
+
+    assert result["turns"][0]["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["candidates_offered"] == ["k_sl_1a_b_r2", "k_sl_1a_b_r1"]
+
+
 def test_run_baseline_refuses_archived_nine_scene_coverage_before_live_work(monkeypatch, tmp_path) -> None:
     variation = {
         "name": "test",
@@ -501,6 +558,67 @@ def test_focused_run_allows_one_explicit_replicate_without_calling_live_services
     assert summary["pooled"]["score_points"]["n"] == 1
     assert summary["pooled"]["score_points"]["standard_deviation"] is None
     assert summary["budget"]["actual_openai_judge_calls"] == 1
+
+
+def test_run_writes_failed_turns_to_all_turn_records_without_changing_judged_records(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "failed-selection",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Search the drawer."]}
+    failed_turn = {
+        "player_input": "Search the drawer.",
+        "narration": "The drawer catches.",
+        "left_scene": False,
+        "beats_projected": [],
+        "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+        "candidates_offered": ["k_sl_1a_b_r2"],
+    }
+    record = {
+        "status": "failed",
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [failed_turn],
+        "completed": False,
+        "quota": None,
+        "failure_reason": "scene did not leave",
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path),
+        ]
+    )
+
+    assert bench_cli._run(args) == 2
+    all_records = json.loads((tmp_path / "all-turn-records.json").read_text(encoding="utf-8"))
+    assert all_records["runs"][0]["status"] == "failed"
+    assert all_records["runs"][0]["turns"] == [failed_turn]
+    assert all_records["runs"][0]["turns"][0]["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert all_records["runs"][0]["turns"][0]["candidates_offered"] == ["k_sl_1a_b_r2"]
+    turn_records = json.loads((tmp_path / "turn-records.json").read_text(encoding="utf-8"))
+    assert turn_records["runs"] == []
 
 
 def test_chat_contract_accepts_variation_argument() -> None:

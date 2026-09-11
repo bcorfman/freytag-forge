@@ -2,7 +2,7 @@
 
 ## Status
 
-Scoped, not started. Follow-up to `.plans/narration-grounding-citation-reliability.md`,
+Phase 1 complete (2026-09-11); Phase 2 not started. Follow-up to `.plans/narration-grounding-citation-reliability.md`,
 discovered while re-running `@llm-canon` after that plan's three fixes
 (grounding-citation auto-attribution, opening-narration-safety, and the
 message-alias collision) all landed and were confirmed live.
@@ -113,28 +113,39 @@ without selecting is what let the divergence accumulate in the first place.
 
 ### Phase 1: Measure the actual selection rate
 
-- [ ] Using `bench` (fix `bench/core.py`'s `DEFAULT_PROMPT_RULES` staleness
+- [x] Using `bench` (fix `bench/core.py`'s `DEFAULT_PROMPT_RULES` staleness
   first if it gets in the way of an accurate preview — see the deferred note
   in the sibling plan — or work around it as that plan did, by always fully
-  specifying `rules` in any experimental variation).
-- [ ] Add a bench variation and script reproducing this plan's exact
+  specifying `rules` in any experimental variation). The free prompt preview
+  confirmed that the variation uses the current runtime rules; no override was
+  needed.
+- [x] Add a bench variation and script reproducing this plan's exact
   four-prompt Scene 1A sequence (reuse `bench/variations/grounding-citation-baseline.json`
   as a shape reference; a new file, since the script here is different).
-- [ ] Run it for several replicates (four per the tool's own default
+- [x] Run it for several replicates (four per the tool's own default
   guidance, more if the first four are inconclusive) and record, per turn,
   whether the model selected the candidate a reasonable reading of the
   player's input would expect. This may require a manual/LLM-judged
   per-turn label rather than a purely mechanical one, since "did this input
   clearly match this candidate" is a judgment call — but keep the
   measurement itself (selected vs. not, per turn, per replicate) mechanical
-  and logged, not just narrated in prose.
-- [ ] Establish a baseline selection rate on this exact script before
+  and logged, not just narrated in prose. Eight replicates (two four-replicate
+  batches) recorded 17 turns in `all-turn-records.json`; each record includes
+  the offered and selected IDs.
+- [x] Establish a baseline selection rate on this exact script before
   proposing any fix. Do not skip straight to a fix based on a single
-  four-turn anecdote (this plan's own reproduction), however suggestive.
+  four-turn anecdote (this plan's own reproduction), however suggestive. The
+  observed baseline is 0/17 selections on offered-candidate turns (0.0%);
+  the clear first-window match is 0/8 and the clear third-turn match is 0/3.
+  No fix was proposed in Phase 1. All eight runs were incomplete because the
+  model hit a narration-known-term safety rejection; this limits the third-turn
+  sample but does not erase the mechanical observations that were recorded.
 
-Exit gate: a baseline selection-rate measurement exists for the reproducing
-script, from more than one replicate, so a later fix's effect can be
-compared against a real number rather than one lucky or unlucky run.
+Exit gate: [x] A baseline selection-rate measurement exists for the reproducing
+script from eight replicates, so a later fix's effect can be compared against a
+real number rather than one lucky or unlucky run. Evidence: the generated
+`bench/results/candidate-selection-baseline-report.json` and the corresponding
+append-only rows in `bench/results/ledger.jsonl`.
 
 ### Phase 2: Diagnose why the rule is not landing
 

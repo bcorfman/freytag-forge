@@ -20,45 +20,34 @@ proposed change before committing it as a durable fact.
   continuity, and transcript position—including across a save/load. No pending
   candidate's prose is ever shown before that decision is made.
 
-## Runtime contract
+## Runtime and deployment contract
 
-The provider receives a bounded `TurnKnowledgeContext`: safe scene frame,
-committed player/speaker-sayable knowledge, and eligible reveal
-candidates—never plot prose, routes, source IDs, future effects, or transcript
-memory. It returns strict JSON segments and, at most, one eligible knowledge
-ID; both are untrusted. The runtime resolves that ID to its sole package-owned
-route and effects on a cloned fact store, then a deterministic
-`NarrationSafetyValidator` re-checks every segment's text and grounding
-against that same clone before anything commits—rejecting a leaked name, an
-ungrounded claim, wrong-speaker dialogue, or a premature transition outright,
-with no partial edits and no state change. Only a fully validated candidate is
-committed atomically and rendered.
+The provider receives a bounded `TurnKnowledgeContext`: the safe scene frame,
+committed sayable knowledge, and eligible reveal candidates. It never receives
+plot prose, routes, source IDs, future effects, or transcript memory. Its strict
+JSON is untrusted. The runtime resolves one eligible knowledge ID to its
+package-owned route, applies the proposal to a cloned fact store, and runs
+`NarrationSafetyValidator` against that clone. Leaks, unsupported claims,
+wrong-speaker dialogue, and premature transitions fail closed with no partial
+state change. Only validated facts and narration commit.
 
-Pacing is declarative and fact-backed: accepted turns record bounded narrative
-time, while package-declared deadlines may add pressure or perform an authored
+Pacing is declarative and fact-backed: accepted turns advance bounded narrative
+time, while package deadlines may add pressure or perform an authored
 transition. The runtime never infers gameplay from prose or selects an action.
 
-## Authoring and deployment
+Stories use [Markdown authoring](markdown-story-authoring.md) plus typed
+`knowledge.yaml` declarations. The loader fails closed on malformed input,
+unknown references, invalid predicates/effects, ambiguous transitions, timing
+errors, and dependency cycles. Package files and compiled indexes are immutable
+at runtime; schema-2 packages use save version 2 and older snapshots are
+rejected.
 
-The [Markdown story authoring](markdown-story-authoring.md) guide documents the
-package format: Markdown sources plus the typed `knowledge.yaml` fact and
-knowledge declaration. Loading fails closed on malformed input, unknown IDs,
-predicates, knowledge sources, effects, audiences, timing windows, ambiguous
-transitions, and dependency cycles. Package inputs and compiled lookup indexes
-remain immutable at runtime. Schema-2 knowledge packages use save version 2;
-older snapshots fail closed rather than being reinterpreted under new
-revelation rules.
-
-FastAPI, React, Cloudflare Worker transport, and SQLite are the hosted stack.
-`POST /api/v1/session` selects a `story_id` and returns an `opening` for the
-first scene whose first segment is the scene's authored `entry_text` verbatim and
-whose remaining segments are the provider's embellishment of that scene's first
-authored beat, so it fails closed with the same narration errors as a turn when
-the Worker is unavailable; `POST /api/v1/turn` returns structured
-`segments`, a compatibility `lines` field, scene/phase state, and an optional
-typed `game_break`; `POST /api/v1/game-break` is the only way to resolve it. The
-web adapter owns transport, CORS, deployment identity, and persistence—not
-gameplay policy.
+FastAPI, React, a Cloudflare Worker, and SQLite form the hosted stack. The web
+adapter owns transport, CORS, deployment identity, and persistence—not gameplay
+policy. `POST /api/v1/session` starts a story and returns its authored opening;
+`POST /api/v1/turn` returns structured segments, compatibility `lines`, state,
+and an optional typed `game_break`; `POST /api/v1/game-break` is the only
+resolution endpoint.
 
 ## Developer workflow
 

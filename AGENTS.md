@@ -6,6 +6,16 @@
 ## Running Tests
 
 - `TMPDIR=/tmp uv run pytest -q`; finish feature work with `uv run ruff check --fix . && uv run ruff format .`.
+## Tooling
+
+- Prefer Serena MCP tools over `grep`/`sed`/`cat` for anything code-shaped:
+  `find_symbol`, `get_symbols_overview`, `find_declaration` to locate
+  functions/classes; `find_referencing_symbols`, `find_implementations` to
+  find call sites; `search_for_pattern` for a textual sweep;
+  `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`,
+  `rename_symbol` to edit a whole symbol. Shell tools remain right for tests,
+  git, builds, and package managers — things Serena doesn't cover.
+
 ## Architecture
 
 - Start with [the PRD](docs/PRD.md); use the focused runbook and [contributor guide](docs/contributor-guide.md) for the change.
@@ -42,6 +52,31 @@ event would have produced regardless does not count, and narrative colour that
 commits no fact is not an effect. Judge each input against the scene it runs
 in; if you want the question answered at scale, measure it in `bench` by
 comparing a turn against a deliberate null control, or ask the LLM judge.
+
+## Writing Narrator Rules
+
+The narrator is a small, non-reasoning Llama-class model. Every string that
+reaches it as an instruction — `_turn_rules` entries, the system prompt, the
+opening, and any retry hint — must be written at an 8th-grade reading level,
+or it will not reliably hold.
+
+- **Short, common words.** `thing`/`object`, not `entity`. `say who owns it`,
+  not `attribute ownership`. `the story says`, not `the authored material
+  states`.
+- **Short sentences, one idea each.** Never join two demands with `and`; the
+  model reliably obeys the first half and drops the second.
+- **No project jargon.** `authored`, `grounding`, `segment`, `candidate`,
+  `convey`, `durable evidence`, `container contents` are our vocabulary, not
+  the model's. Where a technical term is unavoidable because it names a JSON
+  field, keep the surrounding sentence plain.
+- **Name the thing, don't describe the category.** Hand the model the
+  concrete noun it must use, not a description of a class of situation.
+
+Apply any change to narrator instructions to *every* path that narrates, not
+just the turn path: `_turn_rules`, `opening()` (builds its own separate rule
+list — easiest to forget), `_system_prompt`, `_section_user_prompt`,
+`_scene_setting`, and `_recover_malformed_response`. Where two paths need the
+same rule, build it in one helper and call it from both.
 
 ## Forbidden Patterns
 
