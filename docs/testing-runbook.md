@@ -398,12 +398,20 @@ the runtime must derive the source and fact effects atomically.
 
 - Python 3.12 dependencies installed with `uv sync --group dev`.
 - Run from the repository root; pytest temporary files belong under `/tmp`.
+- Before the staged probe, set `RAILWAY_TOKEN`, `RAILWAY_PROJECT_ID`,
+  `RAILWAY_SERVICE_ID`, `RAILWAY_STAGING_ENVIRONMENT_ID`, and
+  `RAILWAY_PUBLIC_API_URL` in the shell, for example with `source .env`.
 
 **Safe actions:** Local transport tests intercept the Worker request; no
 network request is made.
 
 **Destructive or external actions:** The optional browser probe creates a
-disposable staging session and may make billed model calls.
+disposable staging session and may make billed model calls. The probe script
+temporarily switches the ENTIRE staging deployment to a fixed scripted
+narration response for its duration, so no one else should run manual staging
+checks such as `@llm-canon` or `@storylets` while it is running. It automatically
+reverts staging to live narration afterward, even if the probe fails, and polls
+for the live opening text to differ from the scripted one.
 
 **Steps:**
 
@@ -415,7 +423,7 @@ disposable staging session and may make billed model calls.
 
 ```bash
 TMPDIR=/tmp uv run pytest -q
-source .env && cd frontend && E2E_KNOWLEDGE_TIMELINE=1 npm run test:e2e -- --grep @knowledge-timeline
+bash scripts/knowledge_timeline_probe.sh
 ```
 
 Expected: the intercepted request excludes plot prose, route prose, source IDs,
@@ -428,6 +436,29 @@ saved session unchanged. The staged probe retains the same reveal timeline.
 
 **Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
 the staged evidence is no longer needed.
+
+**Staging attempt 2026-09-10:** The probe initially failed because the local
+Railway CLI 2.1.0 did not recognize the legacy `variable` command. The script
+now detects that CLI and falls back to `npx @railway/cli@latest`, preserving
+explicit project, service, and environment targeting. The retry reached the
+current CLI but was rejected before changing staging variables with
+`Unauthorized. Please check that your RAILWAY_TOKEN is valid and has access to
+the resource you're trying to use.` The cleanup trap ran, but its three
+variable-reset calls were rejected by the same authentication failure. Confirm
+or replace the project token in the local environment before rerunning; no
+successful Railway variable update was observed from this attempt.
+
+**Staging verification 2026-09-10 (successful).** After correcting the probe
+to compare the provider's final opening segment rather than the API's complete
+opening text, `bash scripts/knowledge_timeline_probe.sh` completed successfully
+against staging. The browser test passed in 2.3 minutes. The fresh artifact
+`artifacts/e2e-knowledge-timeline.{json,md}` records SHA
+`65184a9fc12902b6b73a7da362a764a6f7277952`, five committed timeline turns, and
+the invalid future-lead turn rejected with `ineligible_selection` and HTTP 409.
+The drawer turn selected `k_sl_1a_b_r2`, resolved
+`SL-1A-B/SL-1A-B-R2`, and returned grounded narration. The probe's exit cleanup
+restored live narration successfully. Railway's agent-tooling and Config as
+Code messages remained warnings only and did not affect the result.
 
 **Notes:** Last verified locally on 2026-08-27: `TMPDIR=/tmp uv run pytest -q`
 passed with 92 tests after the resolver cutover. The transport fixture captures
@@ -460,6 +491,26 @@ The browser probe keeps its broad free-text investigation intent—Sarah's
 research or a damaged recording. Its assertion accepts either authored
 `SL-1A-B` outcome, while the preceding turns still prove the warning cannot
 appear early.
+
+**Observed 2026-09-10.** The committed deterministic evidence implementation
+passed the focused Phase 3/API checks (`3 passed, 22 deselected`) and generated
+the ignored redacted artifact `artifacts/phase3-knowledge-evidence.json`. The
+artifact records the four required boundaries: the damaged-warning selection
+resolved to `SL-1A-B/SL-1A-B-R2` and committed `michelle_warning_known`, while
+future, duplicate, and unselected IDs were rejected with unchanged SQLite
+snapshots. The full Python suite passed with 310 tests and 90.92% coverage.
+The frontend unit/evidence suite passed with 33 tests. No staging browser run
+was performed, so this verifies the local deterministic evidence only; the
+staging command above remains outstanding for the deployed SHA.
+
+**Staging attempt 2026-09-10.** `/api/v1/version` reported staging SHA
+`b3a8823ce88c7899e47d8632e91d1d3ea1db55e5`. The browser probe reached the third
+drawer turn, but failed because the live provider returned only local
+phone/drawer/KMS observations and did not yet mention a recording, warning,
+research, evidence, continuity, or lead. The test therefore stopped before its
+selected-ID and resolved-source assertions, and did not produce a new
+`e2e-knowledge-timeline` report. This is a staging/live-provider acceptance
+failure, not evidence that the deterministic local fixture failed.
 
 
 A later staging attempt reported a browser CORS failure. Direct checks of the

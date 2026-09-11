@@ -405,7 +405,7 @@ no JANUS, later-scene purpose, source IDs, future route effects, or full
 plot/storylet prose, stays within the declared budget, and still offers the
 next eligible local reveal.
 
-Phase evidence: [ ] retain the deterministic fixture's request payload IDs,
+Phase evidence: [x] retain the deterministic fixture's request payload IDs,
 selected IDs, resolved package IDs, facts before/after, accepted segments, and
 rejection reason. Run it through the staged API/browser harness with a
 test-only deterministic provider selected by deployment configuration (never a
