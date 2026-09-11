@@ -577,8 +577,51 @@ it as an incomplete run.
 **Cleanup:** `artifacts/phase5-knowledge-leakage-matrix.json` is gitignored and
 may be deleted once staged evidence supersedes it.
 
-**Notes:** The staged gates and their observed evidence are still outstanding
-and will be appended here after that run.
+**Notes:** Staging verification 2026-09-11 (blocked): PR #446 (branch
+`phase5knowledge`) merged to `main` as commit
+`0c7d4f228d758d24096c7d35786f251259686463`. Staging's `/api/v1/version` was
+polled until it reported that exact SHA before any gate ran.
+
+With stale artifacts deleted, `@smoke` was run twice against staging and failed
+identically both times on the first scripted turn, player input "Look carefully
+at Michelle's phone.": `Turn API returned HTTP 409: narration does not ground
+the knowledge term 'michelle's phone'`. The focused `@safety|@npc` gate was then
+run once and both of its two tests failed with the identical error message and
+grounding term on their own first scripted turns.
+
+A local deterministic check (`KnowledgeProjector.project` against the same
+scripted input) confirmed a valid grounding id, `k_scene_1a_entry`, is available
+in the projection and its own statement already mentions Michelle's phone --
+so this is not a missing-grounding structural gap; the live model had a valid
+id to cite and did not cite it. `@llm-canon` was NOT run after this pattern, to
+avoid spending further billed OpenAI calls on a scene-1A opening flow that had
+just failed identically three times in a row for the same reason.
+
+This is not a knowledge leak: the deterministic `NarrationSafetyValidator`
+correctly rejected the non-compliant narration before commit or render,
+exactly as designed (fail closed, no state change). The finding is a live-model
+narration-grounding citation compliance gap, not a Phase 5 code defect --
+nothing in the Phase 5 diff touched `storygame/runtime/narration_safety.py`,
+`storygame/runtime/cloudflare.py`, or the package's `knowledge.yaml`.
+
+The 2026-08-31 staging entry recorded in the Phase 3 section of this file above
+shows `@spine` and `@llm-canon` completing structurally (all turns returning
+successfully) with only narrative-quality judge complaints at that time. The
+deterministic NarrationSafetyValidator's hard grounding-citation rejection was
+added afterward, in the Phase 4 merge, and its Phase 3/4 staged evidence used
+a test-only deterministic provider rather than the live model (see the Phase 3
+section's own Phase evidence note). This staged Phase 5 run therefore appears
+to be the first time that specific check ran against live model traffic, and it
+reveals the live model does not reliably comply with it even for a
+straightforward, already-available grounding id.
+
+Status: the Phase 5 code changes (leakage matrix tests, roleplay-judge.js
+committed-timeline rewrite, narrative_history removal) are merged and
+independently verified locally (327 Python tests, 35 frontend tests, both
+suites' ruff/build checks clean). The staged rollout gate is blocked by this
+live-model grounding-citation compliance gap, which is outside Phase 5's scope
+to fix. Production promotion was out of scope for this pass by explicit
+decision.
 
 ## Phase 2 fact-derived shadow projection
 
