@@ -10,25 +10,27 @@ proposed change before committing it as a durable fact.
   save/load and a typed resolution of an already-issued game-break warning are
   control actions.
 - Markdown packages define scenes, entities, transitions, optional storylets,
-  executable storylet routes,
-  and Freytag pacing. They shape drama and urgency without turning into action
-  menus or parser rules.
-- Packages declare facts, safe scene frames, and audience-scoped knowledge with
-  exact reveal sources. Runtime knowledge is a projection of committed facts,
-  never author prose or speaker-private facts.
+  executable storylet routes, and Freytag pacing, shaping drama and urgency
+  without turning into action menus or parser rules.
 - A move that demonstrably removes an indispensable reachable dependency pauses
-  for an explicit decision. Proceed commits the validated branch; return restores
-  the exact pre-turn snapshot, including across a save/load.
+  for an explicit decision. Proceed commits the validated branch and its
+  narration; return restores the exact pre-turn snapshot—facts, knowledge,
+  continuity, and transcript position—including across a save/load. No pending
+  candidate's prose is ever shown before that decision is made.
 
 ## Runtime contract
 
 The provider receives a bounded `TurnKnowledgeContext`: safe scene frame,
-committed player knowledge, present-speaker sayable knowledge, and eligible
-reveal candidates—never plot prose, routes, source IDs, future effects, or
-transcript memory. It returns strict JSON segments and, at most, one eligible
-knowledge ID. Its output is untrusted: the runtime resolves that ID to the sole
-package-owned route and effects on cloned state before atomically committing.
-Invalid IDs never mutate canonical state.
+committed player/speaker-sayable knowledge, and eligible reveal
+candidates—never plot prose, routes, source IDs, future effects, or transcript
+memory. It returns strict JSON segments and, at most, one eligible knowledge
+ID; both are untrusted. The runtime resolves that ID to its sole package-owned
+route and effects on a cloned fact store, then a deterministic
+`NarrationSafetyValidator` re-checks every segment's text and grounding
+against that same clone before anything commits—rejecting a leaked name, an
+ungrounded claim, wrong-speaker dialogue, or a premature transition outright,
+with no partial edits and no state change. Only a fully validated candidate is
+committed atomically and rendered.
 
 Pacing is declarative and fact-backed: accepted turns record bounded narrative
 time, while package-declared deadlines may add pressure or perform an authored

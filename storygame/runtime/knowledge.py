@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import predicate_matches
-from storygame.story_package.models import FactDelivery, KnowledgeDefinition
+from storygame.story_package.models import FactDelivery, KnowledgeDefinition, entity_surface_forms
 
 
 class _KnowledgeModel(BaseModel):
@@ -68,8 +68,7 @@ def _entity_surface_forms(entity) -> tuple[str, ...]:
     than being inferred from the name or from a knowledge item's aliases.
     """
 
-    forms = {entity.name.casefold(), *(alias.casefold() for alias in entity.aliases)}
-    return tuple(sorted(form for form in forms if form))
+    return entity_surface_forms(entity)
 
 
 def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:

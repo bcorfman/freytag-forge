@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import inspect
 import json
 import textwrap
@@ -11,6 +12,152 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+
+class _CaseInsensitiveHeaders(dict[str, str]):
+    def __getitem__(self, key: str) -> str:
+        wanted = key.casefold()
+        for actual, value in self.items():
+            if actual.casefold() == wanted:
+                return value
+        raise KeyError(key)
+
+    def get(self, key: str, default: str | None = None) -> str | None:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+
+class _SyncASGIResponse:
+    def __init__(self, status_code: int, headers: list[tuple[bytes, bytes]], body: bytes) -> None:
+        self.status_code = status_code
+        self.headers = _CaseInsensitiveHeaders(
+            {key.decode("latin-1"): value.decode("latin-1") for key, value in headers}
+        )
+        self.content = body
+
+    @property
+    def text(self) -> str:
+        return self.content.decode("utf-8")
+
+    def json(self) -> Any:
+        return json.loads(self.text)
+
+
+class _SyncASGITestClient:
+    """Small TestClient-compatible adapter for the installed httpx2/AnyIO stack.
+
+    The pinned test dependency's blocking portal deadlocks in this execution
+    environment after FastAPI completes a handler. Running the ASGI call on a
+    fresh asyncio loop retains the real FastAPI routing/middleware path while
+    keeping the compatibility surface used by the tests.
+    """
+
+    __test__ = False
+
+    def __init__(self, app: Any, base_url: str = "http://testserver", **_: Any) -> None:
+        self.app = app
+        self.base_url = base_url.rstrip("/")
+
+    def __enter__(self) -> _SyncASGITestClient:
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        return None
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        json: Any = None,
+        content: bytes | str | None = None,
+        headers: dict[str, str] | None = None,
+        **_: Any,
+    ) -> _SyncASGIResponse:
+        from urllib.parse import urlsplit
+
+        target = urlsplit(url if url.startswith("http") else f"{self.base_url}{url}")
+        body = json_module.dumps(json).encode("utf-8") if json is not None else content
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        body = body or b""
+        request_headers = [(b"user-agent", b"testclient")]
+        supplied_headers = {key.casefold(): value for key, value in (headers or {}).items()}
+        if json is not None:
+            supplied_headers.setdefault("content-type", "application/json")
+        supplied_headers.setdefault("content-length", str(len(body)))
+        request_headers.extend(
+            (key.encode("latin-1"), value.encode("latin-1")) for key, value in supplied_headers.items()
+        )
+        result: dict[str, Any] = {"status": None, "headers": [], "body": bytearray()}
+        received = False
+
+        async def receive() -> dict[str, Any]:
+            nonlocal received
+            if received:
+                return {"type": "http.disconnect"}
+            received = True
+            return {"type": "http.request", "body": body, "more_body": False}
+
+        async def send(message: dict[str, Any]) -> None:
+            if message["type"] == "http.response.start":
+                result["status"] = message["status"]
+                result["headers"] = message.get("headers", [])
+            elif message["type"] == "http.response.body":
+                result["body"].extend(message.get("body", b""))
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": method.upper(),
+            "path": target.path or "/",
+            "raw_path": (target.path or "/").encode("utf-8"),
+            "root_path": "",
+            "scheme": target.scheme or "http",
+            "query_string": target.query.encode("ascii"),
+            "headers": request_headers,
+            "client": ("testclient", 50000),
+            "server": (target.hostname or "testserver", target.port or 80),
+            "extensions": {"http.response.debug": {}},
+            "state": {},
+        }
+        asyncio.run(self.app(scope, receive, send))
+        return _SyncASGIResponse(result["status"], result["headers"], bytes(result["body"]))
+
+    def get(self, url: str, **kwargs: Any) -> _SyncASGIResponse:
+        return self.request("GET", url, **kwargs)
+
+    def options(self, url: str, **kwargs: Any) -> _SyncASGIResponse:
+        return self.request("OPTIONS", url, **kwargs)
+
+    def post(self, url: str, **kwargs: Any) -> _SyncASGIResponse:
+        return self.request("POST", url, **kwargs)
+
+
+json_module = json
+
+
+def _install_test_client_compatibility() -> None:
+    import fastapi.routing
+    import fastapi.testclient as fastapi_testclient
+    import starlette.concurrency
+    import starlette.routing
+    import starlette.testclient as starlette_testclient
+
+    async def run_in_threadpool_compat(func: Any, *args: Any, **kwargs: Any) -> Any:
+        return func(*args, **kwargs)
+
+    fastapi.routing.run_in_threadpool = run_in_threadpool_compat
+    starlette.routing.run_in_threadpool = run_in_threadpool_compat
+    starlette.concurrency.run_in_threadpool = run_in_threadpool_compat
+    fastapi_testclient.TestClient = _SyncASGITestClient
+    starlette_testclient.TestClient = _SyncASGITestClient
+
+
+_install_test_client_compatibility()
 
 TIERS = ("unit", "component", "integration", "evaluation")
 QUALITY_TIERS = ("runtime_safety", "authoring_quality")

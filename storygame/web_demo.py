@@ -93,7 +93,12 @@ def _turn_payload(
     prompt: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Keep structured segments primary while retaining migration-era lines."""
-    if isinstance(proposal, str):
+    if game_break is not None:
+        # The candidate is validated but not canon until the player chooses to
+        # proceed. Never put its prose in the warning response.
+        narration = ""
+        segments: list[dict[str, object]] = []
+    elif isinstance(proposal, str):
         narration = proposal
         segments = [{"kind": "narration", "text": narration}]
     else:
@@ -103,7 +108,7 @@ def _turn_payload(
         ]
     payload = {
         "segments": segments,
-        "lines": [narration],
+        "lines": [narration] if narration else [],
         "game_break": game_break,
         "delivery": state.last_turn_delivery.model_dump(mode="json"),
         "state": _state_summary(state),
@@ -266,14 +271,13 @@ def create_demo_app(
         if not state.pending_break or state.pending_break.warning_id != body.warning_id:
             raise HTTPException(status_code=409, detail="game-break warning does not match this session")
         try:
-            RuntimeEngine(state, provider_for(state)).resolve_break(body.decision)
+            resolved = RuntimeEngine(state, provider_for(state)).resolve_break(body.decision)
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
-        narration = "You proceed."
-        if body.decision == "return_to_scene":
-            narration = "You return to the scene before that consequence."
-        return _turn_payload(state, narration)
+        if body.decision == "proceed" and resolved is not None:
+            return _turn_payload(state, resolved)
+        return _turn_payload(state, "You return to the scene before that consequence.")
 
     return app
 

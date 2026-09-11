@@ -147,6 +147,9 @@ class KnowledgeIndexes(_Model):
     alias_to_knowledge: Mapping[str, tuple[str, ...]]
     audience_to_known_terms: Mapping[str, tuple[str, ...]]
     prerequisite_dependents: Mapping[str, tuple[str, ...]]
+    entity_alias_to_entities: Mapping[str, tuple[str, ...]] = {}
+    term_to_knowledge: Mapping[str, tuple[str, ...]] = {}
+    protected_terms: tuple[str, ...] = ()
 
 
 class Entity(_Model):
@@ -159,6 +162,13 @@ class Entity(_Model):
     # them. Setting this replaces that paragraph for prompt purposes only; plot.md
     # remains narrative ground truth and is never edited to accommodate the narrator.
     narrator_bio: str | None = None
+
+
+def entity_surface_forms(entity: Entity) -> tuple[str, ...]:
+    """Return authored display-name and alias forms for deterministic screening."""
+
+    forms = {entity.name.casefold(), *(alias.casefold() for alias in entity.aliases)}
+    return tuple(sorted(form for form in forms if form))
 
 
 class ItemPlacement(_Model):

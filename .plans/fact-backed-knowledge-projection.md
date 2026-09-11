@@ -417,32 +417,32 @@ separately as quality evidence, not as structural authorization.
 
 ### Phase 4 / PR 4: Pre-commit narration safety and atomic rendering
 
-- [ ] Add `NarrationSafetyValidator` and package alias indexes. Validate each
+- [x] Add `NarrationSafetyValidator` and package alias indexes. Validate each
   narration/dialogue segment against the cloned post-candidate audience
   projection.
-- [ ] Refactor `RuntimeEngine.turn()` to execute: parse -> normalize structural
+- [x] Refactor `RuntimeEngine.turn()` to execute: parse -> normalize structural
   envelope only -> validate exact operations/events -> apply to clone -> build
   post-candidate projection -> validate narration -> dependency analysis ->
   atomic commit -> append transcript/render.
-- [ ] Ensure game-break candidates do not render their candidate narration until
+- [x] Ensure game-break candidates do not render their candidate narration until
   `proceed`; `return_to_scene` restores facts, knowledge projection, continuity,
   and transcript position exactly.
-- [ ] Remove normalization that can infer a canonical route from a model's
+- [x] Remove normalization that can infer a canonical route from a model's
   leaked/partial canonical operations unless the proposal explicitly selects
   one unique eligible knowledge source. Recovery may repair JSON structure, not
   infer narrative authorization.
-- [ ] Add adversarial tests for future entity aliases, protected paraphrases,
+- [x] Add adversarial tests for future entity aliases, protected paraphrases,
   uncited knowledge, wrong-speaker dialogue, unselected candidate effects,
   premature transitions, invented game-breaking evidence, durable incidental claims, and
   rejected-turn atomicity.
-- [ ] Add API/frontend tests proving rejected narration never reaches
+- [x] Add API/frontend tests proving rejected narration never reaches
   `segments`/`lines` and accepted segments preserve their validated structure.
 
-Exit gate: no narration is rendered or remembered unless its grounding and
+Exit gate: [x] no narration is rendered or remembered unless its grounding and
 same-turn effects validate against the candidate projection; every failure
 leaves facts, scene, events, continuity, transcript, and persistence unchanged.
 
-Phase evidence: run the fixture with adversarial provider replies: an invented
+Phase evidence: [x] run the fixture with adversarial provider replies: an invented
 clue that incorrectly completes a required dependency, a premature warning,
 and patrol tape without an arrival/search event. The game-breaking and
 premature claims must be rejected atomically; ordinary local clues remain

@@ -56,6 +56,7 @@ class RuntimeSnapshot(BaseModel):
     turn_records: tuple[TurnRecord, ...] = ()
     staged_hint_fact_ids: tuple[str, ...] = ()
     staged_handoff_fact_ids: tuple[str, ...] = ()
+    last_turn_delivery: TurnDelivery = TurnDelivery()
 
 
 class RuntimeState(BaseModel):
@@ -120,7 +121,24 @@ class RuntimeState(BaseModel):
             turn_records=tuple(self.turn_records),
             staged_hint_fact_ids=self.staged_hint_fact_ids,
             staged_handoff_fact_ids=self.staged_handoff_fact_ids,
+            last_turn_delivery=self.last_turn_delivery,
         )
+
+    def restore_snapshot(self, snapshot: RuntimeSnapshot) -> None:
+        """Restore every pre-turn field, including delivery observability."""
+
+        self.current_scene_id = snapshot.current_scene_id
+        self.phase = snapshot.phase
+        self.active_event_ids = set(snapshot.active_event_ids)
+        self.fired_event_ids = set(snapshot.fired_event_ids)
+        self.facts = snapshot.facts.clone()
+        self.turn_index = snapshot.turn_index
+        self.scene_entered_at_turn = snapshot.scene_entered_at_turn
+        self.narrative_history = list(snapshot.narrative_history)
+        self.turn_records = list(snapshot.turn_records)
+        self.staged_hint_fact_ids = snapshot.staged_hint_fact_ids
+        self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
+        self.last_turn_delivery = snapshot.last_turn_delivery
 
     def set_pending_break(
         self,
@@ -213,17 +231,7 @@ class RuntimeState(BaseModel):
             raise RuntimeStateError("there is no pending game break")
         if decision == "return_to_scene":
             snapshot = self.pending_snapshot
-            self.current_scene_id = snapshot.current_scene_id
-            self.phase = snapshot.phase
-            self.active_event_ids = set(snapshot.active_event_ids)
-            self.fired_event_ids = set(snapshot.fired_event_ids)
-            self.facts = snapshot.facts.clone()
-            self.turn_index = snapshot.turn_index
-            self.scene_entered_at_turn = snapshot.scene_entered_at_turn
-            self.narrative_history = list(snapshot.narrative_history)
-            self.turn_records = list(snapshot.turn_records)
-            self.staged_hint_fact_ids = snapshot.staged_hint_fact_ids
-            self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
+            self.restore_snapshot(snapshot)
         elif decision != "proceed":
             raise RuntimeStateError("game break decision must be proceed or return_to_scene")
         else:
