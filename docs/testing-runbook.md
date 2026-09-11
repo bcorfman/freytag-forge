@@ -652,6 +652,8 @@ memory card', which is outside the scope of the grounding-citation-reliability
 plan and has not yet been investigated. Production promotion remains out of
 scope for this pass by earlier explicit decision.
 
+After renaming the colliding 'Michelle's message'/'her message'/'message from Michelle'/'Michelle's note' phrasings to distinctive 'encrypted'-based variants in data/stories/continuity-initiative/knowledge.yaml (commit `cbc427b`), staging redeployed to that exact SHA (confirmed via `/api/v1/version`). With stale artifacts deleted, the focused `@safety|@npc` gate was re-run against staging and both tests now pass (2 passed). Combined with the earlier confirmed `@smoke` pass, all three of `@smoke`, `@safety`, and `@npc` now pass against staging at commit `cbc427b`. `@llm-canon` (the full nine-scene spine judge run) has still not been run. The Phase 5 exit gate in `.plans/fact-backed-knowledge-projection.md` requires it to pass before the gate can be marked fully met. Production promotion remains out of scope for this pass by earlier explicit decision.
+
 ## Phase 2 fact-derived shadow projection
 
 **Purpose:** Verify the legacy provider context remains unchanged while the
