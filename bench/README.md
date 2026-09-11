@@ -145,11 +145,28 @@ An optional `overrides` object patches package files in a temporary effective co
 
 Whole-file replacement is also accepted by supplying a string as the file's override value. The effective copy is what the runtime loads and sends to the narrator, and its content is what `package_hash` records.
 
-The three shipped example configurations are:
+The shipped example configurations are:
 
 - `variations/example.json`: the shipped configuration with beat details and the default output example, plus a Scene 1A script. Use it as the starting point for a new arm.
 - `variations/no-output-example.json`: the same configuration with the response example omitted. Removing it entirely has been observed to break response validity: the narrator repeatedly returned `INVALID_PROPOSAL` and produced no score.
 - `variations/drawer-overlay.json`: a package override, showing how a variation edits authored text in a temporary effective copy.
+
+For candidate-selection work, `variations/candidate-selection-baseline.json`
+replays the four authored Scene 1A actions from the reliability plan. Run it
+with four replicates, then report against `all-turn-records.json`; that file
+keeps the per-turn offered and selected IDs even when a scene fails before the
+judgeable `turn-records.json` output is written. The committed baseline report
+keeps the same redacted per-turn fields without model narration:
+
+```bash
+uv run python -m bench run --variation bench/variations/candidate-selection-baseline.json \
+  --scene 1A --script candidate-selection-repro --replicates 4 \
+  --out /tmp/candidate-selection-baseline --confirm
+uv run python -m bench.candidate_selection_report \
+  --in /tmp/candidate-selection-baseline/all-turn-records.json \
+  --out-json /tmp/candidate-selection-baseline/report.json \
+  --out-md /tmp/candidate-selection-baseline/report.md
+```
 
 The leakage metric is calculated against the resolved example actually sent in the turn system prompt, so it works for arbitrary custom examples rather than only the shipped drawer text.
 
@@ -184,4 +201,3 @@ The in-process bench calls `RuntimeEngine.turn(input)` without injecting `clock_
 This was settled by deterministic local evidence against the archived Arm C timing records, not by assuming that seconds and turns were interchangeable: the archive records Scene 1A at relative turns 1, 2, 3, 4 and resets to 0 on entry to 1B at global turn 5; the local engine tests assert the same reset and turn-relative activation, and assert that an injected seconds value cannot bypass the minimum-turn floor. The frontend package-clock tests independently reject `target_seconds` and require `target_turn`. Thus no schedule is invented or injected by the bench.
 
 What was not verified here is a fresh live, stochastic bench traversal against staging; that is intentionally out of scope and would spend both budgets. The archived hosted run proves the observed controller schedule, and the local runtime/clock tests prove the in-process schedule. Exact future model outputs, neuron billing telemetry, and a fresh hosted equivalence run remain unverified.
-

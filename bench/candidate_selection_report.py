@@ -42,8 +42,9 @@ def compute_report(data: dict[str, Any]) -> dict[str, Any]:
     turn1_matched = 0
     turn3_occurrences = 0
     turn3_matched = 0
+    per_turn: list[dict[str, Any]] = []
 
-    for run in runs:
+    for run_index, run in enumerate(runs):
         turns = run.get("turns", [])
         if not isinstance(turns, list):
             raise ValueError("each run's 'turns' value must be a list")
@@ -52,6 +53,7 @@ def compute_report(data: dict[str, Any]) -> dict[str, Any]:
         for index, turn in enumerate(turns):
             candidates = turn.get("candidates_offered", [])
             selected_ids = turn.get("selected_knowledge_ids", [])
+            expected_ids = TURN1_POSITION0_IDS if index % 4 == 0 else TURN3_POSITION2_IDS if index % 4 == 2 else set()
             if candidates:
                 offered += 1
                 if selected_ids:
@@ -59,12 +61,23 @@ def compute_report(data: dict[str, Any]) -> dict[str, Any]:
 
             if index % 4 == 0:
                 turn1_occurrences += 1
-                if set(selected_ids) & TURN1_POSITION0_IDS:
+                if set(selected_ids) & expected_ids:
                     turn1_matched += 1
             if index % 4 == 2:
                 turn3_occurrences += 1
-                if set(selected_ids) & TURN3_POSITION2_IDS:
+                if set(selected_ids) & expected_ids:
                     turn3_matched += 1
+            per_turn.append(
+                {
+                    "replicate": run.get("replicate", run_index + 1),
+                    "turn": index + 1,
+                    "player_input": turn.get("player_input", ""),
+                    "candidates_offered": candidates,
+                    "selected_knowledge_ids": selected_ids,
+                    "expected_candidate_ids": sorted(expected_ids),
+                    "expected_match": None if not expected_ids else bool(set(selected_ids) & expected_ids),
+                }
+            )
 
     return {
         "total_runs": len(runs),
@@ -72,6 +85,7 @@ def compute_report(data: dict[str, Any]) -> dict[str, Any]:
         "overall_selection_rate": _rate(selected, offered),
         "turn1_position0_match_rate": _match_rate(turn1_matched, turn1_occurrences),
         "turn3_position2_match_rate": _match_rate(turn3_matched, turn3_occurrences),
+        "per_turn": per_turn,
     }
 
 
