@@ -482,23 +482,21 @@ valid, and a grounded recording reveal commits before it renders.
   `_PRIVATE_PREDICATES`, raw narration memory, compatibility context fields, and
   temporary schema adapters after persisted-session policy is complete.
 
-Exit gate: [ ] not yet met. Deterministic leakage tests pass across all scenes
-and audiences (verified locally: `tests/test_knowledge_leakage_matrix.py`,
-3/3 passing, full suite 327/327 at the time). The original blocker — a
-live-model grounding-citation compliance gap in `NarrationSafetyValidator`
-running against real traffic for what looks like the first time — is now
-fixed and confirmed live: see `.plans/narration-grounding-citation-reliability.md`
-for the full investigation, a deterministic auto-attribution repair
-(commit `b7d5d1d`), and a separately-discovered opening-narration-safety gap
-found and fixed during the same follow-up (commit `a46f6b9`). Staging
-redeployed to commit `bdc966d` and `@smoke` — the exact test that originally
-failed 4/4 times — now passes. Staged `@llm-canon` still has not run: the
-focused `@safety|@npc` gate now hits a different, separate
-`narration_known_term_leak` (on 'message from michelle' and 'hidden memory
-card') in scene content those tests only reach once past the now-fixed
-opening blocker. That new leak is outside the grounding-citation plan's
-scope and has not yet been investigated. Production promotion remains out of
-scope for this pass by explicit decision.
+Exit gate: [ ] not yet fully met. Deterministic leakage tests pass across all
+scenes and audiences (verified locally: `tests/test_knowledge_leakage_matrix.py`,
+3/3 passing, full suite 327/327 at the time). Every staged structural blocker
+found so far is now fixed and confirmed live: the original live-model
+grounding-citation compliance gap (deterministic auto-attribution repair,
+commit `b7d5d1d`), a separately-discovered opening-narration-safety gap
+(commit `a46f6b9`), and a `narration_known_term_leak` caused by an
+overly-generic authored alias colliding with ordinary conversation (renamed
+in commit `cbc427b`) — see `.plans/narration-grounding-citation-reliability.md`
+for the full investigation. Staging redeployed through commit `cbc427b`, and
+`@smoke`, `@safety`, and `@npc` all now pass — `@smoke` and the
+`@safety|@npc` pair are the exact tests that originally failed. Staged
+`@llm-canon`, the full nine-scene spine judge run this exit gate's own
+wording requires, still has not been run. Production promotion remains out
+of scope for this pass by explicit decision.
 
 Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
 against staging, then production after promotion. Preserve JSON/Markdown
