@@ -704,9 +704,7 @@ class CloudflareTurnProvider:
                 ],
                 "selected_knowledge_ids": [],
             }
-            return self._cap_accepted_response(
-                narration_only, proposal.model_copy(update={"selected_knowledge_ids": ()})
-            )
+            return self._cap_accepted_response(narration_only, parse_turn_proposal(narration_only))
         except RuntimeContractError as error:
             if self.last_projection and self.last_projection.handoff_deliveries:
                 return self._fallback_handoff()
@@ -834,7 +832,11 @@ class CloudflareTurnProvider:
     def _cap_accepted_response(self, response: object, proposal: TurnProposal) -> object:
         """Bound accepted narration while retaining an out-of-band reveal segment."""
 
-        if len(proposal.segments) <= MAX_TURN_SEGMENTS and not self.grounding_attributions:
+        if (
+            len(proposal.segments) <= MAX_TURN_SEGMENTS
+            and not self.grounding_attributions
+            and parse_turn_proposal(response) == proposal
+        ):
             return response
         kept = list(proposal.segments[:MAX_TURN_SEGMENTS])
         if proposal.selected_knowledge_ids:
@@ -931,6 +933,7 @@ class CloudflareTurnProvider:
                 f"You selected {', '.join(sorted(proposal.selected_knowledge_ids))}. Resend the same narration with "
                 "selected_knowledge_ids holding at most one of those IDs, or an empty list to reveal nothing.",
             )
+        proposal = self._auto_attribute_committed_knowledge(proposal)
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
         ineligible = sorted(
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}
@@ -1041,6 +1044,37 @@ class CloudflareTurnProvider:
                 "select facts or a transition.",
             )
         return proposal
+
+    def _auto_attribute_committed_knowledge(self, proposal: TurnProposal) -> TurnProposal:
+        """Repair omitted grounding for unambiguous, already-committed terms."""
+
+        if self.last_projection is None:
+            return proposal
+
+        committed_ids = {item.id for item in self.last_projection.committed_knowledge}
+        indexes = self.state.package.knowledge_indexes
+        multi_word_terms = {term for term in indexes.term_to_knowledge if len(term.split()) > 1}
+        changed = False
+        segments: list[NarrationSegment] = []
+        for segment in proposal.segments:
+            normalized_text = " ".join(segment.text.casefold().split())
+            new_ids: set[str] = set()
+            for term in multi_word_terms:
+                normalized_term = " ".join(term.casefold().split())
+                if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", normalized_text):
+                    continue
+                owners = set(indexes.term_to_knowledge[term]) & committed_ids
+                if len(owners) == 1:
+                    owner = next(iter(owners))
+                    if owner not in segment.grounding_ids:
+                        new_ids.add(owner)
+            if not new_ids:
+                segments.append(segment)
+                continue
+            changed = True
+            segments.append(segment.model_copy(update={"grounding_ids": (*segment.grounding_ids, *sorted(new_ids))}))
+
+        return proposal.model_copy(update={"segments": tuple(segments)}) if changed else proposal
 
     def _missing_handoff_terms(self, narration: str) -> tuple[str, ...]:
         deliveries = self.last_projection.handoff_deliveries if self.last_projection else ()

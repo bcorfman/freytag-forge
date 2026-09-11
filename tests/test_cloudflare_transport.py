@@ -563,6 +563,62 @@ def test_transport_drops_an_ungrounded_groupless_selection(monkeypatch) -> None:
     assert provider.grounding_attributions == ()
 
 
+def test_transport_auto_attributes_a_committed_known_term(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = {
+        "segments": [{"kind": "narration", "text": "Kristin examines Michelle's phone on the kitchen floor."}],
+        "selected_knowledge_ids": [],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+
+    result = provider("Look carefully at Michelle's phone.")
+
+    assert "k_scene_1a_entry" in result["segments"][0]["grounding_ids"]
+
+
+def test_transport_does_not_attribute_an_unavailable_future_term(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    future_term = "facility entrance"
+    future_owner_ids = PACKAGE.knowledge_indexes.term_to_knowledge[future_term]
+    committed_ids = {item.id for item in KnowledgeProjector().project(state, "player", "").committed_knowledge}
+    assert len(future_owner_ids) == 1
+    assert future_owner_ids[0] not in committed_ids
+    reply = {
+        "segments": [{"kind": "narration", "text": f"The {future_term} waits beyond the trees."}],
+        "selected_knowledge_ids": [],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+
+    result = provider("Search the grounds.")
+
+    assert future_owner_ids[0] not in result["segments"][0].get("grounding_ids", [])
+
+
+def test_transport_does_not_duplicate_existing_committed_grounding(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = {
+        "segments": [
+            {
+                "kind": "narration",
+                "text": "Michelle's phone remains on the kitchen floor.",
+                "grounding_ids": ["k_scene_1a_entry"],
+            }
+        ],
+        "selected_knowledge_ids": [],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+
+    result = provider("Check Michelle's phone.")
+
+    assert result["segments"][0]["grounding_ids"].count("k_scene_1a_entry") == 1
+
+
 def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) -> None:
     """Selecting a candidate without telling it must cost a guided retry, not the player's turn."""
 
