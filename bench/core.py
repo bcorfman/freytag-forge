@@ -22,11 +22,11 @@ from storygame.runtime.cloudflare import (
     CloudflareTurnProvider,
     NarrationProviderError,
 )
-from storygame.runtime.contracts import join_narration
+from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import predicate_matches
+from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
 
 CRITERIA = (
@@ -474,7 +474,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     engine = RuntimeEngine(state, provider)
     try:
         opening = engine.opening()
-    except NarrationProviderError as error:
+    except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
         return _failed_scene_record(variation, scene_id, script, provider, error)
     turns = []
     inputs = script["inputs"]
@@ -484,7 +484,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         prior_scene = state.current_scene_id
         try:
             proposal = _turn_with_rate_limit_retry(engine, player_input)
-        except NarrationProviderError as error:
+        except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
             return _failed_scene_record(
                 variation,
                 scene_id,
@@ -547,7 +547,7 @@ def _failed_scene_record(
     opening: str = "",
     turns: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    error_code = getattr(error, "error_code", "")
+    error_code = getattr(error, "error_code", "") or getattr(error, "code", "")
     reason = f"{error_code}: {error}" if error_code else str(error)
     quota = None
     if error_code == "AI_QUOTA_EXCEEDED":

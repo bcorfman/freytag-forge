@@ -8,7 +8,7 @@ from urllib.error import HTTPError
 import pytest
 
 import bench.cli as bench_cli
-import bench.core as bench_core
+import bench.core as core
 from bench.core import (
     CRITERIA,
     aggregate_runs,
@@ -35,14 +35,14 @@ PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="ut
 
 
 def _seed_bench_custody(monkeypatch) -> None:
-    original_package_and_state = bench_core.package_and_state
+    original_package_and_state = core.package_and_state
 
     def package_and_state_with_custody(variation, scene_id=None):
         package, state = original_package_and_state(variation, scene_id)
         state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
         return package, state
 
-    monkeypatch.setattr(bench_core, "package_and_state", package_and_state_with_custody)
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_custody)
 
 
 def test_score_matches_archived_acceptance_fixture() -> None:
@@ -266,6 +266,39 @@ def test_failed_replicate_is_recorded_and_excluded_from_compare(monkeypatch, tmp
     assert "INVALID_PROPOSAL" in row["failure_reason"]
     assert row["scenes_scored"] == 0
     assert row["max_score"] == 0
+
+
+def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monkeypatch) -> None:
+    payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": ["k_invented_source"]}],
+        "selected_knowledge_ids": [],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+
+        def __call__(self, _: str) -> dict[str, object]:
+            return payload
+
+    provider = FakeProvider()
+    variation = {
+        "name": "grounding-citation-baseline",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+        "_prompt_variant": {
+            "include_output_example": True,
+            "output_example": '{"segments": [], "selected_knowledge_ids": []}',
+            "beat_delivery": "details",
+        },
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: provider)
+
+    result = core.run_scene(variation, "1A", {"name": "repro", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "failed"
+    assert "invalid_grounding_reference" in result["failure_reason"]
 
 
 def test_run_baseline_refuses_archived_nine_scene_coverage_before_live_work(monkeypatch, tmp_path) -> None:
