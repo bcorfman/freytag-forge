@@ -237,23 +237,33 @@ depending on model compliance and without introducing a new failure code.
 
 ### Phase 3: Land the fix and re-verify live
 
-- [ ] Remove the now-superseded `cite_committed_knowledge_ids` flag and its
-  two rule sentences from `storygame/runtime/cloudflare.py`, the matching
-  plumbing in `bench/core.py`'s `resolve_variation`, the two regression tests
-  in `tests/test_cloudflare_transport.py` that exercise the flag directly
-  (`test_committed_knowledge_ids_are_exposed_and_required_when_enabled` /
-  `test_committed_knowledge_ids_remain_hidden_by_default`), and
-  `bench/variations/grounding-citation-candidate-1.json` — the auto-attribution
-  fix already lives unconditionally in shipped code and needs no flag; keep
-  only what the evidence supports, per this project's stated preference
-  against unused branches. The auto-attribution fix and its own tests are
-  untouched by this cleanup.
-- [ ] Audit every other prompt-constructing path — `_system_prompt()`, the
-  opening's own rule list, and `_recover_malformed_response`'s retry hint —
-  for whether the same missing-id gap applies there too (an opening segment
-  can also name already-established knowledge without ever having been shown
-  its id). Apply the same fix wherever it is needed; do not leave the turn
-  path fixed while the opening path still drifts, per constraint 3.
+- [x] Removed the superseded `cite_committed_knowledge_ids` flag and its two
+  rule sentences from `storygame/runtime/cloudflare.py`, the matching
+  plumbing in `bench/core.py`, the two flag-specific regression tests, and
+  `bench/variations/grounding-citation-candidate-1.json`. Landed in commit
+  `bd129a8`; full suite 331/331 after removal, auto-attribution and its
+  three tests untouched.
+- [x] Audited every other prompt-constructing path. Traced the actual code:
+  `CloudflareTurnProvider.__call__` (ordinary turns), `.opening()`, and
+  `_recover_malformed_response` → `_eligible_or_narration_only` (the
+  malformed-JSON retry path) all converge on the same
+  `_parse_eligible_proposal`, which is exactly where the Phase 2
+  auto-attribution fix lives — since that fix is a deterministic response
+  repair, not a prompt rule, it applies uniformly to every path without
+  needing any change to `_system_prompt()` or the retry hint. The audit
+  found something more serious instead: `RuntimeEngine.opening()` never
+  called `NarrationSafetyValidator` at all — confirmed live by a diagnostic
+  where a fake provider's opening blatantly said "JANUS watches from the
+  shadows, already aware of Kristin" and was accepted with zero rejection.
+  Fixed in commit `a46f6b9`: `opening()` now validates the provider's own
+  segments (never the authored entry_text) through the same validator
+  `turn()` already uses; confirmed rejection code `protected_narration_leak`.
+  `web_demo.py`'s `/api/v1/session` now returns HTTP 409 with
+  `X-Freytag-Rejection-Code` on rejection, matching the turn handler, and
+  never persists the rejected session. Two pre-existing tests whose fake
+  providers returned the same invalid payload for both the opening and the
+  turn call needed a safe opening response added — not a validator
+  weakening. Full suite 333/333.
 - [ ] Deploy to staging (merge to `main`, wait for the exact-SHA redeploy, per
   this project's standing procedure) and re-run the exact gates that first
   caught this: `@smoke`, then `@safety|@npc`. Only after those pass, run
