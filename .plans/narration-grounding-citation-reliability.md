@@ -150,46 +150,85 @@ variation rather than relying on the unset-default preview. Fixing
 `DEFAULT_PROMPT_RULES` itself is a small, separate, low-priority follow-up,
 not required to complete this task.
 
-- [ ] Add one new `system_prompt` variation key, e.g.
-  `cite_committed_knowledge_ids: bool` (default `false`, so today's shipped
-  behavior and the Phase 1 baseline variation are both unchanged unless a
-  variation opts in). When true: (a) `_section_user_prompt` renders each
-  committed-knowledge SCENE line with its id visible, mirroring the existing
-  candidate pattern rather than inventing a new format — for example
-  `f"{item['statement']} ({item['id']})"`; (b) exactly two new rule sentences
-  are appended (regardless of whether `default_rules` or a variation's own
-  `rules` override is in effect, the same way `_owner_rules()`/`_placement_rules()`
-  are always appended today), each one short idea at an 8th-grade level, for
-  example in spirit: "Some SCENE lines end with an ID in parentheses." /
-  "If you write about that line, put its ID in grounding_ids." Wire this
-  variation key through `bench/core.py`'s `resolve_variation`/`_prompt_variant`
-  so it is bench-testable without further code changes.
-- [ ] Add `bench/variations/grounding-citation-candidate-1.json`: same Scene
-  1A `phone-grounding-repro` script as the Phase 1 baseline, shipped default
-  rules (no `rules` override, so the new sentences land on the real
-  `default_rules`), with `cite_committed_knowledge_ids: true`.
-- [ ] Using `bench describe`/`bench prompt --variation ... --text`, confirm
-  the resolved SCENE section actually shows the parenthetical id and the two
-  new rule sentences appear, before spending a model call.
-- [ ] Run the baseline and candidate-1 variations for several replicates each
-  (`bench run --replicates N`, default four per the tool's own guidance) on
-  the reproduction script, and on at least one other scene/script the shipped
-  rules already cover, to check for regressions elsewhere.
-- [ ] `bench compare` the two arms on both the existing 63-point canon-judge
-  score and the rejection-rate signal Phase 1 made measurable. Require enough
-  replicates per arm to be distinguishable from noise per the tool's own
-  Welch-test/minimum-detectable-effect output; do not report a one- or
-  two-run difference as conclusive.
-- [ ] If candidate-1 does not measurably help, iterate on the two rule
-  sentences' wording only (a pure JSON change, no further code edit needed
-  now that the structural id-exposure is variation-configurable) before
-  concluding the structural fix itself was insufficient.
+- [x] Added one new `system_prompt` variation key,
+  `cite_committed_knowledge_ids: bool` (default `false`, shipped behavior and
+  the Phase 1 baseline variation unchanged unless a variation opts in). When
+  true: `_section_user_prompt` renders each committed-knowledge SCENE line
+  with its id visible (`f"{item['statement']} ({item['id']})"`) and exactly
+  two new rule sentences are appended ("Some SCENE lines end with an ID in
+  parentheses." / "If you write about that line, put its ID in
+  grounding_ids."). Wired through `bench/core.py`. Landed in commit
+  `bcee96e`.
+- [x] Added `bench/variations/grounding-citation-candidate-1.json` (Scene 1A
+  `phone-grounding-repro`, shipped default rules, `cite_committed_knowledge_ids: true`).
+- [x] Ran the baseline (4 replicates) and candidate-1 (4 replicates) live
+  against staging's narrator. **Result: candidate-1 did not help.** Baseline:
+  4/4 failed with `uncited_knowledge: narration does not ground the
+  knowledge term 'michelle's phone'`. Candidate-1: 4/4 failed identically —
+  exposing the id and adding the two rule sentences made no measurable
+  difference. A direct provider call showed why: the model's segments
+  carried no `grounding_ids` key at all, on any segment, in either arm. This
+  is a stronger, more useful negative result than a partial one — it rules
+  out "the model just needs the id" and points at something more structural.
+- [ ] `bench compare`/regression-script runs against another scene were not
+  performed, because candidate-1's negative result changed direction before
+  they were needed (see below) — not because the plan's original rigor was
+  abandoned. If prompt-only wording is revisited later, run these before
+  trusting any positive result.
 
-Exit gate: one specific combination (id-exposure plus rule wording) is
-selected with bench evidence that it measurably reduces the
-`uncited_knowledge`/`narration_known_term_leak` rejection rate on the
-reproducing script, does not regress the canon-judge score, and introduces no
-new failure code, across enough replicates to be distinguishable from noise.
+**Direction changed, 2026-09-11, based on the candidate-1 negative result.**
+`storygame/runtime/cloudflare.py` already has a proven, shipped mechanism for
+exactly this class of problem: when a selected candidate's id is missing from
+`grounding_ids`, `_parse_eligible_proposal` calls `derive_grounding`/
+`derive_statement_grounding` (`storygame/runtime/validation.py`) to find the
+segment whose text conveys that candidate and attribute the id
+automatically — a deterministic, code-level repair, not a prompt appeal. That
+mechanism only covers the one selected candidate; it has no counterpart for
+ordinary committed knowledge. Checked whether extending it is even safe:
+`package.knowledge_indexes.term_to_knowledge["michelle's phone"]` resolves to
+exactly one id, `k_scene_1a_entry` — unambiguous. Extending the same
+already-accepted derivation pattern to committed knowledge is a mechanism fix,
+not a prompt constraint, is fully deterministic, needs no live model calls to
+verify (a mocked-response unit test proves it directly), and does not depend
+on an 8B model's citation compliance at all.
+
+- [ ] In `CloudflareTurnProvider._parse_eligible_proposal` (or a small sibling
+  method called from it), after parsing the proposal and before the existing
+  `ungroundable` check, scan each segment's text for a multi-word known term
+  (reuse `indexes.term_to_knowledge`, mirroring `NarrationSafetyValidator`'s
+  own matching) whose owning ids intersect `self.last_projection.committed_knowledge`
+  ids in exactly one place (unambiguous) and are not already in that
+  segment's `grounding_ids`. Auto-attribute: return an amended proposal with
+  that id added to the segment's `grounding_ids`, the same way the existing
+  candidate-derivation path already amends segments via `segment.model_copy(...)`.
+  Deliberately scope this to committed knowledge only (never to a newly
+  selected-this-turn reveal — that path is already handled) and to
+  unambiguous single-owner terms only; leave a genuinely ambiguous or
+  ownerless term alone so `NarrationSafetyValidator` still rejects it exactly
+  as today.
+- [ ] Add a deterministic unit test (no live call): construct a
+  `CloudflareTurnProvider` with a stub/monkeypatched raw response shaped like
+  the real failing one (narration mentioning "Michelle's phone" with no
+  `grounding_ids` on any segment), call the parsing path directly, and assert
+  the returned proposal's segment now carries `k_scene_1a_entry` in
+  `grounding_ids`. Add a companion test proving an ambiguous or unknown term
+  is left unattributed (still rejected downstream).
+- [ ] Confirm the fix end to end with the full local suite, then one live
+  `bench run --variation bench/variations/grounding-citation-baseline.json
+  --scene 1A --replicates 4 --confirm` (no candidate variation needed — this
+  is unconditional runtime behavior, not a prompt variant) and confirm the
+  baseline's 4/4 failure rate is now resolved without any prompt change.
+- [ ] If auto-attribution alone resolves it, remove the now-unhelpful
+  `cite_committed_knowledge_ids` flag, its two rule sentences, and
+  `bench/variations/grounding-citation-candidate-1.json` as dead experimental
+  weight, per this project's stated preference against leaving unused
+  branches once a decision is made — keep only what the evidence supports.
+
+Exit gate: a deterministic, code-level fix (not a prompt rule) is shown by a
+free unit test to correctly and unambiguously repair the exact staging
+failure, and by one live bench run to actually resolve it against the real
+narrator, without depending on model compliance and without introducing a new
+failure code.
 
 ### Phase 3: Land the fix and re-verify live
 
