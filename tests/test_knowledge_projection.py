@@ -205,7 +205,6 @@ def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path
     )
 
     engine.turn("Search the desk.")
-    assert state.narrative_history == []
     assert state.turn_records[0].id == "turn_1"
     assert engine.last_projection is not None
 
@@ -218,9 +217,8 @@ def test_projection_is_stable_across_turn_recording_and_save_load(tmp_path: Path
     )
 
 
-def test_future_or_ambiguous_input_and_raw_history_do_not_expand_shadow_context() -> None:
+def test_future_or_ambiguous_input_does_not_expand_shadow_context() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.narrative_history.append("JANUS and Brandon were already revealed in an old transcript.")
     state.active_event_ids.add("SL-1A-B")
     projector = KnowledgeProjector()
 

@@ -9,9 +9,11 @@ proposed change before committing it as a durable fact.
 - Every ordinary in-world input goes to the narration model unchanged; only
   save/load and a typed resolution of an already-issued game-break warning are
   control actions.
-- Markdown packages define scenes, entities, transitions, optional storylets,
-  executable storylet routes, and Freytag pacing, shaping drama and urgency
-  without turning into action menus or parser rules.
+- Markdown plus typed knowledge declarations define scenes, entities,
+  transitions, optional storylets, executable storylet routes, and Freytag
+  pacing, shaping drama and urgency without turning into action menus or parser
+  rules. The knowledge declaration supplies the audience- and scene-scoped
+  facts that support progressive revelation and narration safety.
 - A move that demonstrably removes an indispensable reachable dependency pauses
   for an explicit decision. Proceed commits the validated branch and its
   narration; return restores the exact pre-turn snapshot—facts, knowledge,
@@ -38,8 +40,9 @@ transition. The runtime never infers gameplay from prose or selects an action.
 
 ## Authoring and deployment
 
-The [Markdown story authoring](markdown-story-authoring.md) guide is the source
-format contract. Loading fails closed on malformed input, unknown IDs,
+The [Markdown story authoring](markdown-story-authoring.md) guide documents the
+package format: Markdown sources plus the typed `knowledge.yaml` fact and
+knowledge declaration. Loading fails closed on malformed input, unknown IDs,
 predicates, knowledge sources, effects, audiences, timing windows, ambiguous
 transitions, and dependency cycles. Package inputs and compiled lookup indexes
 remain immutable at runtime. Schema-2 knowledge packages use save version 2;
