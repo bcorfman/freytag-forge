@@ -482,23 +482,31 @@ valid, and a grounded recording reveal commits before it renders.
   `_PRIVATE_PREDICATES`, raw narration memory, compatibility context fields, and
   temporary schema adapters after persisted-session policy is complete.
 
-Exit gate: [ ] not met. Deterministic leakage tests pass across all scenes and
-audiences (verified locally: `tests/test_knowledge_leakage_matrix.py`, 3/3
-passing, full suite 327/327). Staged `@llm-canon` has not passed — the staged
-rollout is blocked before it could even be attempted, by a live-model
-grounding-citation compliance gap exposed by Phase 4's `NarrationSafetyValidator`
-running against real traffic for what looks like the first time. Production
-promotion is out of scope for this pass by explicit decision. The runbook
-records the real, blocked evidence rather than a passing result.
+Exit gate: [ ] not yet met. Deterministic leakage tests pass across all scenes
+and audiences (verified locally: `tests/test_knowledge_leakage_matrix.py`,
+3/3 passing, full suite 327/327 at the time). The original blocker — a
+live-model grounding-citation compliance gap in `NarrationSafetyValidator`
+running against real traffic for what looks like the first time — is now
+fixed and confirmed live: see `.plans/narration-grounding-citation-reliability.md`
+for the full investigation, a deterministic auto-attribution repair
+(commit `b7d5d1d`), and a separately-discovered opening-narration-safety gap
+found and fixed during the same follow-up (commit `a46f6b9`). Staging
+redeployed to commit `bdc966d` and `@smoke` — the exact test that originally
+failed 4/4 times — now passes. Staged `@llm-canon` still has not run: the
+focused `@safety|@npc` gate now hits a different, separate
+`narration_known_term_leak` (on 'message from michelle' and 'hidden memory
+card') in scene content those tests only reach once past the now-fixed
+opening blocker. That new leak is outside the grounding-citation plan's
+scope and has not yet been investigated. Production promotion remains out of
+scope for this pass by explicit decision.
 
 Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
 against staging, then production after promotion. Preserve JSON/Markdown
-artifacts and stop on the first failed assertion. **Blocked** — the merge (PR
-#446, commit `0c7d4f228d758d24096c7d35786f251259686463`) and exact-SHA staging
-deploy both happened, but the earlier staged gates failed structurally before
-`@knowledge-timeline` was reached; see the "Phase 5 knowledge leakage matrix
-and staging rollout" section of `docs/testing-runbook.md` for the recorded
-evidence. Production is out of scope for this pass.
+artifacts and stop on the first failed assertion. **Still blocked**, by a new
+and different leak than the one recorded here originally; see the "Phase 5
+knowledge leakage matrix and staging rollout" section of
+`docs/testing-runbook.md` for the full, dated evidence trail across both
+findings. Production is out of scope for this pass.
 
 ### Persistent Scene 1A knowledge-timeline acceptance harness
 
