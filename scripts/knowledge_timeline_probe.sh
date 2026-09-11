@@ -12,6 +12,11 @@ done
 api_base_url="${RAILWAY_PUBLIC_API_URL%/}"
 scripted_opening='Rain beads on the quiet house.'
 
+railway_cli=(railway)
+if ! railway variable --help >/dev/null 2>&1; then
+  railway_cli=(npx --yes @railway/cli@latest)
+fi
+
 version_response="$(curl -sf "$api_base_url/api/v1/version")"
 channel="$(jq -r '.channel' <<<"$version_response")"
 if test "$channel" != staging; then
@@ -22,17 +27,17 @@ fi
 test_status=1
 
 revert_staging() {
-  railway variable set "FREYTAG_SCRIPTED_TURNS=" \
+  "${railway_cli[@]}" variable set "FREYTAG_SCRIPTED_TURNS=" \
     --project "$RAILWAY_PROJECT_ID" \
     --service "$RAILWAY_SERVICE_ID" \
     --environment "$RAILWAY_STAGING_ENVIRONMENT_ID" \
     --skip-deploys || true
-  railway variable set "FREYTAG_EXPOSE_KNOWLEDGE_AUDIT=" \
+  "${railway_cli[@]}" variable set "FREYTAG_EXPOSE_KNOWLEDGE_AUDIT=" \
     --project "$RAILWAY_PROJECT_ID" \
     --service "$RAILWAY_SERVICE_ID" \
     --environment "$RAILWAY_STAGING_ENVIRONMENT_ID" \
     --skip-deploys || true
-  railway variable set "FREYTAG_TURN_PROVIDER=" \
+  "${railway_cli[@]}" variable set "FREYTAG_TURN_PROVIDER=" \
     --project "$RAILWAY_PROJECT_ID" \
     --service "$RAILWAY_SERVICE_ID" \
     --environment "$RAILWAY_STAGING_ENVIRONMENT_ID" || true
@@ -44,7 +49,7 @@ revert_staging() {
     live_opening_response="$(curl -sf -X POST "$api_base_url/api/v1/session" \
       -H 'Content-Type: application/json' \
       -d '{"story_id":"continuity_initiative"}' || true)"
-    live_opening="$(jq -r '.opening.text // empty' <<<"$live_opening_response" 2>/dev/null || true)"
+    live_opening="$(jq -r '.opening.segments[-1].text // empty' <<<"$live_opening_response" 2>/dev/null || true)"
     if test -n "$live_opening" && test "$live_opening" != "$scripted_opening"; then
       live_restored=1
       break
@@ -58,17 +63,17 @@ revert_staging() {
 
 trap revert_staging EXIT
 
-railway variable set "FREYTAG_TURN_PROVIDER=scripted" \
+"${railway_cli[@]}" variable set "FREYTAG_TURN_PROVIDER=scripted" \
   --project "$RAILWAY_PROJECT_ID" \
   --service "$RAILWAY_SERVICE_ID" \
   --environment "$RAILWAY_STAGING_ENVIRONMENT_ID" \
   --skip-deploys
-railway variable set "FREYTAG_SCRIPTED_TURNS=deployment/knowledge-timeline-script.json" \
+"${railway_cli[@]}" variable set "FREYTAG_SCRIPTED_TURNS=deployment/knowledge-timeline-script.json" \
   --project "$RAILWAY_PROJECT_ID" \
   --service "$RAILWAY_SERVICE_ID" \
   --environment "$RAILWAY_STAGING_ENVIRONMENT_ID" \
   --skip-deploys
-railway variable set "FREYTAG_EXPOSE_KNOWLEDGE_AUDIT=1" \
+"${railway_cli[@]}" variable set "FREYTAG_EXPOSE_KNOWLEDGE_AUDIT=1" \
   --project "$RAILWAY_PROJECT_ID" \
   --service "$RAILWAY_SERVICE_ID" \
   --environment "$RAILWAY_STAGING_ENVIRONMENT_ID"
@@ -78,7 +83,7 @@ for attempt in $(seq 1 30); do
   opening_response="$(curl -sf -X POST "$api_base_url/api/v1/session" \
     -H 'Content-Type: application/json' \
     -d '{"story_id":"continuity_initiative"}' || true)"
-  opening_text="$(jq -r '.opening.text // empty' <<<"$opening_response" 2>/dev/null || true)"
+  opening_text="$(jq -r '.opening.segments[-1].text // empty' <<<"$opening_response" 2>/dev/null || true)"
   if test "$opening_text" = "$scripted_opening"; then
     scripted_live=1
     break

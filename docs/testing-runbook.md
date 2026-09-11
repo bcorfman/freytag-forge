@@ -437,6 +437,29 @@ saved session unchanged. The staged probe retains the same reveal timeline.
 **Cleanup:** Delete ignored `artifacts/e2e-knowledge-timeline.{json,md}` when
 the staged evidence is no longer needed.
 
+**Staging attempt 2026-09-10:** The probe initially failed because the local
+Railway CLI 2.1.0 did not recognize the legacy `variable` command. The script
+now detects that CLI and falls back to `npx @railway/cli@latest`, preserving
+explicit project, service, and environment targeting. The retry reached the
+current CLI but was rejected before changing staging variables with
+`Unauthorized. Please check that your RAILWAY_TOKEN is valid and has access to
+the resource you're trying to use.` The cleanup trap ran, but its three
+variable-reset calls were rejected by the same authentication failure. Confirm
+or replace the project token in the local environment before rerunning; no
+successful Railway variable update was observed from this attempt.
+
+**Staging verification 2026-09-10 (successful).** After correcting the probe
+to compare the provider's final opening segment rather than the API's complete
+opening text, `bash scripts/knowledge_timeline_probe.sh` completed successfully
+against staging. The browser test passed in 2.3 minutes. The fresh artifact
+`artifacts/e2e-knowledge-timeline.{json,md}` records SHA
+`65184a9fc12902b6b73a7da362a764a6f7277952`, five committed timeline turns, and
+the invalid future-lead turn rejected with `ineligible_selection` and HTTP 409.
+The drawer turn selected `k_sl_1a_b_r2`, resolved
+`SL-1A-B/SL-1A-B-R2`, and returned grounded narration. The probe's exit cleanup
+restored live narration successfully. Railway's agent-tooling and Config as
+Code messages remained warnings only and did not affect the result.
+
 **Notes:** Last verified locally on 2026-08-27: `TMPDIR=/tmp uv run pytest -q`
 passed with 92 tests after the resolver cutover. The transport fixture captures
 the payload and proves the opening has no candidate, while an activated
