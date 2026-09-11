@@ -29,6 +29,11 @@ function narrationText(payload) {
   return turnText.join(" ").trim();
 }
 
+function recordRevealedKnowledge(scene, segments) {
+  const groundingIds = segments.flatMap((segment) => segment.grounding_ids || []);
+  scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...groundingIds])];
+}
+
 async function exerciseDistinctFreeTextActions(page) {
   await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
@@ -108,7 +113,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
   expect(sceneOrder.at(-1)).toBe("3C");
 });
 
-test("judges every reached scene against the five-file narrative canon @llm-canon", async ({ page }) => {
+test("judges every reached scene against its committed knowledge canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
   test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
   test.setTimeout(20 * 60_000);
@@ -116,8 +121,10 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
   const controller = await installPackageClock(page);
   const sessionPayload = await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
+  const initialScene = { opening, turns: [], revealedKnowledgeIds: [], ...(sessionPayload?.prompt ? { opening_prompt: sessionPayload.prompt } : {}) };
+  recordRevealedKnowledge(initialScene, sessionPayload?.opening?.segments || []);
   const byScene = new Map([
-    ["1A", { opening, turns: [], ...(sessionPayload?.prompt ? { opening_prompt: sessionPayload.prompt } : {}) }],
+    ["1A", initialScene],
   ]);
   const sceneOrder = pacing.sceneOrder;
   let sceneId = "1A";
@@ -219,6 +226,7 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
       // and the judge only ever read it as the park's odd first line.
       const departure = entered ? segments.slice(0, -1) : segments;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
+      recordRevealedKnowledge(byScene.get(sourceSceneId), departure);
       if (sceneNarration) {
         byScene.get(sourceSceneId).turns.push({
           player_input: input,
@@ -229,11 +237,15 @@ test("judges every reached scene against the five-file narrative canon @llm-cano
         });
       }
       if (entered && !byScene.has(reachedSceneId)) {
-        byScene.set(reachedSceneId, {
+        const openingSegment = segments.at(-1);
+        const nextScene = {
           opening: segments.at(-1).text.trim(),
           turns: [],
+          revealedKnowledgeIds: [],
           ...(payload.prompt ? { opening_prompt: payload.prompt } : {}),
-        });
+        };
+        recordRevealedKnowledge(nextScene, [openingSegment]);
+        byScene.set(reachedSceneId, nextScene);
       }
       sceneId = reachedSceneId;
       turnIndex = payload.state?.turn_index;

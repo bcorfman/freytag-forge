@@ -519,6 +519,67 @@ current staging revision's `OPTIONS /api/v1/turn` and cross-origin invalid
 probe before changing CORS configuration, and record the deployed SHA if it
 recurs.
 
+## Phase 5 knowledge leakage matrix and staging rollout
+
+**Purpose:** Verify the deterministic package-wide knowledge leakage matrix in
+`tests/test_knowledge_leakage_matrix.py`: every scene and audience is projected
+before and after each reveal, all not-yet-reachable knowledge terms stay absent,
+and the explicit payload-size regression threshold holds. Separately verify that
+the browser canon judge in `frontend/e2e/roleplay-judge.js` scores each scene
+against its committed reveal timeline, not the full world, route, or storylet
+files.
+
+**Setup / seed:**
+
+- Python 3.12 dependencies are installed with `uv sync --group dev`.
+- Run from the repository root; pytest temporary files belong under `/tmp`.
+- Before staged gates, set the `RAILWAY_*` variables documented in the Phase 3
+  entry from `.env` and source the root `.env` for the frontend staging target.
+
+**Safe actions:** The deterministic pytest module and frontend unit tests run
+locally with no network calls.
+
+**Destructive or external actions:** The staged `@smoke`, focused safety/NPC-
+knowledge cases, full spine, and `@llm-canon` gates run only against the hosted
+staging deployment, never a local API, after a merge to `main` and CI redeploy.
+Delete stale artifacts before every attempt, confirm `/api/v1/version` reports
+the new staging SHA, and confirm each run completed before recording evidence.
+`@llm-canon` makes billed OpenAI judge calls; a nonzero exit is normal when the
+judge records a failing verdict.
+
+**Steps:**
+
+1. Run the deterministic leakage-matrix test locally.
+2. Run the frontend unit suite locally.
+3. After merging to `main`, confirming `/api/v1/version` reports the new
+   staging SHA, and deleting stale artifacts, run the staged gates in order:
+   `@smoke`, the focused `@safety|@npc` cases, the full spine, then
+   `@llm-canon`. The `@llm-canon` playthrough already covers the full spine and
+   satisfies that step; do not run a separate spine command.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest tests/test_knowledge_leakage_matrix.py -q
+cd frontend && npm test
+source .env && cd frontend && npm run test:e2e -- --grep @smoke
+source .env && cd frontend && npm run test:e2e -- --grep "@safety|@npc"
+source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @llm-canon
+```
+
+Expected: a passing run shows no future-scene term in any scene/audience
+projection, and each scene's canon payload contains only its actually committed
+knowledge statements and scene frame, never full world, route, or storylet
+text. The staged gates must run against the new SHA; interpret a nonzero
+`@llm-canon` exit from its completed artifact and verdict rather than treating
+it as an incomplete run.
+
+**Cleanup:** `artifacts/phase5-knowledge-leakage-matrix.json` is gitignored and
+may be deleted once staged evidence supersedes it.
+
+**Notes:** The staged gates and their observed evidence are still outstanding
+and will be appended here after that run.
+
 ## Phase 2 fact-derived shadow projection
 
 **Purpose:** Verify the legacy provider context remains unchanged while the

@@ -52,7 +52,6 @@ class RuntimeSnapshot(BaseModel):
     facts: FactStore
     turn_index: int = Field(ge=0)
     scene_entered_at_turn: int = Field(ge=0)
-    narrative_history: tuple[str, ...] = ()
     turn_records: tuple[TurnRecord, ...] = ()
     staged_hint_fact_ids: tuple[str, ...] = ()
     staged_handoff_fact_ids: tuple[str, ...] = ()
@@ -71,7 +70,6 @@ class RuntimeState(BaseModel):
     facts: FactStore = Field(default_factory=FactStore)
     turn_index: int = Field(default=0, ge=0)
     scene_entered_at_turn: int = Field(default=0, ge=0)
-    narrative_history: list[str] = Field(default_factory=list)
     turn_records: list[TurnRecord] = Field(default_factory=list)
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
@@ -117,7 +115,6 @@ class RuntimeState(BaseModel):
             facts=self.facts.clone(),
             turn_index=self.turn_index,
             scene_entered_at_turn=self.scene_entered_at_turn,
-            narrative_history=tuple(self.narrative_history),
             turn_records=tuple(self.turn_records),
             staged_hint_fact_ids=self.staged_hint_fact_ids,
             staged_handoff_fact_ids=self.staged_handoff_fact_ids,
@@ -134,7 +131,6 @@ class RuntimeState(BaseModel):
         self.facts = snapshot.facts.clone()
         self.turn_index = snapshot.turn_index
         self.scene_entered_at_turn = snapshot.scene_entered_at_turn
-        self.narrative_history = list(snapshot.narrative_history)
         self.turn_records = list(snapshot.turn_records)
         self.staged_hint_fact_ids = snapshot.staged_hint_fact_ids
         self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids

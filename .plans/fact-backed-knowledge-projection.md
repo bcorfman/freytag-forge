@@ -450,37 +450,44 @@ valid, and a grounded recording reveal commits before it renders.
 
 ### Phase 5 / PR 5: Staged acceptance, rollout, and cleanup
 
-- [ ] Add deterministic package-wide leakage matrices that build a context for
+- [x] Add deterministic package-wide leakage matrices that build a context for
   every scene/audience before and after each reveal and assert all future known
   terms are absent.
-- [ ] Add context snapshots/diffs to local test artifacts using IDs and redacted
+- [x] Add context snapshots/diffs to local test artifacts using IDs and redacted
   statements, and make payload-size regression thresholds explicit.
-- [ ] Update `frontend/e2e/roleplay-judge.js` so the judge evaluates the reached
+- [x] Update `frontend/e2e/roleplay-judge.js` so the judge evaluates the reached
   scene against the committed reveal timeline rather than receiving all of
   `world.yaml`, all scene routes, and author-only source as undifferentiated
   canon. Keep the judge unable to authorize runtime output.
 - [ ] Deploy to staging and run `@smoke`, focused safety/NPC-knowledge cases,
   the full spine, and finally `@llm-canon`. Preserve artifacts from each gate;
   stop rollout on the first knowledge leak or future-beat jump.
-- [ ] Exercise player prompts that name every future character, place, system,
+- [x] Exercise player prompts that name every future character, place, system,
   and objective from Scene 1A. Verify the inputs reach the model unchanged but
   none of those names enter context or accepted narration before their reveal.
 - [ ] After final staging evidence, update `docs/testing-runbook.md` with the
   exact commands, environment, outcomes, artifacts, safety classification, and
   cleanup. Promote only the verified revision, then repeat the smoke and
   knowledge-safety probes against production.
-- [ ] Remove legacy `protected_knowledge` string filtering,
+- [x] Remove legacy `protected_knowledge` string filtering,
   `_PRIVATE_PREDICATES`, raw narration memory, compatibility context fields, and
   temporary schema adapters after persisted-session policy is complete.
 
-Exit gate: deterministic leakage tests pass across all scenes and audiences;
-staged `@llm-canon` passes progressive revelation and protected safety without
-rushing future beats; the exact promoted revision passes production smoke and
-knowledge probes; the focused runbook records only observed final evidence.
+Exit gate: [ ] deterministic leakage tests pass across all scenes and audiences
+(verified locally: `tests/test_knowledge_leakage_matrix.py`, 3/3 passing,
+full suite 327/327); staged `@llm-canon` passes progressive revelation and
+protected safety without rushing future beats (outstanding); the exact
+promoted revision passes production smoke and knowledge probes (deferred by
+explicit decision, production rollout not in scope for this pass); the focused
+runbook records only observed final evidence (outstanding — the runbook has a
+procedural section only, no staging results yet).
 
 Phase evidence: run browser `@knowledge-timeline` and its OpenAI judge variant
 against staging, then production after promotion. Preserve JSON/Markdown
-artifacts and stop on the first failed assertion.
+artifacts and stop on the first failed assertion. **Outstanding** — requires a
+merge to `main`, the exact-SHA staging deploy, and the staged gate commands
+already documented in the new "Phase 5 knowledge leakage matrix and staging
+rollout" section of `docs/testing-runbook.md`.
 
 ### Persistent Scene 1A knowledge-timeline acceptance harness
 

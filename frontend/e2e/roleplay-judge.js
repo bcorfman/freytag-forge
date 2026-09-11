@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
+
 const JUDGE_SCHEMA = {
   type: "object",
   properties: {
@@ -101,32 +105,26 @@ export async function judgeRoleplayTurn({ opening, playerInput, narration }, { e
   return verdict;
 }
 
-function sceneBlock(source, heading, nextHeading) {
-  const start = source.indexOf(heading);
-  if (start < 0) return "";
-  const end = source.indexOf(nextHeading, start + heading.length);
-  return source.slice(start, end < 0 ? undefined : end);
-}
-
-export function sceneCanon(sceneId, root = resolve(import.meta.dirname, "../..")) {
+export function sceneCanon(sceneId, revealedKnowledgeIds = [], root = resolve(import.meta.dirname, "../..")) {
+  const require = createRequire(import.meta.url);
+  const YAML = require("yaml");
   const storyRoot = resolve(root, "data/stories/continuity-initiative");
-  const read = (name) => readFileSync(resolve(storyRoot, name), "utf8");
-  const plot = read("plot.md");
-  const scenes = ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"];
-  const nextScene = scenes[scenes.indexOf(sceneId) + 1];
+  const knowledgePackage = YAML.parse(readFileSync(resolve(storyRoot, "knowledge.yaml"), "utf8"));
+  const sceneFrame = knowledgePackage.scene_frames.find((frame) => frame.scene_id === sceneId);
+  const revealedIds = new Set(revealedKnowledgeIds);
   return {
     scene_id: sceneId,
-    plot: sceneBlock(plot, `## Scene ${sceneId}`, nextScene ? `## Scene ${nextScene}` : "\u0000"),
-    storylets: sceneBlock(read("storylets.md"), `### SL-${sceneId}`, nextScene ? `### SL-${nextScene}` : "\u0000"),
-    routes: sceneBlock(read("storylet-routes.yaml"), `- id: SL-${sceneId}`, nextScene ? `- id: SL-${nextScene}` : "\u0000"),
-    pacing: read("pacing.yaml"),
-    world: read("world.yaml"),
+    situation: sceneFrame.situation,
+    pressure: sceneFrame.pressure,
+    revealed_knowledge: knowledgePackage.knowledge
+      .filter((entry) => entry.available_in_scenes.includes(sceneId) && revealedIds.has(entry.id))
+      .map(({ id, statement }) => ({ id, statement })),
   };
 }
 
 export async function judgeSceneNarration(
-  { sceneId, opening, turns },
-  { environment = process.env, fetchImpl = fetch, canon = sceneCanon(sceneId) } = {},
+  { sceneId, opening, turns, revealedKnowledgeIds = [] },
+  { environment = process.env, fetchImpl = fetch, canon = sceneCanon(sceneId, revealedKnowledgeIds) } = {},
 ) {
   const { apiKey, model } = judgeConfiguration(environment);
   const turnsWithBeatContext = turns.map((turn) => ({
@@ -167,5 +165,3 @@ export async function judgeSceneNarration(
   }
   return verdict;
 }
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
