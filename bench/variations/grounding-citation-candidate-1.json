@@ -1,7 +1,0 @@
-{
-    "name": "grounding-citation-candidate-1",
-    "story_package": "data/stories/continuity-initiative",
-    "system_prompt": {"include_output_example": true, "cite_committed_knowledge_ids": true},
-    "user_prompt": {"beat_delivery": "details"},
-    "scripts": {"1A": [{"name": "phone-grounding-repro", "inputs": ["Look carefully at Michelle's phone."]}]}
-}
