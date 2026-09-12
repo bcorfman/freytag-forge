@@ -122,3 +122,44 @@ def test_authored_handoff_ignores_a_package_candidate_not_in_projection() -> Non
     projected_candidates = tuple(candidate for candidate in package_candidates if candidate.id == "warning")
 
     assert uniquely_matched_authored_handoff("Recover the card files and read them.", projected_candidates) is None
+
+
+def test_scene_1a_b_migrated_candidates_stay_disjoint() -> None:
+    files_candidate = RevealCandidate(
+        id="k_sl_1a_b_r1",
+        statement="Kristin reads the saved files on Michelle's memory card.",
+        must_convey=(),
+        action_evidence=(
+            ("recover", "retrieve"),
+            ("card files", "saved files", "files on the card"),
+            ("read", "inspect"),
+        ),
+        delivery_text=(
+            "Michelle's memory card contains a damaged recording and saved files. "
+            "The card points to a dead drop at a bench in the park."
+        ),
+    )
+    recording_candidate = RevealCandidate(
+        id="k_sl_1a_b_r2",
+        statement="Kristin listens to Michelle's damaged recording.",
+        must_convey=(),
+        action_evidence=(
+            ("recover", "retrieve"),
+            ("damaged recording", "interrupted message", "recording"),
+            ("listen", "play"),
+        ),
+        delivery_text=(
+            "Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts."
+        ),
+    )
+    candidates = (files_candidate, recording_candidate)
+
+    files_result = uniquely_matched_authored_handoff("Retrieve the saved files on the card and read them.", candidates)
+    recording_result = uniquely_matched_authored_handoff("Recover the damaged recording and listen to it.", candidates)
+    unrelated_result = uniquely_matched_authored_handoff("Search the kitchen for signs of a struggle.", candidates)
+
+    assert files_result is not None
+    assert files_result.candidate.id == "k_sl_1a_b_r1"
+    assert recording_result is not None
+    assert recording_result.candidate.id == "k_sl_1a_b_r2"
+    assert unrelated_result is None

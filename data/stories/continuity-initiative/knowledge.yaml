@@ -329,6 +329,7 @@ knowledge:
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [dead drop, exchange point, place to trade information, the dead-drop, park exchange, drop at the bench]
   - [bench in the park, park bench, bench, park, the park bench, bench near the park]
+  delivery_text: "Michelle's memory card contains a damaged recording and saved files. The card points to a dead drop at a bench in the park."
 - id: k_sl_1a_b_r2
   statement: "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: do not trust emergency broadcasts."
   earn_when: recovers Michelle's damaged recording and listens to it
