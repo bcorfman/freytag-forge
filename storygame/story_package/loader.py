@@ -14,6 +14,7 @@ from storygame.story_package.models import (
     Entity,
     FactDelivery,
     KnowledgeCatalog,
+    KnowledgeDefinition,
     KnowledgeIndexes,
     PacingSource,
     RouteOperation,
@@ -404,6 +405,73 @@ def _validate_knowledge(package: StoryPackage) -> None:
         visit(fact_id)
 
 
+_HANDOFF_BOOKKEEPING_LABELS = (
+    "action_evidence",
+    "action evidence",
+    "candidate_id",
+    "candidate id",
+    "delivery_text",
+    "delivery text",
+    "fact_id",
+    "fact id",
+    "grounding_ids",
+    "grounding ids",
+    "knowledge_id",
+    "knowledge id",
+    "must_convey",
+    "must convey",
+    "selected_knowledge_ids",
+    "selected knowledge ids",
+    "source_id",
+    "source id",
+)
+
+
+def _delivery_internal_token(package: StoryPackage, item: KnowledgeDefinition) -> str | None:
+    """Return an implementation token that must not appear in authored prose."""
+
+    ids = {
+        *(known.id for known in package.knowledge.knowledge),
+        *package.fact_ids,
+        *(transition.id for transition in package.pacing.transitions),
+        *(route.id for route in package.storylet_routes.storylets),
+        *(realization.id for route in package.storylet_routes.storylets for realization in route.realizations),
+        *(event.id for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)),
+    }
+    text = item.delivery_text or ""
+    folded = text.casefold()
+    for token in (*ids, *_HANDOFF_BOOKKEEPING_LABELS):
+        if token and re.search(rf"(?<![\w-]){re.escape(token.casefold())}(?![\w-])", folded):
+            return token
+    match = re.search(r"(?<!\w)[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?!\w)", folded)
+    return match.group(0) if match else None
+
+
+def _validate_authored_handoffs(package: StoryPackage) -> None:
+    """Validate optional authored delivery data before the package can run."""
+
+    from storygame.runtime.validation import unconveyed_terms
+
+    for item in package.knowledge.knowledge:
+        if item.delivery_text is None:
+            continue
+        if not item.action_evidence or any(not group for group in item.action_evidence):
+            raise StoryPackageError(f"authored handoff knowledge '{item.id}' requires non-empty action_evidence groups")
+        if not item.delivery_text.strip():
+            raise StoryPackageError(f"authored handoff knowledge '{item.id}' has blank delivery_text")
+        groups = tuple(group for group in item.must_convey if group)
+        missing = unconveyed_terms(groups, item.delivery_text)
+        if missing:
+            raise StoryPackageError(
+                f"authored handoff knowledge '{item.id}' delivery_text misses must_convey: {', '.join(missing)}"
+            )
+        token = _delivery_internal_token(package, item)
+        if token:
+            raise StoryPackageError(
+                f"authored handoff knowledge '{item.id}' delivery_text contains implementation-only token '{token}'"
+            )
+
+
 def _validate(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
     entity_groups = (package.world.locations, package.world.npcs, package.world.items)
@@ -749,5 +817,6 @@ def load_story_package(root: Path) -> StoryPackage:
     )
     _validate(package)
     _validate_knowledge(package)
+    _validate_authored_handoffs(package)
     _validate_deliveries(package)
     return package

@@ -37,10 +37,26 @@ claim. It is shown only with an already eligible candidate. It guides the
 narrator's proposal; it never commits a fact or replaces selection, grounding,
 must-convey, effect, or narration-safety validation.
 
-`action_evidence` is separate, typed authoring data for a shadow-only matcher.
-Each inner list contains equivalent accepted phrases; every list must match a
-player action before a candidate is reported. It is never sent to the narrator
-and currently has no effect on candidates, narration, selections, or facts.
+`action_evidence` is separate, typed authoring data for an exact action matcher.
+Each inner list contains conservative equivalent phrases; every non-empty list
+must match the player's action. Pair it with `delivery_text` only when the
+candidate is ready for authored handoff. The delivery must state every
+`must_convey` group and must not contain package IDs or bookkeeping labels. It
+is never sent to the narrator or exposed in the narrator's serialized context.
+
+```yaml
+  action_evidence:
+  - [recover, retrieve]
+  - [damaged recording, interrupted message]
+  - [listen, play]
+  delivery_text: >-
+    Michelle's memory card contains a damaged recording. It warns against
+    emergency broadcasts.
+```
+
+Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
+keeps the legacy narrator-proposal path.
+
 `pacing.yaml` supplies one ordered window
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`

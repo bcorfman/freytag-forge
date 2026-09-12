@@ -18,32 +18,26 @@ become durable.
 
 ## Runtime contract
 
-- The narrator receives only a bounded `TurnKnowledgeContext`: the safe scene
-  frame, committed sayable knowledge, and eligible reveal candidates. It does
-  not receive routes, source IDs, future effects, or transcript memory.
+- The narrator receives a bounded `TurnKnowledgeContext` with the safe scene
+  frame, committed sayable knowledge, and eligible candidates. It receives no
+  routes, source IDs, future effects, or transcript memory.
 - Narrator JSON is untrusted. The runtime resolves at most one eligible
-  knowledge ID to its package-owned route, validates the cloned fact state and
-  narration, then commits the whole turn atomically. If the narrator leaves the
-  ID empty but its text fully proves exactly one offered candidate, the
-  transport may fill that ID before the same checks run. Ambiguous or partial
-  text stays unselected. Leaks, unsupported claims, wrong-speaker dialogue,
-  and premature transitions fail closed.
+  knowledge ID, validates narration and the cloned fact state, then commits the
+  whole turn atomically. Ambiguous or partial claims, leaks, unsupported
+  facts, wrong-speaker dialogue, and premature transitions fail closed.
 - Accepted turns advance declarative, fact-backed pacing. The runtime never
   infers gameplay from vague prose or chooses an action for the player.
 
 ### Authored reveal handoff
 
-- A candidate may bypass narrator selection only when its package explicitly
-  opts in with complete `action_evidence` and non-empty `delivery_text`.
-  The runtime may then match the player's action and deliver that authored
-  text, but it still sends the composed turn through the existing validation
-  and atomic commit path.
-- `delivery_text` is optional for the package as a whole. It is required only
-  for candidates that opt into authored handoff. Candidates without this
-  opt-in keep the current LLM-proposal path.
-- This handoff changes delivery, not a fact ID, package effect, or save payload.
-  Existing saves containing those facts remain valid under the normal story,
-  schema, and integrity checks.
+- An authored handoff is opt-in per candidate: both complete `action_evidence`
+  and non-empty `delivery_text` are required. The loader checks all
+  `must_convey` groups and rejects package IDs or bookkeeping labels in the
+  delivery. The delivery text stays out of narrator serialization.
+- Candidates without this opt-in keep the narrator-proposal path. Later
+  matching and delivery still use the existing validation and atomic commit
+  path; no fact ID, package effect, or save payload changes, so existing saves
+  remain valid.
 
 ## Authoring and API
 

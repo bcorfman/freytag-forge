@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import predicate_matches
@@ -27,6 +27,7 @@ class RevealCandidate(_KnowledgeModel):
     statement: str
     earn_when: str | None = None
     must_convey: tuple[tuple[str, ...], ...]
+    delivery_text: str | None = Field(default=None, exclude=True)
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
@@ -263,4 +264,5 @@ class KnowledgeProjector:
             statement=item.statement,
             earn_when=item.earn_when,
             must_convey=item.must_convey,
+            delivery_text=item.delivery_text,
         )

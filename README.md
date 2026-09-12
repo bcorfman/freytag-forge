@@ -1,17 +1,16 @@
 # Freytag Forge
 
-> Write anything. Make it matter.
+> Freeform roleplay with consequences that stick.
 
-Freytag Forge turns freeform roleplay into drama that remembers.
+Write the move. Change the story.
 
 ## Features
 
-- **Freeform actions.** Type what your character does. No command menus.
-- **Consequences that stick.** Validated facts make every discovery count.
-- **Secrets you earn.** Your actions unlock reveals while future plot stays hidden.
-- **Pressure with purpose.** Storylets and pacing turn delay into stakes.
-
-**Write the move. Change the story.**
+- **Play freely.** Describe any in-world action. No menus or parser syntax.
+- **Make it matter.** Validated facts make discoveries and choices stick.
+- **Earn the secrets.** Unlock reveals through action while future plot stays hidden.
+- **Keep the pressure on.** Storylets and pacing turn every delay into stakes.
+- **Stay in the story.** Scoped knowledge and atomic turns protect continuity.
 
 ## Play online
 

@@ -120,6 +120,7 @@ class KnowledgeDefinition(_Model):
     earn_when: str | None = Field(default=None, min_length=1)
     action_evidence: tuple[tuple[str, ...], ...] = ()
     must_convey: tuple[tuple[str, ...], ...] = ()
+    delivery_text: str | None = None
 
 
 class SceneFrame(_Model):
