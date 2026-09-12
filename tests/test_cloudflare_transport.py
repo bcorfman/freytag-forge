@@ -33,18 +33,37 @@ AUTHORED_DELIVERY = (
 
 
 def _legacy_recording_package():
-    knowledge_id = "k_sl_1a_b_r2"
-    knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
-    legacy = knowledge.model_copy(update={"delivery_text": None})
+    legacy_ids = {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
     catalog = PACKAGE.knowledge.model_copy(
         update={
-            "knowledge": tuple(legacy if item.id == knowledge_id else item for item in PACKAGE.knowledge.knowledge),
+            "knowledge": tuple(
+                item.model_copy(update={"delivery_text": None}) if item.id in legacy_ids else item
+                for item in PACKAGE.knowledge.knowledge
+            ),
         }
     )
     indexes = PACKAGE.knowledge_indexes.model_copy(
-        update={"by_id": {**PACKAGE.knowledge_indexes.by_id, knowledge_id: legacy}}
+        update={
+            "by_id": {
+                **PACKAGE.knowledge_indexes.by_id,
+                **{
+                    item_id: PACKAGE.knowledge_indexes.by_id[item_id].model_copy(update={"delivery_text": None})
+                    for item_id in legacy_ids
+                },
+            }
+        }
     )
     return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
+
+
+def _staged_scene_1a_state() -> RuntimeState:
+    state = RuntimeState.bootstrap(PACKAGE)
+    engine = RuntimeEngine(state, lambda *_args, **_kwargs: {"segments": []})
+    engine._activate_pacing()
+    for _ in range(2):
+        state.turn_index += 1
+        engine._activate_pacing()
+    return state
 
 
 def _authored_handoff_package():
@@ -1694,20 +1713,78 @@ def test_selection_duty_uses_one_random_choice_rule() -> None:
 
 
 def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state = _staged_scene_1a_state()
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"positive_selection_example": True}
     )
 
-    prompt = provider.assemble_turn_prompt("Recover Michelle's damaged recording and read the saved files.")
+    prompt = provider.assemble_turn_prompt("Search the kitchen for signs of what happened.")
 
     assert (
-        "Earn it when the player recovers Michelle's damaged recording and listens to it."
+        "Earn it when the player searches the kitchen or back door for signs of what happened."
         in provider._section_user_prompt(prompt["context"])
     )
-    assert '"selected_knowledge_ids":["k_sl_1a_b_r1"]' in prompt["system"]
-    assert '"grounding_ids":["k_sl_1a_b_r1"]' in prompt["system"]
+    assert '"selected_knowledge_ids":["k_sl_1a_a_r1"]' in prompt["system"]
+    assert '"grounding_ids":["k_sl_1a_a_r1"]' in prompt["system"]
+
+
+def test_nonmatching_turn_hides_migrated_candidates_but_keeps_projection() -> None:
+    state = _staged_scene_1a_state()
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    prompt = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
+
+    migrated = {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
+    assert provider.last_projection is not None
+    assert migrated <= {candidate.id for candidate in provider.last_projection.candidates}
+    assert migrated.isdisjoint(provider.prompt_candidate_ids)
+    user = provider._section_user_prompt(prompt["context"])
+    assert all(f"Candidate {candidate_id}" not in user for candidate_id in migrated)
+    assert all(f"Put {candidate_id}" not in user for candidate_id in migrated)
+
+
+def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_commit(monkeypatch) -> None:
+    state = _staged_scene_1a_state()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    response = {
+        "segments": [
+            {
+                "kind": "narration",
+                "text": "Kristin searches the room and finds nothing useful.",
+                "grounding_ids": ["k_sl_1a_b_r1"],
+            }
+        ],
+        "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+    }
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response(response)
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = RuntimeEngine(state, provider).turn("Search the kitchen for signs of a struggle.")
+
+    assert proposal.selected_knowledge_ids == ()
+    assert not state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert provider.recovery_count == 1
+    assert len(payloads) == 2
+    assert "k_sl_1a_b_r1" not in payloads[1]["system"]
+
+
+def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatch) -> None:
+    state = _staged_scene_1a_state()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": "The drawer opens."}]}),
+    )
+
+    proposal = provider("Recover Michelle's memory card and read the saved files.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
+    assert proposal["segments"][-1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r1"].delivery_text
 
 
 def test_selection_probe_asks_for_only_an_offered_id(monkeypatch) -> None:

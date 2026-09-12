@@ -176,8 +176,7 @@ class _EligibilityError(RuntimeContractError):
     """A proposal that parsed cleanly but named knowledge this turn may not use.
 
     ``summary`` is safe to return to the client: it names the rule, never a
-    story ID. ``hint`` is for the recovery prompt only, where the offending IDs
-    are already part of the Worker's own context.
+    story ID. ``hint`` is for the recovery prompt only.
     """
 
     def __init__(self, summary: str, hint: str) -> None:
@@ -395,15 +394,14 @@ class CloudflareTurnProvider:
     def _model_candidates(self) -> tuple[RevealCandidate, ...]:
         """Return candidates that the narrator may consider on this turn.
 
-        An authored handoff owns its reveal in the runtime, so it shows no
-        candidates to the narrator. Legacy turns retain the full eligible list.
-        The optional narrowing switch remains a prompt-only experiment for
-        legacy turns.
+        Authored handoffs own their reveals in the runtime, so they never show
+        up in the narrator's candidate list. The optional narrowing switch
+        remains a prompt-only experiment for legacy turns.
         """
 
         if self._is_authored_handoff_turn():
             return ()
-        candidates = self.last_projection.candidates if self.last_projection else ()
+        candidates = self._legacy_projection_candidates()
         if not (
             self.prompt_variant
             and self.prompt_variant.get("narrow_to_shadow_match", False)
@@ -411,6 +409,29 @@ class CloudflareTurnProvider:
         ):
             return candidates
         return tuple(candidate for candidate in candidates if candidate.id == self.shadow_matched_candidate_id)
+
+    def _handoff_eligible_candidate_ids(self) -> set[str]:
+        """Return projected candidates whose reveal belongs to the runtime."""
+
+        return {
+            candidate_id
+            for candidate in (self.last_projection.candidates if self.last_projection else ())
+            for candidate_id in (getattr(candidate, "id", None),)
+            if candidate_id is not None
+            and getattr(candidate, "action_evidence", ())
+            and isinstance(getattr(candidate, "delivery_text", None), str)
+            and candidate.delivery_text.strip()
+        }
+
+    def _legacy_projection_candidates(self) -> tuple[RevealCandidate, ...]:
+        """Return projected candidates that the narrator is allowed to select."""
+
+        handoff_ids = self._handoff_eligible_candidate_ids()
+        return tuple(
+            candidate
+            for candidate in (self.last_projection.candidates if self.last_projection else ())
+            if getattr(candidate, "id", None) not in handoff_ids
+        )
 
     def _is_authored_handoff_turn(self) -> bool:
         """Return whether the runtime owns this turn's reveal delivery."""
@@ -538,13 +559,13 @@ class CloudflareTurnProvider:
             return DEFAULT_OUTPUT_EXAMPLE
         if self.preselected_knowledge_id and self.last_projection:
             candidate = next(
-                (item for item in self.last_projection.candidates if item.id == self.preselected_knowledge_id), None
+                (item for item in self._model_candidates() if item.id == self.preselected_knowledge_id), None
             )
             example_text = self._preselected_output_example(candidate) if candidate else DEFAULT_OUTPUT_EXAMPLE
         elif self.prompt_variant and "output_example" in self.prompt_variant:
             example_text = self.prompt_variant["output_example"]
         else:
-            candidates = self.last_projection.candidates if self.last_projection else ()
+            candidates = self._model_candidates()
             example_candidate = (
                 self._example_candidate(candidates)
                 if self.prompt_variant and self.prompt_variant.get("positive_selection_example", False)
@@ -662,7 +683,7 @@ class CloudflareTurnProvider:
             self._system_prompt(),
             {
                 "scene_entry": entry,
-                "knowledge_context": {"player": self.last_projection.model_dump(mode="json")},
+                "knowledge_context": {"player": self._serialized_player_context({})},
                 "_rules": rules,
             },
         )
@@ -704,8 +725,8 @@ class CloudflareTurnProvider:
         if self.last_projection is None:
             return {}
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
-        # Legacy candidate statements remain explicit constraint lines. An
-        # authored handoff has no model candidates, so its list is empty.
+        # Legacy candidate statements remain explicit constraint lines. Runtime-
+        # owned handoffs stay in the projection for matching, not in this list.
         model_candidate_ids = {candidate.id for candidate in self._model_candidates()}
         context["candidates"] = [
             candidate for candidate in context["candidates"] if candidate["id"] in model_candidate_ids
@@ -727,14 +748,14 @@ class CloudflareTurnProvider:
         return covered
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
-        """Return only the beats belonging to storylets offered this turn."""
+        """Return the authored beats belonging to projected storylets."""
 
         package = self.state.package
         storylets = {storylet.id: storylet for storylet in package.storylets}
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
         seen: set[str] = set()
         selected: list[SceneBeat] = []
-        for candidate in self._model_candidates():
+        for candidate in self.last_projection.candidates if self.last_projection else ():
             knowledge = package.knowledge_indexes.by_id[candidate.id]
             if knowledge.source.kind != "storylet_realization" or knowledge.source.storylet_id is None:
                 continue
@@ -863,7 +884,7 @@ class CloudflareTurnProvider:
 
     def _recover_malformed_response(self, payload: dict[str, object], hint: str = "") -> object:
         handoff_turn = self._is_authored_handoff_turn()
-        correction = f" {hint}" if hint and not handoff_turn else ""
+        correction = f" {hint}" if hint and not handoff_turn and not self._handoff_eligible_candidate_ids() else ""
         if handoff_turn:
             instruction = (
                 "Your last answer was not valid. Send back only JSON. It must have segments with text in them. "
@@ -1025,6 +1046,7 @@ class CloudflareTurnProvider:
 
         context = user.get("knowledge_context", {})
         player = context.get("player", {}) if isinstance(context, dict) else {}
+        offered_ids = {candidate.id for candidate in self._model_candidates()}
         if isinstance(player, dict) and player:
             scene.extend(paragraphs(player["scene_frame"]))
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
@@ -1043,6 +1065,8 @@ class CloudflareTurnProvider:
                 scene.append(item["statement"])
             if not handoff_turn:
                 for candidate in player.get("candidates", []):
+                    if candidate.get("id") not in offered_ids:
+                        continue
                     constraints.append(f"Candidate {candidate['id']}. The player does not know this yet.")
                     earn_when = candidate.get("earn_when")
                     if isinstance(earn_when, str) and earn_when:
@@ -1197,6 +1221,14 @@ class CloudflareTurnProvider:
             raise RuntimeContractError("knowledge projection is unavailable")
         if self.authored_handoff is not None:
             return self._ordinary_handoff_proposal(proposal, projection)
+        handoff_ids = self._handoff_eligible_candidate_ids()
+        selected_handoff_ids = set(proposal.selected_knowledge_ids) & handoff_ids
+        if selected_handoff_ids:
+            raise _EligibilityError(
+                "selected knowledge is owned by the runtime",
+                "You selected a runtime-owned reveal that this turn did not offer. Resend the same narration "
+                "with selected_knowledge_ids as an empty list and no grounding_ids, revealing nothing new.",
+            )
         # This pre-check must mirror every provider-facing rule in SelectedRevealResolver.resolve;
         # a rule missing here becomes a hard turn failure in the browser instead of one recovery.
         if len(proposal.selected_knowledge_ids) > 1:
@@ -1207,7 +1239,7 @@ class CloudflareTurnProvider:
             )
         proposal = self._auto_select_unambiguous_candidate(proposal)
         proposal = self._auto_attribute_committed_knowledge(proposal)
-        candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
+        candidate_ids = {candidate.id for candidate in self._legacy_projection_candidates()}
         ineligible = sorted(
             {knowledge_id for knowledge_id in proposal.selected_knowledge_ids if knowledge_id not in candidate_ids}
         )
@@ -1240,13 +1272,19 @@ class CloudflareTurnProvider:
             }
         )
         if ungroundable:
+            if set(ungroundable) & handoff_ids:
+                raise _EligibilityError(
+                    "segment grounding names a runtime-owned reveal",
+                    "You grounded a segment on a runtime-owned reveal that this turn did not offer. Resend the same "
+                    "narration with an empty grounding_ids list.",
+                )
             raise _EligibilityError(
                 "segment grounding is not committed or selected knowledge",
                 f"You grounded a segment on {', '.join(ungroundable)}, which is neither committed knowledge nor a "
                 "candidate you selected. Resend the same narration with an empty grounding_ids list; only if that ID "
                 "is one of this turn's candidates may you instead place it in selected_knowledge_ids.",
             )
-        candidates = {candidate.id: candidate for candidate in self.last_projection.candidates}
+        candidates = {candidate.id: candidate for candidate in self._legacy_projection_candidates()}
         # Selecting a reveal without telling it commits the fact silently: the scene's exit
         # unlocks and the player is moved somewhere the narration gave them no reason to go.
         # When the prose proves the reveal, derive the missing bookkeeping from that evidence.
@@ -1359,7 +1397,7 @@ class CloudflareTurnProvider:
             return proposal
 
         matches = []
-        for candidate in self.last_projection.candidates:
+        for candidate in self._legacy_projection_candidates():
             groups = tuple(group for group in candidate.must_convey if group)
             if not groups:
                 continue
