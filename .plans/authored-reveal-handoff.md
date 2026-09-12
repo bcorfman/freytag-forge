@@ -2,9 +2,11 @@
 
 ## Status
 
-**Phase 6 complete (2026-09-12). Both gates met: the deterministic suite passes
-and the live benchmark composed the authored handoff on every replicate that
-reached the recording turn, with no false positives.**
+**Phases 6 and 7 complete (2026-09-12). The deterministic suite passes and the
+live benchmark is clean: Scene 1A completed 4 of 4 replicates with the authored
+handoff composed on every one, the unrelated control completed 2 of 2, and no
+replicate failed. Two candidates are migrated; the rest stay legacy for the
+authoring reason recorded in Phase 7.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -333,9 +335,20 @@ migration exists to remove.
 - [x] Remove the two-pass benchmark path now that the authored-handoff path has
   sufficient evidence. Deleted outright rather than left behind a disabled flag.
 
-- [ ] Gather live evidence for `k_sl_1a_b_r1` from
-  `bench/manifests/phase7-live-bench.json` before considering it rolled out;
-  orchestrate the run through Ringer rather than executing it by hand.
+- [x] Gather live evidence from `bench/manifests/phase7-live-bench.json`,
+  orchestrated through Ringer rather than executed by hand. The run on
+  2026-09-12 is the first completely clean one: Scene 1A completed 4 of 4
+  replicates with `k_sl_1a_b_r2` composed on every one, and the unrelated
+  Scene 1B control completed 2 of 2. No replicate failed for any reason.
+  Artifacts are under `bench/results/phase7-live-1a/` and
+  `bench/results/phase7-live-1b/`.
+
+  The run that immediately preceded it completed only 2 of 4, both failures
+  being `narration_known_term_leak: 'memory card'` on turn 2. That turn
+  projects the beat whose own authored prose reads "Kristin finds a hidden
+  memory card taped beneath a drawer", so the engine was rejecting the
+  narrator for using the words it had just been handed. Licensing a projected
+  beat's vocabulary removed the contradiction and the failures with it.
 
 **Deliberately not migrated, and why.** `k_sl_1a_a_r1`/`a_r2`,
 `k_sl_1a_d_r1`/`d_r2` and the `k_sl_1a_c_*` pair are outcome variants of the
