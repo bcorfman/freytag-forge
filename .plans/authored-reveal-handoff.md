@@ -308,23 +308,44 @@ migration exists to remove.
 
 ### Phase 7: Rollout and authoring expansion
 
-- [ ] Migrate `k_sl_1a_d_r1` and the remaining Scene 1A legacy candidates. The
-  Phase 6 live run shows the residual failure mode is a legacy candidate's own
-  guarded terms leaking into prose the model did not select, at roughly one
-  replicate in four. Authored handoff is the designed answer to that, so the
-  migration is the fix rather than another prompt rule.
-- [ ] Gather live evidence for each migrated candidate from
+- [x] Close the hole that made migration necessary but not sufficient.
+  `_model_candidates` hid a migrated candidate only on the turn its matcher
+  fired. On every other turn the narrator was still offered it, so its wording
+  entered the prompt for an unearned reveal, and the model could select the ID
+  through the legacy path and commit the fact with no authored delivery at all.
+  A migrated candidate is now neither shown to nor selectable by the model on
+  any turn, across the opening, the output examples and the recovery path, while
+  remaining in the projection the matcher runs against.
+- [x] Migrate candidates incrementally, prioritizing concrete investigation
+  actions and short, player-visible payoffs. `k_sl_1a_b_r1`, the saved-files
+  reveal, is migrated: its `action_evidence` was already disjoint from
+  `k_sl_1a_b_r2`, so only its `delivery_text` had to be authored.
+- [x] Keep the behavior opt-in by candidate data during the first release.
+  Exactly two candidates are migrated, and a check enforces that number so a
+  further migration cannot land unnoticed.
+- [x] Review telemetry for unmatched player phrasings; add only explicit,
+  author-reviewed aliases. Do not replace the exact matcher with a similarity
+  score or LLM semantic judgment. Sixty-seven recorded live turns produced nine
+  correct compositions and no false positives, but three natural phrasings
+  earned nothing because the shared first evidence group accepted only
+  recover/retrieve. Adding `memory card` and `the card` to that group on both
+  candidates fixes all three without creating a tie; the matcher is unchanged.
+- [x] Remove the two-pass benchmark path now that the authored-handoff path has
+  sufficient evidence. Deleted outright rather than left behind a disabled flag.
+
+- [ ] Gather live evidence for `k_sl_1a_b_r1` from
   `bench/manifests/phase7-live-bench.json` before considering it rolled out;
   orchestrate the run through Ringer rather than executing it by hand.
-- [ ] Keep the behavior opt-in by candidate data during the first release.
-- [ ] Review telemetry for unmatched player phrasings; add only explicit,
-  author-reviewed aliases. Do not replace the exact matcher with a similarity
-  score or LLM semantic judgment.
-- [ ] Migrate candidates incrementally, prioritizing concrete investigation
-  actions and short, player-visible payoffs.
-- [ ] Remove the two-pass benchmark path only after the authored-handoff path
-  has sufficient evidence; it is useful diagnostic evidence until then, but
-  must not be enabled in production.
+
+**Deliberately not migrated, and why.** `k_sl_1a_a_r1`/`a_r2`,
+`k_sl_1a_d_r1`/`d_r2` and the `k_sl_1a_c_*` pair are outcome variants of the
+*same* player action - a thorough versus a hurried search, the full files versus
+surviving fragments. No `action_evidence` can honestly distinguish them, because
+the difference is in what survived rather than in what the player did. Migrating
+both members of such a pair would make the matcher tie, and a tie composes
+nothing, which reads to a player as the game ignoring them. These need atomizing
+in the fiction before they can be migrated; that is authoring work, not a
+mechanical migration.
 
 ## Explicit non-solutions
 
