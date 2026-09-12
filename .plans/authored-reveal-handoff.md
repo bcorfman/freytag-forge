@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1 complete. Proposed; do not enable in ordinary play yet.**
+**Phase 2 complete. Proposed; do not enable in ordinary play yet.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -116,23 +116,23 @@ JSON.
 
 ### Phase 2: Make matching an explicit, fail-closed runtime decision
 
-- [ ] Promote the existing `candidate_matcher.py` from shadow-only telemetry
+- [x] Promote the existing `candidate_matcher.py` from shadow-only telemetry
   to an internal decision helper for handoff-eligible projected candidates.
-- [ ] Preserve its current safety contract: every phrase group is required,
+- [x] Preserve its current safety contract: every phrase group is required,
   declared aliases are allowed, negated actions do not match, and more than
   one match returns none.
-- [ ] Run the matcher after projection, never against all package knowledge.
+- [x] Run the matcher after projection, never against all package knowledge.
   A protected or future candidate cannot be selected because it is absent from
   the input set.
-- [ ] Return a small internal result carrying either no candidate or the
+- [x] Return a small internal result carrying either no candidate or the
   projected candidate and its authored delivery text. Do not expose this
   result to the narrator or API.
-- [ ] Keep shadow telemetry for non-opted-in candidates during migration so
+- [x] Keep shadow telemetry for non-opted-in candidates during migration so
   package authors can see missed matches without changing play.
 
-Exit gate: tests cover positive exact phrases, authored aliases, partial input,
-negation, no offered candidate, two matching candidates, and a candidate that
-is in the package but not currently projected.
+- [x] Exit gate: tests cover positive exact phrases, authored aliases, partial
+  input, negation, no offered candidate, two matching candidates, and a
+  candidate that is in the package but not currently projected.
 
 ### Phase 3: Compose the authored segment before existing validation
 
