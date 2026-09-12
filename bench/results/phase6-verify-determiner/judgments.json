@@ -1,0 +1,95 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Kitchen/back-door search did not report the concrete scene evidence the player asked about.",
+        "Phone status became inconsistent: canon says undamaged phone; narration says cracked screen and later dark/nonresponsive.",
+        "Work area search hinted at a hidden object but did not reveal what it was or let the player act on it.",
+        "Damaged recording was recovered from the phone/memory card in a confused way, without establishing how it was found from the hidden item.",
+        "Protected/future knowledge was revealed early: 'Continuity Initiative' and 'choose who remains.'",
+        "The turn about an official at the door and watching the gate was ignored; no responsive consequence occurred.",
+        "Scene exit jumped to travel and new-location information without properly dramatizing the immediate scene beats.",
+        "Exit reason was not adequately motivated from what the player was actually shown in prose.",
+        "Repeated searching of the kitchen/back door failed to yield actionable findings despite canon saying evidence is there."
+      ],
+      "reasons": [
+        "The opening does establish some sensory scene setup, but subsequent turns are thin and often repetitive rather than responsive to the specific action taken.",
+        "Turn 1 should have covered local evidence in the kitchen/back door area: overturned chair, damaged back door frame, phone on floor, signs of struggle or departure. Instead it only re-describes picking up the phone and invents damage inconsistent with canon.",
+        "Turn 2 gestures toward the unsearched work area and a hidden item, which is appropriate, but withholds the actual discovery. That fails to reward investigation with usable information.",
+        "Turn 3 delivers a recording warning not to trust emergency broadcasts, but the recovery chain is muddled. The narration returns to the phone on the floor, says it will not turn on, then abruptly states a memory card contains a recording. This is poorly grounded in the prior search beat.",
+        "Turn 4 ignores the player's declared actions about hiding evidence, interacting with an official at the door, and observing the gate. A normal turn requires consequences; this one provides none.",
+        "The scene progression is out of order and incomplete. The authored local beats implied by the prompts include establishing Michelle is gone, investigating her last research/work area, recovering the interrupted message/recording, and then handling the first threat. The actual narration skips or botches several of these, then leaps ahead.",
+        "The final turn leaves the scene, but the prose the player reads has not properly earned that departure. It introduces major conspiracy specifics and a park-bench lead abruptly, with no clear local discovery sequence from the desk/drawers/recording that the player actually experienced in detail.",
+        "Because protected knowledge is supposed to remain unrevealed until justified, naming the federal program and its purpose in this scene is an early spoiler beyond the immediate local investigation.",
+        "Overall, the scene neither stays tightly scene-local nor covers its authored beats cleanly across turns."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 2 invents a drawer with Michelle's initials and a hidden object without clearly revealing what it is or grounding it in supplied scene canon.",
+        "Turn 3 contradicts established canon by treating Michelle's undamaged phone on the kitchen floor as cracked/dark/nonresponsive and using it to access a memory card recording.",
+        "Turn 3 reveals protected plot information early: a damaged recording warning Kristin not to trust emergency broadcasts.",
+        "Turn 4 introduces a welfare-check officer at the door without adequate scene-local grounding or consequence resolution for the player's requested actions at the gate.",
+        "Turn 5 leaves the scene by dumping major discoveries not actually found in narrated play in this scene: Continuity Initiative, choosing who remains, and a park bench source.",
+        "Turn 5 departs despite the player's action being another kitchen/back-door search, not a move to leave.",
+        "Turn 5 does not motivate exit from what the player actually learned on-page; it names discoveries that were never properly uncovered in preceding narration.",
+        "Repeated searching of the kitchen/work area fails to produce actionable, concretely narrated findings in response to the player's investigations."
+      ],
+      "reasons": [
+        "The opening establishes the kitchen adequately, but subsequent turns do not consistently build responsive, sensory consequences from the player's specific searches.",
+        "Turn 1 is mostly consistent with the entry canon: phone on floor, forced back door, signs of disturbance. However it only reiterates existing facts and gives no new actionable evidence from close inspection.",
+        "Turn 2 should reward the player's targeted search of Michelle's unsearched work area. Instead it withholds the find in a vague cliffhanger and prematurely projects later beats without delivering them.",
+        "Turn 3 skips from the hidden-work-area search to picking up the phone again, ignoring the immediate prior discovery and breaking local causality.",
+        "The scene races ahead to future beats and protected knowledge instead of progressively uncovering Michelle's investigation through the work area first.",
+        "Ordinary turns need consequences the player can act on. Here, apt repeated investigation of exactly the right areas either repeats known facts or jumps offscreen to unrevealed discoveries.",
+        "A left_scene turn must tell the player what was found, where, and why it points onward. This exit fails because the necessary evidence was not actually discovered in prior readable narration, and the player did not choose to depart."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 does not actually inspect the back door/lock/phone for concrete signs; it only restates visible clutter and invents a broken chair leg/cracked screen.",
+        "Turn 2 promises checking hidden places under drawers/behind work area but only opens a drawer and finds generic papers/notebook; no meaningful discovery or consequence.",
+        "Turn 3 reveals protected knowledge early: the Continuity/emergency-broadcast distrust thread is surfaced without the required prior investigative support from Michelle's work area.",
+        "Turn 3 is inconsistent about the phone: earlier canon says the phone is undamaged, but turn 1 says cracked screen; turn 3 says locked phone and then abruptly gives a memory-card recording anyway.",
+        "Turn 4 ignores the player's specific action about hiding evidence, answering an official at the door, and watching the gate; no responsive consequence occurs.",
+        "The scene skips authored beats in order: the work area/research search is not properly dramatized before later revelations, and the first-threat/official-at-door material is not shown before projecting it.",
+        "Turn 5 exits the scene abruptly on a repeated kitchen/back-door search input, without narrating the actual search result that justifies departure in-scene.",
+        "Turn 5 names major revelations ('Continuity Initiative', 'choose who remains') and immediate travel to the park bench in summary form, racing transitions and dumping future beats.",
+        "Repeated apt searching of the area that canon says contains clues keeps returning little or nothing actionable until a sudden offscreen leap."
+      ],
+      "reasons": [
+        "Opening establishes some atmosphere, but subsequent turns are thin and nonresponsive, often paraphrasing the same kitchen state instead of producing concrete findings.",
+        "Scene-local canon requires Kristin to find out where Michelle went by searching the not-yet-searched work area and related evidence. The scene largely fails to convert those searches into readable discoveries.",
+        "Consistency errors matter here: Michelle's phone is canonically undamaged on the floor, yet the narration makes it cracked; signs of damage/tampering are alternately present and absent.",
+        "Protected knowledge is not safe: the damaged recording's warning and especially the Continuity Initiative reveal arrive without the necessary gradual chain of evidence in this scene.",
+        "The departure turn must give the player a reason to leave by naming what was found and where it points in the prose they read. Instead, it jumps to recovered files and immediate travel after an unrelated repeated search command, so the exit is unearned and poorly motivated.",
+        "Overall, the authored scene beats were not adequately covered in order across the turns, and investigation was not rewarded reliably."
+      ]
+    }
+  ],
+  "judge_calls": 3
+}

@@ -2478,6 +2478,35 @@ machine: `allow_full_access = false` gives workers a read-only repository and no
 network, so the run fails with `Read-only file system` before making a call.
 Run it directly from the repository instead.
 
+### Determiner-sensitive knowledge terms — 2026-09-12
+
+Verifying the `michelle's research` fix live cost two more four-replicate runs
+and was worth it: the alias fix held, but the rerun exposed a defect no
+deterministic test covered. In `bench/results/phase6-verify-research/`, one
+replicate composed the authored handoff on turn 3, committing `k_sl_1a_b_r2`,
+then failed on turn 4 with `narration_known_term_leak: narration mentions
+unavailable knowledge 'the memory card'` — rejected for naming the object it had
+just earned.
+
+The index keyed on the leading determiner:
+
+```text
+'memory card'     -> k_sl_1a_b_r1, k_sl_1a_b_r2, k_sl_1a_d_r1, k_sl_1a_d_r2
+'the memory card' -> k_sl_1a_d_r1          (uncommitted)
+```
+
+`_compile_knowledge_indexes` now records both the exact and the
+determiner-normalized form and merges their owners. Only one leading determiner
+is stripped, never from a single-word phrase. Guarded multi-word terms went from
+202 to 204, so narration protection widened rather than narrowed — check that
+number when touching the index, because normalizing `term_to_knowledge` without
+`audience_to_known_terms` would silently shrink the guarded set instead.
+
+`bench/results/phase6-verify-determiner/` then completed 3 of 4 with all three
+composing the handoff. The one remaining failure is a turn-2 mention of `memory
+card` before it is earned: the legacy select-or-don't-mention class, no facts
+committed, and Phase 7 migration is the fix.
+
 ## CI test-suite overlap and timing investigation
 
 **Purpose:** Verify the tests that run on push and pull request in the

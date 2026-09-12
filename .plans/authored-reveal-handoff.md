@@ -276,10 +276,35 @@ in four failed with `narration_known_term_leak: narration mentions unavailable
 knowledge 'michelle's research'`. No fact was committed. This is the older
 select-or-don't-mention problem from
 `narration-candidate-selection-reliability.md`: the term belonged to an
-uncommitted legacy candidate, `k_sl_1a_d_r1`. That specific alias has since been
-removed because it named the scene's own invitation to search rather than the
-secret, but the class remains for any legacy candidate and is the reason to keep
+uncommitted legacy candidate, `k_sl_1a_d_r1`. That specific alias was removed
+because it named the scene's own invitation to search rather than the secret,
+but the class remains for any legacy candidate and is the reason to keep
 migrating candidates to authored handoff.
+
+#### Live verification of that residual — 2026-09-12
+
+Two further four-replicate runs of the same script confirmed the alias fix and
+found one more defect that the deterministic suite could not have caught.
+
+- `bench/results/phase6-verify-research/`: `michelle's research` did not recur.
+  But two replicates failed on `memory card` / `the memory card`, and one of
+  those had already composed the handoff on turn 3 and was rejected on turn 4
+  for naming the card it had just legitimately earned.
+- Root cause: the term index keyed on the leading determiner, so `memory card`
+  was owned by four reveals including the earned one while `the memory card` was
+  owned only by an uncommitted sibling. Fixed by normalizing one leading
+  determiner at index time and merging owners — a subtractive fix that removes
+  the determiner sensitivity rather than adding a matching rule. Guarded
+  multi-word terms rose from 202 to 204, so protection widened. Two sibling
+  instances, `the exchange point` and `her information drop`, were fixed by the
+  same change.
+- `bench/results/phase6-verify-determiner/`: 3 of 4 completed, and all 3 that
+  reached turn 3 composed `k_sl_1a_b_r2`. The post-earn rejection is gone.
+
+What remains is a single, well-understood failure mode: roughly one replicate in
+four, the narrator names a legacy candidate's guarded term on turn 2 before the
+player has earned it. It commits no facts and is exactly what Phase 7's
+migration exists to remove.
 
 ### Phase 7: Rollout and authoring expansion
 
