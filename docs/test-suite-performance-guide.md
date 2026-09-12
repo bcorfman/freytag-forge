@@ -36,9 +36,12 @@ commit, command, coverage mode, elapsed time, and generated health report.
 
 ## CI
 
-The `tests` workflow runs **Cutover contracts**, **Fast feedback (unit and
-component)**, and **Required coverage gate**. The coverage gate uses two
-workers, branch coverage, the project-wide 90% floor, and a health artifact.
+The `tests` workflow runs **Static checks**, **Fast feedback (unit and
+component runtime-safety tests)**, and **Required coverage gate**. Static
+checks run Ruff's fast syntax/error rules. The fast job excludes the
+authoring-quality suite and boundary-heavy integration tests; the required
+gate is the single complete test run and uses two workers, branch coverage,
+the project-wide 90% floor, and a health artifact.
 Coverage-context and benchmark workflows are informational. Live hosted and
 OpenAI tests remain opt-in and skip without their credentials and flags.
 

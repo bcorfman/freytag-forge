@@ -168,6 +168,9 @@ _SESSION_CPU = 0.0
 
 
 _INTEGRATION_FILES = {
+    "test_knowledge_leakage_matrix.py",
+    "test_phase3_evidence.py",
+    "test_phase4_evidence.py",
     "test_scene_progression_phase4.py",
     "test_scene_runtime_phase2.py",
     "test_web_demo.py",
