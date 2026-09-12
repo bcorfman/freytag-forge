@@ -2427,6 +2427,57 @@ This session's live artifacts are under
 `bench/results/authored-handoff-phase1*` and
 `bench/results/authored-handoff-exact/`; reruns should use `/tmp`.
 
+### Phase 6 live gate met — 2026-09-12
+
+The three failures recorded above were diagnosed and fixed, and the live gate
+was then met. They were never handoff defects.
+
+- `uncited_knowledge: kitchen floor` was the handoff turn itself, not a turn
+  before it. `_parse_eligible_proposal` returned early through
+  `_ordinary_handoff_proposal`, skipping `_auto_attribute_committed_knowledge`,
+  so committed grounding was never repaired on a handoff turn.
+- `kristin and brandon` and `dead drop` were authored-prose term traps: the
+  narrator was handed scene text naming knowledge the scene had not committed,
+  then rejected for using it. The loader now refuses such a package via
+  `_validate_narration_term_traps`, which inspects `entry_text`, beats, and the
+  knowledge-frame `situation`.
+- `bench` itself hid the evidence: failed replicates never reached
+  `aggregate_runs`, so a total failure and an unexecuted run produced identical
+  summaries. Summaries now carry `failed_replicates`, the verbatim
+  `failure_reason` strings, and an `entry_state` disclosure.
+
+Commands used, both against the live Cloudflare narrator:
+
+```bash
+TMPDIR=/tmp .venv/bin/python -m bench run \
+  --variation bench/variations/authored-handoff-phase1.json \
+  --scene 1A --replicates 4 --script candidate-selection-repro \
+  --out bench/results/phase6-live-1a --confirm
+TMPDIR=/tmp .venv/bin/python -m bench run \
+  --variation bench/variations/authored-handoff-phase1.json \
+  --scene 1B --replicates 2 --script unrelated-scene \
+  --out bench/results/phase6-live-1b --confirm
+```
+
+**Observed:** Scene 1A completed 3 of 4 replicates (264 neurons) against 0 of 4
+before. All 3 composed `authored_handoff_candidate_id: k_sl_1a_b_r2` on turn 3
+with `model_selected_knowledge_ids: []`, and the authored `delivery_text`
+appeared verbatim in the player-facing narration. The other 13 turns across the
+run matched no handoff despite four offered candidates, so there were no false
+positives and no fact committed on an unmatched action. The Scene 1B control
+completed 2 of 2 with no failures.
+
+**Not fixed, and deliberately recorded rather than hidden:** one Scene 1A
+replicate failed with `narration_known_term_leak: narration mentions unavailable
+knowledge 'michelle's research'`. It committed no facts. It is the legacy
+select-or-don't-mention problem, not a handoff defect, and is carried to Phase 7
+as a reason to continue migrating legacy candidates.
+
+Note that a live `bench run` cannot be executed by a sandboxed worker on this
+machine: `allow_full_access = false` gives workers a read-only repository and no
+network, so the run fails with `Read-only file system` before making a call.
+Run it directly from the repository instead.
+
 ## CI test-suite overlap and timing investigation
 
 **Purpose:** Verify the tests that run on push and pull request in the

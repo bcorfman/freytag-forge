@@ -2,8 +2,9 @@
 
 ## Status
 
-**Phase 6 implementation complete. Deterministic gates pass; the live benchmark
-exit gate remains open until pre-recording narration-safety failures are fixed.**
+**Phase 6 complete (2026-09-12). Both gates met: the deterministic suite passes
+and the live benchmark composed the authored handoff on every replicate that
+reached the recording turn, with no false positives.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -226,44 +227,67 @@ uv run python -m bench run --variation bench/variations/authored-handoff-phase1.
   --out bench/results/authored-handoff-phase1 --confirm
 ```
 
-- [ ] Exit gate: the isolated probe and live benchmark show accepted delivery
+- [x] Exit gate: met 2026-09-12. The live benchmark shows accepted delivery
   where the previous one- and two-pass model paths produced empty selections,
-  with no fact committed on unmatched or ambiguous actions. The live benchmark
-  currently stops before the recording turn on `uncited_knowledge` and
-  `narration_known_term_leak` failures; keep migration opt-in until a rerun
-  reaches the exact action.
+  with no fact committed on unmatched or ambiguous actions. Evidence is under
+  `bench/results/phase6-live-1a/` and `bench/results/phase6-live-1b/`.
 
-#### Current Phase 6 blocker
+#### Phase 6 resolution
 
-The deterministic gate is complete, but the live gate is not. The live runs
-were made with `bench/variations/authored-handoff-phase1.json`:
+The handoff design was never the problem. Three unrelated defects stopped every
+live run before it reached the recording turn; all three are fixed and covered
+by executed checks.
 
-- The isolated selection probe reached the worker and reported no offered
-  candidate plus the shadow match `k_sl_1a_b_r2`. This confirms the authored
-  handoff is hidden from model selection.
-- Four Scene 1A `candidate-selection-repro` replicates stopped before the
-  recording action with `uncited_knowledge: narration does not ground the
-  knowledge term 'kitchen floor'`.
-- The direct `authored-recording-exact` arm also stopped before handoff
-  projection with `narration_known_term_leak: narration mentions unavailable
-  knowledge 'dead drop'`.
-- The unrelated Scene 1B control stopped before handoff with
-  `narration_known_term_leak: narration mentions unavailable knowledge
-  'kristin and brandon'`.
+1. **The grounding repair was bypassed on the handoff path.**
+   `_parse_eligible_proposal` returned early via `_ordinary_handoff_proposal`
+   before `_auto_attribute_committed_knowledge` ran, so a handoff turn naming an
+   already-committed term was rejected with `uncited_knowledge`. Identical prose
+   grounded `k_scene_1a_entry` on the legacy path and nothing on the handoff
+   path. This is what produced the `'kitchen floor'` failures: they occurred on
+   turn 3, the recording turn itself, not before it.
+2. **Authored prose named knowledge the scene had not committed.** The engine
+   hands the narrator each scene's `entry_text`, beats and knowledge-frame
+   `situation`, then rejected it for writing from that material. Eleven
+   collisions across eight scenes, the worst registering the two protagonists'
+   names as knowledge aliases, which is what killed the 1B control. Fixed in the
+   package data, and generalized by the new loader lint
+   `_validate_narration_term_traps` so no package can reintroduce the class.
+3. **`bench` misreported.** Prompt previews read a stale hand-copy of the turn
+   rules, and failed replicates never reached `aggregate_runs`, so a 4-of-4
+   failure summarized identically to a run that never executed. The summary now
+   carries `failed_replicates`, the real `failure_reason` strings, and an
+   `entry_state` disclosure of the deliberately bare arrival state.
 
-These are pre-recording narrator-safety failures. They are not false-positive
-handoffs and did not commit facts. Do not weaken narration safety or authored
-matching to make the benchmark continue. Fix or isolate the pre-recording
-prompt/scene-safety failures, then rerun the exact recording action and confirm
-`authored_handoff_candidate_id: k_sl_1a_b_r2` with the authored delivery before
-checking the exit gate. The captured live records are under
-`bench/results/authored-handoff-phase1/`,
-`bench/results/authored-handoff-exact/`, and
-`bench/results/authored-handoff-phase1-1b/`; repeatable commands and the
-deterministic results are in `docs/testing-runbook.md`.
+Live result, `bench/variations/authored-handoff-phase1.json`:
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Scene 1A replicates completed | 0 of 4 | 3 of 4 |
+| Authored handoff composed | never | 3 of 3 reaching turn 3 |
+| False-positive handoffs | n/a | 0 across 13 non-matching turns |
+| Scene 1B control | 0 of 1 | 2 of 2 |
+
+The delivered turn carried `model_selected_knowledge_ids: []` with
+`selected_knowledge_ids: ['k_sl_1a_b_r2']` and the authored `delivery_text`
+verbatim, confirming the runtime, not the model, owned the reveal.
+
+**Residual, carried to Phase 7, not a handoff defect.** One Scene 1A replicate
+in four failed with `narration_known_term_leak: narration mentions unavailable
+knowledge 'michelle's research'`. No fact was committed. This is the older
+select-or-don't-mention problem from
+`narration-candidate-selection-reliability.md`: the term belonged to an
+uncommitted legacy candidate, `k_sl_1a_d_r1`. That specific alias has since been
+removed because it named the scene's own invitation to search rather than the
+secret, but the class remains for any legacy candidate and is the reason to keep
+migrating candidates to authored handoff.
 
 ### Phase 7: Rollout and authoring expansion
 
+- [ ] Migrate `k_sl_1a_d_r1` and the remaining Scene 1A legacy candidates. The
+  Phase 6 live run shows the residual failure mode is a legacy candidate's own
+  guarded terms leaking into prose the model did not select, at roughly one
+  replicate in four. Authored handoff is the designed answer to that, so the
+  migration is the fix rather than another prompt rule.
 - [ ] Keep the behavior opt-in by candidate data during the first release.
 - [ ] Review telemetry for unmatched player phrasings; add only explicit,
   author-reviewed aliases. Do not replace the exact matcher with a similarity
