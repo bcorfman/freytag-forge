@@ -2328,3 +2328,58 @@ ordinary play because no checked-in candidate has `delivery_text`.
 
 Observed 2026-09-12: the focused command passed 103 tests; Ruff passed; the
 full suite passed 376 tests with 91.60% coverage.
+
+## CI test-suite overlap and timing investigation
+
+**Purpose:** Verify the tests that run on push and pull request in the
+`tests` workflow, and identify duplicate or misclassified coverage that makes
+those jobs slower.
+
+**Setup / seed:** A clean checkout with the locked Python dependencies. The
+workflow's required gate uses `TMPDIR=/tmp uv run pytest -q --cov -n 2`.
+
+**Safe actions:** Collection, timing, and local deterministic test runs only.
+No provider, deployment, or hosted request is made.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Inspect `.github/workflows/test.yml` and `tests/conftest.py` for the three
+   required CI jobs and their test markers.
+2. Run the fast-feedback selection with `--durations=20`.
+3. Run the required coverage command with its health report under `/tmp`.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality" --durations=20
+TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=/tmp/test-suite-health.json
+```
+
+Expected: the full gate remains green at or above 90% total branch coverage;
+fast feedback contains only unit/component runtime-safety tests after the CI
+selection is tightened. On 2026-09-12 before the change, collection reported
+378 total tests, 323 unit/component tests, and 61 authoring-quality tests;
+the serial fast-feedback diagnostic passed 323 tests in 39.40 seconds. The
+serial full baseline passed 378 tests in 109.62 seconds at 91.63% coverage.
+
+**Cleanup:** Remove only temporary reports under `/tmp` if no longer needed.
+
+**Notes:** The cutover job and fast-feedback job both repeated the same
+61-file authoring suite that the required gate already runs. The leakage
+matrix and Phase 3/4 evidence tests are deterministic package/runtime
+boundary checks, not fast unit feedback; their required-gate coverage remains
+the source of truth after reclassification.
+
+Observed after the change on 2026-09-12: the changed fast-feedback command
+collected and passed 257 tests in 16.16 seconds, with zero authoring-quality
+tests selected. The unchanged required-gate command passed all 378 tests in
+60.02 seconds at 91.63% coverage. The cutover job's remaining Ruff command
+also passed.
+
+The loader follow-up caches YAML parsing by file content and deep-copies the
+cached value for each load. The 61-test Markdown package module then passed in
+8.49 seconds wall time. The required-gate command passed all 378 tests in
+25.86 seconds at 91.64% coverage, down from the 60.02-second pre-cache run;
+no tests were skipped from the required gate.

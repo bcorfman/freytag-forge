@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -59,9 +61,14 @@ _REQUIRED_STORYLET_SECTIONS = {
 }
 
 
+@cache
+def _parse_yaml(text: str) -> object:
+    return yaml.safe_load(text)
+
+
 def _yaml(path: Path) -> dict[str, Any]:
     try:
-        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+        value = deepcopy(_parse_yaml(path.read_text(encoding="utf-8")))
     except (OSError, yaml.YAMLError) as exc:
         raise StoryPackageError(f"cannot read YAML '{path}': {exc}") from exc
     if not isinstance(value, dict):

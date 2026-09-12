@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   cutover-contracts:
-    name: Cutover contracts
+    name: Static checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -31,18 +31,6 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
-      - name: Verify Markdown story-package contracts
-        run: >-
-          TMPDIR=/tmp uv run pytest -q --no-cov
-          tests/test_markdown_story_package.py
-          --tier-report=artifacts/markdown-story-package.json
-      - name: Upload cutover reports
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cutover-contracts
-          path: artifacts/
-          if-no-files-found: warn
 
   fast-feedback:
     name: Fast feedback (unit and component)
@@ -71,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run fast feedback tests
-        run: TMPDIR=/tmp uv run pytest -q --no-cov -m "unit or component"
+        run: TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"
 
   test:
     name: Required coverage gate
