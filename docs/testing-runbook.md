@@ -2192,3 +2192,47 @@ effects.
 **Notes:** Added 2026-09-11. This phase changes documentation only; the
 authored-handoff runtime remains disabled until later phases add and validate
 the package data and decision path.
+
+## Authored reveal handoff Phase 1 loader contract
+
+**Purpose:** Verify optional package-owned delivery text, its load-time
+conveyance and bookkeeping checks, and legacy evidence-only candidates.
+
+**Setup / seed:** The checked-in `continuity-initiative` package, temporary
+copied-package fixtures, and Python dependencies installed with
+`uv sync --group dev`.
+
+**Safe actions:** Run the focused loader and projection tests, Ruff, and the
+full local suite. Tests write only temporary copied packages.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the Phase 1 loader and projection tests.
+2. Run Ruff autofix and formatting.
+3. Run the full Python suite.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q --no-cov tests/test_markdown_story_package.py tests/test_knowledge_projection.py
+uv run ruff check --fix . && uv run ruff format .
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: complete authored handoff data loads, its delivery text is absent
+from runtime model serialization, incomplete handoffs are rejected before
+play, and the legacy package still loads. Ruff and the full suite pass.
+
+**Cleanup:** Pytest removes temporary package copies. None required.
+
+**Notes:** Added 2026-09-11 for Phase 1 of
+`.plans/authored-reveal-handoff.md`. The handoff remains disabled because no
+shipped candidate has `delivery_text`; Phase 2 owns runtime matching.
+
+Observed 2026-09-11: the focused loader/projection command passed 76 tests;
+Ruff passed after formatting one test file; the full suite passed 367 tests
+with 91.54% coverage. After narrowing the internal-token guard to allow
+player-facing entity names, the focused command and full suite were rerun and
+passed with the same results.

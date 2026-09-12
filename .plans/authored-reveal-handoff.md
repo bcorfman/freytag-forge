@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 0 complete. Proposed; do not enable in ordinary play yet.**
+**Phase 1 complete. Proposed; do not enable in ordinary play yet.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -96,22 +96,23 @@ JSON.
 
 ### Phase 1: Add package-owned delivery data and loader checks
 
-- [ ] Add `delivery_text: str | None` to `KnowledgeDefinition` and its runtime
+- [x] Add `delivery_text: str | None` to `KnowledgeDefinition` and its runtime
   projection type. Keep it out of model serialization.
-- [ ] Treat a candidate as authored-handoff eligible only when both
+- [x] Treat a candidate as authored-handoff eligible only when both
   `action_evidence` and non-empty `delivery_text` exist.
-- [ ] At package load time, reject handoff candidates when:
+- [x] At package load time, reject handoff candidates when:
   - evidence groups are empty;
   - delivery text is blank;
   - delivery text does not satisfy every non-empty `must_convey` group;
   - a delivery string contains implementation-only IDs or bookkeeping labels.
-- [ ] Reuse the project's existing conveyance matcher for the loader check;
+- [x] Reuse the project's existing conveyance matcher for the loader check;
   do not introduce a second incompatible interpretation of `must_convey`.
-- [ ] Extend authoring documentation with a short example showing evidence,
+- [x] Extend authoring documentation with a short example showing evidence,
   delivery text, and the requirement to author conservative aliases.
 
-Exit gate: loader tests prove that incomplete delivery text is rejected before
-the game can start, and legacy candidates without this opt-in still load.
+- [x] Exit gate: loader tests prove that incomplete delivery text is rejected
+  before the game can start, and legacy candidates without this opt-in still
+  load.
 
 ### Phase 2: Make matching an explicit, fail-closed runtime decision
 

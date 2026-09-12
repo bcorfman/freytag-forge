@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement
@@ -225,6 +226,70 @@ def test_loader_rejects_invalid_knowledge_catalog(tmp_path: Path, mutate: object
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
+
+
+_AUTHORED_DELIVERY = (
+    "Michelle finds the memory card and plays the damaged recording. The warning concerns emergency broadcasts."
+)
+
+
+def _knowledge_item(catalog: dict[str, object], knowledge_id: str) -> dict[str, object]:
+    return next(item for item in catalog["knowledge"] if item["id"] == knowledge_id)  # type: ignore[index]
+
+
+def test_complete_authored_handoff_loads_and_stays_out_of_runtime_serialization(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    item = _knowledge_item(catalog, "k_sl_1a_b_r2")
+    item["delivery_text"] = _AUTHORED_DELIVERY
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+
+    package = load_story_package(root)
+    knowledge = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
+    candidate = KnowledgeProjector._candidate(knowledge)
+
+    assert knowledge.delivery_text == _AUTHORED_DELIVERY
+    assert candidate.delivery_text == _AUTHORED_DELIVERY
+    assert "delivery_text" not in candidate.model_dump()
+    assert _AUTHORED_DELIVERY not in candidate.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda item: item.update(delivery_text=_AUTHORED_DELIVERY, action_evidence=[]), "non-empty action_evidence"),
+        (
+            lambda item: item.update(delivery_text=_AUTHORED_DELIVERY, action_evidence=[[]]),
+            "non-empty action_evidence",
+        ),
+        (lambda item: item.update(delivery_text="   "), "blank delivery_text"),
+        (
+            lambda item: item.update(delivery_text="Michelle finds the memory card and plays the damaged recording."),
+            "must_convey",
+        ),
+        (
+            lambda item: item.update(delivery_text=f"{_AUTHORED_DELIVERY} (candidate_id: k_sl_1a_b_r2)"),
+            "implementation-only token",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_authored_handoff(tmp_path: Path, mutate: object, message: str) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    mutate(_knowledge_item(catalog, "k_sl_1a_b_r2"))  # type: ignore[operator]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match=message):
+        load_story_package(root)
+
+
+def test_legacy_evidence_without_delivery_text_still_loads() -> None:
+    package = load_story_package(PACKAGE)
+
+    assert any(item.action_evidence for item in package.knowledge.knowledge)
+    assert all(item.delivery_text is None for item in package.knowledge.knowledge)
 
 
 def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(tmp_path: Path) -> None:
