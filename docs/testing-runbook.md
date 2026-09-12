@@ -2229,10 +2229,58 @@ play, and the legacy package still loads. Ruff and the full suite pass.
 
 **Notes:** Added 2026-09-11 for Phase 1 of
 `.plans/authored-reveal-handoff.md`. The handoff remains disabled because no
-shipped candidate has `delivery_text`; Phase 2 owns runtime matching.
+shipped candidate has `delivery_text`; Phase 2 owns runtime matching and Phase
+3 owns composition.
 
 Observed 2026-09-11: the focused loader/projection command passed 76 tests;
 Ruff passed after formatting one test file; the full suite passed 367 tests
 with 91.54% coverage. After narrowing the internal-token guard to allow
 player-facing entity names, the focused command and full suite were rerun and
 passed with the same results.
+
+## Authored reveal handoff Phase 3 composition contract
+
+**Purpose:** Verify that one exact authored match becomes an ordinary narration
+segment before the existing resolver, safety checks, effects, and atomic commit.
+Model selection and candidate grounding are ignored for that matched handoff;
+legacy candidates retain their existing path.
+
+**Setup / seed:** The checked-in `continuity-initiative` package, an in-memory
+test copy with one candidate given `delivery_text`, and Python dependencies
+installed with `uv sync --group dev`. If `.venv` is stale or incomplete, repair
+it with `uv sync --reinstall`.
+
+**Safe actions:** Run the focused transport/safety tests, Ruff, and the full
+local suite. Tests use an in-memory package and do not alter the checked-in
+story data.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the authored-handoff composition and safety tests.
+2. Run Ruff autofix and formatting.
+3. Run the full Python suite.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_cloudflare_transport.py tests/test_candidate_matcher.py tests/test_narration_safety.py
+uv run ruff check --fix . && uv run ruff format .
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: a matched handoff returns the exact authored sentence with the
+candidate grounding and selected ID, then commits through the normal effects
+path. Invalid surrounding prose rejects the composed proposal and leaves the
+full pre-turn state unchanged. No new public segment kind or bookkeeping field
+appears.
+
+**Cleanup:** None.
+
+**Notes:** Added 2026-09-12 for Phase 3 of
+`.plans/authored-reveal-handoff.md`. The handoff remains opt-in and disabled in
+ordinary play because no checked-in candidate has `delivery_text`.
+
+Observed 2026-09-12: the focused command passed 103 tests; Ruff passed; the
+full suite passed 376 tests with 91.60% coverage.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 2 complete. Proposed; do not enable in ordinary play yet.**
+**Phase 3 complete. Proposed; do not enable in ordinary play yet.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -136,24 +136,24 @@ JSON.
 
 ### Phase 3: Compose the authored segment before existing validation
 
-- [ ] Refactor the provider/turn boundary so model prose is parsed as an
+- [x] Refactor the provider/turn boundary so model prose is parsed as an
   ordinary proposal with no candidate selection duty for a matched handoff.
-- [ ] When the matcher returned one candidate, append one normal narration
+- [x] When the matcher returned one candidate, append one normal narration
   segment with `text=delivery_text` and `grounding_ids=[candidate.id]`, and set
   `selected_knowledge_ids=[candidate.id]` on the composed proposal.
-- [ ] When there is no matcher result, compose nothing and retain the legacy
+- [x] When there is no matcher result, compose nothing and retain the legacy
   model-proposal behavior until that candidate is migrated.
-- [ ] Send the composed proposal through the current prechecks, resolver,
+- [x] Send the composed proposal through the current prechecks, resolver,
   narration-safety checks, package effects, cloned fact-state validation, and
   atomic commit. Do not add a parallel commit path.
-- [ ] Ensure rendering observes the composed segment before state effects are
+- [x] Ensure rendering observes the composed segment before state effects are
   committed. A failed render/validation leaves the state unchanged.
-- [ ] Keep model-generated prose separate from the package segment internally
+- [x] Keep model-generated prose separate from the package segment internally
   only as needed for construction and test assertions; do not add metadata to
   the JSON schema.
 
-Exit gate: an accepted handoff uses the same validator and effects path as a
-model-selected reveal, while a rejected composed proposal changes no facts.
+- [x] Exit gate: an accepted handoff uses the same validator and effects path as
+  a model-selected reveal, while a rejected composed proposal changes no facts.
 
 ### Phase 4: Simplify the narrator contract for handoff turns
 
