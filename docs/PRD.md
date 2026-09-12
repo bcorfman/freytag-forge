@@ -18,24 +18,24 @@ facts become durable.
 
 ## Runtime contract
 
-- The narrator receives a bounded `TurnKnowledgeContext` with safe scene
-  material, committed knowledge, and eligible candidates. It receives no
-  routes, source IDs, future effects, or transcript memory.
+- The narrator receives bounded `TurnKnowledgeContext` scene material,
+  committed knowledge, and current candidates. It receives no routes, source
+  IDs, future effects, or transcript memory.
 - Narrator JSON is untrusted. The runtime resolves at most one eligible fact,
-  validates the narration and cloned fact state, then commits the whole turn
-  atomically. Ambiguous claims, leaks, unsupported facts, wrong-speaker
-  dialogue, and premature transitions fail closed.
+  validates the composed narration and cloned fact state, then commits the
+  whole turn atomically. Leaks, unsupported facts, wrong-speaker dialogue,
+  ambiguity, and premature transitions fail closed.
 - Accepted turns advance declarative, fact-backed pacing. The runtime never
   infers gameplay from vague prose or chooses an action for the player.
 
 ### Authored reveal handoff
 
 - An authored handoff is opt-in per candidate: complete `action_evidence` and
-  non-empty `delivery_text` are required. After projection, the exact matcher
-  accepts one candidate only when every evidence group matches, no negation is
-  present, and no tie exists. The internal result stays out of narrator and
-  API serialization; legacy candidates keep the narrator path and shadow
-  telemetry. Existing fact IDs, effects, and saves remain unchanged.
+  non-empty `delivery_text` are required. After projection, one exact match
+  adds that authored text as ordinary narration and selects the same candidate
+  through the normal resolver. Ties and misses produce no handoff. The result
+  stays out of narrator and API serialization; legacy candidates keep the
+  narrator path. Existing fact IDs, effects, and saves remain unchanged.
 
 ## Authoring and API
 

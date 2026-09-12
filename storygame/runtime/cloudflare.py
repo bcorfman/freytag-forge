@@ -840,9 +840,9 @@ class CloudflareTurnProvider:
                         proposal = self._parse_eligible_proposal(salvaged)
                     except RuntimeContractError as salvage_error:
                         return self._recover_malformed_response(payload, getattr(salvage_error, "hint", ""))
-                    return self._cap_accepted_response(salvaged, proposal)
+                    return self._accept_proposal(salvaged, proposal)
                 return self._recover_malformed_response(payload, getattr(error, "hint", ""))
-            return self._cap_accepted_response(response, proposal)
+            return self._accept_proposal(response, proposal)
 
         fallback_payload = {key: value for key, value in payload.items() if key != "response_format"}
         self._record_recovery()
@@ -917,7 +917,48 @@ class CloudflareTurnProvider:
                 502,
                 "INVALID_PROPOSAL",
             ) from error
+        return self._accept_proposal(response, proposal)
+
+    def _accept_proposal(self, response: object, proposal: TurnProposal) -> object:
+        """Compose an authored handoff before the engine's normal validation path."""
+
+        if self.authored_handoff is not None:
+            proposal = self._compose_authored_handoff(proposal)
+            response = proposal.model_dump(mode="json")
         return self._cap_accepted_response(response, proposal)
+
+    def _compose_authored_handoff(self, proposal: TurnProposal) -> TurnProposal:
+        """Keep model prose ordinary, then append the package-owned delivery segment."""
+
+        handoff = self.authored_handoff
+        if handoff is None:
+            return proposal
+        committed_ids = (
+            {item.id for item in self.last_projection.committed_knowledge}
+            if self.last_projection is not None
+            else set()
+        )
+        model_segments = tuple(
+            segment.model_copy(
+                update={
+                    "grounding_ids": tuple(
+                        grounding_id for grounding_id in segment.grounding_ids if grounding_id in committed_ids
+                    )
+                }
+            )
+            for segment in proposal.segments
+        )
+        delivery = NarrationSegment(
+            kind="narration",
+            text=handoff.delivery_text,
+            grounding_ids=(handoff.candidate.id,),
+        )
+        return proposal.model_copy(
+            update={
+                "segments": (*model_segments, delivery),
+                "selected_knowledge_ids": (handoff.candidate.id,),
+            }
+        )
 
     def _character_lines(self) -> list[str]:
         """Introduce only the characters this scene actually involves.
@@ -1139,8 +1180,11 @@ class CloudflareTurnProvider:
         self.model_grounding_ids = tuple(
             sorted({grounding_id for segment in proposal.segments for grounding_id in segment.grounding_ids})
         )
-        if self.last_projection is None:
+        projection = self.last_projection
+        if projection is None:
             raise RuntimeContractError("knowledge projection is unavailable")
+        if self.authored_handoff is not None:
+            return self._ordinary_handoff_proposal(proposal, projection)
         # This pre-check must mirror every provider-facing rule in SelectedRevealResolver.resolve;
         # a rule missing here becomes a hard turn failure in the browser instead of one recovery.
         if len(proposal.selected_knowledge_ids) > 1:
@@ -1261,6 +1305,22 @@ class CloudflareTurnProvider:
                 "select facts or a transition.",
             )
         return proposal
+
+    def _ordinary_handoff_proposal(self, proposal: TurnProposal, projection: TurnKnowledgeContext) -> TurnProposal:
+        """Drop model selection work while retaining safe committed grounding."""
+
+        committed_ids = {item.id for item in projection.committed_knowledge}
+        segments = tuple(
+            segment.model_copy(
+                update={
+                    "grounding_ids": tuple(
+                        grounding_id for grounding_id in segment.grounding_ids if grounding_id in committed_ids
+                    )
+                }
+            )
+            for segment in proposal.segments
+        )
+        return proposal.model_copy(update={"segments": segments, "selected_knowledge_ids": ()})
 
     def _auto_select_unambiguous_candidate(self, proposal: TurnProposal) -> TurnProposal:
         """Select one reveal only when the narration itself proves exactly one candidate.

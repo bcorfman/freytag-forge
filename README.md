@@ -6,11 +6,11 @@ Write the move. Change the story.
 
 ## Features
 
-- **Write any move.** Freeform in-world actions, with no menus or parser syntax.
-- **Change the story.** Validated discoveries and choices stick.
-- **Uncover what you earn.** Future plot stays hidden until your actions reveal it.
-- **Feel the pressure.** Storylets and pacing make every delay count.
-- **Keep your footing.** Scoped knowledge and atomic turns protect continuity.
+- **Play freeform.** Write any in-world move. No menus. No parser syntax.
+- **Make it matter.** Validated discoveries and choices stick.
+- **Earn every reveal.** Future plot stays hidden until your actions uncover it.
+- **Stay under pressure.** Storylets and pacing make every delay count.
+- **Keep the thread.** Scoped knowledge and atomic turns protect continuity.
 
 ## Play online
 

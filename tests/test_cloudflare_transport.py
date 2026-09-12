@@ -27,6 +27,24 @@ from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+AUTHORED_DELIVERY = (
+    "Michelle's hidden memory card holds a damaged recording that warns Kristin not to trust emergency broadcasts."
+)
+
+
+def _authored_handoff_package():
+    knowledge_id = "k_sl_1a_b_r2"
+    knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
+    authored = knowledge.model_copy(update={"delivery_text": AUTHORED_DELIVERY})
+    catalog = PACKAGE.knowledge.model_copy(
+        update={
+            "knowledge": tuple(authored if item.id == knowledge_id else item for item in PACKAGE.knowledge.knowledge),
+        }
+    )
+    indexes = PACKAGE.knowledge_indexes.model_copy(
+        update={"by_id": {**PACKAGE.knowledge_indexes.by_id, knowledge_id: authored}}
+    )
+    return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
 
 
 def _assert_memory_card_in_custody(state: RuntimeState) -> None:
@@ -544,6 +562,77 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
     assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert provider.model_selected_knowledge_ids == ()
     assert provider.recovery_count == 0
+
+
+def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypatch) -> None:
+    package = _authored_handoff_package()
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = {
+        "segments": [
+            {
+                "kind": "narration",
+                "text": "Kristin turns toward the desk.",
+                "grounding_ids": ["k_future_unavailable"],
+            }
+        ],
+        "selected_knowledge_ids": ["k_future_unavailable"],
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+
+    result = provider("Recover the damaged recording and listen to it.")
+
+    assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["segments"] == [
+        {"kind": "narration", "text": "Kristin turns toward the desk.", "speaker_id": None, "grounding_ids": []},
+        {
+            "kind": "narration",
+            "text": AUTHORED_DELIVERY,
+            "speaker_id": None,
+            "grounding_ids": ["k_sl_1a_b_r2"],
+        },
+    ]
+    assert provider.model_selected_knowledge_ids == ("k_future_unavailable",)
+    assert provider.recovery_count == 0
+
+
+def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypatch) -> None:
+    package = _authored_handoff_package()
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {"segments": [{"kind": "narration", "text": "The room settles."}], "selected_knowledge_ids": []}
+        ),
+    )
+    before = state.snapshot()
+
+    proposal = RuntimeEngine(state, provider).turn("Recover the damaged recording and listen to it.")
+
+    assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
+    assert proposal.segments[-1].text == AUTHORED_DELIVERY
+    assert state.facts.has("michelle_warning_known", "story", value="true")
+
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {
+                "segments": [{"kind": "narration", "text": "Brandon reveals the protected future."}],
+                "selected_knowledge_ids": [],
+            }
+        ),
+    )
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, provider).turn("Recover the damaged recording and listen to it.")
+
+    assert state.snapshot() == before
 
 
 def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
