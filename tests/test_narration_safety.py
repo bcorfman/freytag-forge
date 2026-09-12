@@ -6,6 +6,7 @@ import pytest
 
 from storygame.runtime.contracts import NarrationSegment, RuntimeContractError, parse_turn_proposal
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
@@ -41,6 +42,38 @@ def test_future_entity_name_or_alias_is_rejected_without_grounding() -> None:
     error = _run_rejected("Brandon waits beside the door.")
 
     assert error.code == "narration_known_term_leak"
+
+
+def test_determiner_variant_shares_knowledge_owners_with_bare_term() -> None:
+    indexes = PACKAGE.knowledge_indexes
+
+    assert indexes.term_to_knowledge["the memory card"] == indexes.term_to_knowledge["memory card"]
+
+
+def test_earned_memory_card_accepts_determiner_but_unearned_term_is_rejected() -> None:
+    knowledge_id = "k_sl_1a_b_r2"
+    knowledge = PACKAGE.knowledge_indexes.by_id[knowledge_id]
+    state = RuntimeState.bootstrap(PACKAGE)
+    for effect in knowledge.establishes:
+        state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
+
+    proposal = RuntimeEngine(
+        state,
+        lambda _: {
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": "The memory card is safe in Michelle's hands.",
+                    "grounding_ids": [knowledge_id],
+                }
+            ]
+        },
+    ).turn("Inspect the memory card.")
+
+    assert proposal.segments[0].text == "The memory card is safe in Michelle's hands."
+
+    error = _run_rejected("The memory card waits beneath the drawer.")
+    assert error.code in {"uncited_knowledge", "narration_known_term_leak"}
 
 
 def test_protected_concept_alias_is_rejected() -> None:

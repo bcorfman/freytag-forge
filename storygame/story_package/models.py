@@ -167,6 +167,28 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+_LEADING_DETERMINERS = frozenset({"the", "a", "an", "this", "that", "her", "his", "their", "its"})
+
+
+def normalize_term(value: str) -> str:
+    """Remove one leading determiner from a multi-word lookup phrase."""
+
+    words = value.casefold().split()
+    if len(words) > 1 and words[0] in _LEADING_DETERMINERS:
+        return " ".join(words[1:])
+    return value.casefold()
+
+
+def term_lookup_forms(value: str) -> tuple[str, ...]:
+    """Return the exact and determiner-normalized forms for an index lookup."""
+
+    folded = value.casefold()
+    normalized = normalize_term(value)
+    if normalized == folded:
+        return (folded,)
+    return (folded, normalized)
+
+
 def entity_surface_forms(entity: Entity) -> tuple[str, ...]:
     """Return authored display-name and alias forms for deterministic screening."""
 
