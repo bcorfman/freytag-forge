@@ -10,8 +10,7 @@ facts become durable.
   parser rules.
 - Authored Markdown and typed knowledge define the world, reveals, storylets,
   transitions, and pacing.
-- Knowledge is scoped to the audience and current scene, so reveals stay
-  progressive and future plot stays hidden.
+- Scene-scoped knowledge keeps reveals progressive and future plot hidden.
 - Removing an essential reachable dependency opens a typed game-break choice.
   Proceed commits the validated branch; return restores the exact pre-turn
   snapshot, including across save/load.
@@ -19,12 +18,12 @@ facts become durable.
 ## Runtime contract
 
 - The narrator receives bounded `TurnKnowledgeContext` scene material,
-  committed knowledge, and current candidates. It receives no routes, source
-  IDs, future effects, or transcript memory.
+  committed knowledge, and eligible candidates on legacy turns. It receives no
+  routes, source IDs, future effects, or transcript memory.
 - Narrator JSON is untrusted. The runtime resolves at most one eligible fact,
-  validates the composed narration and cloned fact state, then commits the
-  whole turn atomically. Leaks, unsupported facts, wrong-speaker dialogue,
-  ambiguity, and premature transitions fail closed.
+  validates narration and cloned facts, then commits the whole turn atomically.
+  Leaks, unsupported facts, wrong-speaker dialogue, ambiguity, and premature
+  transitions fail closed.
 - Accepted turns advance declarative, fact-backed pacing. The runtime never
   infers gameplay from vague prose or chooses an action for the player.
 
@@ -33,9 +32,10 @@ facts become durable.
 - An authored handoff is opt-in per candidate: complete `action_evidence` and
   non-empty `delivery_text` are required. After projection, one exact match
   adds that authored text as ordinary narration and selects the same candidate
-  through the normal resolver. Ties and misses produce no handoff. The result
-  stays out of narrator and API serialization; legacy candidates keep the
-  narrator path. Existing fact IDs, effects, and saves remain unchanged.
+  through the normal resolver. The narrator gets only surrounding scene
+  material; legacy candidates keep the existing candidate prompt. Ties and
+  misses produce no handoff, and existing fact IDs, effects, and saves remain
+  unchanged.
 
 ## Authoring and API
 

@@ -1,5 +1,49 @@
 # Testing runbook
 
+## Authored reveal handoff prompt contract
+
+**Purpose:** Verify that a matcher-backed authored reveal is delivered by the
+runtime while the narrator sees only ordinary scene material, including after
+malformed-response recovery. Legacy candidate prompts remain unchanged.
+
+**Setup / seed:** The checked-in `continuity-initiative` package and the
+authored-handoff fixture in `tests/test_cloudflare_transport.py`.
+
+**Safe actions:** Run the focused local regression tests. No worker request is
+made; tests use a stub response.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the authored-handoff and transport prompt tests.
+2. Run the full suite and Ruff before accepting the change.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q tests/test_cloudflare_transport.py
+TMPDIR=/tmp uv run pytest -q
+uv run ruff check --fix .
+uv run ruff format .
+```
+
+Expected: the focused assertions pass; its process may exit nonzero only on the
+repository-wide coverage gate. The handoff prompt contains no candidate ID,
+candidate statement, delivery text, `must_convey`, or grounding instructions;
+a malformed reply recovers without restoring those details; the composed result
+contains the exact authored delivery and uses the normal commit path. The full
+suite reaches the coverage threshold.
+
+**Cleanup:** None.
+
+**Notes:** Added 2026-09-12 for Phase 4 of
+`.plans/authored-reveal-handoff.md`. The selection prepass is skipped for an
+authored handoff. Legacy candidates retain their prompt contract. Observed
+2026-09-12: the focused module passed all 82 assertions and exited only on its
+64.12% subset coverage; the full suite passed 378 tests at 91.63% coverage.
+Ruff check and formatting passed.
+
 ## Narration candidate-selection baseline
 
 **Purpose:** Measure how often the narrator selects an offered Scene 1A reveal

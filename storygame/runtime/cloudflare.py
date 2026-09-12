@@ -309,13 +309,15 @@ class CloudflareTurnProvider:
     def selection_probe(self, player_input: str) -> tuple[str, ...]:
         """Ask for selection bookkeeping alone, for a benchmark diagnostic.
 
-        This is deliberately separate from a game turn.  Its answer never reaches
-        the resolver, so it cannot reveal or commit knowledge.  It exists to tell
+        This is deliberately separate from a game turn. Its answer never reaches
+        the resolver, so it cannot reveal or commit knowledge. It exists to tell
         whether the model can emit an offered ID when it has no narration or
         grounding work to do.
         """
 
         self.assemble_turn_prompt(player_input)
+        if self._is_authored_handoff_turn():
+            return ()
         candidates = self._model_candidates()
         response = self._request_allowing_one_transient_retry(self._selection_payload(player_input, candidates))
         return self._parse_selection_response(response, candidates)
@@ -324,11 +326,13 @@ class CloudflareTurnProvider:
         """Use a short call to confirm one matcher-backed candidate for narration.
 
         The authored matcher, rather than this model call, supplies the evidence
-        that the player earned a reveal.  A malformed answer, an empty answer,
-        or any ID other than that one fails closed.  This result still commits
+        that the player earned a reveal. A malformed answer, an empty answer,
+        or any ID other than that one fails closed. This result still commits
         nothing; the normal narration proposal and resolver run afterwards.
         """
 
+        if self._is_authored_handoff_turn():
+            return None
         matched_id = self.shadow_matched_candidate_id
         if matched_id is None:
             return None
@@ -389,13 +393,16 @@ class CloudflareTurnProvider:
         return matched.id if matched else None
 
     def _model_candidates(self) -> tuple[RevealCandidate, ...]:
-        """Return the candidate list displayed to the narrator for this experiment.
+        """Return candidates that the narrator may consider on this turn.
 
-        Normal play and all non-matching actions retain the full eligible list.
-        The optional narrowing switch is a prompt-only experiment; the resolver
-        always receives ``last_projection.candidates`` unchanged.
+        An authored handoff owns its reveal in the runtime, so it shows no
+        candidates to the narrator. Legacy turns retain the full eligible list.
+        The optional narrowing switch remains a prompt-only experiment for
+        legacy turns.
         """
 
+        if self._is_authored_handoff_turn():
+            return ()
         candidates = self.last_projection.candidates if self.last_projection else ()
         if not (
             self.prompt_variant
@@ -405,18 +412,26 @@ class CloudflareTurnProvider:
             return candidates
         return tuple(candidate for candidate in candidates if candidate.id == self.shadow_matched_candidate_id)
 
-    def _turn_rules(self) -> list[str]:
-        """State the selection rule that actually applies to this turn.
+    def _is_authored_handoff_turn(self) -> bool:
+        """Return whether the runtime owns this turn's reveal delivery."""
 
-        With candidates offered, the narrator must choose one at random from
-        the matching list. With no candidates, it must leave the list empty.
+        return getattr(self, "authored_handoff", None) is not None
+
+    def _turn_rules(self) -> list[str]:
+        """State the rules that apply to this turn.
+
+        Authored handoffs need only ordinary scene narration. Legacy turns keep
+        their candidate selection and grounding rules.
         """
 
+        handoff_turn = self._is_authored_handoff_turn()
         candidates = self._model_candidates()
-        model_grounding = not (
+        model_grounding = not handoff_turn and not (
             self.prompt_variant is not None and self.prompt_variant.get("model_grounding", True) is False
         )
-        if getattr(self, "selection_prepass_completed", False):
+        if handoff_turn:
+            selection_rules: list[str] = []
+        elif getattr(self, "selection_prepass_completed", False):
             selection_rules = (
                 [
                     f"The first check picked {getattr(self, 'preselected_knowledge_id', None)}. Reveal it now.",
@@ -434,11 +449,13 @@ class CloudflareTurnProvider:
                 ),
             ]
         no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
-        if not candidates:
+        if not handoff_turn and not candidates:
             selection_rules.append(no_candidate_rule)
         hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
         handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
-        if handoffs:
+        if handoff_turn:
+            handoff_rule = ""
+        elif handoffs:
             handoff_rule = (
                 "Write each handoff event. Cover each required idea. Answer the player. "
                 "Do not say the player did something they did not do."
@@ -474,23 +491,17 @@ class CloudflareTurnProvider:
             "Do not repeat the request's labels back.",
         ]
         configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
-        rules = list(configured_rules) if isinstance(configured_rules, list) else default_rules
+        rules = list(configured_rules) if not handoff_turn and isinstance(configured_rules, list) else default_rules
         if not all(isinstance(rule, str) and rule for rule in rules):
             raise ValueError("prompt variant rules must be a list of non-empty strings")
-        # default_rules already carries no_candidate_rule through *selection_rules; only a
-        # variation that REPLACED the rules block still needs this turn-specific one appended.
-        if configured_rules and not candidates:
+        # A variation that replaces the rules block still needs this turn-specific
+        # rule, except on authored handoffs where selection is runtime-owned.
+        if configured_rules and not candidates and not handoff_turn:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
-        # The example is not the place to teach grounding. Showing a grounded
-        # selection here made the model ground on IDs it had not selected, and a
-        # live sample went from no failures in sixteen turns to six in eighteen -
-        # five of them HTTP 409 for grounding on knowledge that was neither
-        # committed nor selected. The engine attributes the delivering segment
-        # itself, so the model never needs to be shown how.
         return rules
 
     def _owner_rules(self) -> list[str]:
@@ -519,18 +530,12 @@ class CloudflareTurnProvider:
         return rules
 
     def _output_example(self) -> str | None:
-        """Resolve the response example, or None when this variation omits it.
-
-        A generic empty-selection example taught the narrator that it could
-        describe a discovery and still leave the reveal unselected.  When this
-        turn offers candidates, use one already-safe candidate to demonstrate
-        the complete selection shape instead.  The candidate is in the same
-        bounded projection as the user prompt; this does not expose a future
-        fact or authorize a commit.
-        """
+        """Resolve the response example, or None when this variation omits it."""
 
         if self.prompt_variant and not self.prompt_variant.get("include_output_example", True):
             return None
+        if self._is_authored_handoff_turn():
+            return DEFAULT_OUTPUT_EXAMPLE
         if self.preselected_knowledge_id and self.last_projection:
             candidate = next(
                 (item for item in self.last_projection.candidates if item.id == self.preselected_knowledge_id), None
@@ -694,13 +699,13 @@ class CloudflareTurnProvider:
         return setting
 
     def _serialized_player_context(self, scene_setting: dict[str, object]) -> dict[str, object]:
-        """Serialize candidate context without repeating facts already carried by beats."""
+        """Serialize only the player context the narrator may use."""
 
         if self.last_projection is None:
             return {}
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
-        # Every candidate statement remains an explicit item in the CONSTRAINTS section;
-        # the beat is additional dramatic context, not a replacement for the claim.
+        # Legacy candidate statements remain explicit constraint lines. An
+        # authored handoff has no model candidates, so its list is empty.
         model_candidate_ids = {candidate.id for candidate in self._model_candidates()}
         context["candidates"] = [
             candidate for candidate in context["candidates"] if candidate["id"] in model_candidate_ids
@@ -857,17 +862,21 @@ class CloudflareTurnProvider:
         return self._eligible_or_narration_only(response)
 
     def _recover_malformed_response(self, payload: dict[str, object], hint: str = "") -> object:
-        correction = f" {hint}" if hint else ""
-        recovery_payload = {
-            **payload,
-            "system": (
-                f"{payload['system']} Your last answer was not valid.{correction} Send back only JSON. It must have "
-                "segments with text in them. selected_knowledge_ids must be a list. Leave it empty only when no "
-                "offered candidate was earned. Do not add markdown. Do not explain. "
-                "Do not repeat the request's labels. If you are not sure an ID belongs in grounding_ids, leave "
-                "grounding_ids out."
-            ),
-        }
+        handoff_turn = self._is_authored_handoff_turn()
+        correction = f" {hint}" if hint and not handoff_turn else ""
+        if handoff_turn:
+            instruction = (
+                "Your last answer was not valid. Send back only JSON. It must have segments with text in them. "
+                "Do not select a fact. Do not add markdown. Do not explain. Do not repeat the request's labels."
+            )
+        else:
+            instruction = (
+                "Your last answer was not valid. Send back only JSON. It must have segments with text in them. "
+                "selected_knowledge_ids must be a list. Leave it empty only when no offered candidate was earned. "
+                "Do not add markdown. Do not explain. Do not repeat the request's labels. If you are not sure an ID "
+                "belongs in grounding_ids, leave grounding_ids out."
+            )
+        recovery_payload = {**payload, "system": f"{payload['system']} {instruction}{correction}"}
         self._record_recovery()
         try:
             response = self._request_allowing_one_transient_retry(recovery_payload)
@@ -998,6 +1007,7 @@ class CloudflareTurnProvider:
         scene: list[str] = []
         constraints: list[str] = []
         player_lines: list[str] = []
+        handoff_turn = self._is_authored_handoff_turn()
 
         def paragraphs(text: str) -> list[str]:
             """One entry per authored line, each kept whole."""
@@ -1031,25 +1041,27 @@ class CloudflareTurnProvider:
                             scene.extend(paragraphs(detail))
             for item in player.get("committed_knowledge", []):
                 scene.append(item["statement"])
-            for candidate in player.get("candidates", []):
-                constraints.append(f"Candidate {candidate['id']}. The player does not know this yet.")
-                earn_when = candidate.get("earn_when")
-                if isinstance(earn_when, str) and earn_when:
-                    constraints.append(f"Earn it when the player {earn_when}.")
-                constraints.append(f"What the player learns: {candidate['statement']}")
-                selection_instruction = (
-                    f"If the player earns it, state what they learn. Put {candidate['id']} in selected_knowledge_ids."
-                )
-                if (self.prompt_variant or {}).get("model_grounding", True):
+            if not handoff_turn:
+                for candidate in player.get("candidates", []):
+                    constraints.append(f"Candidate {candidate['id']}. The player does not know this yet.")
+                    earn_when = candidate.get("earn_when")
+                    if isinstance(earn_when, str) and earn_when:
+                        constraints.append(f"Earn it when the player {earn_when}.")
+                    constraints.append(f"What the player learns: {candidate['statement']}")
                     selection_instruction = (
                         f"If the player earns it, state what they learn. Put {candidate['id']} "
-                        "in selected_knowledge_ids "
-                        f"and in the grounding_ids for that text."
+                        "in selected_knowledge_ids."
                     )
-                constraints.append(selection_instruction)
-                for group in candidate.get("must_convey", []):
-                    if group:
-                        constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
+                    if (self.prompt_variant or {}).get("model_grounding", True):
+                        selection_instruction = (
+                            f"If the player earns it, state what they learn. Put {candidate['id']} "
+                            "in selected_knowledge_ids "
+                            f"and in the grounding_ids for that text."
+                        )
+                    constraints.append(selection_instruction)
+                    for group in candidate.get("must_convey", []):
+                        if group:
+                            constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
             speakers = context.get("speakers", {})
             if isinstance(speakers, dict):
