@@ -33,6 +33,19 @@ test("uses structured narration before compatibility lines", () => {
   ]);
 });
 
+test("renders an authored handoff as ordinary narration", () => {
+  const authoredText =
+    "Michelle's hidden memory card holds a damaged recording that warns Kristin not to trust emergency broadcasts.";
+  const blocks = turnBlocks({
+    lines: [authoredText],
+    segments: [{ kind: "narration", text: authoredText, grounding_ids: ["k_sl_1a_b_r2"] }],
+  });
+
+  assert.deepEqual(blocks.map(({ kind, text }) => ({ kind, text })), [{ kind: "narration", text: authoredText }]);
+  assert.equal(blocks[0].kind, "narration");
+  assert.equal(blocks[0].text.includes("k_sl_1a_b_r2"), false);
+});
+
 test("falls back to compatibility lines for non-interaction turns", () => {
   assert.deepEqual(turnBlocks({ lines: ["The next choice is yours."], segments: [] }), [
     { kind: "narration", text: "The next choice is yours." },

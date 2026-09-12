@@ -1,0 +1,45 @@
+{
+  "replicates": 1,
+  "completed_replicates": 0,
+  "scenes_scored": 0,
+  "max_score": 0,
+  "score_metric": "0-point record: seven equally weighted boolean criteria across 0 scenes",
+  "pooled": {
+    "score_points": {
+      "n": 0,
+      "mean": null,
+      "standard_deviation": null,
+      "confidence_interval_95": null,
+      "minimum_detectable_effect": null,
+      "replicate_scores": []
+    },
+    "total": 0,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 0,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 0,
+      "exit_motivated": 0,
+      "rewards_investigation": 0
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 0,
+      "per_criterion_where_attributable": {},
+      "unattributed": 0
+    }
+  },
+  "per_script": {},
+  "replicate_scores": [],
+  "example_leakage": 0,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "budget": {
+    "projected_workers_ai_neurons": 55.0,
+    "actual_narration_turns": 2,
+    "actual_narration_requests": 4,
+    "estimated_workers_ai_neurons_from_requests": 44.0,
+    "actual_openai_judge_calls": 0,
+    "quota": null
+  }
+}

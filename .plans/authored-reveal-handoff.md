@@ -2,7 +2,8 @@
 
 ## Status
 
-**Phase 5 complete. Proposed; expand migration only after Phase 6 evidence.**
+**Phase 6 implementation complete. Deterministic gates pass; the live benchmark
+exit gate remains open until pre-recording narration-safety failures are fixed.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -196,21 +197,23 @@ JSON.
 
 ### Phase 6: Test and benchmark
 
-- [ ] Unit-test schema/loader checks, matcher behavior, prompt exclusion,
+- [x] Unit-test schema/loader checks, matcher behavior, prompt exclusion,
   composed-segment shape, validation failure, and atomic no-commit behavior.
-- [ ] Add an engine-level test proving the selected fact and package effects
+- [x] Add an engine-level test proving the selected fact and package effects
   commit only after the composed delivery passes all existing validators.
-- [ ] Add an API/UI regression test that the player sees the authored sentence
+- [x] Add an API/UI regression test that the player sees the authored sentence
   as ordinary narration and never sees source IDs or a new segment kind.
-- [ ] Add a benchmark variation for authored handoff. Its records must include
+- [x] Add a benchmark variation for authored handoff. Its records must include
   `authored_handoff_candidate_id` as bench telemetry only.
-- [ ] Run the isolated recording probe first; then run the established Scene 1A
+- [x] Run the isolated recording probe first; then run the established Scene 1A
   script and at least one unrelated scene. Diagnose pre-recording narration
   safety failures separately rather than treating them as selection outcomes.
-- [ ] Require zero false-positive handoffs in deterministic cases and 100%
+- [x] Require zero false-positive handoffs in deterministic cases and 100%
   successful composed delivery for the exact recording action before expanding
   migration. Judge surrounding prose quality separately from selection
-  correctness.
+  correctness. The deterministic suite is at zero false positives and 100%
+  exact composed delivery; the live scripts stopped before that turn on
+  separate narration-safety failures.
 
 Suggested commands after implementation:
 
@@ -223,9 +226,41 @@ uv run python -m bench run --variation bench/variations/authored-handoff-phase1.
   --out bench/results/authored-handoff-phase1 --confirm
 ```
 
-Exit gate: the isolated probe and live benchmark show accepted delivery where
-the previous one- and two-pass model paths produced empty selections, with no
-fact committed on unmatched or ambiguous actions.
+- [ ] Exit gate: the isolated probe and live benchmark show accepted delivery
+  where the previous one- and two-pass model paths produced empty selections,
+  with no fact committed on unmatched or ambiguous actions. The live benchmark
+  currently stops before the recording turn on `uncited_knowledge` and
+  `narration_known_term_leak` failures; keep migration opt-in until a rerun
+  reaches the exact action.
+
+#### Current Phase 6 blocker
+
+The deterministic gate is complete, but the live gate is not. The live runs
+were made with `bench/variations/authored-handoff-phase1.json`:
+
+- The isolated selection probe reached the worker and reported no offered
+  candidate plus the shadow match `k_sl_1a_b_r2`. This confirms the authored
+  handoff is hidden from model selection.
+- Four Scene 1A `candidate-selection-repro` replicates stopped before the
+  recording action with `uncited_knowledge: narration does not ground the
+  knowledge term 'kitchen floor'`.
+- The direct `authored-recording-exact` arm also stopped before handoff
+  projection with `narration_known_term_leak: narration mentions unavailable
+  knowledge 'dead drop'`.
+- The unrelated Scene 1B control stopped before handoff with
+  `narration_known_term_leak: narration mentions unavailable knowledge
+  'kristin and brandon'`.
+
+These are pre-recording narrator-safety failures. They are not false-positive
+handoffs and did not commit facts. Do not weaken narration safety or authored
+matching to make the benchmark continue. Fix or isolate the pre-recording
+prompt/scene-safety failures, then rerun the exact recording action and confirm
+`authored_handoff_candidate_id: k_sl_1a_b_r2` with the authored delivery before
+checking the exit gate. The captured live records are under
+`bench/results/authored-handoff-phase1/`,
+`bench/results/authored-handoff-exact/`, and
+`bench/results/authored-handoff-phase1-1b/`; repeatable commands and the
+deterministic results are in `docs/testing-runbook.md`.
 
 ### Phase 7: Rollout and authoring expansion
 

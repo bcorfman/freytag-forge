@@ -2362,6 +2362,71 @@ legacy path until it receives its own authored delivery.
 saved-file lead, and dead-drop facts under their existing IDs and preserves
 the conservative evidence boundary between them.
 
+## Authored reveal handoff Phase 6 verification
+
+**Purpose:** Verify the authored Scene 1A recording handoff through the loader,
+matcher, narrator boundary, normal validation/commit path, API payload, and
+browser rendering. Bench telemetry records the matched candidate without
+changing the player or narrator contract.
+
+**Setup / seed:** The checked-in `continuity-initiative` package,
+`bench/variations/authored-handoff-phase1.json`, Python dependencies installed
+with `uv sync --group dev`, and frontend dependencies installed with `npm ci`
+inside `frontend/`.
+
+**Safe actions:** Run deterministic unit, API, and frontend tests. Inspect the
+bench variation and run its prompt/record harness. No live model request is
+made unless the optional `bench run` command is used.
+
+**Destructive or external actions:** `bench run` contacts the configured worker
+and judge and can spend provider quota; use `--confirm` only when those calls
+are intended. Store outputs under `/tmp`.
+
+**Steps:**
+
+1. Run the isolated exact recording matcher/composition tests first.
+2. Run the established Scene 1A bench script and an unrelated Scene 1B run
+   when worker and judge credentials are available.
+3. Inspect `all-turn-records.json` for zero false-positive handoffs and a
+   `100%` exact recording match rate. Treat narration-safety failures before
+   the recording action as separate from handoff selection.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_candidate_matcher.py tests/test_markdown_story_package.py tests/test_cloudflare_transport.py tests/test_web_demo.py
+(cd frontend && npm test)
+uv run python -m bench describe --variation bench/variations/authored-handoff-phase1.json --json
+uv run python -m bench selection-probe --variation bench/variations/authored-handoff-phase1.json --scene 1A --storylet SL-1A-B --player-input "Recover the damaged recording and listen to it." --replicates 1
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1A --replicates 4 --script candidate-selection-repro --out /tmp/bench-authored-handoff-1a --confirm
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1A --replicates 1 --script authored-recording-exact --out /tmp/bench-authored-handoff-exact --confirm
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1B --replicates 1 --script unrelated-scene --out /tmp/bench-authored-handoff-1b --confirm
+```
+
+Expected: deterministic tests pass; the exact recording action produces only
+`k_sl_1a_b_r2` in `authored_handoff_candidate_id`; unmatched, partial, negated,
+and ambiguous actions produce `null`; the API and browser show only ordinary
+narration; bench records contain no new public segment kind or API field.
+
+**Cleanup:** Remove `/tmp/bench-authored-handoff-1a` and
+`/tmp/bench-authored-handoff-exact` and `/tmp/bench-authored-handoff-1b` if the
+live runs were performed. Do not edit the append-only tracked ledger to remove
+evidence.
+
+**Notes:** Added 2026-09-12 for Phase 6 of
+`.plans/authored-reveal-handoff.md`. Observed 2026-09-12: the isolated live
+selection probe offered no candidate and reported only the shadow match;
+deterministic focused tests passed 23 handoff cases, bench telemetry tests
+passed 43 cases, the frontend suite passed 36 cases, and the full suite passed
+385 tests at 91.64% coverage. The live Scene 1A replicates stopped before the
+recording action on `uncited_knowledge: kitchen floor`; the unrelated Scene 1B
+control stopped on `narration_known_term_leak: kristin and brandon`. These are
+pre-recording narration failures, not handoff selections. The exact-action arm
+also stopped before projection on `narration_known_term_leak: dead drop`.
+This session's live artifacts are under
+`bench/results/authored-handoff-phase1*` and
+`bench/results/authored-handoff-exact/`; reruns should use `/tmp`.
+
 ## CI test-suite overlap and timing investigation
 
 **Purpose:** Verify the tests that run on push and pull request in the

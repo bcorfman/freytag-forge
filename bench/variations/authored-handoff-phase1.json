@@ -1,0 +1,29 @@
+{
+    "name": "authored-handoff-phase1",
+    "story_package": "data/stories/continuity-initiative",
+    "system_prompt": {
+        "include_output_example": true,
+        "auto_select_unambiguous_candidates": false,
+        "model_grounding": false
+    },
+    "user_prompt": {"beat_delivery": "details"},
+    "scripts": {
+        "1A": [
+            {"name": "candidate-selection-repro", "inputs": [
+                "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+                "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+                "Recover the damaged recording and listen to it.",
+                "Hide the evidence, answer the official at the door, then watch what they do at the gate as they leave."
+            ]},
+            {"name": "authored-recording-exact", "inputs": [
+                "Recover the damaged recording and listen to it.",
+                "Read the saved files on Michelle's memory card.",
+                "Search the park bench for the dead drop.",
+                "Photograph the evidence before leaving."
+            ]}
+        ],
+        "1B": [{"name": "unrelated-scene", "inputs": [
+            "Inspect the path beyond the gate for signs of where the patrol went."
+        ]}]
+    }
+}

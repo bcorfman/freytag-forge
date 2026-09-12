@@ -343,6 +343,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     class FakeProvider:
         request_count = 0
         recovery_count = 0
+        authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_sl_1a_b_r2"))
         model_grounding_ids = ("k_sl_1a_b_r2",)
         model_selected_knowledge_ids = ("k_sl_1a_b_r2",)
         shadow_matched_candidate_id = "k_sl_1a_b_r2"
@@ -385,6 +386,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     )
 
     assert result["turns"][0]["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["authored_handoff_candidate_id"] == "k_sl_1a_b_r2"
     assert result["turns"][0]["model_selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["model_grounding_ids"] == ["k_sl_1a_b_r2"]

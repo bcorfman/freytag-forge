@@ -170,6 +170,11 @@ uv run python -m bench.candidate_selection_report \
 
 The leakage metric is calculated against the resolved example actually sent in the turn system prompt, so it works for arbitrary custom examples rather than only the shipped drawer text.
 
+For the authored reveal handoff, use `variations/authored-handoff-phase1.json`.
+Each turn record adds `authored_handoff_candidate_id` as bench-only telemetry;
+it is not part of the narrator or player API. Verify the exact recording action
+first, then run the established Scene 1A script and an unrelated Scene 1B run.
+
 For example, run the two prompt-only experiment arms, then run one focused live replicate of each and compare their real ledger rows:
 
 ```bash

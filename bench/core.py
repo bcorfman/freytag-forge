@@ -598,6 +598,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         segments = proposal.segments[:-1] if entered else proposal.segments
         narration = join_narration(tuple(segments)) if segments else ""
         if narration:
+            handoff = getattr(provider, "authored_handoff", None)
             turns.append(
                 {
                     "player_input": player_input,
@@ -605,6 +606,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "left_scene": entered,
                     "beats_projected": list(state.last_turn_delivery.beats_projected),
                     "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                    "authored_handoff_candidate_id": (handoff.candidate.id if handoff is not None else None),
                     "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
                     "grounding_ids": sorted(
                         {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
