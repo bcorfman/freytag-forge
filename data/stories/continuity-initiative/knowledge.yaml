@@ -945,13 +945,12 @@ knowledge:
   must_convey:
   - [support-column failure, cooling-system risk, structural failure, support column problem, cooling failure, structural risk]
   - [collapse the facility, facility collapse, facility, bring down the facility, underground collapse, collapse below]
-  - [corridor access, restricted corridor, access, restricted access, infrastructure access, corridor entrance]
+  - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
 - id: k_sl_2a_c_r2
-  statement: Kristin and Brandon have opened a restricted infrastructure corridor.
+  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility.
   entity_ids: [kristin, brandon, regional_facility]
   aliases:
-  - restricted corridor
   - infrastructure corridor
   audience:
     kind: public
@@ -974,8 +973,8 @@ knowledge:
     priority: 10
   must_convey:
   - [opened, open, access, gained access, opened access, corridor opened]
-  - [restricted infrastructure corridor, restricted corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
-  - [Kristin and Brandon, Kristin, Brandon, the pair, both inspectors, the inspectors]
+  - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
+  - [gaining access to the facility, access to the facility, facility access gained]
 - id: k_sl_2a_c_r2_rebecca_observes
   statement: Rebecca has ordered the infiltrators watched.
   entity_ids: [rebecca, kristin, brandon, regional_facility]
@@ -2015,7 +2014,7 @@ knowledge:
 - id: k_bridge_3a_command_assault
   statement: The uprising is active, and the group is moving toward the command and broadcast levels.
   entity_ids: [kristin, michelle, broadcast_relay, detention_level]
-  aliases: [command levels, broadcast levels]
+  aliases: [command and broadcast levels, broadcast levels]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3A]
   establishes: [{op: assert, fact_id: command_levels_assault_underway, value: true}]
@@ -2023,7 +2022,7 @@ knowledge:
 - id: k_bridge_3b_broadcast
   statement: The national broadcast has begun.
   entity_ids: [kristin, michelle, broadcast_relay]
-  aliases: [broadcast started, national transmission]
+  aliases: [broadcast started, nationwide broadcast]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: broadcast_started, value: true}]
@@ -2111,7 +2110,7 @@ knowledge:
 - id: k_scene_3b_entry
   statement: The broadcast relay is the immediate contested objective.
   entity_ids: [kristin, broadcast_relay]
-  aliases: [broadcast relay, relay]
+  aliases: [relay objective, relay]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: scene_3b_entry_known, value: true}]

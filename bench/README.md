@@ -27,6 +27,8 @@ The `prompt` command makes no model request and prints only `{"system": ..., "us
 
 `prompt` prints the exact system and user prompt the narrator would receive. It contacts no model and spends nothing, so it is the cheapest way to see what a prompt change actually did. It takes the story's own coordinates - a scene, optionally a beat, optionally the player's action - and needs no variation file:
 
+Bench scenes start from a bare arrival state with only that scene's entry fact committed; they do not reconstruct optional earlier storylets. Run summaries disclose this scene and committed-knowledge count, so safety failures from an isolated mid-story scene can be read in context.
+
 ```bash
 # the prompt that establishes scene 1A, as the player enters it
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --scene 1A --text

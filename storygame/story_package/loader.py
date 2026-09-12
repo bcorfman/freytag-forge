@@ -477,6 +477,48 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
             raise StoryPackageError(
                 f"authored handoff knowledge '{item.id}' delivery_text contains implementation-only token '{token}'"
             )
+    _validate_narration_term_traps(package)
+
+
+def _validate_narration_term_traps(package: StoryPackage) -> None:
+    """Reject authored scene text that names knowledge not committed at scene entry."""
+
+    from storygame.runtime.knowledge import KnowledgeProjector
+    from storygame.runtime.state import RuntimeState
+
+    indexes = package.knowledge_indexes
+    guarded_terms = {
+        term.casefold()
+        for terms in indexes.audience_to_known_terms.values()
+        for term in terms
+        if len(term.split()) > 1 and term.casefold() in indexes.term_to_knowledge
+    }
+    projector = KnowledgeProjector()
+    for scene in package.scenes:
+        state = RuntimeState(
+            package=package,
+            current_scene_id=scene.metadata.scene_id,
+            phase=scene.metadata.freytag_phase,
+        )
+        state._assert_scene_entry_fact(scene.metadata.scene_id)
+        committed = {item.id for item in projector.project(state, "player", "").committed_knowledge}
+        authored_parts = [scene.metadata.entry_text]
+        for beat in scene.beats.values():
+            beat_text = getattr(beat, "text", "") or getattr(beat, "description", "")
+            if beat_text:
+                authored_parts.append(beat_text)
+        authored_text = " ".join(" ".join(authored_parts).casefold().split())
+        for term in sorted(guarded_terms):
+            normalized_term = " ".join(term.split())
+            if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", authored_text):
+                continue
+            owners = tuple(indexes.term_to_knowledge.get(term, ()))
+            if set(owners) & committed:
+                continue
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} authored prose contains unavailable knowledge term "
+                f"'{term}' owned by knowledge IDs {list(owners)}"
+            )
 
 
 def _validate(package: StoryPackage) -> None:

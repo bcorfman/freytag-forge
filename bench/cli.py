@@ -26,6 +26,7 @@ from bench.core import (
     load_dotenv,
     load_variation,
     package_and_state,
+    preview_rules,
     prompt_for,
     run_judges,
     run_scene,
@@ -274,7 +275,7 @@ def _describe(args: argparse.Namespace) -> int:
             "output_example": variation["_resolved_output_example"],
             "beat_delivery": variation["_prompt_variant"]["beat_delivery"],
             "story_package": variation["_story_package_value"],
-            "rules": variation["_resolved_rules"],
+            "rules": preview_rules(variation),
         }
     )
     return 0
@@ -473,6 +474,7 @@ def _run(args: argparse.Namespace) -> int:
                     "narration_requests": 0,
                     "recovery_requests": 0,
                     "package": variation.get("_package_path", ""),
+                    "entry_state": {"scene_id": args.scene, "committed_knowledge_count": 1},
                 }
             record["replicate"] = replicate
             runs.append(record)
@@ -529,7 +531,13 @@ def _run(args: argparse.Namespace) -> int:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
-    aggregate = aggregate_runs(judged_runs, judgments, args.replicates)
+    aggregate = aggregate_runs(
+        judged_runs,
+        judgments,
+        args.replicates,
+        failures=failed_runs,
+        entry_state=(runs[0].get("entry_state") if runs else None),
+    )
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
@@ -555,7 +563,7 @@ def _run(args: argparse.Namespace) -> int:
             ),
             LEDGER_PATH,
         )
-    failure_aggregate = aggregate_runs([], [], args.replicates)
+    failure_aggregate = aggregate_runs([], [], args.replicates, failures=[])
     for failed in failed_runs:
         failure_budget = {
             "estimated_workers_ai_neurons_from_requests": failed.get("narration_requests", 0) * 330 / 30,

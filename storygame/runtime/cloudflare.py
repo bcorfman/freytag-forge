@@ -1322,7 +1322,7 @@ class CloudflareTurnProvider:
         """Drop model selection work while retaining safe committed grounding."""
 
         committed_ids = {item.id for item in projection.committed_knowledge}
-        segments = tuple(
+        filtered_segments = tuple(
             segment.model_copy(
                 update={
                     "grounding_ids": tuple(
@@ -1332,7 +1332,9 @@ class CloudflareTurnProvider:
             )
             for segment in proposal.segments
         )
-        return proposal.model_copy(update={"segments": segments, "selected_knowledge_ids": ()})
+        proposal = proposal.model_copy(update={"segments": filtered_segments})
+        proposal = self._auto_attribute_committed_knowledge(proposal)
+        return proposal.model_copy(update={"selected_knowledge_ids": ()})
 
     def _auto_select_unambiguous_candidate(self, proposal: TurnProposal) -> TurnProposal:
         """Select one reveal only when the narration itself proves exactly one candidate.

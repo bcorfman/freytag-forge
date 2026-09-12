@@ -846,6 +846,56 @@ def test_transport_auto_attributes_a_committed_known_term(monkeypatch) -> None:
     assert provider.model_grounding_ids == ()
 
 
+def test_authored_handoff_auto_attributes_a_committed_known_term() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider.assemble_turn_prompt("Look at the kitchen floor.")
+    provider.authored_handoff = object()
+    response = {
+        "segments": [{"kind": "narration", "text": "Kristin kneels by the kitchen floor."}],
+        "selected_knowledge_ids": [],
+    }
+
+    proposal = provider._parse_eligible_proposal(response)
+
+    assert proposal.segments[0].grounding_ids == ("k_scene_1a_entry",)
+
+
+def test_authored_handoff_does_not_attribute_an_uncommitted_future_term() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider.assemble_turn_prompt("Search the grounds.")
+    provider.authored_handoff = object()
+    future_term = "facility entrance"
+    future_owner_ids = PACKAGE.knowledge_indexes.term_to_knowledge[future_term]
+    response = {
+        "segments": [{"kind": "narration", "text": f"Kristin approaches the {future_term}."}],
+        "selected_knowledge_ids": [],
+    }
+
+    proposal = provider._parse_eligible_proposal(response)
+
+    assert future_owner_ids[0] not in proposal.segments[0].grounding_ids
+
+
+def test_authored_handoff_clears_model_proposed_selection() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider.assemble_turn_prompt("Look at the kitchen floor.")
+    provider.authored_handoff = object()
+    response = {
+        "segments": [{"kind": "narration", "text": "Kristin kneels by the kitchen floor."}],
+        "selected_knowledge_ids": ["k_scene_1a_entry"],
+    }
+
+    proposal = provider._parse_eligible_proposal(response)
+
+    assert proposal.selected_knowledge_ids == ()
+
+
 def test_transport_does_not_attribute_an_unavailable_future_term(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()

@@ -42,26 +42,6 @@ REFERENCE_SD = 2.24
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
-DEFAULT_PROMPT_RULES = (
-    "Narrate the concrete immediate consequence of the player's action.",
-    "Ground narration in the scene and knowledge context.",
-    "Use the authored place, texture, and physical detail.",
-    "Answer what the player actually did.",
-    "Never invent durable evidence, physical objects, items, or container contents.",
-    "Treat the authored entry_text and beat details as already true.",
-    "A grounding ID may name only committed knowledge or the selected candidate.",
-    "Never ground on a candidate you did not select.",
-    "Dialogue may use only its speaker's sayable knowledge.",
-    (
-        "When one or more offered candidates match the player's action, randomly pick one candidate from that list "
-        "and put its ID in selected_knowledge_ids."
-    ),
-    "Never write source IDs, events, operations, facts, or transitions as prose.",
-    "Return one paragraph per segment, roughly 30 to 55 words, with at most 5 segments.",
-    "Never reuse a beat's sentences.",
-    "Never contradict authored text.",
-    "Never echo the request fields.",
-)
 T_CRITICAL_95 = {
     1: 12.706,
     2: 4.303,
@@ -204,7 +184,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         "narrow_to_shadow_match": narrow_to_shadow_match,
         "selection_prepass": selection_prepass,
     }
-    variation["_resolved_rules"] = list(rules if rules is not None else DEFAULT_PROMPT_RULES)
+    variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
     variation["_variation_hash"] = stable_hash(
         {
@@ -313,6 +293,24 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
     state = RuntimeState(package=package, current_scene_id=target_scene, phase=scene.metadata.freytag_phase)
     state._assert_scene_entry_fact(target_scene)
     return package, state
+
+
+def entry_state(state: RuntimeState) -> dict[str, Any]:
+    """Describe the deliberately bare state used when a scene is benched."""
+
+    return {
+        "scene_id": state.current_scene_id,
+        "committed_knowledge_count": len(state.facts.asserted),
+    }
+
+
+def preview_rules(variation: dict[str, Any], scene_id: str | None = None) -> list[str]:
+    """Return the provider's rules without dispatching a narration request."""
+
+    _, state = package_and_state(variation, scene_id)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"])
+    provider.assemble_turn_prompt("")
+    return list(provider._turn_rules())
 
 
 def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTurnProvider:
@@ -570,12 +568,13 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
 
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
     package, state = package_and_state(variation, scene_id)
+    arrival_entry_state = entry_state(state)
     provider = provider_for(state, variation)
     engine = RuntimeEngine(state, provider)
     try:
         opening = engine.opening()
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
-        return _failed_scene_record(variation, scene_id, script, provider, error)
+        return _failed_scene_record(variation, scene_id, script, provider, error, entry_state=arrival_entry_state)
     turns = []
     inputs = script["inputs"]
     quota = None
@@ -593,6 +592,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 error,
                 opening=opening.narration,
                 turns=turns,
+                entry_state=arrival_entry_state,
             )
         entered = state.current_scene_id != prior_scene
         segments = proposal.segments[:-1] if entered else proposal.segments
@@ -631,6 +631,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             RuntimeError(f"scene {scene_id} did not leave within {max_turns} turns for script {script['name']}"),
             opening=opening.narration,
             turns=turns,
+            entry_state=arrival_entry_state,
         )
     return {
         "status": "ok",
@@ -648,6 +649,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
         "package": str(package.root) if hasattr(package, "root") else str(variation["_package_path"]),
+        "entry_state": arrival_entry_state,
     }
 
 
@@ -660,6 +662,7 @@ def _failed_scene_record(
     *,
     opening: str = "",
     turns: list[dict[str, Any]] | None = None,
+    entry_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     error_code = getattr(error, "error_code", "") or getattr(error, "code", "")
     reason = f"{error_code}: {error}" if error_code else str(error)
@@ -682,6 +685,7 @@ def _failed_scene_record(
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
         "package": str(variation["_package_path"]),
+        "entry_state": entry_state or {"scene_id": scene_id, "committed_knowledge_count": 1},
     }
 
 
@@ -749,7 +753,15 @@ def _stats(values: list[float], n_for_mde: int | None = None) -> dict[str, Any]:
     }
 
 
-def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], replicates: int) -> dict[str, Any]:
+def aggregate_runs(
+    runs: list[dict[str, Any]],
+    judgments: list[dict[str, Any]],
+    replicates: int,
+    *,
+    failures: list[dict[str, Any]] | None = None,
+    entry_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    failures = failures or []
     paired = [{**run, "judgment": judgment} for run, judgment in zip(runs, judgments, strict=False)]
     values = [float(score_judgments([item["judgment"]])["total"]) for item in paired]
     pooled_judgment = score_judgments(judgments)
@@ -759,6 +771,14 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
     }
     scenes_scored = len(judged_scene_ids or {run["scene_id"] for run in paired if run.get("scene_id")})
     max_score = scenes_scored * len(CRITERIA)
+    entry_records = [*runs, *failures]
+    disclosed_entry_state = entry_state or next(
+        (record.get("entry_state") for record in entry_records if record.get("entry_state")),
+        None,
+    )
+    if disclosed_entry_state is None:
+        scene_id = next((record.get("scene_id") for record in entry_records if record.get("scene_id")), None)
+        disclosed_entry_state = {"scene_id": scene_id, "committed_knowledge_count": 1 if scene_id else None}
     by_script: dict[str, Any] = {}
     for script in sorted({run["script"] for run in runs}):
         script_judgments = [item["judgment"] for item in paired if item["script"] == script]
@@ -774,6 +794,9 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
     return {
         "replicates": replicates,
         "completed_replicates": completed_replicates,
+        "failed_replicates": len(failures),
+        "failures": failures,
+        "entry_state": disclosed_entry_state,
         "scenes_scored": scenes_scored,
         "max_score": max_score,
         "score_metric": (
