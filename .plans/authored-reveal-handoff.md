@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 3 complete. Proposed; do not enable in ordinary play yet.**
+**Phase 5 complete. Proposed; expand migration only after Phase 6 evidence.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -175,22 +175,24 @@ JSON.
 
 ### Phase 5: Migrate one narrow Scene 1A slice
 
-- [ ] Start with `k_sl_1a_b_r2`, the damaged-recording warning, because it has
+- [x] Start with `k_sl_1a_b_r2`, the damaged-recording warning, because it has
   an existing exact matcher path and a clear `must_convey` set.
-- [ ] Author delivery text that directly states Michelle, the memory card, the
+- [x] Author delivery text that directly states Michelle, the memory card, the
   damaged recording, and the emergency-broadcast warning.
-- [ ] Tighten overlapping Scene 1A candidate evidence before enabling both
-  recording outcomes. In particular, an action that merely recovers the card
-  must not also earn a candidate whose payoff requires reading saved files.
-- [ ] Decide whether to split the memory-card discovery, the recording warning,
-  and the dead-drop files into separate player-visible candidates. Prefer this
-  atomized path when one delivery currently contains several discoveries.
-- [ ] Preserve IDs and effects for any existing persisted fact unless a
+- [x] Tighten overlapping Scene 1A candidate evidence before enabling both
+  recording outcomes. `k_sl_1a_b_r2` requires recovery, the damaged recording,
+  and listening; `k_sl_1a_b_r1` separately requires the saved files and reading,
+  so card recovery alone cannot earn the files outcome.
+- [x] Decide whether to split the memory-card discovery, the recording warning,
+  and the dead-drop files into separate player-visible candidates. Use the
+  atomized path for the first handoff: `k_sl_1a_b_r2` delivers only the warning;
+  `k_sl_1a_b_r1` remains legacy until it gets its own authored delivery.
+- [x] Preserve IDs and effects for any existing persisted fact unless a
   migration is explicitly authored and tested.
 
-Exit gate: the recording action has exactly one match; recovering the card,
-reading files, partial actions, and negated actions have the intended safe
-outcomes.
+- [x] Exit gate: the recording action has exactly one match; recovering the
+  card, reading files, partial actions, and negated actions have the intended
+  safe outcomes. The focused Phase 5 suite passes 183 tests.
 
 ### Phase 6: Test and benchmark
 

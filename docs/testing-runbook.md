@@ -2272,9 +2272,9 @@ play, and the legacy package still loads. Ruff and the full suite pass.
 **Cleanup:** Pytest removes temporary package copies. None required.
 
 **Notes:** Added 2026-09-11 for Phase 1 of
-`.plans/authored-reveal-handoff.md`. The handoff remains disabled because no
-shipped candidate has `delivery_text`; Phase 2 owns runtime matching and Phase
-3 owns composition.
+`.plans/authored-reveal-handoff.md`. The handoff remains opt-in by candidate;
+the Scene 1A recording warning is the first shipped opt-in. Phase 2 owns
+runtime matching and Phase 3 owns composition.
 
 Observed 2026-09-11: the focused loader/projection command passed 76 tests;
 Ruff passed after formatting one test file; the full suite passed 367 tests
@@ -2323,11 +2323,44 @@ appears.
 **Cleanup:** None.
 
 **Notes:** Added 2026-09-12 for Phase 3 of
-`.plans/authored-reveal-handoff.md`. The handoff remains opt-in and disabled in
-ordinary play because no checked-in candidate has `delivery_text`.
+`.plans/authored-reveal-handoff.md`. The handoff remains opt-in in ordinary
+play; the Scene 1A recording warning is the first checked-in candidate with
+`delivery_text`.
 
 Observed 2026-09-12: the focused command passed 103 tests; Ruff passed; the
 full suite passed 376 tests with 91.60% coverage.
+
+## Authored reveal handoff Phase 5 Scene 1A slice
+
+**Purpose:** Verify the first shipped authored handoff: the Scene 1A damaged
+recording warning. The runtime may hand it off only after its exact evidence
+matches one projected candidate.
+
+**Setup / seed:** The checked-in `continuity-initiative` package and Python
+dependencies installed with `uv sync --group dev`.
+
+**Safe actions:** Run the focused package, matcher, transport, and journey
+tests, Ruff, and the full local suite. No hosted request is made.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_markdown_story_package.py tests/test_candidate_matcher.py tests/test_cloudflare_transport.py tests/test_knowledge_projection.py tests/test_canon_journey.py
+uv run ruff check --fix . && uv run ruff format .
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: the exact recording action produces one authored delivery with the
+existing fact ID and effects. Card recovery alone, file reading, partial, and
+negated actions produce no authored handoff. The files outcome remains on the
+legacy path until it receives its own authored delivery.
+
+**Cleanup:** None.
+
+**Notes:** Added 2026-09-12 for Phase 5 of
+`.plans/authored-reveal-handoff.md`. This slice keeps the memory-card warning,
+saved-file lead, and dead-drop facts under their existing IDs and preserves
+the conservative evidence boundary between them.
 
 ## CI test-suite overlap and timing investigation
 

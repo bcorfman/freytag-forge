@@ -284,7 +284,7 @@ knowledge:
     priority: 0
 - id: k_sl_1a_b_r1
   statement: "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
-  earn_when: recovers Michelle's damaged recording or reads the files saved with it
+  earn_when: reads the saved files on Michelle's memory card
   action_evidence:
   - [recover, retrieve]
   - [card files, saved files, files on the card]
@@ -368,6 +368,9 @@ knowledge:
   - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [emergency broadcasts, warning, do not trust the emergency broadcasts, distrust the broadcasts]
+  delivery_text: >-
+    Michelle's memory card contains a damaged recording. It warns Kristin not to
+    trust emergency broadcasts.
 - id: k_sl_1a_d_r1
   statement: 'Kristin reads the remaining files on Michelle''s recovered memory card and learns the place she used to trade information.'
   entity_ids: [kristin, michelle, memory_card]
