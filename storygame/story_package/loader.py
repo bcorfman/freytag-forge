@@ -502,6 +502,12 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
         state._assert_scene_entry_fact(scene.metadata.scene_id)
         committed = {item.id for item in projector.project(state, "player", "").committed_knowledge}
         authored_parts = [scene.metadata.entry_text]
+        frame = next(frame for frame in package.knowledge.scene_frames if frame.scene_id == scene.metadata.scene_id)
+        authored_parts.append(frame.situation)
+        for field in ("objective", "tone"):
+            value = getattr(frame, field, "")
+            if value:
+                authored_parts.append(value)
         for beat in scene.beats.values():
             beat_text = getattr(beat, "text", "") or getattr(beat, "description", "")
             if beat_text:

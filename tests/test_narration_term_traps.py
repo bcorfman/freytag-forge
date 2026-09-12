@@ -38,6 +38,25 @@ def test_loader_rejects_an_uncommitted_guarded_term_in_scene_prose(tmp_path: Pat
         load_story_package(root)
 
 
+def test_loader_rejects_an_uncommitted_guarded_term_in_scene_frame_situation(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    shutil.copytree(PACKAGE, root)
+    knowledge = root / "knowledge.yaml"
+    contents = knowledge.read_text(encoding="utf-8")
+    contents = contents.replace(
+        "situation: A supposedly abandoned freight terminal above an underground installation.",
+        "situation: A supposedly abandoned freight terminal above a dead drop.",
+        1,
+    )
+    knowledge.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(
+        StoryPackageError,
+        match="scene 1C.*dead drop.*k_sl_1a_b_r1",
+    ):
+        load_story_package(root)
+
+
 def test_loader_runs_narration_term_trap_lint_without_authored_handoff_validator(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

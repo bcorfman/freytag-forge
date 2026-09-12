@@ -13,6 +13,14 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
 - Declarative storylets and pacing make delay a player choice. Prose cannot
   choose a branch for the player.
 
+## Hosting and API
+
+- FastAPI, React, a Cloudflare Worker, and SQLite provide hosting. The adapter
+  owns transport, CORS, deployment identity, and persistence; gameplay stays
+  shared and story-agnostic.
+- The API serves sessions, turns, game-break choices, segments, and a
+  compatibility `lines` field.
+
 ## Runtime contract
 
 - Facts are the only durable truth. Each turn projects scene-local knowledge,
@@ -23,6 +31,9 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
   plot.
 - A rejected turn restores the exact pre-turn snapshot, including across save
   and load.
+- A threatened dependency opens a typed choice. `proceed` commits the branch;
+  `return` restores the exact pre-turn snapshot, including across save and
+  load.
 
 ### Authored reveal handoff
 

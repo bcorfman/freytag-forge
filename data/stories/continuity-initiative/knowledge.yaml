@@ -212,7 +212,7 @@ scene_frames:
   situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
-  situation: 'A damaged public park holding Michelle''s dead drop: an ordinary bench with a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
+  situation: 'A damaged public park with an ordinary bench, a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
   situation: A supposedly abandoned freight terminal above an underground installation. The transit card opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
@@ -224,7 +224,7 @@ scene_frames:
   situation: 'The facility''s records archive: selection files, development records naming the system''s authors, and corrupted prisoner files threaded with oddly familiar phrasing. A medical terminal''s maintenance reports carry a rhythm that reads like a message.'
   pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
-  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, a coded message waits for someone who knows Michelle''s phrasing.'
+  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, an unread note waits for someone who knows Michelle''s phrasing.'
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
   situation: 'The detention sector: holding blocks, stolen radios, a medical level bearing the experiments, and an imprisoned senior official whose emergency military override codes expire the moment the new authority activates.'
@@ -233,7 +233,7 @@ scene_frames:
   situation: Security corridors between the resistance and Rebecca's executive office. The predictive system anticipates every rational move; only conflicting, irrational emergencies confuse it. Beyond the office lies the external broadcast relay chamber.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
-  situation: 'Rebecca''s office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
+  situation: 'The secured command office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
@@ -375,8 +375,7 @@ knowledge:
   statement: 'Kristin reads the remaining files on Michelle''s recovered memory card and learns the place she used to trade information.'
   entity_ids: [kristin, michelle, memory_card]
   aliases:
-  - hidden memory card
-  - Michelle's research
+  - information drop
   audience:
     kind: public
     player_visible: true
