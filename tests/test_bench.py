@@ -123,6 +123,29 @@ def test_non_string_output_example_is_rejected(tmp_path) -> None:
         load_variation(path)
 
 
+def test_runtime_output_example_leaves_the_provider_default_dynamic(tmp_path) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["system_prompt"] = {"use_runtime_output_example": True}
+    path = tmp_path / "runtime-example.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    variation = load_variation(path)
+
+    assert variation["_resolved_output_example"] is None
+    assert "output_example" not in variation["_prompt_variant"]
+
+
+def test_selection_only_variation_disables_model_grounding(tmp_path) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["system_prompt"]["model_grounding"] = False
+    path = tmp_path / "selection-only.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    variation = load_variation(path)
+
+    assert variation["_prompt_variant"]["model_grounding"] is False
+
+
 def test_overlay_changes_effective_package_hash_and_assembled_prompt() -> None:
     example = load_variation(VARIATION)
     overlay = load_variation(OVERLAY_VARIATION)
@@ -320,6 +343,10 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     class FakeProvider:
         request_count = 0
         recovery_count = 0
+        model_grounding_ids = ("k_sl_1a_b_r2",)
+        model_selected_knowledge_ids = ("k_sl_1a_b_r2",)
+        shadow_matched_candidate_id = "k_sl_1a_b_r2"
+        prompt_candidate_ids = ("k_sl_1a_b_r2",)
         last_projection = None
 
         def opening(self) -> dict[str, object]:
@@ -358,6 +385,11 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     )
 
     assert result["turns"][0]["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["model_selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["model_grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["shadow_matched_candidate_id"] == "k_sl_1a_b_r2"
+    assert result["turns"][0]["prompt_candidate_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["candidates_offered"] == ["k_sl_1a_b_r2", "k_sl_1a_b_r1"]
 
 
@@ -654,6 +686,21 @@ def test_a_prompt_can_be_inspected_without_writing_a_variation_file() -> None:
     assert prompts["user"].startswith("CHARACTERS:")
     assert "PLAYER:\n- Look around the kitchen." in prompts["user"]
     assert variation["_prompt_variant"]["beat_delivery"] == "details"
+
+
+def test_variation_records_harness_selection_switch() -> None:
+    from bench.core import resolve_variation
+
+    variation = resolve_variation(
+        {
+            "name": "harness-switch",
+            "story_package": "data/stories/continuity-initiative",
+            "system_prompt": {"auto_select_unambiguous_candidates": False},
+        },
+        PACKAGE / "variation.json",
+    )
+
+    assert variation["_prompt_variant"]["auto_select_unambiguous_candidates"] is False
 
 
 def test_entering_a_scene_with_no_action_yet_renders_no_player_section() -> None:

@@ -1,53 +1,61 @@
 # Freytag Forge product reference
 
 Freytag Forge is a package-driven interactive-fiction engine for freeform
-roleplay with consequences that hold. A story-agnostic runtime validates each
-proposed change before committing it as a durable fact.
+roleplay. Its story-agnostic runtime validates proposed changes before facts
+become durable.
 
 ## Player experience
 
-- Every ordinary in-world input goes to the narration model unchanged; only
-  save/load and a typed resolution of an already-issued game-break warning are
-  control actions.
-- Markdown plus typed knowledge declarations define scenes, entities,
-  transitions, optional storylets, executable storylet routes, and Freytag
-  pacing, shaping drama and urgency without turning into action menus or parser
-  rules. The knowledge declaration supplies the audience- and scene-scoped
-  facts that support progressive revelation and narration safety.
-- A move that demonstrably removes an indispensable reachable dependency pauses
-  for an explicit decision. Proceed commits the validated branch and its
-  narration; return restores the exact pre-turn snapshot—facts, knowledge,
-  continuity, and transcript position—including across a save/load. No pending
-  candidate's prose is ever shown before that decision is made.
+- Players write ordinary in-world actions. There are no command menus or
+  parser rules.
+- Authored Markdown and typed knowledge define scenes, characters, reveals,
+  transitions, storylets, and pacing.
+- Facts and knowledge are scoped to the audience and current scene, so the
+  narrator can build progressive reveals without exposing future plot.
+- Removing an essential reachable dependency opens a typed game-break choice.
+  Proceed commits the validated branch; return restores the exact pre-turn
+  snapshot, including across save/load.
 
-## Runtime and deployment contract
+## Runtime contract
 
-The provider receives a bounded `TurnKnowledgeContext`: the safe scene frame,
-committed sayable knowledge, and eligible reveal candidates. It never receives
-plot prose, routes, source IDs, future effects, or transcript memory. Its strict
-JSON is untrusted. The runtime resolves one eligible knowledge ID to its
-package-owned route, applies the proposal to a cloned fact store, and runs
-`NarrationSafetyValidator` against that clone. Leaks, unsupported claims,
-wrong-speaker dialogue, and premature transitions fail closed with no partial
-state change. Only validated facts and narration commit.
+- The narrator receives only a bounded `TurnKnowledgeContext`: the safe scene
+  frame, committed sayable knowledge, and eligible reveal candidates. It does
+  not receive routes, source IDs, future effects, or transcript memory.
+- Narrator JSON is untrusted. The runtime resolves at most one eligible
+  knowledge ID to its package-owned route, validates the cloned fact state and
+  narration, then commits the whole turn atomically. If the narrator leaves the
+  ID empty but its text fully proves exactly one offered candidate, the
+  transport may fill that ID before the same checks run. Ambiguous or partial
+  text stays unselected. Leaks, unsupported claims, wrong-speaker dialogue,
+  and premature transitions fail closed.
+- Accepted turns advance declarative, fact-backed pacing. The runtime never
+  infers gameplay from vague prose or chooses an action for the player.
 
-Pacing is declarative and fact-backed: accepted turns advance bounded narrative
-time, while package deadlines may add pressure or perform an authored
-transition. The runtime never infers gameplay from prose or selects an action.
+### Authored reveal handoff
 
-Stories use [Markdown authoring](markdown-story-authoring.md) plus typed
-`knowledge.yaml` declarations. The loader fails closed on malformed input,
-unknown references, invalid predicates/effects, ambiguous transitions, timing
-errors, and dependency cycles. Package files and compiled indexes are immutable
-at runtime; schema-2 packages use save version 2 and older snapshots are
-rejected.
+- A candidate may bypass narrator selection only when its package explicitly
+  opts in with complete `action_evidence` and non-empty `delivery_text`.
+  The runtime may then match the player's action and deliver that authored
+  text, but it still sends the composed turn through the existing validation
+  and atomic commit path.
+- `delivery_text` is optional for the package as a whole. It is required only
+  for candidates that opt into authored handoff. Candidates without this
+  opt-in keep the current LLM-proposal path.
+- This handoff changes delivery, not a fact ID, package effect, or save payload.
+  Existing saves containing those facts remain valid under the normal story,
+  schema, and integrity checks.
 
-FastAPI, React, a Cloudflare Worker, and SQLite form the hosted stack. The web
-adapter owns transport, CORS, deployment identity, and persistence—not gameplay
-policy. `POST /api/v1/session` starts a story and returns its authored opening;
-`POST /api/v1/turn` returns structured segments, compatibility `lines`, state,
-and an optional typed `game_break`; `POST /api/v1/game-break` is the only
-resolution endpoint.
+## Authoring and API
+
+- The loader rejects malformed Markdown, unknown references, invalid predicates
+  or effects, ambiguous transitions, timing errors, dependency cycles, and old
+  save formats. Package files and compiled indexes are immutable at runtime.
+- FastAPI, React, a Cloudflare Worker, and SQLite provide the hosted stack.
+  The web adapter owns transport, CORS, deployment identity, and persistence;
+  it does not own gameplay policy.
+- `POST /api/v1/session` starts a story. `POST /api/v1/turn` returns structured
+  segments, compatibility `lines`, state, and an optional typed `game_break`.
+  `POST /api/v1/game-break` resolves that warning.
 
 ## Developer workflow
 

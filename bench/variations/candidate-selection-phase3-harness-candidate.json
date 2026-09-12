@@ -1,0 +1,32 @@
+{
+    "name": "candidate-selection-phase3-harness-candidate",
+    "story_package": "data/stories/continuity-initiative",
+    "system_prompt": {
+        "auto_select_unambiguous_candidates": true,
+        "rules": [
+            "Show what happens right after the player acts.",
+            "Use only what the SCENE section tells you.",
+            "Use the places and details the story gives you.",
+            "Keep each object where the scene puts it.",
+            "Answer what the player did.",
+            "Do not make up new objects, clues, or things inside containers.",
+            "Everything in the SCENE section is already true.",
+            "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
+            "Do not put a candidate's ID in grounding_ids unless you picked it.",
+            "A character may only say what you were told that character can say.",
+            "When one or more offered candidates match the player's action, randomly pick one candidate from that list and put its ID in selected_knowledge_ids.",
+            "Never write IDs or story bookkeeping into the prose.",
+            "Do not copy sentences from the SCENE section.",
+            "Do not say anything that goes against the SCENE section.",
+            "Do not repeat the request's labels back."
+        ],
+        "include_output_example": true
+    },
+    "user_prompt": {"beat_delivery": "details"},
+    "scripts": {"1A": [{"name": "candidate-selection-repro", "inputs": [
+        "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+        "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+        "Try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+        "Hide what was found, answer the official at the door, then watch what they do at the gate as they leave."
+    ]}]}
+}

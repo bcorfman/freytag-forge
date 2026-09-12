@@ -30,6 +30,17 @@ claims with aliases, prerequisites, exact effects, and one typed source
 must match `world.yaml`; each claim's effects must be authorized by its named
 source. Schema-2 saves use persistence version 2 and intentionally reject
 older snapshots rather than silently reinterpreting prose-era state.
+
+A selectable knowledge claim may also declare `earn_when`: one short,
+player-safe sentence fragment describing the in-world action that earns the
+claim. It is shown only with an already eligible candidate. It guides the
+narrator's proposal; it never commits a fact or replaces selection, grounding,
+must-convey, effect, or narration-safety validation.
+
+`action_evidence` is separate, typed authoring data for a shadow-only matcher.
+Each inner list contains equivalent accepted phrases; every list must match a
+player action before a candidate is reported. It is never sent to the narrator
+and currently has no effect on candidates, narration, selections, or facts.
 `pacing.yaml` supplies one ordered window
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`

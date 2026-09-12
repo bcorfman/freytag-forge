@@ -38,8 +38,9 @@ uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-sele
 Expected: the report's `turn1_position0_match_rate` and
 `turn3_position2_match_rate` are the baseline measures for the two clear
 selection windows. Its `per_turn` list must retain the input, replicate,
-`selected_knowledge_ids`, and `candidates_offered` for every recorded turn,
-including failed runs, without storing narration text.
+`selected_knowledge_ids`, `grounding_ids`, and `candidates_offered` for every
+recorded turn, including failed runs, without storing narration text. The
+grounding list is the union of IDs attached to the accepted turn's segments.
 
 **Cleanup:** None required. Keep the `/tmp` output while comparing a later
 candidate; do not add raw model transcripts to the repository.
@@ -48,6 +49,106 @@ candidate; do not add raw model transcripts to the repository.
 `.plans/narration-candidate-selection-reliability.md`. The report measures
 actual model selections mechanically; deciding that the two windows are clear
 matches is an authored benchmark judgment recorded by the plan.
+
+**Phase 2 diagnosis 2026-09-11:** A further four-replicate baseline batch
+produced 0/4 first-turn selections, extending the same-script baseline to 12
+replicates, 21 offered turns, and 0 selections. The prose varied on each
+request, but the model always left `selected_knowledge_ids` empty; each run
+later failed on the unrelated `narration_known_term_leak` check. The assembled
+first-turn prompt was 5,013 characters. It placed two overlapping Scene 1A
+candidate statements before the rule block; those candidates have no
+`must_convey` groups, so statement overlap cannot safely identify one. A
+four-replicate wording probe (`bench/variations/candidate-selection-phase2-rule.json`)
+added direct-selection rules and produced 0/16 selections, so prompt wording
+was not accepted as the Phase 3 fix. The Phase 3 candidate is a deterministic
+bridge limited to exactly one eligible candidate whose complete non-empty
+`must_convey` groups appear in the response. Ambiguous candidates and partial
+or vague prose remain unselected, and the ordinary resolver still validates
+all effects before commit.
+
+**Phase 2 commands:**
+
+```bash
+uv run python -m bench run --variation bench/variations/candidate-selection-baseline.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/bench-candidate-selection-phase2-baseline --confirm
+uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-selection-phase2-baseline/all-turn-records.json --out-json /tmp/bench-candidate-selection-phase2-baseline/report.json --out-md /tmp/bench-candidate-selection-phase2-baseline/report.md
+uv run python -m bench run --variation bench/variations/candidate-selection-phase2-rule.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/bench-candidate-selection-phase2-rule --confirm
+uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-selection-phase2-rule/all-turn-records.json --out-json /tmp/bench-candidate-selection-phase2-rule/report.json --out-md /tmp/bench-candidate-selection-phase2-rule/report.md
+```
+
+Expected: the baseline report records 0/4 first-turn matches and the wording
+probe records 0/4 first-turn plus 0/4 third-turn matches. The live runs are
+billed and write append-only ledger rows; the reports and raw transcripts stay
+under `/tmp`.
+
+**Instrumentation update 2026-09-11:** `bench` now records the union of
+accepted segment `grounding_ids` beside `selected_knowledge_ids`. It also
+records the model's raw `selected_knowledge_ids` and `grounding_ids` before the
+harness repairs either field. The candidate-selection report preserves all
+four fields. The focused
+regression check passed 107 tests:
+
+```bash
+TMPDIR=/tmp uv run pytest -q --no-cov tests/test_cloudflare_transport.py tests/test_bench.py tests/test_candidate_selection_report.py
+```
+
+One fresh baseline replicate then recorded four accepted turns. Selection was
+empty on all four. Grounding was `k_scene_1a_entry` on turns 1, 3, and 4, and
+empty on turn 2. This proves the LLM was grounding narration on already-known
+scene facts while still selecting no new candidate; the benchmark no longer
+needs to infer that distinction. A fresh run with the corrected grouped rule
+recorded `selected_knowledge_ids: []`, `model_grounding_ids: []`, and final
+`grounding_ids: ["k_scene_1a_entry"]` on its one accepted turn. The final ID
+was added by the harness, not returned by the LLM.
+
+**Rule-layout comparison 2026-09-11:** The same four-input script was run
+with the selection duty as three separate bullets and as one grouped bullet.
+The separate version recorded 0/4 first-turn selections and 0/4 selections on
+offered turns. The grouped version recorded 0/4 first-turn selections, 0/2
+third-turn matches, and 0/9 selections on offered turns. It reached more
+accepted turns before its later leak failure, but it did not improve selection.
+In the grouped run, all nine accepted turns had empty `model_grounding_ids`;
+the final grounding list contained only the harness-added known scene fact on
+some turns. The line grouping is therefore not the root fix.
+
+```bash
+uv run python -m bench run --variation bench/variations/candidate-selection-phase2-separate.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/bench-candidate-selection-phase2-separate --confirm
+uv run python -m bench run --variation bench/variations/candidate-selection-phase2-grouped.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/bench-candidate-selection-phase2-grouped --confirm
+uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-selection-phase2-separate/all-turn-records.json --out-json /tmp/bench-candidate-selection-phase2-separate/report.json --out-md /tmp/bench-candidate-selection-phase2-separate/report.md
+uv run python -m bench.candidate_selection_report --in /tmp/bench-candidate-selection-phase2-grouped/all-turn-records.json --out-json /tmp/bench-candidate-selection-phase2-grouped/report.json --out-md /tmp/bench-candidate-selection-phase2-grouped/report.md
+```
+
+**Harness comparison 2026-09-11:** The first controlled comparison used the
+same grouped prompt and four-input script. The baseline disabled the new
+deterministic selection bridge; the candidate enabled it. Both arms produced
+0/7 selections on offered turns across four replicates, reached no judgeable
+scene, and therefore produced no score. The negative result is expected when
+the model's prose is vague or incomplete: the bridge must not guess a reveal.
+The unit test separately proves the intended positive case: when the model
+describes all required facts for exactly one offered candidate but returns an
+empty selection, the harness adds that candidate and the existing validator
+still decides whether it can commit.
+
+```bash
+uv run python -m bench run --variation bench/variations/candidate-selection-phase3-harness-baseline.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/candidate-selection-phase3-harness-baseline --confirm
+uv run python -m bench run --variation bench/variations/candidate-selection-phase3-harness-candidate.json --scene 1A --script candidate-selection-repro --replicates 4 --out /tmp/candidate-selection-phase3-harness-candidate --confirm
+uv run python -m bench.candidate_selection_report --in /tmp/candidate-selection-phase3-harness-baseline/all-turn-records.json --out-json /tmp/candidate-selection-phase3-harness-baseline/report.json --out-md /tmp/candidate-selection-phase3-harness-baseline/report.md
+uv run python -m bench.candidate_selection_report --in /tmp/candidate-selection-phase3-harness-candidate/all-turn-records.json --out-json /tmp/candidate-selection-phase3-harness-candidate/report.json --out-md /tmp/candidate-selection-phase3-harness-candidate/report.md
+```
+
+The per-turn records now preserve both `model_selected_knowledge_ids` and the
+final `selected_knowledge_ids`, so a non-empty final value with an empty model
+value is direct evidence of a harness repair.
+
+**Random-choice prompt comparison 2026-09-11:** The new single-rule prompt was
+run with the harness disabled and enabled. The baseline recorded 0/13 final
+selections on offered turns across four replicates and the candidate recorded
+0/16. Both arms reached no judgeable scene. The candidate reached three more
+accepted narration turns, but the LLM returned no selections in either arm and
+the harness repaired none because no response fully proved exactly one
+candidate. This prompt change therefore has no measured selection-rate gain.
+
+The final full Python suite passed 338 tests with 91.35% coverage. Ruff check
+and formatting also passed with no changes required.
 
 **Observed 2026-09-11:** Two four-replicate batches used 396 estimated
 Workers AI neurons across 36 narration requests and produced 8 failed runs,
@@ -60,6 +161,173 @@ focused subset); the full suite is the coverage check of record.
 `TMPDIR=/tmp uv run pytest -q` passed 337 tests with 91.35% total coverage.
 From `frontend`, `npm test` passed 35 tests and `npm run build` completed
 successfully.
+
+## Candidate selection cue and positive-example regression
+
+**Purpose:** Verify that an eligible reveal can carry a player-safe earning cue
+and that turns with offered candidates use a coupled selection/grounding JSON
+example rather than the old empty-selection discovery example.
+
+**Setup / seed:** Use the checked-in `continuity-initiative` package. Scene
+1A's `SL-1A-B` must be active to expose its two recording candidates.
+
+**Safe actions:** Run local tests and inspect the assembled prompt. No model
+request or state-changing action is required.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the focused Cloudflare transport test module.
+2. Run the full suite before accepting a change; the focused command alone is
+   expected to miss the repository-wide coverage gate.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q tests/test_cloudflare_transport.py -x
+TMPDIR=/tmp uv run pytest -q
+```
+
+Expected: the focused module's assertions pass; its process may exit nonzero
+only because the focused subset is below 90% total coverage. The full suite
+must pass the coverage gate. The assembled offered-candidate prompt names the
+cue and shows the same offered ID in both `selected_knowledge_ids` and the
+delivering segment's `grounding_ids`.
+
+**Cleanup:** None.
+
+**Notes:** Added 2026-09-11. This is a prompt/data affordance only. The normal
+resolver still decides whether selection, narration, grounding, package
+effects, and resulting facts can commit.
+
+Observed 2026-09-11: the focused transport module passed all 71 assertions,
+then exited only on the expected focused-subset coverage gate (62.32%). The
+full parallel suite passed 344 tests with 91.45% coverage. `uv run ruff check
+--fix .` and `uv run ruff format .` both completed with no changes.
+
+The four-replicate live cue/positive-example probe used 220 estimated Workers
+AI neurons. It recorded 1 selected candidate out of 10 offered turns (10%),
+with 1/4 first-window matches and 0/2 third-window matches. The one selection
+was returned by the model and passed normal grounding checks; it was not a
+harness repair. This is not enough to accept the prompt/data change as a
+reliability fix. The run also demonstrated why a positive example must be
+limited to a cue-matching action: an initial preview would otherwise show the
+first offered candidate for an unrelated action.
+
+**Selection-only probe 2026-09-11:** The one-call
+`candidate-selection-phase5-selection-only` variation removed every
+model-facing candidate-grounding rule and asked only for a selected ID plus
+reveal prose; the existing resolver remained responsible for deriving
+grounding after validated delivery. Four live replicates used an estimated 220
+Workers AI neurons and recorded 0 selected candidates on 15 offered turns.
+Both clear windows were 0/4. This rejects the hypothesis that the model was
+abstaining because it had to coordinate `grounding_ids` with
+`selected_knowledge_ids`. Do not enable this prompt variant for ordinary play.
+
+**Matcher isolation 2026-09-11:** `tests/test_candidate_matcher.py` defines
+the pre-integration safety contract for a future high-precision matcher. It
+must return one candidate only when every authored phrase group is present;
+declared paraphrases may match, while partial, unrelated, negated, empty, and
+ambiguous inputs return no candidate. The matcher is intentionally unused by
+the package loader, prompt, provider, resolver, and state mutation paths until
+these tests are expanded with package-specific evidence data and reviewed.
+
+**Matcher shadow telemetry 2026-09-11:** The first package evidence is limited
+to the two Scene 1A memory-card outcomes. `CloudflareTurnProvider` records
+`shadow_matched_candidate_id` after projection, and `bench` records that ID
+per turn. The evidence is not serialized into the prompt and the value does
+not alter candidates, selection, grounding, narration, effects, or commits.
+Verify this boundary with `tests/test_candidate_matcher.py`,
+`tests/test_cloudflare_transport.py`, and `tests/test_bench.py` before any
+future proposal to use the telemetry for prompt narrowing.
+
+The first four-replicate live shadow run used the unchanged baseline prompt and
+220 estimated Workers AI neurons. It recorded ten accepted turns. On both
+surviving third-turn recording actions, the matcher uniquely reported
+`k_sl_1a_b_r2`; the model selected no candidate and the final selection stayed
+empty. All other recorded turns reported no match. This proves the matcher can
+identify the intended recording candidate without changing the model-visible
+context or committing any fact; it does not yet prove that prompt narrowing or
+automatic delivery would be safe or effective.
+
+**Shadow-narrowing probe 2026-09-11:** The one-call
+`candidate-selection-phase7-shadow-narrowing` variation used the matcher only
+to reduce the narrator-visible candidate list when exactly one shadow match
+existed. The resolver still received the complete eligible projection. Four
+live replicates used 231 estimated Workers AI neurons across 21 narration
+requests and recorded ten turns. Both surviving recording turns had shadow
+match `k_sl_1a_b_r2` and showed only that ID to the narrator, but both model
+and final selections stayed empty. This rejects candidate-list ambiguity as
+the cause of the observed abstention. Do not enable narrowing for ordinary
+play.
+
+**Selection-only JSON diagnostic 2026-09-11:** `python -m bench
+selection-probe` builds the ordinary safe projection for one isolated storylet,
+then sends a 32-token request containing only the player action, offered IDs,
+and their statements. The reply has one allowed key,
+`selected_knowledge_ids`. It is diagnostic telemetry only: it does not enter
+the resolver and cannot select, ground, narrate, apply effects, or commit a
+fact. The transport test verifies that no narration, segment, or grounding
+work reaches this request.
+
+For `SL-1A-B` and `Recover Michelle's damaged recording and listen to it.`,
+four one-option probes (the shadow-narrowing variation) returned
+`k_sl_1a_b_r2` four times. This establishes that the 8B model can emit an
+offered candidate ID when the story-generation contract is absent. It does not
+make direct selection safe: with the full two-option list, all four probes
+returned the wrong `k_sl_1a_b_r1`; with the unrelated action `Search the office
+drawers for a spare key.`, all four returned the unearned `k_sl_1a_b_r2`.
+The failure is therefore not JSON syntax or the ID token itself. It is the
+model's unreliable semantic decision when more than one option is visible,
+and it can also fabricate a selection without evidence. Keep this tool out of
+the game path and do not use its answer for commits.
+
+**Two-pass candidate delivery probe 2026-09-11:**
+
+**Purpose:** Test whether a short selection call followed by ordinary narration
+can make an evidence-backed reveal survive the normal validator. This is
+benchmark-only; it never commits a turn.
+
+**Setup / seed:** Use
+`bench/variations/candidate-selection-phase8-two-pass.json`, Scene 1A,
+`SL-1A-B`, and the interrupted-recording action. The selector runs only when
+the exact authored matcher returns one candidate. A tie, no match, malformed
+selector reply, or a different ID forces an empty selection.
+
+**Safe actions:** The isolated probe builds temporary state and calls the
+provider without an engine, so it cannot apply effects or facts.
+
+**Destructive or external actions:** The provider calls Workers AI and consumes
+model capacity; use a small replicate count.
+
+**Verify:**
+
+```bash
+uv run python -m bench two-pass-probe \
+  --variation bench/variations/candidate-selection-phase8-two-pass.json \
+  --scene 1A --storylet SL-1A-B \
+  --player-input "Try to recover the interrupted message she was recording, and listen to whatever survives of it." \
+  --replicates 1
+```
+
+Expected success signal for the handoff is the same nonempty ID in
+`preselected_knowledge_id`, `model_selected_knowledge_ids`, and
+`final_selected_knowledge_ids`. The first two fields alone are not success:
+the final field must have passed narration, grounding derivation, and normal
+validation.
+
+**Cleanup:** None.
+
+**Observed:** The four-replicate full-scene run made 18 narration requests but
+all replicates failed before the recording action on existing narration safety
+leaks, so it cannot measure this change. Six isolated recording probes then
+selected `k_sl_1a_b_r2` in the evidence-gated first pass (6/6); the narration
+model named it in 5/6 final drafts, but did not state the required warning in
+any draft. Its recovery therefore returned an empty final selection in 6/6.
+The normal validator prevented every unsupported commit. This two-pass design
+does not improve accepted candidate selection and must remain disabled in
+ordinary play.
 
 ## Optional-storylet pacing permutation audit
 
@@ -1887,3 +2155,40 @@ Observed 2026-09-03: the full suite reported `262 passed in 39.86s` and
 `90.43%` coverage. Ruff and each of `check_bench.py --skip-live`,
 `check_ledger.py`, `check_coverage.py`, `check_neutral.py`, and
 `check_legacy.py` reported `PASS`.
+
+## Authored reveal handoff Phase 0 contract
+
+**Purpose:** Verify the Phase 0 migration boundary: authored handoff is
+opt-in, legacy candidates keep the LLM-proposal path, and existing runtime
+state remains compatible with save/load.
+
+**Setup / seed:** The checked-in `continuity-initiative` package and Python
+dependencies installed with `uv sync --group dev`.
+
+**Safe actions:** Run the deterministic save/load regression. It uses a
+temporary SQLite snapshot under pytest's temporary directory.
+
+**Destructive or external actions:** None.
+
+**Steps:**
+
+1. Run the projection/save-load regression for the existing fact-backed state.
+2. Review the Phase 0 contract in `.plans/authored-reveal-handoff.md` and
+   `docs/PRD.md`.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q --no-cov tests/test_knowledge_projection.py::test_projection_is_stable_across_turn_recording_and_save_load
+```
+
+Expected: the test passes, proving that save/load preserves the runtime state
+needed to reproduce the same knowledge projection. The Phase 0 docs state that
+adding authored delivery changes delivery only, not fact IDs or package
+effects.
+
+**Cleanup:** Pytest removes its temporary SQLite snapshot.
+
+**Notes:** Added 2026-09-11. This phase changes documentation only; the
+authored-handoff runtime remains disabled until later phases add and validate
+the package data and decision path.

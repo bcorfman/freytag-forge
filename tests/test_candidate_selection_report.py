@@ -12,11 +12,15 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
                     {
                         "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
                         "selected_knowledge_ids": ["k_sl_1a_a_r1"],
+                        "model_selected_knowledge_ids": ["k_sl_1a_a_r1"],
+                        "grounding_ids": ["k_sl_1a_a_r1"],
+                        "model_grounding_ids": ["k_sl_1a_a_r1"],
                     },
                     {"candidates_offered": [], "selected_knowledge_ids": []},
                     {
                         "candidates_offered": ["k_sl_1a_b_r1", "k_sl_1a_b_r2"],
                         "selected_knowledge_ids": [],
+                        "grounding_ids": ["k_scene_1a_entry"],
                     },
                     {"candidates_offered": [], "selected_knowledge_ids": []},
                 ],
@@ -61,10 +65,16 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
         "player_input": "",
         "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
         "selected_knowledge_ids": ["k_sl_1a_a_r1"],
+        "model_selected_knowledge_ids": ["k_sl_1a_a_r1"],
+        "grounding_ids": ["k_sl_1a_a_r1"],
+        "model_grounding_ids": ["k_sl_1a_a_r1"],
         "expected_candidate_ids": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
         "expected_match": True,
     }
     assert report["per_turn"][2]["expected_candidate_ids"] == ["k_sl_1a_b_r1", "k_sl_1a_b_r2"]
     assert report["per_turn"][2]["expected_match"] is False
+    assert report["per_turn"][2]["selected_knowledge_ids"] == []
+    assert report["per_turn"][2]["grounding_ids"] == ["k_scene_1a_entry"]
+    assert report["per_turn"][2]["model_grounding_ids"] == []
     assert report["per_turn"][1]["expected_candidate_ids"] == []
     assert report["per_turn"][1]["expected_match"] is None

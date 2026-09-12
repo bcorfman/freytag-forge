@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 1 complete (2026-09-11); Phase 2 not started. Follow-up to `.plans/narration-grounding-citation-reliability.md`,
+Phase 2 complete (2026-09-11); Phase 3 in progress (2026-09-11). Follow-up to `.plans/narration-grounding-citation-reliability.md`,
 discovered while re-running `@llm-canon` after that plan's three fixes
 (grounding-citation auto-attribution, opening-narration-safety, and the
 message-alias collision) all landed and were confirmed live.
@@ -87,16 +87,11 @@ without selecting is what let the divergence accumulate in the first place.
 
 ## What is already known (do not re-derive)
 
-- `storygame/runtime/cloudflare.py`'s `_turn_rules()` already carries several
-  selection-duty rules: "Pick at most one candidate. Put its ID in
-  selected_knowledge_ids.", "If you pick a candidate, tell it in one
-  paragraph, and put its ID in that paragraph's grounding_ids.", "Do not
-  pick a candidate that has no text to tell.", "If no candidate fits what
-  just happened, leave selected_knowledge_ids empty.", "If you tell a
-  candidate but do not pick it, the story gets stuck." That last rule
-  literally names the failure mode this plan is investigating and the model
-  still exhibits it — so the existing rule wording is demonstrably
-  insufficient on its own, at least in this reproduction.
+- `storygame/runtime/cloudflare.py`'s `_turn_rules()` now gives one selection
+  rule: when one or more offered candidates match the action, randomly choose
+  one and return its ID. The transport and resolver still enforce that the
+  selected reveal is told and grounded. The old wording said only "at most
+  one" and therefore wrongly gave the model permission to choose zero.
 - The candidates ARE present in the prompt with a player-safe statement and
   their own id (confirmed via direct inspection of
   `KnowledgeProjector.project(...).candidates` at each turn in this plan's
@@ -149,13 +144,24 @@ append-only rows in `bench/results/ledger.jsonl`.
 
 ### Phase 2: Diagnose why the rule is not landing
 
-- [ ] With the baseline established, inspect what varies between a replicate
+- [x] With the baseline established, inspect what varies between a replicate
   where the model selects correctly and one where it does not (same script,
   same candidates, same rules) — is it something about how the candidate's
   `statement`/`must_convey` reads, ordering in the prompt, the length of the
   CONSTRAINTS section, or genuinely just sampling variance in a small model
-  with no legible cause?
-- [ ] Consider, per constraint 4, whether a deterministic mechanism can
+  with no legible cause? Twelve baseline replicates produced 21 offered
+  turns and 0 selections. The extra four-replicate batch again produced 0/4
+  first-turn selections. There was therefore no successful arm to contrast;
+  narration varied, but selection abstained every time. The first prompt is
+  5,013 characters and places two overlapping candidate statements before a
+  long CONSTRAINTS rule block. The first pair has no `must_convey` groups;
+  the third-turn pair does, but the observed prose did not convey any complete
+  reveal. The evidence supports a compliance gap, not a legible sampling
+  difference. After instrumentation, a fresh replicate showed grounding on
+  the already-known entry fact on turns 1, 3, and 4 while selection stayed
+  empty on all four turns; turn 2 had neither. The LLM is therefore producing
+  grounded scene narration, but not committing an offered reveal.
+- [x] Consider, per constraint 4, whether a deterministic mechanism can
   reduce reliance on the model's own selection judgment at all for a clearly
   unambiguous case, analogous to how `derive_grounding`/`derive_statement_grounding`
   already exist for a related bookkeeping gap — for example, detecting when
@@ -167,19 +173,43 @@ append-only rows in `bench/results/ledger.jsonl`.
   already-committed mention, since it would newly commit canon rather than
   just labeling prose that was already going to render. Do not build this
   without being explicit, in the writeup, about what makes it safe or why it
-  is not.
-- [ ] If a rule-wording change looks promising instead (or in addition),
+  is not. The turn-1 pair is not safe: its statements overlap and have no
+  authored groups. Vague or partial prose is not safe either. A bounded
+  mechanism is ready for Phase 3 validation: auto-select only when exactly
+  one eligible candidate's complete non-empty `must_convey` groups are found
+  in the response segments; then send the result through the existing
+  selection, effect, and safety validation. Leave ambiguous or incomplete
+  cases untouched.
+- [x] If a rule-wording change looks promising instead (or in addition),
   design it and hold it to the same bench-measured bar as Phase 1's
   baseline — a wording change is not accepted on "it should be clearer,"
-  only on a measured improvement over the baseline selection rate.
+  only on a measured improvement over the baseline selection rate. The
+  Phase 2 probe added two short direct-selection rules and produced 0/16
+  selections across four replicates, so it is rejected rather than carried
+  into Phase 3. A controlled comparison of the corrected three-bullet wording
+  against the one-bullet wording also produced 0 selections in both arms
+  (0/4 first-turn matches in each), so line grouping is not the root fix.
 
-Exit gate: a specific, evidence-backed hypothesis for why the model
-sometimes fails to select a clearly-matching candidate, and one candidate
-fix (rule wording, a deterministic mechanism, or both) ready for Phase 3
-validation.
+Exit gate: [x] Met. The evidence-backed hypothesis is that the small model
+defaults to atmospheric narration and treats selection as optional even when
+the player action matches an offered reveal; the varied narration with 0/21
+baseline selections and the 0/16 wording-probe selections support that
+diagnosis. The candidate fix is the narrowly gated deterministic mechanism
+above, ready for Phase 3 validation.
 
 ### Phase 3: Validate and land
 
+- [x] Run the first controlled harness comparison with the same prompt and
+  four-input script: one arm leaves the model's selection untouched, and the
+  other applies the four safety checks in the harness. Both arms produced
+  `0/7` selections on offered turns and reached no judgeable scene completion.
+  The result is a valid negative result, but it is not enough to pass the
+  exit gate because the model did not write a complete `must_convey` reveal
+  for the harness to recognize.
+- [x] Run the revised single random-choice prompt in the same harness-off and
+  harness-on comparison. The baseline produced 0/13 offered-turn selections;
+  the candidate produced 0/16. Neither arm completed a judgeable scene, so
+  this prompt revision has no measured selection-rate improvement.
 - [ ] Bench-validate the candidate fix against the Phase 1 baseline, same
   discipline as the sibling plan: enough replicates to be distinguishable
   from noise, and a check for regressions on at least one other scene/script.

@@ -238,6 +238,7 @@ scene_frames:
 knowledge:
 - id: k_sl_1a_a_r1
   statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.'
+  earn_when: searches the kitchen or back door for signs of what happened
   entity_ids: []
   aliases:
   - michelle abduction suspicion
@@ -260,6 +261,7 @@ knowledge:
     priority: 0
 - id: k_sl_1a_a_r2
   statement: 'A hurried search leaves Kristin uncertain, but the broken door and overturned chair make Michelle’s absence feel staged.'
+  earn_when: searches the kitchen or back door for signs of what happened
   entity_ids: []
   aliases:
   - michelle abduction suspicion
@@ -282,6 +284,11 @@ knowledge:
     priority: 0
 - id: k_sl_1a_b_r1
   statement: "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
+  earn_when: recovers Michelle's damaged recording or reads the files saved with it
+  action_evidence:
+  - [recover, retrieve]
+  - [card files, saved files, files on the card]
+  - [read, inspect]
   entity_ids: []
   aliases:
   - continuity initiative known
@@ -324,6 +331,11 @@ knowledge:
   - [bench in the park, park bench, bench, park, the park bench, bench near the park]
 - id: k_sl_1a_b_r2
   statement: "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: do not trust emergency broadcasts."
+  earn_when: recovers Michelle's damaged recording and listens to it
+  action_evidence:
+  - [recover, retrieve]
+  - [damaged recording, interrupted message, recording]
+  - [listen, play]
   entity_ids: []
   aliases:
   - michelle warning known

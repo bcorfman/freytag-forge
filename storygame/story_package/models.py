@@ -117,6 +117,8 @@ class KnowledgeDefinition(_Model):
     establishes: tuple[RouteOperation, ...] = Field(min_length=1)
     source: RevealSource
     relevance: Relevance = Field(default_factory=Relevance)
+    earn_when: str | None = Field(default=None, min_length=1)
+    action_evidence: tuple[tuple[str, ...], ...] = ()
     must_convey: tuple[tuple[str, ...], ...] = ()
 
 

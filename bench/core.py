@@ -52,12 +52,10 @@ DEFAULT_PROMPT_RULES = (
     "A grounding ID may name only committed knowledge or the selected candidate.",
     "Never ground on a candidate you did not select.",
     "Dialogue may use only its speaker's sayable knowledge.",
-    "Select at most one candidate ID in selected_knowledge_ids.",
-    "A selected candidate must be conveyed by one readable segment, and that segment must carry its ID "
-    "in grounding_ids.",
-    "A candidate with neither a statement nor a must_convey group cannot be selected.",
-    "Leave selected_knowledge_ids empty when no candidate fits what just happened.",
-    "Narrating a reveal without selecting it stalls the story.",
+    (
+        "When one or more offered candidates match the player's action, randomly pick one candidate from that list "
+        "and put its ID in selected_knowledge_ids."
+    ),
     "Never write source IDs, events, operations, facts, or transitions as prose.",
     "Return one paragraph per segment, roughly 30 to 55 words, with at most 5 segments.",
     "Never reuse a beat's sentences.",
@@ -168,14 +166,43 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         raise ValueError("system_prompt.include_output_example must be a boolean")
     if "output_example" in prompt and not isinstance(prompt["output_example"], str):
         raise ValueError("system_prompt.output_example must be a string")
-    resolved_output_example = prompt.get("output_example", DEFAULT_OUTPUT_EXAMPLE if include_output_example else None)
+    use_runtime_output_example = prompt.get("use_runtime_output_example", False)
+    if not isinstance(use_runtime_output_example, bool):
+        raise ValueError("system_prompt.use_runtime_output_example must be a boolean")
+    if use_runtime_output_example and "output_example" in prompt:
+        raise ValueError("use_runtime_output_example cannot be combined with output_example")
+    resolved_output_example = (
+        None
+        if use_runtime_output_example
+        else prompt.get("output_example", DEFAULT_OUTPUT_EXAMPLE if include_output_example else None)
+    )
     if "output_example" in prompt:
         include_output_example = True
+    auto_select_unambiguous_candidates = prompt.get("auto_select_unambiguous_candidates", True)
+    if not isinstance(auto_select_unambiguous_candidates, bool):
+        raise ValueError("system_prompt.auto_select_unambiguous_candidates must be a boolean")
+    positive_selection_example = prompt.get("positive_selection_example", False)
+    if not isinstance(positive_selection_example, bool):
+        raise ValueError("system_prompt.positive_selection_example must be a boolean")
+    model_grounding = prompt.get("model_grounding", True)
+    if not isinstance(model_grounding, bool):
+        raise ValueError("system_prompt.model_grounding must be a boolean")
+    narrow_to_shadow_match = prompt.get("narrow_to_shadow_match", False)
+    if not isinstance(narrow_to_shadow_match, bool):
+        raise ValueError("system_prompt.narrow_to_shadow_match must be a boolean")
+    selection_prepass = prompt.get("selection_prepass", False)
+    if not isinstance(selection_prepass, bool):
+        raise ValueError("system_prompt.selection_prepass must be a boolean")
     variation["_prompt_variant"] = {
         **({"rules": rules} if rules is not None else {}),
         "include_output_example": include_output_example,
-        "output_example": resolved_output_example,
+        **({"output_example": resolved_output_example} if not use_runtime_output_example else {}),
         "beat_delivery": beat_delivery,
+        "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
+        "positive_selection_example": positive_selection_example,
+        "model_grounding": model_grounding,
+        "narrow_to_shadow_match": narrow_to_shadow_match,
+        "selection_prepass": selection_prepass,
     }
     variation["_resolved_rules"] = list(rules if rules is not None else DEFAULT_PROMPT_RULES)
     variation["_resolved_output_example"] = resolved_output_example
@@ -184,7 +211,13 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
             "rules": variation["_resolved_rules"],
             "include_output_example": include_output_example,
             "output_example": resolved_output_example,
+            "use_runtime_output_example": use_runtime_output_example,
             "beat_delivery": beat_delivery,
+            "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
+            "positive_selection_example": positive_selection_example,
+            "model_grounding": model_grounding,
+            "narrow_to_shadow_match": narrow_to_shadow_match,
+            "selection_prepass": selection_prepass,
         }
     )
     variation["_story_package_value"] = package_value
@@ -416,6 +449,73 @@ def prompt_for(
     return {"system": str(assembled["system"]), "user": provider._section_user_prompt(context)}
 
 
+def selection_probe_for(
+    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
+) -> dict[str, object]:
+    """Run the selection-only diagnostic against one isolated storylet.
+
+    The result is telemetry, not a turn proposal: it is never sent to the
+    resolver and cannot change the state built for this probe.
+    """
+
+    package, state = package_and_state(variation, scene_id)
+    provider = provider_for(state, variation)
+    RuntimeEngine(state, provider)._activate_pacing()
+    chosen = resolve_storylet(package, scene_id, storylet_id)
+    ordered = beats_for(package, scene_id)
+    by_anchor = {item.anchor: item for item in ordered}
+    entry = min(
+        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
+        key=lambda item: item.id,
+        default=None,
+    )
+    if entry is not None:
+        establish_prior_beats(package, state, scene_id, entry)
+    state.active_event_ids.clear()
+    state.active_event_ids.add(chosen.id)
+    selected = provider.selection_probe(player_input)
+    return {
+        "offered_candidate_ids": list(provider.prompt_candidate_ids),
+        "reported_selected_knowledge_ids": list(selected),
+        "shadow_matched_candidate_id": provider.shadow_matched_candidate_id,
+    }
+
+
+def two_pass_probe_for(
+    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
+) -> dict[str, object]:
+    """Run one two-pass turn in isolation, without committing its proposal.
+
+    Unlike ``selection_probe_for``, this sends the narration request too.  The
+    provider validates it, but no engine receives the result, so this remains a
+    diagnostic and cannot apply effects or change facts.
+    """
+
+    package, state = package_and_state(variation, scene_id)
+    provider = provider_for(state, variation)
+    RuntimeEngine(state, provider)._activate_pacing()
+    chosen = resolve_storylet(package, scene_id, storylet_id)
+    ordered = beats_for(package, scene_id)
+    by_anchor = {item.anchor: item for item in ordered}
+    entry = min(
+        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
+        key=lambda item: item.id,
+        default=None,
+    )
+    if entry is not None:
+        establish_prior_beats(package, state, scene_id, entry)
+    state.active_event_ids.clear()
+    state.active_event_ids.add(chosen.id)
+    response = provider(player_input)
+    selected = response.get("selected_knowledge_ids", []) if isinstance(response, dict) else []
+    return {
+        "preselected_knowledge_id": provider.preselected_knowledge_id,
+        "model_selected_knowledge_ids": list(provider.model_selected_knowledge_ids),
+        "final_selected_knowledge_ids": selected,
+        "narration_requests": provider.request_count,
+    }
+
+
 _WORD_PATTERN = re.compile(r"\b[\w]+(?:[-'][\w]+)*\b", re.UNICODE)
 
 
@@ -505,6 +605,14 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "left_scene": entered,
                     "beats_projected": list(state.last_turn_delivery.beats_projected),
                     "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                    "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
+                    "grounding_ids": sorted(
+                        {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
+                    ),
+                    "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
+                    "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
+                    "preselected_knowledge_id": getattr(provider, "preselected_knowledge_id", None),
+                    "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None
                     else [],
