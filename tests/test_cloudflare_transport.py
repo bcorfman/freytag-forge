@@ -635,6 +635,75 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
     assert state.snapshot() == before
 
 
+def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
+    package = _authored_handoff_package()
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant={
+            "selection_prepass": True,
+            "output_example": f'{{"candidate":"k_sl_1a_b_r2","text":"{AUTHORED_DELIVERY}"}}',
+        },
+    )
+    captured: list[dict[str, object]] = []
+
+    def open_request(request, timeout):
+        captured.append(json.loads(request.data))
+        return _Response({"segments": [{"kind": "narration", "text": "The room settles."}]})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    result = provider("Recover the damaged recording and listen to it.")
+
+    assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
+    assert len(captured) == 1
+    prompt = f"{captured[0]['system']}\n{captured[0]['user']}"
+    candidate = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
+    assert candidate.id not in prompt
+    assert candidate.statement not in prompt
+    assert AUTHORED_DELIVERY not in prompt
+    assert "must_convey" not in prompt
+    assert "selected_knowledge_ids" not in captured[0]["user"]
+    assert "grounding_ids" not in captured[0]["user"]
+
+
+def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) -> None:
+    package = _authored_handoff_package()
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    captured: list[dict[str, object]] = []
+    responses = iter(
+        [
+            {"segments": [{"kind": "narration"}]},
+            {"segments": [{"kind": "narration", "text": "The room settles."}]},
+        ]
+    )
+
+    def open_request(request, timeout):
+        captured.append(json.loads(request.data))
+        return _Response(next(responses))
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    result = provider("Recover the damaged recording and listen to it.")
+
+    assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
+    assert provider.recovery_count == 1
+    assert len(captured) == 2
+    recovery_system = captured[1]["system"]
+    candidate = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
+    assert candidate.id not in recovery_system
+    assert candidate.statement not in recovery_system
+    assert AUTHORED_DELIVERY not in recovery_system
+    assert "grounding_ids" not in recovery_system
+    assert "Put" not in recovery_system
+    assert "Do not select a fact." in recovery_system
+
+
 def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")

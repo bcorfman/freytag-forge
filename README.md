@@ -1,16 +1,16 @@
 # Freytag Forge
 
-> Freeform roleplay with consequences that stick.
+> Freeform roleplay where every move changes what can happen next.
 
-Write the move. Change the story.
+Write the move. Earn the reveal. Live with the consequence.
 
 ## Features
 
 - **Play freeform.** Write any in-world move. No menus. No parser syntax.
-- **Make it matter.** Validated discoveries and choices stick.
-- **Earn every reveal.** Future plot stays hidden until your actions uncover it.
-- **Stay under pressure.** Storylets and pacing make every delay count.
-- **Keep the thread.** Scoped knowledge and atomic turns protect continuity.
+- **Make it stick.** Validated discoveries and choices become lasting facts.
+- **Earn the reveal.** Progressive plot stays hidden until your actions uncover it.
+- **Feel the pressure.** Storylets and pacing make every delay count.
+- **Trust the thread.** Scoped knowledge and atomic turns keep continuity intact.
 
 ## Play online
 

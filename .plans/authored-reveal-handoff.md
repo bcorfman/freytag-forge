@@ -157,21 +157,21 @@ JSON.
 
 ### Phase 4: Simplify the narrator contract for handoff turns
 
-- [ ] For a matcher-backed handoff, omit candidate statements, `must_convey`
+- [x] For a matcher-backed handoff, omit candidate statements, `must_convey`
   lists, candidate IDs, selection rules, and grounding rules from the narrator
   prompt. The model receives only the scene material it needs to write the
   surrounding action.
-- [ ] Preserve the existing prompt for legacy candidates until they migrate.
-- [ ] Confirm opening, normal turn, malformed-response recovery, and every
+- [x] Preserve the existing prompt for legacy candidates until they migrate.
+- [x] Confirm opening, normal turn, malformed-response recovery, and every
   alternate narration path use the same split. A recovery must not reintroduce
   candidate details or ask the model to select.
-- [ ] Keep narrator instructions at the existing eighth-grade reading level.
+- [x] Keep narrator instructions at the existing eighth-grade reading level.
   The only added behavior should be ordinary scene narration, not a new JSON
   relationship.
 
-Exit gate: prompt snapshots show no candidate ID or delivery wording reaches
-the model for an authored-handoff turn, while the player-facing composed result
-contains the exact authored reveal.
+- [x] Exit gate: prompt snapshots show no candidate ID or delivery wording
+  reaches the model for an authored-handoff turn, while the player-facing
+  composed result contains the exact authored reveal.
 
 ### Phase 5: Migrate one narrow Scene 1A slice
 
