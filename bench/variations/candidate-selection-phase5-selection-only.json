@@ -1,0 +1,12 @@
+{
+    "name": "candidate-selection-phase5-selection-only",
+    "story_package": "data/stories/continuity-initiative",
+    "system_prompt": {"include_output_example": true, "model_grounding": false},
+    "user_prompt": {"beat_delivery": "details"},
+    "scripts": {"1A": [{"name": "candidate-selection-repro", "inputs": [
+        "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+        "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+        "Try to recover the interrupted message she was recording, and listen to whatever survives of it.",
+        "Hide what was found, answer the official at the door, then watch what they do at the gate as they leave."
+    ]}]}
+}

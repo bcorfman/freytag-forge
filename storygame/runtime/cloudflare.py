@@ -12,6 +12,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+from storygame.runtime.candidate_matcher import ActionEvidenceCandidate, uniquely_matched_candidate
 from storygame.runtime.contracts import (
     NarrationSegment,
     RuntimeContractError,
@@ -19,7 +20,7 @@ from storygame.runtime.contracts import (
     contract_error_summary,
     parse_turn_proposal,
 )
-from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
+from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
@@ -220,6 +221,13 @@ class CloudflareTurnProvider:
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_prompt: dict[str, str] | None = None
         self.grounding_attributions: tuple[str, ...] = ()
+        self.model_selected_knowledge_ids: tuple[str, ...] = ()
+        self.model_grounding_ids: tuple[str, ...] = ()
+        self.shadow_matched_candidate_id: str | None = None
+        self.prompt_candidate_ids: tuple[str, ...] = ()
+        self.preselected_knowledge_id: str | None = None
+        self.selection_prepass_completed = False
+        self._example_player_input = ""
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
@@ -250,13 +258,22 @@ class CloudflareTurnProvider:
         )
 
     def __call__(self, player_input: str) -> object:
+        self.preselected_knowledge_id = None
+        self.selection_prepass_completed = False
         prompt = self.assemble_turn_prompt(player_input)
+        if self.prompt_variant and self.prompt_variant.get("selection_prepass", False):
+            self.preselected_knowledge_id = self._selection_prepass(player_input)
+            self.selection_prepass_completed = True
+            prompt = self.assemble_turn_prompt(player_input)
         return self._dispatch(prompt["system"], prompt["context"])
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""
 
+        self._example_player_input = player_input
         self.last_projection = self.projector.project(self.state, "player", player_input)
+        self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
+        self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={
                 "hint_staged": bool(self.last_projection.hinted_deliveries),
@@ -282,26 +299,133 @@ class CloudflareTurnProvider:
         context["_rules"] = self._turn_rules()
         return {"system": self._system_prompt(), "context": context}
 
-    def _turn_rules(self) -> list[str]:
-        """State the selection rule that actually applies to this turn.
+    def selection_probe(self, player_input: str) -> tuple[str, ...]:
+        """Ask for selection bookkeeping alone, for a benchmark diagnostic.
 
-        The two cases pull in opposite directions and both have cost a
-        playthrough. With no candidates, "select at most one" invites the model
-        to invent an ID and the player loses the turn. With candidates offered,
-        permissive wording leaves the model free to select nothing, the earned
-        reveal never commits, and the story stalls in the scene instead. So the
-        rule is stated as a duty when a reveal is on offer, and as a
-        prohibition when none is.
+        This is deliberately separate from a game turn.  Its answer never reaches
+        the resolver, so it cannot reveal or commit knowledge.  It exists to tell
+        whether the model can emit an offered ID when it has no narration or
+        grounding work to do.
+        """
+
+        self.assemble_turn_prompt(player_input)
+        candidates = self._model_candidates()
+        response = self._request_allowing_one_transient_retry(self._selection_payload(player_input, candidates))
+        return self._parse_selection_response(response, candidates)
+
+    def _selection_prepass(self, player_input: str) -> str | None:
+        """Use a short call to confirm one matcher-backed candidate for narration.
+
+        The authored matcher, rather than this model call, supplies the evidence
+        that the player earned a reveal.  A malformed answer, an empty answer,
+        or any ID other than that one fails closed.  This result still commits
+        nothing; the normal narration proposal and resolver run afterwards.
+        """
+
+        matched_id = self.shadow_matched_candidate_id
+        if matched_id is None:
+            return None
+        candidates = tuple(candidate for candidate in self._model_candidates() if candidate.id == matched_id)
+        if len(candidates) != 1:
+            return None
+        response = self._request_allowing_one_transient_retry(self._selection_payload(player_input, candidates))
+        selected = self._parse_selection_response(response, candidates)
+        return matched_id if selected == (matched_id,) else None
+
+    @staticmethod
+    def _selection_payload(player_input: str, candidates: tuple[RevealCandidate, ...]) -> dict[str, object]:
+        lines = [f"PLAYER ACTION: {player_input}", "OFFERED OPTIONS:"]
+        for candidate in candidates:
+            lines.append(f"- {candidate.id}: {candidate.statement}")
+            if candidate.earn_when:
+                lines.append(f"  Earn it only when: {candidate.earn_when}")
+        lines.append("Choose one ID only when the action plainly earns that option. Otherwise use [].")
+        return {
+            "system": (
+                "Return only JSON. It has one key: selected_knowledge_ids. "
+                "Use [] or one offered ID. Do not add other keys."
+            ),
+            "user": "\n".join(lines),
+            "max_tokens": 32,
+            "response_format": {"type": "json_object"},
+        }
+
+    @staticmethod
+    def _parse_selection_response(response: object, candidates: tuple[RevealCandidate, ...]) -> tuple[str, ...]:
+        if not isinstance(response, dict):
+            raise ValueError("selection probe response must be a JSON object")
+        selected = response.get("selected_knowledge_ids")
+        if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
+            raise ValueError("selection probe response must contain selected_knowledge_ids as a list of strings")
+        if len(selected) > 1:
+            raise ValueError("selection probe response may select at most one ID")
+        offered_ids = {candidate.id for candidate in candidates}
+        if any(item not in offered_ids for item in selected):
+            raise ValueError("selection probe response contains an ID that was not offered")
+        return tuple(selected)
+
+    def _shadow_matched_candidate_id(self, player_input: str) -> str | None:
+        """Record a matcher result without changing the narrated turn.
+
+        Action evidence stays out of the model context. This result is telemetry
+        only: it neither changes candidates nor proposes, grounds, validates, or
+        commits a reveal.
         """
 
         candidates = self.last_projection.candidates if self.last_projection else ()
-        selection_rules = [
-            "Pick at most one candidate. Put its ID in selected_knowledge_ids.",
-            "If you pick a candidate, tell it in one paragraph, and put its ID in that paragraph's grounding_ids.",
-            "Do not pick a candidate that has no text to tell.",
-            "If no candidate fits what just happened, leave selected_knowledge_ids empty.",
-            "If you tell a candidate but do not pick it, the story gets stuck.",
-        ]
+        evidence_candidates = tuple(
+            ActionEvidenceCandidate(id=candidate.id, required_groups=knowledge.action_evidence)
+            for candidate in candidates
+            if (knowledge := self.state.package.knowledge_indexes.by_id.get(candidate.id)) and knowledge.action_evidence
+        )
+        matched = uniquely_matched_candidate(player_input, evidence_candidates)
+        return matched.id if matched else None
+
+    def _model_candidates(self) -> tuple[RevealCandidate, ...]:
+        """Return the candidate list displayed to the narrator for this experiment.
+
+        Normal play and all non-matching actions retain the full eligible list.
+        The optional narrowing switch is a prompt-only experiment; the resolver
+        always receives ``last_projection.candidates`` unchanged.
+        """
+
+        candidates = self.last_projection.candidates if self.last_projection else ()
+        if not (
+            self.prompt_variant
+            and self.prompt_variant.get("narrow_to_shadow_match", False)
+            and self.shadow_matched_candidate_id
+        ):
+            return candidates
+        return tuple(candidate for candidate in candidates if candidate.id == self.shadow_matched_candidate_id)
+
+    def _turn_rules(self) -> list[str]:
+        """State the selection rule that actually applies to this turn.
+
+        With candidates offered, the narrator must choose one at random from
+        the matching list. With no candidates, it must leave the list empty.
+        """
+
+        candidates = self._model_candidates()
+        model_grounding = not (
+            self.prompt_variant is not None and self.prompt_variant.get("model_grounding", True) is False
+        )
+        if getattr(self, "selection_prepass_completed", False):
+            selection_rules = (
+                [
+                    f"The first check picked {getattr(self, 'preselected_knowledge_id', None)}. Reveal it now.",
+                    f"Put {getattr(self, 'preselected_knowledge_id', None)} in selected_knowledge_ids.",
+                    "Do not select another candidate.",
+                ]
+                if getattr(self, "preselected_knowledge_id", None)
+                else ["The first check found no earned candidate. Leave selected_knowledge_ids empty."]
+            )
+        else:
+            selection_rules = [
+                (
+                    "When one or more offered candidates match the player's action, randomly pick one candidate "
+                    "from that list and put its ID in selected_knowledge_ids."
+                ),
+            ]
         no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
         if not candidates:
             selection_rules.append(no_candidate_rule)
@@ -327,8 +451,14 @@ class CloudflareTurnProvider:
             "Answer what the player did.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is already true.",
-            "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
-            "Do not put a candidate's ID in grounding_ids unless you picked it.",
+            *(
+                (
+                    "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
+                    "Do not put a candidate's ID in grounding_ids unless you picked it.",
+                )
+                if model_grounding
+                else ()
+            ),
             "A character may only say what you were told that character can say.",
             *selection_rules,
             "Never write IDs or story bookkeeping into the prose.",
@@ -382,18 +512,83 @@ class CloudflareTurnProvider:
         return rules
 
     def _output_example(self) -> str | None:
-        """Resolve the response example, or None when this variation omits it."""
+        """Resolve the response example, or None when this variation omits it.
+
+        A generic empty-selection example taught the narrator that it could
+        describe a discovery and still leave the reveal unselected.  When this
+        turn offers candidates, use one already-safe candidate to demonstrate
+        the complete selection shape instead.  The candidate is in the same
+        bounded projection as the user prompt; this does not expose a future
+        fact or authorize a commit.
+        """
 
         if self.prompt_variant and not self.prompt_variant.get("include_output_example", True):
             return None
-        example_text = (
-            self.prompt_variant.get("output_example", DEFAULT_OUTPUT_EXAMPLE)
-            if self.prompt_variant
-            else DEFAULT_OUTPUT_EXAMPLE
-        )
+        if self.preselected_knowledge_id and self.last_projection:
+            candidate = next(
+                (item for item in self.last_projection.candidates if item.id == self.preselected_knowledge_id), None
+            )
+            example_text = self._preselected_output_example(candidate) if candidate else DEFAULT_OUTPUT_EXAMPLE
+        elif self.prompt_variant and "output_example" in self.prompt_variant:
+            example_text = self.prompt_variant["output_example"]
+        else:
+            candidates = self.last_projection.candidates if self.last_projection else ()
+            example_candidate = (
+                self._example_candidate(candidates)
+                if self.prompt_variant and self.prompt_variant.get("positive_selection_example", False)
+                else None
+            )
+            example_text = (
+                self._selection_output_example(example_candidate) if example_candidate else DEFAULT_OUTPUT_EXAMPLE
+            )
         if not isinstance(example_text, str):
             raise ValueError("prompt variant output_example must be a string")
         return example_text
+
+    @staticmethod
+    def _preselected_output_example(candidate: RevealCandidate) -> str:
+        """Show delivery and selection without adding model grounding work."""
+
+        return json.dumps(
+            {
+                "segments": [{"kind": "narration", "text": candidate.statement}],
+                "selected_knowledge_ids": [candidate.id],
+            },
+            separators=(",", ":"),
+        )
+
+    @staticmethod
+    def _selection_output_example(candidate: RevealCandidate) -> str:
+        """Show the coupled narration, selection, and grounding shape safely."""
+
+        return json.dumps(
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": candidate.statement,
+                        "grounding_ids": [candidate.id],
+                    }
+                ],
+                "selected_knowledge_ids": [candidate.id],
+            },
+            separators=(",", ":"),
+        )
+
+    def _example_candidate(self, candidates: tuple[RevealCandidate, ...]) -> RevealCandidate | None:
+        """Return a cue-matching candidate for a positive output example.
+
+        This only chooses a prompt example.  It must never select a candidate,
+        change facts, or replace the normal proposal validation path.  Requiring
+        two meaningful cue words keeps an unrelated offered candidate out of an
+        example for a different player action.
+        """
+
+        action_terms = self._content_terms(self._example_player_input)
+        for candidate in candidates:
+            if candidate.earn_when and len(action_terms & self._content_terms(candidate.earn_when)) >= 2:
+                return candidate
+        return None
 
     def _protagonist_name(self) -> str:
         """The short name the player is called by, not the full credited name."""
@@ -430,7 +625,10 @@ class CloudflareTurnProvider:
     def opening(self) -> object:
         """Continue the authored entry text, before any player input exists."""
 
+        self._example_player_input = ""
         self.last_projection = self.projector.project(self.state, "player", "")
+        self.shadow_matched_candidate_id = None
+        self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         entry = self._scene_entry()
         rules = [
             "The player already read the entry text. Write only what comes next. Keep the same voice and tense.",
@@ -495,7 +693,10 @@ class CloudflareTurnProvider:
         context = self.last_projection.model_dump(mode="json", exclude={"sayable_knowledge"})
         # Every candidate statement remains an explicit item in the CONSTRAINTS section;
         # the beat is additional dramatic context, not a replacement for the claim.
-        context["candidates"] = list(context["candidates"])
+        model_candidate_ids = {candidate.id for candidate in self._model_candidates()}
+        context["candidates"] = [
+            candidate for candidate in context["candidates"] if candidate["id"] in model_candidate_ids
+        ]
         return context
 
     def _beat_covered_candidate_ids(self, beat_anchors: set[object]) -> set[str]:
@@ -504,7 +705,7 @@ class CloudflareTurnProvider:
         package = self.state.package
         storylets = {storylet.id: storylet for storylet in package.storylets}
         covered: set[str] = set()
-        for candidate in self.last_projection.candidates if self.last_projection else ():
+        for candidate in self._model_candidates():
             knowledge = package.knowledge_indexes.by_id[candidate.id]
             source = knowledge.source
             storylet = storylets.get(source.storylet_id) if source.storylet_id else None
@@ -520,7 +721,7 @@ class CloudflareTurnProvider:
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
         seen: set[str] = set()
         selected: list[SceneBeat] = []
-        for candidate in self.last_projection.candidates if self.last_projection else ():
+        for candidate in self._model_candidates():
             knowledge = package.knowledge_indexes.by_id[candidate.id]
             if knowledge.source.kind != "storylet_realization" or knowledge.source.storylet_id is None:
                 continue
@@ -653,7 +854,8 @@ class CloudflareTurnProvider:
             **payload,
             "system": (
                 f"{payload['system']} Your last answer was not valid.{correction} Send back only JSON. It must have "
-                "segments with text in them. selected_knowledge_ids is optional. Do not add markdown. Do not explain. "
+                "segments with text in them. selected_knowledge_ids must be a list. Leave it empty only when no "
+                "offered candidate was earned. Do not add markdown. Do not explain. "
                 "Do not repeat the request's labels. If you are not sure an ID belongs in grounding_ids, leave "
                 "grounding_ids out."
             ),
@@ -781,11 +983,21 @@ class CloudflareTurnProvider:
             for item in player.get("committed_knowledge", []):
                 scene.append(item["statement"])
             for candidate in player.get("candidates", []):
-                constraints.append(
-                    f"{candidate['statement']} The player does not know this yet. "
-                    "Reveal it only if the player earns it. "
-                    f"If you reveal it, put {candidate['id']} in selected_knowledge_ids."
+                constraints.append(f"Candidate {candidate['id']}. The player does not know this yet.")
+                earn_when = candidate.get("earn_when")
+                if isinstance(earn_when, str) and earn_when:
+                    constraints.append(f"Earn it when the player {earn_when}.")
+                constraints.append(f"What the player learns: {candidate['statement']}")
+                selection_instruction = (
+                    f"If the player earns it, state what they learn. Put {candidate['id']} in selected_knowledge_ids."
                 )
+                if (self.prompt_variant or {}).get("model_grounding", True):
+                    selection_instruction = (
+                        f"If the player earns it, state what they learn. Put {candidate['id']} "
+                        "in selected_knowledge_ids "
+                        f"and in the grounding_ids for that text."
+                    )
+                constraints.append(selection_instruction)
                 for group in candidate.get("must_convey", []):
                     if group:
                         constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
@@ -912,7 +1124,13 @@ class CloudflareTurnProvider:
 
     def _parse_eligible_proposal(self, response: object) -> TurnProposal:
         self.grounding_attributions = ()
+        self.model_selected_knowledge_ids = ()
+        self.model_grounding_ids = ()
         proposal = parse_turn_proposal(response)
+        self.model_selected_knowledge_ids = tuple(proposal.selected_knowledge_ids)
+        self.model_grounding_ids = tuple(
+            sorted({grounding_id for segment in proposal.segments for grounding_id in segment.grounding_ids})
+        )
         if self.last_projection is None:
             raise RuntimeContractError("knowledge projection is unavailable")
         # This pre-check must mirror every provider-facing rule in SelectedRevealResolver.resolve;
@@ -923,6 +1141,7 @@ class CloudflareTurnProvider:
                 f"You selected {', '.join(sorted(proposal.selected_knowledge_ids))}. Resend the same narration with "
                 "selected_knowledge_ids holding at most one of those IDs, or an empty list to reveal nothing.",
             )
+        proposal = self._auto_select_unambiguous_candidate(proposal)
         proposal = self._auto_attribute_committed_knowledge(proposal)
         candidate_ids = {candidate.id for candidate in self.last_projection.candidates}
         ineligible = sorted(
@@ -1034,6 +1253,48 @@ class CloudflareTurnProvider:
                 "select facts or a transition.",
             )
         return proposal
+
+    def _auto_select_unambiguous_candidate(self, proposal: TurnProposal) -> TurnProposal:
+        """Select one reveal only when the narration itself proves exactly one candidate.
+
+        This is a narrow harness repair for a small narrator that often describes
+        an earned reveal but leaves its bookkeeping empty. It is safe only when:
+
+        1. the candidate is in this turn's offered list;
+        2. its non-empty ``must_convey`` groups are all present in the prose;
+        3. exactly one offered candidate passes that test; and
+        4. the normal selection, effect, and narration-safety checks still run.
+
+        A variation can disable this rule for a controlled baseline comparison.
+        """
+
+        if (
+            self.last_projection is None
+            or proposal.selected_knowledge_ids
+            or self.prompt_variant is not None
+            and self.prompt_variant.get("auto_select_unambiguous_candidates", True) is False
+        ):
+            return proposal
+
+        matches = []
+        for candidate in self.last_projection.candidates:
+            groups = tuple(group for group in candidate.must_convey if group)
+            if not groups:
+                continue
+            matches.append((candidate, derive_grounding(groups, proposal.segments)))
+        matches = [(candidate, segments) for candidate, segments in matches if segments]
+        if len(matches) != 1:
+            return proposal
+
+        candidate, derived_segments = matches[0]
+        segments = tuple(
+            segment.model_copy(update={"grounding_ids": (*segment.grounding_ids, candidate.id)})
+            if any(segment is derived_segment for derived_segment in derived_segments)
+            and candidate.id not in segment.grounding_ids
+            else segment
+            for segment in proposal.segments
+        )
+        return proposal.model_copy(update={"segments": segments, "selected_knowledge_ids": (candidate.id,)})
 
     def _auto_attribute_committed_knowledge(self, proposal: TurnProposal) -> TurnProposal:
         """Repair omitted grounding for unambiguous, already-committed terms."""

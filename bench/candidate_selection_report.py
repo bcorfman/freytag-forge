@@ -74,6 +74,9 @@ def compute_report(data: dict[str, Any]) -> dict[str, Any]:
                     "player_input": turn.get("player_input", ""),
                     "candidates_offered": candidates,
                     "selected_knowledge_ids": selected_ids,
+                    "model_selected_knowledge_ids": turn.get("model_selected_knowledge_ids", []),
+                    "grounding_ids": turn.get("grounding_ids", []),
+                    "model_grounding_ids": turn.get("model_grounding_ids", []),
                     "expected_candidate_ids": sorted(expected_ids),
                     "expected_match": None if not expected_ids else bool(set(selected_ids) & expected_ids),
                 }

@@ -6,13 +6,12 @@ Freytag Forge turns freeform roleplay into drama that remembers.
 
 ## Features
 
-- **Freeform play.** Investigate, bluff, bargain, or run—no command menus.
-- **Consequences that stick.** Validated facts make every choice count.
-- **Reveals you earn.** Narration is checked before it reaches you, so the
-  story keeps its secrets.
-- **Pressure with purpose.** Storylets and pacing turn hesitation into stakes.
+- **Freeform actions.** Type what your character does. No command menus.
+- **Consequences that stick.** Validated facts make every discovery count.
+- **Secrets you earn.** Your actions unlock reveals while future plot stays hidden.
+- **Pressure with purpose.** Storylets and pacing turn delay into stakes.
 
-**Less prompt luck. More consequence. Drama that remembers.**
+**Write the move. Change the story.**
 
 ## Play online
 
