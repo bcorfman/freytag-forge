@@ -313,6 +313,9 @@ migration exists to remove.
   guarded terms leaking into prose the model did not select, at roughly one
   replicate in four. Authored handoff is the designed answer to that, so the
   migration is the fix rather than another prompt rule.
+- [ ] Gather live evidence for each migrated candidate from
+  `bench/manifests/phase7-live-bench.json` before considering it rolled out;
+  orchestrate the run through Ringer rather than executing it by hand.
 - [ ] Keep the behavior opt-in by candidate data during the first release.
 - [ ] Review telemetry for unmatched player phrasings; add only explicit,
   author-reviewed aliases. Do not replace the exact matcher with a similarity

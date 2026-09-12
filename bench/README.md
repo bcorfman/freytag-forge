@@ -190,6 +190,14 @@ set -a && . /home/bcorfman/dev/freytag-forge/.env && set +a
 
 ## Cost and safety
 
+Live benchmark runs go through Ringer using `bench/manifests/phase7-live-bench.json`:
+
+```bash
+cd /home/bcorfman/dev/ringer && ./ringer.py run /home/bcorfman/dev/freytag-forge/bench/manifests/phase7-live-bench.json
+```
+
+The task declares `full_access` because a live run needs network access and must write `bench/results/`, which the default worker sandbox forbids. `bench/checks/no_source_drift.py` replaces that sandbox by failing the task if any tracked file outside `bench/results/` changed. `bench/checks/live_bench.py` judges the produced artifacts rather than trusting the worker's own summary.
+
 There are two independent budgets:
 
 - Cloudflare Workers AI: the observed planning rate is about 330 neurons per 30 narration requests, or about 11 neurons per request. A full 30-turn traversal is therefore roughly 330 neurons. A nine-scene, four-replicate comparison is roughly 1,320 neurons, before any recovery requests; it fits comfortably below the 10,000-neuron daily free allocation, but fewer than eight such comparisons should be planned in one UTC day.
