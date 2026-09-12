@@ -33,9 +33,7 @@ from bench.core import (
     scenes_scored_for_row,
     score_judgments,
     scripts_for,
-    selection_probe_for,
     successful_ledger_rows,
-    two_pass_probe_for,
     unknown_scale_ledger_rows,
     welch_t_test,
 )
@@ -168,24 +166,6 @@ def parser() -> argparse.ArgumentParser:
             "turns before it. Reach a later turn with 'chat' or 'run' instead."
         ),
     )
-    selection_probe = sub.add_parser(
-        "selection-probe",
-        help="ask the model for candidate IDs only; never runs a game turn",
-    )
-    selection_probe.add_argument("--variation", type=Path, required=True)
-    selection_probe.add_argument("--scene", required=True)
-    selection_probe.add_argument("--storylet", required=True)
-    selection_probe.add_argument("--player-input", required=True)
-    selection_probe.add_argument("--replicates", type=int, default=1)
-    two_pass_probe = sub.add_parser(
-        "two-pass-probe",
-        help="run an isolated two-pass turn; never commits the proposal",
-    )
-    two_pass_probe.add_argument("--variation", type=Path, required=True)
-    two_pass_probe.add_argument("--scene", required=True)
-    two_pass_probe.add_argument("--storylet", required=True)
-    two_pass_probe.add_argument("--player-input", required=True)
-    two_pass_probe.add_argument("--replicates", type=int, default=1)
     return command
 
 
@@ -234,28 +214,6 @@ def _prompt(args: argparse.Namespace) -> int:
         print(prompts["user"])
         return 0
     _json(prompts)
-    return 0
-
-
-def _selection_probe(args: argparse.Namespace) -> int:
-    if args.replicates < 1:
-        raise ValueError("--replicates must be at least 1")
-    variation = load_variation(args.variation)
-    results = [
-        selection_probe_for(variation, args.scene, args.storylet, args.player_input) for _ in range(args.replicates)
-    ]
-    _json({"diagnostic_only": True, "results": results})
-    return 0
-
-
-def _two_pass_probe(args: argparse.Namespace) -> int:
-    if args.replicates < 1:
-        raise ValueError("--replicates must be at least 1")
-    variation = load_variation(args.variation)
-    results = [
-        two_pass_probe_for(variation, args.scene, args.storylet, args.player_input) for _ in range(args.replicates)
-    ]
-    _json({"diagnostic_only": True, "results": results})
     return 0
 
 
@@ -622,10 +580,6 @@ def main(argv: list[str] | None = None) -> int:
             return _score(args)
         if args.command == "prompt":
             return _prompt(args)
-        if args.command == "selection-probe":
-            return _selection_probe(args)
-        if args.command == "two-pass-probe":
-            return _two_pass_probe(args)
         if args.command == "describe":
             return _describe(args)
         if args.command == "log":

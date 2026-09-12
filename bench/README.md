@@ -176,6 +176,9 @@ For the authored reveal handoff, use `variations/authored-handoff-phase1.json`.
 Each turn record adds `authored_handoff_candidate_id` as bench-only telemetry;
 it is not part of the narrator or player API. Verify the exact recording action
 first, then run the established Scene 1A script and an unrelated Scene 1B run.
+New turn records omit the retired `preselected_knowledge_id` field because no
+runtime path can set it. Existing records under `bench/results/` are historical
+and remain unchanged.
 
 For example, run the two prompt-only experiment arms, then run one focused live replicate of each and compare their real ledger rows:
 

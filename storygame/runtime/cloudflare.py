@@ -230,8 +230,6 @@ class CloudflareTurnProvider:
         self.shadow_matched_candidate_id: str | None = None
         self.authored_handoff: AuthoredHandoff | None = None
         self.prompt_candidate_ids: tuple[str, ...] = ()
-        self.preselected_knowledge_id: str | None = None
-        self.selection_prepass_completed = False
         self._example_player_input = ""
         self.prompt_variant = prompt_variant
         self.request_count = 0
@@ -263,13 +261,7 @@ class CloudflareTurnProvider:
         )
 
     def __call__(self, player_input: str) -> object:
-        self.preselected_knowledge_id = None
-        self.selection_prepass_completed = False
         prompt = self.assemble_turn_prompt(player_input)
-        if self.prompt_variant and self.prompt_variant.get("selection_prepass", False):
-            self.preselected_knowledge_id = self._selection_prepass(player_input)
-            self.selection_prepass_completed = True
-            prompt = self.assemble_turn_prompt(player_input)
         return self._dispatch(prompt["system"], prompt["context"])
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
@@ -304,75 +296,6 @@ class CloudflareTurnProvider:
         }
         context["_rules"] = self._turn_rules()
         return {"system": self._system_prompt(), "context": context}
-
-    def selection_probe(self, player_input: str) -> tuple[str, ...]:
-        """Ask for selection bookkeeping alone, for a benchmark diagnostic.
-
-        This is deliberately separate from a game turn. Its answer never reaches
-        the resolver, so it cannot reveal or commit knowledge. It exists to tell
-        whether the model can emit an offered ID when it has no narration or
-        grounding work to do.
-        """
-
-        self.assemble_turn_prompt(player_input)
-        if self._is_authored_handoff_turn():
-            return ()
-        candidates = self._model_candidates()
-        response = self._request_allowing_one_transient_retry(self._selection_payload(player_input, candidates))
-        return self._parse_selection_response(response, candidates)
-
-    def _selection_prepass(self, player_input: str) -> str | None:
-        """Use a short call to confirm one matcher-backed candidate for narration.
-
-        The authored matcher, rather than this model call, supplies the evidence
-        that the player earned a reveal. A malformed answer, an empty answer,
-        or any ID other than that one fails closed. This result still commits
-        nothing; the normal narration proposal and resolver run afterwards.
-        """
-
-        if self._is_authored_handoff_turn():
-            return None
-        matched_id = self.shadow_matched_candidate_id
-        if matched_id is None:
-            return None
-        candidates = tuple(candidate for candidate in self._model_candidates() if candidate.id == matched_id)
-        if len(candidates) != 1:
-            return None
-        response = self._request_allowing_one_transient_retry(self._selection_payload(player_input, candidates))
-        selected = self._parse_selection_response(response, candidates)
-        return matched_id if selected == (matched_id,) else None
-
-    @staticmethod
-    def _selection_payload(player_input: str, candidates: tuple[RevealCandidate, ...]) -> dict[str, object]:
-        lines = [f"PLAYER ACTION: {player_input}", "OFFERED OPTIONS:"]
-        for candidate in candidates:
-            lines.append(f"- {candidate.id}: {candidate.statement}")
-            if candidate.earn_when:
-                lines.append(f"  Earn it only when: {candidate.earn_when}")
-        lines.append("Choose one ID only when the action plainly earns that option. Otherwise use [].")
-        return {
-            "system": (
-                "Return only JSON. It has one key: selected_knowledge_ids. "
-                "Use [] or one offered ID. Do not add other keys."
-            ),
-            "user": "\n".join(lines),
-            "max_tokens": 32,
-            "response_format": {"type": "json_object"},
-        }
-
-    @staticmethod
-    def _parse_selection_response(response: object, candidates: tuple[RevealCandidate, ...]) -> tuple[str, ...]:
-        if not isinstance(response, dict):
-            raise ValueError("selection probe response must be a JSON object")
-        selected = response.get("selected_knowledge_ids")
-        if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
-            raise ValueError("selection probe response must contain selected_knowledge_ids as a list of strings")
-        if len(selected) > 1:
-            raise ValueError("selection probe response may select at most one ID")
-        offered_ids = {candidate.id for candidate in candidates}
-        if any(item not in offered_ids for item in selected):
-            raise ValueError("selection probe response contains an ID that was not offered")
-        return tuple(selected)
 
     def _shadow_matched_candidate_id(self, player_input: str) -> str | None:
         """Record a matcher result without changing the narrated turn.
@@ -452,16 +375,6 @@ class CloudflareTurnProvider:
         )
         if handoff_turn:
             selection_rules: list[str] = []
-        elif getattr(self, "selection_prepass_completed", False):
-            selection_rules = (
-                [
-                    f"The first check picked {getattr(self, 'preselected_knowledge_id', None)}. Reveal it now.",
-                    f"Put {getattr(self, 'preselected_knowledge_id', None)} in selected_knowledge_ids.",
-                    "Do not select another candidate.",
-                ]
-                if getattr(self, "preselected_knowledge_id", None)
-                else ["The first check found no earned candidate. Leave selected_knowledge_ids empty."]
-            )
         else:
             selection_rules = [
                 (
@@ -557,12 +470,7 @@ class CloudflareTurnProvider:
             return None
         if self._is_authored_handoff_turn():
             return DEFAULT_OUTPUT_EXAMPLE
-        if self.preselected_knowledge_id and self.last_projection:
-            candidate = next(
-                (item for item in self._model_candidates() if item.id == self.preselected_knowledge_id), None
-            )
-            example_text = self._preselected_output_example(candidate) if candidate else DEFAULT_OUTPUT_EXAMPLE
-        elif self.prompt_variant and "output_example" in self.prompt_variant:
+        if self.prompt_variant and "output_example" in self.prompt_variant:
             example_text = self.prompt_variant["output_example"]
         else:
             candidates = self._model_candidates()
@@ -571,42 +479,24 @@ class CloudflareTurnProvider:
                 if self.prompt_variant and self.prompt_variant.get("positive_selection_example", False)
                 else None
             )
-            example_text = (
-                self._selection_output_example(example_candidate) if example_candidate else DEFAULT_OUTPUT_EXAMPLE
-            )
+            example_text = DEFAULT_OUTPUT_EXAMPLE
+            if example_candidate:
+                example_text = json.dumps(
+                    {
+                        "segments": [
+                            {
+                                "kind": "narration",
+                                "text": example_candidate.statement,
+                                "grounding_ids": [example_candidate.id],
+                            }
+                        ],
+                        "selected_knowledge_ids": [example_candidate.id],
+                    },
+                    separators=(",", ":"),
+                )
         if not isinstance(example_text, str):
             raise ValueError("prompt variant output_example must be a string")
         return example_text
-
-    @staticmethod
-    def _preselected_output_example(candidate: RevealCandidate) -> str:
-        """Show delivery and selection without adding model grounding work."""
-
-        return json.dumps(
-            {
-                "segments": [{"kind": "narration", "text": candidate.statement}],
-                "selected_knowledge_ids": [candidate.id],
-            },
-            separators=(",", ":"),
-        )
-
-    @staticmethod
-    def _selection_output_example(candidate: RevealCandidate) -> str:
-        """Show the coupled narration, selection, and grounding shape safely."""
-
-        return json.dumps(
-            {
-                "segments": [
-                    {
-                        "kind": "narration",
-                        "text": candidate.statement,
-                        "grounding_ids": [candidate.id],
-                    }
-                ],
-                "selected_knowledge_ids": [candidate.id],
-            },
-            separators=(",", ":"),
-        )
 
     def _example_candidate(self, candidates: tuple[RevealCandidate, ...]) -> RevealCandidate | None:
         """Return a cue-matching candidate for a positive output example.

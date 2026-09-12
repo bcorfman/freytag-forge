@@ -160,18 +160,19 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     for forbidden in ("janus", "plot_beats", "active_storylets", "narrative_history"):
         assert forbidden not in serialized
     _assert_memory_card_in_custody(state)
-    state.active_event_ids.add("SL-1A-B")
-    provider("Search the desk drawer for Michelle's recording.")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
+    provider("Inspect the gate after the patrol leaves.")
     drawer_context = captured["payload"]["user"]
-    assert "k_sl_1a_b_r2 in selected_knowledge_ids" in drawer_context
-    assert "k_sl_1a_b_r1 in selected_knowledge_ids" in drawer_context
-    assert "If you reveal k_sl_1a_b_r1, you must say this: memory card" in drawer_context
+    assert "k_sl_1a_c_r2 in selected_knowledge_ids" in drawer_context
+    assert "k_sl_1a_c_r1 in selected_knowledge_ids" in drawer_context
+    assert "If you reveal k_sl_1a_c_r2, you must say this: reflective tape" in drawer_context
     assert provider.last_projection is not None
-    assert "damaged recording" in next(
-        item.statement for item in provider.last_projection.candidates if item.id == "k_sl_1a_b_r2"
+    assert "reflective tape" in next(
+        item.statement for item in provider.last_projection.candidates if item.id == "k_sl_1a_c_r2"
     )
     unbeat_context = provider._serialized_player_context({"beats": []})
-    assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == "k_sl_1a_b_r2")
+    assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == "k_sl_1a_c_r2")
 
 
 def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
@@ -258,23 +259,26 @@ def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> No
 
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     filler = [{"kind": "narration", "text": f"Filler {index}."} for index in range(MAX_TURN_SEGMENTS + 1)]
     delivery = {
         "kind": "narration",
-        "text": "Taped beneath the drawer she finds Michelle's hidden memory card and a damaged recording, "
-        "naming a dead drop at a bench in the park.",
-        "grounding_ids": ["k_sl_1a_b_r1"],
+        "text": (
+            "After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be "
+            "watched."
+        ),
+        "grounding_ids": ["k_sl_1a_c_r2"],
     }
-    reply = {"segments": [*filler, delivery], "selected_knowledge_ids": ["k_sl_1a_b_r1"]}
+    reply = {"segments": [*filler, delivery], "selected_knowledge_ids": ["k_sl_1a_c_r2"]}
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     result = provider("Search under the drawers.")
 
     assert len(result["segments"]) == MAX_TURN_SEGMENTS + 1
-    assert result["segments"][-1]["grounding_ids"] == ["k_sl_1a_b_r1"]
-    assert "memory card" in result["segments"][-1]["text"]
+    assert result["segments"][-1]["grounding_ids"] == ["k_sl_1a_c_r2"]
+    assert "reflective tape" in result["segments"][-1]["text"]
 
 
 def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
@@ -293,7 +297,7 @@ def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> Non
     assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
-def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) -> None:
+def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(monkeypatch) -> None:
     captured: list[dict[str, object]] = []
 
     def open_request(request, **_kwargs):
@@ -308,11 +312,12 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
     _assert_memory_card_in_custody(state)
     state.active_event_ids.clear()
     state.active_event_ids.add("SL-1A-B")
-    provider("Search the desk drawer for a damaged recording.")
+    provider("Recover Michelle's memory card and read the saved files.")
 
     contexts = [payload["user"] for payload in captured]
-    assert all("k_sl_1a_b_r2" not in context for context in contexts[:2])
-    assert "k_sl_1a_b_r2 in selected_knowledge_ids" in contexts[2]
+    migrated = {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
+    assert migrated.isdisjoint(provider.prompt_candidate_ids)
+    assert all(all(candidate_id not in context for candidate_id in migrated) for context in contexts)
 
     storylet = next(storylet for storylet in PACKAGE.storylets if storylet.id == "SL-1A-B")
     beats = {anchor: beat for scene in PACKAGE.scenes for anchor, beat in scene.beats.items()}
@@ -322,6 +327,8 @@ def test_recording_candidate_is_absent_until_its_route_is_eligible(monkeypatch) 
 
     assert all(all(f"- {d}" in contexts[2] for d in beats[link].details) for link in storylet.source_links[1:])
     assert all(_bare(beats[link].prose) not in _bare(contexts[2]) for link in storylet.source_links[1:])
+    assert provider.last_projection is not None
+    assert migrated <= {candidate.id for candidate in provider.last_projection.candidates}
     assert state.last_turn_delivery.beats_projected == storylet.source_links
     assert len(storylet.source_links[1:]) < len(PACKAGE.scenes[0].beats)
 
@@ -466,7 +473,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
     _assert_memory_card_in_custody(state)
-    state.active_event_ids.add("SL-1A-B")
+    state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -482,21 +489,26 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
             )
         return _Response(
             {
-                "narration": (
-                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
-                    "Michelle's hidden memory card, "
-                    'then plays its damaged recording: do not trust emergency broadcasts.",'
-                    '"grounding_ids":["k_sl_1a_b_r2"]}],'
-                    '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                "narration": json.dumps(
+                    {
+                        "segments": [
+                            {
+                                "kind": "narration",
+                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement,
+                                "grounding_ids": ["k_sl_1a_a_r1"],
+                            }
+                        ],
+                        "selected_knowledge_ids": ["k_sl_1a_a_r1"],
+                    }
                 )
             }
         )
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Search the desk drawer for Michelle's damaged recording.")
+    proposal = provider("Search the kitchen for signs of what happened.")
 
-    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_a_r1"]
     assert len(payloads) == 2
     assert "last answer was not valid" in payloads[1]["system"]
     assert "k_future_unavailable" in payloads[1]["system"]
@@ -510,7 +522,7 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -518,9 +530,17 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
         if len(payloads) == 1:
             return _Response(
                 {
-                    "narration": (
-                        '{"segments":[{"kind":"narration","text":"A recording plays.",'
-                        '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":[]}'
+                    "narration": json.dumps(
+                        {
+                            "segments": [
+                                {
+                                    "kind": "narration",
+                                    "text": "A recording plays.",
+                                    "grounding_ids": ["k_sl_1a_a_r1"],
+                                }
+                            ],
+                            "selected_knowledge_ids": [],
+                        }
                     )
                 }
             )
@@ -535,20 +555,21 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Search the desk drawer.")
+    proposal = provider("Search the kitchen for signs of what happened.")
 
     assert proposal["segments"][0]["text"] == "The drawer sticks, then gives."
     assert len(payloads) == 2
     assert "last answer was not valid" in payloads[1]["system"]
     # The retry must name the offending ID; a blind retry repeats the same mistake.
-    assert "k_sl_1a_b_r2" in payloads[1]["system"]
+    assert "k_sl_1a_a_r1" in payloads[1]["system"]
     assert "grounding_ids" in payloads[1]["system"]
 
 
 def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -556,18 +577,18 @@ def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> 
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"Kristin finds Michelle\'s memory card and '
-                    'damaged recording; the card points to a dead drop at the park bench."}],'
-                    '"selected_knowledge_ids":["k_sl_1a_b_r1"]}'
+                    '{"segments":[{"kind":"narration","text":"After the patrol leaves, Kristin finds '
+                    'reflective tape on the gate, a warning that the house will be watched."}],'
+                    '"selected_knowledge_ids":["k_sl_1a_c_r2"]}'
                 )
             }
         )
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Look under the workstation.")
+    proposal = provider("Inspect the gate after the patrol leaves.")
 
-    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_c_r2"]
     assert len(payloads) == 1
     assert state.last_turn_delivery.recovery_used is False
 
@@ -680,7 +701,6 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
         token="",
         state=state,
         prompt_variant={
-            "selection_prepass": True,
             "output_example": f'{{"candidate":"k_sl_1a_b_r2","text":"{AUTHORED_DELIVERY}"}}',
         },
     )
@@ -742,15 +762,16 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
 
 def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     reply = {
         "segments": [
             {
                 "kind": "narration",
                 "text": (
-                    "Kristin finds Michelle's hidden memory card and plays the damaged recording. "
-                    "Her warning is not to trust emergency broadcasts."
+                    "After the patrol leaves, Kristin finds reflective tape on the gate, "
+                    "a warning that the house will be watched."
                 ),
             }
         ],
@@ -758,11 +779,11 @@ def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monke
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    player_input = "Search the desk drawer for evidence."
+    player_input = "Inspect the gate after the patrol leaves."
     provider_proposal = provider(player_input)
     RuntimeEngine(state, lambda _: provider_proposal).turn(player_input)
 
-    assert "SL-1A-B" in state.fired_event_ids
+    assert "SL-1A-C" in state.fired_event_ids
 
 
 def test_transport_leaves_ambiguous_or_incomplete_candidates_unselected(monkeypatch) -> None:
@@ -961,8 +982,8 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    _assert_memory_card_in_custody(state)
-    state.active_event_ids.add("SL-1A-B")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -972,46 +993,7 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
                 {
                     "narration": (
                         '{"segments":[{"kind":"narration","text":"A faint scratch and a few loose screws."}],'
-                        '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
-                    )
-                }
-            )
-        return _Response(
-            {
-                "narration": (
-                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
-                    "Michelle's hidden memory card, "
-                    'then plays its damaged recording: do not trust emergency broadcasts.",'
-                    '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
-                )
-            }
-        )
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-
-    proposal = provider("Look under the workstation.")
-
-    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert len(payloads) == 2
-    assert "k_sl_1a_b_r2" in payloads[1]["system"]
-    # The correction must say what is missing: the telling, not just the ID.
-    assert "would never learn it" in payloads[1]["system"]
-
-
-def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
-    payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-
-    def open_request(request, timeout):
-        payloads.append(json.loads(request.data))
-        if len(payloads) == 1:
-            return _Response(
-                {
-                    "narration": (
-                        '{"segments":[{"kind":"narration","text":"Michelle fears the emergency broadcasts.",'
-                        '"grounding_ids":["k_sl_1a_b_r1"]}],"selected_knowledge_ids":["k_sl_1a_b_r1"]}'
+                        '"selected_knowledge_ids":["k_sl_1a_c_r2"]}'
                     )
                 }
             )
@@ -1022,11 +1004,12 @@ def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
                         "segments": [
                             {
                                 "kind": "narration",
-                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r1"].statement,
-                                "grounding_ids": ["k_sl_1a_b_r1"],
+                                "text": "After the patrol leaves, Kristin finds reflective tape on the gate, "
+                                "a warning that the house will be watched.",
+                                "grounding_ids": ["k_sl_1a_c_r2"],
                             }
                         ],
-                        "selected_knowledge_ids": ["k_sl_1a_b_r1"],
+                        "selected_knowledge_ids": ["k_sl_1a_c_r2"],
                     }
                 )
             }
@@ -1034,13 +1017,59 @@ def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Search Michelle's workstation.")
+    proposal = provider("Inspect the gate after the patrol leaves.")
 
-    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r1"]
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_c_r2"]
+    assert len(payloads) == 2
+    assert "k_sl_1a_c_r2" in payloads[1]["system"]
+    # The correction must say what is missing: the telling, not just the ID.
+    assert "would never learn it" in payloads[1]["system"]
+
+
+def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    _assert_memory_card_in_custody(state)
+    state.active_event_ids.add("SL-1A-D")
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response(
+                {
+                    "narration": (
+                        '{"segments":[{"kind":"narration","text":"Michelle fears the emergency broadcasts.",'
+                        '"grounding_ids":["k_sl_1a_d_r1"]}],"selected_knowledge_ids":["k_sl_1a_d_r1"]}'
+                    )
+                }
+            )
+        return _Response(
+            {
+                "narration": json.dumps(
+                    {
+                        "segments": [
+                            {
+                                "kind": "narration",
+                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_d_r1"].statement,
+                                "grounding_ids": ["k_sl_1a_d_r1"],
+                            }
+                        ],
+                        "selected_knowledge_ids": ["k_sl_1a_d_r1"],
+                    }
+                )
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    proposal = provider("Read Michelle's research files.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_d_r1"]
     assert len(payloads) == 2
     assert "memory card" in payloads[1]["system"]
     assert "must_convey" in payloads[1]["system"]
-    assert state.last_turn_delivery.must_convey_misses == ("k_sl_1a_b_r1",)
+    assert state.last_turn_delivery.must_convey_misses == ("k_sl_1a_d_r1",)
     assert state.last_turn_delivery.recovery_used is True
     assert state.last_turn_delivery.fallback_used is False
 
@@ -1076,28 +1105,35 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    _assert_memory_card_in_custody(state)
-    state.active_event_ids.add("SL-1A-B")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
         payloads.append(json.loads(request.data))
         return _Response(
             {
-                "narration": (
-                    '{"segments":[{"kind":"narration","text":"Kristin finds and secures '
-                    "Michelle's hidden memory card, "
-                    'then plays its damaged recording: do not trust emergency broadcasts.",'
-                    '"grounding_ids":["k_sl_1a_b_r2"]}],"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
+                "narration": json.dumps(
+                    {
+                        "segments": [
+                            {
+                                "kind": "narration",
+                                "text": "After the patrol leaves, Kristin finds reflective tape on the gate, "
+                                "a warning that the house will be watched.",
+                                "grounding_ids": ["k_sl_1a_c_r2"],
+                            }
+                        ],
+                        "selected_knowledge_ids": ["k_sl_1a_c_r2"],
+                    }
                 )
             }
         )
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    proposal = provider("Play the damaged recording.")
+    proposal = provider("Inspect the gate after the patrol leaves.")
 
-    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_c_r2"]
     assert len(payloads) == 1, "grounding on the selected candidate must not spend a recovery"
 
 
@@ -1168,15 +1204,16 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     assert '"grounding_ids":[' not in payloads[-1]["system"]
     assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 
-    state.active_event_ids.add("SL-1A-B")
-    provider("Search the desk drawer for Michelle's recording.")
+    state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-C")
+    provider("Inspect the gate after the patrol leaves.")
     offered_prompt = payloads[-1]["user"]
     # An offered reveal is a duty, not an option: permissive wording let the model
     # narrate the earned moment without committing it, stalling the scene.
     assert (
         "When one or more offered candidates match the player's action, randomly pick one candidate" in offered_prompt
     )
-    assert "k_sl_1a_b_r2" in payloads[-1]["user"], "the offered candidate IDs must be named"
+    assert "k_sl_1a_c_r2" in payloads[-1]["user"], "the offered candidate IDs must be named"
     assert "you must say this" in offered_prompt
     assert "This turn has no candidates." not in offered_prompt
     offered_id = provider.last_projection.candidates[0].id
@@ -1562,7 +1599,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
 
     state = RuntimeState.bootstrap(PACKAGE)
     _assert_memory_card_in_custody(state)
-    state.active_event_ids.add("SL-1A-B")
+    state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     captured: dict[str, object] = {}
 
@@ -1571,11 +1608,14 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"A reply."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    provider("Search the desk drawer for Michelle's recording.")
+    provider("Search the kitchen for signs of what happened.")
 
-    system = captured["payload"]["system"]
-    assert "k_sl_1a_b_r2" in captured["payload"]["user"] or "statement" in system
-    assert "Kristin finds and secures Michelle's hidden memory card" in captured["payload"]["user"]
+    assert "Candidate k_sl_1a_a_r1" in captured["payload"]["user"]
+    assert (
+        "What the player learns: " + PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement
+        in captured["payload"]["user"]
+    )
+    assert "must say this" not in captured["payload"]["user"]
 
 
 def _instruction_for(prompt_variant, candidates) -> str:
@@ -1787,100 +1827,6 @@ def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatc
     assert proposal["segments"][-1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r1"].delivery_text
 
 
-def test_selection_probe_asks_for_only_an_offered_id(monkeypatch) -> None:
-    captured: dict[str, object] = {}
-
-    def open_request(request, timeout):
-        captured["payload"] = json.loads(request.data)
-        return _Response({"narration": '{"selected_knowledge_ids":["k_sl_1a_b_r1"]}'})
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-
-    selected = provider.selection_probe("Search the desk drawer for evidence.")
-
-    assert selected == ("k_sl_1a_b_r1",)
-    payload = captured["payload"]
-    assert payload["max_tokens"] == 32
-    assert "segments" not in payload["system"]
-    assert "grounding_ids" not in payload["system"]
-    assert "narration" not in payload["user"]
-    assert "k_sl_1a_b_r1" in payload["user"]
-    assert "k_sl_1a_b_r2" in payload["user"]
-
-
-def test_two_pass_selection_uses_only_a_matcher_backed_id(monkeypatch) -> None:
-    payloads: list[dict[str, object]] = []
-
-    def open_request(request, timeout):
-        payload = json.loads(request.data)
-        payloads.append(payload)
-        if len(payloads) == 1:
-            return _Response({"narration": '{"selected_knowledge_ids":["k_sl_1a_b_r2"]}'})
-        return _Response(
-            {
-                "narration": (
-                    '{"segments":[{"kind":"narration","text":"Michelle\'s memory card holds a damaged '
-                    'recording that says not to trust emergency broadcasts."}],'
-                    '"selected_knowledge_ids":["k_sl_1a_b_r2"]}'
-                )
-            }
-        )
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    package = _legacy_recording_package()
-    state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
-    provider = CloudflareTurnProvider(
-        worker_url="https://worker.example/turn",
-        token="",
-        state=state,
-        prompt_variant={"selection_prepass": True, "narrow_to_shadow_match": True, "model_grounding": False},
-    )
-
-    response = provider(
-        "Try to recover the interrupted message she was recording, and listen to whatever survives of it."
-    )
-
-    assert response["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert provider.preselected_knowledge_id == "k_sl_1a_b_r2"
-    assert len(payloads) == 2
-    assert payloads[0]["max_tokens"] == 32
-    assert payloads[1]["max_tokens"] == 1024
-    assert "Earn it only when" in payloads[0]["user"]
-    assert "first check picked k_sl_1a_b_r2" in payloads[1]["user"]
-    assert '"selected_knowledge_ids":["k_sl_1a_b_r2"]' in payloads[1]["system"]
-    assert "grounding_ids" not in payloads[1]["system"]
-
-
-def test_two_pass_selection_fails_closed_without_matcher_evidence(monkeypatch) -> None:
-    payloads: list[dict[str, object]] = []
-
-    def open_request(request, timeout):
-        payloads.append(json.loads(request.data))
-        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Kristin searches the drawers."}]}'})
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
-    provider = CloudflareTurnProvider(
-        worker_url="https://worker.example/turn",
-        token="",
-        state=state,
-        prompt_variant={"selection_prepass": True, "narrow_to_shadow_match": True},
-    )
-
-    provider("Search the office drawers for a spare key.")
-
-    assert provider.model_selected_knowledge_ids == ()
-    assert provider.preselected_knowledge_id is None
-    assert len(payloads) == 1
-    assert payloads[0]["max_tokens"] == 1024
-    assert "first check found no earned candidate" in payloads[0]["user"]
-
-
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
@@ -1922,18 +1868,6 @@ def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolve
     assert {candidate.id for candidate in provider.last_projection.candidates} == {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
     assert "k_sl_1a_b_r2" in user
     assert "k_sl_1a_b_r1" not in user
-
-
-def test_selection_only_variant_does_not_ask_the_model_to_ground_candidates() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant={"model_grounding": False})
-
-    prompt = provider.assemble_turn_prompt("Search the desk drawer for the recording.")
-    user = provider._section_user_prompt(prompt["context"])
-
-    assert "grounding_ids" not in user
-    assert "Put k_sl_1a_b_r2 in selected_knowledge_ids." in user
 
 
 def test_the_no_candidate_rule_is_stated_once_not_twice() -> None:

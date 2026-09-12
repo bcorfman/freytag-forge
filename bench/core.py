@@ -171,9 +171,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     narrow_to_shadow_match = prompt.get("narrow_to_shadow_match", False)
     if not isinstance(narrow_to_shadow_match, bool):
         raise ValueError("system_prompt.narrow_to_shadow_match must be a boolean")
-    selection_prepass = prompt.get("selection_prepass", False)
-    if not isinstance(selection_prepass, bool):
-        raise ValueError("system_prompt.selection_prepass must be a boolean")
     variation["_prompt_variant"] = {
         **({"rules": rules} if rules is not None else {}),
         "include_output_example": include_output_example,
@@ -183,7 +180,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         "positive_selection_example": positive_selection_example,
         "model_grounding": model_grounding,
         "narrow_to_shadow_match": narrow_to_shadow_match,
-        "selection_prepass": selection_prepass,
     }
     variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
@@ -198,7 +194,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
             "positive_selection_example": positive_selection_example,
             "model_grounding": model_grounding,
             "narrow_to_shadow_match": narrow_to_shadow_match,
-            "selection_prepass": selection_prepass,
         }
     )
     variation["_story_package_value"] = package_value
@@ -448,73 +443,6 @@ def prompt_for(
     return {"system": str(assembled["system"]), "user": provider._section_user_prompt(context)}
 
 
-def selection_probe_for(
-    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
-) -> dict[str, object]:
-    """Run the selection-only diagnostic against one isolated storylet.
-
-    The result is telemetry, not a turn proposal: it is never sent to the
-    resolver and cannot change the state built for this probe.
-    """
-
-    package, state = package_and_state(variation, scene_id)
-    provider = provider_for(state, variation)
-    RuntimeEngine(state, provider)._activate_pacing()
-    chosen = resolve_storylet(package, scene_id, storylet_id)
-    ordered = beats_for(package, scene_id)
-    by_anchor = {item.anchor: item for item in ordered}
-    entry = min(
-        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
-        key=lambda item: item.id,
-        default=None,
-    )
-    if entry is not None:
-        establish_prior_beats(package, state, scene_id, entry)
-    state.active_event_ids.clear()
-    state.active_event_ids.add(chosen.id)
-    selected = provider.selection_probe(player_input)
-    return {
-        "offered_candidate_ids": list(provider.prompt_candidate_ids),
-        "reported_selected_knowledge_ids": list(selected),
-        "shadow_matched_candidate_id": provider.shadow_matched_candidate_id,
-    }
-
-
-def two_pass_probe_for(
-    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
-) -> dict[str, object]:
-    """Run one two-pass turn in isolation, without committing its proposal.
-
-    Unlike ``selection_probe_for``, this sends the narration request too.  The
-    provider validates it, but no engine receives the result, so this remains a
-    diagnostic and cannot apply effects or change facts.
-    """
-
-    package, state = package_and_state(variation, scene_id)
-    provider = provider_for(state, variation)
-    RuntimeEngine(state, provider)._activate_pacing()
-    chosen = resolve_storylet(package, scene_id, storylet_id)
-    ordered = beats_for(package, scene_id)
-    by_anchor = {item.anchor: item for item in ordered}
-    entry = min(
-        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
-        key=lambda item: item.id,
-        default=None,
-    )
-    if entry is not None:
-        establish_prior_beats(package, state, scene_id, entry)
-    state.active_event_ids.clear()
-    state.active_event_ids.add(chosen.id)
-    response = provider(player_input)
-    selected = response.get("selected_knowledge_ids", []) if isinstance(response, dict) else []
-    return {
-        "preselected_knowledge_id": provider.preselected_knowledge_id,
-        "model_selected_knowledge_ids": list(provider.model_selected_knowledge_ids),
-        "final_selected_knowledge_ids": selected,
-        "narration_requests": provider.request_count,
-    }
-
-
 _WORD_PATTERN = re.compile(r"\b[\w]+(?:[-'][\w]+)*\b", re.UNICODE)
 
 
@@ -614,7 +542,6 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     ),
                     "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
                     "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
-                    "preselected_knowledge_id": getattr(provider, "preselected_knowledge_id", None),
                     "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None

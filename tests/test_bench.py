@@ -789,16 +789,16 @@ def test_a_beat_carries_the_progress_of_the_beats_before_it() -> None:
 
     from bench.core import default_variation, prompt_for
 
-    prompts = prompt_for(default_variation(), "1A", "Play back the recording.", "1A.3")
+    prompts = prompt_for(default_variation(), "1A", "Inspect the gate after the patrol leaves.", "1A.4")
     scene = prompts["user"].split("SCENE:")[1].split("CONSTRAINTS:")[0]
     constraints = prompts["user"].split("CONSTRAINTS:")[1]
 
     earlier = "to a removal too deliberate to be looting"
-    assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.3"
+    assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.4"
     assert earlier not in constraints, "an established reveal must not still be offered"
-    assert "k_sl_1a_b_r1 in selected_knowledge_ids" in constraints, "1A.3's own reveal stays on offer"
-    # SL-1A-D is optional and gated on michelle_warning_known, which only the still
-    # live SL-1A-B supplies, so no player could hold its reveal at beat 1A.3.
+    assert "k_sl_1a_c_r2 in selected_knowledge_ids" in constraints, "1A.4's own reveal stays on offer"
+    # SL-1A-D is optional and gated on memory_card_in_kristins_custody, which is
+    # not established by naming beat 1A.4 alone.
     assert "Taped beneath a drawer" not in scene
 
 
