@@ -1,0 +1,186 @@
+{
+  "replicates": 4,
+  "completed_replicates": 2,
+  "failed_replicates": 2,
+  "failures": [
+    {
+      "status": "failed",
+      "replicate": 2,
+      "script": "candidate-selection-repro",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\nKristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze drifts to the workstation, where Michelle's chair lies overturned. The desk is cluttered with papers and equipment, but everything seems to be in its place, except for the absence of Michelle's tablet and work bag. Kristin's eyes narrow as she takes in the scene. She notices that the back door frame shows signs of forced entry, and her mind starts racing with possibilities.",
+      "turns": [
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is thick with the scent of coffee, and the morning sunlight streaming through the window casts a warm glow over the room. Her gaze falls on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes narrow as she takes in the scene: the overturned workstation chair, the forced back door, and the missing tablet and work bag. She approaches the back door, running her hand over the splintered wood where the lock was forced. The scratches and scuffs tell a story of a hasty entry, one that was meant to be quick and quiet.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ]
+        }
+      ],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions unavailable knowledge 'memory card'",
+      "narration_turns": 1,
+      "example_leakage": 0,
+      "narration_requests": 3,
+      "recovery_requests": 0,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "failed",
+      "replicate": 3,
+      "script": "candidate-selection-repro",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\nKristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze lingers on it, her mind racing with possibilities. She takes a deep breath, trying to clear her head and focus on the task at hand: finding evidence of Michelle's disappearance.",
+      "turns": [
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The room is quiet, the only sound the creak of the old house settling around her. She approaches the overturned workstation chair, its legs splayed out in a tangled mess. The chair looks like it was knocked over in a hurry, and Kristin's gut tightens with concern. Moving closer to the back door, she examines the lock. It's been forced, the metal twisted and bent. The door itself looks like it's been recently damaged, and Kristin's mind starts racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ]
+        }
+      ],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions unavailable knowledge 'memory card'",
+      "narration_turns": 1,
+      "example_leakage": 0,
+      "narration_requests": 3,
+      "recovery_requests": 0,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1
+      }
+    }
+  ],
+  "scenes_scored": 1,
+  "max_score": 7,
+  "score_metric": "7-point record: seven equally weighted boolean criteria across 1 scene",
+  "pooled": {
+    "score_points": {
+      "n": 2,
+      "mean": 0.0,
+      "standard_deviation": 0.0,
+      "confidence_interval_95": [
+        0.0,
+        0.0
+      ],
+      "minimum_detectable_effect": 5.473006486383879,
+      "replicate_scores": [
+        0.0,
+        0.0
+      ]
+    },
+    "total": 0,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 0,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 0,
+      "exit_motivated": 0,
+      "rewards_investigation": 0
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 23,
+      "per_criterion_where_attributable": {
+        "progressive": 1
+      },
+      "unattributed": 22
+    }
+  },
+  "per_script": {
+    "candidate-selection-repro": {
+      "score_points": {
+        "n": 2,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "confidence_interval_95": [
+          0.0,
+          0.0
+        ],
+        "minimum_detectable_effect": 5.473006486383879,
+        "replicate_scores": [
+          0.0,
+          0.0
+        ]
+      },
+      "example_leakage": 1,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 0,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 0,
+        "exit_motivated": 0,
+        "rewards_investigation": 0
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 23,
+        "per_criterion_where_attributable": {
+          "progressive": 1
+        },
+        "unattributed": 22
+      }
+    }
+  },
+  "replicate_scores": [
+    0.0,
+    0.0
+  ],
+  "example_leakage": 1,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "entry_state": {
+    "scene_id": "1A",
+    "committed_knowledge_count": 1
+  },
+  "budget": {
+    "projected_workers_ai_neurons": 220.0,
+    "actual_narration_turns": 12,
+    "actual_narration_requests": 20,
+    "estimated_workers_ai_neurons_from_requests": 220.0,
+    "actual_openai_judge_calls": 2,
+    "quota": null
+  }
+}

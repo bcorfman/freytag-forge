@@ -1,0 +1,35 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Turn 1 does not actually search the kitchen/back door or report concrete findings; it only re-describes known objects.",
+    "Turn 1 introduces non-canon detail of a cracked phone despite canon saying the phone is undamaged.",
+    "Turn 2 hints at a hidden object but does not reveal what Kristin finds, so the investigation yields nothing actionable.",
+    "Turn 2 projects future beats prematurely without delivering them in scene.",
+    "Turn 3 wrongly recovers/listens to a damaged recording from the phone/memory card without the prior discovery being properly narrated from the work area.",
+    "Turn 3 reveals protected knowledge early: 'do not trust emergency broadcasts.'",
+    "Turn 3 contradicts canon by shifting focus back to the phone rather than the unsearched work area where evidence should be found.",
+    "Turn 4 ignores the player's action about hiding evidence, answering an official at the door, and watching the gate; no responsive consequence occurs.",
+    "Turn 4 introduces an official-at-the-door/threat beat without dramatizing it.",
+    "Turn 5 leaves the scene abruptly despite the player merely repeating a local search action.",
+    "Turn 5 dumps major future revelations (Continuity Initiative, who remains, park bench source) instead of progressive local discovery.",
+    "Turn 5 exits without earned on-page discovery chain from this scene's searches.",
+    "Repeated searching of the kitchen/back door never produces actionable local evidence, despite canon saying there are signs here and the work area has not been searched yet.",
+    "Scene skips or botches ordered authored beats: disappearance signs, Michelle's last investigation from her work area, interrupted message, first threat/exit motivation."
+  ],
+  "reasons": [
+    "The scene-local canon requires Kristin to investigate Michelle's house, especially the still-unsearched work area, to learn where Michelle went. The turns mostly fail to reveal concrete evidence from those places.",
+    "Consistency is broken by stating the phone screen is cracked when canon specifies Michelle's phone is undamaged.",
+    "The opening establishes atmosphere adequately, but subsequent turns do not provide substantial responsive consequences to the player's specific searches.",
+    "Important discoveries are either withheld ('something ... never meant to be seen') or dumped later without showing how Kristin found them.",
+    "Protected information should not be revealed before the appropriate investigative chain; the warning about emergency broadcasts and Continuity Initiative arrives too early and too abruptly.",
+    "A left_scene turn must give a motivated departure based on what was found and where it points. Here the departure is disconnected from the player's actual action and from prior narrated discoveries.",
+    "The scene does not reward apt repeated investigation of the kitchen/back door/work area with usable information the player can act on."
+  ]
+}
