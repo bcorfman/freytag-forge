@@ -1,0 +1,477 @@
+{
+  "scene_id": "1A",
+  "package_path": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "candidate-selection-repro",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\nKristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. Her gaze falls on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes linger on it for a moment before she moves on to the rest of the room. The kitchen is in disarray, with the workstation chair overturned and papers scattered across the counter.",
+      "turns": [
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is thick with the scent of coffee, and the silence is oppressive. She approaches the phone on the floor, Michelle's phone, and picks it up, examining it for any signs of damage or tampering. The screen is cracked, but the phone itself seems to be in working order, which is strange given the state of the rest of the house.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ]
+        },
+        {
+          "player_input": "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+          "narration": "Kristin's eyes scan the kitchen, her gaze lingering on the overturned workstation chair and the forced back door. She approaches the chair, her hand reaching out to steady it, and then moves on to the drawers, her fingers running along the edges, searching for any sign of what Michelle might have hidden. The first drawer she checks is empty, but the second one sticks, then gives, and inside, under a curl of packing tape, her fingers find the flat edge of something that was never meant to be seen from above.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Recover the damaged recording and listen to it.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any signs of disturbance. She examines the phone's screen, noticing that it's still on, but the screen is cracked and the display is dark. Kristin tries to turn the phone on, but it doesn't respond. Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts.",
+          "left_scene": false,
+          "beats_projected": [],
+          "selected_knowledge_ids": [
+            "k_sl_1a_b_r2"
+          ],
+          "authored_handoff_candidate_id": "k_sl_1a_b_r2",
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry",
+            "k_sl_1a_b_r2"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": "k_sl_1a_b_r2",
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Hide the evidence, answer the official at the door, then watch what they do at the gate as they leave.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any other signs of disturbance. She quickly moves to the desk, where she had seen Michelle's work area, and begins to search through the drawers, looking for any clues about her friend's disappearance. As she searches, Kristin's mind is racing with questions and concerns, but she tries to stay focused on the task at hand.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        },
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin recovers Michelle's memory card and reads the files on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to choose who remains. Michelle's files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 1,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "ok",
+      "replicate": 3,
+      "script": "candidate-selection-repro",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\nKristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze lingers on it, her mind racing with possibilities. She takes a deep breath, trying to clear her head and focus on the task at hand: finding evidence of Michelle's disappearance.",
+      "turns": [
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is thick with the scent of coffee, and the morning sunlight streaming through the window casts an eerie glow on the countertops. Her gaze falls on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes narrow as she takes in the scene: the overturned workstation chair, the forced back door, and the missing tablet and work bag. She approaches the back door, running her hand over the splintered wood where the lock was forced. The scratches and scuffs tell a story of a hasty and deliberate entry.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ]
+        },
+        {
+          "player_input": "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+          "narration": "Kristin's eyes scan the kitchen, her gaze lingering on the overturned workstation chair and the forced back door. She takes a step closer to the desk, her eyes scanning the surface for any sign of Michelle's research or notes. The drawers, however, catch her attention. Michelle's initials, KMS, are carved into the front of one drawer, and Kristin's fingers brush against the edge of the drawer as she searches for any hidden compartments or clues. Her fingers find the flat edge of something that was never meant to be seen from above, and the kitchen behind her goes very quiet.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Recover the damaged recording and listen to it.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any signs of disturbance. She examines the phone's screen, noticing that it's still on, but the screen is cracked and the display is dark. Kristin tries to turn the phone on, but it doesn't respond. Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts.",
+          "left_scene": false,
+          "beats_projected": [],
+          "selected_knowledge_ids": [
+            "k_sl_1a_b_r2"
+          ],
+          "authored_handoff_candidate_id": "k_sl_1a_b_r2",
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry",
+            "k_sl_1a_b_r2"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": "k_sl_1a_b_r2",
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Hide the evidence, answer the official at the door, then watch what they do at the gate as they leave.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any other signs of disturbance. She tucks the phone into her pocket, then moves to the front door, where she finds a welfare-check officer standing with a clipboard. The officer looks up at Kristin, a mixture of concern and officialdom on his face.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        },
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin recovers Michelle's memory card and reads the files on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to choose who remains. Michelle's files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 1,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "ok",
+      "replicate": 4,
+      "script": "candidate-selection-repro",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck with the idea of getting to her best friend's house quickly, but that proved impossible. Police cars, ambulances, and fire trucks were deployed everywhere, causing traffic jams that made her drive take forever.\n\nKristin steps into the kitchen, her eyes scanning the space for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze lingers on it, her mind racing with possibilities. She takes a deep breath, trying to clear her head, and begins to survey the rest of the kitchen, her eyes settling on the workstation in the corner.",
+      "turns": [
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin steps into the kitchen, her eyes scanning the space for any sign of Michelle's whereabouts. Michelle's phone lies on the floor, its screen cracked but still intact, and Kristin's gaze lingers on it for a moment before moving on to the rest of the room. The overturned workstation chair catches her attention, and she walks over to it, her eyes taking in the scattered papers and the broken chair leg.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2"
+          ]
+        },
+        {
+          "player_input": "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area.",
+          "narration": "Kristin's eyes scan the kitchen, her gaze lingering on the overturned workstation chair and the forced back door. She approaches the desk, her hands running over the surface, searching for any sign of what Michelle might have left behind. Her fingers brush against the edge of the drawer, and she pulls it open, revealing a neatly organized space with a few scattered papers and a small notebook.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Recover the damaged recording and listen to it.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any signs of disturbance. She checks the phone's screen, but it's still locked, and she doesn't see any signs of forced entry or tampering. Kristin's gaze falls on the kitchen table, where Michelle's usual spot for her phone and keys is empty, and she feels a growing sense of unease. Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts.",
+          "left_scene": false,
+          "beats_projected": [],
+          "selected_knowledge_ids": [
+            "k_sl_1a_b_r2"
+          ],
+          "authored_handoff_candidate_id": "k_sl_1a_b_r2",
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry",
+            "k_sl_1a_b_r2"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": "k_sl_1a_b_r2",
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_a_r2",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ]
+        },
+        {
+          "player_input": "Hide the evidence, answer the official at the door, then watch what they do at the gate as they leave.",
+          "narration": "Kristin carefully picks up Michelle's phone from the kitchen floor, her eyes scanning the room for any other signs of disturbance. She quickly moves to the desk, where she had seen Michelle's work area, and begins to search through the drawers, looking for any clues about Michelle's disappearance. As she searches, Kristin's mind is racing with questions and concerns, but she tries to stay focused on the task at hand.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        },
+        {
+          "player_input": "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "narration": "Kristin recovers Michelle's memory card and reads the files on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to choose who remains. Michelle's files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a4--the-first-threat"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1a_d_r1",
+            "k_sl_1a_c_r1",
+            "k_sl_1a_c_r2",
+            "k_sl_1a_d_r2"
+          ]
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 0,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1
+      }
+    }
+  ]
+}

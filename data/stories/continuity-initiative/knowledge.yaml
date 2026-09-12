@@ -212,7 +212,7 @@ scene_frames:
   situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
-  situation: 'A damaged public park holding Michelle''s dead drop: an ordinary bench with a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
+  situation: 'A damaged public park with an ordinary bench, a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
   situation: A supposedly abandoned freight terminal above an underground installation. The transit card opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
@@ -224,7 +224,7 @@ scene_frames:
   situation: 'The facility''s records archive: selection files, development records naming the system''s authors, and corrupted prisoner files threaded with oddly familiar phrasing. A medical terminal''s maintenance reports carry a rhythm that reads like a message.'
   pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
-  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, a coded message waits for someone who knows Michelle''s phrasing.'
+  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, an unread note waits for someone who knows Michelle''s phrasing.'
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
   situation: 'The detention sector: holding blocks, stolen radios, a medical level bearing the experiments, and an imprisoned senior official whose emergency military override codes expire the moment the new authority activates.'
@@ -233,7 +233,7 @@ scene_frames:
   situation: Security corridors between the resistance and Rebecca's executive office. The predictive system anticipates every rational move; only conflicting, irrational emergencies confuse it. Beyond the office lies the external broadcast relay chamber.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
-  situation: 'Rebecca''s office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
+  situation: 'The secured command office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
@@ -286,7 +286,7 @@ knowledge:
   statement: "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
   earn_when: reads the saved files on Michelle's memory card
   action_evidence:
-  - [recover, retrieve]
+  - [recover, retrieve, memory card, the card]
   - [card files, saved files, files on the card]
   - [read, inspect]
   entity_ids: []
@@ -329,11 +329,12 @@ knowledge:
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [dead drop, exchange point, place to trade information, the dead-drop, park exchange, drop at the bench]
   - [bench in the park, park bench, bench, park, the park bench, bench near the park]
+  delivery_text: "Michelle's memory card contains a damaged recording and saved files. The card points to a dead drop at a bench in the park."
 - id: k_sl_1a_b_r2
   statement: "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: do not trust emergency broadcasts."
   earn_when: recovers Michelle's damaged recording and listens to it
   action_evidence:
-  - [recover, retrieve]
+  - [recover, retrieve, memory card, the card]
   - [damaged recording, interrupted message, recording]
   - [listen, play]
   entity_ids: []
@@ -375,8 +376,7 @@ knowledge:
   statement: 'Kristin reads the remaining files on Michelle''s recovered memory card and learns the place she used to trade information.'
   entity_ids: [kristin, michelle, memory_card]
   aliases:
-  - hidden memory card
-  - Michelle's research
+  - information drop
   audience:
     kind: public
     player_visible: true
@@ -945,13 +945,12 @@ knowledge:
   must_convey:
   - [support-column failure, cooling-system risk, structural failure, support column problem, cooling failure, structural risk]
   - [collapse the facility, facility collapse, facility, bring down the facility, underground collapse, collapse below]
-  - [corridor access, restricted corridor, access, restricted access, infrastructure access, corridor entrance]
+  - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
 - id: k_sl_2a_c_r2
-  statement: Kristin and Brandon have opened a restricted infrastructure corridor.
+  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility.
   entity_ids: [kristin, brandon, regional_facility]
   aliases:
-  - restricted corridor
   - infrastructure corridor
   audience:
     kind: public
@@ -974,8 +973,8 @@ knowledge:
     priority: 10
   must_convey:
   - [opened, open, access, gained access, opened access, corridor opened]
-  - [restricted infrastructure corridor, restricted corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
-  - [Kristin and Brandon, Kristin, Brandon, the pair, both inspectors, the inspectors]
+  - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
+  - [gaining access to the facility, access to the facility, facility access gained]
 - id: k_sl_2a_c_r2_rebecca_observes
   statement: Rebecca has ordered the infiltrators watched.
   entity_ids: [rebecca, kristin, brandon, regional_facility]
@@ -2015,7 +2014,7 @@ knowledge:
 - id: k_bridge_3a_command_assault
   statement: The uprising is active, and the group is moving toward the command and broadcast levels.
   entity_ids: [kristin, michelle, broadcast_relay, detention_level]
-  aliases: [command levels, broadcast levels]
+  aliases: [command and broadcast levels, broadcast levels]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3A]
   establishes: [{op: assert, fact_id: command_levels_assault_underway, value: true}]
@@ -2023,7 +2022,7 @@ knowledge:
 - id: k_bridge_3b_broadcast
   statement: The national broadcast has begun.
   entity_ids: [kristin, michelle, broadcast_relay]
-  aliases: [broadcast started, national transmission]
+  aliases: [broadcast started, nationwide broadcast]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: broadcast_started, value: true}]
@@ -2111,7 +2110,7 @@ knowledge:
 - id: k_scene_3b_entry
   statement: The broadcast relay is the immediate contested objective.
   entity_ids: [kristin, broadcast_relay]
-  aliases: [broadcast relay, relay]
+  aliases: [relay objective, relay]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: scene_3b_entry_known, value: true}]

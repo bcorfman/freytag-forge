@@ -25,6 +25,7 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
@@ -42,26 +43,6 @@ REFERENCE_SD = 2.24
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
-DEFAULT_PROMPT_RULES = (
-    "Narrate the concrete immediate consequence of the player's action.",
-    "Ground narration in the scene and knowledge context.",
-    "Use the authored place, texture, and physical detail.",
-    "Answer what the player actually did.",
-    "Never invent durable evidence, physical objects, items, or container contents.",
-    "Treat the authored entry_text and beat details as already true.",
-    "A grounding ID may name only committed knowledge or the selected candidate.",
-    "Never ground on a candidate you did not select.",
-    "Dialogue may use only its speaker's sayable knowledge.",
-    (
-        "When one or more offered candidates match the player's action, randomly pick one candidate from that list "
-        "and put its ID in selected_knowledge_ids."
-    ),
-    "Never write source IDs, events, operations, facts, or transitions as prose.",
-    "Return one paragraph per segment, roughly 30 to 55 words, with at most 5 segments.",
-    "Never reuse a beat's sentences.",
-    "Never contradict authored text.",
-    "Never echo the request fields.",
-)
 T_CRITICAL_95 = {
     1: 12.706,
     2: 4.303,
@@ -190,9 +171,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     narrow_to_shadow_match = prompt.get("narrow_to_shadow_match", False)
     if not isinstance(narrow_to_shadow_match, bool):
         raise ValueError("system_prompt.narrow_to_shadow_match must be a boolean")
-    selection_prepass = prompt.get("selection_prepass", False)
-    if not isinstance(selection_prepass, bool):
-        raise ValueError("system_prompt.selection_prepass must be a boolean")
     variation["_prompt_variant"] = {
         **({"rules": rules} if rules is not None else {}),
         "include_output_example": include_output_example,
@@ -202,9 +180,8 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         "positive_selection_example": positive_selection_example,
         "model_grounding": model_grounding,
         "narrow_to_shadow_match": narrow_to_shadow_match,
-        "selection_prepass": selection_prepass,
     }
-    variation["_resolved_rules"] = list(rules if rules is not None else DEFAULT_PROMPT_RULES)
+    variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
     variation["_variation_hash"] = stable_hash(
         {
@@ -217,7 +194,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
             "positive_selection_example": positive_selection_example,
             "model_grounding": model_grounding,
             "narrow_to_shadow_match": narrow_to_shadow_match,
-            "selection_prepass": selection_prepass,
         }
     )
     variation["_story_package_value"] = package_value
@@ -313,6 +289,24 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
     state = RuntimeState(package=package, current_scene_id=target_scene, phase=scene.metadata.freytag_phase)
     state._assert_scene_entry_fact(target_scene)
     return package, state
+
+
+def entry_state(state: RuntimeState) -> dict[str, Any]:
+    """Describe the deliberately bare state used when a scene is benched."""
+
+    return {
+        "scene_id": state.current_scene_id,
+        "committed_knowledge_count": len(KnowledgeProjector().project(state, "player", "").committed_knowledge),
+    }
+
+
+def preview_rules(variation: dict[str, Any], scene_id: str | None = None) -> list[str]:
+    """Return the provider's rules without dispatching a narration request."""
+
+    _, state = package_and_state(variation, scene_id)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"])
+    provider.assemble_turn_prompt("")
+    return list(provider._turn_rules())
 
 
 def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTurnProvider:
@@ -449,73 +443,6 @@ def prompt_for(
     return {"system": str(assembled["system"]), "user": provider._section_user_prompt(context)}
 
 
-def selection_probe_for(
-    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
-) -> dict[str, object]:
-    """Run the selection-only diagnostic against one isolated storylet.
-
-    The result is telemetry, not a turn proposal: it is never sent to the
-    resolver and cannot change the state built for this probe.
-    """
-
-    package, state = package_and_state(variation, scene_id)
-    provider = provider_for(state, variation)
-    RuntimeEngine(state, provider)._activate_pacing()
-    chosen = resolve_storylet(package, scene_id, storylet_id)
-    ordered = beats_for(package, scene_id)
-    by_anchor = {item.anchor: item for item in ordered}
-    entry = min(
-        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
-        key=lambda item: item.id,
-        default=None,
-    )
-    if entry is not None:
-        establish_prior_beats(package, state, scene_id, entry)
-    state.active_event_ids.clear()
-    state.active_event_ids.add(chosen.id)
-    selected = provider.selection_probe(player_input)
-    return {
-        "offered_candidate_ids": list(provider.prompt_candidate_ids),
-        "reported_selected_knowledge_ids": list(selected),
-        "shadow_matched_candidate_id": provider.shadow_matched_candidate_id,
-    }
-
-
-def two_pass_probe_for(
-    variation: dict[str, Any], scene_id: str, storylet_id: str, player_input: str
-) -> dict[str, object]:
-    """Run one two-pass turn in isolation, without committing its proposal.
-
-    Unlike ``selection_probe_for``, this sends the narration request too.  The
-    provider validates it, but no engine receives the result, so this remains a
-    diagnostic and cannot apply effects or change facts.
-    """
-
-    package, state = package_and_state(variation, scene_id)
-    provider = provider_for(state, variation)
-    RuntimeEngine(state, provider)._activate_pacing()
-    chosen = resolve_storylet(package, scene_id, storylet_id)
-    ordered = beats_for(package, scene_id)
-    by_anchor = {item.anchor: item for item in ordered}
-    entry = min(
-        (by_anchor[anchor] for anchor in chosen.source_links if anchor in by_anchor),
-        key=lambda item: item.id,
-        default=None,
-    )
-    if entry is not None:
-        establish_prior_beats(package, state, scene_id, entry)
-    state.active_event_ids.clear()
-    state.active_event_ids.add(chosen.id)
-    response = provider(player_input)
-    selected = response.get("selected_knowledge_ids", []) if isinstance(response, dict) else []
-    return {
-        "preselected_knowledge_id": provider.preselected_knowledge_id,
-        "model_selected_knowledge_ids": list(provider.model_selected_knowledge_ids),
-        "final_selected_knowledge_ids": selected,
-        "narration_requests": provider.request_count,
-    }
-
-
 _WORD_PATTERN = re.compile(r"\b[\w]+(?:[-'][\w]+)*\b", re.UNICODE)
 
 
@@ -570,12 +497,13 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
 
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
     package, state = package_and_state(variation, scene_id)
+    arrival_entry_state = entry_state(state)
     provider = provider_for(state, variation)
     engine = RuntimeEngine(state, provider)
     try:
         opening = engine.opening()
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
-        return _failed_scene_record(variation, scene_id, script, provider, error)
+        return _failed_scene_record(variation, scene_id, script, provider, error, entry_state=arrival_entry_state)
     turns = []
     inputs = script["inputs"]
     quota = None
@@ -593,11 +521,13 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 error,
                 opening=opening.narration,
                 turns=turns,
+                entry_state=arrival_entry_state,
             )
         entered = state.current_scene_id != prior_scene
         segments = proposal.segments[:-1] if entered else proposal.segments
         narration = join_narration(tuple(segments)) if segments else ""
         if narration:
+            handoff = getattr(provider, "authored_handoff", None)
             turns.append(
                 {
                     "player_input": player_input,
@@ -605,13 +535,13 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "left_scene": entered,
                     "beats_projected": list(state.last_turn_delivery.beats_projected),
                     "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                    "authored_handoff_candidate_id": (handoff.candidate.id if handoff is not None else None),
                     "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
                     "grounding_ids": sorted(
                         {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
                     ),
                     "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
                     "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
-                    "preselected_knowledge_id": getattr(provider, "preselected_knowledge_id", None),
                     "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None
@@ -629,6 +559,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             RuntimeError(f"scene {scene_id} did not leave within {max_turns} turns for script {script['name']}"),
             opening=opening.narration,
             turns=turns,
+            entry_state=arrival_entry_state,
         )
     return {
         "status": "ok",
@@ -646,6 +577,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
         "package": str(package.root) if hasattr(package, "root") else str(variation["_package_path"]),
+        "entry_state": arrival_entry_state,
     }
 
 
@@ -658,6 +590,7 @@ def _failed_scene_record(
     *,
     opening: str = "",
     turns: list[dict[str, Any]] | None = None,
+    entry_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     error_code = getattr(error, "error_code", "") or getattr(error, "code", "")
     reason = f"{error_code}: {error}" if error_code else str(error)
@@ -665,7 +598,7 @@ def _failed_scene_record(
     if error_code == "AI_QUOTA_EXCEEDED":
         quota = {"error": error_code, "message": "Workers AI quota is exhausted until 00:00 UTC."}
         reason = quota["message"]
-    return {
+    record = {
         "status": "failed",
         "replicate": 0,
         "script": script["name"],
@@ -681,6 +614,9 @@ def _failed_scene_record(
         "recovery_requests": provider.recovery_count,
         "package": str(variation["_package_path"]),
     }
+    if entry_state is not None:
+        record["entry_state"] = entry_state
+    return record
 
 
 def _turn_with_rate_limit_retry(engine: RuntimeEngine, player_input: str) -> Any:
@@ -747,7 +683,15 @@ def _stats(values: list[float], n_for_mde: int | None = None) -> dict[str, Any]:
     }
 
 
-def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], replicates: int) -> dict[str, Any]:
+def aggregate_runs(
+    runs: list[dict[str, Any]],
+    judgments: list[dict[str, Any]],
+    replicates: int,
+    *,
+    failures: list[dict[str, Any]] | None = None,
+    entry_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    failures = failures or []
     paired = [{**run, "judgment": judgment} for run, judgment in zip(runs, judgments, strict=False)]
     values = [float(score_judgments([item["judgment"]])["total"]) for item in paired]
     pooled_judgment = score_judgments(judgments)
@@ -757,6 +701,11 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
     }
     scenes_scored = len(judged_scene_ids or {run["scene_id"] for run in paired if run.get("scene_id")})
     max_score = scenes_scored * len(CRITERIA)
+    entry_records = [*runs, *failures]
+    disclosed_entry_state = entry_state or next(
+        (record.get("entry_state") for record in entry_records if record.get("entry_state")),
+        None,
+    )
     by_script: dict[str, Any] = {}
     for script in sorted({run["script"] for run in runs}):
         script_judgments = [item["judgment"] for item in paired if item["script"] == script]
@@ -769,9 +718,11 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
             "per_criterion": script_score["per_criterion"],
             "graded_secondary": script_score["graded_secondary"],
         }
-    return {
+    aggregate = {
         "replicates": replicates,
         "completed_replicates": completed_replicates,
+        "failed_replicates": len(failures),
+        "failures": failures,
         "scenes_scored": scenes_scored,
         "max_score": max_score,
         "score_metric": (
@@ -784,6 +735,9 @@ def aggregate_runs(runs: list[dict[str, Any]], judgments: list[dict[str, Any]], 
         "example_leakage": sum(int(run.get("example_leakage", 0)) for run in runs),
         "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
     }
+    if disclosed_entry_state is not None:
+        aggregate["entry_state"] = disclosed_entry_state
+    return aggregate
 
 
 def _student_t_two_sided_p(statistic: float, degrees: float) -> float:

@@ -322,6 +322,41 @@ def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
     assert response.json()["segments"][0]["text"] == "The lead sharpens."
 
 
+def test_api_returns_authored_handoff_as_ordinary_narration(tmp_path) -> None:
+    authored_text = (
+        "Michelle's hidden memory card holds a damaged recording that warns Kristin not to trust emergency broadcasts."
+    )
+
+    class _AuthoredProvider(_StubProvider):
+        def __call__(self, _input: str) -> dict[str, object]:
+            return {
+                "segments": [{"kind": "narration", "text": authored_text, "grounding_ids": ["k_sl_1a_b_r2"]}],
+                "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+            }
+
+    def provider_factory(state):
+        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.active_event_ids.add("SL-1A-B")
+        return _AuthoredProvider(authored_text)
+
+    app = create_demo_app(store_path=tmp_path / "sessions.sqlite", provider_factory=provider_factory)
+
+    with TestClient(app) as client:
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        response = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Recover the damaged recording and listen to it."},
+        )
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["lines"] == [authored_text]
+    assert payload["segments"][0]["kind"] == "narration"
+    assert payload["segments"][0]["text"] == authored_text
+    assert "k_sl_1a_b_r2" not in payload["lines"][0]
+    assert all(segment["kind"] == "narration" for segment in payload["segments"])
+
+
 def test_test_clock_is_opt_in_and_can_trigger_pacing_without_waiting(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
     monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "clock-secret")

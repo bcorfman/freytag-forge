@@ -24,6 +24,7 @@ from bench.core import (
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
@@ -343,6 +344,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     class FakeProvider:
         request_count = 0
         recovery_count = 0
+        authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_sl_1a_b_r2"))
         model_grounding_ids = ("k_sl_1a_b_r2",)
         model_selected_knowledge_ids = ("k_sl_1a_b_r2",)
         shadow_matched_candidate_id = "k_sl_1a_b_r2"
@@ -385,6 +387,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     )
 
     assert result["turns"][0]["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert result["turns"][0]["authored_handoff_candidate_id"] == "k_sl_1a_b_r2"
     assert result["turns"][0]["model_selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["model_grounding_ids"] == ["k_sl_1a_b_r2"]
@@ -486,6 +489,33 @@ def test_aggregate_reports_actual_scene_denominator() -> None:
     assert aggregate["max_score"] == 7
     assert aggregate["score_metric"].startswith("7-point record")
     assert aggregate["example_leakage"] == 2
+
+
+def test_failures_only_aggregate_reports_failure_details() -> None:
+    failure = {
+        "replicate": 1,
+        "script": "e2e",
+        "scene_id": "1A",
+        "failure_reason": "narration provider failed",
+    }
+    aggregate = aggregate_runs([], [], 1, failures=[failure])
+    assert aggregate["failed_replicates"] == 1
+    assert aggregate["failures"] == [failure]
+    assert aggregate["failures"][0]["failure_reason"] == "narration provider failed"
+    assert "entry_state" not in aggregate
+
+
+def test_entry_state_counts_projected_committed_knowledge() -> None:
+    variation = load_variation(VARIATION)
+    _, state = core.package_and_state(variation, "1A")
+    state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+
+    projected_count = len(KnowledgeProjector().project(state, "player", "").committed_knowledge)
+    assert len(state.facts.asserted) != projected_count
+    assert core.entry_state(state) == {
+        "scene_id": "1A",
+        "committed_knowledge_count": projected_count,
+    }
 
 
 def test_score_exposes_graded_missing_entries_without_changing_record_score() -> None:
@@ -759,16 +789,16 @@ def test_a_beat_carries_the_progress_of_the_beats_before_it() -> None:
 
     from bench.core import default_variation, prompt_for
 
-    prompts = prompt_for(default_variation(), "1A", "Play back the recording.", "1A.3")
+    prompts = prompt_for(default_variation(), "1A", "Inspect the gate after the patrol leaves.", "1A.4")
     scene = prompts["user"].split("SCENE:")[1].split("CONSTRAINTS:")[0]
     constraints = prompts["user"].split("CONSTRAINTS:")[1]
 
     earlier = "to a removal too deliberate to be looting"
-    assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.3"
+    assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.4"
     assert earlier not in constraints, "an established reveal must not still be offered"
-    assert "k_sl_1a_b_r1 in selected_knowledge_ids" in constraints, "1A.3's own reveal stays on offer"
-    # SL-1A-D is optional and gated on michelle_warning_known, which only the still
-    # live SL-1A-B supplies, so no player could hold its reveal at beat 1A.3.
+    assert "k_sl_1a_c_r2 in selected_knowledge_ids" in constraints, "1A.4's own reveal stays on offer"
+    # SL-1A-D is optional and gated on memory_card_in_kristins_custody, which is
+    # not established by naming beat 1A.4 alone.
     assert "Taped beneath a drawer" not in scene
 
 

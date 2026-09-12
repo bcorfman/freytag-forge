@@ -27,6 +27,8 @@ The `prompt` command makes no model request and prints only `{"system": ..., "us
 
 `prompt` prints the exact system and user prompt the narrator would receive. It contacts no model and spends nothing, so it is the cheapest way to see what a prompt change actually did. It takes the story's own coordinates - a scene, optionally a beat, optionally the player's action - and needs no variation file:
 
+Bench scenes start from a bare arrival state with only that scene's entry fact committed; they do not reconstruct optional earlier storylets. Run summaries disclose this scene and committed-knowledge count, so safety failures from an isolated mid-story scene can be read in context.
+
 ```bash
 # the prompt that establishes scene 1A, as the player enters it
 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m bench prompt --scene 1A --text
@@ -170,6 +172,14 @@ uv run python -m bench.candidate_selection_report \
 
 The leakage metric is calculated against the resolved example actually sent in the turn system prompt, so it works for arbitrary custom examples rather than only the shipped drawer text.
 
+For the authored reveal handoff, use `variations/authored-handoff-phase1.json`.
+Each turn record adds `authored_handoff_candidate_id` as bench-only telemetry;
+it is not part of the narrator or player API. Verify the exact recording action
+first, then run the established Scene 1A script and an unrelated Scene 1B run.
+New turn records omit the retired `preselected_knowledge_id` field because no
+runtime path can set it. Existing records under `bench/results/` are historical
+and remain unchanged.
+
 For example, run the two prompt-only experiment arms, then run one focused live replicate of each and compare their real ledger rows:
 
 ```bash
@@ -182,6 +192,14 @@ set -a && . /home/bcorfman/dev/freytag-forge/.env && set +a
 ```
 
 ## Cost and safety
+
+Live benchmark runs go through Ringer using `bench/manifests/phase7-live-bench.json`:
+
+```bash
+cd /home/bcorfman/dev/ringer && ./ringer.py run /home/bcorfman/dev/freytag-forge/bench/manifests/phase7-live-bench.json
+```
+
+The task declares `full_access` because a live run needs network access and must write `bench/results/`, which the default worker sandbox forbids. `bench/checks/no_source_drift.py` replaces that sandbox by failing the task if any tracked file outside `bench/results/` changed. `bench/checks/live_bench.py` judges the produced artifacts rather than trusting the worker's own summary.
 
 There are two independent budgets:
 

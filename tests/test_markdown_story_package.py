@@ -292,12 +292,18 @@ def test_loader_rejects_invalid_authored_handoff(tmp_path: Path, mutate: object,
         load_story_package(root)
 
 
-def test_legacy_evidence_without_delivery_text_still_loads() -> None:
-    package = load_story_package(PACKAGE)
+def test_legacy_evidence_without_delivery_text_still_loads(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "knowledge.yaml"
+    catalog = yaml.safe_load(source.read_text())
+    _knowledge_item(catalog, "k_sl_1a_b_r1").pop("delivery_text")  # type: ignore[union-attr]
+    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
 
-    authored_ids = {item.id for item in package.knowledge.knowledge if item.delivery_text is not None}
-    assert authored_ids == {"k_sl_1a_b_r2"}
-    assert all(item.delivery_text is None for item in package.knowledge.knowledge if item.id != "k_sl_1a_b_r2")
+    package = load_story_package(root)
+    legacy = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r1")
+
+    assert legacy.action_evidence
+    assert legacy.delivery_text is None
 
 
 def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
@@ -346,21 +352,28 @@ def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
 
 
 @pytest.mark.parametrize(
-    "player_input",
+    ("player_input", "expected_id"),
     [
-        "Recover Michelle's memory card.",
-        "Recover Michelle's damaged recording.",
-        "Recover Michelle's memory card and read the saved files.",
-        "Do not recover Michelle's damaged recording or listen to it.",
+        ("Recover Michelle's memory card.", None),
+        ("Recover Michelle's damaged recording.", None),
+        ("Recover Michelle's memory card and read the saved files.", "k_sl_1a_b_r1"),
+        ("Do not recover Michelle's damaged recording or listen to it.", None),
     ],
 )
-def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(player_input: str) -> None:
+def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(
+    player_input: str, expected_id: str | None
+) -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
     candidates = KnowledgeProjector().project(state, "player", player_input).candidates
 
-    assert uniquely_matched_authored_handoff(player_input, candidates) is None
+    handoff = uniquely_matched_authored_handoff(player_input, candidates)
+    if expected_id is None:
+        assert handoff is None
+    else:
+        assert handoff is not None
+        assert handoff.candidate.id == expected_id
 
 
 def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(tmp_path: Path) -> None:

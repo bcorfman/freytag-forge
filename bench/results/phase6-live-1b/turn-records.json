@@ -1,0 +1,278 @@
+{
+  "scene_id": "1B",
+  "package_path": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "unrelated-scene",
+      "scene_id": "1B",
+      "opening": "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\nKristin's eyes scan the handwritten number sequence, her mind racing to decipher its meaning. She recognizes the transit access card as one Michelle used to commute to work, and the photograph of Michelle with a man she doesn't know sends a shiver down her spine.",
+      "turns": [
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the route the patrol took as it swept through the park. She spots the faint trail of footprints leading off towards the service path, and the crunch of gravel beneath the tires of a vehicle that had been hastily parked. The patrol's route seems to have been a circuit, designed to keep the park's visitors in sight without drawing too much attention to themselves.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the route the patrol took, but there's no sign of where they went or how many there were. The park is quiet, the only sound the distant hum of emergency vehicles and the creak of a nearby tree in the gentle breeze. She focuses on the patrol's path, her mind racing with the possibilities, but the only clue is the faint impression of tires on the grass, leading off into the distance.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the faint tire tracks and scuff marks left by the emergency patrol. She notices a radio crackling in the distance, a voice speaking in hushed tones about 'possible sightings' and 'contaminated water sources'. The patrol's route seems to have taken them towards the service tunnels, but Kristin can't shake the feeling that they're being watched.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate. The park pursuit ended behind them when the tactical team lost their trail. The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin toward the supposedly abandoned freight terminal and its evacuation tunnels. The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source in the photograph had found her in the park. The transit card from Michelle's dead drop granted access to a supposedly abandoned freight terminal. Fresh tire tracks, air vents, and unusually heavy electrical service said the site remained active, so Kristin and Brandon followed the transport route beneath the loading docks.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 4,
+      "example_leakage": 0,
+      "narration_requests": 6,
+      "recovery_requests": 2,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1B",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "ok",
+      "replicate": 2,
+      "script": "unrelated-scene",
+      "scene_id": "1B",
+      "opening": "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\nKristin's eyes scan the handwritten number sequence, her mind racing to decipher its meaning. The transit access card lies flat on the bench, its magnetic strip exposed, and the photograph of Michelle with the unknown man seems to stare back at her, a mixture of concern and curiosity etched on Michelle's face.",
+      "turns": [
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the route the patrol took, but there's no sign of where they went or how many there were. The park is quiet, the only sound the distant hum of emergency vehicles and the creak of a nearby tree in the gentle breeze. She spots a faint scuff mark on the pavement, partially hidden by a discarded trash bag, and her gaze lingers on it for a moment before moving on.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the route the patrol took, but there's no sign of where they went or how many there were. She spots a faint scuff on the pavement, a slight disturbance in the grass, and a discarded crumpled wrapper from a coffee cup, but nothing that suggests a specific direction or number of people. The watching man remains stationary, his gaze fixed on the bench, but Kristin can't tell if he's waiting for her or something else.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin scans the path beyond the gate, her eyes tracing the faint tire tracks and scuff marks left by the emergency patrol. She notices a faint smudge of dust on the gatepost, as though the patrol had recently passed through. The sound of sirens echoes in the distance, growing fainter as the patrol moves further away.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        },
+        {
+          "player_input": "Inspect the path beyond the gate for signs of where the patrol went.",
+          "narration": "Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate. The park pursuit ended behind them when the tactical team lost their trail. The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin toward the supposedly abandoned freight terminal and its evacuation tunnels. The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source in the photograph had found her in the park. The transit card from Michelle's dead drop granted access to a supposedly abandoned freight terminal. Fresh tire tracks, air vents, and unusually heavy electrical service said the site remained active, so Kristin and Brandon followed the transport route beneath the loading docks.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "preselected_knowledge_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ]
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 4,
+      "example_leakage": 0,
+      "narration_requests": 6,
+      "recovery_requests": 1,
+      "package": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1B",
+        "committed_knowledge_count": 1
+      }
+    }
+  ]
+}

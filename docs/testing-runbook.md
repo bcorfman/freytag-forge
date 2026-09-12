@@ -2362,6 +2362,151 @@ legacy path until it receives its own authored delivery.
 saved-file lead, and dead-drop facts under their existing IDs and preserves
 the conservative evidence boundary between them.
 
+## Authored reveal handoff Phase 6 verification
+
+**Purpose:** Verify the authored Scene 1A recording handoff through the loader,
+matcher, narrator boundary, normal validation/commit path, API payload, and
+browser rendering. Bench telemetry records the matched candidate without
+changing the player or narrator contract.
+
+**Setup / seed:** The checked-in `continuity-initiative` package,
+`bench/variations/authored-handoff-phase1.json`, Python dependencies installed
+with `uv sync --group dev`, and frontend dependencies installed with `npm ci`
+inside `frontend/`.
+
+**Safe actions:** Run deterministic unit, API, and frontend tests. Inspect the
+bench variation and run its prompt/record harness. No live model request is
+made unless the optional `bench run` command is used.
+
+**Destructive or external actions:** `bench run` contacts the configured worker
+and judge and can spend provider quota; use `--confirm` only when those calls
+are intended. Store outputs under `/tmp`.
+
+**Steps:**
+
+1. Run the isolated exact recording matcher/composition tests first.
+2. Run the established Scene 1A bench script and an unrelated Scene 1B run
+   when worker and judge credentials are available.
+3. Inspect `all-turn-records.json` for zero false-positive handoffs and a
+   `100%` exact recording match rate. Treat narration-safety failures before
+   the recording action as separate from handoff selection.
+
+**Verify:**
+
+```bash
+TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_candidate_matcher.py tests/test_markdown_story_package.py tests/test_cloudflare_transport.py tests/test_web_demo.py
+(cd frontend && npm test)
+uv run python -m bench describe --variation bench/variations/authored-handoff-phase1.json --json
+uv run python -m bench selection-probe --variation bench/variations/authored-handoff-phase1.json --scene 1A --storylet SL-1A-B --player-input "Recover the damaged recording and listen to it." --replicates 1
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1A --replicates 4 --script candidate-selection-repro --out /tmp/bench-authored-handoff-1a --confirm
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1A --replicates 1 --script authored-recording-exact --out /tmp/bench-authored-handoff-exact --confirm
+uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json --scene 1B --replicates 1 --script unrelated-scene --out /tmp/bench-authored-handoff-1b --confirm
+```
+
+Expected: deterministic tests pass; the exact recording action produces only
+`k_sl_1a_b_r2` in `authored_handoff_candidate_id`; unmatched, partial, negated,
+and ambiguous actions produce `null`; the API and browser show only ordinary
+narration; bench records contain no new public segment kind or API field.
+
+**Cleanup:** Remove `/tmp/bench-authored-handoff-1a` and
+`/tmp/bench-authored-handoff-exact` and `/tmp/bench-authored-handoff-1b` if the
+live runs were performed. Do not edit the append-only tracked ledger to remove
+evidence.
+
+**Notes:** Added 2026-09-12 for Phase 6 of
+`.plans/authored-reveal-handoff.md`. Observed 2026-09-12: the isolated live
+selection probe offered no candidate and reported only the shadow match;
+deterministic focused tests passed 23 handoff cases, bench telemetry tests
+passed 43 cases, the frontend suite passed 36 cases, and the full suite passed
+385 tests at 91.64% coverage. The live Scene 1A replicates stopped before the
+recording action on `uncited_knowledge: kitchen floor`; the unrelated Scene 1B
+control stopped on `narration_known_term_leak: kristin and brandon`. These are
+pre-recording narration failures, not handoff selections. The exact-action arm
+also stopped before projection on `narration_known_term_leak: dead drop`.
+This session's live artifacts are under
+`bench/results/authored-handoff-phase1*` and
+`bench/results/authored-handoff-exact/`; reruns should use `/tmp`.
+
+### Phase 6 live gate met — 2026-09-12
+
+The three failures recorded above were diagnosed and fixed, and the live gate
+was then met. They were never handoff defects.
+
+- `uncited_knowledge: kitchen floor` was the handoff turn itself, not a turn
+  before it. `_parse_eligible_proposal` returned early through
+  `_ordinary_handoff_proposal`, skipping `_auto_attribute_committed_knowledge`,
+  so committed grounding was never repaired on a handoff turn.
+- `kristin and brandon` and `dead drop` were authored-prose term traps: the
+  narrator was handed scene text naming knowledge the scene had not committed,
+  then rejected for using it. The loader now refuses such a package via
+  `_validate_narration_term_traps`, which inspects `entry_text`, beats, and the
+  knowledge-frame `situation`.
+- `bench` itself hid the evidence: failed replicates never reached
+  `aggregate_runs`, so a total failure and an unexecuted run produced identical
+  summaries. Summaries now carry `failed_replicates`, the verbatim
+  `failure_reason` strings, and an `entry_state` disclosure.
+
+Commands used, both against the live Cloudflare narrator:
+
+```bash
+TMPDIR=/tmp .venv/bin/python -m bench run \
+  --variation bench/variations/authored-handoff-phase1.json \
+  --scene 1A --replicates 4 --script candidate-selection-repro \
+  --out bench/results/phase6-live-1a --confirm
+TMPDIR=/tmp .venv/bin/python -m bench run \
+  --variation bench/variations/authored-handoff-phase1.json \
+  --scene 1B --replicates 2 --script unrelated-scene \
+  --out bench/results/phase6-live-1b --confirm
+```
+
+**Observed:** Scene 1A completed 3 of 4 replicates (264 neurons) against 0 of 4
+before. All 3 composed `authored_handoff_candidate_id: k_sl_1a_b_r2` on turn 3
+with `model_selected_knowledge_ids: []`, and the authored `delivery_text`
+appeared verbatim in the player-facing narration. The other 13 turns across the
+run matched no handoff despite four offered candidates, so there were no false
+positives and no fact committed on an unmatched action. The Scene 1B control
+completed 2 of 2 with no failures.
+
+**Not fixed, and deliberately recorded rather than hidden:** one Scene 1A
+replicate failed with `narration_known_term_leak: narration mentions unavailable
+knowledge 'michelle's research'`. It committed no facts. It is the legacy
+select-or-don't-mention problem, not a handoff defect, and is carried to Phase 7
+as a reason to continue migrating legacy candidates.
+
+Note that a live `bench run` cannot be executed by a sandboxed worker on this
+machine: `allow_full_access = false` gives workers a read-only repository and no
+network, so the run fails with `Read-only file system` before making a call.
+Run it directly from the repository instead.
+
+### Determiner-sensitive knowledge terms — 2026-09-12
+
+Verifying the `michelle's research` fix live cost two more four-replicate runs
+and was worth it: the alias fix held, but the rerun exposed a defect no
+deterministic test covered. In `bench/results/phase6-verify-research/`, one
+replicate composed the authored handoff on turn 3, committing `k_sl_1a_b_r2`,
+then failed on turn 4 with `narration_known_term_leak: narration mentions
+unavailable knowledge 'the memory card'` — rejected for naming the object it had
+just earned.
+
+The index keyed on the leading determiner:
+
+```text
+'memory card'     -> k_sl_1a_b_r1, k_sl_1a_b_r2, k_sl_1a_d_r1, k_sl_1a_d_r2
+'the memory card' -> k_sl_1a_d_r1          (uncommitted)
+```
+
+`_compile_knowledge_indexes` now records both the exact and the
+determiner-normalized form and merges their owners. Only one leading determiner
+is stripped, never from a single-word phrase. Guarded multi-word terms went from
+202 to 204, so narration protection widened rather than narrowed — check that
+number when touching the index, because normalizing `term_to_knowledge` without
+`audience_to_known_terms` would silently shrink the guarded set instead.
+
+`bench/results/phase6-verify-determiner/` then completed 3 of 4 with all three
+composing the handoff. The one remaining failure is a turn-2 mention of `memory
+card` before it is earned: the legacy select-or-don't-mention class, no facts
+committed, and Phase 7 migration is the fix.
+
 ## CI test-suite overlap and timing investigation
 
 **Purpose:** Verify the tests that run on push and pull request in the

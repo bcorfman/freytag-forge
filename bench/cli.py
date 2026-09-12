@@ -26,15 +26,14 @@ from bench.core import (
     load_dotenv,
     load_variation,
     package_and_state,
+    preview_rules,
     prompt_for,
     run_judges,
     run_scene,
     scenes_scored_for_row,
     score_judgments,
     scripts_for,
-    selection_probe_for,
     successful_ledger_rows,
-    two_pass_probe_for,
     unknown_scale_ledger_rows,
     welch_t_test,
 )
@@ -167,24 +166,6 @@ def parser() -> argparse.ArgumentParser:
             "turns before it. Reach a later turn with 'chat' or 'run' instead."
         ),
     )
-    selection_probe = sub.add_parser(
-        "selection-probe",
-        help="ask the model for candidate IDs only; never runs a game turn",
-    )
-    selection_probe.add_argument("--variation", type=Path, required=True)
-    selection_probe.add_argument("--scene", required=True)
-    selection_probe.add_argument("--storylet", required=True)
-    selection_probe.add_argument("--player-input", required=True)
-    selection_probe.add_argument("--replicates", type=int, default=1)
-    two_pass_probe = sub.add_parser(
-        "two-pass-probe",
-        help="run an isolated two-pass turn; never commits the proposal",
-    )
-    two_pass_probe.add_argument("--variation", type=Path, required=True)
-    two_pass_probe.add_argument("--scene", required=True)
-    two_pass_probe.add_argument("--storylet", required=True)
-    two_pass_probe.add_argument("--player-input", required=True)
-    two_pass_probe.add_argument("--replicates", type=int, default=1)
     return command
 
 
@@ -236,28 +217,6 @@ def _prompt(args: argparse.Namespace) -> int:
     return 0
 
 
-def _selection_probe(args: argparse.Namespace) -> int:
-    if args.replicates < 1:
-        raise ValueError("--replicates must be at least 1")
-    variation = load_variation(args.variation)
-    results = [
-        selection_probe_for(variation, args.scene, args.storylet, args.player_input) for _ in range(args.replicates)
-    ]
-    _json({"diagnostic_only": True, "results": results})
-    return 0
-
-
-def _two_pass_probe(args: argparse.Namespace) -> int:
-    if args.replicates < 1:
-        raise ValueError("--replicates must be at least 1")
-    variation = load_variation(args.variation)
-    results = [
-        two_pass_probe_for(variation, args.scene, args.storylet, args.player_input) for _ in range(args.replicates)
-    ]
-    _json({"diagnostic_only": True, "results": results})
-    return 0
-
-
 def _describe(args: argparse.Namespace) -> int:
     variation = load_variation(args.variation)
     # Loading the effective package validates both the base package and every
@@ -274,7 +233,7 @@ def _describe(args: argparse.Namespace) -> int:
             "output_example": variation["_resolved_output_example"],
             "beat_delivery": variation["_prompt_variant"]["beat_delivery"],
             "story_package": variation["_story_package_value"],
-            "rules": variation["_resolved_rules"],
+            "rules": preview_rules(variation),
         }
     )
     return 0
@@ -529,7 +488,13 @@ def _run(args: argparse.Namespace) -> int:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
-    aggregate = aggregate_runs(judged_runs, judgments, args.replicates)
+    aggregate = aggregate_runs(
+        judged_runs,
+        judgments,
+        args.replicates,
+        failures=failed_runs,
+        entry_state=(runs[0].get("entry_state") if runs else None),
+    )
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
@@ -555,7 +520,7 @@ def _run(args: argparse.Namespace) -> int:
             ),
             LEDGER_PATH,
         )
-    failure_aggregate = aggregate_runs([], [], args.replicates)
+    failure_aggregate = aggregate_runs([], [], args.replicates, failures=[])
     for failed in failed_runs:
         failure_budget = {
             "estimated_workers_ai_neurons_from_requests": failed.get("narration_requests", 0) * 330 / 30,
@@ -615,10 +580,6 @@ def main(argv: list[str] | None = None) -> int:
             return _score(args)
         if args.command == "prompt":
             return _prompt(args)
-        if args.command == "selection-probe":
-            return _selection_probe(args)
-        if args.command == "two-pass-probe":
-            return _two_pass_probe(args)
         if args.command == "describe":
             return _describe(args)
         if args.command == "log":

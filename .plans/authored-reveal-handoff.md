@@ -2,7 +2,11 @@
 
 ## Status
 
-**Phase 5 complete. Proposed; expand migration only after Phase 6 evidence.**
+**Phases 6 and 7 complete (2026-09-12). The deterministic suite passes and the
+live benchmark is clean: Scene 1A completed 4 of 4 replicates with the authored
+handoff composed on every one, the unrelated control completed 2 of 2, and no
+replicate failed. Two candidates are migrated; the rest stay legacy for the
+authoring reason recorded in Phase 7.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence. It complements (and supersedes the uncompleted
@@ -196,21 +200,23 @@ JSON.
 
 ### Phase 6: Test and benchmark
 
-- [ ] Unit-test schema/loader checks, matcher behavior, prompt exclusion,
+- [x] Unit-test schema/loader checks, matcher behavior, prompt exclusion,
   composed-segment shape, validation failure, and atomic no-commit behavior.
-- [ ] Add an engine-level test proving the selected fact and package effects
+- [x] Add an engine-level test proving the selected fact and package effects
   commit only after the composed delivery passes all existing validators.
-- [ ] Add an API/UI regression test that the player sees the authored sentence
+- [x] Add an API/UI regression test that the player sees the authored sentence
   as ordinary narration and never sees source IDs or a new segment kind.
-- [ ] Add a benchmark variation for authored handoff. Its records must include
+- [x] Add a benchmark variation for authored handoff. Its records must include
   `authored_handoff_candidate_id` as bench telemetry only.
-- [ ] Run the isolated recording probe first; then run the established Scene 1A
+- [x] Run the isolated recording probe first; then run the established Scene 1A
   script and at least one unrelated scene. Diagnose pre-recording narration
   safety failures separately rather than treating them as selection outcomes.
-- [ ] Require zero false-positive handoffs in deterministic cases and 100%
+- [x] Require zero false-positive handoffs in deterministic cases and 100%
   successful composed delivery for the exact recording action before expanding
   migration. Judge surrounding prose quality separately from selection
-  correctness.
+  correctness. The deterministic suite is at zero false positives and 100%
+  exact composed delivery; the live scripts stopped before that turn on
+  separate narration-safety failures.
 
 Suggested commands after implementation:
 
@@ -223,21 +229,136 @@ uv run python -m bench run --variation bench/variations/authored-handoff-phase1.
   --out bench/results/authored-handoff-phase1 --confirm
 ```
 
-Exit gate: the isolated probe and live benchmark show accepted delivery where
-the previous one- and two-pass model paths produced empty selections, with no
-fact committed on unmatched or ambiguous actions.
+- [x] Exit gate: met 2026-09-12. The live benchmark shows accepted delivery
+  where the previous one- and two-pass model paths produced empty selections,
+  with no fact committed on unmatched or ambiguous actions. Evidence is under
+  `bench/results/phase6-live-1a/` and `bench/results/phase6-live-1b/`.
+
+#### Phase 6 resolution
+
+The handoff design was never the problem. Three unrelated defects stopped every
+live run before it reached the recording turn; all three are fixed and covered
+by executed checks.
+
+1. **The grounding repair was bypassed on the handoff path.**
+   `_parse_eligible_proposal` returned early via `_ordinary_handoff_proposal`
+   before `_auto_attribute_committed_knowledge` ran, so a handoff turn naming an
+   already-committed term was rejected with `uncited_knowledge`. Identical prose
+   grounded `k_scene_1a_entry` on the legacy path and nothing on the handoff
+   path. This is what produced the `'kitchen floor'` failures: they occurred on
+   turn 3, the recording turn itself, not before it.
+2. **Authored prose named knowledge the scene had not committed.** The engine
+   hands the narrator each scene's `entry_text`, beats and knowledge-frame
+   `situation`, then rejected it for writing from that material. Eleven
+   collisions across eight scenes, the worst registering the two protagonists'
+   names as knowledge aliases, which is what killed the 1B control. Fixed in the
+   package data, and generalized by the new loader lint
+   `_validate_narration_term_traps` so no package can reintroduce the class.
+3. **`bench` misreported.** Prompt previews read a stale hand-copy of the turn
+   rules, and failed replicates never reached `aggregate_runs`, so a 4-of-4
+   failure summarized identically to a run that never executed. The summary now
+   carries `failed_replicates`, the real `failure_reason` strings, and an
+   `entry_state` disclosure of the deliberately bare arrival state.
+
+Live result, `bench/variations/authored-handoff-phase1.json`:
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Scene 1A replicates completed | 0 of 4 | 3 of 4 |
+| Authored handoff composed | never | 3 of 3 reaching turn 3 |
+| False-positive handoffs | n/a | 0 across 13 non-matching turns |
+| Scene 1B control | 0 of 1 | 2 of 2 |
+
+The delivered turn carried `model_selected_knowledge_ids: []` with
+`selected_knowledge_ids: ['k_sl_1a_b_r2']` and the authored `delivery_text`
+verbatim, confirming the runtime, not the model, owned the reveal.
+
+**Residual, carried to Phase 7, not a handoff defect.** One Scene 1A replicate
+in four failed with `narration_known_term_leak: narration mentions unavailable
+knowledge 'michelle's research'`. No fact was committed. This is the older
+select-or-don't-mention problem from
+`narration-candidate-selection-reliability.md`: the term belonged to an
+uncommitted legacy candidate, `k_sl_1a_d_r1`. That specific alias was removed
+because it named the scene's own invitation to search rather than the secret,
+but the class remains for any legacy candidate and is the reason to keep
+migrating candidates to authored handoff.
+
+#### Live verification of that residual — 2026-09-12
+
+Two further four-replicate runs of the same script confirmed the alias fix and
+found one more defect that the deterministic suite could not have caught.
+
+- `bench/results/phase6-verify-research/`: `michelle's research` did not recur.
+  But two replicates failed on `memory card` / `the memory card`, and one of
+  those had already composed the handoff on turn 3 and was rejected on turn 4
+  for naming the card it had just legitimately earned.
+- Root cause: the term index keyed on the leading determiner, so `memory card`
+  was owned by four reveals including the earned one while `the memory card` was
+  owned only by an uncommitted sibling. Fixed by normalizing one leading
+  determiner at index time and merging owners — a subtractive fix that removes
+  the determiner sensitivity rather than adding a matching rule. Guarded
+  multi-word terms rose from 202 to 204, so protection widened. Two sibling
+  instances, `the exchange point` and `her information drop`, were fixed by the
+  same change.
+- `bench/results/phase6-verify-determiner/`: 3 of 4 completed, and all 3 that
+  reached turn 3 composed `k_sl_1a_b_r2`. The post-earn rejection is gone.
+
+What remains is a single, well-understood failure mode: roughly one replicate in
+four, the narrator names a legacy candidate's guarded term on turn 2 before the
+player has earned it. It commits no facts and is exactly what Phase 7's
+migration exists to remove.
 
 ### Phase 7: Rollout and authoring expansion
 
-- [ ] Keep the behavior opt-in by candidate data during the first release.
-- [ ] Review telemetry for unmatched player phrasings; add only explicit,
+- [x] Close the hole that made migration necessary but not sufficient.
+  `_model_candidates` hid a migrated candidate only on the turn its matcher
+  fired. On every other turn the narrator was still offered it, so its wording
+  entered the prompt for an unearned reveal, and the model could select the ID
+  through the legacy path and commit the fact with no authored delivery at all.
+  A migrated candidate is now neither shown to nor selectable by the model on
+  any turn, across the opening, the output examples and the recovery path, while
+  remaining in the projection the matcher runs against.
+- [x] Migrate candidates incrementally, prioritizing concrete investigation
+  actions and short, player-visible payoffs. `k_sl_1a_b_r1`, the saved-files
+  reveal, is migrated: its `action_evidence` was already disjoint from
+  `k_sl_1a_b_r2`, so only its `delivery_text` had to be authored.
+- [x] Keep the behavior opt-in by candidate data during the first release.
+  Exactly two candidates are migrated, and a check enforces that number so a
+  further migration cannot land unnoticed.
+- [x] Review telemetry for unmatched player phrasings; add only explicit,
   author-reviewed aliases. Do not replace the exact matcher with a similarity
-  score or LLM semantic judgment.
-- [ ] Migrate candidates incrementally, prioritizing concrete investigation
-  actions and short, player-visible payoffs.
-- [ ] Remove the two-pass benchmark path only after the authored-handoff path
-  has sufficient evidence; it is useful diagnostic evidence until then, but
-  must not be enabled in production.
+  score or LLM semantic judgment. Sixty-seven recorded live turns produced nine
+  correct compositions and no false positives, but three natural phrasings
+  earned nothing because the shared first evidence group accepted only
+  recover/retrieve. Adding `memory card` and `the card` to that group on both
+  candidates fixes all three without creating a tie; the matcher is unchanged.
+- [x] Remove the two-pass benchmark path now that the authored-handoff path has
+  sufficient evidence. Deleted outright rather than left behind a disabled flag.
+
+- [x] Gather live evidence from `bench/manifests/phase7-live-bench.json`,
+  orchestrated through Ringer rather than executed by hand. The run on
+  2026-09-12 is the first completely clean one: Scene 1A completed 4 of 4
+  replicates with `k_sl_1a_b_r2` composed on every one, and the unrelated
+  Scene 1B control completed 2 of 2. No replicate failed for any reason.
+  Artifacts are under `bench/results/phase7-live-1a/` and
+  `bench/results/phase7-live-1b/`.
+
+  The run that immediately preceded it completed only 2 of 4, both failures
+  being `narration_known_term_leak: 'memory card'` on turn 2. That turn
+  projects the beat whose own authored prose reads "Kristin finds a hidden
+  memory card taped beneath a drawer", so the engine was rejecting the
+  narrator for using the words it had just been handed. Licensing a projected
+  beat's vocabulary removed the contradiction and the failures with it.
+
+**Deliberately not migrated, and why.** `k_sl_1a_a_r1`/`a_r2`,
+`k_sl_1a_d_r1`/`d_r2` and the `k_sl_1a_c_*` pair are outcome variants of the
+*same* player action - a thorough versus a hurried search, the full files versus
+surviving fragments. No `action_evidence` can honestly distinguish them, because
+the difference is in what survived rather than in what the player did. Migrating
+both members of such a pair would make the matcher tie, and a tie composes
+nothing, which reads to a player as the game ignoring them. These need atomizing
+in the fiction before they can be migrated; that is authoring work, not a
+mechanical migration.
 
 ## Explicit non-solutions
 

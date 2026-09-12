@@ -28,6 +28,8 @@ from storygame.story_package.models import (
     StoryPackage,
     WorldSource,
     entity_surface_forms,
+    normalize_term,
+    term_lookup_forms,
 )
 
 
@@ -243,13 +245,19 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
         for scene_id in item.available_in_scenes:
             scene_to_candidates.setdefault(scene_id, []).append(item.id)
         for alias in item.aliases:
-            alias_to_knowledge.setdefault(alias.casefold(), []).append(item.id)
-            term_to_knowledge.setdefault(alias.casefold(), []).append(item.id)
+            for form in term_lookup_forms(alias):
+                alias_to_knowledge.setdefault(form, []).append(item.id)
+                term_to_knowledge.setdefault(form, []).append(item.id)
         for phrasing in (term for group in item.must_convey for term in group if len(term.split()) > 1):
-            term_to_knowledge.setdefault(phrasing.casefold(), []).append(item.id)
+            for form in term_lookup_forms(phrasing):
+                term_to_knowledge.setdefault(form, []).append(item.id)
         audience_key = item.audience.kind + ":" + ",".join(item.audience.character_ids)
         audience_to_known_terms.setdefault(audience_key, []).extend(
-            (item.statement, *item.aliases, *(term for group in item.must_convey for term in group))
+            (
+                item.statement,
+                *(form for alias in item.aliases for form in term_lookup_forms(alias)),
+                *(form for group in item.must_convey for term in group for form in term_lookup_forms(term)),
+            )
         )
         for predicate in item.requires:
             prerequisite_dependents.setdefault(predicate.fact_id, []).append(item.id)
@@ -257,10 +265,19 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
     def frozen(values: dict[str, list[str]]) -> dict[str, tuple[str, ...]]:
         return {key: tuple(sorted(set(value))) for key, value in values.items()}
 
+    def frozen_term_index(values: dict[str, list[str]]) -> dict[str, tuple[str, ...]]:
+        owners_by_normalized: dict[str, list[str]] = {}
+        for key, owners in values.items():
+            owners_by_normalized.setdefault(normalize_term(key), []).extend(owners)
+        return {key: tuple(sorted(set(owners_by_normalized[normalize_term(key)]))) for key in values} | {
+            key: tuple(sorted(set(owners))) for key, owners in owners_by_normalized.items() if key not in values
+        }
+
     entity_alias_to_entities: dict[str, list[str]] = {}
     for entity in (*world.locations, *world.npcs, *world.items):
         for form in entity_surface_forms(entity):
-            entity_alias_to_entities.setdefault(form, []).append(entity.id)
+            for lookup_form in term_lookup_forms(form):
+                entity_alias_to_entities.setdefault(lookup_form, []).append(entity.id)
 
     protected_terms: set[str] = set()
     entity_forms = {
@@ -268,25 +285,26 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
     }
     for protected in world.protected_knowledge:
         spaced = protected.replace("_", " ").replace("-", " ").casefold()
-        protected_terms.add(spaced)
-        words = spaced.split()
-        if len(words) > 1:
-            for start in range(len(words)):
-                for end in range(start + 2, len(words) + 1):
-                    protected_terms.add(" ".join(words[start:end]))
-            if words[0] not in entity_forms:
-                protected_terms.add(words[0])
+        for protected_form in term_lookup_forms(spaced):
+            protected_terms.add(protected_form)
+            words = protected_form.split()
+            if len(words) > 1:
+                for start in range(len(words)):
+                    for end in range(start + 2, len(words) + 1):
+                        protected_terms.add(" ".join(words[start:end]))
+                if words[0] not in entity_forms:
+                    protected_terms.add(words[0])
 
     return KnowledgeIndexes(
         by_id=by_id,
         facts_to_knowledge=frozen(facts_to_knowledge),
         source_to_knowledge=frozen(source_to_knowledge),
         scene_to_candidates=frozen(scene_to_candidates),
-        alias_to_knowledge=frozen(alias_to_knowledge),
+        alias_to_knowledge=frozen_term_index(alias_to_knowledge),
         audience_to_known_terms={key: tuple(sorted(set(value))) for key, value in audience_to_known_terms.items()},
         prerequisite_dependents=frozen(prerequisite_dependents),
-        entity_alias_to_entities=frozen(entity_alias_to_entities),
-        term_to_knowledge=frozen(term_to_knowledge),
+        entity_alias_to_entities=frozen_term_index(entity_alias_to_entities),
+        term_to_knowledge=frozen_term_index(term_to_knowledge),
         protected_terms=tuple(sorted(protected_terms)),
     )
 
@@ -479,6 +497,50 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
             )
 
 
+def _validate_narration_term_traps(package: StoryPackage) -> None:
+    """Reject authored scene text that names knowledge not committed at scene entry."""
+
+    from storygame.runtime.knowledge import KnowledgeProjector
+    from storygame.runtime.state import RuntimeState
+
+    indexes = package.knowledge_indexes
+    guarded_terms = {
+        term.casefold()
+        for terms in indexes.audience_to_known_terms.values()
+        for term in terms
+        if len(term.split()) > 1 and term.casefold() in indexes.term_to_knowledge
+    }
+    projector = KnowledgeProjector()
+    for scene in package.scenes:
+        state = RuntimeState(
+            package=package,
+            current_scene_id=scene.metadata.scene_id,
+            phase=scene.metadata.freytag_phase,
+        )
+        state._assert_scene_entry_fact(scene.metadata.scene_id)
+        committed = {item.id for item in projector.project(state, "player", "").committed_knowledge}
+        authored_parts = [scene.metadata.entry_text]
+        frame = next(frame for frame in package.knowledge.scene_frames if frame.scene_id == scene.metadata.scene_id)
+        authored_parts.append(frame.situation)
+        for field in ("objective", "tone"):
+            value = getattr(frame, field, "")
+            if value:
+                authored_parts.append(value)
+        # Beat vocabulary is licensed at narration time when that beat is projected.
+        authored_text = " ".join(" ".join(authored_parts).casefold().split())
+        for term in sorted(guarded_terms):
+            normalized_term = " ".join(term.split())
+            if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", authored_text):
+                continue
+            owners = tuple(indexes.term_to_knowledge.get(term, ()))
+            if set(owners) & committed:
+                continue
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} authored prose contains unavailable knowledge term "
+                f"'{term}' owned by knowledge IDs {list(owners)}"
+            )
+
+
 def _validate(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
     entity_groups = (package.world.locations, package.world.npcs, package.world.items)
@@ -648,6 +710,7 @@ def _validate(package: StoryPackage) -> None:
         tied = [t for t in package.pacing.transitions if t.source_scene_id == source_id]
         if len({(t.priority, tuple(t.triggers)) for t in tied}) != len(tied):
             raise StoryPackageError(f"transitions from {source_id} have ambiguous priority")
+    _validate_narration_term_traps(package)
 
 
 def _validate_deliveries(package: StoryPackage) -> None:
@@ -822,8 +885,8 @@ def load_story_package(root: Path) -> StoryPackage:
         knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
     )
-    _validate(package)
     _validate_knowledge(package)
+    _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
     return package

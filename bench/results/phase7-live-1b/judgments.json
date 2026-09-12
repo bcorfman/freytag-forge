@@ -1,0 +1,66 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening invents interpretation: disappearance dates described as a 'countdown' without scene-local support.",
+        "Repeated investigation of the same path yields near-duplicate non-progress responses and no actionable discovery from scene canon.",
+        "Turn 3 introduces 'abandoned service tunnels,' which are not established in this scene canon.",
+        "Final turn dumps multiple future beats and offscene events at once: Brandon identification, escape through storm drains, tactical team pursuit, freight terminal, evacuation tunnels, loading docks.",
+        "Protected knowledge is revealed early: the unidentified man in the photograph is named as Brandon Corfman in the exit turn without having been properly uncovered in-scene.",
+        "Scene beats were not covered in order through play; the dead drop contents, watcher, and warning are not interactively developed before transition.",
+        "Exit lacks motivated prose based on what the player actually discovered during the repeated path inspection; the player was not previously told enough to justify leaving for the freight terminal.",
+        "Ordinary bench/dead-drop investigation is skipped after the opening rather than responded to through turns despite being the scene's core canon."
+      ],
+      "reasons": [
+        "The opening has some sensory placement, but it is thin and mostly summary; more importantly, it overstates meaning by calling the dates a countdown. Scene-local canon only says a list of earlier disappearance dates hidden beneath the photo.",
+        "All three non-exit turns respond to the same action with essentially the same vague observation about patrol traces/tire marks. This does not reward apt searching with new, actable information.",
+        "The watcher across the park is only lightly mentioned once and never developed into a responsive consequence. Emergency patrol pressure also remains inert.",
+        "The fourth turn is a compressed synopsis of several beats that were never actually dramatized in prior turns. It races the transition instead of progressively revealing discoveries.",
+        "Because the player repeatedly inspected the path, the scene needed to either produce consequential new findings tied to the park canon or redirect clearly. Instead it stalls, then exits via exposition.",
+        "The departure turn must give a reason to go based on what was found and where it points. Here, the narration asserts many discoveries that the player never earned on-page in this scene, so the exit is not properly motivated."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening overstates discoveries without showing investigation: the handwritten sequence, access card, photo, and hidden disappearance-date list are all effectively pre-revealed immediately.",
+        "Opening adds an unsupported interpretation that the disappearance dates are 'a countdown.'",
+        "The watcher lingering across the park is omitted from the playable scene turns.",
+        "Emergency patrol pressure is only weakly and inconsistently handled; repeated inspections do not materially change the situation in a grounded way.",
+        "Repeated apt searching of the path beyond the gate yields mostly empty or contradictory results the player cannot act on.",
+        "Turn 1 invents 'branching off into the service tunnels' from the patrol route without grounding from scene-local canon.",
+        "Turn 2 has Kristin following impressions through the park, changing position and action scope rather than resolving the requested inspection at the gate.",
+        "Turn 3 introduces 'possible sighting' and 'evacuation tunnel' radio content without established basis, edging into future-beat leakage.",
+        "Final turn dumps multiple scene and next-scene beats in summary form instead of dramatizing them in order within the scene.",
+        "Final turn introduces Brandon and his identification abruptly with no prior readable encounter in this scene.",
+        "Final turn claims the tactical team lost their trail and that Kristin and Brandon escaped through storm drains, events not played out in earlier turns.",
+        "Final turn reveals deductions about the transit card and number sequence identifying a transport route without the player having discovered that in-scene.",
+        "Final turn pushes into the freight terminal and loading docks, racing the transition beyond the park scene.",
+        "The departure narration does not clearly tie what was actually found during play in the park to why leaving now is warranted; it relies on undisplayed discoveries and recap."
+      ],
+      "reasons": [
+        "The scene fails both turn-level and scene-level requirements. The opening should establish the damaged park, the bench, hidden items, patrol sweeps, and the sense of being watched with sensory immediacy. Instead it pre-solves the cache and adds interpretation ('countdown') not supported by the supplied canon.",
+        "On ordinary turns, the player repeatedly inspects the path beyond the gate, but the responses do not reward that investigation with stable, actionable park-local findings. They either invent unsupported tunnel-routing details, merely restate that tracks exist, or provide vague radio fragments.",
+        "Progression is poor. The authored beats projected are Michelle's dead drop, the man following her, and Brandon's warning, but the playable turns do not cover these in order. The dead drop is front-loaded in the opening, the watcher/man-following beat is omitted until an abrupt final recap, and Brandon's warning is never dramatized before the scene exits.",
+        "Scene-local consistency is broken by introducing service tunnels, storm-drain escape, tactical teams, freight terminal loading docks, and heavy electrical service as if already established. Those belong to later developments and are not earned by what the player read in this scene.",
+        "The exit turn is especially noncompliant: it is a retrospective summary containing discoveries, identifications, and movement into the next location rather than a motivated departure from the park based on clearly narrated in-scene findings. Because the player never actually experienced the encounter with Brandon or the chain of discoveries in this scene, the handoff is not properly motivated."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

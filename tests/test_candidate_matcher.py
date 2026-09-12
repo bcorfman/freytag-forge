@@ -5,13 +5,19 @@ from storygame.runtime.candidate_matcher import (
 )
 from storygame.runtime.knowledge import RevealCandidate
 
+CARD_REFERENCES = ("recover", "retrieve", "memory card", "the card")
+
 WARNING = ActionEvidenceCandidate(
     id="warning",
-    required_groups=(("recover", "retrieve"), ("damaged recording", "broken recording"), ("listen", "play")),
+    required_groups=(
+        CARD_REFERENCES,
+        ("damaged recording", "interrupted message", "recording", "broken recording"),
+        ("listen", "play"),
+    ),
 )
 FILES = ActionEvidenceCandidate(
     id="files",
-    required_groups=(("recover", "retrieve"), ("card files", "saved files"), ("read", "inspect")),
+    required_groups=(CARD_REFERENCES, ("card files", "saved files"), ("read", "inspect")),
 )
 
 WARNING_HANDOFF = RevealCandidate(
@@ -58,6 +64,28 @@ def test_negated_action_does_not_match() -> None:
     result = uniquely_matched_candidate("Do not recover the damaged recording or listen to it.", (WARNING, FILES))
 
     assert result is None
+
+
+def test_card_reference_aliases_match_only_the_intended_reveal() -> None:
+    cases = (
+        ("Read the saved files on Michelle's memory card.", "files"),
+        ("Play the damaged recording from Michelle's memory card.", "warning"),
+        ("Listen to the interrupted message on the card.", "warning"),
+    )
+
+    for player_input, expected_id in cases:
+        result = uniquely_matched_candidate(player_input, (WARNING, FILES))
+
+        assert result is not None
+        assert result.id == expected_id
+
+
+def test_card_reference_without_the_reveal_action_does_not_match() -> None:
+    assert uniquely_matched_candidate("Ask Brandon about the memory card.", (WARNING, FILES)) is None
+
+
+def test_negated_recording_action_does_not_match_with_card_alias() -> None:
+    assert uniquely_matched_candidate("Do not listen to the damaged recording.", (WARNING, FILES)) is None
 
 
 def test_ambiguous_complete_evidence_does_not_break_ties() -> None:
@@ -122,3 +150,44 @@ def test_authored_handoff_ignores_a_package_candidate_not_in_projection() -> Non
     projected_candidates = tuple(candidate for candidate in package_candidates if candidate.id == "warning")
 
     assert uniquely_matched_authored_handoff("Recover the card files and read them.", projected_candidates) is None
+
+
+def test_scene_1a_b_migrated_candidates_stay_disjoint() -> None:
+    files_candidate = RevealCandidate(
+        id="k_sl_1a_b_r1",
+        statement="Kristin reads the saved files on Michelle's memory card.",
+        must_convey=(),
+        action_evidence=(
+            CARD_REFERENCES,
+            ("card files", "saved files", "files on the card"),
+            ("read", "inspect"),
+        ),
+        delivery_text=(
+            "Michelle's memory card contains a damaged recording and saved files. "
+            "The card points to a dead drop at a bench in the park."
+        ),
+    )
+    recording_candidate = RevealCandidate(
+        id="k_sl_1a_b_r2",
+        statement="Kristin listens to Michelle's damaged recording.",
+        must_convey=(),
+        action_evidence=(
+            CARD_REFERENCES,
+            ("damaged recording", "interrupted message", "recording"),
+            ("listen", "play"),
+        ),
+        delivery_text=(
+            "Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts."
+        ),
+    )
+    candidates = (files_candidate, recording_candidate)
+
+    files_result = uniquely_matched_authored_handoff("Retrieve the saved files on the card and read them.", candidates)
+    recording_result = uniquely_matched_authored_handoff("Recover the damaged recording and listen to it.", candidates)
+    unrelated_result = uniquely_matched_authored_handoff("Search the kitchen for signs of a struggle.", candidates)
+
+    assert files_result is not None
+    assert files_result.candidate.id == "k_sl_1a_b_r1"
+    assert recording_result is not None
+    assert recording_result.candidate.id == "k_sl_1a_b_r2"
+    assert unrelated_result is None

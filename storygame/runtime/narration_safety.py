@@ -110,6 +110,7 @@ class NarrationSafetyValidator:
             for delivery in state.package.deliveries
             if delivery.fact_id in candidate_state.staged_handoff_fact_ids
         ).casefold()
+        projected_beat_text = self._projected_beat_text(state)
 
         for segment in segments:
             grounding = set(segment.grounding_ids)
@@ -175,6 +176,8 @@ class NarrationSafetyValidator:
                 if not knowledge_ids & allowed_knowledge:
                     if statement_covers_term:
                         continue
+                    if self._contains(projected_beat_text, form):
+                        continue
                     raise ProposalValidationError(
                         f"narration mentions unavailable knowledge '{form}'",
                         code="narration_known_term_leak",
@@ -208,3 +211,15 @@ class NarrationSafetyValidator:
     @staticmethod
     def _normalize(value: str) -> str:
         return " ".join(value.casefold().split())
+
+    @staticmethod
+    def _projected_beat_text(state: RuntimeState) -> str:
+        """Return only the prose and details of beats sent on this turn."""
+
+        projected = set(state.last_turn_delivery.beats_projected)
+        return " ".join(
+            " ".join((beat.prose, *beat.details))
+            for scene in state.package.scenes
+            for anchor, beat in scene.beats.items()
+            if anchor in projected
+        )

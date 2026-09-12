@@ -1,0 +1,30 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Kitchen/back-door search did not actually examine the overturned chair, forced lock/frame, or other concrete signs the player asked about.",
+    "Phone state became inconsistent: opening says dark/battery drained and undamaged; turn 1 says screen cracked; turn 3 says locked; all without grounding.",
+    "Turn 2 says desk/work area is in the kitchen and only hints at finding something, but does not let the player recover or inspect it.",
+    "Turn 3 invents a memory card on Michelle's phone and reveals a warning recording without adequately connecting it to the prior search under/behind the work area.",
+    "Protected/future knowledge is revealed early: 'do not trust emergency broadcasts' and especially 'Continuity Initiative... preparing to choose who remains' exceed the scene's revealed knowledge and race ahead.",
+    "Official at the door is introduced with no responsive consequence to the player's requested observation of what they do at the gate as they leave.",
+    "Final turn ignores the repeated kitchen/back-door search request and instead jumps to reading files and traveling away.",
+    "Scene exit is not motivated by what the player was actually shown finding in prose in that final turn; the departure skips the requested action and names a destination not properly established through play.",
+    "Scene skips or muddles core local investigation beats in order: concrete evidence in kitchen/back door, search of Michelle's work area, interrupted message/research clues, then threat/exit."
+  ],
+  "reasons": [
+    "The judge must evaluate the actual turn against the requested beat. Several turns are nonresponsive: repeated searches of the kitchen/back door keep returning little or nothing actionable, despite canon stating there are concrete clues there and Michelle's work area has not been searched yet.",
+    "Scene-local consistency is broken by contradictory object details and layout assumptions. Michelle's phone is canonically undamaged and lying on the kitchen floor; narration changes that to a cracked screen and later a locked phone, while also treating the work area as though it is in the kitchen without support.",
+    "Progression is poor. Turn 2 teases a hidden object but withholds the consequence; turn 3 then leaps to a damaged recording and a major conspiracy warning. That is revelation by fiat rather than progressive investigation.",
+    "Protected knowledge is not safe. The emergency-broadcast warning and the named federal program with selective survival policy are major revelations not earned within this scene-local canon and not part of revealed_knowledge.",
+    "The opening has some atmosphere, but ordinary turns lack substantial sensory follow-through and consequences. The officer-at-door turn stops at the officer's face instead of answering the player's full action sequence.",
+    "The left_scene turn must give a reason to go based on what was found and where it points, in prose the player actually reads. Instead it ignores the player's search request, summarizes discoveries inconsistently, and jumps to travel. That fails exit motivation.",
+    "Across the scene, authored beats were not cleanly covered in order. The basic disappearance evidence was handled weakly, the work-area search was not completed properly, the interrupted-message/research discovery was muddled, and the threat/escalation with the official was underdramatized before an abrupt transition."
+  ]
+}
