@@ -1,42 +1,47 @@
 # Freytag Forge product reference
 
 Freytag Forge is a package-driven interactive-fiction engine for freeform
-roleplay. Its story-agnostic runtime validates every proposed change before
-facts become durable.
+roleplay. Markdown and typed knowledge compile into an immutable package.
 
-## Player experience
+## Player input and narration
 
-- Players write ordinary in-world actions. There are no menus or parser rules.
-- Authored Markdown and typed knowledge define the world and its progression.
-- Scene-scoped projection keeps discoveries progressive and future plot hidden.
-- A threatened dependency opens a typed choice; proceed commits the branch,
-  while return restores the exact pre-turn snapshot, including after save/load.
+- The player writes ordinary in-world actions. There are no menus or parser
+  rules.
+- The narrator receives only bounded scene material and eligible legacy
+  candidates. It does not receive routes, source IDs, future effects, or
+  transcript memory.
+- Declarative storylets and pacing make delay a player choice. Prose cannot
+  choose a branch for the player.
 
 ## Runtime contract
 
-- Facts are the only durable truth. Each turn projects local knowledge, parses
-  untrusted narrator JSON, validates prose and cloned facts, then commits once.
-- The narrator sees bounded scene material and eligible legacy candidates. It
-  never sees routes, source IDs, future effects, or transcript memory.
-- Unsupported facts, leaks, ambiguity, wrong-speaker dialogue, and premature
-  transitions fail closed. Pacing is declarative; prose never chooses for the player.
+- Facts are the only durable truth. Each turn projects scene-local knowledge,
+  parses untrusted narrator JSON, validates the prose and a cloned fact store,
+  then commits exactly once or not at all.
+- Narration safety checks reject prose that names unearned knowledge, cites a fact it was
+  not given, puts words in the wrong character's mouth, or runs ahead of the
+  plot.
+- A rejected turn restores the exact pre-turn snapshot, including across save
+  and load.
 
 ### Authored reveal handoff
 
-- An authored handoff is opt-in: complete `action_evidence` plus non-empty
-  `delivery_text`. After projection, exactly one match appends that text as
-  ordinary narration and selects the candidate through normal validation.
-  Ties and misses do nothing; legacy candidates, IDs, effects, and saves stay intact.
+- Handoff is opt-in. It requires complete `action_evidence` and non-empty
+  `delivery_text`.
+- The runtime decides whether the action earned the reveal. When exactly one
+  candidate matches, it inserts the authored delivery sentence and validates
+  the result normally.
+- A tie or a miss commits nothing. Incomplete handoff data follows the normal
+  path.
 
-## Authoring and API
+## Package validation
 
-- The loader rejects malformed source, bad references, invalid effects,
-  ambiguous transitions, timing errors, dependency cycles, and old saves.
-  Package files and indexes stay immutable at runtime.
-- FastAPI, React, a Cloudflare Worker, and SQLite provide hosting. The adapter
-  owns transport, CORS, deployment identity, and persistence; gameplay stays
-  shared. The API serves sessions, turns, game-break choices, segments, and
-  compatibility `lines`.
+- Loading rejects malformed source, bad references, invalid effects, ambiguous
+  transitions, timing errors, dependency cycles, and stale saves.
+- `_validate_narration_term_traps` rejects a package when a scene's own
+  authored prose names a multi-word knowledge term whose owning knowledge is
+  not committed in that scene. This prevents the narrator from failing on
+  prose that faithfully repeats material it received.
 
 ## Developer workflow
 

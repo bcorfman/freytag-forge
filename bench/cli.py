@@ -474,7 +474,6 @@ def _run(args: argparse.Namespace) -> int:
                     "narration_requests": 0,
                     "recovery_requests": 0,
                     "package": variation.get("_package_path", ""),
-                    "entry_state": {"scene_id": args.scene, "committed_knowledge_count": 1},
                 }
             record["replicate"] = replicate
             runs.append(record)

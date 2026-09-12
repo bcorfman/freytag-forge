@@ -24,6 +24,7 @@ from bench.core import (
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
@@ -488,6 +489,33 @@ def test_aggregate_reports_actual_scene_denominator() -> None:
     assert aggregate["max_score"] == 7
     assert aggregate["score_metric"].startswith("7-point record")
     assert aggregate["example_leakage"] == 2
+
+
+def test_failures_only_aggregate_reports_failure_details() -> None:
+    failure = {
+        "replicate": 1,
+        "script": "e2e",
+        "scene_id": "1A",
+        "failure_reason": "narration provider failed",
+    }
+    aggregate = aggregate_runs([], [], 1, failures=[failure])
+    assert aggregate["failed_replicates"] == 1
+    assert aggregate["failures"] == [failure]
+    assert aggregate["failures"][0]["failure_reason"] == "narration provider failed"
+    assert "entry_state" not in aggregate
+
+
+def test_entry_state_counts_projected_committed_knowledge() -> None:
+    variation = load_variation(VARIATION)
+    _, state = core.package_and_state(variation, "1A")
+    state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+
+    projected_count = len(KnowledgeProjector().project(state, "player", "").committed_knowledge)
+    assert len(state.facts.asserted) != projected_count
+    assert core.entry_state(state) == {
+        "scene_id": "1A",
+        "committed_knowledge_count": projected_count,
+    }
 
 
 def test_score_exposes_graded_missing_entries_without_changing_record_score() -> None:

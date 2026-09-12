@@ -477,7 +477,6 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
             raise StoryPackageError(
                 f"authored handoff knowledge '{item.id}' delivery_text contains implementation-only token '{token}'"
             )
-    _validate_narration_term_traps(package)
 
 
 def _validate_narration_term_traps(package: StoryPackage) -> None:
@@ -690,6 +689,7 @@ def _validate(package: StoryPackage) -> None:
         tied = [t for t in package.pacing.transitions if t.source_scene_id == source_id]
         if len({(t.priority, tuple(t.triggers)) for t in tied}) != len(tied):
             raise StoryPackageError(f"transitions from {source_id} have ambiguous priority")
+    _validate_narration_term_traps(package)
 
 
 def _validate_deliveries(package: StoryPackage) -> None:
@@ -864,8 +864,8 @@ def load_story_package(root: Path) -> StoryPackage:
         knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
     )
-    _validate(package)
     _validate_knowledge(package)
+    _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
     return package

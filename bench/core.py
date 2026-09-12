@@ -25,6 +25,7 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
@@ -300,7 +301,7 @@ def entry_state(state: RuntimeState) -> dict[str, Any]:
 
     return {
         "scene_id": state.current_scene_id,
-        "committed_knowledge_count": len(state.facts.asserted),
+        "committed_knowledge_count": len(KnowledgeProjector().project(state, "player", "").committed_knowledge),
     }
 
 
@@ -670,7 +671,7 @@ def _failed_scene_record(
     if error_code == "AI_QUOTA_EXCEEDED":
         quota = {"error": error_code, "message": "Workers AI quota is exhausted until 00:00 UTC."}
         reason = quota["message"]
-    return {
+    record = {
         "status": "failed",
         "replicate": 0,
         "script": script["name"],
@@ -685,8 +686,10 @@ def _failed_scene_record(
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
         "package": str(variation["_package_path"]),
-        "entry_state": entry_state or {"scene_id": scene_id, "committed_knowledge_count": 1},
     }
+    if entry_state is not None:
+        record["entry_state"] = entry_state
+    return record
 
 
 def _turn_with_rate_limit_retry(engine: RuntimeEngine, player_input: str) -> Any:
@@ -776,9 +779,6 @@ def aggregate_runs(
         (record.get("entry_state") for record in entry_records if record.get("entry_state")),
         None,
     )
-    if disclosed_entry_state is None:
-        scene_id = next((record.get("scene_id") for record in entry_records if record.get("scene_id")), None)
-        disclosed_entry_state = {"scene_id": scene_id, "committed_knowledge_count": 1 if scene_id else None}
     by_script: dict[str, Any] = {}
     for script in sorted({run["script"] for run in runs}):
         script_judgments = [item["judgment"] for item in paired if item["script"] == script]
@@ -791,12 +791,11 @@ def aggregate_runs(
             "per_criterion": script_score["per_criterion"],
             "graded_secondary": script_score["graded_secondary"],
         }
-    return {
+    aggregate = {
         "replicates": replicates,
         "completed_replicates": completed_replicates,
         "failed_replicates": len(failures),
         "failures": failures,
-        "entry_state": disclosed_entry_state,
         "scenes_scored": scenes_scored,
         "max_score": max_score,
         "score_metric": (
@@ -809,6 +808,9 @@ def aggregate_runs(
         "example_leakage": sum(int(run.get("example_leakage", 0)) for run in runs),
         "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
     }
+    if disclosed_entry_state is not None:
+        aggregate["entry_state"] = disclosed_entry_state
+    return aggregate
 
 
 def _student_t_two_sided_p(statistic: float, degrees: float) -> float:
