@@ -127,6 +127,7 @@ cython_debug/
 # Demo/replay artifacts
 runs/
 artifacts/
+bench-report.md
 frontend/test-results/
 
 # MCP directories

@@ -526,10 +526,7 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
             value = getattr(frame, field, "")
             if value:
                 authored_parts.append(value)
-        for beat in scene.beats.values():
-            beat_text = getattr(beat, "text", "") or getattr(beat, "description", "")
-            if beat_text:
-                authored_parts.append(beat_text)
+        # Beat vocabulary is licensed at narration time when that beat is projected.
         authored_text = " ".join(" ".join(authored_parts).casefold().split())
         for term in sorted(guarded_terms):
             normalized_term = " ".join(term.split())

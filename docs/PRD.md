@@ -29,6 +29,8 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
 - Narration safety checks reject prose that names unearned knowledge, cites a fact it was
   not given, puts words in the wrong character's mouth, or runs ahead of the
   plot.
+- Authored beat prose licenses the vocabulary of that beat for the turn when it is
+  projected to the narrator. Protected knowledge is never licensed this way.
 - Any rejected turn restores the exact pre-turn snapshot, including across
   save and load. A threatened dependency opens a typed choice: `proceed`
   commits the branch, while `return` rejects it.

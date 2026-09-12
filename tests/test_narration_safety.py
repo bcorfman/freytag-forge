@@ -24,7 +24,13 @@ def test_provider_cannot_smuggle_canonical_operations_or_event_ids() -> None:
             parse_turn_proposal({"segments": [{"kind": "narration", "text": "The room is quiet."}], **leaked})
 
 
-def _run_rejected(text: str, *, selected: list[str] | None = None, package=PACKAGE) -> ProposalValidationError:
+def _run_rejected(
+    text: str,
+    *,
+    selected: list[str] | None = None,
+    beats: tuple[str, ...] = (),
+    package=PACKAGE,
+) -> ProposalValidationError:
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
     payload = {
@@ -32,10 +38,26 @@ def _run_rejected(text: str, *, selected: list[str] | None = None, package=PACKA
         "selected_knowledge_ids": selected or [],
     }
     before = state.snapshot()
+
+    def provider(_player_input: str) -> dict[str, object]:
+        state.last_turn_delivery = state.last_turn_delivery.model_copy(update={"beats_projected": beats})
+        return payload
+
     with pytest.raises(ProposalValidationError) as caught:
-        RuntimeEngine(state, lambda _: payload).turn("Search the desk drawer.")
+        RuntimeEngine(state, provider).turn("Search the desk drawer.")
     assert state.snapshot() == before
     return caught.value
+
+
+def _run_accepted(text: str, *, beats: tuple[str, ...] = (), package=PACKAGE):
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+
+    def provider(_player_input: str) -> dict[str, object]:
+        state.last_turn_delivery = state.last_turn_delivery.model_copy(update={"beats_projected": beats})
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    return RuntimeEngine(state, provider).turn("Search the desk drawer.")
 
 
 def test_future_entity_name_or_alias_is_rejected_without_grounding() -> None:
@@ -157,3 +179,19 @@ def test_named_durable_incidental_claim_is_rejected_but_local_color_is_allowed()
         lambda _: {"segments": [{"kind": "narration", "text": "A loose screw glints beneath the drawer."}]},
     ).turn("Search the desk drawer.")
     assert proposal.segments == (NarrationSegment(kind="narration", text="A loose screw glints beneath the drawer."),)
+
+
+def test_projected_beat_licenses_only_its_own_uncommitted_vocabulary() -> None:
+    beat = "scene-1a2--michelles-last-investigation"
+
+    proposal = _run_accepted("Kristin turns over the memory card she has just worked loose.", beats=(beat,))
+    assert proposal.segments[0].text == "Kristin turns over the memory card she has just worked loose."
+
+    no_beat = _run_rejected("Kristin turns over the memory card she has just worked loose.")
+    assert no_beat.code == "narration_known_term_leak"
+
+    unrelated = _run_rejected("The facility entrance waits somewhere beyond the trees.", beats=(beat,))
+    assert unrelated.code == "narration_known_term_leak"
+
+    protected = _run_rejected("The selection system is already ranking people.", beats=(beat,))
+    assert protected.code == "protected_narration_leak"
