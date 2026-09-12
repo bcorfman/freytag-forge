@@ -541,5 +541,6 @@ windows, `budget_seconds: 1890`), `tests/test_scene_relative_pacing.py` (window
 dict, the two budget literals, and `==` relaxed to `<=`). These land as one
 atomic change; see "The raise cannot land on its own".
 
-`docs/testing-runbook.md` records the verification command, outcome, setup, and
-any remaining limitation around subjective pacing feel, once per stage.
+Record each stage's verification outcome and any remaining limitation around
+subjective pacing feel in this plan. Touch `docs/testing-runbook.md` only if a
+stage changes how verification is run.
