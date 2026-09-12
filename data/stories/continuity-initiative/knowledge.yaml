@@ -286,7 +286,7 @@ knowledge:
   statement: "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
   earn_when: reads the saved files on Michelle's memory card
   action_evidence:
-  - [recover, retrieve]
+  - [recover, retrieve, memory card, the card]
   - [card files, saved files, files on the card]
   - [read, inspect]
   entity_ids: []
@@ -334,7 +334,7 @@ knowledge:
   statement: "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: do not trust emergency broadcasts."
   earn_when: recovers Michelle's damaged recording and listens to it
   action_evidence:
-  - [recover, retrieve]
+  - [recover, retrieve, memory card, the card]
   - [damaged recording, interrupted message, recording]
   - [listen, play]
   entity_ids: []

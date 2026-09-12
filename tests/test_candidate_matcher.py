@@ -5,13 +5,19 @@ from storygame.runtime.candidate_matcher import (
 )
 from storygame.runtime.knowledge import RevealCandidate
 
+CARD_REFERENCES = ("recover", "retrieve", "memory card", "the card")
+
 WARNING = ActionEvidenceCandidate(
     id="warning",
-    required_groups=(("recover", "retrieve"), ("damaged recording", "broken recording"), ("listen", "play")),
+    required_groups=(
+        CARD_REFERENCES,
+        ("damaged recording", "interrupted message", "recording", "broken recording"),
+        ("listen", "play"),
+    ),
 )
 FILES = ActionEvidenceCandidate(
     id="files",
-    required_groups=(("recover", "retrieve"), ("card files", "saved files"), ("read", "inspect")),
+    required_groups=(CARD_REFERENCES, ("card files", "saved files"), ("read", "inspect")),
 )
 
 WARNING_HANDOFF = RevealCandidate(
@@ -58,6 +64,28 @@ def test_negated_action_does_not_match() -> None:
     result = uniquely_matched_candidate("Do not recover the damaged recording or listen to it.", (WARNING, FILES))
 
     assert result is None
+
+
+def test_card_reference_aliases_match_only_the_intended_reveal() -> None:
+    cases = (
+        ("Read the saved files on Michelle's memory card.", "files"),
+        ("Play the damaged recording from Michelle's memory card.", "warning"),
+        ("Listen to the interrupted message on the card.", "warning"),
+    )
+
+    for player_input, expected_id in cases:
+        result = uniquely_matched_candidate(player_input, (WARNING, FILES))
+
+        assert result is not None
+        assert result.id == expected_id
+
+
+def test_card_reference_without_the_reveal_action_does_not_match() -> None:
+    assert uniquely_matched_candidate("Ask Brandon about the memory card.", (WARNING, FILES)) is None
+
+
+def test_negated_recording_action_does_not_match_with_card_alias() -> None:
+    assert uniquely_matched_candidate("Do not listen to the damaged recording.", (WARNING, FILES)) is None
 
 
 def test_ambiguous_complete_evidence_does_not_break_ties() -> None:
@@ -130,7 +158,7 @@ def test_scene_1a_b_migrated_candidates_stay_disjoint() -> None:
         statement="Kristin reads the saved files on Michelle's memory card.",
         must_convey=(),
         action_evidence=(
-            ("recover", "retrieve"),
+            CARD_REFERENCES,
             ("card files", "saved files", "files on the card"),
             ("read", "inspect"),
         ),
@@ -144,7 +172,7 @@ def test_scene_1a_b_migrated_candidates_stay_disjoint() -> None:
         statement="Kristin listens to Michelle's damaged recording.",
         must_convey=(),
         action_evidence=(
-            ("recover", "retrieve"),
+            CARD_REFERENCES,
             ("damaged recording", "interrupted message", "recording"),
             ("listen", "play"),
         ),
