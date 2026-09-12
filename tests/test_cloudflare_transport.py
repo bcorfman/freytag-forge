@@ -32,6 +32,21 @@ AUTHORED_DELIVERY = (
 )
 
 
+def _legacy_recording_package():
+    knowledge_id = "k_sl_1a_b_r2"
+    knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
+    legacy = knowledge.model_copy(update={"delivery_text": None})
+    catalog = PACKAGE.knowledge.model_copy(
+        update={
+            "knowledge": tuple(legacy if item.id == knowledge_id else item for item in PACKAGE.knowledge.knowledge),
+        }
+    )
+    indexes = PACKAGE.knowledge_indexes.model_copy(
+        update={"by_id": {**PACKAGE.knowledge_indexes.by_id, knowledge_id: legacy}}
+    )
+    return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
+
+
 def _authored_handoff_package():
     knowledge_id = "k_sl_1a_b_r2"
     knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
@@ -559,7 +574,9 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
     result = provider("Recover the interrupted recording and listen to it.")
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert result["segments"][0]["grounding_ids"] == []
+    assert result["segments"][1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].delivery_text
+    assert result["segments"][1]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert provider.model_selected_knowledge_ids == ()
     assert provider.recovery_count == 0
 
@@ -722,8 +739,9 @@ def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monke
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    provider_proposal = provider("Recover the interrupted recording and listen to it.")
-    RuntimeEngine(state, lambda _: provider_proposal).turn("Recover the interrupted recording and listen to it.")
+    player_input = "Search the desk drawer for evidence."
+    provider_proposal = provider(player_input)
+    RuntimeEngine(state, lambda _: provider_proposal).turn(player_input)
 
     assert "SL-1A-B" in state.fired_event_ids
 
@@ -764,7 +782,7 @@ def test_transport_harness_selection_can_be_disabled_for_comparison(monkeypatch)
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Recover the interrupted recording and listen to it.")
+    result = provider("Search the desk drawer for evidence.")
 
     assert result["selected_knowledge_ids"] == []
 
@@ -1632,7 +1650,7 @@ def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
         worker_url="", token="", state=state, prompt_variant={"positive_selection_example": True}
     )
 
-    prompt = provider.assemble_turn_prompt("Recover Michelle's damaged recording and listen to it.")
+    prompt = provider.assemble_turn_prompt("Recover Michelle's damaged recording and read the saved files.")
 
     assert (
         "Earn it when the player recovers Michelle's damaged recording and listens to it."
@@ -1654,7 +1672,7 @@ def test_selection_probe_asks_for_only_an_offered_id(monkeypatch) -> None:
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    selected = provider.selection_probe("Recover Michelle's damaged recording and listen to it.")
+    selected = provider.selection_probe("Search the desk drawer for evidence.")
 
     assert selected == ("k_sl_1a_b_r1",)
     payload = captured["payload"]
@@ -1685,7 +1703,8 @@ def test_two_pass_selection_uses_only_a_matcher_backed_id(monkeypatch) -> None:
         )
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = _legacy_recording_package()
+    state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
@@ -1761,7 +1780,8 @@ def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt()
 
 
 def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = _legacy_recording_package()
+    state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"narrow_to_shadow_match": True}
@@ -1782,7 +1802,7 @@ def test_selection_only_variant_does_not_ask_the_model_to_ground_candidates() ->
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant={"model_grounding": False})
 
-    prompt = provider.assemble_turn_prompt("Recover Michelle's damaged recording and listen to it.")
+    prompt = provider.assemble_turn_prompt("Search the desk drawer for the recording.")
     user = provider._section_user_prompt(prompt["context"])
 
     assert "grounding_ids" not in user

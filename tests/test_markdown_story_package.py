@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 import yaml
 
+from storygame.runtime.candidate_matcher import (
+    ActionEvidenceCandidate,
+    uniquely_matched_authored_handoff,
+    uniquely_matched_candidate,
+)
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement
@@ -289,8 +295,72 @@ def test_loader_rejects_invalid_authored_handoff(tmp_path: Path, mutate: object,
 def test_legacy_evidence_without_delivery_text_still_loads() -> None:
     package = load_story_package(PACKAGE)
 
-    assert any(item.action_evidence for item in package.knowledge.knowledge)
-    assert all(item.delivery_text is None for item in package.knowledge.knowledge)
+    authored_ids = {item.id for item in package.knowledge.knowledge if item.delivery_text is not None}
+    assert authored_ids == {"k_sl_1a_b_r2"}
+    assert all(item.delivery_text is None for item in package.knowledge.knowledge if item.id != "k_sl_1a_b_r2")
+
+
+def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    projection = KnowledgeProjector().project(
+        state,
+        "player",
+        "Recover Michelle's damaged recording and listen to it.",
+    )
+
+    handoff = uniquely_matched_authored_handoff(
+        "Recover Michelle's damaged recording and listen to it.",
+        projection.candidates,
+    )
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_1a_b_r2"
+    assert handoff.delivery_text == (
+        "Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts."
+    )
+
+
+def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    candidates = (
+        KnowledgeProjector()
+        .project(
+            state,
+            "player",
+            "Recover Michelle's memory card and read the saved files.",
+        )
+        .candidates
+    )
+    evidence = tuple(
+        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence) for candidate in candidates
+    )
+
+    assert uniquely_matched_candidate("Recover Michelle's memory card.", evidence) is None
+    assert uniquely_matched_candidate("Recover Michelle's memory card and read the saved files.", evidence).id == (
+        "k_sl_1a_b_r1"
+    )
+
+
+@pytest.mark.parametrize(
+    "player_input",
+    [
+        "Recover Michelle's memory card.",
+        "Recover Michelle's damaged recording.",
+        "Recover Michelle's memory card and read the saved files.",
+        "Do not recover Michelle's damaged recording or listen to it.",
+    ],
+)
+def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(player_input: str) -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-B")
+    candidates = KnowledgeProjector().project(state, "player", player_input).candidates
+
+    assert uniquely_matched_authored_handoff(player_input, candidates) is None
 
 
 def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(tmp_path: Path) -> None:

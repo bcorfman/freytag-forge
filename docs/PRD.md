@@ -17,34 +17,33 @@ facts become durable.
 
 ## Runtime contract
 
-- The narrator receives bounded `TurnKnowledgeContext` scene material,
-  committed knowledge, and eligible candidates on legacy turns. It receives no
-  routes, source IDs, future effects, or transcript memory.
-- Narrator JSON is untrusted. The runtime resolves at most one eligible fact,
-  validates narration and cloned facts, then commits the whole turn atomically.
-  Leaks, unsupported facts, wrong-speaker dialogue, ambiguity, and premature
-  transitions fail closed.
-- Accepted turns advance declarative, fact-backed pacing. The runtime never
-  infers gameplay from vague prose or chooses an action for the player.
+- Facts are the only durable truth. A turn projects scene-local knowledge,
+  parses untrusted narrator JSON, validates narration and cloned facts, then
+  commits the whole turn atomically.
+- The narrator sees bounded scene material, committed knowledge, and eligible
+  legacy candidates. It sees no routes, source IDs, future effects, or transcript
+  memory. Unsupported facts, leaks, ambiguity, wrong-speaker dialogue, and
+  premature transitions fail closed.
+- Pacing is declarative and fact-backed. The runtime never infers gameplay from
+  vague prose or chooses an action for the player.
 
 ### Authored reveal handoff
 
 - An authored handoff is opt-in per candidate: complete `action_evidence` and
-  non-empty `delivery_text` are required. After projection, one exact match
-  adds that authored text as ordinary narration and selects the same candidate
-  through the normal resolver. The narrator gets only surrounding scene
-  material; legacy candidates keep the existing candidate prompt. Ties and
-  misses produce no handoff, and existing fact IDs, effects, and saves remain
-  unchanged.
+  non-empty `delivery_text` are required. After projection, exactly one match
+  adds the authored text as ordinary narration and selects the candidate through
+  the normal validation path. The narrator gets only surrounding scene
+  material. Ties and misses do nothing. Legacy candidates, fact IDs, effects,
+  and saves remain unchanged.
 
 ## Authoring and API
 
-- The loader rejects malformed Markdown, unknown references, invalid predicates
-  or effects, ambiguous transitions, timing errors, dependency cycles, and old
-  save formats. Package files and compiled indexes are immutable at runtime.
-- FastAPI, React, a Cloudflare Worker, and SQLite provide the hosted stack.
-  The web adapter owns transport, CORS, deployment identity, and persistence;
-  it does not own gameplay policy. The API exposes session, turn, and typed
+- The loader rejects malformed source, unknown references, invalid predicates or
+  effects, ambiguous transitions, timing errors, dependency cycles, and old
+  save formats. Package files and indexes are immutable at runtime.
+- FastAPI, React, a Cloudflare Worker, and SQLite provide hosting. The web
+  adapter owns transport, CORS, deployment identity, and persistence; gameplay
+  stays in the shared runtime. The API exposes session, turn, and typed
   game-break endpoints with structured segments and compatibility `lines`.
 
 ## Developer workflow

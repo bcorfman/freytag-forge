@@ -6,11 +6,10 @@ Write the move. Earn the reveal. Live with the consequence.
 
 ## Features
 
-- **Play freeform.** Write any in-world move. No menus. No parser syntax.
-- **Make it stick.** Validated discoveries and choices become lasting facts.
-- **Earn the reveal.** Progressive plot stays hidden until your actions uncover it.
-- **Feel the pressure.** Storylets and pacing make every delay count.
-- **Trust the thread.** Scoped knowledge and atomic turns keep continuity intact.
+- **Play your way.** Write any in-world move. No menus. No parser syntax.
+- **Earn the truth.** Your actions unlock validated discoveries that stay with you.
+- **Make pressure count.** Storylets and pacing turn every delay into a choice.
+- **Keep the thread.** Scoped knowledge and atomic turns protect continuity.
 
 ## Play online
 
