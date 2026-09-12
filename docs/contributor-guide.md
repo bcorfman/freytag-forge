@@ -12,8 +12,11 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
 - Treat documentation as a map, not executable authority. Before changing a
   CLI, environment variable, test/CI behavior, endpoint, or deployment flow,
   verify it in source, command help, configuration, or workflow YAML.
-- Update the focused runbook in the same change. Keep product/runtime contracts
-  in the PRD and link to focused documents instead of duplicating them.
+- When a verification procedure changes, edit its existing runbook entry in
+  place in the same change. Never append dated results, test counts, or phase
+  logs to the runbook; record outcomes in the plan, PR, or commit message.
+  Keep product/runtime contracts in the PRD and link to focused documents
+  instead of duplicating them.
 - Preserve historical release records as records, not current operating
   guidance.
 

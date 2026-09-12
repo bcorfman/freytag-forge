@@ -61,10 +61,12 @@ cd frontend
 E2E_API_BASE_URL=https://your-api.example E2E_DEPLOYMENT_CHANNEL=production npm run test:e2e
 ```
 
-`E2E_TURNS_PER_POLICY` defaults to 8. Reduce it only for a quick transport/UI
-smoke check; leave the default for a full ending-reachability sample. This suite
-observes actual model behavior, so report values are evaluation evidence rather
-than deterministic CI thresholds.
+There is no per-policy turn setting. Multi-turn traversals are bounded by
+`MAX_CANON_TURNS` and `MAX_STALLED_TURNS` in `frontend/e2e/scene-runtime.spec.js`.
+This suite observes actual model behavior, so report values are evaluation
+evidence rather than deterministic CI thresholds. See the
+[testing runbook](testing-runbook.md) for hosted setup, costs, and how to read
+failures.
 
 Playwright tags select a focused manual category:
 

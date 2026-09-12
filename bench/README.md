@@ -154,7 +154,7 @@ The shipped example configurations are:
 - `variations/drawer-overlay.json`: a package override, showing how a variation edits authored text in a temporary effective copy.
 
 For candidate-selection work, `variations/candidate-selection-baseline.json`
-replays the four authored Scene 1A actions from the reliability plan. Run it
+replays four authored Scene 1A actions. Run it
 with four replicates, then report against `all-turn-records.json`; that file
 keeps the per-turn offered and selected IDs even when a scene fails before the
 judgeable `turn-records.json` output is written. The committed baseline report

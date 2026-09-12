@@ -84,6 +84,7 @@ same rule, build it in one helper and call it from both.
 - No unvalidated provider output, protected-knowledge leak, or fact change after rendering.
 ## Common Mistakes
 
-- Verify CLI, environment, CI, and endpoint behavior in source/help/workflows; update the focused runbook with the change.
+- Verify CLI, environment, CI, and endpoint behavior in source/help/workflows. When a verification procedure changes, edit its existing entry in `docs/testing-runbook.md` in place; add an entry only for a new verification boundary.
+- Never append results to the runbook: no dated observations, test counts, coverage figures, phase evidence, or diagnosis narratives. Record outcomes in the plan, PR, or commit message. The runbook must stay short enough to read whole.
 - Use `TMPDIR=/tmp` for pytest, never pin collection counts, and use `uv run python` rather than `python`.
-- For a staging-verified change, merge the implementation PR first and poll the `main` CI workflow until its SHA-bound staging deployment succeeds before running staged E2E tests. Update the testing runbook only after those E2E results are observed. Commit that documentation as a final follow-up; do not rerun deployment/E2E solely for the documentation-only commit.
+- For a staging-verified change, merge the implementation PR first and poll the `main` CI workflow until its SHA-bound staging deployment succeeds before running staged E2E tests. Record the observed E2E outcome in the plan or PR; if the procedure itself changed, update its runbook entry as a final documentation-only commit, and do not rerun deployment/E2E for that commit.

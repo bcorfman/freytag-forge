@@ -9,8 +9,7 @@ replicate failed. Two candidates are migrated; the rest stay legacy for the
 authoring reason recorded in Phase 7.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
-authored action evidence. It complements (and supersedes the uncompleted
-deterministic-selection portion of) `narration-candidate-selection-reliability.md`.
+authored action evidence.
 
 ## Decision
 
@@ -276,8 +275,7 @@ verbatim, confirming the runtime, not the model, owned the reveal.
 **Residual, carried to Phase 7, not a handoff defect.** One Scene 1A replicate
 in four failed with `narration_known_term_leak: narration mentions unavailable
 knowledge 'michelle's research'`. No fact was committed. This is the older
-select-or-don't-mention problem from
-`narration-candidate-selection-reliability.md`: the term belonged to an
+select-or-don't-mention problem: the term belonged to an
 uncommitted legacy candidate, `k_sl_1a_d_r1`. That specific alias was removed
 because it named the scene's own invitation to search rather than the secret,
 but the class remains for any legacy candidate and is the reason to keep
