@@ -27,6 +27,7 @@ class RevealCandidate(_KnowledgeModel):
     statement: str
     earn_when: str | None = None
     must_convey: tuple[tuple[str, ...], ...]
+    action_evidence: tuple[tuple[str, ...], ...] = Field(default=(), exclude=True)
     delivery_text: str | None = Field(default=None, exclude=True)
 
 
@@ -264,5 +265,6 @@ class KnowledgeProjector:
             statement=item.statement,
             earn_when=item.earn_when,
             must_convey=item.must_convey,
+            action_evidence=item.action_evidence,
             delivery_text=item.delivery_text,
         )

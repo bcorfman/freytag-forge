@@ -12,7 +12,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
-from storygame.runtime.candidate_matcher import ActionEvidenceCandidate, uniquely_matched_candidate
+from storygame.runtime.candidate_matcher import (
+    ActionEvidenceCandidate,
+    AuthoredHandoff,
+    uniquely_matched_authored_handoff,
+    uniquely_matched_candidate,
+)
 from storygame.runtime.contracts import (
     NarrationSegment,
     RuntimeContractError,
@@ -224,6 +229,7 @@ class CloudflareTurnProvider:
         self.model_selected_knowledge_ids: tuple[str, ...] = ()
         self.model_grounding_ids: tuple[str, ...] = ()
         self.shadow_matched_candidate_id: str | None = None
+        self.authored_handoff: AuthoredHandoff | None = None
         self.prompt_candidate_ids: tuple[str, ...] = ()
         self.preselected_knowledge_id: str | None = None
         self.selection_prepass_completed = False
@@ -272,6 +278,7 @@ class CloudflareTurnProvider:
 
         self._example_player_input = player_input
         self.last_projection = self.projector.project(self.state, "player", player_input)
+        self.authored_handoff = uniquely_matched_authored_handoff(player_input, self.last_projection.candidates)
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
@@ -374,9 +381,9 @@ class CloudflareTurnProvider:
 
         candidates = self.last_projection.candidates if self.last_projection else ()
         evidence_candidates = tuple(
-            ActionEvidenceCandidate(id=candidate.id, required_groups=knowledge.action_evidence)
+            ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
             for candidate in candidates
-            if (knowledge := self.state.package.knowledge_indexes.by_id.get(candidate.id)) and knowledge.action_evidence
+            if candidate.action_evidence
         )
         matched = uniquely_matched_candidate(player_input, evidence_candidates)
         return matched.id if matched else None
@@ -628,6 +635,7 @@ class CloudflareTurnProvider:
         self._example_player_input = ""
         self.last_projection = self.projector.project(self.state, "player", "")
         self.shadow_matched_candidate_id = None
+        self.authored_handoff = None
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         entry = self._scene_entry()
         rules = [

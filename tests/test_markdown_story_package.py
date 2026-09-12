@@ -251,6 +251,7 @@ def test_complete_authored_handoff_loads_and_stays_out_of_runtime_serialization(
 
     assert knowledge.delivery_text == _AUTHORED_DELIVERY
     assert candidate.delivery_text == _AUTHORED_DELIVERY
+    assert "action_evidence" not in candidate.model_dump()
     assert "delivery_text" not in candidate.model_dump()
     assert _AUTHORED_DELIVERY not in candidate.model_dump_json()
 

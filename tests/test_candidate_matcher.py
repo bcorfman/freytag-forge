@@ -1,4 +1,9 @@
-from storygame.runtime.candidate_matcher import ActionEvidenceCandidate, uniquely_matched_candidate
+from storygame.runtime.candidate_matcher import (
+    ActionEvidenceCandidate,
+    uniquely_matched_authored_handoff,
+    uniquely_matched_candidate,
+)
+from storygame.runtime.knowledge import RevealCandidate
 
 WARNING = ActionEvidenceCandidate(
     id="warning",
@@ -7,6 +12,21 @@ WARNING = ActionEvidenceCandidate(
 FILES = ActionEvidenceCandidate(
     id="files",
     required_groups=(("recover", "retrieve"), ("card files", "saved files"), ("read", "inspect")),
+)
+
+WARNING_HANDOFF = RevealCandidate(
+    id="warning",
+    statement="The recording warns against trusting emergency broadcasts.",
+    action_evidence=WARNING.required_groups,
+    must_convey=(),
+    delivery_text="Michelle's damaged recording warns Kristin not to trust emergency broadcasts.",
+)
+FILES_HANDOFF = RevealCandidate(
+    id="files",
+    statement="The card contains saved files.",
+    action_evidence=FILES.required_groups,
+    must_convey=(),
+    delivery_text="The memory card contains Michelle's saved files.",
 )
 
 
@@ -52,3 +72,53 @@ def test_empty_evidence_never_matches() -> None:
     candidate = ActionEvidenceCandidate(id="empty", required_groups=())
 
     assert uniquely_matched_candidate("Recover the damaged recording and listen to it.", (candidate,)) is None
+
+
+def test_authored_handoff_returns_the_projected_candidate_and_delivery() -> None:
+    result = uniquely_matched_authored_handoff(
+        "Recover the damaged recording and listen to it.", (WARNING_HANDOFF, FILES_HANDOFF)
+    )
+
+    assert result is not None
+    assert result.candidate is WARNING_HANDOFF
+    assert result.delivery_text == WARNING_HANDOFF.delivery_text
+
+
+def test_authored_handoff_accepts_declared_aliases() -> None:
+    result = uniquely_matched_authored_handoff("Retrieve the broken recording and play it.", (WARNING_HANDOFF,))
+
+    assert result is not None
+    assert result.candidate.id == "warning"
+
+
+def test_authored_handoff_rejects_partial_input() -> None:
+    assert uniquely_matched_authored_handoff("Recover the damaged recording.", (WARNING_HANDOFF,)) is None
+
+
+def test_authored_handoff_rejects_negated_input() -> None:
+    assert (
+        uniquely_matched_authored_handoff("Do not recover the damaged recording or listen to it.", (WARNING_HANDOFF,))
+        is None
+    )
+
+
+def test_authored_handoff_rejects_no_offered_candidate() -> None:
+    assert uniquely_matched_authored_handoff("Search the kitchen for signs of a struggle.", (WARNING_HANDOFF,)) is None
+
+
+def test_authored_handoff_rejects_two_matching_candidates() -> None:
+    duplicate = WARNING_HANDOFF.model_copy(update={"id": "other-warning"})
+
+    assert (
+        uniquely_matched_authored_handoff(
+            "Recover the damaged recording and listen to it.", (WARNING_HANDOFF, duplicate)
+        )
+        is None
+    )
+
+
+def test_authored_handoff_ignores_a_package_candidate_not_in_projection() -> None:
+    package_candidates = (WARNING_HANDOFF, FILES_HANDOFF)
+    projected_candidates = tuple(candidate for candidate in package_candidates if candidate.id == "warning")
+
+    assert uniquely_matched_authored_handoff("Recover the card files and read them.", projected_candidates) is None

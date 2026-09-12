@@ -10,6 +10,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from storygame.runtime.knowledge import RevealCandidate
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,14 @@ class ActionEvidenceCandidate:
 
     id: str
     required_groups: tuple[tuple[str, ...], ...]
+
+
+@dataclass(frozen=True)
+class AuthoredHandoff:
+    """One projected candidate and the delivery text authored for its handoff."""
+
+    candidate: RevealCandidate
+    delivery_text: str
 
 
 _NEGATIONS = frozenset({"avoid", "cannot", "can't", "do", "don't", "never", "no", "not", "without"})
@@ -39,6 +51,30 @@ def uniquely_matched_candidate(
 
     matches = [candidate for candidate in candidates if _matches_all(candidate.required_groups, player_input)]
     return matches[0] if len(matches) == 1 else None
+
+
+def uniquely_matched_authored_handoff(
+    player_input: str, candidates: tuple[RevealCandidate, ...]
+) -> AuthoredHandoff | None:
+    """Return one handoff only when exactly one projected candidate opts in.
+
+    Delivery is eligible only when the projected candidate has both complete
+    action evidence and non-blank authored text. The candidate list is already
+    projected, so package knowledge that is protected or not currently offered
+    cannot participate in the decision.
+    """
+
+    matches = []
+    for candidate in candidates:
+        delivery_text = candidate.delivery_text
+        if not candidate.action_evidence or not isinstance(delivery_text, str) or not delivery_text.strip():
+            continue
+        if _matches_all(candidate.action_evidence, player_input):
+            matches.append((candidate, delivery_text))
+    if len(matches) != 1:
+        return None
+    candidate, delivery_text = matches[0]
+    return AuthoredHandoff(candidate=candidate, delivery_text=delivery_text)
 
 
 def _matches_all(groups: tuple[tuple[str, ...], ...], player_input: str) -> bool:
