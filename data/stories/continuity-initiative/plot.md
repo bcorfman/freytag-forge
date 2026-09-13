@@ -384,7 +384,7 @@ location_id: janus_archive
 freytag_phase: crisis
 objective: Secure evidence while judging Brandons betrayal
 participant_ids: [kristin, brandon, michelle]
-item_ids: [memory_card]
+item_ids: []
 entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
@@ -470,7 +470,7 @@ location_id: purge_chamber
 freytag_phase: crisis
 objective: Survive the purge clock and choose a combined mission
 participant_ids: [kristin, brandon]
-item_ids: [memory_card]
+item_ids: []
 entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
@@ -632,7 +632,7 @@ location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, brandon, rebecca]
-item_ids: [override_codes]
+item_ids: []
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:
@@ -704,7 +704,7 @@ location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, brandon, rebecca]
-item_ids: [memory_card]
+item_ids: []
 entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, the facility was beginning to fail; inside, the evidence was ready to leave for good.\n\n"
 transition_ids: []
 ---
