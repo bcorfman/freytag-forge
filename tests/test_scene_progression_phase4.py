@@ -31,7 +31,7 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    with pytest.raises(ProposalValidationError, match="KMS drawer"):
+    with pytest.raises(ProposalValidationError, match="under the drawer"):
         engine.turn("Play Michelle's damaged recording.")
 
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted

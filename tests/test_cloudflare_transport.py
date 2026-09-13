@@ -1791,6 +1791,32 @@ def test_real_scene_1a_pre_reveal_prompts_keep_the_card_location_out(monkeypatch
         assert "Michelle's workstation drawers are shut.".casefold() in body
 
 
+def test_real_scene_1a_accepts_visible_carving_on_turns_one_through_four(monkeypatch) -> None:
+    visible_carving = "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation."
+
+    def open_request(_request, **_kwargs: object) -> _Response:
+        return _Response({"narration": json.dumps({"segments": [{"kind": "narration", "text": visible_carving}]})})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    engine = RuntimeEngine(
+        state, CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    )
+
+    for turn_index, player_input in enumerate(
+        (
+            "Search the kitchen.",
+            "Check the back door.",
+            "Look at the overturned chair.",
+            "Look around the living room.",
+        ),
+        start=1,
+    ):
+        proposal = engine.turn(player_input)
+        assert proposal.segments[0].text == visible_carving
+        assert state.turn_index == turn_index
+
+
 def test_scene_1a_hidden_canon_stays_out_of_beats_and_pre_reveal_prompts(monkeypatch) -> None:
     plot = Path("data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
     hidden_canon = next(line for line in plot.splitlines() if line.startswith("**Hidden canon:**"))

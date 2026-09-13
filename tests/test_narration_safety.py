@@ -176,9 +176,9 @@ def test_named_durable_incidental_claim_is_rejected_but_local_color_is_allowed()
     state = RuntimeState.bootstrap(PACKAGE)
     proposal = RuntimeEngine(
         state,
-        lambda _: {"segments": [{"kind": "narration", "text": "A loose screw glints beneath the drawer."}]},
+        lambda _: {"segments": [{"kind": "narration", "text": "A loose screw glints beside the desk."}]},
     ).turn("Search the desk drawer.")
-    assert proposal.segments == (NarrationSegment(kind="narration", text="A loose screw glints beneath the drawer."),)
+    assert proposal.segments == (NarrationSegment(kind="narration", text="A loose screw glints beside the desk."),)
 
 
 def test_projected_beat_licenses_only_its_own_uncommitted_vocabulary() -> None:

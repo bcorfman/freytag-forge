@@ -319,7 +319,7 @@ knowledge:
     priority: 0
   must_convey:
   - [memory card, hidden card, card, Michelle's card, hidden memory card, the card]
-  - [KMS drawer, drawer carved with KMS, carved drawer, under the drawer, Kristin's initials]
+  - [under the drawer, taped under the drawer, beneath the drawer, under the KMS drawer]
   - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [dead drop, exchange point, place to trade information, the dead-drop, park exchange, drop at the bench]
@@ -361,7 +361,7 @@ knowledge:
     priority: 0
   must_convey:
   - [memory card, hidden card, card, Michelle's card, hidden memory card, the card]
-  - [KMS drawer, drawer carved with KMS, carved drawer, under the drawer, Kristin's initials]
+  - [under the drawer, taped under the drawer, beneath the drawer, under the KMS drawer]
   - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [emergency broadcasts, warning, do not trust the emergency broadcasts, distrust the broadcasts]

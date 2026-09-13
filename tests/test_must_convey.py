@@ -146,6 +146,6 @@ def test_gated_reveal_statements_convey_their_own_groups() -> None:
     for knowledge in package.knowledge.knowledge:
         if knowledge.must_convey:
             statement_groups = tuple(
-                group for group in knowledge.must_convey if not any("KMS" in term for term in group)
+                group for group in knowledge.must_convey if not any("under the drawer" in term for term in group)
             )
             assert not unconveyed_terms(statement_groups, knowledge.statement), knowledge.id
