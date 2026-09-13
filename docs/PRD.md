@@ -49,6 +49,10 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
   sentence and validates the result normally.
 - A tie or a miss commits nothing. Incomplete handoff data follows the normal
   path.
+- On a handoff turn, grounding repair covers the whole composed turn, the
+  authored sentence included. A multi-word term gets its single committed
+  owner; only when no committed knowledge owns it does the handed-off
+  candidate count. An ambiguous term stays uncited and fails validation.
 
 ## Package validation
 
