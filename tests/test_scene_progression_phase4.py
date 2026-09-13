@@ -34,8 +34,8 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
     with pytest.raises(ProposalValidationError, match="memory card"):
         engine.turn("Play Michelle's damaged recording.")
 
-    assert not state.facts.has("memory_card_in_kristins_custody", "story", value="true")
-    assert not state.facts.has("michelle_warning_known", "story", value="true")
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") not in state.facts.asserted
 
 
 def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
@@ -58,14 +58,14 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
     engine = RuntimeEngine(state, lambda _: next(responses))
 
     engine.turn("Search beneath the marked drawer for Michelle's memory card and play its damaged recording.")
-    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
-    assert state.facts.has("michelle_warning_known", "story", value="true")
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") in state.facts.asserted
 
     state.active_event_ids.add("SL-1A-D")
     engine.turn("Read the remaining files on Michelle's recovered memory card.")
 
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
-    assert state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="michelle_lead_actionable", subject="story", value="true") in state.facts.asserted
 
 
 def test_complete_path_secures_card_with_files_and_park_lead() -> None:
@@ -82,9 +82,9 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
 
     engine.turn("Search beneath the marked drawer for Michelle's memory card and read its files.")
 
-    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
-    assert state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="michelle_lead_actionable", subject="story", value="true") in state.facts.asserted
 
 
 @pytest.mark.parametrize(
@@ -92,13 +92,13 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
 )
 def test_invalid_or_duplicate_selection_is_atomic(selected: list[str]) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    before = (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records))
+    before = (set(state.facts.asserted), set(state.fired_event_ids), tuple(state.turn_records))
     engine = RuntimeEngine(state, lambda _: _turn("The room yields no unearned revelation.", selected))
 
     with pytest.raises((ProposalValidationError, ValueError)):
         engine.turn("Inspect Michelle's phone.")
 
-    assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
+    assert (state.facts.asserted, set(state.fired_event_ids), tuple(state.turn_records)) == before
 
 
 def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
@@ -114,7 +114,7 @@ def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
 
     with pytest.raises(ProposalValidationError, match="grounding"):
         engine.turn("Recover the damaged recording.")
-    assert not state.facts.has("michelle_warning_known", "story", value="true")
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") not in state.facts.asserted
 
 
 def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene() -> None:
@@ -145,8 +145,8 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
     with pytest.raises(ProposalValidationError, match="memory card"):
         engine.turn("Look under the workstation.", clock_seconds=120)
 
-    assert not state.facts.has("continuity_initiative_known", "story", value="true")
-    assert not state.facts.has("michelle_lead_actionable", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="michelle_lead_actionable", subject="story", value="true") not in state.facts.asserted
     assert "SL-1A-B" not in state.fired_event_ids
     assert state.current_scene_id == "1A", "the story may not leave the house on a reveal the player never read"
 
@@ -177,9 +177,9 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
 
     engine.turn("Look under the workstation.", clock_seconds=120)
 
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
-    assert state.facts.has("michelle_lead_actionable", "story", value="true")
-    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="michelle_lead_actionable", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
     assert "SL-1A-B" in state.fired_event_ids
     assert state.current_scene_id == "1A"
 
@@ -211,7 +211,7 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r1",)
     assert proposal.segments[0].grounding_ids == ("k_sl_1a_b_r1",)
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
 
 
 def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
@@ -228,7 +228,7 @@ def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
     with pytest.raises(ProposalValidationError, match="grounded"):
         engine.turn("Look under the workstation.", clock_seconds=120)
 
-    assert not state.facts.has("continuity_initiative_known", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
 def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsing() -> None:
@@ -238,9 +238,9 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     engine.turn("Inspect the marked front gate.")
     engine.turn("Examine the patrol marker on the gate.")
 
-    assert state.facts.has("patrol_return_pressure", "story", value="true")
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
     assert "pressure_1a" in state.fired_event_ids
-    assert state.facts.has("story_elapsed_seconds", "story", value="120")
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value="120") in state.facts.asserted
 
 
 def test_transition_rejects_lead_and_patrol_without_card_custody() -> None:
@@ -258,7 +258,7 @@ def test_transition_rejects_lead_and_patrol_without_card_custody() -> None:
 
 def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    before = (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records))
+    before = (set(state.facts.asserted), set(state.fired_event_ids), tuple(state.turn_records))
     engine = RuntimeEngine(
         state,
         lambda _: {
@@ -269,7 +269,7 @@ def test_untrusted_provider_operations_and_transitions_fail_closed() -> None:
 
     with pytest.raises(ValueError):
         engine.turn("Inspect the facility.")
-    assert (state.facts.as_json(), set(state.fired_event_ids), tuple(state.turn_records)) == before
+    assert (state.facts.asserted, set(state.fired_event_ids), tuple(state.turn_records)) == before
 
 
 def test_internal_game_break_path_keeps_the_resolved_candidate_pending_until_proceed(monkeypatch) -> None:

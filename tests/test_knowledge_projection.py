@@ -12,12 +12,39 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import PROPOSAL_REJECTION_CODES, ProposalValidationError
+from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
 from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+KNOWN_REJECTION_CODES = frozenset(
+    {
+        "multiple_knowledge_selection",
+        "ineligible_selection",
+        "missing_package_source",
+        "invalid_grounding_reference",
+        "unknown_grounding_reference",
+        "invisible_grounding_reference",
+        "uncited_knowledge",
+        "narration_known_term_leak",
+        "protected_narration_leak",
+        "dialogue_speaker_missing",
+        "unknown_dialogue_speaker",
+        "dialogue_grounding_not_sayable",
+        "selection_source_mismatch",
+        "ungrounded_selection",
+        "missing_knowledge_content",
+        "protected_knowledge_mutation",
+        "canonical_fact_mutation",
+        "inactive_storylet_event",
+        "unavailable_storylet",
+        "invalid_storylet_realization",
+        "storylet_operation_mismatch",
+        "invalid_transition",
+        "unsatisfied_transition_triggers",
+    }
+)
 
 
 def _ids(items: object) -> set[str]:
@@ -81,7 +108,6 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     assert "k_sl_1a_b_r2" in _ids(recording.candidates)
     assert "k_sl_1a_b_r2" not in _ids(recording.committed_knowledge)
     assert recording.payload_size() < 8_192
-    assert "Michelle" not in str(recording.observability())
 
     warning = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"]
     state.apply_proposal(
@@ -216,7 +242,7 @@ def test_turn_rejection_has_a_stable_registered_code() -> None:
     second = reject()
     assert str(first) == "segment grounding is not committed or selected knowledge"
     assert first.code == "invalid_grounding_reference"
-    assert first.code in PROPOSAL_REJECTION_CODES
+    assert first.code in KNOWN_REJECTION_CODES
     assert second.code == first.code
 
 

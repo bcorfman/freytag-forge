@@ -654,7 +654,7 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     assert proposal.segments[-1].text == AUTHORED_DELIVERY
-    assert state.facts.has("michelle_warning_known", "story", value="true")
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") in state.facts.asserted
 
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
@@ -1796,7 +1796,7 @@ def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_comm
     proposal = RuntimeEngine(state, provider).turn("Search the kitchen for signs of a struggle.")
 
     assert proposal.selected_knowledge_ids == ()
-    assert not state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
     assert provider.recovery_count == 1
     assert len(payloads) == 2
     assert "k_sl_1a_b_r1" not in payloads[1]["system"]
@@ -1865,7 +1865,7 @@ def test_scene_1a_migrated_reveal_composes_through_engine(
     assert provider.model_selected_knowledge_ids == ()
     for effect in candidate.establishes:
         value = str(effect.value).lower()
-        assert state.facts.has(effect.fact_id, "story", value=value)
+        assert Fact(predicate=effect.fact_id, subject="story", value=value) in state.facts.asserted
 
 
 @pytest.mark.parametrize(
@@ -1916,7 +1916,7 @@ def test_authored_handoff_grounds_echoed_prose_on_the_matched_candidate(
     assert proposal.selected_knowledge_ids == (candidate_id,)
     for effect in candidate.establishes:
         value = str(effect.value).lower()
-        assert state.facts.has(effect.fact_id, "story", value=value)
+        assert Fact(predicate=effect.fact_id, subject="story", value=value) in state.facts.asserted
 
 
 @pytest.mark.parametrize(
@@ -1972,7 +1972,7 @@ def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
     assert proposal.segments[-1].text == candidate.delivery_text
     for effect in candidate.establishes:
         value = str(effect.value).lower()
-        assert state.facts.has(effect.fact_id, "story", value=value)
+        assert Fact(predicate=effect.fact_id, subject="story", value=value) in state.facts.asserted
 
 
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:

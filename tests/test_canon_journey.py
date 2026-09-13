@@ -137,7 +137,7 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
     assert "purge_2c" in state.fired_event_ids
     assert "override_deadline_3a" in state.fired_event_ids
     assert "destruction_3b" in state.fired_event_ids
-    assert state.facts.has("resolution_complete", "story", value="true")
+    assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
 
 
 def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
@@ -152,8 +152,11 @@ def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
             f"turn {turn_index} selecting {selection} ended in {state.current_scene_id}, expected {expected_scene}"
         )
 
-    assert state.facts.has("story_elapsed_seconds", "story", value=str(60 * len(UNCLOCKED_JOURNEY)))
-    assert state.facts.has("resolution_complete", "story", value="true")
+    assert (
+        Fact(predicate="story_elapsed_seconds", subject="story", value=str(60 * len(UNCLOCKED_JOURNEY)))
+        in state.facts.asserted
+    )
+    assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
 
 
 def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
@@ -188,8 +191,8 @@ def test_scene_1a_handoff_recovers_card_atomically_with_continuity_files() -> No
         _drive(engine, provider, None)
 
     assert state.current_scene_id == "1B"
-    assert state.facts.has("continuity_initiative_known", "story", value="true")
-    assert state.facts.has("memory_card_in_kristins_custody", "story", value="true")
+    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
 
 
 def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -> set[str]:

@@ -147,7 +147,9 @@ def test_scene_1b_departure_bridge_uses_threshold_pool(
     engine._apply_canonical_route_events()
 
     assert ("bridge_1b_departure" in state.fired_event_ids) is fires
-    assert state.facts.has("transport_route_departure_ready", "story", value="true") is fires
+    assert (
+        Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
+    ) is fires
     assert (
         "t_1b_1c" in {transition.id for transition in engine.validator.eligible_transitions(state)}
     ) is exit_available

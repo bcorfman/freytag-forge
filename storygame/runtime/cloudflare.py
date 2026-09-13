@@ -623,20 +623,6 @@ class CloudflareTurnProvider:
         ]
         return context
 
-    def _beat_covered_candidate_ids(self, beat_anchors: set[object]) -> set[str]:
-        """Find offered facts whose authored storylet beat is already serialized."""
-
-        package = self.state.package
-        storylets = {storylet.id: storylet for storylet in package.storylets}
-        covered: set[str] = set()
-        for candidate in self._model_candidates():
-            knowledge = package.knowledge_indexes.by_id[candidate.id]
-            source = knowledge.source
-            storylet = storylets.get(source.storylet_id) if source.storylet_id else None
-            if source.kind == "storylet_realization" and storylet and beat_anchors & set(storylet.source_links):
-                covered.add(candidate.id)
-        return covered
-
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
         """Return the authored beats belonging to projected storylets."""
 
