@@ -10,7 +10,7 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
                 "status": "ok",
                 "turns": [
                     {
-                        "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
+                        "candidates_offered": ["k_sl_1a_a_r1"],
                         "selected_knowledge_ids": ["k_sl_1a_a_r1"],
                         "model_selected_knowledge_ids": ["k_sl_1a_a_r1"],
                         "grounding_ids": ["k_sl_1a_a_r1"],
@@ -29,7 +29,7 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
                 "status": "failed",
                 "turns": [
                     {
-                        "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
+                        "candidates_offered": ["k_sl_1a_a_r1"],
                         "selected_knowledge_ids": [],
                     },
                     {"candidates_offered": [], "selected_knowledge_ids": []},
@@ -39,7 +39,7 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
                     },
                     {"candidates_offered": [], "selected_knowledge_ids": []},
                     {
-                        "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
+                        "candidates_offered": ["k_sl_1a_a_r1"],
                         "selected_knowledge_ids": ["k_sl_1a_a_r1"],
                     },
                 ],
@@ -63,12 +63,12 @@ def test_compute_report_aggregates_all_runs_and_position_matches() -> None:
         "replicate": 1,
         "turn": 1,
         "player_input": "",
-        "candidates_offered": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
+        "candidates_offered": ["k_sl_1a_a_r1"],
         "selected_knowledge_ids": ["k_sl_1a_a_r1"],
         "model_selected_knowledge_ids": ["k_sl_1a_a_r1"],
         "grounding_ids": ["k_sl_1a_a_r1"],
         "model_grounding_ids": ["k_sl_1a_a_r1"],
-        "expected_candidate_ids": ["k_sl_1a_a_r1", "k_sl_1a_a_r2"],
+        "expected_candidate_ids": ["k_sl_1a_a_r1"],
         "expected_match": True,
     }
     assert report["per_turn"][2]["expected_candidate_ids"] == ["k_sl_1a_b_r1", "k_sl_1a_b_r2"]

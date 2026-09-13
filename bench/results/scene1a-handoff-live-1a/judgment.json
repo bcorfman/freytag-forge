@@ -1,0 +1,33 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Turn 1 invents a visible text on Michelle's phone ('Meet me at the lab at 4:00am. -Shelly') that conflicts with the opening/canon, which only says Michelle sent an early-morning text and that calls/texts were missed amid emergency alerts.",
+    "Turn 1 says the phone screen is cracked, but canon says the phone is undamaged.",
+    "Turn 1 asserts details not established in-scene as observed discoveries ('chair is tipped over', 'nothing else was taken', 'someone came for Michelle') instead of local evidence.",
+    "Turn 2 searches the workstation drawer but fails to state what item was found; it withholds actionable discovery from the player.",
+    "Turn 2 also leaps to interpretation about initials/instruction without naming the object or contents, so the assigned investigative beat is poorly dramatized.",
+    "Turn 3 ignores the requested object/context from Turn 2 and reverts to the kitchen phone, creating continuity confusion about where the damaged recording came from.",
+    "Turn 3 reveals protected knowledge too baldly ('It warns Kristin not to trust emergency broadcasts') without the intervening concrete recovery/listening scene the player earned.",
+    "Turn 4 has officers spontaneously appear and asks the player to 'Listen to the officers ask about her research,' but the narration mostly gives generic dialogue and then summary; it does not dramatize how they know about the research.",
+    "Turn 5 exits the scene by reading 'the rest of the files,' but those files were never clearly found/read in prior turns because Turn 2 failed to reveal the discovered medium and Turn 3 mishandled it.",
+    "Turn 5 leaves the scene without properly motivating the exit in narrated prose grounded in an actually established discovery from this scene.",
+    "Across the scene, Michelle's unsearched work area is not properly investigated in a responsive, rewarding way despite repeated apt searching requests.",
+    "The scene races to future beats and transitions via summaries ('someone came for Michelle', bench exchange point, travel there) instead of progressive local revelation."
+  ],
+  "reasons": [
+    "The scene violates scene-local canon consistency on key physical facts: Michelle's phone is undamaged in canon, yet Turn 1 makes it cracked.",
+    "The opening and situation establish only that an early-morning text was missed; inventing its exact content and sender label ('-Shelly') is unsupported and changes the mystery.",
+    "Interactive responsiveness is weak: searching the kitchen largely repeats setup, and searching the workstation drawer does not tell the player what was discovered, so investigation is not rewarded.",
+    "Progressive revelation fails because the scene both withholds earned local findings (Turn 2) and blurts higher-level conclusions or future leads in summary form (Turns 3 and 5).",
+    "Protected knowledge is not kept safe: the emergency-broadcast warning is delivered as a flat fact before the scene has convincingly recovered and played the interrupted message in-text.",
+    "The authored beats are not cleanly covered in order. The workstation/research discovery beat is muddled, then the recording/file beats are inconsistently handled, then the exit jumps to the park bench lead without a solid narrated chain of discovery.",
+    "The departure turn does not satisfy the exit requirement: although it names a bench exchange point, that point is not established through player-readable discovery in prior narration, so the reason to leave is not properly earned."
+  ]
+}

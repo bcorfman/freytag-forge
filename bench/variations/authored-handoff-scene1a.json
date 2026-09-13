@@ -1,0 +1,31 @@
+{
+    "name": "authored-handoff-scene1a",
+    "story_package": "data/stories/continuity-initiative",
+    "system_prompt": {
+        "include_output_example": true,
+        "auto_select_unambiguous_candidates": false,
+        "model_grounding": false
+    },
+    "user_prompt": {"beat_delivery": "details"},
+    "scripts": {
+        "1A": [
+            {"name": "handoff-officers", "inputs": [
+                "Search the kitchen.",
+                "Look under Michelle's workstation drawer.",
+                "Recover the damaged recording and listen to it.",
+                "Listen to the officers ask about her research.",
+                "Read the rest of the files."
+            ]},
+            {"name": "handoff-gate", "inputs": [
+                "Search the kitchen.",
+                "Look under Michelle's workstation drawer.",
+                "Recover the damaged recording and listen to it.",
+                "Check the front gate after the patrol leaves.",
+                "Read the rest of the files."
+            ]}
+        ],
+        "1B": [{"name": "unrelated-scene", "inputs": [
+            "Inspect the path beyond the gate for signs of where the patrol went."
+        ]}]
+    }
+}

@@ -214,6 +214,21 @@ def test_scene_1a_entry_catalog_is_safe_before_any_route_is_selected() -> None:
     assert not {"warning", "janus", "facility", "patrol tape"} & set(entry_text.split())
 
 
+def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
+    package = load_story_package(PACKAGE)
+    expected = {
+        "k_sl_1a_a_r1",
+        "k_sl_1a_b_r1",
+        "k_sl_1a_b_r2",
+        "k_sl_1a_c_r1",
+        "k_sl_1a_c_r2",
+        "k_sl_1a_d_r1",
+    }
+    actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
+
+    assert actual == expected, "Migrating or un-migrating a candidate is a reviewed change and must update this set."
+
+
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [

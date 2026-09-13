@@ -873,12 +873,13 @@ class CloudflareTurnProvider:
             text=handoff.delivery_text,
             grounding_ids=(handoff.candidate.id,),
         )
-        return proposal.model_copy(
+        composed = proposal.model_copy(
             update={
                 "segments": (*model_segments, delivery),
                 "selected_knowledge_ids": (handoff.candidate.id,),
             }
         )
+        return self._auto_attribute_committed_knowledge(composed)
 
     def _character_lines(self) -> list[str]:
         """Introduce only the characters this scene actually involves.
@@ -1313,6 +1314,7 @@ class CloudflareTurnProvider:
             return proposal
 
         committed_ids = {item.id for item in self.last_projection.committed_knowledge}
+        handoff_candidate_id = self.authored_handoff.candidate.id if self.authored_handoff is not None else None
         indexes = self.state.package.knowledge_indexes
         multi_word_terms = {term for term in indexes.term_to_knowledge if len(term.split()) > 1}
         changed = False
@@ -1325,6 +1327,12 @@ class CloudflareTurnProvider:
                 if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", normalized_text):
                     continue
                 owners = set(indexes.term_to_knowledge[term]) & committed_ids
+                if (
+                    not owners
+                    and handoff_candidate_id is not None
+                    and handoff_candidate_id in indexes.term_to_knowledge[term]
+                ):
+                    owners = {handoff_candidate_id}
                 if len(owners) == 1:
                     owner = next(iter(owners))
                     if owner not in segment.grounding_ids:

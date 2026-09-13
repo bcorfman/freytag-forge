@@ -15,6 +15,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import PROPOSAL_REJECTION_CODES, ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
+from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -118,7 +119,8 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
 
 
 def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1", "k_sl_1a_c_r1"}, strip_must_convey=True)
+    state = RuntimeState.bootstrap(package)
     responses = iter(
         (
             {
@@ -168,13 +170,13 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
     engine = RuntimeEngine(state, lambda _: next(responses))
 
     expected_candidates = (
-        {"k_sl_1a_a_r1", "k_sl_1a_a_r2"},
+        {"k_sl_1a_a_r1"},
         {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
         {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
         # This run took the damaged recording before Michelle's files, which used to
         # consume Scene 1A's only source of the actionable lead. The memory card
         # recovery now appears alongside the patrol beat so the scene stays winnable.
-        {"k_sl_1a_c_r1", "k_sl_1a_c_r2", "k_sl_1a_d_r1", "k_sl_1a_d_r2"},
+        {"k_sl_1a_c_r1", "k_sl_1a_c_r2", "k_sl_1a_d_r1"},
     )
     for player_input, expected in zip(
         (

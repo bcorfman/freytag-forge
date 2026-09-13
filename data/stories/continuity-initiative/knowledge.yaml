@@ -239,6 +239,9 @@ knowledge:
 - id: k_sl_1a_a_r1
   statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.'
   earn_when: searches the kitchen or back door for signs of what happened
+  action_evidence:
+  - [search, examine, inspect, check]
+  - [kitchen, back door, forced lock, overturned chair]
   entity_ids: []
   aliases:
   - michelle abduction suspicion
@@ -259,29 +262,12 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-- id: k_sl_1a_a_r2
-  statement: 'A hurried search leaves Kristin uncertain, but the broken door and overturned chair make Michelle’s absence feel staged.'
-  earn_when: searches the kitchen or back door for signs of what happened
-  entity_ids: []
-  aliases:
-  - michelle abduction suspicion
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 1A
-  requires: []
-  establishes:
-  - op: assert
-    fact_id: michelle_abduction_suspicion
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-1A-A
-    realization_id: SL-1A-A-R2
-  relevance:
-    entity_ids: []
-    priority: 0
+  must_convey:
+  - [phone]
+  - [tablet]
+  - [chair]
+  - [door, forced entry]
+  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_b_r1
   statement: "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
   earn_when: reads the saved files on Michelle's memory card
@@ -407,39 +393,10 @@ knowledge:
   - [research, research files, files, research material, Michelle's files, work files]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
   - [place she used to trade information, exchange point, place to trade, the exchange point, her information drop, where she traded information]
-- id: k_sl_1a_d_r2
-  statement: 'Kristin reads surviving fragments on Michelle''s recovered memory card, and they still name the exchange point she was using.'
-  entity_ids: [kristin, michelle, memory_card]
-  aliases:
-  - recovered fragments
-  - exchange point
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 1A
-  requires:
-  - fact_id: memory_card_in_kristins_custody
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: continuity_initiative_known
-    value: true
-  - op: assert
-    fact_id: michelle_lead_actionable
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-1A-D
-    realization_id: SL-1A-D-R2
-  relevance:
-    entity_ids: [memory_card]
-    priority: 0
-  must_convey:
-  - [fragments, files, research files, research fragments, file fragments, partial files]
-  - [recovered memory card, memory card, card, card she is carrying]
-  - [exchange point, place she was using, place to trade information, the exchange point, her information drop, where she traded information]
-  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
+  action_evidence:
+  - [read, open, inspect, check, go through]
+  - [files, rest of the files, remaining files, research files, fragments]
+  delivery_text: "The rest of the files on Michelle's memory card hold her research. They name the exchange point where she traded information."
 - id: k_sl_1a_c_r1
   statement: 'The patrol’s interest in Michelle’s research makes Kristin doubt that its welfare check is innocent.'
   entity_ids: []
@@ -468,6 +425,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  action_evidence:
+  - [listen, watch, notice, hear]
+  - [officers, officer, official, officials, patrol]
+  - [research, questions, ask about, asking about]
+  must_convey:
+  - [officers, patrol, patrol's]
+  - [research]
+  - [Michelle, Michelle's, Dr. McGehee]
+  delivery_text: "The officers ask about Michelle's research and what she found. This is not a normal welfare check."
 - id: k_sl_1a_c_r2
   statement: 'After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be watched.'
   entity_ids: []
@@ -500,6 +466,10 @@ knowledge:
   - [reflective tape, gate marker, marker, reflective gate tape, tape marker, strip of reflective tape]
   - [gate, house, home, front gate, the house gate, marked home]
   - [patrol, officers, federal emergency patrol, welfare patrol, emergency officers, federal patrol]
+  action_evidence:
+  - [watch, check, inspect, examine, look at]
+  - [gate, front gate, reflective tape]
+  delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
 - id: k_sl_1b_a_r1
   statement: 'Kristin matches the transit card and number sequence to a freight route leading out of the city.'
   entity_ids: []
