@@ -136,6 +136,10 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     escalation_judge = variation.get("escalation_judge", False)
     if not isinstance(escalation_judge, bool):
         raise ValueError("escalation_judge must be a boolean")
+    entry_state = variation.get("entry_state", "bare")
+    if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
+        raise ValueError("entry_state must be bare or thorough")
+    variation["_entry_state"] = entry_state
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
@@ -299,12 +303,94 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
     return package, state
 
 
-def entry_state(state: RuntimeState) -> dict[str, Any]:
-    """Describe the deliberately bare state used when a scene is benched."""
+def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[Any, RuntimeState]:
+    """Build the configured entry state without making a narration request."""
+
+    if variation.get("_entry_state", variation.get("entry_state", "bare")) == "bare":
+        return package_and_state(variation, scene_id)
+
+    from storygame.personas import (
+        _TURN_CAP,
+        PERSONAS,
+        _legacy_package,
+        _ScriptedProvider,
+        _select_thorough,
+    )
+
+    package = load_story_package(Path(variation["_package_path"]))
+    scene_ids = {scene.metadata.scene_id for scene in package.scenes}
+    if scene_id not in scene_ids:
+        raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
+    state = RuntimeState.bootstrap(package)
+    if state.current_scene_id == scene_id:
+        return package, state
+
+    # The persona harness uses this legacy package only for choosing and
+    # rendering the first storylet reveal. Its IDs match the effective package;
+    # the runtime state stays on the real package so overlays remain in force.
+    persona_package = _legacy_package(package)
+    provider = _ScriptedProvider(persona_package, state)
+    engine = RuntimeEngine(state, provider)
+    for _ in range(_TURN_CAP):
+        if state.current_scene_id == scene_id:
+            return package, state
+        engine._activate_pacing()
+        projection = engine.projector.project(state, "player", "")
+        selected = _select_thorough(persona_package, state, projection.candidates)
+        provider.selected = (selected,) if selected else ()
+        try:
+            engine.turn(PERSONAS["thorough"])
+        except (ProposalValidationError, RuntimeContractError):
+            provider.selected = ()
+            engine.turn(PERSONAS["thorough"])
+        if state.current_scene_id == scene_id:
+            state.package = _package_with_seeded_knowledge(package, state, scene_id)
+            return state.package, state
+
+    raise RuntimeError(f"scene {scene_id} was not reached within {_TURN_CAP} thorough seeding turns")
+
+
+def _package_with_seeded_knowledge(package: Any, state: RuntimeState, scene_id: str) -> Any:
+    """Expose established prior claims at the live scene's entry boundary."""
+
+    established_ids = {
+        item.id
+        for item in package.knowledge.knowledge
+        if KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
+    }
+    knowledge = tuple(
+        item.model_copy(update={"available_in_scenes": (*item.available_in_scenes, scene_id)})
+        if item.id in established_ids and scene_id not in item.available_in_scenes
+        else item
+        for item in package.knowledge.knowledge
+    )
+    indexes = package.knowledge_indexes.model_copy(
+        update={
+            "by_id": {item.id: item for item in knowledge},
+            "protected_terms": tuple(
+                term
+                for term in package.knowledge_indexes.protected_terms
+                if not any(
+                    term.casefold() in item.statement.casefold() for item in knowledge if item.id in established_ids
+                )
+            ),
+        }
+    )
+    return package.model_copy(
+        update={
+            "knowledge": package.knowledge.model_copy(update={"knowledge": knowledge}),
+            "knowledge_indexes": indexes,
+        }
+    )
+
+
+def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, Any]:
+    """Describe the state used when a scene is benched."""
 
     return {
         "scene_id": state.current_scene_id,
         "committed_knowledge_count": len(KnowledgeProjector().project(state, "player", "").committed_knowledge),
+        "seeded_by": seeded_by,
     }
 
 
@@ -504,8 +590,11 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
 
 
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
-    package, state = package_and_state(variation, scene_id)
-    arrival_entry_state = entry_state(state)
+    package, state = seeded_state_for_scene(variation, scene_id)
+    seeded_by = (
+        "thorough" if variation.get("_entry_state", variation.get("entry_state", "bare")) == "thorough" else "none"
+    )
+    arrival_entry_state = entry_state(state, seeded_by=seeded_by)
     provider = provider_for(state, variation)
     engine = RuntimeEngine(state, provider)
     try:

@@ -32,7 +32,7 @@ missing fact, `cue_text` is that fact delivery's visible cue (or `null`),
 
 `prompt` prints the exact system and user prompt the narrator would receive. It contacts no model and spends nothing, so it is the cheapest way to see what a prompt change actually did. It takes the story's own coordinates - a scene, optionally a beat, optionally the player's action - and needs no variation file:
 
-Bench scenes start from a bare arrival state with only that scene's entry fact committed; they do not reconstruct optional earlier storylets. Run summaries disclose this scene and committed-knowledge count, so safety failures from an isolated mid-story scene can be read in context.
+Bench scenes use a bare arrival state by default, with only that scene's entry fact committed; they do not reconstruct optional earlier storylets. Set the variation's `entry_state` to `"thorough"` to play the story offline to the requested scene with the persona harness's thorough player. This costs no narration requests. Run summaries disclose the scene, committed-knowledge count, and `seeded_by` mode (`none` for bare, `thorough` for offline seeding), so safety failures can be read in context.
 
 ```bash
 # the prompt that establishes scene 1A, as the player enters it
@@ -122,6 +122,7 @@ Variations are JSON data, not engine edits. The supported shape is:
 {
   "name": "example",
   "story_package": "data/stories/continuity-initiative",
+  "entry_state": "bare",
   "escalation_judge": true,
   "system_prompt": {
     "rules": ["..."],
@@ -156,6 +157,8 @@ counts appear in an `escalation` block in `summary.json` and the ledger row:
 ```
 
 `beat_delivery` is `details` for beat noun phrases or `prose` for the authored beat paragraph. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
+
+`entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `seeded_by`: `none` for bare and `thorough` for seeded runs.
 
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:
 

@@ -532,6 +532,7 @@ def test_entry_state_counts_projected_committed_knowledge() -> None:
     assert core.entry_state(state) == {
         "scene_id": "1A",
         "committed_knowledge_count": projected_count,
+        "seeded_by": "bare",
     }
 
 
