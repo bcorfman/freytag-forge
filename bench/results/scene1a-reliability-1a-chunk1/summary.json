@@ -1,0 +1,184 @@
+{
+  "replicates": 10,
+  "completed_replicates": 10,
+  "failed_replicates": 0,
+  "failures": [],
+  "scenes_scored": 1,
+  "max_score": 7,
+  "score_metric": "7-point record: seven equally weighted boolean criteria across 1 scene",
+  "pooled": {
+    "score_points": {
+      "n": 20,
+      "mean": 1.2,
+      "standard_deviation": 0.8335087534664907,
+      "confidence_interval_95": [
+        0.8099103787184554,
+        1.5900896212815445
+      ],
+      "minimum_detectable_effect": 2.447602908970326,
+      "replicate_scores": [
+        0.0,
+        1.0,
+        2.0,
+        2.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        3.0,
+        1.0,
+        1.0,
+        2.0,
+        0.0,
+        0.0,
+        3.0
+      ]
+    },
+    "total": 24,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 4,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 2,
+      "exit_motivated": 15,
+      "rewards_investigation": 3
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 173,
+      "per_criterion_where_attributable": {
+        "rich": 1,
+        "progressive": 2
+      },
+      "unattributed": 170
+    }
+  },
+  "per_script": {
+    "handoff-gate": {
+      "score_points": {
+        "n": 10,
+        "mean": 1.4,
+        "standard_deviation": 0.9660917830792959,
+        "confidence_interval_95": [
+          0.7089475852006593,
+          2.0910524147993406
+        ],
+        "minimum_detectable_effect": 2.447602908970326,
+        "replicate_scores": [
+          1.0,
+          2.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          3.0,
+          1.0,
+          0.0,
+          3.0
+        ]
+      },
+      "example_leakage": 6,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 3,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 1,
+        "exit_motivated": 8,
+        "rewards_investigation": 2
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 81,
+        "per_criterion_where_attributable": {
+          "rich": 1
+        },
+        "unattributed": 80
+      }
+    },
+    "handoff-officers": {
+      "score_points": {
+        "n": 10,
+        "mean": 1.0,
+        "standard_deviation": 0.6666666666666666,
+        "confidence_interval_95": [
+          0.5231285288466084,
+          1.4768714711533915
+        ],
+        "minimum_detectable_effect": 2.447602908970326,
+        "replicate_scores": [
+          0.0,
+          2.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          2.0,
+          0.0
+        ]
+      },
+      "example_leakage": 6,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 1,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 1,
+        "exit_motivated": 7,
+        "rewards_investigation": 1
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 92,
+        "per_criterion_where_attributable": {
+          "progressive": 2
+        },
+        "unattributed": 90
+      }
+    }
+  },
+  "replicate_scores": [
+    0.0,
+    1.0,
+    2.0,
+    2.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    3.0,
+    1.0,
+    1.0,
+    2.0,
+    0.0,
+    0.0,
+    3.0
+  ],
+  "example_leakage": 12,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "entry_state": {
+    "scene_id": "1A",
+    "committed_knowledge_count": 1
+  },
+  "budget": {
+    "projected_workers_ai_neurons": 1320.0,
+    "actual_narration_turns": 100,
+    "actual_narration_requests": 120,
+    "estimated_workers_ai_neurons_from_requests": 1320.0,
+    "actual_openai_judge_calls": 20,
+    "quota": null
+  }
+}

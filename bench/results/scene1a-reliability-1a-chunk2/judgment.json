@@ -1,0 +1,28 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": true,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Turn 2 fails to reveal what is actually found in the workstation drawer despite the player searching the exact scene-local target that canon says is unsearched and important.",
+    "Turn 3 invents access to a damaged recording on Michelle's memory card via the phone despite the phone being locked and no prior recovery of such media being established in narration.",
+    "Turn 3 reveals protected knowledge early: 'It warns Kristin not to trust emergency broadcasts.'",
+    "Turn 4 invents officers entering the house with no setup or consequence from prior actions, and has them ask about 'your research,' which is inconsistent because the research is Michelle's.",
+    "Turn 5 jumps to 'the rest of the files on Michelle's memory card' without adequately establishing how Kristin accessed them.",
+    "Turn 5 reveals the exchange point and exits the scene before the workstation/research search beat is properly dramatized on-page.",
+    "The opening mentions scattered papers on the desk, but Turn 1's 'Search the kitchen' does not materially investigate or expose actionable clues in the kitchen beyond summary conclusions.",
+    "Repeated apt searching is not rewarded: searching the workstation drawer, the key unsearched area named in canon, produces no readable discovery the player can act on."
+  ],
+  "reasons": [
+    "The scene must focus on finding evidence of Michelle's disappearance, especially in her unsearched work area. That authored beat is skipped or only gestured at, not actually delivered in responsive narration.",
+    "Scene-local continuity is weak: the player searched the kitchen, then a workstation drawer, then somehow accessed a memory-card recording from a locked phone, then officers appear abruptly. These transitions are not causally grounded in what the player actually did.",
+    "Progressive revelation is violated. The scene leaps from minimal search to major downstream secrets, including the warning about emergency broadcasts and the exchange point, instead of unfolding discoveries through the desk/drawers/research in order.",
+    "Protected knowledge is exposed too soon. The emergency-broadcast distrust warning is a major revelation and should not be surfaced before the local investigation justifies it.",
+    "Richness is insufficient on ordinary turns. Several turns summarize conclusions ('Someone came for Michelle,' 'This is not a normal welfare check') instead of dramatizing observable evidence and immediate consequences.",
+    "Although the exit names what was found and where it points, the departure is not earned because the crucial intermediate scene beat—searching Michelle's work area and uncovering her last investigation/interrupted message in playable form—was not properly covered first."
+  ]
+}

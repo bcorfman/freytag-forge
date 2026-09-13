@@ -398,6 +398,27 @@ composed on every turn that reached its command (`a_r1` 6/6, `b_r2` 6/6, `c_r1`
 earn. Offline probes with a stub narrator, one of which echoes each command,
 reproduce both defects and pass on the fixed runtime.
 
+**Reliability (2026-09-13).** Thirty live replicates of each Scene 1A script,
+in `bench/results/scene1a-reliability-1a-chunk{1,2,3}/` with a four-replicate
+Scene 1B control in `scene1a-reliability-1b/`. A reveal counts as delivered
+only when it composed and its turn committed; intervals are Wilson 95%.
+
+| Reveal | Delivered | 95% interval |
+| --- | --- | --- |
+| `k_sl_1a_a_r1` | 60/60 | 94.0-100% |
+| `k_sl_1a_b_r2` | 60/60 | 94.0-100% |
+| `k_sl_1a_c_r1` | 30/30 | 88.6-100% |
+| `k_sl_1a_c_r2` | 30/30 | 88.6-100% |
+| `k_sl_1a_d_r1` | 59/60 | 91.1-99.7% |
+| All pooled | 239/240 | 97.7-99.9% |
+
+No turn composed a reveal its command did not earn. The gate script completed
+30/30 replicates, the officers script 29/30, and the control 4/4. The single
+failure was `protected_narration_leak` on the protected term 'phase' in the
+narrator's own prose on the files turn; no delivery text contains that word,
+so it is a narration-safety rejection rather than a handoff defect. The lower
+bounds reflect sample size, not observed failures.
+
 ## Explicit non-solutions
 
 - Do not randomly select an eligible candidate.
