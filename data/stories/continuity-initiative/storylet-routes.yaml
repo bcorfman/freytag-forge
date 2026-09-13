@@ -2290,7 +2290,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-B
-  fallback_text: Kristin stops Rebecca from escaping with the portable JANUS archive. Michelle sends copies to independent networks, and the prisoners capture Rebecca.
+  fallback_text: Kristin stops Rebecca from escaping with the portable data case. Michelle sends copies to independent networks, and the prisoners capture Rebecca.
   fallback_realization: Validated free-text confrontation preserves and distributes the archive while Rebecca is
     captured; destroying the archive is not the canonical resolution.
 - id: resolution_escape

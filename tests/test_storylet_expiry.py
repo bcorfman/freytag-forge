@@ -65,7 +65,7 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
         assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
-def test_real_package_has_nineteen_required_storylets() -> None:
+def test_real_package_has_twenty_four_required_storylets() -> None:
     assert len(required_storylet_ids(PACKAGE)) == 24
 
 
