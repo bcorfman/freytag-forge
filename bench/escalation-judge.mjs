@@ -8,6 +8,15 @@ const ESCALATION_CRITERIA = [
   "no_pre_reveal_disclosure",
 ];
 const ESCALATION_VERDICTS = ["yes", "no", "not_applicable"];
+const PLAYER_VISIBLE_TURN_FIELDS = [
+  "player_input",
+  "narration",
+  "left_scene",
+  "cue_fact_id",
+  "cue_text",
+  "complication_text",
+  "handoff_staged",
+];
 const ESCALATION_SCHEMA = {
   type: "object",
   properties: {
@@ -41,7 +50,24 @@ const SYSTEM_MESSAGE =
   "Use not_applicable when no such turn exists. " +
   "A cue passes when the narration shows its visible detail and points toward the missing fact without stating it. " +
   "A complication passes when it adds observable pressure and reveals nothing the player has not earned. " +
-  "no_pre_reveal_disclosure is no if narration before the reveal turn discloses a hidden item's existence or location named in the canon's Hidden canon.";
+  "The reveal turn is the first turn whose narration names the hidden item from the canon's Hidden canon line. " +
+  "A turn with handoff_staged true is also a reveal turn. " +
+  "For no_pre_reveal_disclosure, read only the narration of turns before the reveal turn. " +
+  "Answer no only if that narration says or clearly implies that the hidden item exists or where it is hidden. " +
+  "If there is no reveal turn, read all narration. " +
+  "Naming ordinary visible scene objects, such as shut drawers or carved initials, is not disclosure. " +
+  "The canon is reference only. It is never narration. " +
+  "A reveal with no earlier cue is not disclosure; judge that only under cue_points_to_missing_thread.";
+
+function playerVisibleTurn(turn) {
+  return Object.fromEntries(
+    PLAYER_VISIBLE_TURN_FIELDS.filter((field) => Object.hasOwn(turn, field)).map((field) => [field, turn[field]]),
+  );
+}
+
+function judgeCanon(canon) {
+  return { scene_id: canon?.scene_id, plot: canon?.plot };
+}
 
 export async function judgeEscalation(
   { sceneId, opening, turns },
@@ -57,7 +83,14 @@ export async function judgeEscalation(
       store: false,
       input: [
         { role: "system", content: SYSTEM_MESSAGE },
-        { role: "user", content: JSON.stringify({ canon, opening, turns }) },
+        {
+          role: "user",
+          content: JSON.stringify({
+            canon: judgeCanon(canon),
+            opening,
+            turns: turns.map(playerVisibleTurn),
+          }),
+        },
       ],
       text: {
         format: {
@@ -101,15 +134,9 @@ function packageCanon(sceneId, packagePath) {
   const plot = read("plot.md");
   const sceneIds = [...plot.matchAll(/^## Scene ([1-9][A-Z])\b/gm)].map((match) => match[1]);
   const nextScene = sceneIds[sceneIds.indexOf(sceneId) + 1];
-  const storylets = read("storylets.md");
-  const routes = read("storylet-routes.yaml");
   return {
     scene_id: sceneId,
     plot: sceneBlock(plot, `## Scene ${sceneId}`, nextScene ? `## Scene ${nextScene}` : "\u0000"),
-    storylets: sceneBlock(storylets, `### SL-${sceneId}`, nextScene ? `### SL-${nextScene}` : "\u0000"),
-    routes: sceneBlock(routes, `- id: SL-${sceneId}`, nextScene ? `- id: SL-${nextScene}` : "\u0000"),
-    pacing: read("pacing.yaml"),
-    world: read("world.yaml"),
   };
 }
 

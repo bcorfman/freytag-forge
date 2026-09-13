@@ -16,8 +16,34 @@ function response(value) {
 
 test("escalation judge sends the transcript with the strict schema", async () => {
   let request;
-  const canon = { scene_id: "1A", plot: "**Hidden canon:** under the floorboard" };
-  const turns = [{ cue_fact_id: "missing_fact", cue_text: "A loose floorboard." }];
+  const canon = {
+    scene_id: "1A",
+    plot: "**Hidden canon:** under the floorboard",
+    storylets: "player should never see this",
+    routes: "player should never see this",
+    pacing: "player should never see this",
+    world: "player should never see this",
+  };
+  const turns = [
+    {
+      player_input: "Search the kitchen floor.",
+      narration: "A loose floorboard catches the light.",
+      left_scene: false,
+      cue_fact_id: "missing_fact",
+      cue_text: "A loose floorboard.",
+      complication_text: "Footsteps approach.",
+      handoff_staged: false,
+      beats_projected: ["not player-visible"],
+      candidates_offered: ["not player-visible"],
+      prompt_candidate_ids: ["not player-visible"],
+      selected_knowledge_ids: ["not player-visible"],
+      grounding_ids: ["not player-visible"],
+      model_grounding_ids: ["not player-visible"],
+      shadow_matched_candidate_id: "not player-visible",
+      authored_handoff_candidate_id: "not player-visible",
+      model_selected_knowledge_ids: ["not player-visible"],
+    },
+  ];
   const result = await judgeEscalation(
     { sceneId: "1A", opening: "A quiet kitchen.", turns },
     {
@@ -35,7 +61,25 @@ test("escalation judge sends the transcript with the strict schema", async () =>
   assert.equal(request.store, false);
   assert.equal(request.input[0].role, "system");
   assert.match(request.input[0].content, /not_applicable/);
-  assert.deepEqual(JSON.parse(request.input[1].content), { canon, opening: "A quiet kitchen.", turns });
+  assert.match(request.input[0].content, /reveal turn/);
+  assert.match(request.input[0].content, /handoff_staged/);
+  assert.match(request.input[0].content, /reference only/);
+  assert.match(request.input[0].content, /not disclosure/);
+  assert.deepEqual(JSON.parse(request.input[1].content), {
+    canon: { scene_id: canon.scene_id, plot: canon.plot },
+    opening: "A quiet kitchen.",
+    turns: [
+      {
+        player_input: "Search the kitchen floor.",
+        narration: "A loose floorboard catches the light.",
+        left_scene: false,
+        cue_fact_id: "missing_fact",
+        cue_text: "A loose floorboard.",
+        complication_text: "Footsteps approach.",
+        handoff_staged: false,
+      },
+    ],
+  });
   assert.equal(request.text.format.type, "json_schema");
   assert.equal(request.text.format.name, "scene_escalation_judgment");
   assert.equal(request.text.format.strict, true);
