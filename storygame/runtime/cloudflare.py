@@ -1314,6 +1314,8 @@ class CloudflareTurnProvider:
             return proposal
 
         committed_ids = {item.id for item in self.last_projection.committed_knowledge}
+        if self.authored_handoff is not None:
+            committed_ids.add(self.authored_handoff.candidate.id)
         indexes = self.state.package.knowledge_indexes
         multi_word_terms = {term for term in indexes.term_to_knowledge if len(term.split()) > 1}
         changed = False

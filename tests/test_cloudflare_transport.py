@@ -597,7 +597,7 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
     result = provider("Recover the interrupted recording and listen to it.")
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert result["segments"][0]["grounding_ids"] == []
+    assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert result["segments"][1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].delivery_text
     assert result["segments"][1]["grounding_ids"] == ["k_sl_1a_b_r2"]
     assert provider.model_selected_knowledge_ids == ()
@@ -875,7 +875,7 @@ def test_authored_handoff_auto_attributes_a_committed_known_term() -> None:
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.assemble_turn_prompt("Look at the kitchen floor.")
-    provider.authored_handoff = object()
+    provider.authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_scene_1a_entry"))
     response = {
         "segments": [{"kind": "narration", "text": "Kristin kneels by the kitchen floor."}],
         "selected_knowledge_ids": [],
@@ -891,7 +891,7 @@ def test_authored_handoff_does_not_attribute_an_uncommitted_future_term() -> Non
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.assemble_turn_prompt("Search the grounds.")
-    provider.authored_handoff = object()
+    provider.authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_scene_1a_entry"))
     future_term = "facility entrance"
     future_owner_ids = PACKAGE.knowledge_indexes.term_to_knowledge[future_term]
     response = {
@@ -909,7 +909,7 @@ def test_authored_handoff_clears_model_proposed_selection() -> None:
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider.assemble_turn_prompt("Look at the kitchen floor.")
-    provider.authored_handoff = object()
+    provider.authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_scene_1a_entry"))
     response = {
         "segments": [{"kind": "narration", "text": "Kristin kneels by the kitchen floor."}],
         "selected_knowledge_ids": ["k_scene_1a_entry"],
@@ -1863,6 +1863,57 @@ def test_scene_1a_migrated_reveal_composes_through_engine(
     assert proposal.segments[-1].grounding_ids[0] == candidate_id
     assert proposal.selected_knowledge_ids == (candidate_id,)
     assert provider.model_selected_knowledge_ids == ()
+    for effect in candidate.establishes:
+        value = str(effect.value).lower()
+        assert state.facts.has(effect.fact_id, "story", value=value)
+
+
+@pytest.mark.parametrize(
+    ("candidate_id", "storylet_id", "fact_ids", "player_input", "model_text"),
+    [
+        pytest.param(
+            "k_sl_1a_c_r2",
+            "SL-1A-C",
+            ("michelle_warning_known",),
+            "Check the front gate after the patrol leaves.",
+            "Kristin walks out to the front gate after the patrol leaves.",
+            id="front-gate",
+        ),
+        pytest.param(
+            "k_sl_1a_b_r2",
+            None,
+            (),
+            "Recover the damaged recording and listen to it.",
+            "Kristin finds the damaged recording and listens.",
+            id="damaged-recording",
+        ),
+    ],
+)
+def test_authored_handoff_grounds_echoed_prose_on_the_matched_candidate(
+    monkeypatch,
+    candidate_id: str,
+    storylet_id: str | None,
+    fact_ids: tuple[str, ...],
+    player_input: str,
+    model_text: str,
+) -> None:
+    state = _staged_scene_1a_state() if storylet_id is None else RuntimeState.bootstrap(PACKAGE)
+    for fact_id in fact_ids:
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+    if storylet_id is not None:
+        state.active_event_ids.add(storylet_id)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": model_text}]}),
+    )
+
+    proposal = RuntimeEngine(state, provider).turn(player_input)
+    candidate = PACKAGE.knowledge_indexes.by_id[candidate_id]
+
+    assert candidate_id in proposal.segments[0].grounding_ids
+    assert proposal.segments[-1].text == candidate.delivery_text
+    assert proposal.selected_knowledge_ids == (candidate_id,)
     for effect in candidate.establishes:
         value = str(effect.value).lower()
         assert state.facts.has(effect.fact_id, "story", value=value)
