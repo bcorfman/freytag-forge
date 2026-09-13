@@ -1,0 +1,72 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 gives no meaningful consequence for waiting beyond recycled atmosphere; it does not advance or concretely reveal how JANUS is being countered.",
+        "Turn 2 again stalls with near-repeat text and no responsive change despite repeated waiting.",
+        "Turn 3 only adds the generic destruction-threat cue; Scene 3B's required beat progression still has not occurred.",
+        "Turn 4 injects 'all centered around the same area: the external broadcast relay chamber,' which contradicts 3B.1's core tactic of creating unrelated/conflicting emergencies and prematurely points at the later relay bottleneck.",
+        "Turn 4 cues human_security_control without actually narrating operators taking over or showing the player that JANUS has been defeated in practice.",
+        "The scene never properly dramatizes Rebecca's office confrontation: Michelle is absent from the action, Rebecca is absent until a summary dump, and her claim about saving the facility is omitted.",
+        "Michelle's canonical confrontation that Rebecca approved experiments and selected prisoners is skipped until compressed summary, so 3B.2 is not covered as a played beat.",
+        "Charles's remote appearance, office lockdown, transfer of network control, plan to destroy the Los Angeles facility, terrorist framing, and alternate command site are all omitted from the readable scene.",
+        "Turn 5 dumps multiple major beats out of scene order and offstage instead of dramatizing them across turns.",
+        "Turn 5 reveals protected knowledge early: Brandon 'admits his role in creating JANUS' without prior scene-local dramatization and as part of a compressed transition summary rather than an earned beat.",
+        "The transition out fails motivation standards: the player is not shown where Kristin and Michelle are, what exactly they found in Rebecca's office/relay path, or why departure from the current location is the natural next move; the scene simply declares the bridge.",
+        "Opening/scene establishment is thin and confused: it starts in corridors, then turns refer to 'beyond the office door' and 'the room' without clearly establishing whether the player is in Rebecca's office, outside it, or elsewhere.",
+        "Repeated apt searching/watching yields almost nothing actionable for four turns, despite canon saying this scene contains observable security behavior, office confrontation, and relay bottleneck clues."
+      ],
+      "reasons": [
+        "Scene 3B requires ordered coverage of 3B.1, 3B.2/3B.3, then 3B.4. This scene spends four turns stalling on 3B.1 and then jumps straight to a summary transition, so the authored beats were not covered in order across turns.",
+        "Responsive consequences are mandatory on ordinary turns. The repeated 'Wait and watch the room' commands mostly return paraphrases of the same alarm imagery rather than evolving the tactical situation or revealing actionable information.",
+        "The canon specifically rewards irrational disruption to overload JANUS. Instead, waiting is met with static description, and when advancement finally occurs it is reported, not experienced.",
+        "Scene-local consistency is weak: Michelle, Rebecca, and Charles are central participants in this scene but are largely absent from the narrated turns the player actually reads.",
+        "Turn 4's statement that alarms are all centered on the relay chamber directly undercuts the canon that Kristin creates unrelated alarms to confuse JANUS, and it spotlights a later beat too early.",
+        "The final turn is an exposition block that collapses Brandon's sacrifice, Rebecca's bargain, detention-site acquisition, and the broadcast start into a single summary, violating progressive revelation and scene dramatization.",
+        "Protected/earned information handling is unsafe because Brandon's JANUS confession is revealed in a blunt summary rather than through the canonical relay-sacrifice beat, and Charles's betrayal material is not established before the bridge.",
+        "The exit is not properly motivated from the player's viewed narration; it names outcomes but not a lived discovery chain that justifies leaving the current beat/space."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Scene 3B.1 never actually happens on-page: Kristin does not deliberately create irrational disruptions, flooding, power cuts, or structural alarms as a consequence of play.",
+        "JANUS predictive pressure is repeated abstractly across turns without meaningful state change or actionable consequence.",
+        "Opening/early turns do not substantially establish the local scene beyond generic alarms/corridors; Rebecca's office, command-center pressure, Brandon's separate holding action, and relay geography are not concretely dramatized.",
+        "Responsive consequences are weak: repeated waiting mostly returns atmospheric restatement rather than new actionable developments.",
+        "Turn 4 improperly cues human_security_control without narrating that human operators have actually taken over security in a clear consequential way.",
+        "Scene 3B.2 is skipped until the final turn and then mishandled: Rebecca's office confrontation, her claim about not supporting the killings, Michelle's accusation about approved experiments, and the bargain are not dramatized in sequence.",
+        "Scene 3B.3 is omitted/misordered: Charles does not appear remotely on-page to lock down Rebecca's office, strip her control, threaten destruction of the Los Angeles facility, or frame anti-government terrorists.",
+        "Final turn dumps multiple beats at once, including Brandon's sacrifice, Rebecca's bargain, Kristin overloading JANUS, and the broadcast start, instead of progressive revelation across the scene.",
+        "Final turn contradicts prior local situation by abruptly asserting completed actions the player never caused or witnessed while they were repeatedly waiting.",
+        "Brandon's confession is presented, but without the required buildup that the relay is the final bottleneck after Charles's betrayal and detention locations are secured.",
+        "Rebecca's detention-site information is asserted as secured without the player seeing where/how it was obtained in prose.",
+        "left_scene turn fails to motivate departure from what the player actually read: it does not name a discovered lead/location arising from prior investigation; it simply summarizes completed canon beats after the fact.",
+        "Repeated apt waiting/searching in-scene keeps yielding little the player can act on, despite canon saying the scene should reward disruption and confrontation."
+      ],
+      "reasons": [
+        "The scene must cover authored beats in order across its turns. Here, four turns stall on vague observation of alarms, then the departure turn compresses most of 3B.1-3B.4 into a summary.",
+        "A turn given beat 3B.1 still fails if it dramatizes it poorly. The player waited repeatedly, and the narration never made Kristin perform the canon countermeasure of deliberate irrational infrastructure disruption.",
+        "Scene-local canon centers on corridors, Rebecca's office, and relay conflict among Kristin, Michelle, Brandon, Rebecca, and Charles. Michelle, Rebecca, and Charles are effectively absent from the playable scene until an expository dump.",
+        "The final turn is not scene-local interactive narration but bridge-text-like summary. It races the transition and reveals offscreen accomplishments as if already completed.",
+        "Protected knowledge is not the main problem; the main failures are skipped beats, nonresponsive repetition, lack of progressive consequences, and an unearned exit."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}
