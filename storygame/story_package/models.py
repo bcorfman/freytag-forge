@@ -330,7 +330,15 @@ class FactDelivery(_Model):
     source_entity_id: str | None = None
     must_convey: tuple[tuple[str, ...], ...] = Field(min_length=2)
     fallback_text: str = Field(min_length=1)
+    cue_text: str | None = None
     costs: tuple[RouteOperation, ...] = ()
+
+    @field_validator("cue_text")
+    @classmethod
+    def non_empty_cue_text(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("cue_text must not be empty")
+        return value
 
 
 class RouteRealization(_Model):

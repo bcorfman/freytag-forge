@@ -45,7 +45,6 @@ class TurnKnowledgeContext(_KnowledgeModel):
     referenced_entity_ids: tuple[str, ...]
     continuity_ids: tuple[str, ...]
     candidates: tuple[RevealCandidate, ...]
-    hinted_deliveries: tuple[FactDelivery, ...] = ()
     handoff_deliveries: tuple[FactDelivery, ...] = ()
 
     def payload_size(self) -> int:
@@ -108,7 +107,6 @@ class KnowledgeProjector:
         established_ids = tuple(sorted({entity_id for item in committed for entity_id in item.entity_ids}))
         referenced_ids = self._referenced_established_ids(state, player_input, established_ids)
         candidates = self._candidates(state, audience_id, referenced_ids)
-        deliveries = {delivery.fact_id: delivery for delivery in state.package.deliveries}
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
@@ -121,11 +119,8 @@ class KnowledgeProjector:
             referenced_entity_ids=referenced_ids,
             continuity_ids=tuple(record.id for record in state.turn_records[-self.max_continuity_records :]),
             candidates=candidates,
-            hinted_deliveries=tuple(
-                deliveries[fact_id] for fact_id in state.staged_hint_fact_ids if fact_id in deliveries
-            ),
             handoff_deliveries=tuple(
-                deliveries[fact_id] for fact_id in state.staged_handoff_fact_ids if fact_id in deliveries
+                delivery for delivery in state.package.deliveries if delivery.fact_id in state.staged_handoff_fact_ids
             ),
         )
 

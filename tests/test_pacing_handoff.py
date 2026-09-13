@@ -11,7 +11,13 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState, TurnDelivery
 from storygame.story_package.loader import load_story_package
-from storygame.story_package.models import ActivationRule
+from storygame.story_package.models import (
+    ActivationRule,
+    FactPredicate,
+    RouteOperation,
+    RouteRealization,
+    StoryletRoute,
+)
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -79,6 +85,56 @@ def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repea
     assert rule.minimal_undelivered_facts({"mandatory_a"}) == rule.minimal_undelivered_facts({"mandatory_a"})
 
 
+def test_cue_ranking_uses_eligible_source_windows_and_activation_conditions() -> None:
+    def source(
+        route_id: str, fact_id: str, latest_turn: int, conditions: tuple[FactPredicate, ...] = ()
+    ) -> StoryletRoute:
+        return StoryletRoute(
+            id=route_id,
+            scene_id="1B",
+            title=f"Source for {fact_id}",
+            activation_conditions=conditions,
+            earliest_turn=0,
+            target_turn=1,
+            latest_turn=latest_turn,
+            pressure_role="cue source",
+            realizations=(
+                RouteRealization(
+                    id="R1",
+                    dramatic_intent="show the source",
+                    operations=(RouteOperation(op="assert", fact_id=fact_id, value=True),),
+                ),
+            ),
+        )
+
+    routes = PACKAGE.storylet_routes.model_copy(
+        update={
+            "storylets": (
+                source("SL-1B-A", "transport_route_identified", 7),
+                source(
+                    "SL-1B-B",
+                    "brandon_identified",
+                    3,
+                    (FactPredicate(fact_id="source_ready", equals=True),),
+                ),
+                source("SL-1B-C", "park_pursuit_resolved", 5),
+            )
+        }
+    )
+    package = PACKAGE.model_copy(update={"storylet_routes": routes})
+    scene = next(scene for scene in package.scenes if scene.metadata.scene_id == "1B")
+    state = RuntimeState(package=package, current_scene_id="1B", phase=scene.metadata.freytag_phase)
+    state.facts.assert_fact(Fact(predicate="source_ready", subject="story", value="true"))
+
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    assert engine._ranked_cue_fact_ids() == (
+        "brandon_identified",
+        "park_pursuit_resolved",
+        "transport_route_identified",
+    )
+
+
 def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() -> None:
     state = _state_1b()
     state.turn_index = 3
@@ -94,12 +150,13 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
     engine = RuntimeEngine(state, provider)
 
-    hint = engine.turn("Search the desk.")
-    assert state.staged_hint_fact_ids == ("transport_route_identified", "brandon_identified")
+    cue = engine.turn("Search the desk.")
+    assert state.delivered_cue_ids == ("transport_route_identified",)
+    assert state.staged_cue_fact_id == "brandon_identified"
     assert state.staged_handoff_fact_ids == ()
     assert Fact(predicate="transport_route_identified", subject="story", value="true") not in state.facts.asserted
-    assert hint.segments[0].text == "A clue catches my attention."
-    assert state.last_turn_delivery.hint_staged is True
+    assert cue.segments[0].text == "A clue catches my attention."
+    assert state.last_turn_delivery.cue_fact_id == "transport_route_identified"
     assert state.last_turn_delivery.handoff_staged is False
 
     handoff = engine.turn("Search the park.")
@@ -108,9 +165,9 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert Fact(predicate="transport_route_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
-    assert state.staged_hint_fact_ids == ()
+    assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
-    assert state.last_turn_delivery.hint_staged is True
+    assert state.last_turn_delivery.cue_fact_id == "brandon_identified"
     assert state.last_turn_delivery.handoff_staged is True
     texts = [segment.text for segment in handoff.segments]
     source_bridge = next(
@@ -144,7 +201,7 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
 
 def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(monkeypatch) -> None:
     state = _state_1b()
-    state.staged_hint_fact_ids = ("transport_route_identified",)
+    state.staged_cue_fact_id = "transport_route_identified"
     state.staged_handoff_fact_ids = ("transport_route_identified",)
     captured: dict[str, object] = {}
 
@@ -156,7 +213,6 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("Inspect the security desk.")
     projection = KnowledgeProjector().project(state, "player", "Inspect the security desk.")
-    assert [item.fact_id for item in projection.hinted_deliveries] == ["transport_route_identified"]
     assert [item.fact_id for item in projection.handoff_deliveries] == ["transport_route_identified"]
     serialized = json.dumps(captured["payload"]).casefold()
     assert "rebecca_observing_infiltrators" not in serialized
@@ -164,7 +220,11 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert "do not say the player did something they did not do" in captured["payload"]["user"].casefold()
     state.staged_handoff_fact_ids = ()
     provider("Inspect the security desk.")
-    assert "hint at the evidence" in captured["payload"]["user"].casefold()
+    assert "hint at the evidence" not in captured["payload"]["user"].casefold()
+    assert (
+        next(item.cue_text for item in PACKAGE.deliveries if item.fact_id == "transport_route_identified")
+        in (captured["payload"]["user"])
+    )
 
 
 def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:

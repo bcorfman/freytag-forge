@@ -89,7 +89,7 @@ def test_resolution_scene_does_not_stage_escalation() -> None:
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
 
-    assert state.staged_hint_fact_ids == ()
+    assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
 
 

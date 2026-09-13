@@ -69,6 +69,18 @@ is never sent to the narrator or exposed in the narrator's serialized context.
 Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
 keeps the legacy narrator-proposal path.
 
+Each `FactDelivery` may also have an optional `cue_text`. A cue is one or two
+short sentences about a concrete thing the player can already see or has
+already been told in that scene. It points toward the missing fact without
+stating that fact. Keep it at an 8th-grade reading level. The runtime shows at
+most one cue after the scene's nudge turn, and records each cue once per scene
+visit. A fact asserted by a pacing event needs no `cue_text`; its Deadline
+delivery remains the path that makes the fact true.
+
+```yaml
+  cue_text: The marked gate stands beside the service path. Fresh tire tracks cross the mud.
+```
+
 `pacing.yaml` supplies one ordered window
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`

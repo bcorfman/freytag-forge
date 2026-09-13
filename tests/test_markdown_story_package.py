@@ -770,6 +770,17 @@ def test_loader_rejects_delivery_fallback_that_misses_a_required_phrase(tmp_path
         load_story_package(root)
 
 
+def test_loader_rejects_empty_delivery_cue_text(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "facility_proof")  # type: ignore[index]
+    delivery["cue_text"] = "   "
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="cue_text"):
+        load_story_package(root)
+
+
 def test_loader_rejects_delivery_for_world_only_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source, handoffs = _handoffs(root)

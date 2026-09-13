@@ -1614,7 +1614,7 @@ def _instruction_for(prompt_variant, candidates) -> str:
     provider = CloudflareTurnProvider.__new__(CloudflareTurnProvider)
     provider.state = RuntimeState.bootstrap(PACKAGE)
     provider.prompt_variant = prompt_variant
-    provider.last_projection = SimpleNamespace(candidates=candidates, hinted_deliveries=(), handoff_deliveries=())
+    provider.last_projection = SimpleNamespace(candidates=candidates, handoff_deliveries=())
     return "\n".join(CloudflareTurnProvider._turn_rules(provider))
 
 

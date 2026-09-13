@@ -10,6 +10,7 @@ deliveries:
     Kristin recovers Michelle's memory card from under the drawer carved with her initials, KMS, and reads the files
     on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to
     choose who remains.
+  cue_text: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.
   costs:
   - {op: assert, fact_id: memory_card_in_kristins_custody, value: true}
 - fact_id: park_pursuit_resolved
@@ -22,6 +23,7 @@ deliveries:
   fallback_text: >-
     Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate.
     The park pursuit ended behind them when the tactical team lost their trail.
+  cue_text: A tactical team is closing across the damaged park. The storm-drain entrance is open ahead.
 - fact_id: transport_route_identified
   scene_id: 1B
   source_kind: observation
@@ -32,6 +34,7 @@ deliveries:
   fallback_text: >-
     The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin
     toward the supposedly abandoned freight terminal and its evacuation tunnels.
+  cue_text: The transit card and handwritten sequence lie beside Michelle's photograph on the park bench.
 - fact_id: brandon_identified
   scene_id: 1B
   source_kind: npc
@@ -44,6 +47,7 @@ deliveries:
   fallback_text: >-
     The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source
     in the photograph had found her in the park.
+  cue_text: The watcher stands near the service path. He is the same man shown with Michelle in the photograph.
 - fact_id: missing_may_be_alive
   scene_id: 1B
   source_kind: message
@@ -54,6 +58,7 @@ deliveries:
   fallback_text: >-
     Brandon claims that the missing are still alive, though he refuses to explain how he knows. His warning gives Kristin
     reason to believe the disappeared people are captives rather than casualties.
+  cue_text: The list of earlier disappearances lies open beside the bench. Its dates match the pattern in Michelle's files.
 - fact_id: facility_proof
   scene_id: 1C
   source_kind: observation
@@ -64,6 +69,7 @@ deliveries:
   fallback_text: >-
     Fresh tire tracks, humming air vents, and heavy electrical service prove that the supposedly abandoned terminal hides
     an active facility. The signs point to an underground complex beneath the loading docks.
+  cue_text: Fresh tire tracks cross the loading area. The air vents are still humming.
 - fact_id: captives_confirmed_alive
   scene_id: 1C
   source_kind: observation
@@ -74,6 +80,7 @@ deliveries:
   fallback_text: >-
     From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
     even if the view is too brief to confirm whether Michelle is among them.
+  cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc
@@ -84,6 +91,7 @@ deliveries:
   fallback_text: >-
     Brandon creates false credentials presenting them as technical inspectors. Their inspection cover gives Kristin and
     Brandon the false identities they need to enter the facility.
+  cue_text: Brandon has laid out blank inspector forms beside the servers in the hideout.
 - fact_id: janus_evidence
   scene_id: 2B
   source_kind: observation
@@ -94,6 +102,7 @@ deliveries:
   fallback_text: >-
     Kristin opens the JANUS files in the records archive. The JANUS selection algorithm ranked every American for
     detention, leverage, or control.
+  cue_text: Selection files fill the archive terminals. Government and financial records sit open beside them.
 - fact_id: brandon_janus_role_known
   scene_id: 2B
   source_kind: message
@@ -106,6 +115,7 @@ deliveries:
   fallback_text: >-
     Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
     that he helped develop the AI before learning what it would become.
+  cue_text: A development record on the archive terminal carries Brandon's name beside the system's author list.
 - fact_id: brandon_claimed_reform_motive
   scene_id: 2B
   source_kind: message
@@ -116,6 +126,7 @@ deliveries:
   fallback_text: >-
     Brandon says he tried to destroy the project after he learned its purpose. His explanation is that he meant to expose
     the program and stop JANUS from becoming a tool of political control.
+  cue_text: Brandon's earlier messages about the project remain open on the remote terminal.
 - fact_id: michelle_resistance_known
   scene_id: 2B
   source_kind: message
@@ -126,6 +137,7 @@ deliveries:
   fallback_text: >-
     Michelle's coded messages and private notes show that she has organized prisoners inside the facility. Her resistance
     is altering classifications and preparing an uprising.
+  cue_text: The medical terminal shows corrupted prisoner files and delayed transfer notices.
 - fact_id: purge_clock_started
   scene_id: 2C
   source_kind: broadcast
@@ -145,6 +157,7 @@ deliveries:
   fallback_text: >-
     Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
     transmit, but sending proof will reveal their position.
+  cue_text: Copied records remain open on Kristin's terminal beside the broadcast controls.
 - fact_id: michelle_reached
   scene_id: 3A
   source_kind: observation
@@ -155,6 +168,7 @@ deliveries:
   fallback_text: >-
     Kristin reaches Michelle among the holding blocks in the detention sector. Their reunion is brief, but Michelle is
     alive and ready to direct the rescue.
+  cue_text: The detention block opens onto rows of captives. A stolen radio crackles nearby.
 - fact_id: detention_uprising_started
   scene_id: 3A
   source_kind: message
@@ -165,6 +179,7 @@ deliveries:
   fallback_text: >-
     Michelle triggers coordinated disturbances through coded announcements while she organizes prisoners across the
     detention sectors. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
+  cue_text: Stolen radios crackle across the detention sector. Several cameras show no picture.
 - fact_id: relay_open
   scene_id: 3B
   source_kind: observation
@@ -175,6 +190,7 @@ deliveries:
   fallback_text: >-
     Brandon reaches the external communications relay and disconnects it from JANUS. Brandon holds the relay open so the
     broadcast connection can carry Michelle's evidence.
+  cue_text: The relay chamber lies beyond the broadcast controls. Its access panel shows fresh tool marks.
 - fact_id: human_security_control
   scene_id: 3B
   source_kind: observation
@@ -185,6 +201,7 @@ deliveries:
   fallback_text: >-
     Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control
     replaces the system's predictions in the corridors.
+  cue_text: Structural alarms flash while doors open and close in different parts of the facility.
 - fact_id: charles_abandoned_rebecca
   scene_id: 3B
   source_kind: message
@@ -195,6 +212,7 @@ deliveries:
   fallback_text: >-
     Charles locks down Rebecca's office and abandons Rebecca while he transfers control of the national network. Rebecca
     finally understands that she was expendable to him.
+  cue_text: Rebecca's office screen still carries Charles's remote channel. Security doors are sealing around the room.
 - fact_id: detention_locations_secured
   scene_id: 3B
   source_kind: message
@@ -205,6 +223,7 @@ deliveries:
   fallback_text: >-
     Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data
     gives Kristin and Michelle the detention locations they need for the broadcast.
+  cue_text: A marked site list lies beside Rebecca's national network controls.
 - fact_id: brandon_confession_available
   scene_id: 3B
   source_kind: message
@@ -215,3 +234,4 @@ deliveries:
   fallback_text: >-
     Brandon transmits a confession before the electrical surge takes the relay. He admits his role in creating JANUS,
     and the statement helps authenticate Michelle's evidence.
+  cue_text: A voice channel marked Brandon is queued beside the broadcast controls.

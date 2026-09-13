@@ -74,7 +74,7 @@ class RuntimeEngine(CanonicalEventMixin):
             self._activate_pacing()
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={
-                    "hint_staged": bool(self.state.staged_hint_fact_ids),
+                    "cue_fact_id": self.state.staged_cue_fact_id,
                     "handoff_staged": bool(self.state.staged_handoff_fact_ids),
                 }
             )
@@ -105,7 +105,11 @@ class RuntimeEngine(CanonicalEventMixin):
         canonical_event_id = None
         if self.state.staged_handoff_fact_ids and not provider_proposal.selected_knowledge_ids:
             proposal, canonical_event_id = self._prepare_handoff(proposal)
+        staged_cue_fact_id = self.state.staged_cue_fact_id
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
+        if staged_cue_fact_id and self.state.current_scene_id == before.current_scene_id:
+            self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            self.state.staged_cue_fact_id = None
         self._record_turn(proposal)
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
@@ -261,15 +265,64 @@ class RuntimeEngine(CanonicalEventMixin):
         if self._escalation_eligible():
             missing = self._bridge_delivery_fact_ids()
             if turns_since_entry >= window.nudge_after_turns:
-                self.state.staged_hint_fact_ids = missing
+                deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
+                staged = self.state.staged_cue_fact_id
+                if not (
+                    staged
+                    and staged not in self.state.delivered_cue_ids
+                    and staged in missing
+                    and deliveries.get(staged) is not None
+                    and deliveries[staged].cue_text
+                ):
+                    self.state.staged_cue_fact_id = next(
+                        (
+                            fact_id
+                            for fact_id in self._ranked_cue_fact_ids()
+                            if fact_id not in self.state.delivered_cue_ids
+                            and deliveries.get(fact_id) is not None
+                            and deliveries[fact_id].cue_text
+                        ),
+                        None,
+                    )
+            else:
+                self.state.staged_cue_fact_id = None
             if turns_since_entry >= window.handoff_after_turns:
                 self.state.staged_handoff_fact_ids = missing
         else:
-            self.state.staged_hint_fact_ids = ()
+            self.state.staged_cue_fact_id = None
             self.state.staged_handoff_fact_ids = ()
 
+    def _ranked_cue_fact_ids(self) -> tuple[str, ...]:
+        """Rank missing bridge facts by their earliest eligible source window."""
+
+        missing = self._bridge_delivery_fact_ids()
+        pacing_fact_ids = {effect.fact_id for event in self.state.package.pacing.events for effect in event.effects}
+        eligible_latest_turns: dict[str, int] = {}
+        for storylet in self.state.package.storylet_routes.storylets:
+            if storylet.scene_id != self.state.current_scene_id or storylet.id in self.state.fired_event_ids:
+                continue
+            if not all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions):
+                continue
+            for realization in storylet.realizations:
+                for operation in realization.operations:
+                    if operation.op != "assert" or operation.fact_id not in missing:
+                        continue
+                    current = eligible_latest_turns.get(operation.fact_id)
+                    if current is None or storylet.latest_turn < current:
+                        eligible_latest_turns[operation.fact_id] = storylet.latest_turn
+        return tuple(
+            sorted(
+                (fact_id for fact_id in missing if fact_id not in pacing_fact_ids),
+                key=lambda fact_id: (
+                    0 if fact_id in eligible_latest_turns else 1,
+                    eligible_latest_turns.get(fact_id, 0),
+                    missing.index(fact_id),
+                ),
+            )
+        )
+
     def _escalation_eligible(self) -> bool:
-        """Return whether hint and Deadline staging is allowed; later cue and complication layers use this predicate."""
+        """Return whether cue and Deadline staging is allowed."""
 
         scene = next(
             scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id

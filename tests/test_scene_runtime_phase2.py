@@ -151,10 +151,12 @@ def test_knowledge_schema_save_cutover_rejects_legacy_snapshot_version(tmp_path)
     store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite")
     store.save("session", RuntimeState.bootstrap(PACKAGE))
     with store._connect() as connection:  # noqa: SLF001 - fixture simulates a v1 persisted row.
-        connection.execute("UPDATE runtime_snapshots SET version = 1 WHERE session_id = ?", ("session",))
+        connection.execute("UPDATE runtime_snapshots SET version = 3 WHERE session_id = ?", ("session",))
 
     with pytest.raises(RuntimeSaveError, match="incompatible"):
         store.load("session", PACKAGE)
+
+    assert store.SCHEMA_VERSION == 4
 
 
 def test_successful_proposal_commits_events_and_transition() -> None:
