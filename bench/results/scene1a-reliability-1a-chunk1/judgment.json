@@ -1,0 +1,30 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Kitchen search changes cracked phone to undamaged, adds overturned chair/floor litter without grounding, and states conclusions rather than discovered evidence.",
+    "Desk/drawer search fails to clearly reveal what was found; hidden object remains unnamed, so the investigation does not produce actionable knowledge.",
+    "Recording recovery ignores the just-found hidden item and instead jumps to a memory card in the phone; this is weakly motivated and may contradict the phone lying undamaged on the floor as the key clue.",
+    "Officers beat is introduced abruptly with no setup or consequence chain, and the line 'ask about Michelle's research and what she found' is generic rather than dramatized scene action/dialogue.",
+    "The final turn introduces major protected/future information early: 'Continuity Initiative files,' 'population stabilization centers,' and a confidential-source exchange point.",
+    "Scene exit is not motivated by what Kristin actually read in-scene from a clearly established item/location; it jumps to files on a memory card after prior ambiguity about where those files came from.",
+    "The authored desk/work-area investigation beat is skipped as usable revelation; her unsearched research area was the core local objective, but repeated searching yields little actionable content.",
+    "Opening/turn prose repeats generic kitchen description instead of substantially advancing sensory, physical investigation consequences turn by turn."
+  ],
+  "reasons": [
+    "Scene-local canon says Michelle's work area has not been searched yet and Kristin needs evidence of where she went. The scene should progressively uncover that area. Instead, the first turn mostly restates known facts and adds unsupported ones.",
+    "Turn 1 responds to 'Search the kitchen' with exposition and conclusions ('Someone came for Michelle') rather than concrete discoverable detail. It also conflicts with the opening by calling the phone undamaged after the opening described a cracked screen.",
+    "Turn 2 should reward the specific search under the workstation drawer with a clear discovery. The narration withholds the object's identity entirely, making the result non-actionable and muddy.",
+    "Turn 3 then acts as if a damaged recording on a memory card is available, but the prior turn never clearly established a memory card or recorder. This breaks local continuity and weakens causality.",
+    "Turn 4 escalates to officers asking about research, but the scene has not properly established the research materials Kristin can inspect first; this races forward and under-dramatizes the encounter.",
+    "Protected knowledge is revealed too early in the exit turn. Terms like 'Continuity Initiative' and 'population stabilization centers' go beyond the local beat and dump broader plot material.",
+    "Because the player is never clearly told what exact item was found under the drawer or how it led to the files, the departure to the park bench is not properly motivated by narrated discovery.",
+    "Across the scene, authored beats were not covered cleanly in order through readable consequences: disappearance clue, last investigation, interrupted message/threat, and then a reasoned handoff. The scene instead skips and muddles key middle discoveries."
+  ]
+}

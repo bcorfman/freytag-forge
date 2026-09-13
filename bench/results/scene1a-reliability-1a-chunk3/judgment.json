@@ -1,0 +1,29 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": true,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Turn 2 finds a hidden item but does not identify or let Kristin actually recover or inspect it.",
+    "Turn 3 ignores the hidden find and instead invents access via Michelle's phone/memory card with contradictory staging (phone on floor and on table).",
+    "Turn 3 reveals protected knowledge early: 'don't trust emergency broadcasts' and existence of the damaged recording are treated as obtained without properly recovering the hidden item first.",
+    "Turn 4 invents officers entering/being present with no scene-local setup or consequence from prior actions.",
+    "Turn 4 dumps the conclusion 'not a normal welfare check' instead of grounding it in local evidence/dialogue.",
+    "Turn 5 invents downloaded Continuity Initiative files on Kristin's laptop, despite the scene canon saying Michelle's work area/research has not been searched yet.",
+    "Turn 5 reveals future/remote plot specifics in a dump: population stabilization centers, exchange point, park bench, and immediate travel there.",
+    "The scene skips proper coverage of Michelle's unsearched work area and research discovery in order; investigation of desk/drawers never pays off on-page before later revelations.",
+    "Repeated searching is poorly rewarded: the player searches the kitchen/workstation, but actionable discoveries are withheld or replaced by summary assertions."
+  ],
+  "reasons": [
+    "Opening has some sensory setup, but later turns do not maintain responsive, grounded consequences tied to the player's exact actions.",
+    "Scene-local canon requires finding out where Michelle went by searching her work area, desk, drawers, and research. The authored turns jump ahead to later beats without completing the immediate discovery beat on-page.",
+    "Consistency problems: Michelle's phone is said to be on the floor, then on the kitchen table; the narration claims memory-card/file access without a credible retrieval path from the drawer find.",
+    "Protected knowledge should not be revealed early. The warning about emergency broadcasts and the larger program details are major revelations delivered before the scene earns them through local investigation.",
+    "Turn 4's officers are an abrupt insertion not established by the opening or prior turns, so the turn is not scene-local.",
+    "The exit itself names what was found and where it points, so it is motivated, but it is motivated by wrongly introduced information rather than properly uncovered scene evidence."
+  ]
+}
