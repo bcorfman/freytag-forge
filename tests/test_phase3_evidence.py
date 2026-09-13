@@ -124,7 +124,8 @@ def test_phase3_knowledge_evidence(tmp_path, monkeypatch) -> None:
             _EvidenceProvider(
                 ["k_sl_1a_b_r2"],
                 ["k_sl_1a_b_r2"],
-                "Michelle's damaged memory card recording warns Kristin not to trust emergency broadcasts.",
+                "Michelle's damaged memory card recording was under the KMS drawer and warns Kristin not to trust "
+                "emergency broadcasts.",
             ),
         ),
         _run_case(

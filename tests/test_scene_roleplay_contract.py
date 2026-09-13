@@ -33,8 +33,8 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
-                        "dead drop at a bench in the park."
+                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                        "points to a dead drop at a bench in the park."
                     ),
                     "grounding_ids": ["k_sl_1a_b_r1"],
                 }
@@ -72,8 +72,8 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
             {
                 "kind": "narration",
                 "text": (
-                    "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
-                    "do not trust emergency broadcasts."
+                    "Kristin finds and secures Michelle's memory card under the KMS drawer, then plays its damaged "
+                    "recording: do not trust emergency broadcasts."
                 ),
                 "grounding_ids": [knowledge_id],
             }

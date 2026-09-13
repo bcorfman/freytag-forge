@@ -132,7 +132,7 @@ def test_wrong_speaker_dialogue_cannot_use_a_private_projection() -> None:
     )
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
-    text = "Michelle's hidden memory card plays the damaged recording about emergency broadcasts."
+    text = "Michelle's memory card was under the KMS drawer and plays the damaged recording about emergency broadcasts."
     payload = {
         "segments": [
             {

@@ -146,8 +146,8 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin secures Michelle's memory card and plays its damaged recording, which warns her "
-                            "not to trust emergency broadcasts."
+                            "Kristin secures Michelle's memory card from under the drawer carved with her initials, "
+                            "KMS, and plays its damaged recording, which warns her not to trust emergency broadcasts."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r2"],
                     }

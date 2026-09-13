@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _ID = r"^[a-z][a-z0-9_]*$"
 _SCENE_ID = r"^[1-9][A-Z]$"
@@ -232,6 +232,14 @@ class SceneMetadata(_Model):
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
     item_placements: Mapping[str, str | ItemPlacement] = {}
+    setting_facts: tuple[str, ...] = ()
+
+    @field_validator("setting_facts")
+    @classmethod
+    def non_blank_setting_facts(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not value.strip() for value in values):
+            raise ValueError("setting_facts entries must not be empty or whitespace-only")
+        return values
 
 
 class SceneBeat(_Model):

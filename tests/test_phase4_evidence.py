@@ -129,7 +129,7 @@ def test_phase4_knowledge_evidence(tmp_path, monkeypatch) -> None:
                 ["k_sl_1a_b_r2"],
                 ["k_sl_1a_b_r2"],
                 (
-                    "Kristin secures Michelle's hidden memory card and plays its damaged recording: "
+                    "Kristin secures Michelle's memory card under the KMS drawer and plays its damaged recording: "
                     "do not trust emergency broadcasts."
                 ),
             ),

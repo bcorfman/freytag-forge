@@ -344,7 +344,10 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
         "segments": [
             {
                 "kind": "narration",
-                "text": "Michelle's damaged memory card recording warns Kristin not to trust emergency broadcasts.",
+                "text": (
+                    "Michelle's damaged memory card recording was under the KMS drawer and warns Kristin not to trust "
+                    "emergency broadcasts."
+                ),
                 "grounding_ids": ["k_sl_1a_b_r2"],
             }
         ],
@@ -766,7 +769,7 @@ def test_a_named_beat_reaches_the_prompt(monkeypatch) -> None:
     with_beat = prompt_for(default_variation(), "1A", "Search the drawers.", "1A.2")
 
     assert "taped drawer" not in entered["user"]
-    assert "taped drawer" in with_beat["user"]
+    assert "Michelle's memory card" in with_beat["user"]
     assert "k_sl_1a_d_r1 in selected_knowledge_ids" in with_beat["user"]
 
 

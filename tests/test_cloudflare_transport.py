@@ -29,7 +29,8 @@ from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 AUTHORED_DELIVERY = (
-    "Michelle's hidden memory card holds a damaged recording that warns Kristin not to trust emergency broadcasts."
+    "Michelle's memory card from under the drawer carved with her initials, KMS, holds a damaged recording that "
+    "warns Kristin not to trust emergency broadcasts."
 )
 
 
@@ -1626,7 +1627,10 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
-    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+    assert (
+        "Say who owns a thing the first time you name it: Michelle's memory card, Michelle's phone, Kristin's laptop."
+        in rules
+    )
 
 
 def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
@@ -1690,36 +1694,132 @@ def test_item_placement_rule_uses_package_name_and_placement() -> None:
 
 def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
     scene = PACKAGE.scenes[0]
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
-
-    assert "Hidden memory card is taped under a drawer in Michelle's workstation." in provider._turn_rules()
-
-    _assert_memory_card_in_custody(state)
-    assert "Hidden memory card is taped under a drawer in Michelle's workstation." not in provider._turn_rules()
-
+    synthetic_item = next(item for item in PACKAGE.world.items if item.id == "michelle_phone").model_copy(
+        update={"id": "synthetic_item", "name": "Test item"}
+    )
+    custom_world = PACKAGE.world.model_copy(update={"items": (*PACKAGE.world.items, synthetic_item)})
     metadata = scene.metadata.model_copy(
         update={
+            "item_ids": (*scene.metadata.item_ids, "synthetic_item"),
             "item_placements": {
-                "memory_card": ItemPlacement(
-                    placement="taped beneath the workstation drawer",
-                    while_fact_false="michelle_abduction_suspicion",
+                "synthetic_item": ItemPlacement(
+                    placement="beneath the test desk",
+                    while_fact_false="memory_card_in_kristins_custody",
                 )
-            }
+            },
+        }
+    )
+    custom_package = PACKAGE.model_copy(
+        update={"world": custom_world, "scenes": (scene.model_copy(update={"metadata": metadata}), *PACKAGE.scenes[1:])}
+    )
+    state = RuntimeState.bootstrap(custom_package)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Test item is beneath the test desk." in provider._turn_rules()
+
+    _assert_memory_card_in_custody(state)
+    assert "Test item is beneath the test desk." not in provider._turn_rules()
+
+
+def test_setting_facts_follow_placements_in_opening_and_turn_rules(monkeypatch) -> None:
+    scene = PACKAGE.scenes[0]
+    metadata = scene.metadata.model_copy(
+        update={
+            "item_placements": {"michelle_phone": "beneath the test window"},
+            "setting_facts": ("The test shutters are closed.",),
         }
     )
     custom_package = PACKAGE.model_copy(
         update={"scenes": (scene.model_copy(update={"metadata": metadata}), *PACKAGE.scenes[1:])}
     )
     state = RuntimeState.bootstrap(custom_package)
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    rules = provider._turn_rules()
 
-    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
+    assert rules.index("Michelle's phone is beneath the test window.") < rules.index("The test shutters are closed.")
 
-    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="false"))
-    assert "Hidden memory card is taped beneath the workstation drawer." in provider._turn_rules()
-    state.facts.assert_fact(Fact(predicate="michelle_abduction_suspicion", subject="story", value="true"))
-    assert "Hidden memory card is taped beneath the workstation drawer." not in provider._turn_rules()
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room is still."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider.opening()
+    user = captured["payload"]["user"]
+    assert user.index("Michelle's phone is beneath the test window.") < user.index("The test shutters are closed.")
+
+    unset_metadata = metadata.model_copy(update={"item_placements": {}, "setting_facts": ()})
+    unset_package = PACKAGE.model_copy(
+        update={"scenes": (scene.model_copy(update={"metadata": unset_metadata}), *PACKAGE.scenes[1:])}
+    )
+    unset_provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(unset_package))
+    assert "The test shutters are closed." not in unset_provider._turn_rules()
+
+
+def _capture_scene_1a_pre_reveal_prompts(monkeypatch) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    engine = RuntimeEngine(
+        state, CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    )
+    engine.opening()
+    engine.turn("Search the kitchen.")
+    engine.turn("Check the back door.")
+    return payloads
+
+
+def test_real_scene_1a_pre_reveal_prompts_keep_the_card_location_out(monkeypatch) -> None:
+    payloads = _capture_scene_1a_pre_reveal_prompts(monkeypatch)
+
+    for payload in payloads:
+        body = json.dumps(payload, ensure_ascii=False).casefold()
+        assert "taped" not in body
+        assert "hidden memory card" not in body
+        assert "hidden card" not in body
+        assert "under a drawer" not in body
+        assert "beneath a drawer" not in body
+        assert "under the drawer" not in body
+        assert "beneath the drawer" not in body
+        assert "drawer carved with" not in body
+        assert "Michelle's workstation drawers are shut.".casefold() in body
+
+
+def test_scene_1a_hidden_canon_stays_out_of_beats_and_pre_reveal_prompts(monkeypatch) -> None:
+    plot = Path("data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
+    hidden_canon = next(line for line in plot.splitlines() if line.startswith("**Hidden canon:**"))
+    scene = PACKAGE.scenes[0]
+    beat_text = " ".join(f"{beat.prose} {' '.join(beat.details)}" for beat in scene.beats.values()).casefold()
+    assert hidden_canon.casefold() not in beat_text
+
+    payloads = _capture_scene_1a_pre_reveal_prompts(monkeypatch)
+    assert all(
+        hidden_canon.casefold() not in json.dumps(payload, ensure_ascii=False).casefold() for payload in payloads
+    )
+
+
+def test_reveal_delivery_locates_card_and_clears_card_placement_rules(monkeypatch) -> None:
+    state = _staged_scene_1a_state()
+    payloads: list[dict[str, object]] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        payloads.append(json.loads(request.data))
+        return _Response({"segments": [{"kind": "narration", "text": "The drawer opens."}]})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    proposal = provider("Recover the damaged recording and listen to it.")
+
+    assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
+    assert "KMS" in proposal["segments"][-1]["text"]
+    assert "drawer" in proposal["segments"][-1]["text"].casefold()
+    assert not any("Michelle's memory card is " in rule for rule in provider._turn_rules())
 
 
 def test_turn_rules_sharpen_the_authored_place_rule() -> None:

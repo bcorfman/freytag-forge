@@ -88,10 +88,7 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
         frontmatter = re.match(r"---\n(.*?)\n---\n", body, re.DOTALL)
         if not frontmatter:
             raise StoryPackageError(f"scene {match.group(1)} lacks YAML frontmatter")
-        try:
-            metadata = SceneMetadata.model_validate(yaml.safe_load(frontmatter.group(1)))
-        except (ValidationError, yaml.YAMLError) as exc:
-            raise StoryPackageError(f"invalid frontmatter for scene {match.group(1)}: {exc}") from exc
+        metadata = _parse_scene_metadata(match.group(1), frontmatter.group(1))
         if metadata.scene_id != match.group(1):
             raise StoryPackageError(f"heading and frontmatter disagree for scene {match.group(1)}")
         if set(metadata.bridge_text) != set(metadata.transition_ids):
@@ -106,6 +103,13 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
             )
         )
     return tuple(scenes)
+
+
+def _parse_scene_metadata(scene_id: str, source: str) -> SceneMetadata:
+    try:
+        return SceneMetadata.model_validate(yaml.safe_load(source))
+    except (ValidationError, yaml.YAMLError) as exc:
+        raise StoryPackageError(f"invalid frontmatter for scene {scene_id}: {exc}") from exc
 
 
 def _beat_anchor(heading: str) -> str:

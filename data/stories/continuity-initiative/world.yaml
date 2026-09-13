@@ -61,7 +61,7 @@ npcs:
   narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
 items:
 - id: memory_card
-  name: Hidden memory card
+  name: Michelle's memory card
   aliases:
   - memory card
   fallback_ids:

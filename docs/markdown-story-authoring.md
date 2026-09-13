@@ -16,6 +16,18 @@ The optional `item_placements` mapping gives the narrator a positive placement
 sentence for authored items whose location matters in a scene. Author it per
 scene as needed; it is not required to cover every item.
 
+Do not use `item_placements` for a hidden item's location. Put that location in
+the reveal's `delivery_text`, and repeat it in any `Deadline` fallback that can
+deliver the same fact. Do not put the location in beat text. For human readers,
+audits, and the bench judge, record it in a scene-level `**Hidden canon:**` line
+after `**Plot:**` and before the first beat. This line is never sent to the
+narrator. Keep it before the first beat; after the last beat it becomes part of
+that beat.
+
+The optional `setting_facts` list contains true, visible-state sentences. Each
+sentence is rendered verbatim as its own narrator rule after the placement
+rules. Use short sentences written at an 8th-grade reading level.
+
 ```yaml
 item_ids: [memory_card, michelle_phone]
 item_placements:

@@ -31,7 +31,7 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    with pytest.raises(ProposalValidationError, match="memory card"):
+    with pytest.raises(ProposalValidationError, match="KMS drawer"):
         engine.turn("Play Michelle's damaged recording.")
 
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
@@ -44,8 +44,8 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
     responses = iter(
         (
             _turn(
-                "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
-                "do not trust emergency broadcasts.",
+                "Kristin finds and secures Michelle's memory card under the KMS drawer, then plays its damaged "
+                "recording: do not trust emergency broadcasts.",
                 ["k_sl_1a_b_r2"],
             ),
             _turn(
@@ -74,8 +74,8 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
     engine = RuntimeEngine(
         state,
         lambda _: _turn(
-            "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; "
-            "the card points to a dead drop at a bench in the park.",
+            "Kristin finds and secures Michelle's memory card under the KMS drawer, then reads its damaged recording "
+            "and files; the card points to a dead drop at a bench in the park.",
             ["k_sl_1a_b_r1"],
         ),
     )
@@ -162,8 +162,8 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
-                            "dead drop at a bench in the park."
+                            "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                            "points to a dead drop at a bench in the park."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r1"],
                     }
@@ -198,8 +198,8 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's memory card and damaged recording; the card points to a dead drop "
-                        "at a bench in the park."
+                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                        "points to a dead drop at a bench in the park."
                     ),
                 }
             ],

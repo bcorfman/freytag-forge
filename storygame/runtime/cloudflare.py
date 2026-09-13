@@ -436,6 +436,7 @@ class CloudflareTurnProvider:
             rules.append(handoff_rule)
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
+        rules.extend(self._setting_fact_rules())
         return rules
 
     def _owner_rules(self) -> list[str]:
@@ -462,6 +463,9 @@ class CloudflareTurnProvider:
             placement_text = placement if isinstance(placement, str) else placement.placement
             rules.append(f"{scene_items[item_id].name} is {placement_text}.")
         return rules
+
+    def _setting_fact_rules(self) -> list[str]:
+        return list(self._current_scene().setting_facts)
 
     def _output_example(self) -> str | None:
         """Resolve the response example, or None when this variation omits it."""
@@ -569,6 +573,7 @@ class CloudflareTurnProvider:
         ]
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
+        rules.extend(self._setting_fact_rules())
         return self._dispatch(
             self._system_prompt(),
             {

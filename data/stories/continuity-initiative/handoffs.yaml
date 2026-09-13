@@ -7,8 +7,9 @@ deliveries:
   - [Michelle's memory card, Michelle's files, Michelle's notes, Michelle's card, memory card, research files]
   - [Continuity Initiative, federal emergency program, Continuity program, federal Continuity program, Continuity project, population-selection program]
   fallback_text: >-
-    Kristin recovers Michelle's memory card and reads the files on it. The card identifies the federal emergency
-    program as the Continuity Initiative, which was preparing to choose who remains.
+    Kristin recovers Michelle's memory card from under the drawer carved with her initials, KMS, and reads the files
+    on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to
+    choose who remains.
   costs:
   - {op: assert, fact_id: memory_card_in_kristins_custody, value: true}
 - fact_id: park_pursuit_resolved

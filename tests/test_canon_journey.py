@@ -99,7 +99,8 @@ class _ScriptedProvider:
         # runtime requires of a live provider; an ungrounded selection is rejected.
         text = "A concrete authored consequence lands."
         if self.selected:
-            text = self.package.knowledge_indexes.by_id[self.selected[0]].statement
+            knowledge = self.package.knowledge_indexes.by_id[self.selected[0]]
+            text = knowledge.delivery_text or knowledge.statement
         return {
             "segments": [
                 {
