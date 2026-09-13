@@ -9,6 +9,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package.obligations import required_storylet_ids
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -78,36 +79,19 @@ def test_every_declared_pacing_event_lands_inside_its_scene_window() -> None:
     assert all(event.at_turn <= windows[event.scene_id].handoff_after_turns - 2 for event in PACKAGE.pacing.events)
 
 
-def _required_storylet_ids(package) -> set[str]:
-    activation_facts_by_scene: dict[str, set[str]] = {}
-    for event in package.storylet_routes.bridge_events:
-        activation_facts_by_scene.setdefault(event.scene_id, set()).update(event.activation.all_facts_true)
-        activation_facts_by_scene[event.scene_id].update(event.activation.any_of)
-
-    return {
-        storylet.id
-        for storylet in package.storylet_routes.storylets
-        if any(
-            operation.fact_id in activation_facts_by_scene.get(storylet.scene_id, set())
-            for realization in storylet.realizations
-            for operation in realization.operations
-        )
-    }
-
-
-def _assert_reaction_window_contract(package) -> set[str]:
+def _assert_reaction_window_contract(package) -> frozenset[str]:
     windows = {window.scene_id: window for window in package.pacing.scenes}
-    required_storylet_ids = _required_storylet_ids(package)
+    required_ids = required_storylet_ids(package)
 
     for storylets in (package.storylets, package.storylet_routes.storylets):
         for storylet in storylets:
-            if storylet.id not in required_storylet_ids:
+            if storylet.id not in required_ids:
                 assert storylet.latest_turn < windows[storylet.scene_id].handoff_after_turns, storylet.id
 
     for event in package.pacing.events:
         assert event.at_turn <= windows[event.scene_id].handoff_after_turns - 2, event.id
 
-    return required_storylet_ids
+    return required_ids
 
 
 def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:

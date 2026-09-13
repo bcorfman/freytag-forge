@@ -1868,7 +1868,12 @@ def test_selection_duty_uses_one_random_choice_rule() -> None:
 
 
 def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
-    state = _staged_scene_1a_state(legacy_package(PACKAGE, {"k_sl_1a_a_r1"}))
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
+    engine = RuntimeEngine(state, lambda *_args, **_kwargs: {"segments": []})
+    engine._activate_pacing()
+    state.turn_index = 1
+    engine._activate_pacing()
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"positive_selection_example": True}
     )

@@ -27,6 +27,7 @@ from storygame.runtime.validation import (
     unconveyed_terms,
 )
 from storygame.story_package.models import FactDelivery
+from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 
@@ -211,7 +212,13 @@ class RuntimeEngine(CanonicalEventMixin):
         """Activate only package-declared, scene-bound optional storylets."""
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
+        required_ids = required_storylet_ids(self.state.package)
         for storylet in self.state.package.storylet_routes.storylets:
+            if storylet.scene_id != self.state.current_scene_id:
+                continue
+            if storylet.id not in required_ids and turns_since_entry > storylet.latest_turn:
+                self.state.active_event_ids.discard(storylet.id)
+                continue
             earlier_storylets = tuple(
                 earlier
                 for earlier in self.state.package.storylet_routes.storylets
@@ -220,8 +227,7 @@ class RuntimeEngine(CanonicalEventMixin):
             clock_opened = storylet.earliest_turn <= turns_since_entry
             earned_forward = all(earlier.id in self.state.fired_event_ids for earlier in earlier_storylets)
             if (
-                storylet.scene_id == self.state.current_scene_id
-                and (clock_opened or earned_forward)
+                (clock_opened or earned_forward)
                 and all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions)
                 and storylet.id not in self.state.fired_event_ids
             ):
@@ -252,11 +258,23 @@ class RuntimeEngine(CanonicalEventMixin):
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         window = windows[self.state.current_scene_id]
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
-        missing = self._bridge_delivery_fact_ids()
-        if turns_since_entry >= window.nudge_after_turns:
-            self.state.staged_hint_fact_ids = missing
-        if turns_since_entry >= window.handoff_after_turns:
-            self.state.staged_handoff_fact_ids = missing
+        if self._escalation_eligible():
+            missing = self._bridge_delivery_fact_ids()
+            if turns_since_entry >= window.nudge_after_turns:
+                self.state.staged_hint_fact_ids = missing
+            if turns_since_entry >= window.handoff_after_turns:
+                self.state.staged_handoff_fact_ids = missing
+        else:
+            self.state.staged_hint_fact_ids = ()
+            self.state.staged_handoff_fact_ids = ()
+
+    def _escalation_eligible(self) -> bool:
+        """Return whether hint and Deadline staging is allowed; later cue and complication layers use this predicate."""
+
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
+        return scene.metadata.freytag_phase != "resolution"
 
     def _bridge_delivery_fact_ids(self) -> tuple[str, ...]:
         """Cue ranking only foregrounds content whose activation conditions already hold.

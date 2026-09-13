@@ -159,10 +159,8 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                     {
                         "kind": "narration",
                         "text": "The patrol approaches the gate.",
-                        "grounding_ids": ["k_sl_1a_c_r1"],
                     }
                 ],
-                "selected_knowledge_ids": ["k_sl_1a_c_r1"],
             },
         )
     )
