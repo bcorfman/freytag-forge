@@ -71,7 +71,7 @@ class RuntimeEngine(CanonicalEventMixin):
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
-            self._activate_pacing()
+            self._activate_pacing(realize_complications=True)
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={
                     "cue_fact_id": self.state.staged_cue_fact_id,
@@ -218,7 +218,7 @@ class RuntimeEngine(CanonicalEventMixin):
             return bridge, entry
         return None
 
-    def _activate_pacing(self) -> None:
+    def _activate_pacing(self, *, realize_complications: bool = False) -> None:
         """Activate only package-declared, scene-bound optional storylets."""
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
@@ -254,6 +254,19 @@ class RuntimeEngine(CanonicalEventMixin):
                         Fact(predicate=effect.fact_id, subject="story", value=str(effect.equals).lower())
                     )
                 self.state.fired_event_ids.add(event.id)
+                if realize_complications and self.state.last_turn_delivery.complication_text is None:
+                    realization = next(
+                        (
+                            realization
+                            for realization in event.realizations
+                            if all(self._predicate_matches(predicate) for predicate in realization.when)
+                        ),
+                        None,
+                    )
+                    if realization is not None:
+                        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                            update={"complication_text": realization.text}
+                        )
                 if event.transition_id:
                     self.state.apply_proposal(
                         ResolvedTurnProposal(
@@ -268,6 +281,7 @@ class RuntimeEngine(CanonicalEventMixin):
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         window = windows[self.state.current_scene_id]
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
+        # Authored pacing realizations still pass in resolution; this gate is for generated escalation.
         if self._escalation_eligible():
             missing = self._bridge_delivery_fact_ids()
             if turns_since_entry >= window.nudge_after_turns:

@@ -281,6 +281,20 @@ class ScenePacing(_Model):
         return self
 
 
+class PacingRealization(_Model):
+    """One player-safe, observable realization of a pacing event."""
+
+    when: tuple[FactPredicate, ...] = ()
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def non_blank_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("text must not be empty")
+        return value
+
+
 class PacingEvent(_Model):
     """A package-declared, deterministic deadline complication."""
 
@@ -289,6 +303,7 @@ class PacingEvent(_Model):
     at_turn: int = Field(ge=0)
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
+    realizations: tuple[PacingRealization, ...] = ()
 
 
 class PacingSource(_Model):

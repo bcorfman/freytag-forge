@@ -87,6 +87,13 @@ transition. `storylets.md` keeps the labelled companion format: each `SL-*`
 entry links to `plot.md`, names its allowed scene, retains all required dramatic
 sections, and declares `Pacing window` (`earliest`, `target`, `latest`).
 
+A pacing event may have `realizations`, an ordered list of short, observable
+pressure texts. The first entry whose `when` predicates match the current facts
+wins. The last entry must have no `when`; it is the default. A realization text
+creates pressure that is true and visible now. It must never carry unearned
+knowledge or name a hidden location. A bridge may narrate only pressure facts
+that its activation requires.
+
 `storylet-routes.yaml` is the executable companion to `storylets.md`. It
 declares scene-local activation predicates, exact fact operations for each
 realization, protected boundaries, canonical bridge events, and canonical

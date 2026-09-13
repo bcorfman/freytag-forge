@@ -37,6 +37,7 @@ class TurnDelivery(BaseModel):
     recovery_used: bool = False
     fallback_used: bool = False
     cue_fact_id: str | None = None
+    complication_text: str | None = None
     handoff_staged: bool = False
     segments_truncated: bool = False
     segments_dropped: int = 0

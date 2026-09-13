@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.contracts import ResolvedTurnProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -14,6 +17,8 @@ from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import (
     ActivationRule,
     FactPredicate,
+    PacingEvent,
+    PacingRealization,
     RouteOperation,
     RouteRealization,
     StoryletRoute,
@@ -83,6 +88,146 @@ def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repea
     assert ActivationRule(any_of=("pool_a", "pool_b"), at_least=1).minimal_undelivered_facts(set()) == ("pool_a",)
     assert rule.minimal_undelivered_facts({"mandatory_a"}) == ("mandatory_b", "pool_a", "pool_b")
     assert rule.minimal_undelivered_facts({"mandatory_a"}) == rule.minimal_undelivered_facts({"mandatory_a"})
+
+
+def _synthetic_pacing_package(realizations: tuple[PacingRealization, ...]):
+    event = PacingEvent(
+        id="synthetic_pressure",
+        scene_id="1A",
+        at_turn=1,
+        effects=(FactPredicate(fact_id="patrol_return_pressure", equals=True),),
+        realizations=realizations,
+    )
+    pacing = PACKAGE.pacing.model_copy(update={"events": (event,)})
+    return PACKAGE.model_copy(update={"pacing": pacing})
+
+
+def test_pacing_realization_selects_first_matching_entry_and_default_fallback() -> None:
+    realizations = (
+        PacingRealization(
+            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            text="The first pressure is visible.",
+        ),
+        PacingRealization(
+            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            text="The second pressure is visible.",
+        ),
+        PacingRealization(text="The default pressure is visible."),
+    )
+
+    matching_package = _synthetic_pacing_package(realizations)
+    matching_state = RuntimeState.bootstrap(matching_package)
+    matching_state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    RuntimeEngine(
+        matching_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
+    ).turn("Search the kitchen.")
+    assert matching_state.last_turn_delivery.complication_text == "The first pressure is visible."
+
+    fallback_state = RuntimeState.bootstrap(_synthetic_pacing_package(realizations))
+    RuntimeEngine(
+        fallback_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
+    ).turn("Search the kitchen.")
+    assert fallback_state.last_turn_delivery.complication_text == "The default pressure is visible."
+
+
+@pytest.mark.parametrize(
+    ("facts", "expected_index"),
+    [
+        ((), 0),
+        ((("memory_card_in_kristins_custody", True),), 2),
+        (
+            (
+                ("memory_card_in_kristins_custody", True),
+                ("michelle_lead_actionable", True),
+            ),
+            1,
+        ),
+    ],
+)
+def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
+    monkeypatch, facts: tuple[tuple[str, bool], ...], expected_index: int
+) -> None:
+    captured: list[str] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured.append(request.data.decode())
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    for fact_id, value in facts:
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value=str(value).lower()))
+    engine = RuntimeEngine(
+        state,
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
+    )
+
+    expected = PACKAGE.pacing.events[0].realizations[expected_index].text
+    all_texts = tuple(realization.text for realization in PACKAGE.pacing.events[0].realizations)
+    engine.turn("Search the kitchen.")
+    engine.turn("Check the back door.")
+    engine.turn("Inspect the overturned chair.")
+
+    assert all(text not in captured[0] for text in all_texts)
+    assert captured[1].count(expected) == 1
+    assert all(text not in captured[1] for text in all_texts if text != expected)
+    assert expected not in captured[2]
+
+
+def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
+
+    engine.turn("Search the kitchen.")
+    engine.turn("Check the back door.")
+    assert state.last_turn_delivery.complication_text == PACKAGE.pacing.events[0].realizations[1].text
+
+
+def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated(monkeypatch) -> None:
+    captured: list[str] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured.append(request.data.decode())
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Keep moving."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3C")
+    state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase=scene.metadata.freytag_phase)
+    engine = RuntimeEngine(
+        state,
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
+    )
+
+    engine.turn("Keep moving toward the stairs.")
+    engine.turn("Help the captives up the stairs.")
+
+    assert PACKAGE.pacing.events[4].realizations[0].text in captured[1]
+
+
+def test_unfired_pacing_event_does_not_cross_a_scene_exit() -> None:
+    event = PacingEvent(
+        id="late_pressure",
+        scene_id="1A",
+        at_turn=2,
+        effects=(FactPredicate(fact_id="patrol_return_pressure", equals=True),),
+        realizations=(PacingRealization(text="A late pressure appears."),),
+    )
+    package = PACKAGE.model_copy(update={"pacing": PACKAGE.pacing.model_copy(update={"events": (event,)})})
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-A")
+    state.apply_proposal(
+        ResolvedTurnProposal(
+            segments=({"kind": "narration", "text": "Leave the house."},),
+            transition={"transition_id": "t_1a_1b"},
+        )
+    )
+    RuntimeEngine(state, lambda _input: {"segments": []})._activate_pacing(realize_complications=True)
+
+    assert "SL-1A-A" not in state.active_event_ids
+    assert "late_pressure" not in state.fired_event_ids
+    assert state.last_turn_delivery.complication_text is None
 
 
 def test_cue_ranking_uses_eligible_source_windows_and_activation_conditions() -> None:

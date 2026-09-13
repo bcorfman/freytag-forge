@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -200,4 +201,30 @@ def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
     source.write_text(source.read_text().replace("budget_seconds: 1890", "budget_seconds: 1889", 1))
 
     with pytest.raises(StoryPackageError, match="handoff sum.*budget_seconds"):
+        load_story_package(root)
+
+
+def test_loader_rejects_guarded_last_pacing_realization(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    shutil.copytree(Path("data/stories/continuity-initiative"), root)
+    source = root / "pacing.yaml"
+    data = yaml.safe_load(source.read_text())
+    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
+    event["realizations"][-1]["when"] = [{"fact_id": "patrol_return_pressure", "equals": True}]
+    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+
+    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'"):
+        load_story_package(root)
+
+
+def test_loader_rejects_unknown_pacing_realization_fact(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    shutil.copytree(Path("data/stories/continuity-initiative"), root)
+    source = root / "pacing.yaml"
+    data = yaml.safe_load(source.read_text())
+    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
+    event["realizations"][0]["when"] = [{"fact_id": "no_such_fact", "equals": True}]
+    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+
+    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'"):
         load_story_package(root)

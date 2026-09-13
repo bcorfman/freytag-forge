@@ -650,7 +650,13 @@ def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     pacing = root / "pacing.yaml"
-    pacing.write_text(pacing.read_text().replace("fact_id: michelle_lead_actionable", "fact_id: unknown_fact", 1))
+    pacing.write_text(
+        pacing.read_text().replace(
+            "  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure",
+            "  - fact_id: unknown_fact\n    equals: true\n  - fact_id: patrol_return_pressure",
+            1,
+        )
+    )
     with pytest.raises(StoryPackageError, match="unknown trigger predicate"):
         load_story_package(root)
 

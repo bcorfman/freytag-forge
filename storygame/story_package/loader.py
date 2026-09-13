@@ -636,6 +636,12 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"pacing event '{event.id}' references an unknown transition")
         if {effect.fact_id for effect in event.effects} - set(package.world.facts):
             raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
+        if event.realizations and event.realizations[-1].when:
+            raise StoryPackageError(f"pacing event '{event.id}' must end with an unguarded default realization")
+        if {predicate.fact_id for realization in event.realizations for predicate in realization.when} - set(
+            package.world.facts
+        ):
+            raise StoryPackageError(f"pacing event '{event.id}' has an unknown realization predicate")
         window = windows[event.scene_id]
         if not 0 <= event.at_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")

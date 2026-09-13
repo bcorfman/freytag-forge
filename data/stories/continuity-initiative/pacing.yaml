@@ -6,48 +6,76 @@ events:
   effects:
   - fact_id: patrol_return_pressure
     equals: true
+  realizations:
+  - when:
+    - fact_id: memory_card_in_kristins_custody
+      equals: false
+    text: An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.
+  - when:
+    - fact_id: michelle_lead_actionable
+      equals: true
+    text: The patrol is coming back and it is time to leave.
+  - when:
+    - fact_id: memory_card_in_kristins_custody
+      equals: true
+    text: The patrol is back and searching the house for something Kristin now carries.
+  - text: The patrol is returning to the house.
 - id: pursuit_1b
   scene_id: 1B
   at_turn: 2
   effects:
   - fact_id: pursuit_closing_in
     equals: true
+  realizations:
+  - text: The pursuers are closing in through the park. The pursuit is not over.
 - id: security_1c
   scene_id: 1C
   at_turn: 2
   effects:
   - fact_id: terminal_security_escalating
     equals: true
+  realizations:
+  - text: Security is escalating around the terminal.
 - id: scrutiny_2a
   scene_id: 2A
   at_turn: 2
   effects:
   - fact_id: identity_scrutiny_visible
     equals: true
+  realizations:
+  - text: Facility staff are visibly scrutinizing Kristin's inspector cover.
 - id: collapse_3c
   scene_id: 3C
   at_turn: 2
   effects:
   - fact_id: facility_collapse_escalating
     equals: true
+  realizations:
+  - text: The facility shakes and starts to collapse around the escape route.
 - id: purge_2c
   scene_id: 2C
   at_turn: 2
   effects:
   - fact_id: purge_clock_started
     equals: true
+  realizations:
+  - text: The purge order is moving through the facility, and the clock is running.
 - id: override_deadline_3a
   scene_id: 3A
   at_turn: 3
   effects:
   - fact_id: override_codes_deadline_known
     equals: true
+  realizations:
+  - text: The emergency override codes will expire soon.
 - id: destruction_3b
   scene_id: 3B
   at_turn: 3
   effects:
   - fact_id: facility_destruction_threat
     equals: true
+  realizations:
+  - text: The facility's destruction threat is moving closer.
 scenes:
 - scene_id: 1A
   min_turns: 2

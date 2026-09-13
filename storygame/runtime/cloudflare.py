@@ -406,6 +406,8 @@ class CloudflareTurnProvider:
         cue_rule = (
             f"Show this in the scene, as something {self._protagonist_name()} notices: {cue.cue_text}" if cue else ""
         )
+        complication_text = self.state.last_turn_delivery.complication_text
+        complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
         default_rules = [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
@@ -441,6 +443,8 @@ class CloudflareTurnProvider:
             rules.append(handoff_rule)
         if cue_rule:
             rules.append(cue_rule)
+        if complication_rule:
+            rules.append(complication_rule)
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
         rules.extend(self._setting_fact_rules())
