@@ -140,6 +140,8 @@ Variations are JSON data, not engine edits. The supported shape is:
 the bench makes a separate judge call for each successful replicate. It reports
 these three criteria as `yes`, `no`, or `not_applicable`:
 
+Runs are always judged against the canon of the package they ran.
+
 - `cue_points_to_missing_thread`
 - `complication_creates_pressure_without_unearned_knowledge`
 - `no_pre_reveal_disclosure`
