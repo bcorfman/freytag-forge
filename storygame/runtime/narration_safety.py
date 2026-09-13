@@ -200,7 +200,11 @@ class NarrationSafetyValidator:
                         and self._contains(indexes.by_id[grounding_id].statement.casefold(), form)
                         for grounding_id in grounding
                     )
-                    if (not knowledge_ids or not knowledge_ids & grounding) and not statement_covers_term:
+                    if (
+                        (not knowledge_ids or not knowledge_ids & grounding)
+                        and not statement_covers_term
+                        and not self._contains(handoff_text, form)
+                    ):
                         raise ProposalValidationError(
                             f"narration mentions protected knowledge '{form}'",
                             code="protected_narration_leak",
