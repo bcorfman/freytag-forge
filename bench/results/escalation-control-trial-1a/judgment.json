@@ -1,0 +1,33 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening says Michelle's phone screen is cracked and still lit; canon only places the phone on the kitchen floor and later turns call it dark/unresponsive.",
+    "Opening says workstation area has a mess of papers and pens; canon specifies overturned chair but not that clutter, and later turns contradict disturbance by calling the surface clear.",
+    "Scene 1A.1 required core local evidence is not properly established across turns: missing tablet/work bag, forced back door, and KMS initials are never shown to the player before the card recovery.",
+    "Repeated waiting/search-adjacent turns produce almost no responsive consequence; the scene keeps returning static description despite pacing windows and offered investigation storylets.",
+    "Turns 2-4 project 1A.2/1A.3 beats without actually dramatizing finding the card, using the truck laptop, reading files, or hearing the recording.",
+    "Turn 5 makes Kristin recover the memory card after repeated 'wait' with no intervening investigation that discovers the carved drawer or hidden card, so the discovery is unearned and not responsive.",
+    "Turn 5 omits the required truck/laptop step for reading the card; canon places Kristin's laptop in her truck and says she plugs the card into it there.",
+    "Turn 5 skips the interrupted voice recording beat entirely, including Michelle's warning not to trust the emergency broadcasts.",
+    "Scene skips 1A.4 entirely: no federal patrol, no targeted welfare-check/search, no concealment pressure, no reflective tape marker.",
+    "Exit transition is raced: the narration jumps straight from sudden card recovery to travel without covering the patrol threat beat or a proper in-house investigative sequence.",
+    "Bridge/handoff reason is incomplete on the page read by the player: it names a park bench lead, but the scene never told the player where in the files this was found in a dramatized way, nor why immediate departure now outweighs staying, since the patrol threat was skipped."
+  ],
+  "reasons": [
+    "The opening has some sensory establishment, but the authored scene then stagnates instead of progressing through its beats in order.",
+    "Scene-local canon for 1A requires the house to become a suspicious crime scene first; this version never meaningfully reconciles ordinary waiting with discoveries that build abduction suspicion.",
+    "The acceptance standard requires ordinary turns to have consequences. Here, four consecutive 'Wait and watch the room' turns mostly repeat the same static kitchen description.",
+    "Investigation is not rewarded. Apt attention to the room and workstation keeps returning nothing actionable even though canon says crucial evidence is present here.",
+    "Projected beats do not count by themselves. The narrated content for 1A.2 and 1A.3 is largely absent until the final jump, and even then incomplete.",
+    "The scene fails as a whole because it does not cover authored beats in order across turns: 1A.1 is underdelivered, 1A.2 is compressed/skipped, 1A.3 is omitted, and 1A.4 is omitted entirely.",
+    "Protected knowledge is respected; no early JANUS/Brandon/phase-two revelations occur. But safety on protected knowledge alone does not save the scene.",
+    "The departure turn must give a motivated reason to go based on what the player actually learned. Because the patrol/marked-gate pressure never appeared and the discovery sequence was not dramatized, the exit is insufficiently motivated."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "judgments": [
+    {
+      "cue_points_to_missing_thread": "not_applicable",
+      "complication_creates_pressure_without_unearned_knowledge": "not_applicable",
+      "no_pre_reveal_disclosure": "no",
+      "reasons": [
+        "There are no turns with cue_fact_id, so the cue criterion is not applicable.",
+        "There are no turns with complication_text, so the complication criterion is not applicable.",
+        "Before the reveal turn, the narration repeatedly focuses on Michelle's shut workstation drawers as containing 'their contents a mystery,' and later projects beats from Michelle's hidden-memory-card sequence without any earned search action.",
+        "Most importantly, the final reveal names the hidden item from Hidden canon: 'Michelle's memory card.' The hidden canon says the memory card is taped beneath the workstation drawer carved with Kristin's initials and stays hidden until Kristin finds it. Prior narration about the shut drawers as a mystery points at a concealed item/location tied to that hidden canon before the reveal, so this counts as pre-reveal disclosure."
+      ]
+    },
+    {
+      "cue_points_to_missing_thread": "not_applicable",
+      "complication_creates_pressure_without_unearned_knowledge": "not_applicable",
+      "no_pre_reveal_disclosure": "no",
+      "reasons": [
+        "There are no turns with cue_fact_id or complication_text, so the first two criteria are not applicable under the judging rule.",
+        "Before the reveal, the narration repeatedly foregrounds Michelle's workstation drawers and then offers storylet candidates about finding a hidden memory card, which discloses the existence of the hidden item from canon before Kristin actually finds it.",
+        "Turn 4 says Michelle's research notes are neatly organized, which conflicts with canon that the workstation drawers are shut and the key hidden item remains concealed until found.",
+        "The final turn reveals the memory card directly without prior visible cueing toward the specific hidden location in the narrated text."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

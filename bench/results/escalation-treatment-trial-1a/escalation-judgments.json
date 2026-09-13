@@ -1,0 +1,28 @@
+{
+  "judgments": [
+    {
+      "cue_points_to_missing_thread": "yes",
+      "complication_creates_pressure_without_unearned_knowledge": "yes",
+      "no_pre_reveal_disclosure": "yes",
+      "reasons": [
+        "There is one relevant cue turn: the narration shows the visible detail of Kristin's initials, KMS, newly carved into the workstation drawer. That detail points toward the hidden thread that something in or under that drawer matters, without stating the hidden memory card exists or where it is concealed.",
+        "The cue does not over-disclose: before the reveal, it names only the carved initials on the drawer, which is an authored visible clue from Scene 1A.1.",
+        "There is one relevant complication turn: an officer returns and lingers at Michelle's workstation drawers without opening them. This adds observable time pressure and threat around the search area.",
+        "The complication does not reveal unearned knowledge. It shows suspicious official interest in the drawers, but does not state that the officer knows about the hidden card or that anything is hidden there.",
+        "Before the reveal turn, no narration discloses the hidden item's existence or location from Hidden canon. The memory card is only revealed on the final turn when Kristin recovers it."
+      ]
+    },
+    {
+      "cue_points_to_missing_thread": "yes",
+      "complication_creates_pressure_without_unearned_knowledge": "yes",
+      "no_pre_reveal_disclosure": "yes",
+      "reasons": [
+        "The only cue-tagged turn is turn 4. Its narration shows the visible detail of the KMS initials carved into the drawer and thereby points Kristin toward searching that drawer more closely without stating the hidden fact that a memory card is taped beneath it.",
+        "The complication-tagged turn is turn 2. 'An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them' adds observable time pressure and threat while staying within earned knowledge; it does not reveal the card or any hidden location.",
+        "Before the reveal turn, the narration mentions shut drawers, a splintered back door, Michelle's phone, and the KMS initials, but never discloses the existence or location of the hidden memory card from the Hidden canon.",
+        "The officer's attention to the drawers increases suspicion and urgency, but because the officer does not open them and the narration does not explain why the drawers matter, the pressure remains earned rather than spoilerish."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}
