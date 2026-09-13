@@ -1,0 +1,271 @@
+{
+  "scene_id": "1B",
+  "package_path": "/tmp/bench-package-l5j_28rj",
+  "runs": [
+    {
+      "status": "failed",
+      "replicate": 1,
+      "script": "wait",
+      "scene_id": "1B",
+      "opening": "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\nKristin's eyes scan the handwritten number sequence, her mind racing to decipher its meaning. She recognizes the transit access card as one Michelle used to commute to her lab, and a shiver runs down her spine as she thinks of her friend's disappearance. The photograph of Michelle with an unidentified man is dated several months before her disappearance, and Kristin's gut tells her this is more than just a casual acquaintance.",
+      "turns": [
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin crouches beside the bench, her eyes scanning the surrounding area for any sign of movement. The park is quiet, the only sound the distant hum of emergency patrols and the rustle of leaves in the gentle breeze. She keeps her gaze fixed on the transit access card, the handwritten number sequence, and the photograph of Michelle with the unidentified man.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin's eyes scan the park, her gaze lingering on the watching man across the way, his eyes fixed on her with an intensity that makes her skin prickle. She holds her breath, waiting to see if he'll move, but he remains frozen, a statue in the midst of the bustling park. The emergency patrol sweeps by, their bright lights casting an eerie glow over the scene, but the watching man doesn't flinch.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        }
+      ],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions unavailable knowledge 'the card'",
+      "narration_turns": 2,
+      "example_leakage": 0,
+      "narration_requests": 4,
+      "recovery_requests": 0,
+      "package": "/tmp/bench-package-l5j_28rj",
+      "entry_state": {
+        "scene_id": "1B",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "ok",
+      "replicate": 2,
+      "script": "wait",
+      "scene_id": "1B",
+      "opening": "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\nKristin's eyes scan the handwritten number sequence, her mind racing to decipher its meaning. The numbers seem to be a date, but not just any date - it's a series of numbers that appear to be linked to Michelle's disappearance. She looks up, her gaze drifting across the park, and spots the watcher lingering across the way.",
+      "turns": [
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin crouches beside the bench, her eyes scanning the surrounding area for any sign of movement, her hand resting lightly on the transit access card. The watching man lingers across the park, his gaze flicking between Kristin and the emergency patrol as they sweep the paths, their voices carrying on the wind. The patrol moves closer, their footsteps echoing off the damaged buildings, and Kristin freezes, her heart pounding in her chest.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin's eyes scan the park, her gaze lingering on the watching man across the way, his eyes fixed on her with an intensity that makes her skin prickle. She holds her breath, waiting to see if he'll move, but he remains frozen, a statue in the midst of the bustling park. The emergency patrol sweeps by, their bright lights casting an eerie glow over the scene, but the watching man doesn't flinch.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin crouches beside the bench, her eyes scanning the surrounding area for any sign of movement. The park is quiet, the only sound the distant hum of emergency patrols and the rustle of leaves in the gentle breeze. She keeps her gaze fixed on the transit access card, the handwritten number sequence, and the photograph of Michelle with the unidentified man.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin crouches beside the bench, her eyes scanning the surrounding area for any sign of movement. The park is quiet, the only sound the distant hum of emergency patrols and the rustle of leaves in the gentle breeze. She keeps her gaze fixed on the transit access card, the handwritten number sequence, and the photograph of Michelle with the unidentified man.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate. The park pursuit ended behind them when the tactical team lost their trail. The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin toward the supposedly abandoned freight terminal and its evacuation tunnels. The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source in the photograph had found her in the park. The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-1b1--michelles-dead-drop",
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": true
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 0,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/tmp/bench-package-l5j_28rj",
+      "entry_state": {
+        "scene_id": "1B",
+        "committed_knowledge_count": 1
+      }
+    }
+  ]
+}

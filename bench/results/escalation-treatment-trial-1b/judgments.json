@@ -1,0 +1,37 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening misstates what Kristin is doing: it says she is scanning the handwritten number sequence immediately, rather than substantially establishing the bench dead-drop and damaged park with sensory detail.",
+        "Repeated waiting/searching never yields actionable discovery from the bench contents; the hidden list of earlier disappearance dates beneath the photograph is never found or told to the player.",
+        "The scene does not cover its authored beats in order through play: Michelle's dead drop is barely surfaced, the watcher never engages meaningfully, and Brandon's warning is skipped entirely on-screen.",
+        "Several turns repeat nearly identical idle description with no responsive consequence beyond vague tension, despite pressure from patrols and watcher.",
+        "Turn text repeatedly says 'room' in player input while narration keeps a park; the response does not meaningfully adapt or clarify the environment.",
+        "Protected knowledge is revealed early/unsupported in the exit turn: the watcher is identified as Brandon Corfman, the man in Michelle's photograph, without an on-scene reveal earning that knowledge.",
+        "The exit turn dumps off-screen events not previously narrated: escaping through storm drains, Brandon unlocking a maintenance gate, tactical team losing the trail.",
+        "The exit claims the transit card and number sequence identify a transport route to a freight terminal and evacuation tunnels without the player having investigated or deciphered that on-screen.",
+        "The left-scene handoff is not properly motivated by what the player actually read and discovered in this scene; it names conclusions never dramatized.",
+        "Canon item list is incomplete in play: the list of earlier disappearance dates hidden beneath the photograph is omitted entirely, and the ordinary bench/dead-drop details are underused."
+      ],
+      "reasons": [
+        "Scene-local canon requires a damaged public park, ordinary bench, transit access card, handwritten number sequence, photograph of Michelle with unidentified man, hidden list beneath it, watcher across the park, and emergency patrol sweeps. The scene only repeatedly mentions some items and never reveals the hidden list.",
+        "The opening should substantially establish the scene with sensory detail. Instead it gives thin, generic setup and immediately asserts interpretation of the number sequence as linked to Michelle's disappearance.",
+        "Ordinary turns should have responsive consequences. Five consecutive 'wait and watch' turns mostly loop the same description, with no concrete development, no discovery, and little escalation the player can act on.",
+        "Progressive revelation is absent. The scene withholds actual findings during repeated apt observation, then leaps at the end to major revelations and transition content.",
+        "Protected knowledge was not safe: the unidentified man in the photo becomes Brandon Corfman in the exit summary without any narrated encounter or identification process in prior turns.",
+        "A left_scene turn must give a reason to go based on what was found and where it points, in prose the player actually read. Here, the reason depends on discoveries and escape events that occur off-screen in a summary dump, so the departure is unearned.",
+        "The authored beat about the watcher/Brandon's warning is not dramatized. No warning dialogue or direct interaction occurs before scene exit.",
+        "The scene fails to reward investigation of what canon says is here. Repeated attention to the bench and surroundings keeps returning generic atmosphere instead of actionable clues."
+      ]
+    }
+  ],
+  "judge_calls": 1
+}

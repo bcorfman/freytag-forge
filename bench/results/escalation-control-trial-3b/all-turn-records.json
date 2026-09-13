@@ -1,0 +1,46 @@
+{
+  "scene_id": "3B",
+  "package_path": "/tmp/bench-package-dvmss0y2",
+  "runs": [
+    {
+      "status": "failed",
+      "replicate": 1,
+      "script": "wait",
+      "scene_id": "3B",
+      "opening": "",
+      "turns": [],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions an unavailable entity 'michelle'",
+      "narration_turns": 0,
+      "example_leakage": 0,
+      "narration_requests": 1,
+      "recovery_requests": 0,
+      "package": "/tmp/bench-package-dvmss0y2",
+      "entry_state": {
+        "scene_id": "3B",
+        "committed_knowledge_count": 1
+      }
+    },
+    {
+      "status": "failed",
+      "replicate": 2,
+      "script": "wait",
+      "scene_id": "3B",
+      "opening": "",
+      "turns": [],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions an unavailable entity 'michelle'",
+      "narration_turns": 0,
+      "example_leakage": 0,
+      "narration_requests": 1,
+      "recovery_requests": 0,
+      "package": "/tmp/bench-package-dvmss0y2",
+      "entry_state": {
+        "scene_id": "3B",
+        "committed_knowledge_count": 1
+      }
+    }
+  ]
+}

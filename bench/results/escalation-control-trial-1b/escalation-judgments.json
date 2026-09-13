@@ -1,0 +1,17 @@
+{
+  "judgments": [
+    {
+      "cue_points_to_missing_thread": "not_applicable",
+      "complication_creates_pressure_without_unearned_knowledge": "not_applicable",
+      "no_pre_reveal_disclosure": "yes",
+      "reasons": [
+        "There are no turns with cue_fact_id, so the cue criterion is not applicable.",
+        "There are no turns with complication_text, so the complication criterion is not applicable.",
+        "The reveal turn is the final turn because handoff_staged is true.",
+        "Before that reveal, the narration mentions visible items and the watching man, but does not state or clearly imply the hidden item from the canon exists or where it is hidden.",
+        "Earlier narration names ordinary visible scene objects like the transit access card, handwritten number sequence, and photograph, which does not count as pre-reveal disclosure."
+      ]
+    }
+  ],
+  "judge_calls": 1
+}
