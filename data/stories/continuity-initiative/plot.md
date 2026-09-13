@@ -150,9 +150,7 @@ entry_text: "The park was quieter than the streets around it. The clues led Kris
 transition_ids: [t_1b_1c]
 bridge_text:
   t_1b_1c: >-
-    The transit card from Michelle's dead drop granted access to a supposedly abandoned freight terminal. Fresh tire
-    tracks, air vents, and unusually heavy electrical service said the site remained active, so Kristin and Brandon
-    followed the transport route beneath the loading docks.
+    The park pursuit is behind them. Kristin and Brandon head for the freight terminal along the transport route.
 ---
 
 **Setting:** Kristin’s neighborhood and a damaged public park in Los Angeles
@@ -389,9 +387,8 @@ entry_text: "The records archive hummed behind the restricted corridor. Rows of 
 transition_ids: [t_2b_2c]
 bridge_text:
   t_2b_2c: >-
-    JANUS had chosen Michelle, left Kristin behind as bait, and carried Brandon's name in its original development
-    records. With Michelle's coded resistance already corrupting prisoner files, Kristin and Brandon understood that the
-    archive held both the proof and the betrayal.
+    The JANUS evidence in the archive shows what the system was built to do. Kristin and Brandon understand the archive
+    crisis.
 ---
 
 **Setting:** The facility’s records archive, medical levels, and Brandon’s hideout through a remote connection
@@ -475,9 +472,8 @@ entry_text: "The command levels tightened around them. Somewhere above, orders w
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-
-    Michelle's coded message offered a way to transmit the evidence while opening the detention sectors, but the
-    broadcast could only be activated from Rebecca's secured office. The combined mission was the only chance left
-    before Charles's purge began.
+    The purge clock is running, and the evidence is ready to transmit. They commit to one combined broadcast-and-rescue
+    mission.
 ---
 
 **Setting:** The facility’s command levels and detention sectors
