@@ -1,0 +1,62 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Repeated 'wait and watch' turns do not produce actionable discoveries or consequences tied to the corridor scene.",
+        "Scene-local geography is unstable: 'beyond the office door,' 'beyond the door,' and 'watch the room' are muddled with corridors/relay chamber.",
+        "The turn sequence skips from passive watching straight to end-of-scene summary of many later beats.",
+        "Final turn reveals major future outcomes and offscreen actions by Brandon, Michelle, Rebecca, and human operators without the player earning or witnessing them in this scene.",
+        "Protected knowledge is revealed early: Rebecca's bargain, detention-site data, Brandon's confession, and successful broadcast authentication/output.",
+        "No motivated exit is given in prose based on what Kristin actually finds here and where it points.",
+        "The authored beat 'the facility fights back' is not properly dramatized with responsive, local consequences; instead the narration repeats generic alarm imagery.",
+        "Final turn introduces Brandon at the relay despite no prior local setup in this scene turn sequence."
+      ],
+      "reasons": [
+        "Opening has some sensory setup, but subsequent turns are thin, repetitive, and mostly static despite alarms and an active predictive security environment.",
+        "Ordinary waiting should still trigger responsive consequences in a pressured corridor watched by JANUS; instead several turns merely restate alarms, doors, and focus without new actionable information.",
+        "The scene should progressively reveal how irrational/conflicting emergencies can confuse JANUS near Rebecca's office and the route to the relay. That local mechanism is only vaguely alluded to, then bypassed.",
+        "The fifth turn is an improper summary dump covering an entire resolution chain rather than the assigned local beat. It races through seizure of the relay, overload of JANUS, handoff to human control, Rebecca's deal, detention-site revelation, Brandon's confession, and the broadcast escaping control.",
+        "A left_scene turn must tell the player what was found here and why to go next. Instead it reports completed offscreen successes; it does not narrate Kristin discovering something in the corridor/office area that motivates departure.",
+        "Mention of the broadcast relay chamber as a 'siren call' and alarms centered there pushes beyond immediate observation and weakens scene locality.",
+        "Because repeated apt searching/watching returns little the player can act on, investigation is not rewarded."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": false,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Repeated waiting yields no actionable discovery despite apt observation in a surveillance-heavy corridor scene.",
+        "Turn 5 dumps multiple future beats and offscreen outcomes not earned in-scene.",
+        "Introduces Brandon and Michelle actions/outcomes without scene-local setup or prior revelation in this scene.",
+        "Reveals Rebecca's bargain, detention-site data, Brandon's confession, and broadcast progress prematurely.",
+        "Scene never properly dramatizes the key local mechanism: conflicting irrational emergencies overloading JANUS until humans take control.",
+        "Final exit lacks motivated prose telling the player what Kristin herself found here and where it points before departure."
+      ],
+      "reasons": [
+        "The opening gives some sensory setup, but the subsequent turns are thin and repetitive rather than substantially developing the corridor situation.",
+        "Ordinary turns must produce responsive consequences; four consecutive 'Wait and watch' actions mostly restate alarms, doors, and tension without new actionable information.",
+        "Although cue facts appear in metadata, the narration the player actually reads does not clearly deliver usable discoveries. A discovery not told to the player has not happened.",
+        "Turn 4 should have advanced the authored beat by making clear that structural alarms and desynchronized doors imply JANUS is losing clean predictive control to human operators; instead it remains vague atmosphere.",
+        "Turn 5 is not scene-local. It races through outcomes spanning the relay chamber, Rebecca's negotiation, detention-site intelligence, Brandon's confession, and the broadcast escaping Charles's control.",
+        "Protected knowledge was not safe: the narration reveals major later-scene and cross-scene resolutions before they are earned.",
+        "The scene as read does not cover its authored beats in order. It mostly stalls, then skips straight to end-state summary.",
+        "Because left_scene is true on Turn 5, the player needed motivating narration naming what was found here and where it points. Instead they receive a broad synopsis of completed events, not a discovered lead that justifies leaving."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

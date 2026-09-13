@@ -1,0 +1,30 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening weakly establishes place and action; it repeats the entry text and adds unsupported claims that Kristin knows hidden passages/blind spots in this facility.",
+    "Ordinary 'wait' turns do not produce meaningful responsive consequences; they mostly restate alarms and corridor visuals.",
+    "Scene beats are not covered in order across turns. 3B.2 and 3B.3 are skipped entirely in played narration before exit.",
+    "Turn 5 dumps multiple major beats at once instead of progressively revealing them through dramatized action and dialogue.",
+    "Rebecca office confrontation is missing: no arrival in Rebecca's office, no Rebecca dialogue, no Michelle confrontation about experiment approvals.",
+    "Charles's betrayal is missing: no remote appearance, no office lockdown, no transfer of network control, no explicit plan to destroy the Los Angeles facility and frame anti-government terrorists.",
+    "Protected knowledge violated: Brandon's role in creating JANUS is revealed only in the sacrifice beat, but the scene exits without having properly earned/prior set up the required preceding confrontation sequence; the turn also introduces Michelle's evidence transmission without scene-local setup.",
+    "Exit turn is not properly motivated from what the player actually experienced; it names outcomes but not as discoveries reached through prior play in location order.",
+    "Scene-local geography is muddled: repeated references to an office door / watching a room while canon starts in security corridors en route to Rebecca's office and relay; later all objectives resolve offscreen.",
+    "Repeated apt waiting/searching is not rewarded with actionable developments in this scene."
+  ],
+  "reasons": [
+    "The canon for 3B requires a climax sequence: first Kristin defeats JANUS prediction by irrational infrastructure disruption, then Rebecca bargains in her office and Michelle confronts her, then Charles remotely betrays and locks down the office, then Brandon opens the relay and confesses so the broadcast can begin. The supplied scene never dramatizes the middle beats.",
+    "The first four turns all answer 'Wait and watch the room' with near-identical surveillance prose. They do not advance pressure in a concrete, responsive way beyond repetition, and they do not provide new actionable information or consequences tied to the player's waiting.",
+    "Turn 5 is a summary handoff, not a scene. It telescopes JANUS overload, Rebecca's bargain, detention-site acquisition, Brandon's confession, and the broadcast start into one paragraph. The player never actually reads the Rebecca/Charles confrontation in scene.",
+    "Charles is a required participant in this scene's canon, yet he never appears in dialogue or remote communication. Rebecca also never speaks despite her bargaining beat being essential.",
+    "The final departure lacks proper local motivation because the narration never walks the player through where they went, what exact information they got there, and how that specifically enabled leaving; instead it reports the bridge text and several facts as completed outcomes.",
+    "Canon consistency is also weakened by unsupported assertions in the opening about Kristin knowing hidden passages and blind spots in this facility, which are not established in the supplied scene-local canon."
+  ]
+}

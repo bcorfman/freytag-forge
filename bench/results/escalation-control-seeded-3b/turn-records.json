@@ -1,0 +1,310 @@
+{
+  "scene_id": "3B",
+  "package_path": "/tmp/bench-package-q3htjo93",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "wait",
+      "scene_id": "3B",
+      "opening": "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\nKristin's eyes scan the corridors ahead, the alarms layered over alarms a cacophony that threatens to overwhelm her. She knows the system's limitations, the way it relies on predictability to function. She takes a deep breath, focusing on the task at hand: overload JANUS and seize the broadcast. She moves swiftly, her footsteps echoing off the walls as she makes her way down the corridor. She knows the layout of the facility, the hidden passages and blind spots that JANUS's predictive system can't account for. She spots a maintenance panel on the wall, the cover slightly ajar. She pushes it open, revealing a tangle of wires and circuitry. She knows that cutting the power to the cameras will give her a temporary advantage, but it's a risk she's willing to take.",
+      "turns": [
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the sound of alarms layered over alarms like a cacophony of warning. She watches as the predictive system anticipates every rational move, the doors opening and closing with a calculated precision, cameras disabled with a flicker of power, and structural alarms blaring like a siren in the distance. The corridors beyond the office door are a maze of flashing lights and warning signs, the facility fighting to predict its attackers, but Kristin's eyes are fixed on the external broadcast relay chamber, the immediate contested objective.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the sound of alarms layered over alarms like a cacophony of warning. She watches as the predictive system anticipates every rational move, the doors opening and closing with a calculated precision, cameras disabled with a flicker of power, and structural alarms blaring like a siren in the distance. The corridors beyond the office door are a maze of confusion, flooded with water, and the air thick with the smell of smoke and ozone.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin stands frozen, her eyes fixed on the security monitors as alarms layered over alarms, the facility's systems fighting to predict its attackers. She watches as doors open and close, cameras flicker and die, and structural alarms wail through the corridors. The predictive system, JANUS, anticipates every rational move, but conflicting emergencies confuse it, and the broadcast relay chamber waits at the end of the corridors.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin stands frozen, her eyes fixed on the security monitors as the corridors beyond the office flash with alarms and the predictive system's attempts to anticipate every move. She watches as doors open and close, cameras flicker and die, and structural alarms wail through the facility's speakers. The broadcast relay chamber, her goal, remains a steady, unchanging presence at the end of the corridors, waiting to be seized.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Brandon reaches the external communications relay and disconnects it from JANUS. Brandon holds the relay open so the broadcast connection can carry Michelle's evidence. Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control replaces the system's predictions in the corridors. Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data gives Kristin and Michelle the detention locations they need for the broadcast. Brandon transmits a confession before the electrical surge takes the relay. He admits his role in creating JANUS, and the statement helps authenticate Michelle's evidence. Brandon disconnected the relay from JANUS and held it open through the electrical surge while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as the facility started to fail.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": true
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 0,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/tmp/bench-package-q3htjo93",
+      "entry_state": {
+        "scene_id": "3B",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 39,
+        "seeded_by": "thorough"
+      }
+    },
+    {
+      "status": "ok",
+      "replicate": 2,
+      "script": "wait",
+      "scene_id": "3B",
+      "opening": "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\nKristin's eyes scan the corridors ahead, the hum of the facility's systems and the wail of alarms a cacophony that threatens to overwhelm her focus. She knows JANUS is watching, predicting every move she makes, and that she needs to create chaos if she's going to overload its systems and seize the broadcast. She takes a deep breath, then charges forward, her footsteps echoing off the walls as she floods the corridors with a burst of water, the sudden deluge sending alarms screaming through the facility.",
+      "turns": [
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the sound of alarms layered over alarms a constant reminder of the facility's desperate attempts to predict its attackers. She watches as the doors to the left and right of the office swing open, revealing empty corridors that JANUS has deemed safe to traverse. The cameras above the doors flicker and die, their feeds cut off as the facility's security systems try to adapt to the unpredictable movements of the attackers.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the sound of alarms layered over alarms like a cacophony of warning. She watches as the predictive system anticipates every rational move, the doors opening and closing in a calculated sequence, cameras disabled, and structural alarms blaring in a futile attempt to pinpoint the attackers. The external broadcast relay chamber waits beyond the office, its presence a tantalizing promise of control, but for now, Kristin remains still, waiting and watching.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the hum of the facility's systems and the wail of alarms filling the air. She watches as the predictive system's projections dance across the walls, anticipating every rational move, every possible path to the broadcast relay chamber. But then, a flicker of something irrational, a conflicting emergency that makes the system stumble, and the projections falter for a moment.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Kristin freezes, her eyes scanning the security corridors beyond the office door, the sound of alarms layered over alarms a constant reminder of the facility's desperate attempts to predict its attackers. She watches as the doors slide open and shut, the cameras flicker back to life, and the structural alarms wail in protest, but the external broadcast relay chamber remains tantalizingly out of reach. The predictive system, JANUS, seems to be anticipating every move, every step, every decision, leaving Kristin to wonder if she's truly outsmarting it or simply playing into its hands.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false
+        },
+        {
+          "player_input": "Wait and watch the room.",
+          "narration": "Brandon reaches the external communications relay and disconnects it from JANUS. Brandon holds the relay open so the broadcast connection can carry Michelle's evidence. Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control replaces the system's predictions in the corridors. Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data gives Kristin and Michelle the detention locations they need for the broadcast. Brandon transmits a confession before the electrical surge takes the relay. He admits his role in creating JANUS, and the statement helps authenticate Michelle's evidence. Brandon disconnected the relay from JANUS and held it open through the electrical surge while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as the facility started to fail.",
+          "left_scene": true,
+          "beats_projected": [
+            "scene-3b1--the-facility-fights-back"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_3b_a_r1",
+            "k_sl_3b_a_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": true
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 5,
+      "example_leakage": 0,
+      "narration_requests": 7,
+      "recovery_requests": 1,
+      "package": "/tmp/bench-package-q3htjo93",
+      "entry_state": {
+        "scene_id": "3B",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 39,
+        "seeded_by": "thorough"
+      }
+    }
+  ]
+}
