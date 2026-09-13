@@ -7,7 +7,15 @@ Kristin notices depends on her knowledge state.
 
 Status: design agreed, not yet specified to implementation depth. The open
 questions at the end are the work remaining before this can be broken into
-Ringer tasks.
+Ringer tasks. Re-checked against the code on 2026-09-13: none of the four layers
+beyond Opportunity is built, and `latest_turn` still has no runtime effect.
+
+**Terminology warning.** "Handoff" in this plan means the pacing fallback: at
+`handoff_after_turns` the engine stages `staged_handoff_fact_ids` and delivers
+`handoffs.yaml` fallback text. The engine now also has an unrelated *authored
+reveal handoff*: an `action_evidence` matcher that inserts a candidate's
+`delivery_text` on the turn the player earns it (see `docs/PRD.md`). Name the
+layer distinctly before specifying this plan, or the two will be conflated.
 
 ## The four layers
 
@@ -63,10 +71,6 @@ where you are. Keep this distinction; it is the whole design.
   time with no closing time.
 - Only four scenes have a concrete timed complication. The rest rely on the
   generic nudge/handoff thresholds.
-- No scene distinguishes *card still taped under the drawer* from *card
-  recovered but unread*. `SL-1A-D` activates on
-  `continuity_initiative_known == false AND michelle_warning_known == true`
-  and knows nothing about where the card physically is.
 - The KMS carving exists only as the beat detail string `KMS initials in
   drawer` and one prose sentence in `plot.md`. It is not a fact, so the
   narrator cannot recall it later — runtime context is a projection of
@@ -97,16 +101,17 @@ Complication layer is already load-bearing for scene exit, not decoration.
 
 ### 2. Do not duplicate item possession as a fact
 
-`required_dependencies: [memory_card]` already tracks possession. Adding
-`memory_card_recovered` creates a second source of truth that will
-desynchronise. What genuinely is unrepresented is the *other* physical state —
-still taped under the drawer versus recovered but unread — and only that
-deserves a new fact.
+`required_dependencies: [memory_card]` guards against the item being lost, but
+it does not prove possession. Shipped since this was written:
+`physical-continuity-fix.md` Stage A added one positively named custody fact,
+`memory_card_in_kristins_custody`, rather than a location fact such as
+`memory_card_still_in_house`. It is asserted on recovery, is a trigger on
+`t_1a_1b`, and gates `SL-1A-D`. Use that pattern for any other item.
 
 ### 3. Three kinds of fact, kept separate
 
 - **Physical** — where a thing is, independent of anyone's knowledge
-  (`memory_card_still_in_house`).
+  (`memory_card_in_kristins_custody`).
 - **Epistemic** — what Kristin knows or has inferred (`kms_marker_noticed`,
   `michelle_hiding_intent_inferred`).
 - **Pressure** — what the world is doing (`patrol_search_active`,
@@ -186,9 +191,11 @@ Ringer tasks.
    — and it would repeat every turn. Needs a delivered-cue ledger on
    `RuntimeState`, and a decision about whether that ledger is snapshot state
    (survives rewind) or turn-local.
-5. **Retraction discipline.** Who retracts `memory_card_still_in_house`, and
-   what validates that it happens exactly when possession changes? A missed
-   retraction gives a patrol hunting for a card in Kristin's pocket.
+5. **Retraction discipline.** **Closed** by `physical-continuity-fix.md` Stage
+   A: one positively named custody fact, asserted on recovery; the pressure
+   event itself never changes custody. The rule for any future loss or
+   confiscation is to retract the fact in the same accepted operation — no such
+   path exists in the package yet.
 6. **Early exit.** What happens to a scheduled complication when the player
    satisfies the transition before it fires? Cancel, or fire it into the
    bridge?
