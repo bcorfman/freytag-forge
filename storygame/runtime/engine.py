@@ -80,6 +80,9 @@ class RuntimeEngine(CanonicalEventMixin):
             )
             self.last_projection = self.projector.project(self.state, "player", player_input)
             provider_proposal = parse_turn_proposal(self.provider(player_input))
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
+            )
             proposal, _ = self.reveal_resolver.resolve(
                 self.state, self.last_projection, provider_proposal, self.projector, player_input
             )
@@ -287,7 +290,7 @@ class RuntimeEngine(CanonicalEventMixin):
             else:
                 self.state.staged_cue_fact_id = None
             if turns_since_entry >= window.handoff_after_turns:
-                self.state.staged_handoff_fact_ids = missing
+                self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
         else:
             self.state.staged_cue_fact_id = None
             self.state.staged_handoff_fact_ids = ()
@@ -344,6 +347,20 @@ class RuntimeEngine(CanonicalEventMixin):
                 continue
             missing = event.activation.minimal_undelivered_facts(true_facts)
             return tuple(fact_id for fact_id in missing if fact_id in deliveries)
+        return ()
+
+    def _bridge_missing_fact_ids(self) -> tuple[str, ...]:
+        """Return the pending bridge's smallest set of facts still needed."""
+
+        true_facts = frozenset(
+            fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
+        )
+        for event in self.state.package.storylet_routes.bridge_events:
+            if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
+                continue
+            if event.activation.is_satisfied(true_facts):
+                continue
+            return event.activation.minimal_undelivered_facts(true_facts)
         return ()
 
     def _apply_world_actions(self) -> None:
