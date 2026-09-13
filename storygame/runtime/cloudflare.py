@@ -1314,8 +1314,7 @@ class CloudflareTurnProvider:
             return proposal
 
         committed_ids = {item.id for item in self.last_projection.committed_knowledge}
-        if self.authored_handoff is not None:
-            committed_ids.add(self.authored_handoff.candidate.id)
+        handoff_candidate_id = self.authored_handoff.candidate.id if self.authored_handoff is not None else None
         indexes = self.state.package.knowledge_indexes
         multi_word_terms = {term for term in indexes.term_to_knowledge if len(term.split()) > 1}
         changed = False
@@ -1328,6 +1327,12 @@ class CloudflareTurnProvider:
                 if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", normalized_text):
                     continue
                 owners = set(indexes.term_to_knowledge[term]) & committed_ids
+                if (
+                    not owners
+                    and handoff_candidate_id is not None
+                    and handoff_candidate_id in indexes.term_to_knowledge[term]
+                ):
+                    owners = {handoff_candidate_id}
                 if len(owners) == 1:
                     owner = next(iter(owners))
                     if owner not in segment.grounding_ids:

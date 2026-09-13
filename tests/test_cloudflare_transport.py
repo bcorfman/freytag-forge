@@ -1919,6 +1919,62 @@ def test_authored_handoff_grounds_echoed_prose_on_the_matched_candidate(
         assert state.facts.has(effect.fact_id, "story", value=value)
 
 
+@pytest.mark.parametrize(
+    ("candidate_id", "storylet_id", "player_input", "model_text"),
+    [
+        pytest.param(
+            "k_sl_1a_c_r1",
+            "SL-1A-C",
+            "Listen to the officers ask about her research.",
+            "The officers ask about Dr. McGehee's research.",
+            id="officers",
+        ),
+        pytest.param(
+            "k_sl_1a_d_r1",
+            "SL-1A-D",
+            "Read the rest of the files.",
+            "Kristin reads the rest of Dr. McGehee's files.",
+            id="files",
+        ),
+    ],
+)
+def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
+    monkeypatch,
+    candidate_id: str,
+    storylet_id: str,
+    player_input: str,
+    model_text: str,
+) -> None:
+    state = _staged_scene_1a_state()
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    request_count = 0
+
+    def open_request(*_args, **_kwargs):
+        nonlocal request_count
+        text = "Kristin finds the damaged recording and listens." if request_count == 0 else model_text
+        request_count += 1
+        return _Response({"segments": [{"kind": "narration", "text": text}]})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    engine = RuntimeEngine(state, provider)
+
+    first = engine.turn("Recover the damaged recording and listen to it.")
+    assert first.selected_knowledge_ids == ("k_sl_1a_b_r2",)
+    state.scene_entered_at_turn = state.turn_index + 1
+    if storylet_id not in state.active_event_ids:
+        state.active_event_ids.add(storylet_id)
+
+    candidate = PACKAGE.knowledge_indexes.by_id[candidate_id]
+    proposal = engine.turn(player_input)
+
+    assert "k_sl_1a_b_r2" in proposal.segments[0].grounding_ids
+    assert proposal.selected_knowledge_ids == (candidate_id,)
+    assert proposal.segments[-1].text == candidate.delivery_text
+    for effect in candidate.establishes:
+        value = str(effect.value).lower()
+        assert state.facts.has(effect.fact_id, "story", value=value)
+
+
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
