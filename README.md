@@ -12,11 +12,6 @@ Write the move. Earn the reveal. Live with the consequence.
 - **Delay is a choice.** Storylets and live pacing pressure make every detour cost something.
 - **Nothing breaks.** A bad turn changes nothing, and broken stories or stale saves are caught before play.
 
-## Play online
-
-[Open the live story](https://bcorfman.github.io/freytag-forge/) and write what
-your character tries.
-
 ## For contributors
 
 Python 3.12+ and [uv](https://docs.astral.sh/uv/) are required for the offline
