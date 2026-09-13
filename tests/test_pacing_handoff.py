@@ -90,12 +90,13 @@ def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repea
     assert rule.minimal_undelivered_facts({"mandatory_a"}) == rule.minimal_undelivered_facts({"mandatory_a"})
 
 
-def _synthetic_pacing_package(realizations: tuple[PacingRealization, ...]):
+def _synthetic_pacing_package(realizations: tuple[PacingRealization, ...], when: tuple[FactPredicate, ...] = ()):
     event = PacingEvent(
         id="synthetic_pressure",
         scene_id="1A",
         at_turn=1,
         effects=(FactPredicate(fact_id="patrol_return_pressure", equals=True),),
+        when=when,
         realizations=realizations,
     )
     pacing = PACKAGE.pacing.model_copy(update={"events": (event,)})
@@ -128,6 +129,49 @@ def test_pacing_realization_selects_first_matching_entry_and_default_fallback() 
         fallback_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
     ).turn("Search the kitchen.")
     assert fallback_state.last_turn_delivery.complication_text == "The default pressure is visible."
+
+
+def test_guarded_pacing_event_waits_for_its_predicates_even_after_at_turn() -> None:
+    package = _synthetic_pacing_package(
+        (PacingRealization(text="The guarded pressure is visible."),),
+        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+    )
+    state = RuntimeState.bootstrap(package)
+    state.turn_index = 2
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" not in state.fired_event_ids
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") not in state.facts.asserted
+    assert state.last_turn_delivery.complication_text is None
+
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" in state.fired_event_ids
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
+    assert state.last_turn_delivery.complication_text == "The guarded pressure is visible."
+
+
+def test_guarded_pacing_event_never_fires_before_at_turn() -> None:
+    package = _synthetic_pacing_package(
+        (PacingRealization(text="The guarded pressure is visible."),),
+        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+    )
+    state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" not in state.fired_event_ids
+    assert state.last_turn_delivery.complication_text is None
+
+    state.turn_index = 1
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" in state.fired_event_ids
 
 
 @pytest.mark.parametrize(

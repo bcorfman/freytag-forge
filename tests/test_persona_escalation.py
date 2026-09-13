@@ -54,7 +54,7 @@ def test_personas_cover_the_escalation_ladder_without_stranding(
         assert row["deadline_staged"] is True
         assert row["layer_reached"] == "deadline"
         events = [event for event in PACKAGE.pacing.events if event.scene_id == scene_id]
-        if any(event.at_turn < WINDOWS[scene_id].handoff_after_turns for event in events):
+        if any(event.at_turn < WINDOWS[scene_id].handoff_after_turns and not event.when for event in events):
             assert row["complication_texts"]
     assert "memory_card_in_kristins_custody" in _rows(summaries["staller"])[SCENE_IDS[0]]["costs_applied"]
 

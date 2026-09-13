@@ -228,3 +228,16 @@ def test_loader_rejects_unknown_pacing_realization_fact(tmp_path: Path) -> None:
 
     with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'"):
         load_story_package(root)
+
+
+def test_loader_rejects_unknown_pacing_event_guard_fact(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    shutil.copytree(Path("data/stories/continuity-initiative"), root)
+    source = root / "pacing.yaml"
+    data = yaml.safe_load(source.read_text())
+    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
+    event["when"] = [{"fact_id": "no_such_fact", "equals": True}]
+    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+
+    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'.*unknown event guard predicate"):
+        load_story_package(root)

@@ -118,7 +118,7 @@
           "new": ""
         },
         {
-          "old": "  realizations:\n  - when:\n    - fact_id: charles_abandoned_rebecca\n      equals: true\n    text: Charles's destruction sequence drives blasts section by section toward them. They have little time left.\n  - text: A distant blast shakes the facility. Another blast hits closer as an outer section goes dark.\n",
+          "old": "  realizations:\n  - text: A distant blast shakes the facility. Charles's destruction sequence drives blasts section by section toward them. They have little time left.\n",
           "new": ""
         }
       ]

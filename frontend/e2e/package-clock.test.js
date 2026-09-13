@@ -65,13 +65,13 @@ test("loads the real package and resolves turn milestones", () => {
     kind: "scene_point",
     scene_id: "1B",
     point: "nudge",
-    target_turn: 3,
+    target_turn: 4,
   });
   assert.deepEqual(projection.scenePoint("1B", "handoff"), {
     kind: "scene_point",
     scene_id: "1B",
     point: "handoff",
-    target_turn: 4,
+    target_turn: 5,
   });
   assert.deepEqual(projection.eventPoint("purge_2c"), {
     kind: "pacing_event",
@@ -93,7 +93,19 @@ test("loads the real package and resolves turn milestones", () => {
     "eventPoint",
   ]);
   assert.equal(Object.isFrozen(projection.eventOrder), true);
-  assert.deepEqual([...projection.eventOrder], ["pressure_1a", "purge_2c", "override_deadline_3a", "destruction_3b"]);
+  assert.deepEqual(
+    [...projection.eventOrder],
+    [
+      "pressure_1a",
+      "pursuit_1b",
+      "security_1c",
+      "scrutiny_2a",
+      "collapse_3c",
+      "purge_2c",
+      "override_deadline_3a",
+      "destruction_3b",
+    ],
+  );
 });
 
 test("reports unknown story, scene, event, and point identifiers", () => {

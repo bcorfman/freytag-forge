@@ -248,6 +248,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 event.scene_id == self.state.current_scene_id
                 and event.id not in self.state.fired_event_ids
                 and turns_since_entry >= event.at_turn
+                and all(self._predicate_matches(predicate) for predicate in event.when)
             ):
                 for effect in event.effects:
                     self.state.facts.assert_fact(

@@ -179,6 +179,7 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
         `at_turn must fall within scene "${sceneId}" 0..handoff_after_turns`,
       );
     }
+    list(entry.when, "when", storyId, resolvedPacingPath);
     eventRecords.set(eventId, { sceneId, at });
   }
 

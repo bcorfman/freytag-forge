@@ -301,6 +301,9 @@ class PacingEvent(_Model):
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
     at_turn: int = Field(ge=0)
+    when: tuple[FactPredicate, ...] = Field(
+        default=(), description="Conditions that must also hold before the event fires."
+    )
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
     realizations: tuple[PacingRealization, ...] = ()

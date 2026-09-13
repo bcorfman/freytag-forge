@@ -597,7 +597,11 @@ def _validate(package: StoryPackage) -> None:
         if operation.op == "assert" and operation.value is True
     )
     asserted_true_facts.update(
-        effect.fact_id for event in package.pacing.events for effect in event.effects if effect.equals is True
+        effect.fact_id
+        for event in package.pacing.events
+        if not event.when
+        for effect in event.effects
+        if effect.equals is True
     )
     for transition in package.pacing.transitions:
         if transition.id in transition_ids:
@@ -636,6 +640,8 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"pacing event '{event.id}' references an unknown transition")
         if {effect.fact_id for effect in event.effects} - set(package.world.facts):
             raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
+        if {predicate.fact_id for predicate in event.when} - set(package.world.facts):
+            raise StoryPackageError(f"pacing event '{event.id}' has an unknown event guard predicate")
         if event.realizations and event.realizations[-1].when:
             raise StoryPackageError(f"pacing event '{event.id}' must end with an unguarded default realization")
         if {predicate.fact_id for realization in event.realizations for predicate in realization.when} - set(
