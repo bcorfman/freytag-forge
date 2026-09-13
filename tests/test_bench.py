@@ -407,6 +407,10 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     assert result["turns"][0]["shadow_matched_candidate_id"] == "k_sl_1a_b_r2"
     assert result["turns"][0]["prompt_candidate_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["candidates_offered"] == ["k_sl_1a_b_r2", "k_sl_1a_b_r1"]
+    assert result["turns"][0]["cue_fact_id"] is None
+    assert result["turns"][0]["cue_text"] is None
+    assert result["turns"][0]["complication_text"] is None
+    assert result["turns"][0]["handoff_staged"] is False
 
 
 def test_run_baseline_refuses_archived_nine_scene_coverage_before_live_work(monkeypatch, tmp_path) -> None:
@@ -633,6 +637,133 @@ def test_focused_run_allows_one_explicit_replicate_without_calling_live_services
     assert summary["pooled"]["score_points"]["n"] == 1
     assert summary["pooled"]["score_points"]["standard_deviation"] is None
     assert summary["budget"]["actual_openai_judge_calls"] == 1
+
+
+def test_escalation_judge_is_opt_in_and_added_to_summary_ledger_and_spend(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "escalation-arm",
+        "escalation_judge": True,
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA}
+    judgment["missing_or_wrong"] = []
+    escalation_judgment = {
+        "cue_points_to_missing_thread": "yes",
+        "complication_creates_pressure_without_unearned_knowledge": "no",
+        "no_pre_reveal_disclosure": "not_applicable",
+        "reasons": [],
+    }
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(
+        bench_cli,
+        "run_escalation_judges",
+        lambda *_: {"judgments": [escalation_judgment], "judge_calls": 2},
+    )
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["escalation"]["cue_points_to_missing_thread"] == {"yes": 1, "no": 0, "not_applicable": 0}
+    assert summary["budget"]["actual_openai_judge_calls"] == 3
+    row = ledger_rows(ledger)[0]
+    assert row["escalation"] == summary["escalation"]
+    assert row["spend"]["judge_calls"] == 3
+
+
+def test_escalation_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "ordinary-arm",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA}
+    judgment["missing_or_wrong"] = []
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(bench_cli, "run_escalation_judges", lambda *_: pytest.fail("opt-in judge was called"))
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert "escalation" not in summary
+    assert "escalation" not in ledger_rows(ledger)[0]
+
+
+def test_non_boolean_escalation_judge_is_rejected(tmp_path) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["escalation_judge"] = "yes"
+    path = tmp_path / "invalid-escalation.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="escalation_judge must be a boolean"):
+        load_variation(path)
 
 
 def test_run_writes_failed_turns_to_all_turn_records_without_changing_judged_records(monkeypatch, tmp_path) -> None:

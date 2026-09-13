@@ -39,6 +39,12 @@ CRITERIA = (
     "exit_motivated",
     "rewards_investigation",
 )
+ESCALATION_CRITERIA = (
+    "cue_points_to_missing_thread",
+    "complication_creates_pressure_without_unearned_knowledge",
+    "no_pre_reveal_disclosure",
+)
+ESCALATION_VERDICTS = ("yes", "no", "not_applicable")
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
@@ -127,6 +133,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     package_value = variation.get("story_package", variation.get("package"))
     if not isinstance(package_value, str) or not package_value:
         raise ValueError("variation must name story_package")
+    escalation_judge = variation.get("escalation_judge", False)
+    if not isinstance(escalation_judge, bool):
+        raise ValueError("escalation_judge must be a boolean")
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
@@ -527,6 +536,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         narration = join_narration(tuple(segments)) if segments else ""
         if narration:
             handoff = getattr(provider, "authored_handoff", None)
+            delivery = state.last_turn_delivery
+            cue_fact_id = delivery.cue_fact_id
+            cue_text = next(
+                (
+                    item.cue_text
+                    for item in package.deliveries
+                    if item.fact_id == cue_fact_id and item.cue_text is not None
+                ),
+                None,
+            )
             turns.append(
                 {
                     "player_input": player_input,
@@ -545,6 +564,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None
                     else [],
+                    "cue_fact_id": cue_fact_id,
+                    "cue_text": cue_text,
+                    "complication_text": getattr(delivery, "complication_text", None),
+                    "handoff_staged": delivery.handoff_staged,
                 }
             )
         if entered:
@@ -657,6 +680,20 @@ def score_judgments(judgments: list[dict[str, Any]]) -> dict[str, Any]:
             "unattributed": missing_total - sum(attributed.values()),
         },
     }
+
+
+def score_escalation_judgments(judgments: list[dict[str, Any]], judge_calls: int) -> dict[str, Any]:
+    counts: dict[str, dict[str, int]] = {}
+    for criterion in ESCALATION_CRITERIA:
+        criterion_counts = {verdict: 0 for verdict in ESCALATION_VERDICTS}
+        for judgment in judgments:
+            verdict = judgment.get(criterion)
+            if verdict not in criterion_counts:
+                raise ValueError(f"invalid escalation verdict for {criterion}: {verdict!r}")
+            criterion_counts[verdict] += 1
+        counts[criterion] = criterion_counts
+    counts["judge_calls"] = judge_calls
+    return counts
 
 
 def _stats(values: list[float], n_for_mde: int | None = None) -> dict[str, Any]:
@@ -901,6 +938,8 @@ def ledger_row(
         },
         "model": os.getenv("CF_AI_MODEL", "").strip() or DEFAULT_NARRATOR_MODEL,
     }
+    if "escalation" in aggregate:
+        row["escalation"] = aggregate["escalation"]
     if failure_reason is not None:
         row["failure_reason"] = failure_reason
     return row
@@ -957,4 +996,19 @@ def run_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
     result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "judge CLI failed")
+    return read_json(output_path)
+
+
+def run_escalation_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
+    command = [
+        "node",
+        str(Path(__file__).with_name("escalation-judge.mjs")),
+        "--input",
+        str(input_path),
+        "--output",
+        str(output_path),
+    ]
+    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "escalation judge CLI failed")
     return read_json(output_path)

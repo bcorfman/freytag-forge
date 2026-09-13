@@ -28,9 +28,11 @@ from bench.core import (
     package_and_state,
     preview_rules,
     prompt_for,
+    run_escalation_judges,
     run_judges,
     run_scene,
     scenes_scored_for_row,
+    score_escalation_judgments,
     score_judgments,
     scripts_for,
     successful_ledger_rows,
@@ -484,6 +486,36 @@ def _run(args: argparse.Namespace) -> int:
             run["failure_reason"] = f"judge returned {len(judgments)} result(s) for {len(judged_runs)} completed run(s)"
         failed_runs.extend(missing)
         judged_runs = judged_runs[: len(judgments)]
+    escalation = None
+    escalation_failure_reason = None
+    if variation.get("escalation_judge", False):
+        escalation_path = args.out / "escalation-judgments.json"
+        try:
+            escalation_judged = (
+                run_escalation_judges(pending, escalation_path)
+                if judged_runs
+                else {
+                    "judgments": [],
+                    "judge_calls": 0,
+                }
+            )
+            escalation_judgments = escalation_judged["judgments"]
+            if len(escalation_judgments) != len(judged_runs):
+                raise RuntimeError(
+                    f"escalation judge returned {len(escalation_judgments)} result(s) for "
+                    f"{len(judged_runs)} completed run(s)"
+                )
+            escalation = score_escalation_judgments(
+                escalation_judgments,
+                escalation_judged.get("judge_calls", 0),
+            )
+        except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
+            escalation_failure_reason = _failure_reason(error)
+            failed_runs.extend(judged_runs)
+            judged_runs = []
+            judgments = []
+            escalation = score_escalation_judgments([], 0)
+        judge_failure_reason = judge_failure_reason or escalation_failure_reason
     if judgments:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -495,12 +527,14 @@ def _run(args: argparse.Namespace) -> int:
         failures=failed_runs,
         entry_state=(runs[0].get("entry_state") if runs else None),
     )
+    if escalation is not None:
+        aggregate["escalation"] = escalation
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
         "actual_narration_requests": sum(run["narration_requests"] for run in runs),
         "estimated_workers_ai_neurons_from_requests": sum(run["narration_requests"] for run in runs) * 330 / 30,
-        "actual_openai_judge_calls": judged.get("judge_calls", 0),
+        "actual_openai_judge_calls": judged.get("judge_calls", 0) + (escalation or {}).get("judge_calls", 0),
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:

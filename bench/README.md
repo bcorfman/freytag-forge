@@ -17,6 +17,11 @@ Run these commands from the repository root. The CLI loads `.env` if present; it
 
 The `prompt` command makes no model request and prints only `{"system": ..., "user": ...}`. `score` is a deliberately stable fixture adapter and prints only the seven equally weighted boolean counts and their total out of 63.
 
+Each turn record also carries delivery telemetry: `cue_fact_id` identifies a staged
+missing fact, `cue_text` is that fact delivery's visible cue (or `null`),
+`complication_text` is optional complication text (or `null`), and
+`handoff_staged` says whether a deadline handoff was staged.
+
 ## Commands
 
 `chat` starts a live session at the first scene. Each response is followed by the exact system and user prompt that produced it:
@@ -117,6 +122,7 @@ Variations are JSON data, not engine edits. The supported shape is:
 {
   "name": "example",
   "story_package": "data/stories/continuity-initiative",
+  "escalation_judge": true,
   "system_prompt": {
     "rules": ["..."],
     "include_output_example": true,
@@ -126,6 +132,26 @@ Variations are JSON data, not engine edits. The supported shape is:
   "scripts": {
     "1A": [{"name": "my-script", "inputs": ["..."]}]
   }
+}
+```
+
+`escalation_judge` is an optional boolean and defaults to `false`. When true,
+the bench makes a separate judge call for each successful replicate. It reports
+these three criteria as `yes`, `no`, or `not_applicable`:
+
+- `cue_points_to_missing_thread`
+- `complication_creates_pressure_without_unearned_knowledge`
+- `no_pre_reveal_disclosure`
+
+The escalation judge is separate from the seven-criterion metric of record. Its
+counts appear in an `escalation` block in `summary.json` and the ledger row:
+
+```json
+"escalation": {
+  "cue_points_to_missing_thread": {"yes": 1, "no": 0, "not_applicable": 0},
+  "complication_creates_pressure_without_unearned_knowledge": {"yes": 0, "no": 0, "not_applicable": 1},
+  "no_pre_reveal_disclosure": {"yes": 1, "no": 0, "not_applicable": 0},
+  "judge_calls": 1
 }
 ```
 
