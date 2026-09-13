@@ -51,7 +51,7 @@ events:
   - fact_id: facility_collapse_escalating
     equals: true
   realizations:
-  - text: The facility shakes and starts to collapse around the escape route.
+  - text: The facility shakes. Dust and pieces of the ceiling fall around them.
 - id: purge_2c
   scene_id: 2C
   at_turn: 2
