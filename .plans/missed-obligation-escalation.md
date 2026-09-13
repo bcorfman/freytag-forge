@@ -102,11 +102,15 @@ Complication layer is already load-bearing for scene exit, not decoration.
 ### 2. Do not duplicate item possession as a fact
 
 `required_dependencies: [memory_card]` guards against the item being lost, but
-it does not prove possession. Shipped since this was written:
-`physical-continuity-fix.md` Stage A added one positively named custody fact,
-`memory_card_in_kristins_custody`, rather than a location fact such as
-`memory_card_still_in_house`. It is asserted on recovery, is a trigger on
-`t_1a_1b`, and gates `SL-1A-D`. Use that pattern for any other item.
+it does not prove possession. Shipped since this was written: Scene 1A has one
+positively named custody fact, `memory_card_in_kristins_custody`, rather than a
+location fact such as `memory_card_still_in_house`. It is asserted on recovery
+and by the handoff fallback's `costs`, is a trigger on `t_1a_1b`, and gates
+`SL-1A-D`. An absent fact satisfies `equals: false`, so it needs no seeding, and
+the loader rejects an `equals: false` trigger on a fact nothing asserts true.
+`item_placements` entries may carry `while_fact_false: <custody fact>` so the
+engine stops stating a placement once the item moves. Use that pattern for any
+other item: one custody fact per item, never an item ID as proof of possession.
 
 ### 3. Three kinds of fact, kept separate
 
@@ -165,6 +169,49 @@ The boundary to hold: the patrol makes the drawer *salient*; it never opens it.
 Pressure that hands over knowledge collapses Complication into Handoff and
 violates `pacing_events_must_create_observable_pressure_not_unearned_knowledge`.
 
+## Carried-forward defects
+
+Found by a separate continuity audit, re-verified against the package on
+2026-09-12. They are real today, independent of the four layers, and can each
+ship as its own brief. Handoff migration of a scene may rewrite its bridge, so
+check that before fixing bridge prose.
+
+- **3C resolution cascade (highest value).** `_apply_canonical_route_events`
+  (`storygame/runtime/canonical_events.py`) commits each event and marks it
+  fired before checking the next, and the six `canonical_resolution_events` are
+  declared in chain order. Once `truth_no_longer_containable` holds, archive,
+  escape, network consequences, Phase Two and completion all commit in one pass,
+  before their storylets narrate anything. Sequence them, or require each one's
+  player-visible realization before it commits. `portable_archive_secured` has
+  no world item: 3C declares `memory_card` instead, so add `portable_archive`
+  with custody starting at Rebecca and introduce it before Kristin must secure
+  it.
+- **Bridges claim more than their activation guarantees.** `t_1b_1c` says the
+  transit card opened the route, but `bridge_1b_departure` can fire without
+  `transport_route_identified`. `t_2b_2c` claims Michelle's selection, Kristin
+  as bait, Brandon's name and Michelle's resistance, but
+  `bridge_2b_archive_crisis` needs only `janus_evidence` plus two of three
+  facts, none of them Michelle's selection. `t_2c_3a` claims Michelle's coded
+  message, which `bridge_2c_combined_plan` does not require. Every bridge
+  states only facts its candidate establishes; a fallback that supplies a fact
+  also supplies its item.
+- **Stale item declarations.** `memory_card` in 2B, 2C and 3C (the operative
+  evidence is the JANUS archive) and `override_codes` in 3B. Deleting them
+  removes the object the narrator reaches for wrongly.
+- **Pacing reaction window.** A visible timed threat must precede the handoff by
+  two complete turns, and every storylet's `latest_turn` must leave a turn
+  before handoff. Only four scenes have a pressure event. Decided (2026-09-08):
+  add `pursuit_1b` (turn 2, does not resolve the pursuit), a 1C security
+  escalation, visible 2A scrutiny (Rebecca stays hidden) and a 3C collapse
+  escalation, all at turn 2; move `destruction_3b` from turn 4 to 3; widen 1B to
+  `2/4/5` and 3C to `2/4/6`; raise `budget_seconds` to 1890. These land as one
+  change with `tests/test_scene_relative_pacing.py`: its `expected_windows`
+  dict, the over-budget probe (`1890` → `1889`), and the sum-equals-budget
+  assertion relaxed to `<=`.
+- **Deferred until they surface in play:** 2A credentials visibly created by
+  `SL-2A-B` before the supervisor confrontation (not re-verified), and an
+  authored transit-card placement in 1B behind a `while_fact_false` guard.
+
 ## Open questions — what must be settled before implementation
 
 These are the gaps. Each needs an answer before this plan can be split into
@@ -175,12 +222,12 @@ Ringer tasks.
 1. **Ranking competing obligations.** 1A has two unmet triggers
    (`michelle_lead_actionable`, `patrol_return_pressure`). When several are
    unmet, which does the scheduler foreground? Candidate rules: fewest
-   remaining facts, nearest `latest_turn`, or an authored priority. **Recommendation:**
-   prioritize the obligation with the nearest effective deadline, then use
-   `minimal_undelivered_facts()` as the tie-breaker. Do not add a separate
-   authored priority list; deadlines protect causal pressure from being
-   starved, while the existing minimal-fact ranking keeps the choice grounded
-   in authored transition requirements. **Answer: pending.**
+   remaining facts, nearest `latest_turn`, or an authored priority.
+   **Recommendation:** prioritize the obligation with the nearest effective
+   deadline, then use `minimal_undelivered_facts()` as the tie-breaker. Do not
+   add a separate authored priority list; deadlines protect causal pressure
+   from being starved, while the existing minimal-fact ranking keeps the choice
+   grounded in authored transition requirements. **Answer: pending.**
 2. **What `latest_turn` expiry *does*.** Three options: silently close the
    storylet, escalate it to the next layer, or force it. They differ sharply
    for a storylet whose fact is still required for exit. Undecided.
@@ -191,11 +238,11 @@ Ringer tasks.
    — and it would repeat every turn. Needs a delivered-cue ledger on
    `RuntimeState`, and a decision about whether that ledger is snapshot state
    (survives rewind) or turn-local.
-5. **Retraction discipline.** **Closed** by `physical-continuity-fix.md` Stage
-   A: one positively named custody fact, asserted on recovery; the pressure
-   event itself never changes custody. The rule for any future loss or
-   confiscation is to retract the fact in the same accepted operation — no such
-   path exists in the package yet.
+5. **Retraction discipline.** **Closed** by the Scene 1A custody work: one
+   positively named custody fact, asserted on recovery; the pressure event
+   itself never changes custody, and the 1A patrol confiscates nothing. The
+   rule for any future loss or confiscation is to retract the fact in the same
+   accepted operation — no such path exists in the package yet.
 6. **Early exit.** What happens to a scheduled complication when the player
    satisfies the transition before it fires? Cancel, or fire it into the
    bridge?
@@ -212,7 +259,9 @@ Ringer tasks.
    former, the existing field is the hook and no schema change is needed.
 9. **Scene exemptions.** 3C is a resolution scene and should be sequenced
    causally, not treated as a set of missed clues. Which scenes opt out, and is
-   that authored or inferred from `freytag_phase`?
+   that authored or inferred from `freytag_phase`? See the 3C cascade defect
+   under "Carried-forward defects": it is today's evidence that 3C is not
+   sequenced at all.
 10. **Promoting KMS to canon.** It needs a fact, a `knowledge.yaml` entry, an
     audience, and a relevance entry — otherwise, once committed, it follows
     Kristin to Los Angeles. Which scenes keep it in scope?
@@ -237,8 +286,9 @@ Ringer tasks.
     explicitly or add a validated duration field later. This lets fast players
     reach the scene's causal beats with fewer optional discoveries and lets
     slow players encounter more pressure without making turn duration
-    ambiguous. The story has no global 1800-second ceiling; pacing allowances
-    are sized independently per scene. **Answer:** one player input plus its
+    ambiguous. Pacing allowances are sized independently per scene;
+    `budget_seconds` stays as a ceiling on the worst case, not a target to
+    compress toward. **Answer:** one player input plus its
     narrator resolution is one turn, including an optional storylet. The same
     scene-relative counter drives `min_turns`, `nudge_after_turns`,
     `handoff_after_turns`, and `latest_turn`; there are no hidden storylet
