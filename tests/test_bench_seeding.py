@@ -56,6 +56,10 @@ def test_thorough_seeding_reaches_late_scenes_without_worker_calls(monkeypatch) 
         assert state.current_scene_id == scene_id
         assert state.turn_index == state.scene_entered_at_turn
         assert len(state.facts.asserted) > len(bare_state.facts.asserted)
+        assert (
+            core.entry_state(state, seeded_by="thorough")["earned_knowledge_count"]
+            > core.entry_state(bare_state)["earned_knowledge_count"]
+        )
 
     assert calls == 0
 

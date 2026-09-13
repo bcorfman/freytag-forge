@@ -24,6 +24,7 @@ from bench.core import (
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 from tests._legacy_package import legacy_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -525,12 +526,20 @@ def test_entry_state_counts_projected_committed_knowledge() -> None:
     variation = load_variation(VARIATION)
     _, state = core.package_and_state(variation, "1A")
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
+    projector = KnowledgeProjector()
+    projected_count = len(projector.project(state, "player", "").committed_knowledge)
+    earned_count = sum(
+        KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
+        for item in state.package.knowledge.knowledge
+    )
 
     assert core.entry_state(state) == {
         "scene_id": "1A",
-        "committed_knowledge_count": len(state.facts.asserted),
+        "committed_knowledge_count": projected_count,
+        "earned_knowledge_count": earned_count,
         "seeded_by": "bare",
     }
+    assert projected_count != len(state.facts.asserted)
 
 
 def test_score_exposes_graded_missing_entries_without_changing_record_score() -> None:

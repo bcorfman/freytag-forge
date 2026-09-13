@@ -25,6 +25,7 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
@@ -351,9 +352,14 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
 def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, Any]:
     """Describe the state used when a scene is benched."""
 
+    projector = KnowledgeProjector()
     return {
         "scene_id": state.current_scene_id,
-        "committed_knowledge_count": len(state.facts.asserted),
+        "committed_knowledge_count": len(projector.project(state, "player", "").committed_knowledge),
+        "earned_knowledge_count": sum(
+            KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
+            for item in state.package.knowledge.knowledge
+        ),
         "seeded_by": seeded_by,
     }
 
