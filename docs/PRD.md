@@ -8,8 +8,8 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
 - The player writes ordinary in-world actions. There are no menus or parser
   rules.
 - The narrator receives only bounded scene material and eligible legacy
-  candidates. It never receives migrated reveal candidates, their delivery
-  text, routes, source IDs, future effects, or transcript memory.
+  candidates: never migrated reveals, delivery text, routes, source IDs, future
+  effects, or transcript memory.
 - Declarative storylets and pacing make delay a player choice. Prose cannot
   choose a branch for the player.
 
@@ -24,44 +24,37 @@ roleplay. Markdown and typed knowledge compile into an immutable package.
 ## Runtime contract
 
 - Facts are the only durable truth. Each turn projects scene-local knowledge,
-  parses untrusted narrator JSON, validates the prose and a cloned fact store,
-  then makes one atomic commit or none.
-- Narration safety checks reject prose that names unearned knowledge, cites a fact it was
-  not given, puts words in the wrong character's mouth, or runs ahead of the
-  plot.
-- Authored beat prose licenses the vocabulary of that beat for the turn when it is
-  projected to the narrator. Protected knowledge is never licensed this way.
-- Any rejected turn restores the exact pre-turn snapshot, including across
-  save and load. A threatened dependency opens a typed choice: `proceed`
-  commits the branch, while `return` rejects it.
+  parses untrusted narrator JSON, validates the prose against a cloned fact
+  store, then makes one atomic commit or none.
+- Validation rejects prose that names unearned knowledge, cites an ungiven fact,
+  misattributes speech, or runs ahead of the plot.
+- Projected authored beat prose licenses that beat's vocabulary for the turn;
+  protected knowledge is never licensed this way.
+- A rejected turn restores the exact pre-turn snapshot, including across save
+  and load. A threatened dependency opens a typed choice: `proceed` commits the
+  branch, `return` rejects it.
 
 ### Authored reveal handoff
 
-- Handoff is opt-in. It requires complete `action_evidence` and non-empty
-  `delivery_text`.
-- The exact matcher requires every authored evidence group, rejects negations,
-  and composes nothing from two matches; unmatched phrasing is fixed with
-  author-reviewed aliases, never similarity scoring or model intent.
-- The runtime owns migrated reveals on every turn: it alone decides whether the
-  action earned one, and the candidate is never offered to or selectable by the
-  narrator.
-  When exactly one candidate matches, it inserts the authored delivery
-  sentence and validates the result normally.
-- A tie or a miss commits nothing. Incomplete handoff data follows the normal
-  path.
-- On a handoff turn, grounding repair covers the whole composed turn, the
-  authored sentence included. A multi-word term gets its single committed
-  owner; only when no committed knowledge owns it does the handed-off
-  candidate count. An ambiguous term stays uncited and fails validation.
+- Opt-in: a candidate needs complete `action_evidence` and non-empty
+  `delivery_text`; incomplete data follows the normal path.
+- The runtime alone decides, every turn, whether the action earned a migrated
+  reveal. The exact matcher requires every evidence group, rejects negations,
+  and never composes two matches. Missed phrasings get author-reviewed aliases,
+  never similarity scoring or model intent.
+- Exactly one match inserts the delivery sentence and validates the turn
+  normally; a tie or miss commits nothing.
+- Grounding repair covers the whole composed turn. A multi-word term cites its
+  single committed owner, falling back to the handed-off candidate only when no
+  committed knowledge owns it; an ambiguous term fails validation.
 
 ## Package validation
 
 - Loading rejects malformed source, bad references, invalid effects, ambiguous
   transitions, timing errors, dependency cycles, and stale saves.
-- `_validate_narration_term_traps` rejects a package when a scene's own
-  authored prose names a multi-word knowledge term whose owning knowledge is
-  not committed in that scene. This prevents the narrator from failing on
-  prose that faithfully repeats material it received.
+- `_validate_narration_term_traps` rejects a scene whose own authored prose
+  names a multi-word knowledge term it does not commit, so faithful repetition
+  can never fail validation.
 
 ## Developer workflow
 

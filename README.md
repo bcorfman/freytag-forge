@@ -6,13 +6,11 @@ Write the move. Earn the reveal. Live with the consequence.
 
 ## Features
 
-- **Play in plain text.** Type the action your character takes. No menus or parser syntax.
-- **Earn every reveal.** Discoveries land only when your action and the narration support them.
-- **Hear the authored line.** When a discovery has its proof and delivery text, the engine alone decides when you earned it; the narration model never sees or selects that reveal, and the game delivers the intended sentence.
-- **Keep the world honest.** The engine blocks unearned knowledge, unsupported facts, wrong-speaker dialogue, and plot that jumps ahead.
-- **Make choices matter.** Storylets and declarative pacing turn delay into a real choice.
-- **Trust each turn.** A rejected turn changes nothing, even after saving and loading.
-- **Load with confidence.** Broken references, invalid effects, ambiguous paths, dependency cycles, and stale saves are rejected before play.
+- **Just type.** Say what your character does. No menus, no parser syntax.
+- **Earn every reveal.** Discoveries land only when your action earns them, in the author's own words.
+- **A world that stays honest.** No unearned secrets, invented facts, wrong-speaker lines, or plot jumping ahead.
+- **Delay is a choice.** Storylets and live pacing pressure make every detour cost something.
+- **Nothing breaks.** A bad turn changes nothing, and broken stories or stale saves are caught before play.
 
 ## Play online
 
