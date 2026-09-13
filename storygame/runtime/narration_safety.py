@@ -105,11 +105,13 @@ class NarrationSafetyValidator:
             for item in state.package.knowledge.knowledge
             if KnowledgeProjector._established(item, candidate_state) and KnowledgeProjector._visible_to(item, "player")
         }
-        handoff_text = " ".join(
-            delivery.fallback_text
+        staged_handoff_deliveries = tuple(
+            delivery
             for delivery in state.package.deliveries
             if delivery.fact_id in candidate_state.staged_handoff_fact_ids
-        ).casefold()
+            and delivery.scene_id == candidate_state.current_scene_id
+        )
+        handoff_text = " ".join(delivery.fallback_text for delivery in staged_handoff_deliveries).casefold()
         projected_beat_text = self._projected_beat_text(state)
 
         for segment in segments:
@@ -164,8 +166,10 @@ class NarrationSafetyValidator:
                 if not self._contains(text, form):
                     continue
                 knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
-                if any(self._contains(handoff_form, form) for handoff_form in handoff_terms) or (
-                    candidate_state.staged_handoff_fact_ids and knowledge_ids & handoff_committed_ids
+                if (
+                    self._contains(handoff_text, form)
+                    or any(self._contains(handoff_form, form) for handoff_form in handoff_terms)
+                    or (candidate_state.staged_handoff_fact_ids and knowledge_ids & handoff_committed_ids)
                 ):
                     continue
                 statement_covers_term = any(
