@@ -31,6 +31,7 @@ from storygame.story_package.models import (
     normalize_term,
     term_lookup_forms,
 )
+from storygame.story_package.obligations import required_storylet_ids
 
 
 class StoryPackageError(ValueError):
@@ -848,6 +849,75 @@ def _validate_resolution_entry_guarantees(package: StoryPackage) -> None:
             guaranteed.update(_asserted_true_route_operations(event.operations))
 
 
+def _validate_required_reveal_prerequisites(package: StoryPackage) -> None:
+    """Ensure required reveals have an entry guarantee or a local producer."""
+
+    required_storylets = required_storylet_ids(package)
+    incoming_sources: dict[str, set[str]] = {}
+    for transition in package.pacing.transitions:
+        incoming_sources.setdefault(transition.target_scene_id, set()).add(transition.source_scene_id)
+
+    entry_guarantees: dict[str, set[str]] = {}
+    for scene_id, source_scene_ids in incoming_sources.items():
+        source_guarantees = []
+        for source_scene_id in source_scene_ids:
+            source_guarantees.append(
+                {
+                    fact_id
+                    for event in package.storylet_routes.bridge_events
+                    if event.scene_id == source_scene_id
+                    for fact_id in event.activation.all_facts_true
+                }
+                | {
+                    operation.fact_id
+                    for event in package.storylet_routes.bridge_events
+                    if event.scene_id == source_scene_id
+                    for operation in event.operations
+                    if operation.op == "assert" and operation.value is True
+                }
+            )
+        if source_guarantees:
+            entry_guarantees[scene_id] = set.intersection(*source_guarantees)
+
+    local_producers: dict[str, set[str]] = {}
+    for route in package.storylet_routes.storylets:
+        local_producers.setdefault(route.scene_id, set()).update(
+            operation.fact_id
+            for realization in route.realizations
+            for operation in realization.operations
+            if operation.op == "assert" and operation.value is True
+        )
+    for event in package.pacing.events:
+        local_producers.setdefault(event.scene_id, set()).update(
+            effect.fact_id for effect in event.effects if effect.equals is True
+        )
+    for delivery in package.deliveries:
+        local_producers.setdefault(delivery.scene_id, set()).add(delivery.fact_id)
+        local_producers.setdefault(delivery.scene_id, set()).update(
+            operation.fact_id for operation in delivery.costs if operation.op == "assert" and operation.value is True
+        )
+    for known in package.knowledge.knowledge:
+        for scene_id in known.available_in_scenes:
+            local_producers.setdefault(scene_id, set()).update(
+                effect.fact_id for effect in known.establishes if effect.op == "assert" and effect.value is True
+            )
+
+    for known in package.knowledge.knowledge:
+        if known.source.storylet_id not in required_storylets:
+            continue
+        for scene_id in known.available_in_scenes:
+            entry_fact = f"scene_{scene_id.lower()}_entry_known"
+            guaranteed = entry_guarantees.get(scene_id, set())
+            producible = local_producers.get(scene_id, set())
+            for predicate in known.requires:
+                if predicate.equals is True and predicate.fact_id not in guaranteed | producible | {entry_fact}:
+                    raise StoryPackageError(
+                        f"scene {scene_id} reveal '{known.id}' requires '{predicate.fact_id}', "
+                        "which scene entry does not guarantee "
+                        "and the scene cannot produce"
+                    )
+
+
 def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ...]:
     """Read the authored principal characters plot.md already defines.
 
@@ -978,4 +1048,5 @@ def load_story_package(root: Path) -> StoryPackage:
     _validate_deliveries(package)
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
+    _validate_required_reveal_prerequisites(package)
     return package

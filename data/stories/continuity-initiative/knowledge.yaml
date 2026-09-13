@@ -1253,8 +1253,6 @@ knowledge:
     equals: true
   - fact_id: janus_evidence
     equals: true
-  - fact_id: michelle_resistance_known
-    equals: true
   establishes:
   - op: assert
     fact_id: evidence_ready_to_transmit
@@ -1291,8 +1289,6 @@ knowledge:
   - fact_id: purge_clock_started
     equals: true
   - fact_id: janus_evidence
-    equals: true
-  - fact_id: michelle_resistance_known
     equals: true
   establishes:
   - op: assert

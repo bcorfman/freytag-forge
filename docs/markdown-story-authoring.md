@@ -95,6 +95,10 @@ only through an eligible storylet realization with those exact operations.
 Pacing events remain authored in `pacing.yaml`; their job is observable pressure,
 not unearned knowledge or arbitrary scene transitions.
 
+Required storylet reveals must not depend on a true fact that is unavailable at scene entry and cannot be made true in that scene.
+The loader checks incoming bridge guarantees, scene storylet and pacing effects, `FactDelivery` entries and costs, scene knowledge, and the scene entry fact.
+Add a delivery or another scene-local producer when a required reveal needs an earlier fact.
+
 Canonical route events may list `realization_storylets`, a tuple of storylet IDs
 that must have been shown before the event can commit. This gating applies to
 resolution events; bridge events still commit as soon as their activation holds.

@@ -551,10 +551,10 @@ def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> Non
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
     candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1b_a_r1")
-    candidate["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
+    candidate["requires"] = [{"fact_id": "brandon_face_known", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     package = load_story_package(root)
-    assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["michelle_abduction_suspicion"]
+    assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["brandon_face_known"]
 
 
 def test_loader_rejects_selectable_transition_trigger_without_must_convey(tmp_path: Path) -> None:
