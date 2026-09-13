@@ -34,7 +34,7 @@ deliveries:
   fallback_text: >-
     The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin
     toward the supposedly abandoned freight terminal and its evacuation tunnels.
-  cue_text: The transit card and handwritten sequence lie beside Michelle's photograph. A freight code is printed beside the number sequence.
+  cue_text: A transit access card and a handwritten number sequence lie beside Michelle's photograph.
 - fact_id: brandon_identified
   scene_id: 1B
   source_kind: npc
