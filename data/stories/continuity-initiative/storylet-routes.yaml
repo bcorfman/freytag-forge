@@ -29,6 +29,42 @@ pacing_event_review:
     value: true
   status: approved
   reason: Escalates an observable return threat at the house without revealing the later facility.
+- event_id: pursuit_1b
+  scene_id: 1B
+  at_turn: 2
+  effect:
+    op: assert
+    fact_id: pursuit_closing_in
+    value: true
+  status: approved
+  reason: Makes the park pursuit visibly close in without resolving it.
+- event_id: security_1c
+  scene_id: 1C
+  at_turn: 2
+  effect:
+    op: assert
+    fact_id: terminal_security_escalating
+    value: true
+  status: approved
+  reason: Makes security pressure at the terminal visibly escalate.
+- event_id: scrutiny_2a
+  scene_id: 2A
+  at_turn: 2
+  effect:
+    op: assert
+    fact_id: identity_scrutiny_visible
+    value: true
+  status: approved
+  reason: Makes visible scrutiny of the inspector identity a timed pressure.
+- event_id: collapse_3c
+  scene_id: 3C
+  at_turn: 2
+  effect:
+    op: assert
+    fact_id: facility_collapse_escalating
+    value: true
+  status: approved
+  reason: Makes the facility collapse visibly worsen during the escape.
 new_fact_ids:
 - id: continuity_initiative_known
   definition: Kristin knows Dr. McGehee was researching a suspicious emergency program called the Continuity Initiative.
@@ -273,6 +309,22 @@ new_fact_ids:
     Michelle’s home.
   used_by_storylets:
   - SL-1A-C
+  used_by_transitions: []
+- id: pursuit_closing_in
+  definition: The pursuit team is visibly closing in on Kristin and Brandon in the park.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: terminal_security_escalating
+  definition: Security around the terminal is visibly escalating.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: identity_scrutiny_visible
+  definition: Facility staff are visibly scrutinizing Kristin’s inspector identity.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: facility_collapse_escalating
+  definition: The facility is visibly beginning to collapse around the escape route.
+  used_by_storylets: []
   used_by_transitions: []
 - id: facility_infiltration_needed
   definition: Kristin and Brandon understand that direct rescue or observation is insufficient and that controlled

@@ -46,7 +46,10 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "kristin_laptop": "in Kristin's truck outside the house",
     }
     assert package.scenes[0].metadata.setting_facts == ("Michelle's workstation drawers are shut.",)
-    assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
+    pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
+    mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
+    assert mapped_facts <= set(package.world.facts)
+    assert set(package.world.facts) - pacing_facts <= mapped_facts
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
         for realization in route.realizations:

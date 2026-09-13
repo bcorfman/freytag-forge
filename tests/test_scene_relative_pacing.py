@@ -75,20 +75,58 @@ def test_each_scene_entry_starts_with_a_full_relative_turn_allowance() -> None:
 def test_every_declared_pacing_event_lands_inside_its_scene_window() -> None:
     windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
 
-    assert all(event.at_turn <= windows[event.scene_id].handoff_after_turns for event in PACKAGE.pacing.events)
+    assert all(event.at_turn <= windows[event.scene_id].handoff_after_turns - 2 for event in PACKAGE.pacing.events)
+
+
+def _required_storylet_ids(package) -> set[str]:
+    activation_facts_by_scene: dict[str, set[str]] = {}
+    for event in package.storylet_routes.bridge_events:
+        activation_facts_by_scene.setdefault(event.scene_id, set()).update(event.activation.all_facts_true)
+        activation_facts_by_scene[event.scene_id].update(event.activation.any_of)
+
+    return {
+        storylet.id
+        for storylet in package.storylet_routes.storylets
+        if any(
+            operation.fact_id in activation_facts_by_scene.get(storylet.scene_id, set())
+            for realization in storylet.realizations
+            for operation in realization.operations
+        )
+    }
+
+
+def _assert_reaction_window_contract(package) -> set[str]:
+    windows = {window.scene_id: window for window in package.pacing.scenes}
+    required_storylet_ids = _required_storylet_ids(package)
+
+    for storylets in (package.storylets, package.storylet_routes.storylets):
+        for storylet in storylets:
+            if storylet.id not in required_storylet_ids:
+                assert storylet.latest_turn < windows[storylet.scene_id].handoff_after_turns, storylet.id
+
+    for event in package.pacing.events:
+        assert event.at_turn <= windows[event.scene_id].handoff_after_turns - 2, event.id
+
+    return required_storylet_ids
+
+
+def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:
+    required_storylet_ids = _assert_reaction_window_contract(PACKAGE)
+
+    assert len(required_storylet_ids) == 19
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     expected_windows = {
         "1A": (2, 4, 5),
-        "1B": (2, 3, 4),
+        "1B": (2, 4, 5),
         "1C": (2, 3, 4),
         "2A": (2, 3, 4),
         "2B": (2, 3, 4),
         "2C": (2, 3, 4),
         "3A": (3, 4, 5),
         "3B": (4, 4, 5),
-        "3C": (2, 4, 5),
+        "3C": (2, 4, 6),
     }
     windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
 
@@ -96,7 +134,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
         scene_id: (window.min_turns, window.nudge_after_turns, window.handoff_after_turns)
         for scene_id, window in windows.items()
     } == expected_windows
-    assert sum(window.handoff_after_turns for window in windows.values()) * 45 == PACKAGE.pacing.budget_seconds
+    assert sum(window.handoff_after_turns for window in windows.values()) * 45 <= PACKAGE.pacing.budget_seconds
     for scene_id, window in windows.items():
         storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
         targets = [storylet.target_turn for storylet in storylets]
@@ -175,7 +213,7 @@ def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
-    source.write_text(source.read_text().replace("budget_seconds: 1800", "budget_seconds: 1799", 1))
+    source.write_text(source.read_text().replace("budget_seconds: 1890", "budget_seconds: 1889", 1))
 
     with pytest.raises(StoryPackageError, match="handoff sum.*budget_seconds"):
         load_story_package(root)

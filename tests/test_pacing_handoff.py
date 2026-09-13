@@ -81,6 +81,7 @@ def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repea
 
 def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() -> None:
     state = _state_1b()
+    state.turn_index = 3
     responses = iter(({"segments": [{"kind": "narration", "text": "A clue catches my attention."}]},))
     calls = 0
 

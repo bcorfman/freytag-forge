@@ -4,7 +4,7 @@ These tests drive the runtime with a scripted provider so CI proves the story
 package and engine support a complete 1A -> 3C playthrough without any model
 call. The clocked variant mirrors the hosted Playwright package-clock recipe;
 the unclocked variant mirrors default 60-second turns and stays within the
-authored 1800-second (30-minute) budget.
+authored 1890-second budget.
 """
 
 from __future__ import annotations

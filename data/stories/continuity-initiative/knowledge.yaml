@@ -131,6 +131,14 @@ facts:
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
     scrutiny at the McGehee home.
+- id: pursuit_closing_in
+  purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
+- id: terminal_security_escalating
+  purpose: Security around the terminal is visibly escalating.
+- id: identity_scrutiny_visible
+  purpose: Facility staff are visibly scrutinizing Kristin’s inspector identity.
+- id: facility_collapse_escalating
+  purpose: The facility is visibly beginning to collapse around the escape route.
 - id: facility_infiltration_needed
   purpose: Kristin and Brandon understand that direct rescue or observation is insufficient
     and that controlled deeper access to the facility is necessary.
