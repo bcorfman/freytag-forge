@@ -18,33 +18,6 @@ from storygame.story_package.models import Audience
 from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-KNOWN_REJECTION_CODES = frozenset(
-    {
-        "multiple_knowledge_selection",
-        "ineligible_selection",
-        "missing_package_source",
-        "invalid_grounding_reference",
-        "unknown_grounding_reference",
-        "invisible_grounding_reference",
-        "uncited_knowledge",
-        "narration_known_term_leak",
-        "protected_narration_leak",
-        "dialogue_speaker_missing",
-        "unknown_dialogue_speaker",
-        "dialogue_grounding_not_sayable",
-        "selection_source_mismatch",
-        "ungrounded_selection",
-        "missing_knowledge_content",
-        "protected_knowledge_mutation",
-        "canonical_fact_mutation",
-        "inactive_storylet_event",
-        "unavailable_storylet",
-        "invalid_storylet_realization",
-        "storylet_operation_mismatch",
-        "invalid_transition",
-        "unsatisfied_transition_triggers",
-    }
-)
 
 
 def _ids(items: object) -> set[str]:
@@ -242,7 +215,6 @@ def test_turn_rejection_has_a_stable_registered_code() -> None:
     second = reject()
     assert str(first) == "segment grounding is not committed or selected knowledge"
     assert first.code == "invalid_grounding_reference"
-    assert first.code in KNOWN_REJECTION_CODES
     assert second.code == first.code
 
 

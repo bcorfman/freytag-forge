@@ -10,36 +10,10 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
+from tests._rejection_codes import KNOWN_REJECTION_CODES
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 ARTIFACT = Path("artifacts/phase3-knowledge-evidence.json")
-KNOWN_REJECTION_CODES = frozenset(
-    {
-        "multiple_knowledge_selection",
-        "ineligible_selection",
-        "missing_package_source",
-        "invalid_grounding_reference",
-        "unknown_grounding_reference",
-        "invisible_grounding_reference",
-        "uncited_knowledge",
-        "narration_known_term_leak",
-        "protected_narration_leak",
-        "dialogue_speaker_missing",
-        "unknown_dialogue_speaker",
-        "dialogue_grounding_not_sayable",
-        "selection_source_mismatch",
-        "ungrounded_selection",
-        "missing_knowledge_content",
-        "protected_knowledge_mutation",
-        "canonical_fact_mutation",
-        "inactive_storylet_event",
-        "unavailable_storylet",
-        "invalid_storylet_realization",
-        "storylet_operation_mismatch",
-        "invalid_transition",
-        "unsatisfied_transition_triggers",
-    }
-)
 
 
 class _EvidenceProvider:
