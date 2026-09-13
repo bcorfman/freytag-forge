@@ -634,7 +634,8 @@ transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-
     Brandon disconnected the relay from JANUS and held it open through the electrical surge while Kristin and Michelle
-    began the broadcast. The evidence was moving beyond Charles's control as the facility started to fail.
+    began the broadcast. The evidence was moving beyond Charles's control as remote sections began exploding one by one,
+    with blasts moving section by section toward the center.
 ---
 
 **Setting:** Security corridors, command center, and Rebecca Jenkins’s executive office
@@ -673,9 +674,11 @@ Rebecca attempts to bargain by offering the locations of every detention site.
 
 ### Scene 3B.3 — Charles’s Betrayal
 
-**Details:** Charles appears; locked office; national network; Los Angeles facility; anti-government terrorists; remote command site
+**Details:** Charles appears remotely from a remote command site; destruction sequence; remote outer-section explosions; inward-moving blasts; locked office; national network and Los Angeles facility; anti-government terrorists
 
 Charles appears remotely and locks down Rebecca’s office. He reveals that he has already transferred control of the national network away from her.
+
+He starts the facility's destruction sequence from a distance. Remote outer sections begin exploding one after another, moving inward toward the central levels where Kristin, Michelle, Brandon, and Rebecca are.
 
 He intends to destroy the Los Angeles facility, killing the captives, Rebecca, and the infiltrators. He will blame the destruction on anti-government terrorists and proceed with his broadcast from another command site.
 
@@ -705,7 +708,7 @@ item_placements:
   portable_archive:
     placement: with Rebecca in her hands
     while_fact_false: portable_archive_secured
-entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, the facility was beginning to fail; inside, the evidence was ready to leave for good.\n\n"
+entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, the facility was beginning to fail as blasts moved section by section toward the center; inside, the evidence was ready to leave for good.\n\n"
 transition_ids: []
 ---
 
@@ -759,9 +762,9 @@ Charles escapes from his remote command site before authorities can locate him, 
 
 ### Scene 3C.3 — The Collapse
 
-**Details:** destruction sequence; facility infrastructure; redirected power; maintenance tunnels; emergency supports; surface gates
+**Details:** destruction sequence; remote outer-section explosions and inward-moving blasts; central levels; facility infrastructure; redirected power; emergency supports and maintenance tunnels; surface gates
 
-Charles activates the facility’s destruction sequence. Kristin uses her knowledge of facility infrastructure and operations to redirect power and prevent a complete underground collapse, but she cannot save every section.
+The destruction sequence is already running, and blasts from the outer sections move toward the central levels. Kristin uses her knowledge of facility infrastructure and operations to redirect power and hold emergency supports ahead of the blasts, but she cannot save every section.
 
 Michelle leads the prisoners toward maintenance tunnels while Kristin keeps the emergency supports functioning.
 

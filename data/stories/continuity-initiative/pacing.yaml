@@ -75,7 +75,11 @@ events:
   - fact_id: facility_destruction_threat
     equals: true
   realizations:
-  - text: The facility's destruction threat is moving closer.
+  - when:
+    - fact_id: charles_abandoned_rebecca
+      equals: true
+    text: Charles's destruction sequence drives blasts section by section toward them. They have little time left.
+  - text: A distant blast shakes the facility. Another blast hits closer as an outer section goes dark.
 scenes:
 - scene_id: 1A
   min_turns: 2

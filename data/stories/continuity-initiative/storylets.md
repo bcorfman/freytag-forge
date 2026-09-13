@@ -1206,7 +1206,8 @@ Each entry below is authoring data, not a player action menu.
 - Rebecca claims surrender is the only way to save the failing facility.
 - Michelle confronts her with approvals for experiments.
 - Rebecca offers all detention-site locations.
-- Charles remotely strips Rebecca of control and locks down the office.
+- Charles remotely strips Rebecca of control, locks down the office, and starts the destruction sequence.
+- Outer sections begin exploding one by one toward the center.
 
 **Effects**
 - May set `rebecca_experiment_approval_confronted`.
@@ -1392,7 +1393,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3C`
 
 **Available when**
-- Charles has activated facility destruction.
+- The facility’s destruction sequence is already running, with blasts moving from outer sections toward the central levels.
 - The prisoners are moving toward escape routes.
 - Kristin can still affect structural/power systems.
 

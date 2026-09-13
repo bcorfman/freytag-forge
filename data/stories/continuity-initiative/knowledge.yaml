@@ -186,7 +186,7 @@ facts:
 - id: evidence_ready_to_transmit
   purpose: The protagonists have enough authenticated evidence to attempt the combined exposure-and-rescue mission.
 - id: facility_destruction_threat
-  purpose: Charles has activated the threat to destroy the Los Angeles facility, making escape urgent.
+  purpose: Charles's destruction sequence explodes outer sections one by one toward the center, making escape urgent.
 - id: michelle_selected_for_resistance_influence
   purpose: Kristin knows JANUS selected Michelle for her predicted ability to unite resistance.
 - id: national_facility_locations_broadcast
