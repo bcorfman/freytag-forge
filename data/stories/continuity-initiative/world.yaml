@@ -74,6 +74,10 @@ items:
   name: Transit access card
 - id: override_codes
   name: Emergency override codes
+- id: portable_archive
+  name: Portable data case
+  aliases:
+  - data case
 facts:
 - scene_1a_entry_known
 - scene_1b_entry_known

@@ -66,7 +66,7 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
 
 
 def test_real_package_has_nineteen_required_storylets() -> None:
-    assert len(required_storylet_ids(PACKAGE)) == 19
+    assert len(required_storylet_ids(PACKAGE)) == 24
 
 
 def test_resolution_scene_does_not_stage_escalation() -> None:

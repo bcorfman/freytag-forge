@@ -700,7 +700,11 @@ location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, brandon, rebecca]
-item_ids: []
+item_ids: [portable_archive]
+item_placements:
+  portable_archive:
+    placement: with Rebecca in her hands
+    while_fact_false: portable_archive_secured
 entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, the facility was beginning to fail; inside, the evidence was ready to leave for good.\n\n"
 transition_ids: []
 ---
@@ -719,7 +723,9 @@ transition_ids: []
 
 ### Scene 3C.1 — The National Transmission
 
-**Details:** captive video; JANUS selection records; detention network locations; planning sessions; behavioral experiments; Brandon’s confession
+**Details:** captive video; JANUS selection records; detention network locations; planning sessions; behavioral experiments; Brandon’s confession; portable data case
+
+A portable data case holding the archive is with Rebecca in the executive office.
 
 Michelle broadcasts:
 

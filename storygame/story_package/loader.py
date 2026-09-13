@@ -812,6 +812,42 @@ def _validate_transition_trigger_sources(package: StoryPackage) -> None:
                 )
 
 
+def _validate_resolution_entry_guarantees(package: StoryPackage) -> None:
+    """Ensure resolution activations can be true when their scene is reached."""
+
+    incoming_sources: dict[str, set[str]] = {}
+    for transition in package.pacing.transitions:
+        incoming_sources.setdefault(transition.target_scene_id, set()).add(transition.source_scene_id)
+
+    guarantees_by_source: dict[str, set[str]] = {}
+    for source_scene_id in {source for sources in incoming_sources.values() for source in sources}:
+        guarantees: set[str] = set()
+        for event in package.storylet_routes.bridge_events:
+            if event.scene_id != source_scene_id:
+                continue
+            guarantees.update(event.activation.all_facts_true)
+            guarantees.update(_asserted_true_route_operations(event.operations))
+        guarantees_by_source[source_scene_id] = guarantees
+
+    for scene_id in {event.scene_id for event in package.storylet_routes.resolution_events}:
+        source_ids = incoming_sources.get(scene_id, set())
+        if source_ids:
+            guaranteed = set.intersection(*(guarantees_by_source[source_id] for source_id in source_ids))
+        else:
+            guaranteed = set()
+        for event in package.storylet_routes.resolution_events:
+            if event.scene_id != scene_id:
+                continue
+            required = set(event.activation.all_facts_true) | set(event.activation.any_of)
+            missing = required - guaranteed
+            if missing:
+                fact_id = next(iter(sorted(missing)))
+                raise StoryPackageError(
+                    f"scene {scene_id} resolution event '{event.id}' needs '{fact_id}', which entry does not guarantee"
+                )
+            guaranteed.update(_asserted_true_route_operations(event.operations))
+
+
 def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ...]:
     """Read the authored principal characters plot.md already defines.
 
@@ -862,8 +898,23 @@ def load_story_package(root: Path) -> StoryPackage:
             raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
         deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
 
-        def event_source(item: dict[str, Any]) -> dict[str, Any]:
+        route_storylet_ids = {item["id"] for item in routes_raw["storylets"]}
+
+        def event_source(item: dict[str, Any], *, resolution: bool) -> dict[str, Any]:
             activation = item.get("activation", {})
+            realization_storylets = item.get("realization_storylets", ())
+            if realization_storylets is None:
+                realization_storylets = ()
+            unknown_storylets = set(realization_storylets) - route_storylet_ids
+            if unknown_storylets:
+                event_kind = "resolution" if resolution else "bridge"
+                raise StoryPackageError(
+                    f"canonical {event_kind} event '{item['id']}' references unknown realization storylet(s): "
+                    f"{sorted(unknown_storylets)}"
+                )
+            fallback_text = item.get("fallback_text")
+            if resolution and (not isinstance(fallback_text, str) or not fallback_text.strip()):
+                raise StoryPackageError(f"resolution event '{item['id']}' must have non-empty fallback_text")
             return {
                 "id": item["id"],
                 "scene_id": item["scene_id"],
@@ -873,6 +924,8 @@ def load_story_package(root: Path) -> StoryPackage:
                     "at_least": activation.get("at_least", 0),
                 },
                 "operations": item["produces"],
+                "realization_storylets": realization_storylets,
+                "fallback_text": fallback_text,
             }
 
         routes = StoryletRoutesSource.model_validate(
@@ -894,9 +947,11 @@ def load_story_package(root: Path) -> StoryPackage:
                     }
                     for item in routes_raw["storylets"]
                 ),
-                "bridge_events": tuple(event_source(item) for item in routes_raw.get("canonical_bridge_events", ())),
+                "bridge_events": tuple(
+                    event_source(item, resolution=False) for item in routes_raw.get("canonical_bridge_events", ())
+                ),
                 "resolution_events": tuple(
-                    event_source(item) for item in routes_raw.get("canonical_resolution_events", ())
+                    event_source(item, resolution=True) for item in routes_raw.get("canonical_resolution_events", ())
                 ),
             }
         )
@@ -922,4 +977,5 @@ def load_story_package(root: Path) -> StoryPackage:
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
     _validate_transition_trigger_sources(package)
+    _validate_resolution_entry_guarantees(package)
     return package

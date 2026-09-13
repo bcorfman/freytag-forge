@@ -121,8 +121,11 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        if entry_segments:
-            return proposal.model_copy(update={"segments": (*proposal.segments, *entry_segments)})
+        resolution_segments = self._apply_resolution_deadline_backstop()
+        if entry_segments or resolution_segments:
+            return proposal.model_copy(
+                update={"segments": (*proposal.segments, *(entry_segments or ()), *resolution_segments)}
+            )
         return proposal
 
     def _record_turn(self, proposal: ResolvedTurnProposal) -> None:

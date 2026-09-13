@@ -95,6 +95,25 @@ only through an eligible storylet realization with those exact operations.
 Pacing events remain authored in `pacing.yaml`; their job is observable pressure,
 not unearned knowledge or arbitrary scene transitions.
 
+Canonical route events may list `realization_storylets`, a tuple of storylet IDs
+that must have been shown before the event can commit. This gating applies to
+resolution events; bridge events still commit as soon as their activation holds.
+The loader rejects an unknown storylet ID. A storylet named by a bridge or
+resolution event is required, so it stays available past its optional expiry.
+
+Every resolution event must also have a short, player-facing `fallback_text`.
+Keep `fallback_realization` as an author note; it is not player prose. When a
+resolution scene reaches its `handoff_after_turns` Deadline on an accepted turn,
+the runtime commits each remaining activation-ready resolution event in
+declaration order, shows its `fallback_text`, and marks its realization
+storylets as shown. These fallback segments are returned with that turn.
+
+Each fact in a resolution activation must be guaranteed at scene entry or by an
+earlier resolution event in the same scene. Entry guarantees come from the
+incoming scene's bridge event: use its `all_facts_true` facts or facts asserted
+by its operations. The loader rejects a resolution chain that has no such
+guarantee, naming the scene, event, and missing fact.
+
 Load a package with `storygame.story_package.load_story_package(path)`. It is a
 validated immutable authoring input; it does not interpret player text or add a
 story-specific runtime branch.

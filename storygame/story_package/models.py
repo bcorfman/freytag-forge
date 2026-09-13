@@ -373,6 +373,8 @@ class CanonicalRouteEvent(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     activation: ActivationRule
     operations: tuple[RouteOperation, ...] = Field(min_length=1)
+    realization_storylets: tuple[str, ...] = ()
+    fallback_text: str | None = None
 
 
 class StoryletRoutesSource(_Model):

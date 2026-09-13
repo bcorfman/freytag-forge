@@ -50,7 +50,10 @@ CLOCKED_JOURNEY = [
     (None, 1620, "3B"),
     ("k_sl_3b_c_r1", 1680, "3C"),
     ("k_sl_3c_a_r1", 1740, "3C"),
-    (None, 1800, "3C"),
+    ("k_sl_3c_b_r1", 1780, "3C"),
+    ("k_sl_3c_c_r1", 1820, "3C"),
+    ("k_sl_3c_d_r1", 1860, "3C"),
+    ("k_sl_3c_e_r1", 1890, "3C"),
 ]
 
 # Alternate-realization coverage at the default 60-second turn cadence.
@@ -84,6 +87,10 @@ UNCLOCKED_JOURNEY = [
     (None, "3B"),
     ("k_sl_3b_c_r2", "3C"),
     ("k_sl_3c_a_r2", "3C"),
+    ("k_sl_3c_b_r2", "3C"),
+    ("k_sl_3c_c_r2", "3C"),
+    ("k_sl_3c_d_r2", "3C"),
+    ("k_sl_3c_e_r2", "3C"),
 ]
 
 

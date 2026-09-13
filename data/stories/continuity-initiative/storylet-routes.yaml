@@ -2240,12 +2240,12 @@ canonical_bridge_events:
   activation:
     all_facts_true:
     - relay_open
+    - brandon_confession_available
+    - detention_locations_secured
     any_of:
     - human_security_control
     - charles_abandoned_rebecca
-    - detention_locations_secured
-    - brandon_confession_available
-    at_least: 3
+    at_least: 1
   produces:
   - op: assert
     fact_id: broadcast_started
@@ -2270,6 +2270,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-A
+  fallback_text: Michelle's broadcast carries the evidence, detention locations, and Brandon's confession across the country. Charles can no longer contain the truth through one channel.
   fallback_realization: The running broadcast publishes independently verifiable evidence and exact facility information
     until Charles can no longer contain it.
 - id: resolution_archive_and_rebecca
@@ -2289,6 +2290,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-B
+  fallback_text: Kristin stops Rebecca from escaping with the portable JANUS archive. Michelle sends copies to independent networks, and the prisoners capture Rebecca.
   fallback_realization: Validated free-text confrontation preserves and distributes the archive while Rebecca is
     captured; destroying the archive is not the canonical resolution.
 - id: resolution_escape
@@ -2305,6 +2307,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-C
+  fallback_text: Michelle leads the captives through maintenance tunnels. Kristin keeps the emergency supports working. Brandon opens the surface gates, and the Los Angeles facility is lost.
   fallback_realization: Kristin’s Army infrastructure and operations background and Michelle’s evacuation leadership get surviving captives to the surface
     while the Los Angeles facility is lost.
 - id: resolution_network_consequences
@@ -2331,6 +2334,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-D
+  fallback_text: Detention sites surrender or release prisoners as the national network breaks apart. Communities begin rescue efforts. Michelle publishes the archive, Kristin joins the rescue work, and Charles escapes.
   fallback_realization: Canonical resolution reports establish network fragmentation, community rescues, Michelle’s
     publication effort, Kristin’s rescue work, and Charles’s escape.
 - id: resolution_phase_two
@@ -2348,6 +2352,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-E
+  fallback_text: A recovered JANUS file labels the operation Phase One and reveals that Phase Two was meant to provoke conflict among survivors.
   fallback_realization: The partially recovered JANUS file canonically reveals the Phase One label and the authored
     Phase Two conflict objective.
 - id: resolution_complete
@@ -2371,6 +2376,7 @@ canonical_resolution_events:
   - SL-3C-C
   - SL-3C-D
   - SL-3C-E
+  fallback_text: The truth is public, the captives are out, and the network is breaking apart. Rebecca is captured, but Charles remains free. The Phase Two plan is known. Kristin and Michelle turn toward the work ahead.
   fallback_realization: The sole authored ending at 3C is complete once exposure, escape, antagonist outcomes, national
     consequences, and the Phase Two reveal have all landed.
 audit_notes:
