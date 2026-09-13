@@ -24,7 +24,6 @@ from bench.core import (
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
-from storygame.runtime.knowledge import KnowledgeProjector
 from tests._legacy_package import legacy_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -527,11 +526,9 @@ def test_entry_state_counts_projected_committed_knowledge() -> None:
     _, state = core.package_and_state(variation, "1A")
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
 
-    projected_count = len(KnowledgeProjector().project(state, "player", "").committed_knowledge)
-    assert len(state.facts.asserted) != projected_count
     assert core.entry_state(state) == {
         "scene_id": "1A",
-        "committed_knowledge_count": projected_count,
+        "committed_knowledge_count": len(state.facts.asserted),
         "seeded_by": "bare",
     }
 

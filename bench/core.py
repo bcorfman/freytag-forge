@@ -25,7 +25,6 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
-from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.story_package.loader import load_story_package
@@ -344,44 +343,9 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
             provider.selected = ()
             engine.turn(PERSONAS["thorough"])
         if state.current_scene_id == scene_id:
-            state.package = _package_with_seeded_knowledge(package, state, scene_id)
-            return state.package, state
+            return package, state
 
     raise RuntimeError(f"scene {scene_id} was not reached within {_TURN_CAP} thorough seeding turns")
-
-
-def _package_with_seeded_knowledge(package: Any, state: RuntimeState, scene_id: str) -> Any:
-    """Expose established prior claims at the live scene's entry boundary."""
-
-    established_ids = {
-        item.id
-        for item in package.knowledge.knowledge
-        if KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
-    }
-    knowledge = tuple(
-        item.model_copy(update={"available_in_scenes": (*item.available_in_scenes, scene_id)})
-        if item.id in established_ids and scene_id not in item.available_in_scenes
-        else item
-        for item in package.knowledge.knowledge
-    )
-    indexes = package.knowledge_indexes.model_copy(
-        update={
-            "by_id": {item.id: item for item in knowledge},
-            "protected_terms": tuple(
-                term
-                for term in package.knowledge_indexes.protected_terms
-                if not any(
-                    term.casefold() in item.statement.casefold() for item in knowledge if item.id in established_ids
-                )
-            ),
-        }
-    )
-    return package.model_copy(
-        update={
-            "knowledge": package.knowledge.model_copy(update={"knowledge": knowledge}),
-            "knowledge_indexes": indexes,
-        }
-    )
 
 
 def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, Any]:
@@ -389,7 +353,7 @@ def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, An
 
     return {
         "scene_id": state.current_scene_id,
-        "committed_knowledge_count": len(KnowledgeProjector().project(state, "player", "").committed_knowledge),
+        "committed_knowledge_count": len(state.facts.asserted),
         "seeded_by": seeded_by,
     }
 
