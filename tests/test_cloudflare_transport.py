@@ -1856,12 +1856,16 @@ def test_scene_1a_migrated_reveal_composes_through_engine(
         lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": "The room settles."}]}),
     )
 
-    proposal = provider(player_input)
+    proposal = RuntimeEngine(state, provider).turn(player_input)
+    candidate = PACKAGE.knowledge_indexes.by_id[candidate_id]
 
-    assert proposal["segments"][-1]["text"] == PACKAGE.knowledge_indexes.by_id[candidate_id].delivery_text
-    assert proposal["segments"][-1]["grounding_ids"] == [candidate_id]
-    assert proposal["selected_knowledge_ids"] == [candidate_id]
+    assert proposal.segments[-1].text == candidate.delivery_text
+    assert proposal.segments[-1].grounding_ids[0] == candidate_id
+    assert proposal.selected_knowledge_ids == (candidate_id,)
     assert provider.model_selected_knowledge_ids == ()
+    for effect in candidate.establishes:
+        value = str(effect.value).lower()
+        assert state.facts.has(effect.fact_id, "story", value=value)
 
 
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:

@@ -873,12 +873,13 @@ class CloudflareTurnProvider:
             text=handoff.delivery_text,
             grounding_ids=(handoff.candidate.id,),
         )
-        return proposal.model_copy(
+        composed = proposal.model_copy(
             update={
                 "segments": (*model_segments, delivery),
                 "selected_knowledge_ids": (handoff.candidate.id,),
             }
         )
+        return self._auto_attribute_committed_knowledge(composed)
 
     def _character_lines(self) -> list[str]:
         """Introduce only the characters this scene actually involves.
