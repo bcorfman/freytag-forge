@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
-from storygame.runtime.validation import PROPOSAL_REJECTION_CODES
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
+from tests._rejection_codes import KNOWN_REJECTION_CODES
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 ARTIFACT = Path("artifacts/phase3-knowledge-evidence.json")
@@ -80,7 +80,7 @@ def _run_case(tmp_path: Path, case: str, player_input: str, provider: _EvidenceP
         assert response.status_code in (409, 422), f"{case} returned an unexpected status"
         if response.status_code == 409:
             assert rejection_code is not None
-            assert rejection_code in PROPOSAL_REJECTION_CODES
+            assert rejection_code in KNOWN_REJECTION_CODES
         else:
             assert rejection_code is None
             rejection_code = "contract_schema_violation"

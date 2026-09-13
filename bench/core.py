@@ -39,7 +39,6 @@ CRITERIA = (
     "exit_motivated",
     "rewards_investigation",
 )
-REFERENCE_SD = 2.24
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
@@ -632,7 +631,6 @@ def _turn_with_rate_limit_retry(engine: RuntimeEngine, player_input: str) -> Any
             for field in RuntimeState.model_fields:
                 setattr(engine.state, field, getattr(before, field))
             engine.last_projection = None
-            engine.last_post_selection_projection = None
             time.sleep(delay)
     raise AssertionError("unreachable")
 

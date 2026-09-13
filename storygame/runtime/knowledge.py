@@ -51,17 +51,6 @@ class TurnKnowledgeContext(_KnowledgeModel):
     def payload_size(self) -> int:
         return len(self.model_dump_json(exclude={"sayable_knowledge"}).encode())
 
-    def observability(self) -> dict[str, object]:
-        """Safe metrics: IDs and counts only, never prose or player input."""
-
-        return {
-            "scene_id": self.scene_id,
-            "audience_id": self.audience_id,
-            "committed_ids": tuple(item.id for item in self.committed_knowledge),
-            "candidate_ids": tuple(item.id for item in self.candidates),
-            "payload_bytes": self.payload_size(),
-        }
-
 
 def _entity_surface_forms(entity) -> tuple[str, ...]:
     """Every written form by which a player might name one entity.

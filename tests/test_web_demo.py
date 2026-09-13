@@ -451,7 +451,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
     invalid_restored = RuntimeStateSqliteStore(store_path).load(invalid_session_id, PACKAGE)
     assert accepted.status_code == 200
     assert accepted.json()["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
-    assert restored.facts.has("michelle_warning_known", "story", value="true")
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") in restored.facts.asserted
     assert rejected.status_code == 409
     assert rejected.headers["X-Freytag-Rejection-Code"] == "ineligible_selection"
     assert invalid_restored.snapshot() == before_rejection

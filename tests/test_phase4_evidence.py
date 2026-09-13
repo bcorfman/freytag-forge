@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
-from storygame.runtime.validation import PROPOSAL_REJECTION_CODES
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
+from tests._rejection_codes import KNOWN_REJECTION_CODES
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 ARTIFACT = Path("artifacts/phase4-knowledge-evidence.json")
@@ -76,7 +76,7 @@ def _run_case(tmp_path: Path, name: str, player_input: str, provider: _EvidenceP
     rejection_code = response.headers.get("X-Freytag-Rejection-Code")
     assert response.status_code in (409, 422)
     if response.status_code == 409:
-        assert rejection_code in PROPOSAL_REJECTION_CODES
+        assert rejection_code in KNOWN_REJECTION_CODES
     else:
         rejection_code = "contract_schema_violation"
     return {

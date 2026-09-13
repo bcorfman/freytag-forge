@@ -96,17 +96,17 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     hint = engine.turn("Search the desk.")
     assert state.staged_hint_fact_ids == ("transport_route_identified", "brandon_identified")
     assert state.staged_handoff_fact_ids == ()
-    assert not state.facts.has("transport_route_identified", "story", value="true")
+    assert Fact(predicate="transport_route_identified", subject="story", value="true") not in state.facts.asserted
     assert hint.segments[0].text == "A clue catches my attention."
     assert state.last_turn_delivery.hint_staged is True
     assert state.last_turn_delivery.handoff_staged is False
 
     handoff = engine.turn("Search the park.")
     assert state.current_scene_id == "1C"
-    assert not state.facts.has("trust_brandon", "story", value="true")
-    assert state.facts.has("transport_route_identified", "story", value="true")
-    assert state.facts.has("brandon_identified", "story", value="true")
-    assert state.facts.has("transport_route_departure_ready", "story", value="true")
+    assert Fact(predicate="trust_brandon", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="transport_route_identified", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
     assert state.staged_hint_fact_ids == ()
     assert state.staged_handoff_fact_ids == ()
     assert state.last_turn_delivery.hint_staged is True
@@ -129,8 +129,8 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
     handoff = engine.turn("Watch the guard rotation.")
 
     assert state.current_scene_id == "2B"
-    assert state.facts.has("false_identities_ready", "story", value="true")
-    assert state.facts.has("rebecca_observing_infiltrators", "story", value="true")
+    assert Fact(predicate="false_identities_ready", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="rebecca_observing_infiltrators", subject="story", value="true") in state.facts.asserted
     assert "bridge_2a_restricted_access" in state.fired_event_ids
     assert state.last_turn_delivery.handoff_staged is True
     assert any("false credentials" in segment.text.casefold() for segment in handoff.segments)

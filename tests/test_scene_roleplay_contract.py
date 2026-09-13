@@ -95,9 +95,9 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
     engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
 
-    assert state.facts.has("patrol_return_pressure", "story", value="true")
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
     assert "pressure_1a" in state.fired_event_ids
-    assert state.facts.has("story_elapsed_seconds", "story", value="120")
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value="120") in state.facts.asserted
 
 
 def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() -> None:

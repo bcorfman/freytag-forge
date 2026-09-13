@@ -20,15 +20,6 @@ from typing import Any
 
 import yaml
 
-CHECKS = (
-    "unattested_detail",
-    "ambiguous_owned_item",
-    "frame_beat_conflict",
-    "absent_speaker",
-    "beat_overprojection",
-    "prompt_hygiene",
-    "beats_without_turns",
-)
 SCENES = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
 _WORD = re.compile(r"[A-Za-z][A-Za-z'-]{2,}")
 _STOPWORDS = set(  # noqa: SIM905

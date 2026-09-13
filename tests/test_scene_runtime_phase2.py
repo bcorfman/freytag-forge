@@ -76,25 +76,22 @@ def test_fact_store_helpers_round_trip() -> None:
     entry_fact = Fact(predicate="scene_1a_entry_known", subject="story", value="true")
     state.facts.assert_fact(fact)
 
-    assert state.facts.has("located", "kristin", "mcgehee_home")
+    assert Fact(predicate="located", subject="kristin", object="mcgehee_home") in state.facts.asserted
     assert state.facts.matching("located", "kristin") == (fact,)
-    assert state.facts.as_json() == [fact.model_dump(mode="json"), entry_fact.model_dump(mode="json")]
-    restored = state.facts.from_json(state.facts.as_json())
-    restored.retract_fact(fact)
-    assert not restored.has("located", "kristin", "mcgehee_home")
-    with pytest.raises(ValueError, match="facts must be a list"):
-        state.facts.from_json({})
+    assert state.facts.asserted == {fact, entry_fact}
+    state.facts.retract_fact(fact)
+    assert Fact(predicate="located", subject="kristin", object="mcgehee_home") not in state.facts.asserted
 
 
 def test_scene_entry_fact_is_committed_at_bootstrap() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
 
-    assert state.facts.has("scene_1a_entry_known", "story", value="true")
+    assert Fact(predicate="scene_1a_entry_known", subject="story", value="true") in state.facts.asserted
 
 
 def test_invalid_transition_or_event_is_atomic() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    original = state.facts.as_json()
+    original = set(state.facts.asserted)
     proposal = ResolvedTurnProposal(
         segments=(NarrationSegment(kind="narration", text="This cannot commit."),),
         operations=(FactOperation(operation="assert", fact=Fact(predicate="noticed", subject="memory_card")),),
@@ -104,7 +101,7 @@ def test_invalid_transition_or_event_is_atomic() -> None:
     with pytest.raises(RuntimeStateError):
         state.apply_proposal(proposal)
 
-    assert state.facts.as_json() == original
+    assert state.facts.asserted == original
     assert state.current_scene_id == "1A"
 
 
@@ -129,7 +126,7 @@ def test_warning_persists_and_return_restores_exact_snapshot(tmp_path) -> None:
     restored = store.load("session", PACKAGE)
 
     assert restored.pending_break == warning
-    assert restored.facts.as_json() == before.facts.as_json()
+    assert restored.facts.asserted == before.facts.asserted
     with pytest.raises(RuntimeStateError):
         restored.apply_proposal(ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="Ignore it."),)))
     restored.resolve_break("return_to_scene")
@@ -180,8 +177,8 @@ def test_successful_proposal_commits_events_and_transition() -> None:
 
     assert state.current_scene_id == "1B"
     assert state.phase == "rising_action"
-    assert state.facts.has("noticed", "michelle_phone")
-    assert state.facts.has("seen", "memory_card")
+    assert Fact(predicate="noticed", subject="michelle_phone") in state.facts.asserted
+    assert Fact(predicate="seen", subject="memory_card") in state.facts.asserted
     assert state.fired_event_ids == {"SL-1A-A"}
 
 
