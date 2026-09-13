@@ -389,19 +389,6 @@ storylets:
     - janus_selection_system
     - brandon_history
     - phase_two
-  - id: SL-1A-A-R2
-    dramatic_intent: A hurried or partial inspection still makes one concrete contradiction impossible to dismiss,
-      raising suspicion without identifying an abductor.
-    operations:
-    - op: assert
-      fact_id: michelle_abduction_suspicion
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_selection_system
-    - brandon_history
-    - phase_two
   completion_or_abort:
     complete_when:
     - fact_id: michelle_abduction_suspicion
@@ -567,23 +554,6 @@ storylets:
       value: true
     - op: assert
       fact_id: michelle_abduction_suspicion
-      value: true
-    - op: assert
-      fact_id: michelle_lead_actionable
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_1a_1b
-    protected_knowledge_boundaries:
-    - janus_selection_system
-    - brandon_history
-    - phase_two
-  - id: SL-1A-D-R2
-    dramatic_intent: Kristin reads the surviving fragments on the memory card she is already carrying; they still name
-      the exchange point Michelle used, which is enough to move on.
-    operations:
-    - op: assert
-      fact_id: continuity_initiative_known
       value: true
     - op: assert
       fact_id: michelle_lead_actionable

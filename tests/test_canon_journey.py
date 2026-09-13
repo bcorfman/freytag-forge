@@ -15,6 +15,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -89,7 +90,8 @@ UNCLOCKED_JOURNEY = [
 class _ScriptedProvider:
     """Return one pre-planned selection per turn without parsing prose."""
 
-    def __init__(self) -> None:
+    def __init__(self, package=PACKAGE) -> None:
+        self.package = package
         self.selected: list[str] = []
 
     def __call__(self, _player_input: str) -> dict[str, object]:
@@ -97,7 +99,7 @@ class _ScriptedProvider:
         # runtime requires of a live provider; an ungrounded selection is rejected.
         text = "A concrete authored consequence lands."
         if self.selected:
-            text = PACKAGE.knowledge_indexes.by_id[self.selected[0]].statement
+            text = self.package.knowledge_indexes.by_id[self.selected[0]].statement
         return {
             "segments": [
                 {
@@ -116,8 +118,9 @@ def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | 
 
 
 def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = _ScriptedProvider()
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
+    provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
 
     elapsed = 0
@@ -138,8 +141,9 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
 
 
 def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = _ScriptedProvider()
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
+    provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
 
     for turn_index, (selection, expected_scene) in enumerate(UNCLOCKED_JOURNEY, start=1):
@@ -155,8 +159,9 @@ def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
 def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
     """A committed transition trigger must wait for the source scene's minimum turns."""
 
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = _ScriptedProvider()
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
+    provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
 
     _drive(engine, provider, "k_sl_1a_a_r1", clock_seconds=120)

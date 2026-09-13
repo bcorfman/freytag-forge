@@ -25,6 +25,7 @@ from bench.core import (
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from tests._legacy_package import legacy_package
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
@@ -45,6 +46,15 @@ def _seed_bench_custody(monkeypatch) -> None:
         return package, state
 
     monkeypatch.setattr(core, "package_and_state", package_and_state_with_custody)
+
+
+def _use_legacy_candidates(monkeypatch, knowledge_ids: set[str]) -> None:
+    original_load_story_package = core.load_story_package
+
+    def load_legacy_package(path):
+        return legacy_package(original_load_story_package(path), knowledge_ids)
+
+    monkeypatch.setattr(core, "load_story_package", load_legacy_package)
 
 
 def test_score_matches_archived_acceptance_fixture() -> None:
@@ -749,6 +759,7 @@ def test_a_named_beat_reaches_the_prompt(monkeypatch) -> None:
 
     from bench.core import default_variation, prompt_for
 
+    _use_legacy_candidates(monkeypatch, {"k_sl_1a_d_r1"})
     _seed_bench_custody(monkeypatch)
     variation = default_variation()
     entered = prompt_for(variation, "1A", "Search the drawers.")
@@ -780,7 +791,7 @@ def test_an_unknown_beat_names_the_beats_the_scene_actually_has() -> None:
         resolve_beat(package, "1A", "9Z")
 
 
-def test_a_beat_carries_the_progress_of_the_beats_before_it() -> None:
+def test_a_beat_carries_the_progress_of_the_beats_before_it(monkeypatch) -> None:
     """Beat N must show beats 1..N-1 as knowledge already held, not reveals still owed.
 
     Offering an earlier beat's reveal again tells the narrator the player has yet
@@ -789,6 +800,7 @@ def test_a_beat_carries_the_progress_of_the_beats_before_it() -> None:
 
     from bench.core import default_variation, prompt_for
 
+    _use_legacy_candidates(monkeypatch, {"k_sl_1a_c_r2"})
     prompts = prompt_for(default_variation(), "1A", "Inspect the gate after the patrol leaves.", "1A.4")
     scene = prompts["user"].split("SCENE:")[1].split("CONSTRAINTS:")[0]
     constraints = prompts["user"].split("CONSTRAINTS:")[1]
@@ -829,6 +841,7 @@ def test_one_storylet_can_be_read_in_isolation(monkeypatch) -> None:
 
     from bench.core import default_variation, prompt_for
 
+    _use_legacy_candidates(monkeypatch, {"k_sl_1a_d_r1"})
     _seed_bench_custody(monkeypatch)
     narrow = prompt_for(default_variation(), "1A", "Feel under the drawer.", None, "SL-1A-D")
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")

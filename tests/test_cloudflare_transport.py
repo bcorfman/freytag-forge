@@ -25,6 +25,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
+from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 AUTHORED_DELIVERY = (
@@ -32,32 +33,8 @@ AUTHORED_DELIVERY = (
 )
 
 
-def _legacy_recording_package():
-    legacy_ids = {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
-    catalog = PACKAGE.knowledge.model_copy(
-        update={
-            "knowledge": tuple(
-                item.model_copy(update={"delivery_text": None}) if item.id in legacy_ids else item
-                for item in PACKAGE.knowledge.knowledge
-            ),
-        }
-    )
-    indexes = PACKAGE.knowledge_indexes.model_copy(
-        update={
-            "by_id": {
-                **PACKAGE.knowledge_indexes.by_id,
-                **{
-                    item_id: PACKAGE.knowledge_indexes.by_id[item_id].model_copy(update={"delivery_text": None})
-                    for item_id in legacy_ids
-                },
-            }
-        }
-    )
-    return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
-
-
-def _staged_scene_1a_state() -> RuntimeState:
-    state = RuntimeState.bootstrap(PACKAGE)
+def _staged_scene_1a_state(package=PACKAGE) -> RuntimeState:
+    state = RuntimeState.bootstrap(package)
     engine = RuntimeEngine(state, lambda *_args, **_kwargs: {"segments": []})
     engine._activate_pacing()
     for _ in range(2):
@@ -117,6 +94,7 @@ class _Response:
 
 
 def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None:
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     captured: dict[str, object] = {}
     attempts: list[int] = []
 
@@ -128,7 +106,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"A valid proposal."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
+    state = RuntimeState.bootstrap(package)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
@@ -258,7 +236,8 @@ def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> No
 
 
 def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
     filler = [{"kind": "narration", "text": f"Filler {index}."} for index in range(MAX_TURN_SEGMENTS + 1)]
@@ -282,7 +261,8 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch)
 
 
 def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1"}, strip_must_convey=True)
+    state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -294,7 +274,7 @@ def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> Non
     candidate = next(item for item in context["candidates"] if item["id"] == "k_sl_1a_c_r1")
 
     assert candidate["must_convey"] == []
-    assert candidate["statement"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
+    assert candidate["statement"] == package.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
 def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(monkeypatch) -> None:
@@ -471,7 +451,8 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
 
 def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -494,7 +475,7 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
                         "segments": [
                             {
                                 "kind": "narration",
-                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement,
+                                "text": package.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement,
                                 "grounding_ids": ["k_sl_1a_a_r1"],
                             }
                         ],
@@ -521,7 +502,8 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
     """Bad grounding must spend the single recovery, not fail the player's turn with HTTP 409."""
 
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -567,7 +549,8 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
 
 def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -761,7 +744,8 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
 
 
 def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -981,7 +965,8 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
     """Selecting a candidate without telling it must cost a guided retry, not the player's turn."""
 
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -1028,7 +1013,8 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
 
 def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_d_r1"})
+    state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-D")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -1051,7 +1037,7 @@ def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
                         "segments": [
                             {
                                 "kind": "narration",
-                                "text": PACKAGE.knowledge_indexes.by_id["k_sl_1a_d_r1"].statement,
+                                "text": package.knowledge_indexes.by_id["k_sl_1a_d_r1"].statement,
                                 "grounding_ids": ["k_sl_1a_d_r1"],
                             }
                         ],
@@ -1104,7 +1090,8 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 
 def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -1193,7 +1180,8 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room stays quiet."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    state = RuntimeState.bootstrap(package)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     provider("Inspect the room.")
@@ -1597,7 +1585,8 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     hosted playthroughs because nothing ever committed.
     """
 
-    state = RuntimeState.bootstrap(PACKAGE)
+    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"}, strip_must_convey=True)
+    state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -1612,7 +1601,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
 
     assert "Candidate k_sl_1a_a_r1" in captured["payload"]["user"]
     assert (
-        "What the player learns: " + PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement
+        "What the player learns: " + package.knowledge_indexes.by_id["k_sl_1a_a_r1"].statement
         in captured["payload"]["user"]
     )
     assert "must say this" not in captured["payload"]["user"]
@@ -1753,7 +1742,7 @@ def test_selection_duty_uses_one_random_choice_rule() -> None:
 
 
 def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
-    state = _staged_scene_1a_state()
+    state = _staged_scene_1a_state(legacy_package(PACKAGE, {"k_sl_1a_a_r1"}))
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"positive_selection_example": True}
     )
@@ -1784,7 +1773,7 @@ def test_nonmatching_turn_hides_migrated_candidates_but_keeps_projection() -> No
 
 
 def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_commit(monkeypatch) -> None:
-    state = _staged_scene_1a_state()
+    state = _staged_scene_1a_state(legacy_package(PACKAGE, {"k_sl_1a_a_r1"}))
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     response = {
         "segments": [
@@ -1827,6 +1816,54 @@ def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatc
     assert proposal["segments"][-1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r1"].delivery_text
 
 
+@pytest.mark.parametrize(
+    ("candidate_id", "storylet_id", "player_input", "fact_ids"),
+    [
+        pytest.param("k_sl_1a_a_r1", "SL-1A-A", "Search the kitchen.", (), id="house-search"),
+        pytest.param(
+            "k_sl_1a_c_r1",
+            "SL-1A-C",
+            "Listen to the officers ask about her research.",
+            ("michelle_warning_known",),
+            id="officers-research",
+        ),
+        pytest.param(
+            "k_sl_1a_c_r2",
+            "SL-1A-C",
+            "Check the front gate after the patrol leaves.",
+            ("michelle_warning_known",),
+            id="front-gate",
+        ),
+        pytest.param(
+            "k_sl_1a_d_r1",
+            "SL-1A-D",
+            "Read the rest of the files.",
+            ("michelle_warning_known", "memory_card_in_kristins_custody"),
+            id="remaining-files",
+        ),
+    ],
+)
+def test_scene_1a_migrated_reveal_composes_through_engine(
+    monkeypatch, candidate_id: str, storylet_id: str, player_input: str, fact_ids: tuple[str, ...]
+) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    for fact_id in fact_ids:
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+    state.active_event_ids.add(storylet_id)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": "The room settles."}]}),
+    )
+
+    proposal = provider(player_input)
+
+    assert proposal["segments"][-1]["text"] == PACKAGE.knowledge_indexes.by_id[candidate_id].delivery_text
+    assert proposal["segments"][-1]["grounding_ids"] == [candidate_id]
+    assert proposal["selected_knowledge_ids"] == [candidate_id]
+    assert provider.model_selected_knowledge_ids == ()
+
+
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.add("SL-1A-B")
@@ -1853,7 +1890,7 @@ def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt()
 
 
 def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver() -> None:
-    package = _legacy_recording_package()
+    package = legacy_package(PACKAGE, {"k_sl_1a_b_r1", "k_sl_1a_b_r2"})
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-B")
     provider = CloudflareTurnProvider(

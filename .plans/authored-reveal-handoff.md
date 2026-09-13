@@ -5,8 +5,8 @@
 **Phases 6 and 7 complete (2026-09-12). The deterministic suite passes and the
 live benchmark is clean: Scene 1A completed 4 of 4 replicates with the authored
 handoff composed on every one, the unrelated control completed 2 of 2, and no
-replicate failed. Two candidates are migrated; the rest stay legacy for the
-authoring reason recorded in Phase 7.**
+replicate failed. All six Scene 1A candidates are now migrated; the four added
+after that run have deterministic evidence but no live benchmark yet.**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence.
@@ -321,8 +321,9 @@ migration exists to remove.
   reveal, is migrated: its `action_evidence` was already disjoint from
   `k_sl_1a_b_r2`, so only its `delivery_text` had to be authored.
 - [x] Keep the behavior opt-in by candidate data during the first release.
-  Exactly two candidates are migrated, and a check enforces that number so a
-  further migration cannot land unnoticed.
+  Six candidates are migrated, every Scene 1A reveal.
+  `test_authored_handoff_candidates_are_exactly_the_reviewed_set` fails if that
+  set changes, so a further migration cannot land unnoticed.
 - [x] Review telemetry for unmatched player phrasings; add only explicit,
   author-reviewed aliases. Do not replace the exact matcher with a similarity
   score or LLM semantic judgment. Sixty-seven recorded live turns produced nine
@@ -348,15 +349,35 @@ migration exists to remove.
   narrator for using the words it had just been handed. Licensing a projected
   beat's vocabulary removed the contradiction and the failures with it.
 
-**Deliberately not migrated, and why.** `k_sl_1a_a_r1`/`a_r2`,
-`k_sl_1a_d_r1`/`d_r2` and the `k_sl_1a_c_*` pair are outcome variants of the
-*same* player action - a thorough versus a hurried search, the full files versus
-surviving fragments. No `action_evidence` can honestly distinguish them, because
-the difference is in what survived rather than in what the player did. Migrating
-both members of such a pair would make the matcher tie, and a tie composes
-nothing, which reads to a player as the game ignoring them. These need atomizing
-in the fiction before they can be migrated; that is authoring work, not a
-mechanical migration.
+**Scene 1A is fully migrated (2026-09-12).** The four candidates left on the
+legacy path above are now authored handoffs, each unblocked for the reason that
+had blocked it.
+
+*Outcome variants folded.* `k_sl_1a_a_r2` and `k_sl_1a_d_r2`, with their
+realizations `SL-1A-A-R2` and `SL-1A-D-R2`, are deleted. Each pair was one
+player action with two tellings, so no evidence could tell the members apart
+and migrating both would have made the matcher tie. They were also one reveal
+in practice: both `a` candidates set only `michelle_abduction_suspicion`, and
+the extra fact `d_r1` sets is already true by the time `SL-1A-D` can activate.
+`k_sl_1a_a_r1` and `k_sl_1a_d_r1` keep their IDs, statements and effects, so
+saves are unaffected.
+
+*Distinct actions authored.* `k_sl_1a_c_r1` (noticing what the patrol asks
+about) and `k_sl_1a_c_r2` (checking the gate after it leaves) set different
+facts and have disjoint evidence. `c_r1` and `a_r1` gained `must_convey`,
+chosen so each candidate's own statement still conveys every group.
+
+`test_authored_handoff_candidates_are_exactly_the_reviewed_set` fails if the
+migrated set changes, and `test_scene_1a_migrated_reveal_composes_through_engine`
+proves each new reveal composes and commits through the engine. Tests that
+covered the legacy path with these candidates now run against
+`tests/_legacy_package.py`, a package copy that makes the named candidates
+legacy again.
+
+Fail-closed gaps left on purpose: a command carrying two reveals' evidence
+("Inspect the gate and read the files") composes nothing, and the matcher
+counts "do" as a negation, so "watch what they do at the gate" earns nothing.
+The four new migrations have no live benchmark yet.
 
 ## Explicit non-solutions
 

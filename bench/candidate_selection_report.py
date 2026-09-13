@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-TURN1_POSITION0_IDS = {"k_sl_1a_a_r1", "k_sl_1a_a_r2"}
+TURN1_POSITION0_IDS = {"k_sl_1a_a_r1"}
 TURN3_POSITION2_IDS = {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
 
 
