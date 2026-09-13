@@ -634,8 +634,7 @@ transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-
     Brandon disconnected the relay from JANUS and held it open through the electrical surge while Kristin and Michelle
-    began the broadcast. The evidence was moving beyond Charles's control as remote sections began exploding one by one,
-    with blasts moving section by section toward the center.
+    began the broadcast. The evidence was moving beyond Charles's control as blasts tore through the outer sections, one after another, toward the center.
 ---
 
 **Setting:** Security corridors, command center, and Rebecca Jenkins’s executive office
@@ -674,13 +673,13 @@ Rebecca attempts to bargain by offering the locations of every detention site.
 
 ### Scene 3B.3 — Charles’s Betrayal
 
-**Details:** Charles appears remotely from a remote command site; destruction sequence; remote outer-section explosions; inward-moving blasts; locked office; national network and Los Angeles facility; anti-government terrorists
+**Details:** Charles appears; locked office; national network; destruction sequence; exploding outer sections; anti-government terrorists; remote command site
 
 Charles appears remotely and locks down Rebecca’s office. He reveals that he has already transferred control of the national network away from her.
 
-He starts the facility's destruction sequence from a distance. Remote outer sections begin exploding one after another, moving inward toward the central levels where Kristin, Michelle, Brandon, and Rebecca are.
-
 He intends to destroy the Los Angeles facility, killing the captives, Rebecca, and the infiltrators. He will blame the destruction on anti-government terrorists and proceed with his broadcast from another command site.
+
+He starts the destruction sequence from a distance. Remote outer sections begin exploding one after another, moving inward toward the central levels where Kristin, Michelle, Brandon, and Rebecca are.
 
 Rebecca finally understands that Charles always considered her expendable.
 
@@ -762,7 +761,7 @@ Charles escapes from his remote command site before authorities can locate him, 
 
 ### Scene 3C.3 — The Collapse
 
-**Details:** destruction sequence; remote outer-section explosions and inward-moving blasts; central levels; facility infrastructure; redirected power; emergency supports and maintenance tunnels; surface gates
+**Details:** destruction sequence; inward-moving blasts; central levels; redirected power; maintenance tunnels; emergency supports; surface gates
 
 The destruction sequence is already running, and blasts from the outer sections move toward the central levels. Kristin uses her knowledge of facility infrastructure and operations to redirect power and hold emergency supports ahead of the blasts, but she cannot save every section.
 
