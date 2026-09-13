@@ -5,8 +5,8 @@
 **Phases 6 and 7 complete (2026-09-12). The deterministic suite passes and the
 live benchmark is clean: Scene 1A completed 4 of 4 replicates with the authored
 handoff composed on every one, the unrelated control completed 2 of 2, and no
-replicate failed. All six Scene 1A candidates are now migrated; the four added
-after that run have deterministic evidence but no live benchmark yet.**
+replicate failed. All six Scene 1A candidates are now migrated, and a live
+benchmark of all of them runs clean (see the end of Phase 7).**
 
 This plan replaces further prompt-only work for candidates that have explicit,
 authored action evidence.
@@ -377,7 +377,26 @@ legacy again.
 Fail-closed gaps left on purpose: a command carrying two reveals' evidence
 ("Inspect the gate and read the files") composes nothing, and the matcher
 counts "do" as a negation, so "watch what they do at the gate" earns nothing.
-The four new migrations have no live benchmark yet.
+
+**Live evidence for full Scene 1A (2026-09-12).** `bench/variations/authored-handoff-scene1a.json`
+has two five-turn scripts that between them reach every migrated reveal. The
+first live run exposed two grounding defects, each fixed and covered by a test
+that drives a committed turn:
+
+1. Composed delivery text naming committed knowledge was never auto-grounded,
+   because the repair ran before the delivery segment was appended.
+2. Narration echoing a term owned only by the reveal being handed off (the
+   gate script's "front gate") was left uncited. Counting the candidate as a
+   co-owner then broke shared terms such as "dr. mcgehee", so committed owners
+   are now chosen first and the candidate only when no committed knowledge
+   owns the term.
+
+The third run, `bench/results/scene1a-handoff-live3-1a/` and `-1b/`, is clean:
+all six Scene 1A replicates and both Scene 1B controls completed, every reveal
+composed on every turn that reached its command (`a_r1` 6/6, `b_r2` 6/6, `c_r1`
+3/3, `c_r2` 3/3, `d_r1` 6/6), and no turn composed a reveal its command did not
+earn. Offline probes with a stub narrator, one of which echoes each command,
+reproduce both defects and pass on the fixed runtime.
 
 ## Explicit non-solutions
 
