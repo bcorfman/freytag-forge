@@ -34,7 +34,7 @@ deliveries:
   fallback_text: >-
     The transit card and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin
     toward the supposedly abandoned freight terminal and its evacuation tunnels.
-  cue_text: The transit card and handwritten sequence lie beside Michelle's photograph on the park bench.
+  cue_text: The transit card and handwritten sequence lie beside Michelle's photograph. A freight code is printed beside the number sequence.
 - fact_id: brandon_identified
   scene_id: 1B
   source_kind: npc
@@ -58,7 +58,7 @@ deliveries:
   fallback_text: >-
     Brandon claims that the missing are still alive, though he refuses to explain how he knows. His warning gives Kristin
     reason to believe the disappeared people are captives rather than casualties.
-  cue_text: The list of earlier disappearances lies open beside the bench. Its dates match the pattern in Michelle's files.
+  cue_text: The list of earlier disappearances lies open beside the bench. Its dates match the pattern in the other records.
 - fact_id: facility_proof
   scene_id: 1C
   source_kind: observation
@@ -115,7 +115,7 @@ deliveries:
   fallback_text: >-
     Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
     that he helped develop the AI before learning what it would become.
-  cue_text: A development record on the archive terminal carries Brandon's name beside the system's author list.
+  cue_text: Brandon's hands stop over a record on the archive terminal. He goes quiet as he reads the next line.
 - fact_id: brandon_claimed_reform_motive
   scene_id: 2B
   source_kind: message
@@ -212,7 +212,7 @@ deliveries:
   fallback_text: >-
     Charles locks down Rebecca's office and abandons Rebecca while he transfers control of the national network. Rebecca
     finally understands that she was expendable to him.
-  cue_text: Rebecca's office screen still carries Charles's remote channel. Security doors are sealing around the room.
+  cue_text: The executive screen still carries a remote channel marked Charles. Security doors are sealing around the room.
 - fact_id: detention_locations_secured
   scene_id: 3B
   source_kind: message
