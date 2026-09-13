@@ -727,17 +727,21 @@ def _validate_deliveries(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
     facts = package.fact_ids
     canonical_events = package.storylet_routes.bridge_events
-    exit_prerequisite_facts = {
-        fact_id
-        for event in canonical_events
-        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
-    }
     player_safe_facts = {
         effect.fact_id
         for known in package.knowledge.knowledge
         if known.audience.player_visible
         for effect in known.establishes
     }
+    world_only_facts_by_scene: dict[str, set[str]] = {}
+    for known in package.knowledge.knowledge:
+        if known.audience.kind != "world_only":
+            continue
+        asserted_facts = {
+            effect.fact_id for effect in known.establishes if effect.op == "assert" and effect.value is True
+        }
+        for scene_id in known.available_in_scenes:
+            world_only_facts_by_scene.setdefault(scene_id, set()).update(asserted_facts)
     deliveries_by_fact: dict[str, FactDelivery] = {}
     for delivery in package.deliveries:
         if delivery.fact_id not in facts:
@@ -772,13 +776,40 @@ def _validate_deliveries(package: StoryPackage) -> None:
             raise StoryPackageError(
                 f"delivery for fact '{delivery.fact_id}' has no player-visible knowledge definition"
             )
-    # World-only prerequisites, such as Rebecca's observation, are deliberately
-    # absent from this audit: they arrive from declared world actions rather
-    # than from a player-visible handoff.
-    missing_deliveries = sorted((exit_prerequisite_facts & player_safe_facts) - set(deliveries_by_fact))
-    if missing_deliveries:
-        fact_id = missing_deliveries[0]
-        raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
+    for event in canonical_events:
+        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of):
+            if fact_id in deliveries_by_fact:
+                continue
+            if fact_id not in player_safe_facts and fact_id in world_only_facts_by_scene.get(event.scene_id, set()):
+                continue
+            raise StoryPackageError(f"scene {event.scene_id} bridge-required fact '{fact_id}' has no FactDelivery")
+
+
+def _asserted_true_route_operations(operations: tuple[RouteOperation, ...]) -> set[str]:
+    return {operation.fact_id for operation in operations if operation.op == "assert" and operation.value is True}
+
+
+def _validate_transition_trigger_sources(package: StoryPackage) -> None:
+    """Ensure every positive transition trigger has a producer in its source scene."""
+
+    asserted_by_scene: dict[str, set[str]] = {}
+    for event in package.storylet_routes.bridge_events:
+        asserted_by_scene.setdefault(event.scene_id, set()).update(_asserted_true_route_operations(event.operations))
+    for event in package.pacing.events:
+        asserted_by_scene.setdefault(event.scene_id, set()).update(
+            effect.fact_id for effect in event.effects if effect.equals is True
+        )
+    for delivery in package.deliveries:
+        asserted_by_scene.setdefault(delivery.scene_id, set()).update(_asserted_true_route_operations(delivery.costs))
+
+    for transition in package.pacing.transitions:
+        for trigger in transition.triggers:
+            source_facts = asserted_by_scene.get(transition.source_scene_id, set())
+            if trigger.equals is True and trigger.fact_id not in source_facts:
+                raise StoryPackageError(
+                    f"scene {transition.source_scene_id} transition '{transition.id}' trigger "
+                    f"'{trigger.fact_id}' is not asserted by a bridge event, pacing event or delivery cost"
+                )
 
 
 def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ...]:
@@ -890,4 +921,5 @@ def load_story_package(root: Path) -> StoryPackage:
     _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
+    _validate_transition_trigger_sources(package)
     return package

@@ -259,6 +259,9 @@ class RuntimeEngine(CanonicalEventMixin):
             self.state.staged_handoff_fact_ids = missing
 
     def _bridge_delivery_fact_ids(self) -> tuple[str, ...]:
+        """Cue ranking only foregrounds content whose activation conditions already hold.
+        It never activates anything past a guard."""
+
         true_facts = frozenset(
             fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
         )
