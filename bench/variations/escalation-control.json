@@ -14,7 +14,7 @@
           "new": ""
         },
         {
-          "old": "  cue_text: A transit access card and a handwritten number sequence lie beside Michelle's photograph.\n",
+          "old": "  cue_text: A transit token and a handwritten number sequence lie beside Michelle's photograph.\n",
           "new": ""
         },
         {
@@ -159,4 +159,3 @@
     ]
   }
 }
-

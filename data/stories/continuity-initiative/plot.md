@@ -165,13 +165,13 @@ bridge_text:
 
 ### Scene 1B.1 — Michelle’s Dead Drop
 
-**Details:** ordinary park bench; transit access card; handwritten number sequence; Michelle photograph; unidentified man; disappearance dates
+**Details:** ordinary park bench; transit token; handwritten number sequence; Michelle photograph; unidentified man; disappearance dates
 
 Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols.
 
 Beneath the bench, she finds:
 
-* A transit access card
+* A transit token
 * A handwritten sequence of numbers
 * A photograph of Michelle speaking with an unidentified man
 * A list of dates corresponding to earlier, smaller disappearances that had been reported as accidents or missing-person cases
@@ -219,7 +219,7 @@ freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
 item_ids: [transit_card]
-entry_text: "The transit card led to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. Kristin and Brandon slipped into the service level beneath the loading docks, where an observation shaft overlooked something much larger below.\n\n"
+entry_text: "The transit token led to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. Kristin and Brandon slipped into the service level beneath the loading docks, where an observation shaft overlooked something much larger below.\n\n"
 transition_ids: [t_1c_2a]
 bridge_text:
   t_1c_2a: >-
@@ -241,9 +241,9 @@ bridge_text:
 
 ### Scene 1C.1 — Following the Transport Route
 
-**Details:** transit card; abandoned freight terminal; structural modifications; underground complex; fresh tire tracks; humming air vents
+**Details:** transit token; abandoned freight terminal; structural modifications; underground complex; fresh tire tracks; humming air vents
 
-The transit card from Michelle’s dead drop grants access to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal a large underground complex.
+The transit token from Michelle’s dead drop grants access to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal a large underground complex.
 
 Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
 

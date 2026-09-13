@@ -640,7 +640,7 @@ storylets:
     transport infrastructure—without making one clue the required interaction.
   realization_options:
   - id: SL-1B-A-R1
-    dramatic_intent: Correlate the transit card with Michelle’s handwritten sequence/dates so the encoded routing information
+    dramatic_intent: Correlate the transit token with Michelle’s handwritten sequence/dates so the encoded routing information
       points to a specific freight/industrial destination used by the removal operation.
     operations:
     - op: assert

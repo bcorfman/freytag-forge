@@ -311,7 +311,7 @@ def test_knowledge_outside_the_scene_arrives_only_when_the_player_reaches_for_it
     unmentioned = projector.project(state, "player", "Search the kitchen for signs of a struggle.")
     assert recalled_id not in _ids(unmentioned.committed_knowledge)
 
-    mentioned = projector.project(state, "player", "Examine Brandon's transit card.")
+    mentioned = projector.project(state, "player", "Examine Brandon's transit token.")
     assert recalled_id in _ids(mentioned.committed_knowledge)
 
     # The scene's own material is unconditional either way.

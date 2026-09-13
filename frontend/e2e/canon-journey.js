@@ -27,7 +27,7 @@ export const scenePrompts = {
   ],
   // 1C.1 transport route -> 1C.2 captives -> 1C.3 nationwide network -> 1C.4 architects
   "1C": [
-    "Use the transit card at the freight terminal and work down into the service level, reading the site for signs it is still active.",
+    "Use the transit token at the freight terminal and work down into the service level, reading the site for signs it is still active.",
     "From the observation shaft, watch the processing floor and match what you see against the missing-person records.",
     "Get into a logistics terminal and follow where the transports actually go beyond this site.",
     "Play back the recorded conference between the people directing this operation and listen to what they intend next.",

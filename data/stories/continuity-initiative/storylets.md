@@ -240,7 +240,7 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee through the dead drop
-- Transit access card
+- Transit token
 - Handwritten number sequence
 - Photograph of Michelle with Brandon
 - List of earlier disappearance dates
@@ -252,7 +252,7 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - The dates lead Kristin to suspect earlier tests.
 - The photograph makes the unknown man personally important.
-- The transit card and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
+- The transit token and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
 - The number sequence remains unresolved context for later interpretation.
 
 **Effects**
@@ -390,7 +390,7 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Transit access card
+- Transit token
 - Freight-terminal infrastructure
 
 **Dramatic purpose**
@@ -399,7 +399,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin compares declared abandonment with electrical load, ventilation, and recent infrastructure work.
-- The transit card opens access that should not exist at a dead facility.
+- The transit token opens access that should not exist at a dead facility.
 - Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.
 
 **Effects**

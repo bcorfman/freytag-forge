@@ -220,10 +220,10 @@ scene_frames:
   situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
-  situation: 'A damaged public park with an ordinary bench, a transit access card, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
+  situation: 'A damaged public park with an ordinary bench, a transit token, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: A supposedly abandoned freight terminal above an underground installation. The transit card opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
+  situation: A supposedly abandoned freight terminal above an underground installation. The transit token opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
   pressure: Confirm the facility and its purpose
 - scene_id: 2A
   situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's overstressed cooling and support-column monitoring requires outside inspectors - a flaw that false credentials could exploit to reach its restricted corridors.
@@ -482,7 +482,7 @@ knowledge:
   - [gate, front gate, reflective tape]
   delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
 - id: k_sl_1b_a_r1
-  statement: 'Kristin matches the transit card and number sequence to a freight route leading out of the city.'
+  statement: 'Kristin matches the transit token and number sequence to a freight route leading out of the city.'
   entity_ids: []
   aliases:
   - transport route identified
@@ -675,7 +675,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_a_r2
-  statement: 'Michelle’s transit card opens a service entrance beneath the terminal, confirming an active facility below.'
+  statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below.'
   entity_ids: []
   aliases:
   - facility proof
