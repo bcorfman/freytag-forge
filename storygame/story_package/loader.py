@@ -59,7 +59,6 @@ _REQUIRED_STORYLET_SECTIONS = {
     "Abort",
     "Protected boundary",
     "Pacing window",
-    "Pacing impact",
 }
 
 
@@ -208,7 +207,6 @@ def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set
         window = dict(re.findall(r"-\s*(earliest|target|latest):\s*`([^`]+)`", sections["Pacing window"]))
         if set(window) != {"earliest", "target", "latest"}:
             raise StoryPackageError(f"storylet {match.group(1)} has an invalid pacing window")
-        impact = sections["Pacing impact"].strip("` \n")
         storylets.append(
             Storylet(
                 id=match.group(1),
@@ -219,7 +217,6 @@ def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set
                 earliest_turn=_turn(window["earliest"]),
                 target_turn=_turn(window["target"]),
                 latest_turn=_turn(window["latest"]),
-                pacing_impact=impact,
             )
         )
     return tuple(storylets)

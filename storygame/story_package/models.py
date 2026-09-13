@@ -307,7 +307,6 @@ class Storylet(_Model):
     earliest_turn: int = Field(ge=0)
     target_turn: int = Field(ge=0)
     latest_turn: int = Field(ge=0)
-    pacing_impact: Literal["none", "brief_delay", "pressure_increase", "advance_readiness"]
 
     @model_validator(mode="after")
     def ordered(self) -> Storylet:

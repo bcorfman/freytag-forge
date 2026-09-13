@@ -75,9 +75,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 1`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-1A-B — Michelle Hid Something for Kristin
@@ -128,9 +125,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 2`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-1A-D — The Rest of Michelle's Files
@@ -176,9 +170,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 2`
 - latest: `turn 3`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -232,9 +223,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 3`
 - latest: `turn 3`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ## Storylets for [Scene 1B — The Lead in the Park](plot.md#scene-1b--the-lead-in-the-park)
@@ -287,9 +275,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-1B-B — Is Brandon Hunter or Rescuer?
@@ -338,9 +323,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -391,9 +373,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ## Storylets for [Scene 1C — Discovery of the Facility](plot.md#scene-1c--discovery-of-the-facility)
@@ -442,9 +421,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -497,9 +473,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-1C-C — A Regional Hub, Not the Prison
@@ -550,9 +523,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -607,9 +577,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-2A-B — Build the Cover Around a Real Structural Risk
@@ -658,9 +625,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -712,9 +676,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ## Storylets for [Scene 2B — Evidence and Betrayal](plot.md#scene-2b--evidence-and-betrayal)
@@ -763,9 +724,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -816,9 +774,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-2B-C — Michelle Is Already Sabotaging the System
@@ -867,9 +822,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -921,9 +873,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-2C-B — The Purge Clock Starts Moving
@@ -971,9 +920,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1026,9 +972,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1086,9 +1029,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-3A-B — The “Rescued” Captives Were Being Prepared
@@ -1141,9 +1081,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-3A-C — The Uprising Begins
@@ -1189,9 +1126,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1242,9 +1176,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1298,9 +1229,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-3B-C — Brandon Holds the Relay Open
@@ -1352,9 +1280,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1410,9 +1335,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-3C-B — Rebecca’s Archive Cannot Simply Be Destroyed
@@ -1460,9 +1382,6 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 
@@ -1516,9 +1435,6 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 # Resolution-phase storylet realizations
@@ -1569,9 +1485,6 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - target: `turn 1`
 - latest: `turn 2`
 
-**Pacing impact**
-`brief_delay`
-
 ---
 
 ### SL-3C-E — Phase One
@@ -1615,9 +1528,6 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - earliest: `turn 0`
 - target: `turn 1`
 - latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
 
 ---
 

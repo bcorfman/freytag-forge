@@ -73,9 +73,7 @@ keeps the legacy narrator-proposal path.
 per scene plus typed fact predicates and a distinct priority for each outgoing
 transition. `storylets.md` keeps the labelled companion format: each `SL-*`
 entry links to `plot.md`, names its allowed scene, retains all required dramatic
-sections, and declares `Pacing window` (`earliest`, `target`, `latest`) plus a
-`Pacing impact` of `none`, `brief_delay`, `pressure_increase`, or
-`advance_readiness`.
+sections, and declares `Pacing window` (`earliest`, `target`, `latest`).
 
 `storylet-routes.yaml` is the executable companion to `storylets.md`. It
 declares scene-local activation predicates, exact fact operations for each
