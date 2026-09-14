@@ -2,13 +2,13 @@
 
 **Genre:** Adventure / Conspiracy Thriller
 
-> **Runtime authority note:** This document defines narrative canon, scene ordering, dramatic beats, protected revelations, and intended story meaning. The embedded scene metadata is descriptive authoring context.
+> **Story specification note:** This story package is one specification made of seven co-equal files: `plot.md`, `world.yaml`, `knowledge.yaml`, `pacing.yaml`, `storylets.md`, `storylet-routes.yaml`, and `handoffs.yaml`. Each carries a distinct part of the story. This file holds narrative canon, scene order, dramatic beats, protected revelations, and intended meaning. The others hold world truth, player knowledge, pressure, optional situations, durable consequences, and fallback delivery. Read them together.
 >
-> `world.yaml`, `knowledge.yaml`, `pacing.yaml`, `storylets.md`, `storylet-routes.yaml`, and `handoffs.yaml` are one canonical story specification. Read them together: each carries a distinct part of the story's world truth, player knowledge, pressure, optional situations, durable consequences, and fallback delivery.
+> Story changes start here. Any change to what happens, in what order, or what it means is made in `plot.md` first, then propagated out to every other file it affects. A change made in another file must never leave this plot saying something different.
 >
-> `participant_ids` and `item_ids` identify entities and items that are narratively relevant to a scene; they do **not** imply mandatory runtime dependencies. Hard dependencies, when any are required, are declared only in the reviewed runtime YAML.
+> When files conflict, the developer settles it. Decide the intended story, record it in `plot.md` first, then bring the other files into line with it. Do not resolve a conflict by quietly editing whichever file is closest. A purely mechanical change that does not alter the story, such as a turn number, a fact ID, or wiring between facts, can be made in the other files alone, as long as `plot.md` still describes the story correctly afterwards.
 >
-> If descriptive metadata here conflicts with validated runtime data, the reviewed runtime YAML governs execution. This plot continues to govern the intended narrative result, and any conflict should be reconciled explicitly rather than silently changing the story.
+> `participant_ids` and `item_ids` identify entities and items that are narratively relevant to a scene; they do **not** imply mandatory runtime dependencies. Hard dependencies, when any are required, are declared only in the runtime YAML files.
 
 ## Premise
 
