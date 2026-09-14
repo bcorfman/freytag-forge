@@ -59,25 +59,25 @@ test("loads the real package and resolves turn milestones", () => {
     kind: "scene_point",
     scene_id: "1B",
     point: "min",
-    target_turn: 2,
+    target_turn: 8,
   });
   assert.deepEqual(projection.scenePoint("1B", "nudge"), {
     kind: "scene_point",
     scene_id: "1B",
     point: "nudge",
-    target_turn: 4,
+    target_turn: 10,
   });
   assert.deepEqual(projection.scenePoint("1B", "handoff"), {
     kind: "scene_point",
     scene_id: "1B",
     point: "handoff",
-    target_turn: 5,
+    target_turn: 13,
   });
   assert.deepEqual(projection.eventPoint("purge_2c"), {
     kind: "pacing_event",
     scene_id: "2C",
     event_id: "purge_2c",
-    target_turn: 2,
+    target_turn: 3,
   });
   assert.equal(Object.hasOwn(projection.scenePoint("1B", "min"), "target_seconds"), false);
   assert.equal(Object.hasOwn(projection.eventPoint("purge_2c"), "target_seconds"), false);
@@ -104,6 +104,15 @@ test("loads the real package and resolves turn milestones", () => {
       "purge_2c",
       "override_deadline_3a",
       "destruction_3b",
+      "home_search_narrows_1a",
+      "park_lockdown_1b",
+      "terminal_sweep_1c",
+      "cover_review_2a",
+      "archive_sweep_2b",
+      "transfers_2c",
+      "detention_lockdown_3a",
+      "relay_power_3b",
+      "routes_collapse_3c",
     ],
   );
 });

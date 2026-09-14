@@ -80,7 +80,7 @@ test("sceneCanon returns only revealed knowledge for the current scene", () => {
     {
       id: "k_sl_1a_b_r1",
       statement:
-        "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park.",
+        "Kristin finds and secures Michelle's memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park.",
     },
   ]);
   assert.deepEqual(Object.keys(canon).sort(), ["pressure", "revealed_knowledge", "scene_id", "situation"]);
