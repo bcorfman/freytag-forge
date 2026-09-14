@@ -127,7 +127,10 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "Do not say anything that goes against the SCENE section." in captured["payload"]["user"]
     prohibition = "- Do not make up new objects, clues, or things inside containers."
     assert prohibition in captured["payload"]["user"]
-    assert "already true" in captured["payload"]["user"]
+    assert (
+        "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it."
+        in captured["payload"]["user"]
+    )
     assert "at most two sentences" not in instruction
     assert "selected_knowledge_ids" in captured["payload"]["system"]
     assert "Do not copy sentences from the SCENE section." in captured["payload"]["user"]

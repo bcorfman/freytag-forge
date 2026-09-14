@@ -413,9 +413,9 @@ class CloudflareTurnProvider:
             "Use only what the SCENE section tells you.",
             "Use the places and details the story gives you.",
             "Keep each object where the scene puts it.",
-            "Answer what the player did.",
+            f"Answer what the player did. Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
-            "Everything in the SCENE section is already true.",
+            "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
             *(
                 (
                     "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
