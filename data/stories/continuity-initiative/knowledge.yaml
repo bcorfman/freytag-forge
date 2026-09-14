@@ -5,7 +5,7 @@ facts:
 - id: facility_proof
   purpose: Kristin has confirmed that the supposedly abandoned terminal conceals an active underground detention facility.
 - id: false_identities_ready
-  purpose: Kristin and Brandon have credible technical-inspector identities and a structural-risk cover story for entering the facility.
+  purpose: Kristin and Brandon have credible technical-inspector identities and a cooling-water/ventilation cover story for entering the facility.
 - id: janus_evidence
   purpose: Kristin has secured archive material showing JANUS classified Americans for detention, leverage, and political control.
 - id: purge_clock_started
@@ -27,7 +27,7 @@ facts:
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
 - id: house_marked_for_return
-  purpose: The McGehee home has been marked by the patrol for a likely return.
+  purpose: Kristin and Michelle's shared home has been marked by the patrol for a likely return.
 - id: transport_route_identified
   purpose: Kristin and Brandon have enough evidence to follow the removal operation’s
     physical transport route toward a specific industrial/freight destination.
@@ -56,7 +56,7 @@ facts:
 - id: brandon_prepared_before_event
   purpose: Kristin knows Brandon prepared for the disappearance before it occurred.
 - id: restricted_corridor_access
-  purpose: Kristin and Brandon have access to restricted infrastructure corridors.
+  purpose: Kristin and Brandon have access to restricted infrastructure corridors and the limited diagnostic console assigned to the inspection cover.
 - id: rebecca_observing_infiltrators
   purpose: Rebecca has quietly ordered the infiltrators observed; this fact is not
     automatically known to Kristin.
@@ -75,8 +75,8 @@ facts:
 - id: antagonist_split_known
   purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
 - id: combined_broadcast_rescue_plan_known
-  purpose: Kristin/Brandon know Michelle’s plan to combine evidence transmission with
-    opening detention sectors via Rebecca’s office.
+  purpose: Kristin and Brandon know Michelle’s plan to enter her detention sector through local maintenance access,
+    then combine evidence transmission with opening sealed detention sectors via Rebecca’s office.
 - id: uprising_prepared
   purpose: Kristin knows Michelle has organized an active prisoner resistance network.
 - id: conditioned_release_plan_known
@@ -86,8 +86,7 @@ facts:
   purpose: Kristin knows the facility conducted the authored neurological/behavioral
     experiments.
 - id: military_override_codes_available
-  purpose: The resistance has secured or reliably relayed the emergency military override
-    codes.
+  purpose: The resistance has secured the authorization codes that can release the emergency surface gates once.
 - id: human_security_control
   purpose: JANUS can no longer reliably predict the group’s route and human operators
     have taken direct control.
@@ -130,7 +129,7 @@ facts:
     can be followed away from the house.
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
-    scrutiny at the McGehee home.
+    scrutiny at Kristin and Michelle's shared home.
 - id: pursuit_closing_in
   purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
 - id: terminal_security_escalating
@@ -138,7 +137,7 @@ facts:
 - id: identity_scrutiny_visible
   purpose: Facility staff are visibly scrutinizing Kristin’s inspector identity.
 - id: facility_collapse_escalating
-  purpose: The facility is visibly beginning to collapse around the escape route.
+  purpose: Charles's emergency deluge is visibly spreading through the outer access level toward the escape route.
 - id: facility_infiltration_needed
   purpose: Kristin and Brandon understand that direct rescue or observation is insufficient
     and that controlled deeper access to the facility is necessary.
@@ -149,15 +148,14 @@ facts:
   purpose: Kristin and Brandon have survived or otherwise resolved the park pursuit
     and can depart together.
 - id: transport_route_departure_ready
-  purpose: Kristin and Brandon have the transport lead, have resolved the park pursuit,
+  purpose: Kristin and Brandon have the transport lead, have resolved the park pursuit, have identified Brandon's connection to it,
     and can proceed to the industrial destination.
 - id: archive_crisis_understood
   purpose: Kristin has secured JANUS evidence, learned the bait/Brandon revelations,
     and recognized Michelle’s active resistance, completing the archive crisis.
 - id: override_codes_deadline_known
-  purpose: Kristin and Michelle understand that the senior official’s emergency override
-    authorization will expire when Charles activates his new authority, whether or
-    not the codes are secured.
+  purpose: Kristin and Michelle understand that the senior official’s authorization to release the emergency surface gates
+    will expire when Charles activates his new authority, whether or not the codes are secured.
 - id: command_levels_assault_underway
   purpose: Michelle’s uprising is active and the protagonists are moving from the detention
     levels toward the command/broadcast levels.
@@ -186,7 +184,7 @@ facts:
 - id: evidence_ready_to_transmit
   purpose: The protagonists have enough authenticated evidence to attempt the combined exposure-and-rescue mission.
 - id: facility_destruction_threat
-  purpose: Charles's destruction sequence explodes outer sections one by one toward the center, making escape urgent.
+  purpose: Charles has turned Kristin's false water emergency into a real deluge, making escape urgent.
 - id: michelle_selected_for_resistance_influence
   purpose: Kristin knows JANUS selected Michelle for her predicted ability to unite resistance.
 - id: national_facility_locations_broadcast
@@ -196,7 +194,25 @@ facts:
 - id: rebecca_experiment_approval_confronted
   purpose: Rebecca's personal approval of the experiments has been confronted before her capture.
 - id: rebecca_office_required_for_broadcast
-  purpose: Rebecca's secured office is the required manual activation point for the combined mission.
+  purpose: Rebecca's secured office is the required manual activation point to broadcast the evidence and release the sealed detention sectors.
+- id: home_search_window_narrowing
+  purpose: The returning patrol is widening its search around Kristin and Michelle's shared house, making a careful exit urgent.
+- id: park_lockdown_spreading
+  purpose: Emergency teams are closing the park's paths and service exits around Kristin and Brandon.
+- id: terminal_sweep_closing
+  purpose: Security teams are beginning a methodical sweep of the terminal's service levels.
+- id: inspector_cover_under_review
+  purpose: The facility is checking Kristin and Brandon's inspection cover closely enough that a second mistake will expose them.
+- id: archive_security_sweep
+  purpose: Archive security is auditing access and narrowing the time Kristin and Brandon can remain among the records.
+- id: purge_transfers_underway
+  purpose: The purge has moved from an announced threat to visible prisoner transfers and killing preparations.
+- id: detention_lockdown_spreading
+  purpose: Armed teams are sealing detention blocks and cutting the uprising's routes before it can reach the command levels.
+- id: relay_power_failing
+  purpose: The relay's power path is failing under Charles's countermeasures, shortening the time available to begin the broadcast.
+- id: escape_routes_collapsing
+  purpose: Rising water and sealed bulkheads are closing maintenance routes through the facility.
 - id: scene_1a_entry_known
   purpose: The safe opening frame for scene 1A has been established.
 - id: scene_1b_entry_known
@@ -217,31 +233,31 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: 'Kristin has reached Michelle’s house after a slow, emergency-clogged drive. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Her work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
+  situation: 'After an overnight assessment shift, Kristin has reached the house she shares with Michelle through emergency-clogged streets. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Michelle’s work area - the desk, the drawers, the places she kept her research - has not been searched yet.'
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
-  situation: 'A damaged public park with an ordinary bench, a transit token, a handwritten number sequence, a photograph of Michelle with an unidentified man, and a list of earlier disappearance dates hidden beneath it. A watcher lingers across the park while emergency patrols sweep the paths.'
+  situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: A supposedly abandoned freight terminal above an underground installation. The transit token opens the service level; fresh tire tracks, air vents, and heavy electrical service confirm the site is active. An observation shaft overlooks a prisoner processing area, and an unattended logistics terminal glows nearby.
+  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Kristin and Brandon are in its lower service level, looking for a way to confirm what lies deeper below.
   pressure: Confirm the facility and its purpose
 - scene_id: 2A
-  situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's overstressed cooling and support-column monitoring requires outside inspectors - a flaw that false credentials could exploit to reach its restricted corridors.
+  situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's strained cooling-water and ventilation systems offer a narrow pretext for an unscheduled inspection.
   pressure: Enter the facility under false identities
 - scene_id: 2B
-  situation: 'The facility''s records archive: selection files, development records naming the system''s authors, and corrupted prisoner files threaded with oddly familiar phrasing. A medical terminal''s maintenance reports carry a rhythm that reads like a message.'
+  situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. Kristin and Brandon must find usable evidence before their cover is reviewed.
   pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
-  situation: 'The command levels during an accelerating crisis: private executive channels, transfer orders, and a purge countdown already moving. In the maintenance network, an unread note waits for someone who knows Michelle''s phrasing.'
+  situation: "The command levels during an accelerating crisis: private executive channels, transfer orders, and a maintenance network. Security activity is increasing faster than Kristin can explain, and Michelle's phrasing may be hidden somewhere in the traffic."
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
-  situation: 'The detention sector: holding blocks, stolen radios, a medical level bearing the experiments, and an imprisoned senior official whose emergency military override codes expire the moment the new authority activates.'
+  situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
-  situation: Security corridors between the resistance and Rebecca's executive office. The predictive system anticipates every rational move; only conflicting, irrational emergencies confuse it. Beyond the office lies the external broadcast relay chamber.
+  situation: Security corridors between the resistance and Rebecca's executive office. JANUS is tracking the fight through cameras, doors, and alarms; the group needs an opening to reach the broadcast relay.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
-  situation: 'The secured command office and the broadcast chamber as the facility begins to fail: the open relay, the national broadcast controls, a portable archive naming conspirators and prisoner locations, and escape routes that will not stay open long.'
+  situation: The secured command office and broadcast chamber during a mounting deluge. The relay is open for the moment, but escaping captives need a route out before water and bulkheads close it.
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
@@ -675,7 +691,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_1c_a_r2
-  statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below.'
+  statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below. The service schematic marks a dry maintenance ascent that joins the drainage spine, too exposed to use now but worth remembering.'
   entity_ids: []
   aliases:
   - facility proof
@@ -873,7 +889,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_b_r2
-  statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real structural danger to put in their lie.'
+  statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
   entity_ids: []
   aliases:
   - false identities ready
@@ -897,7 +913,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_c_r1
-  statement: 'Kristin persuades a doubtful supervisor that a support-column failure could collapse the facility, gaining corridor access.'
+  statement: 'Kristin persuades a doubtful supervisor that a cooling-water fault could disable the service level, gaining corridor access.'
   entity_ids: []
   aliases:
   - restricted corridor access
@@ -924,12 +940,12 @@ knowledge:
     entity_ids: []
     priority: 0
   must_convey:
-  - [support-column failure, cooling-system risk, structural failure, support column problem, cooling failure, structural risk]
-  - [collapse the facility, facility collapse, facility, bring down the facility, underground collapse, collapse below]
+  - [cooling-water imbalance, cooling-system risk, water-pressure fault, cooling failure, cooling leak, water system problem]
+  - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
   - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
 - id: k_sl_2a_c_r2
-  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility.
+  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.
   entity_ids: [kristin, brandon, regional_facility]
   aliases:
   - infrastructure corridor
@@ -1239,10 +1255,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2c_c_r1
-  statement: "Michelle's encrypted message offers a way to transmit the evidence and open the detention cells through Rebecca's secured office."
+  statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   entity_ids: []
   aliases:
-  - combined broadcast rescue plan known
+  - evidence ready to transmit
   audience:
     kind: public
     player_visible: true
@@ -1257,12 +1273,6 @@ knowledge:
   - op: assert
     fact_id: evidence_ready_to_transmit
     value: true
-  - op: assert
-    fact_id: rebecca_office_required_for_broadcast
-    value: true
-  - op: assert
-    fact_id: combined_broadcast_rescue_plan_known
-    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-2C-C
@@ -1272,14 +1282,12 @@ knowledge:
     priority: 0
   must_convey:
   - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
-  - [open the detention cells, open the cells, rescue the prisoners, free the cells, release the prisoners, open detention blocks]
-  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office, office under Rebecca's control, secured room]
-  - [Michelle's encrypted message, coded message, message, Michelle's coded note, her encrypted message, encrypted message from Michelle]
+  - [reveal their position, expose their position, seal the detention sectors, seal the cells, risk the captives, rescue impossible]
 - id: k_sl_2c_c_r2
-  statement: 'Michelle’s coded message reveals that Rebecca’s office can open the cells and broadcast the evidence at once.'
+  statement: 'The proof is ready to transmit, but Kristin and Brandon must choose whether to risk the captives by sending it now.'
   entity_ids: []
   aliases:
-  - combined broadcast rescue plan known
+  - evidence ready to transmit
   audience:
     kind: public
     player_visible: true
@@ -1292,7 +1300,7 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: combined_broadcast_rescue_plan_known
+    fact_id: evidence_ready_to_transmit
     value: true
   source:
     kind: storylet_realization
@@ -1302,10 +1310,48 @@ knowledge:
     entity_ids: []
     priority: 0
   must_convey:
-  - [coded message, Michelle's encrypted message, message, coded note, encrypted message from Michelle, Michelle's encrypted note]
-  - [Rebecca's office, secured office, office, Rebecca's locked office, office under Rebecca's control, Rebecca's room]
-  - [open the cells, open detention cells, cells, free the cells, release the captives, open detention blocks]
-  - [broadcast the evidence, transmit the evidence, broadcast, send the evidence, evidence broadcast, broadcast proof]
+  - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
+  - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
+- id: k_sl_2c_d_r1
+  statement: "Michelle's encrypted message marks a maintenance route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and release the sealed detention sectors."
+  entity_ids: []
+  aliases: [combined broadcast rescue plan known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C, 3A]
+  requires:
+  - {fact_id: purge_clock_started, equals: true}
+  - {fact_id: evidence_ready_to_transmit, equals: true}
+  establishes:
+  - {op: assert, fact_id: rebecca_office_required_for_broadcast, value: true}
+  - {op: assert, fact_id: combined_broadcast_rescue_plan_known, value: true}
+  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R1}
+  relevance: {entity_ids: [], priority: 0}
+  must_convey:
+  - [Michelle's encrypted message, coded message, message, Michelle's coded note, encrypted message from Michelle]
+  - [maintenance access route, maintenance path, local access route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
+  - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
+  - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+- id: k_sl_2c_d_r2
+  statement: "Kristin traces Michelle's maintenance code into her holding block, then to Rebecca's office, and learns the dangerous plan can save captives only if they seize the broadcast controls."
+  entity_ids: []
+  aliases: [combined broadcast rescue plan known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C, 3A]
+  requires:
+  - {fact_id: purge_clock_started, equals: true}
+  - {fact_id: evidence_ready_to_transmit, equals: true}
+  establishes:
+  - {op: assert, fact_id: rebecca_office_required_for_broadcast, value: true}
+  - {op: assert, fact_id: combined_broadcast_rescue_plan_known, value: true}
+  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R2}
+  relevance: {entity_ids: [], priority: 0}
+  must_convey:
+  - [Michelle's maintenance code, maintenance code, coded message, Michelle's code]
+  - [maintenance code route, maintenance path, local access route, coded path]
+  - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
+  - [open the detention cells, rescue the captives, release the prisoners, open the cells]
+  - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
   entity_ids: []
@@ -1359,11 +1405,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_b_r1
-  statement: 'Michelle shows Kristin the experiment records proving planned "survivors" were conditioned to support Charles''s story, and the framed official hands over expiring military override codes.'
+  statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   entity_ids: []
   aliases:
   - conditioned release plan known
-  - military override codes available
   audience:
     kind: public
     player_visible: true
@@ -1379,12 +1424,6 @@ knowledge:
   - op: assert
     fact_id: conditioned_release_plan_known
     value: true
-  - op: assert
-    fact_id: military_override_codes_available
-    value: true
-  - op: assert
-    fact_id: charles_framed_officials_known
-    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3A-B
@@ -1393,11 +1432,10 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_b_r2
-  statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments, and Kristin copies the imprisoned official''s usable override authorization.'
+  statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
   entity_ids: []
   aliases:
   - behavioral experiments known
-  - military override codes available
   audience:
     kind: public
     player_visible: true
@@ -1410,13 +1448,76 @@ knowledge:
   - op: assert
     fact_id: behavioral_experiments_known
     value: true
-  - op: assert
-    fact_id: military_override_codes_available
-    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3A-B
     realization_id: SL-3A-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_d_r1
+  statement: 'The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.'
+  entity_ids: []
+  aliases:
+  - emergency gate authorization
+  - framed official
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: military_override_codes_available
+    value: true
+  - op: assert
+    fact_id: charles_framed_officials_known
+    value: true
+  - op: assert
+    fact_id: override_codes_deadline_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-D
+    realization_id: SL-3A-D-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3a_d_r2
+  statement: 'The framed official proves the emergency gate authorization is real, but its brief response makes clear that the one-use code is about to expire.'
+  entity_ids: []
+  aliases:
+  - emergency gate authorization
+  - authorization deadline
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: military_override_codes_available
+    value: true
+  - op: assert
+    fact_id: charles_framed_officials_known
+    value: true
+  - op: assert
+    fact_id: override_codes_deadline_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-D
+    realization_id: SL-3A-D-R2
   relevance:
     entity_ids: []
     priority: 0
@@ -1435,6 +1536,8 @@ knowledge:
     equals: true
   - fact_id: uprising_prepared
     equals: true
+  - fact_id: military_override_codes_available
+    equals: true
   establishes:
   - op: assert
     fact_id: detention_uprising_started
@@ -1447,7 +1550,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3a_c_r2
-  statement: 'With the override codes about to expire under Charles''s new authority, Michelle launches the prepared uprising rather than wait.'
+  statement: 'With the emergency-gate authorization about to expire under Charles''s new authority, Michelle launches the prepared uprising rather than wait.'
   entity_ids: []
   aliases:
   - detention uprising started
@@ -1461,6 +1564,8 @@ knowledge:
   - fact_id: michelle_reached
     equals: true
   - fact_id: uprising_prepared
+    equals: true
+  - fact_id: military_override_codes_available
     equals: true
   establishes:
   - op: assert
@@ -1477,7 +1582,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_a_r1
-  statement: 'Kristin floods corridors, cuts unrelated power, and creates structural alarms until JANUS must yield to human operators.'
+  statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
   entity_ids: []
   aliases:
   - human security control
@@ -1521,12 +1626,11 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_b_r1
-  statement: 'Rebecca offers every detention-site location, then learns Charles has locked her in and marked her for death.'
+  statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
   entity_ids: []
   aliases:
   - detention locations offer known
   - detention locations secured
-  - charles abandoned rebecca
   audience:
     kind: public
     player_visible: true
@@ -1540,16 +1644,10 @@ knowledge:
     fact_id: rebecca_experiment_approval_confronted
     value: true
   - op: assert
-    fact_id: facility_destruction_threat
-    value: true
-  - op: assert
     fact_id: detention_locations_offer_known
     value: true
   - op: assert
     fact_id: detention_locations_secured
-    value: true
-  - op: assert
-    fact_id: charles_abandoned_rebecca
     value: true
   source:
     kind: storylet_realization
@@ -1559,10 +1657,9 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_b_r2
-  statement: 'Michelle confronts Rebecca over the experiments as Charles abandons her, and her archive becomes the prisoners’ lifeline.'
+  statement: 'Rebecca offers the detention-site locations before the confrontation is complete, and Michelle secures them without treating Rebecca as trustworthy.'
   entity_ids: []
   aliases:
-  - charles abandoned rebecca
   - detention locations offer known
   - detention locations secured
   audience:
@@ -1575,9 +1672,6 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: charles_abandoned_rebecca
-    value: true
-  - op: assert
     fact_id: detention_locations_offer_known
     value: true
   - op: assert
@@ -1587,6 +1681,66 @@ knowledge:
     kind: storylet_realization
     storylet_id: SL-3B-B
     realization_id: SL-3B-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_d_r1
+  statement: 'Charles locks down Rebecca''s office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.'
+  entity_ids: []
+  aliases:
+  - charles abandoned rebecca
+  - real deluge
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires:
+  - fact_id: human_security_control
+    equals: true
+  - fact_id: detention_locations_secured
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: charles_abandoned_rebecca
+    value: true
+  - op: assert
+    fact_id: facility_destruction_threat
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-D
+    realization_id: SL-3B-D-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_3b_d_r2
+  statement: 'A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.'
+  entity_ids: []
+  aliases:
+  - charles abandoned rebecca
+  - real deluge
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3B
+  requires:
+  - fact_id: human_security_control
+    equals: true
+  - fact_id: detention_locations_secured
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: charles_abandoned_rebecca
+    value: true
+  - op: assert
+    fact_id: facility_destruction_threat
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3B-D
+    realization_id: SL-3B-D-R2
   relevance:
     entity_ids: []
     priority: 0
@@ -1623,7 +1777,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3b_c_r2
-  statement: 'Brandon holds the relay open against the surge and security forces so Kristin and Michelle can begin the broadcast.'
+  statement: 'Brandon holds the relay open against the security lockdown so Kristin and Michelle can begin the broadcast.'
   entity_ids: []
   aliases:
   - relay open
@@ -1784,7 +1938,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_c_r1
-  statement: 'Kristin keeps emergency supports working as Michelle leads captives through the maintenance tunnels toward the surface.'
+  statement: 'Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.'
   entity_ids: []
   aliases:
   - evacuation route open
@@ -1814,7 +1968,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_3c_c_r2
-  statement: 'Brandon’s final override opens the surface gates as the relay chamber is destroyed and the facility collapses around them.'
+  statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
   entity_ids: []
   aliases:
   - captives reaching surface

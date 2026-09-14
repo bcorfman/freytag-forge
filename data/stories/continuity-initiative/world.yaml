@@ -2,7 +2,7 @@ story_id: continuity_initiative
 protagonist_id: kristin
 locations:
 - id: mcgehee_home
-  name: Shelly's house
+  name: Kristin and Michelle's shared house
 - id: los_angeles_park
   name: Los Angeles park
 - id: regional_facility
@@ -59,6 +59,13 @@ npcs:
   name: Rebecca Jenkins
   # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
   narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
+- id: senior_official
+  name: Imprisoned senior official
+  aliases:
+  - senior official
+  - imprisoned official
+  - government prisoner
+  narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
 items:
 - id: memory_card
   name: Michelle's memory card
@@ -169,6 +176,15 @@ facts:
 - prisoner_records_corrupted
 - rebecca_experiment_approval_confronted
 - rebecca_office_required_for_broadcast
+- home_search_window_narrowing
+- park_lockdown_spreading
+- terminal_sweep_closing
+- inspector_cover_under_review
+- archive_security_sweep
+- purge_transfers_underway
+- detention_lockdown_spreading
+- relay_power_failing
+- escape_routes_collapsing
 protected_knowledge:
 - janus_selection_system
 - brandon_history

@@ -133,19 +133,19 @@ deliveries:
   source_entity_id: michelle
   must_convey:
   - [Michelle's coded messages, Michelle's private notes, Michelle's resistance, Michelle's coded notes, her private messages, the resistance notes]
-  - [organized prisoners, altering classifications, preparing an uprising, prisoners organized, reclassified prisoners, planned an uprising]
+  - [altering classifications, delaying transfers, sabotaging the facility, altered records, delayed transfers, resistance link]
   fallback_text: >-
-    Michelle's coded messages and private notes show that she has organized prisoners inside the facility. Her resistance
-    is altering classifications and preparing an uprising.
+    Michelle's coded messages and private notes show active sabotage and a small, hidden resistance link inside the
+    facility. It is altering classifications and delaying transfers.
   cue_text: The medical terminal shows corrupted prisoner files and delayed transfer notices.
 - fact_id: purge_clock_started
   scene_id: 2C
   source_kind: broadcast
   must_convey:
   - [Charles's purge order, Charles orders, command orders, Charles's order, the purge command, Charles's command]
-  - [purge begins within hours, purge deadline, captives face destruction, destruction is due within hours, hours remain before destruction, the purge is imminent]
+  - [purge begins within hours, purge deadline, captives face killing, killing is due within hours, hours remain before the purge, the purge is imminent]
   fallback_text: >-
-    Charles's purge order moves the transfers and destruction onto a deadline. Command orders make clear that the purge
+    Charles's purge order moves the transfers and killings onto a deadline. Command orders make clear that the purge
     begins within hours, before the captives can be safely moved.
 - fact_id: evidence_ready_to_transmit
   scene_id: 2C
@@ -158,6 +158,21 @@ deliveries:
     Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
     transmit, but sending proof will reveal their position.
   cue_text: Copied records remain open on Kristin's terminal beside the broadcast controls.
+- fact_id: rebecca_office_required_for_broadcast
+  scene_id: 2C
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle's encrypted message, Michelle's coded message, maintenance message, Michelle's note]
+  - [maintenance access route, maintenance path, local access route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
+  - [open the detention cells, open the cells, release the prisoners, open detention blocks]
+  - [broadcast the evidence, transmit the evidence, send the evidence, broadcast proof]
+  fallback_text: >-
+    Michelle's encrypted maintenance message marks a maintenance access route into her partly unsecured holding block
+    and identifies Rebecca's secured office as the manual point that can broadcast the evidence and open the detention
+    cells in the sealed sectors. Reaching the office before the purge closes the route will be dangerous.
+  cue_text: A maintenance report repeats a route marker that Michelle used in her private notes.
 - fact_id: michelle_reached
   scene_id: 3A
   source_kind: observation
@@ -169,6 +184,19 @@ deliveries:
     Kristin reaches Michelle among the holding blocks in the detention sector. Their reunion is brief, but Michelle is
     alive and ready to direct the rescue.
   cue_text: The detention block opens onto rows of captives. A stolen radio crackles nearby.
+- fact_id: military_override_codes_available
+  scene_id: 3A
+  source_kind: npc
+  source_entity_id: senior_official
+  must_convey:
+  - [framed official, senior official, imprisoned official, government prisoner]
+  - [emergency surface gates, surface gates, emergency gates]
+  - [authorization code, gate authorization, one-use authorization, override code]
+  - [expires, deadline, new authority, time limit]
+  fallback_text: >-
+    The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates. It will
+    expire when Charles activates his new authority, so it creates a narrow escape window rather than a solution.
+  cue_text: A prisoner with an official access seal watches the gate-status panel cycle toward expiry.
 - fact_id: detention_uprising_started
   scene_id: 3A
   source_kind: message
@@ -201,7 +229,7 @@ deliveries:
   fallback_text: >-
     Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control
     replaces the system's predictions in the corridors.
-  cue_text: Structural alarms flash while doors open and close in different parts of the facility.
+  cue_text: Water-pressure warnings flash while doors open and close in empty service corridors.
 - fact_id: charles_abandoned_rebecca
   scene_id: 3B
   source_kind: message
@@ -232,6 +260,6 @@ deliveries:
   - [Brandon's confession, Brandon admits, Brandon transmits, Brandon's admission, Brandon confesses, Brandon sends his confession]
   - [helped create JANUS, role in creating JANUS, authenticate Michelle's evidence, helped build the AI, JANUS development role, his part in JANUS]
   fallback_text: >-
-    Brandon transmits a confession before the electrical surge takes the relay. He admits his role in creating JANUS,
+    Brandon transmits a confession before security can lock down the relay chamber. He admits his role in creating JANUS,
     and the statement helps authenticate Michelle's evidence.
   cue_text: A voice channel marked Brandon is queued beside the broadcast controls.
