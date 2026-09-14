@@ -1339,7 +1339,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 4
-      target_turn: 6
+      target_turn: 7
       latest_turn: 7
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Michelle’s

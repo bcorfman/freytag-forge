@@ -3,28 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-import storygame.personas as personas_module
+from storygame.personas import PERSONAS, run_persona
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 SCENE_IDS = [scene.metadata.scene_id for scene in PACKAGE.scenes]
 WINDOWS = {window.scene_id: window for window in PACKAGE.pacing.scenes}
-PERSONA_TURN_CAP = sum(window.handoff_after_turns for window in PACKAGE.pacing.scenes)
-PERSONAS = personas_module.PERSONAS
-run_persona = personas_module.run_persona
-
-
-@pytest.fixture(scope="module", autouse=True)
-def authored_persona_turn_cap():
-    original_cap = personas_module._TURN_CAP
-    personas_module._TURN_CAP = PERSONA_TURN_CAP
-    yield
-    personas_module._TURN_CAP = original_cap
 
 
 @pytest.fixture(scope="module")
@@ -79,12 +70,16 @@ def test_persona_summary_is_json_serializable(name: str, summaries: dict[str, di
 
 def test_persona_cli_writes_json(tmp_path: Path) -> None:
     output = tmp_path / "persona-summary.json"
-    original_argv = sys.argv
-    sys.argv = ["storygame.personas", "--out", str(output)]
-    try:
-        personas_module.main()
-    finally:
-        sys.argv = original_argv
+    env = {**os.environ, "PYTHONPATH": str(Path.cwd()), "TMPDIR": "/tmp"}
+    result = subprocess.run(
+        [sys.executable, "-m", "storygame.personas", "--out", str(output)],
+        cwd=Path.cwd(),
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stderr == ""
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == set(PERSONAS)
     assert all(summary["resolution_complete"] for summary in payload.values())

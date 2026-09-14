@@ -24,7 +24,10 @@ PERSONAS = {
 }
 
 _RESOLUTION_FACT = "resolution_complete"
-_TURN_CAP = 80
+
+
+def _turn_cap(package: StoryPackage) -> int:
+    return sum(window.handoff_after_turns for window in package.pacing.scenes) + len(package.pacing.scenes)
 
 
 class _ScriptedProvider:
@@ -218,7 +221,7 @@ def _run(
     rows = {scene.metadata.scene_id: _scene_row(scene.metadata.scene_id) for scene in package.scenes}
     rejected_turns: list[int] = []
 
-    for _ in range(_TURN_CAP):
+    for _ in range(_turn_cap(package)):
         if _resolution_complete(state):
             break
         engine._activate_pacing()

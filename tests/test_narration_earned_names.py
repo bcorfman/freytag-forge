@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from storygame.personas import _TURN_CAP, PERSONAS, _legacy_package, _ScriptedProvider, _select_thorough
+from storygame.personas import PERSONAS, _legacy_package, _ScriptedProvider, _select_thorough, _turn_cap
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -23,7 +23,7 @@ def _seeded_3b() -> RuntimeState:
     provider = _ScriptedProvider(persona_package, state)
     engine = RuntimeEngine(state, provider)
 
-    for _ in range(_TURN_CAP):
+    for _ in range(_turn_cap(persona_package)):
         if state.current_scene_id == "3B":
             assert state.package is PACKAGE
             return state

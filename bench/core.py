@@ -310,11 +310,11 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
         return package_and_state(variation, scene_id)
 
     from storygame.personas import (
-        _TURN_CAP,
         PERSONAS,
         _legacy_package,
         _ScriptedProvider,
         _select_thorough,
+        _turn_cap,
     )
 
     package = load_story_package(Path(variation["_package_path"]))
@@ -329,9 +329,10 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
     # rendering the first storylet reveal. Its IDs match the effective package;
     # the runtime state stays on the real package so overlays remain in force.
     persona_package = _legacy_package(package)
+    turn_cap = _turn_cap(persona_package)
     provider = _ScriptedProvider(persona_package, state)
     engine = RuntimeEngine(state, provider)
-    for _ in range(_TURN_CAP):
+    for _ in range(turn_cap):
         if state.current_scene_id == scene_id:
             return package, state
         engine._activate_pacing()
@@ -346,7 +347,7 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
         if state.current_scene_id == scene_id:
             return package, state
 
-    raise RuntimeError(f"scene {scene_id} was not reached within {_TURN_CAP} thorough seeding turns")
+    raise RuntimeError(f"scene {scene_id} was not reached within {turn_cap} thorough seeding turns")
 
 
 def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, Any]:

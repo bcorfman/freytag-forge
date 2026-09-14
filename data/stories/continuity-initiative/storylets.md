@@ -822,7 +822,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 4`
-- target: `turn 6`
+- target: `turn 7`
 - latest: `turn 7`
 
 ---

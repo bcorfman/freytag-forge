@@ -92,17 +92,15 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    for player_input in (
-        "Search the kitchen.",
-        "Inspect the back door.",
-        "Examine the workstation.",
-        "Trace the patrol marker.",
-    ):
-        engine.turn(player_input)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    turn_count = event.at_turn
+    # These are deliberate non-events: advance the declared pressure clock without player action.
+    for turn_index in range(turn_count):
+        engine.turn("Wait." if turn_index % 2 == 0 else "Keep waiting.")
 
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
     assert "pressure_1a" in state.fired_event_ids
-    assert Fact(predicate="story_elapsed_seconds", subject="story", value="240") in state.facts.asserted
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value=str(turn_count * 60)) in state.facts.asserted
 
 
 def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() -> None:

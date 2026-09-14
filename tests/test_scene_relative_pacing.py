@@ -128,7 +128,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     for scene_id, window in windows.items():
         storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
         targets = [storylet.target_turn for storylet in storylets]
-        assert targets == sorted(targets)
+        assert targets == sorted(set(targets))
         assert all(
             storylet.earliest_turn <= storylet.target_turn <= window.handoff_after_turns for storylet in storylets
         )
