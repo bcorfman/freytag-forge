@@ -100,16 +100,28 @@ class NarrationSafetyValidator:
             for term in group
             if len(term.split()) > 1
         }
-        handoff_committed_ids = {
+        earned_ids = {
             item.id
             for item in state.package.knowledge.knowledge
             if KnowledgeProjector._established(item, candidate_state) and KnowledgeProjector._visible_to(item, "player")
         }
-        handoff_text = " ".join(
-            delivery.fallback_text
+        earned_entity_ids = {
+            entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
+        }
+        earned_protected_terms = {
+            form
+            for form in indexes.protected_terms
+            if any(
+                self._contains(indexes.by_id[knowledge_id].statement.casefold(), form) for knowledge_id in earned_ids
+            )
+        }
+        staged_handoff_deliveries = tuple(
+            delivery
             for delivery in state.package.deliveries
             if delivery.fact_id in candidate_state.staged_handoff_fact_ids
-        ).casefold()
+            and delivery.scene_id == candidate_state.current_scene_id
+        )
+        handoff_text = " ".join(delivery.fallback_text for delivery in staged_handoff_deliveries).casefold()
         projected_beat_text = self._projected_beat_text(state)
 
         for segment in segments:
@@ -152,7 +164,7 @@ class NarrationSafetyValidator:
                     for grounding_id in grounding
                 )
                 if (
-                    not entity_set & allowed_entities
+                    not entity_set & (allowed_entities | earned_entity_ids)
                     and not statement_covers_entity
                     and not self._contains(handoff_text, form)
                 ):
@@ -164,8 +176,10 @@ class NarrationSafetyValidator:
                 if not self._contains(text, form):
                     continue
                 knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
-                if any(self._contains(handoff_form, form) for handoff_form in handoff_terms) or (
-                    candidate_state.staged_handoff_fact_ids and knowledge_ids & handoff_committed_ids
+                if (
+                    self._contains(handoff_text, form)
+                    or any(self._contains(handoff_form, form) for handoff_form in handoff_terms)
+                    or knowledge_ids & earned_ids
                 ):
                     continue
                 statement_covers_term = any(
@@ -196,7 +210,13 @@ class NarrationSafetyValidator:
                         and self._contains(indexes.by_id[grounding_id].statement.casefold(), form)
                         for grounding_id in grounding
                     )
-                    if (not knowledge_ids or not knowledge_ids & grounding) and not statement_covers_term:
+                    if (
+                        (not knowledge_ids or not knowledge_ids & grounding)
+                        and not statement_covers_term
+                        and not self._contains(handoff_text, form)
+                        and not knowledge_ids & earned_ids
+                        and form not in earned_protected_terms
+                    ):
                         raise ProposalValidationError(
                             f"narration mentions protected knowledge '{form}'",
                             code="protected_narration_leak",

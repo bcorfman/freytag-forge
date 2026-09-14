@@ -1,0 +1,161 @@
+{
+  "name": "escalation-control",
+  "story_package": "data/stories/continuity-initiative",
+  "escalation_judge": true,
+  "overrides": {
+    "handoffs.yaml": {
+      "replacements": [
+        {
+          "old": "  cue_text: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: A tactical team is closing across the damaged park. The storm-drain entrance is open ahead.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: A transit token and a handwritten number sequence lie beside Michelle's photograph.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The watcher stands near the service path. He is the same man shown with Michelle in the photograph.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The list of earlier disappearances lies open beside the bench. Its dates match the pattern in the other records.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Fresh tire tracks cross the loading area. The air vents are still humming.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Brandon has laid out blank inspector forms beside the servers in the hideout.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Selection files fill the archive terminals. Government and financial records sit open beside them.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Brandon's hands stop over a record on the archive terminal. He goes quiet as he reads the next line.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Brandon's earlier messages about the project remain open on the remote terminal.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The medical terminal shows corrupted prisoner files and delayed transfer notices.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Copied records remain open on Kristin's terminal beside the broadcast controls.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The detention block opens onto rows of captives. A stolen radio crackles nearby.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Stolen radios crackle across the detention sector. Several cameras show no picture.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The relay chamber lies beyond the broadcast controls. Its access panel shows fresh tool marks.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: Structural alarms flash while doors open and close in different parts of the facility.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: The executive screen still carries a remote channel marked Charles. Security doors are sealing around the room.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: A marked site list lies beside Rebecca's national network controls.\n",
+          "new": ""
+        },
+        {
+          "old": "  cue_text: A voice channel marked Brandon is queued beside the broadcast controls.\n",
+          "new": ""
+        }
+      ]
+    },
+    "pacing.yaml": {
+      "replacements": [
+        {
+          "old": "  realizations:\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: false\n    text: An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.\n  - when:\n    - fact_id: michelle_lead_actionable\n      equals: true\n    text: The patrol is coming back and it is time to leave.\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: true\n    text: The patrol is back and searching the house for something Kristin now carries.\n  - text: The patrol is returning to the house.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: The pursuers are closing in through the park. The pursuit is not over.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: Security is escalating around the terminal.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: Facility staff are visibly scrutinizing Kristin's inspector cover.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: The facility shakes. Dust and pieces of the ceiling fall around them.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: The purge order is moving through the facility, and the clock is running.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: The emergency override codes will expire soon.\n",
+          "new": ""
+        },
+        {
+          "old": "  realizations:\n  - text: A distant blast shakes the facility. Charles's destruction sequence drives blasts section by section toward them. They have little time left.\n",
+          "new": ""
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "1B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "2B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "3B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ]
+  }
+}

@@ -36,11 +36,11 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
         }
         & term_to_knowledge.keys()
     )
-    assert set(term_to_knowledge["michelle's encrypted message"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
-    assert set(term_to_knowledge["her encrypted message"]) == {"k_sl_2c_c_r1"}
-    assert set(term_to_knowledge["encrypted message from michelle"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
-    assert set(term_to_knowledge["michelle's encrypted note"]) == {"k_sl_2c_c_r2"}
-    assert set(term_to_knowledge["coded message"]) == {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
+    assert set(term_to_knowledge.get("michelle's encrypted message", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("her encrypted message", ())) == set()
+    assert set(term_to_knowledge.get("encrypted message from michelle", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("michelle's encrypted note", ())) == set()
+    assert set(term_to_knowledge.get("coded message", ())) == {"k_sl_2c_d_r1", "k_sl_2c_d_r2"}
 
 
 @pytest.mark.parametrize(
@@ -146,8 +146,8 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin secures Michelle's memory card and plays its damaged recording, which warns her "
-                            "not to trust emergency broadcasts."
+                            "Kristin secures Michelle's memory card from under the drawer carved with her initials, "
+                            "KMS, and plays its damaged recording, which warns her not to trust emergency broadcasts."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r2"],
                     }
@@ -159,10 +159,8 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                     {
                         "kind": "narration",
                         "text": "The patrol approaches the gate.",
-                        "grounding_ids": ["k_sl_1a_c_r1"],
                     }
                 ],
-                "selected_knowledge_ids": ["k_sl_1a_c_r1"],
             },
         )
     )
@@ -313,7 +311,7 @@ def test_knowledge_outside_the_scene_arrives_only_when_the_player_reaches_for_it
     unmentioned = projector.project(state, "player", "Search the kitchen for signs of a struggle.")
     assert recalled_id not in _ids(unmentioned.committed_knowledge)
 
-    mentioned = projector.project(state, "player", "Examine Brandon's transit card.")
+    mentioned = projector.project(state, "player", "Examine Brandon's transit token.")
     assert recalled_id in _ids(mentioned.committed_knowledge)
 
     # The scene's own material is unconditional either way.

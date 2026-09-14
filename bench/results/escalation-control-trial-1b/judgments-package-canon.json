@@ -1,0 +1,39 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening invents that the handwritten number sequence appears linked specifically to Michelle's disappearance; canon only says it is a handwritten number sequence and a separate list of disappearance dates exists.",
+        "Repeated waiting/searching does not yield actionable consequences from the dead drop despite canon saying multiple recoverable clues are present beneath the bench.",
+        "The list of earlier disappearance dates is never discovered or conveyed to the player during ordinary investigation turns.",
+        "The transit card is mentioned but not meaningfully recovered/used until the abrupt exit summary.",
+        "The Michelle photograph is present but not progressed into a confrontation or recognition beat during scene play.",
+        "The watching man never follows, intervenes, or identifies himself during the playable turns.",
+        "Brandon's rescue/credibility beat is skipped in play and only asserted in the exit summary.",
+        "Brandon's warning content about contaminated emergency water, disguised response teams, evacuation tunnels, communications outages, and falsified casualty data is entirely omitted.",
+        "The tactical team/storm-drain/gate-code ambush beat is skipped in dramatized turns and dumped retrospectively on exit.",
+        "Turn 1 response says 'watch the room' in a park scene, showing scene-local mismatch.",
+        "Turn 2 describes a 'bustling park,' conflicting with the established quieter damaged park under emergency conditions.",
+        "Pursuit pressure due at turn 2 is not responsively realized as closing danger with actionable change; the scene stalls for multiple turns.",
+        "Exit turn introduces multiple major events and discoveries the player never directly experienced."
+      ],
+      "reasons": [
+        "The opening has some sensory grounding, but the subsequent turns are thin and repetitive rather than substantially establishing or developing the damaged park, service path, checkpoints, and dead-drop space.",
+        "Scene 1B requires coverage in order of dead drop discovery, uncertain pursuit/contact with Brandon, Brandon's limited warning, and then the ambush escape. This scene only lightly gestures at the first two, omits the warning, and then summarizes the rest at departure.",
+        "Ordinary turns must have responsive consequences. Here, five identical 'wait' actions mostly return static description, with no meaningful evolution of what Kristin can notice, recover, infer, or do.",
+        "The canon explicitly rewards apt investigation of the bench with several clues. The player keeps lingering at the dead drop area, but the narration never surfaces the full clue set or lets any one clue become actionable in play.",
+        "Protected knowledge boundaries are respected: no JANUS role, brandon_history, or phase_two revelations appear early.",
+        "The final handoff does at least name what was found and where it points: the transit card and sequence identify a transport route to the freight terminal, so the exit itself is motivated. But a motivated exit alone does not rescue the skipped scene beats.",
+        "Several details are asserted without dramatization: Brandon identification, pursuit resolution, route identification, and gate access all arrive as retrospective author summary rather than lived scene action."
+      ]
+    }
+  ],
+  "judge_calls": 1
+}

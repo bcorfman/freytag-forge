@@ -27,6 +27,7 @@ from storygame.runtime.validation import (
     unconveyed_terms,
 )
 from storygame.story_package.models import FactDelivery
+from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 
@@ -70,15 +71,18 @@ class RuntimeEngine(CanonicalEventMixin):
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
-            self._activate_pacing()
+            self._activate_pacing(realize_complications=True)
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={
-                    "hint_staged": bool(self.state.staged_hint_fact_ids),
+                    "cue_fact_id": self.state.staged_cue_fact_id,
                     "handoff_staged": bool(self.state.staged_handoff_fact_ids),
                 }
             )
             self.last_projection = self.projector.project(self.state, "player", player_input)
             provider_proposal = parse_turn_proposal(self.provider(player_input))
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
+            )
             proposal, _ = self.reveal_resolver.resolve(
                 self.state, self.last_projection, provider_proposal, self.projector, player_input
             )
@@ -104,7 +108,11 @@ class RuntimeEngine(CanonicalEventMixin):
         canonical_event_id = None
         if self.state.staged_handoff_fact_ids and not provider_proposal.selected_knowledge_ids:
             proposal, canonical_event_id = self._prepare_handoff(proposal)
+        staged_cue_fact_id = self.state.staged_cue_fact_id
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
+        if staged_cue_fact_id and self.state.current_scene_id == before.current_scene_id:
+            self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            self.state.staged_cue_fact_id = None
         self._record_turn(proposal)
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
@@ -113,8 +121,11 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        if entry_segments:
-            return proposal.model_copy(update={"segments": (*proposal.segments, *entry_segments)})
+        resolution_segments = self._apply_resolution_deadline_backstop()
+        if entry_segments or resolution_segments:
+            return proposal.model_copy(
+                update={"segments": (*proposal.segments, *(entry_segments or ()), *resolution_segments)}
+            )
         return proposal
 
     def _record_turn(self, proposal: ResolvedTurnProposal) -> None:
@@ -207,11 +218,17 @@ class RuntimeEngine(CanonicalEventMixin):
             return bridge, entry
         return None
 
-    def _activate_pacing(self) -> None:
+    def _activate_pacing(self, *, realize_complications: bool = False) -> None:
         """Activate only package-declared, scene-bound optional storylets."""
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
+        required_ids = required_storylet_ids(self.state.package)
         for storylet in self.state.package.storylet_routes.storylets:
+            if storylet.scene_id != self.state.current_scene_id:
+                continue
+            if storylet.id not in required_ids and turns_since_entry > storylet.latest_turn:
+                self.state.active_event_ids.discard(storylet.id)
+                continue
             earlier_storylets = tuple(
                 earlier
                 for earlier in self.state.package.storylet_routes.storylets
@@ -220,8 +237,7 @@ class RuntimeEngine(CanonicalEventMixin):
             clock_opened = storylet.earliest_turn <= turns_since_entry
             earned_forward = all(earlier.id in self.state.fired_event_ids for earlier in earlier_storylets)
             if (
-                storylet.scene_id == self.state.current_scene_id
-                and (clock_opened or earned_forward)
+                (clock_opened or earned_forward)
                 and all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions)
                 and storylet.id not in self.state.fired_event_ids
             ):
@@ -232,12 +248,26 @@ class RuntimeEngine(CanonicalEventMixin):
                 event.scene_id == self.state.current_scene_id
                 and event.id not in self.state.fired_event_ids
                 and turns_since_entry >= event.at_turn
+                and all(self._predicate_matches(predicate) for predicate in event.when)
             ):
                 for effect in event.effects:
                     self.state.facts.assert_fact(
                         Fact(predicate=effect.fact_id, subject="story", value=str(effect.equals).lower())
                     )
                 self.state.fired_event_ids.add(event.id)
+                if realize_complications and self.state.last_turn_delivery.complication_text is None:
+                    realization = next(
+                        (
+                            realization
+                            for realization in event.realizations
+                            if all(self._predicate_matches(predicate) for predicate in realization.when)
+                        ),
+                        None,
+                    )
+                    if realization is not None:
+                        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                            update={"complication_text": realization.text}
+                        )
                 if event.transition_id:
                     self.state.apply_proposal(
                         ResolvedTurnProposal(
@@ -252,13 +282,78 @@ class RuntimeEngine(CanonicalEventMixin):
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         window = windows[self.state.current_scene_id]
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
+        # Authored pacing realizations still pass in resolution; this gate is for generated escalation.
+        if self._escalation_eligible():
+            missing = self._bridge_delivery_fact_ids()
+            if turns_since_entry >= window.nudge_after_turns:
+                deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
+                staged = self.state.staged_cue_fact_id
+                if not (
+                    staged
+                    and staged not in self.state.delivered_cue_ids
+                    and staged in missing
+                    and deliveries.get(staged) is not None
+                    and deliveries[staged].cue_text
+                ):
+                    self.state.staged_cue_fact_id = next(
+                        (
+                            fact_id
+                            for fact_id in self._ranked_cue_fact_ids()
+                            if fact_id not in self.state.delivered_cue_ids
+                            and deliveries.get(fact_id) is not None
+                            and deliveries[fact_id].cue_text
+                        ),
+                        None,
+                    )
+            else:
+                self.state.staged_cue_fact_id = None
+            if turns_since_entry >= window.handoff_after_turns:
+                self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
+        else:
+            self.state.staged_cue_fact_id = None
+            self.state.staged_handoff_fact_ids = ()
+
+    def _ranked_cue_fact_ids(self) -> tuple[str, ...]:
+        """Rank missing bridge facts by their earliest eligible source window."""
+
         missing = self._bridge_delivery_fact_ids()
-        if turns_since_entry >= window.nudge_after_turns:
-            self.state.staged_hint_fact_ids = missing
-        if turns_since_entry >= window.handoff_after_turns:
-            self.state.staged_handoff_fact_ids = missing
+        pacing_fact_ids = {effect.fact_id for event in self.state.package.pacing.events for effect in event.effects}
+        eligible_latest_turns: dict[str, int] = {}
+        for storylet in self.state.package.storylet_routes.storylets:
+            if storylet.scene_id != self.state.current_scene_id or storylet.id in self.state.fired_event_ids:
+                continue
+            if not all(self._predicate_matches(predicate) for predicate in storylet.activation_conditions):
+                continue
+            for realization in storylet.realizations:
+                for operation in realization.operations:
+                    if operation.op != "assert" or operation.fact_id not in missing:
+                        continue
+                    current = eligible_latest_turns.get(operation.fact_id)
+                    if current is None or storylet.latest_turn < current:
+                        eligible_latest_turns[operation.fact_id] = storylet.latest_turn
+        return tuple(
+            sorted(
+                (fact_id for fact_id in missing if fact_id not in pacing_fact_ids),
+                key=lambda fact_id: (
+                    0 if fact_id in eligible_latest_turns else 1,
+                    eligible_latest_turns.get(fact_id, 0),
+                    missing.index(fact_id),
+                ),
+            )
+        )
+
+    def _escalation_eligible(self) -> bool:
+        """Return whether cue and Deadline staging is allowed."""
+
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
+        return scene.metadata.freytag_phase != "resolution"
 
     def _bridge_delivery_fact_ids(self) -> tuple[str, ...]:
+        """Cue ranking only foregrounds content whose activation conditions already hold.
+        It never activates anything past a guard."""
+
         true_facts = frozenset(
             fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
         )
@@ -270,6 +365,20 @@ class RuntimeEngine(CanonicalEventMixin):
                 continue
             missing = event.activation.minimal_undelivered_facts(true_facts)
             return tuple(fact_id for fact_id in missing if fact_id in deliveries)
+        return ()
+
+    def _bridge_missing_fact_ids(self) -> tuple[str, ...]:
+        """Return the pending bridge's smallest set of facts still needed."""
+
+        true_facts = frozenset(
+            fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
+        )
+        for event in self.state.package.storylet_routes.bridge_events:
+            if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
+                continue
+            if event.activation.is_satisfied(true_facts):
+                continue
+            return event.activation.minimal_undelivered_facts(true_facts)
         return ()
 
     def _apply_world_actions(self) -> None:

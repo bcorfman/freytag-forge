@@ -31,7 +31,7 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    with pytest.raises(ProposalValidationError, match="memory card"):
+    with pytest.raises(ProposalValidationError, match="under the drawer"):
         engine.turn("Play Michelle's damaged recording.")
 
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
@@ -44,8 +44,8 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
     responses = iter(
         (
             _turn(
-                "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
-                "do not trust emergency broadcasts.",
+                "Kristin finds and secures Michelle's memory card under the KMS drawer, then plays its damaged "
+                "recording: do not trust emergency broadcasts.",
                 ["k_sl_1a_b_r2"],
             ),
             _turn(
@@ -74,8 +74,8 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
     engine = RuntimeEngine(
         state,
         lambda _: _turn(
-            "Kristin finds and secures Michelle's hidden memory card, then reads its damaged recording and files; "
-            "the card points to a dead drop at a bench in the park.",
+            "Kristin finds and secures Michelle's memory card under the KMS drawer, then reads its damaged recording "
+            "and files; the card points to a dead drop at a bench in the park.",
             ["k_sl_1a_b_r1"],
         ),
     )
@@ -162,8 +162,8 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
-                            "dead drop at a bench in the park."
+                            "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                            "points to a dead drop at a bench in the park."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r1"],
                     }
@@ -183,7 +183,9 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     assert "SL-1A-B" in state.fired_event_ids
     assert state.current_scene_id == "1A"
 
-    engine.turn("Take the lead and leave the house.")
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    for _ in range(window.min_turns - 1):
+        engine.turn("Search the room for the next concrete lead.")
 
     assert state.current_scene_id == "1B"
 
@@ -198,8 +200,8 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's memory card and damaged recording; the card points to a dead drop "
-                        "at a bench in the park."
+                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                        "points to a dead drop at a bench in the park."
                     ),
                 }
             ],
@@ -235,12 +237,17 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
 
-    engine.turn("Inspect the marked front gate.")
-    engine.turn("Examine the patrol marker on the gate.")
+    for player_input in (
+        "Inspect the marked front gate.",
+        "Examine the patrol marker on the gate.",
+        "Search the front room.",
+        "Trace the patrol route.",
+    ):
+        engine.turn(player_input)
 
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
     assert "pressure_1a" in state.fired_event_ids
-    assert Fact(predicate="story_elapsed_seconds", subject="story", value="120") in state.facts.asserted
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value="240") in state.facts.asserted
 
 
 def test_transition_rejects_lead_and_patrol_without_card_custody() -> None:

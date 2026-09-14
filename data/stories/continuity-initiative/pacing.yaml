@@ -1,66 +1,193 @@
-budget_seconds: 1800
+budget_seconds: 7200
 events:
 - id: pressure_1a
   scene_id: 1A
-  at_turn: 2
+  at_turn: 4
   effects:
   - fact_id: patrol_return_pressure
     equals: true
+  realizations:
+  - when:
+    - fact_id: memory_card_in_kristins_custody
+      equals: false
+    text: An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.
+  - when:
+    - fact_id: michelle_lead_actionable
+      equals: true
+    text: The patrol is coming back and it is time to leave.
+  - when:
+    - fact_id: memory_card_in_kristins_custody
+      equals: true
+    text: The patrol is back and searching the house for something Kristin now carries.
+  - text: The patrol is returning to the house.
+- id: pursuit_1b
+  scene_id: 1B
+  at_turn: 4
+  effects:
+  - fact_id: pursuit_closing_in
+    equals: true
+  realizations:
+  - text: The pursuers are closing in through the park. The pursuit is not over.
+- id: security_1c
+  scene_id: 1C
+  at_turn: 3
+  effects:
+  - fact_id: terminal_security_escalating
+    equals: true
+  realizations:
+  - text: Security is escalating around the terminal.
+- id: scrutiny_2a
+  scene_id: 2A
+  at_turn: 3
+  effects:
+  - fact_id: identity_scrutiny_visible
+    equals: true
+  realizations:
+  - text: Facility staff are visibly scrutinizing Kristin's inspector cover.
+- id: collapse_3c
+  scene_id: 3C
+  at_turn: 4
+  effects:
+  - fact_id: facility_collapse_escalating
+    equals: true
+  realizations:
+  - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.
 - id: purge_2c
   scene_id: 2C
-  at_turn: 2
+  at_turn: 3
   effects:
   - fact_id: purge_clock_started
     equals: true
+  realizations:
+  - text: The purge order is moving through the facility, and the clock is running.
 - id: override_deadline_3a
   scene_id: 3A
-  at_turn: 3
+  at_turn: 9
   effects:
   - fact_id: override_codes_deadline_known
     equals: true
+  realizations:
+  - text: The emergency-gate authorization will expire soon.
 - id: destruction_3b
   scene_id: 3B
-  at_turn: 4
+  at_turn: 9
+  when:
+  - fact_id: charles_abandoned_rebecca
+    equals: true
   effects:
   - fact_id: facility_destruction_threat
     equals: true
+  realizations:
+  - text: Charles has opened the emergency deluge in the outer access level. Water is spreading toward the command routes.
+- id: home_search_narrows_1a
+  scene_id: 1A
+  at_turn: 8
+  effects:
+  - fact_id: home_search_window_narrowing
+    equals: true
+  realizations:
+  - text: The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.
+- id: park_lockdown_1b
+  scene_id: 1B
+  at_turn: 8
+  effects:
+  - fact_id: park_lockdown_spreading
+    equals: true
+  realizations:
+  - text: Emergency teams close the footpaths one by one. The service exits are becoming the only way out of the park.
+- id: terminal_sweep_1c
+  scene_id: 1C
+  at_turn: 7
+  effects:
+  - fact_id: terminal_sweep_closing
+    equals: true
+  realizations:
+  - text: Radios below call for a sweep of the service levels. Guards are beginning to search upward toward the loading docks.
+- id: cover_review_2a
+  scene_id: 2A
+  at_turn: 7
+  effects:
+  - fact_id: inspector_cover_under_review
+    equals: true
+  realizations:
+  - text: A second credential check threatens their inspector cover.
+- id: archive_sweep_2b
+  scene_id: 2B
+  at_turn: 8
+  effects:
+  - fact_id: archive_security_sweep
+    equals: true
+  realizations:
+  - text: An archive audit begins at the far terminals. Access lights change from green to amber as security works closer.
+- id: transfers_2c
+  scene_id: 2C
+  at_turn: 8
+  effects:
+  - fact_id: purge_transfers_underway
+    equals: true
+  realizations:
+  - text: Transfer carts begin moving through the lower levels. The purge is no longer an order on a screen.
+- id: detention_lockdown_3a
+  scene_id: 3A
+  at_turn: 8
+  effects:
+  - fact_id: detention_lockdown_spreading
+    equals: true
+  realizations:
+  - text: Armored teams seal one holding block after another. The uprising is losing routes while it waits.
+- id: relay_power_3b
+  scene_id: 3B
+  at_turn: 9
+  effects:
+  - fact_id: relay_power_failing
+    equals: true
+  realizations:
+  - text: Charles's countermeasures make the relay lights flicker. The open connection will not hold much longer.
+- id: routes_collapse_3c
+  scene_id: 3C
+  at_turn: 10
+  effects:
+  - fact_id: escape_routes_collapsing
+    equals: true
+  realizations:
+  - text: Rising water closes a maintenance passage behind the fleeing captives. The remaining routes are narrowing fast.
 scenes:
 - scene_id: 1A
-  min_turns: 2
-  nudge_after_turns: 4
-  handoff_after_turns: 5
+  min_turns: 8
+  nudge_after_turns: 10
+  handoff_after_turns: 13
 - scene_id: 1B
-  min_turns: 2
-  nudge_after_turns: 3
-  handoff_after_turns: 4
+  min_turns: 8
+  nudge_after_turns: 10
+  handoff_after_turns: 13
 - scene_id: 1C
-  min_turns: 2
-  nudge_after_turns: 3
-  handoff_after_turns: 4
+  min_turns: 7
+  nudge_after_turns: 8
+  handoff_after_turns: 11
 - scene_id: 2A
-  min_turns: 2
-  nudge_after_turns: 3
-  handoff_after_turns: 4
+  min_turns: 7
+  nudge_after_turns: 8
+  handoff_after_turns: 11
 - scene_id: 2B
-  min_turns: 2
-  nudge_after_turns: 3
-  handoff_after_turns: 4
+  min_turns: 8
+  nudge_after_turns: 10
+  handoff_after_turns: 15
 - scene_id: 2C
-  min_turns: 2
-  nudge_after_turns: 3
-  handoff_after_turns: 4
+  min_turns: 8
+  nudge_after_turns: 9
+  handoff_after_turns: 16
 - scene_id: 3A
-  min_turns: 3
-  nudge_after_turns: 4
-  handoff_after_turns: 5
+  min_turns: 9
+  nudge_after_turns: 10
+  handoff_after_turns: 13
 - scene_id: 3B
-  min_turns: 4
-  nudge_after_turns: 4
-  handoff_after_turns: 5
+  min_turns: 9
+  nudge_after_turns: 10
+  handoff_after_turns: 14
 - scene_id: 3C
-  min_turns: 2
-  nudge_after_turns: 4
-  handoff_after_turns: 5
+  min_turns: 10
+  nudge_after_turns: 11
+  handoff_after_turns: 14
 transitions:
 - id: t_1a_1b
   source_scene_id: 1A

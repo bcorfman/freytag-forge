@@ -274,7 +274,7 @@ class CloudflareTurnProvider:
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={
-                "hint_staged": bool(self.last_projection.hinted_deliveries),
+                "cue_fact_id": self.state.staged_cue_fact_id,
                 "handoff_staged": bool(self.last_projection.handoff_deliveries),
             }
         )
@@ -385,7 +385,6 @@ class CloudflareTurnProvider:
         no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
         if not handoff_turn and not candidates:
             selection_rules.append(no_candidate_rule)
-        hinted = self.last_projection.hinted_deliveries if self.last_projection else ()
         handoffs = self.last_projection.handoff_deliveries if self.last_projection else ()
         if handoff_turn:
             handoff_rule = ""
@@ -394,13 +393,21 @@ class CloudflareTurnProvider:
                 "Write each handoff event. Cover each required idea. Answer the player. "
                 "Do not say the player did something they did not do."
             )
-        elif hinted:
-            handoff_rule = (
-                "Hint at the evidence with something a character says, notices, or hears on a radio. "
-                "Do not make it a fact yet."
-            )
         else:
             handoff_rule = ""
+        cue = next(
+            (
+                delivery
+                for delivery in self.state.package.deliveries
+                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
+            ),
+            None,
+        )
+        cue_rule = (
+            f"Show this in the scene, as something {self._protagonist_name()} notices: {cue.cue_text}" if cue else ""
+        )
+        complication_text = self.state.last_turn_delivery.complication_text
+        complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
         default_rules = [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
@@ -434,8 +441,13 @@ class CloudflareTurnProvider:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
+        if cue_rule:
+            rules.append(cue_rule)
+        if complication_rule:
+            rules.append(complication_rule)
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
+        rules.extend(self._setting_fact_rules())
         return rules
 
     def _owner_rules(self) -> list[str]:
@@ -462,6 +474,9 @@ class CloudflareTurnProvider:
             placement_text = placement if isinstance(placement, str) else placement.placement
             rules.append(f"{scene_items[item_id].name} is {placement_text}.")
         return rules
+
+    def _setting_fact_rules(self) -> list[str]:
+        return list(self._current_scene().setting_facts)
 
     def _output_example(self) -> str | None:
         """Resolve the response example, or None when this variation omits it."""
@@ -569,6 +584,7 @@ class CloudflareTurnProvider:
         ]
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
+        rules.extend(self._setting_fact_rules())
         return self._dispatch(
             self._system_prompt(),
             {

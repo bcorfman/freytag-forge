@@ -5,13 +5,24 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.contracts import ResolvedTurnProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState, TurnDelivery
 from storygame.story_package.loader import load_story_package
-from storygame.story_package.models import ActivationRule
+from storygame.story_package.models import (
+    ActivationRule,
+    FactPredicate,
+    PacingEvent,
+    PacingRealization,
+    RouteOperation,
+    RouteRealization,
+    StoryletRoute,
+)
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -79,8 +90,258 @@ def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repea
     assert rule.minimal_undelivered_facts({"mandatory_a"}) == rule.minimal_undelivered_facts({"mandatory_a"})
 
 
+def _synthetic_pacing_package(realizations: tuple[PacingRealization, ...], when: tuple[FactPredicate, ...] = ()):
+    event = PacingEvent(
+        id="synthetic_pressure",
+        scene_id="1A",
+        at_turn=1,
+        effects=(FactPredicate(fact_id="patrol_return_pressure", equals=True),),
+        when=when,
+        realizations=realizations,
+    )
+    pacing = PACKAGE.pacing.model_copy(update={"events": (event,)})
+    return PACKAGE.model_copy(update={"pacing": pacing})
+
+
+def test_pacing_realization_selects_first_matching_entry_and_default_fallback() -> None:
+    realizations = (
+        PacingRealization(
+            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            text="The first pressure is visible.",
+        ),
+        PacingRealization(
+            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            text="The second pressure is visible.",
+        ),
+        PacingRealization(text="The default pressure is visible."),
+    )
+
+    matching_package = _synthetic_pacing_package(realizations)
+    matching_state = RuntimeState.bootstrap(matching_package)
+    matching_state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    RuntimeEngine(
+        matching_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
+    ).turn("Search the kitchen.")
+    assert matching_state.last_turn_delivery.complication_text == "The first pressure is visible."
+
+    fallback_state = RuntimeState.bootstrap(_synthetic_pacing_package(realizations))
+    RuntimeEngine(
+        fallback_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
+    ).turn("Search the kitchen.")
+    assert fallback_state.last_turn_delivery.complication_text == "The default pressure is visible."
+
+
+def test_guarded_pacing_event_waits_for_its_predicates_even_after_at_turn() -> None:
+    package = _synthetic_pacing_package(
+        (PacingRealization(text="The guarded pressure is visible."),),
+        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+    )
+    state = RuntimeState.bootstrap(package)
+    state.turn_index = 2
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" not in state.fired_event_ids
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") not in state.facts.asserted
+    assert state.last_turn_delivery.complication_text is None
+
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" in state.fired_event_ids
+    assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
+    assert state.last_turn_delivery.complication_text == "The guarded pressure is visible."
+
+
+def test_guarded_pacing_event_never_fires_before_at_turn() -> None:
+    package = _synthetic_pacing_package(
+        (PacingRealization(text="The guarded pressure is visible."),),
+        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+    )
+    state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" not in state.fired_event_ids
+    assert state.last_turn_delivery.complication_text is None
+
+    state.turn_index = 1
+    engine._activate_pacing(realize_complications=True)
+
+    assert "synthetic_pressure" in state.fired_event_ids
+
+
+@pytest.mark.parametrize(
+    ("facts", "expected_index"),
+    [
+        ((), 0),
+        ((("memory_card_in_kristins_custody", True),), 2),
+        (
+            (
+                ("memory_card_in_kristins_custody", True),
+                ("michelle_lead_actionable", True),
+            ),
+            1,
+        ),
+    ],
+)
+def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
+    monkeypatch, facts: tuple[tuple[str, bool], ...], expected_index: int
+) -> None:
+    captured: list[str] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured.append(request.data.decode())
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    for fact_id, value in facts:
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value=str(value).lower()))
+    engine = RuntimeEngine(
+        state,
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
+    )
+
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    expected = event.realizations[expected_index].text
+    all_texts = tuple(realization.text for realization in event.realizations)
+    engine.turn("Search the kitchen.")
+    engine.turn("Check the back door.")
+    engine.turn("Inspect the overturned chair.")
+    engine.turn("Trace the patrol marker.")
+    engine.turn("Search the front room.")
+
+    assert all(text not in captured[0] for text in all_texts)
+    assert all(text not in captured[index] for index in (1, 2) for text in all_texts)
+    assert captured[3].count(expected) == 1
+    assert all(text not in captured[3] for text in all_texts if text != expected)
+    assert expected not in captured[4]
+
+
+def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
+
+    for player_input in (
+        "Search the kitchen.",
+        "Check the back door.",
+        "Inspect the overturned chair.",
+        "Trace the patrol marker.",
+    ):
+        engine.turn(player_input)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    assert state.last_turn_delivery.complication_text == event.realizations[1].text
+
+
+def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated(monkeypatch) -> None:
+    captured: list[str] = []
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured.append(request.data.decode())
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Keep moving."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3C")
+    state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase=scene.metadata.freytag_phase)
+    engine = RuntimeEngine(
+        state,
+        CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
+    )
+
+    engine.turn("Keep moving toward the stairs.")
+    engine.turn("Help the captives up the stairs.")
+    engine.turn("Open the nearest flood door.")
+    engine.turn("Guide the captives toward the relay.")
+
+    event = next(event for event in PACKAGE.pacing.events if event.id == "collapse_3c")
+    assert event.realizations[0].text in captured[3]
+
+
+def test_unfired_pacing_event_does_not_cross_a_scene_exit() -> None:
+    event = PacingEvent(
+        id="late_pressure",
+        scene_id="1A",
+        at_turn=2,
+        effects=(FactPredicate(fact_id="patrol_return_pressure", equals=True),),
+        realizations=(PacingRealization(text="A late pressure appears."),),
+    )
+    package = PACKAGE.model_copy(update={"pacing": PACKAGE.pacing.model_copy(update={"events": (event,)})})
+    state = RuntimeState.bootstrap(package)
+    state.active_event_ids.add("SL-1A-A")
+    state.apply_proposal(
+        ResolvedTurnProposal(
+            segments=({"kind": "narration", "text": "Leave the house."},),
+            transition={"transition_id": "t_1a_1b"},
+        )
+    )
+    RuntimeEngine(state, lambda _input: {"segments": []})._activate_pacing(realize_complications=True)
+
+    assert "SL-1A-A" not in state.active_event_ids
+    assert "late_pressure" not in state.fired_event_ids
+    assert state.last_turn_delivery.complication_text is None
+
+
+def test_cue_ranking_uses_eligible_source_windows_and_activation_conditions() -> None:
+    def source(
+        route_id: str, fact_id: str, latest_turn: int, conditions: tuple[FactPredicate, ...] = ()
+    ) -> StoryletRoute:
+        return StoryletRoute(
+            id=route_id,
+            scene_id="1B",
+            title=f"Source for {fact_id}",
+            activation_conditions=conditions,
+            earliest_turn=0,
+            target_turn=1,
+            latest_turn=latest_turn,
+            pressure_role="cue source",
+            realizations=(
+                RouteRealization(
+                    id="R1",
+                    dramatic_intent="show the source",
+                    operations=(RouteOperation(op="assert", fact_id=fact_id, value=True),),
+                ),
+            ),
+        )
+
+    routes = PACKAGE.storylet_routes.model_copy(
+        update={
+            "storylets": (
+                source("SL-1B-A", "transport_route_identified", 7),
+                source(
+                    "SL-1B-B",
+                    "brandon_identified",
+                    3,
+                    (FactPredicate(fact_id="source_ready", equals=True),),
+                ),
+                source("SL-1B-C", "park_pursuit_resolved", 5),
+            )
+        }
+    )
+    package = PACKAGE.model_copy(update={"storylet_routes": routes})
+    scene = next(scene for scene in package.scenes if scene.metadata.scene_id == "1B")
+    state = RuntimeState(package=package, current_scene_id="1B", phase=scene.metadata.freytag_phase)
+    state.facts.assert_fact(Fact(predicate="source_ready", subject="story", value="true"))
+
+    engine = RuntimeEngine(state, lambda _input: {"segments": []})
+
+    assert engine._ranked_cue_fact_ids() == (
+        "brandon_identified",
+        "park_pursuit_resolved",
+        "transport_route_identified",
+        "missing_may_be_alive",
+    )
+
+
 def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() -> None:
     state = _state_1b()
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1B")
+    state.turn_index = window.nudge_after_turns - 1
     responses = iter(({"segments": [{"kind": "narration", "text": "A clue catches my attention."}]},))
     calls = 0
 
@@ -93,23 +354,26 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
     engine = RuntimeEngine(state, provider)
 
-    hint = engine.turn("Search the desk.")
-    assert state.staged_hint_fact_ids == ("transport_route_identified", "brandon_identified")
+    cue = engine.turn("Search the desk.")
+    assert state.delivered_cue_ids == ("transport_route_identified",)
+    assert state.staged_cue_fact_id == "brandon_identified"
     assert state.staged_handoff_fact_ids == ()
     assert Fact(predicate="transport_route_identified", subject="story", value="true") not in state.facts.asserted
-    assert hint.segments[0].text == "A clue catches my attention."
-    assert state.last_turn_delivery.hint_staged is True
+    assert cue.segments[0].text == "A clue catches my attention."
+    assert state.last_turn_delivery.cue_fact_id == "transport_route_identified"
     assert state.last_turn_delivery.handoff_staged is False
 
+    state.turn_index = window.handoff_after_turns - 1
     handoff = engine.turn("Search the park.")
     assert state.current_scene_id == "1C"
     assert Fact(predicate="trust_brandon", subject="story", value="true") not in state.facts.asserted
     assert Fact(predicate="transport_route_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="missing_may_be_alive", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
-    assert state.staged_hint_fact_ids == ()
+    assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
-    assert state.last_turn_delivery.hint_staged is True
+    assert state.last_turn_delivery.cue_fact_id == "brandon_identified"
     assert state.last_turn_delivery.handoff_staged is True
     texts = [segment.text for segment in handoff.segments]
     source_bridge = next(
@@ -121,6 +385,8 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
 def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
     state = _state_2a()
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "2A")
+    state.turn_index = window.handoff_after_turns - 4
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
     engine.turn("Approach the facility entrance.")
@@ -143,7 +409,7 @@ def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> 
 
 def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(monkeypatch) -> None:
     state = _state_1b()
-    state.staged_hint_fact_ids = ("transport_route_identified",)
+    state.staged_cue_fact_id = "transport_route_identified"
     state.staged_handoff_fact_ids = ("transport_route_identified",)
     captured: dict[str, object] = {}
 
@@ -155,7 +421,6 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("Inspect the security desk.")
     projection = KnowledgeProjector().project(state, "player", "Inspect the security desk.")
-    assert [item.fact_id for item in projection.hinted_deliveries] == ["transport_route_identified"]
     assert [item.fact_id for item in projection.handoff_deliveries] == ["transport_route_identified"]
     serialized = json.dumps(captured["payload"]).casefold()
     assert "rebecca_observing_infiltrators" not in serialized
@@ -163,7 +428,11 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert "do not say the player did something they did not do" in captured["payload"]["user"].casefold()
     state.staged_handoff_fact_ids = ()
     provider("Inspect the security desk.")
-    assert "hint at the evidence" in captured["payload"]["user"].casefold()
+    assert "hint at the evidence" not in captured["payload"]["user"].casefold()
+    assert (
+        next(item.cue_text for item in PACKAGE.deliveries if item.fact_id == "transport_route_identified")
+        in (captured["payload"]["user"])
+    )
 
 
 def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:

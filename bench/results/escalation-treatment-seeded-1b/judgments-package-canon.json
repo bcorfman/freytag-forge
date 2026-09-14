@@ -1,0 +1,63 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 1 gives no meaningful consequence for waiting and does not advance any dead-drop realization.",
+        "Turn 2 repeats the same static description; pressure appears, but Kristin still learns nothing actionable from the bench materials.",
+        "Turn 3 introduces the watching man and patrol but still withholds Brandon's rescue/identification and any substantive consequence.",
+        "Turn 4 again stalls on repeated object listing; the transit clue is only cued, not actually interpreted into a usable route.",
+        "Turn 5 summary-dumps multiple skipped beats at once: storm-drain escape, tactical team, maintenance gate, Brandon identification, and route conclusion were not dramatized in prior turns.",
+        "Scene omits or fails to dramatize Brandon's warning content from 1B.3: contaminated emergency water, disguised response teams, evacuation tunnels, missing registrations, communications outages, falsified casualty data, and his claim that the missing are alive.",
+        "Scene never clearly shows Kristin recovering/taking the dead-drop materials, including establishing possession of the transit token/transit_card.",
+        "Setting/action mismatch: player repeatedly says 'watch the room' while scene is a park; acceptable as intent to wait/watch, but narration does not strongly localize consequences beyond repetition.",
+        "No substantial responsive consequences across ordinary turns; repeated apt searching/waiting mostly returns the same inventory list without new actionable information.",
+        "Final departure names where they are going and why, but the key discoveries are largely untold until the exit turn, so the scene progression is not properly earned."
+      ],
+      "reasons": [
+        "The opening has some sensory establishment and uses correct scene elements: damaged park, bench, token, number sequence, Michelle photo, disappearance dates.",
+        "Protected knowledge boundaries are respected: no JANUS role/history or phase-two revelations are exposed early.",
+        "However, the scene must cover its authored beats in order across turns. Here, 1B.1 barely happens, 1B.2 is only hinted, 1B.3 is skipped, and 1B.4 is collapsed into a retrospective exit summary.",
+        "Interactive-fiction responsiveness requirement is not met. Repeated waiting should still trigger evolving consequences; instead the narration mostly restates the same objects and atmosphere.",
+        "The scene does not reward investigation. The dead-drop clues remain inert for too long, and only on the exit turn are their meanings asserted rather than discovered in play.",
+        "Because major events are narrated only after the fact, the scene is not sufficiently scene-local or progressive, and it fails despite a motivated transition."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening misdescribes the dead-drop list: canon says a list of disappearance dates; opening says 'a random assortment of names' and introduces an Army colleague not in scene canon.",
+        "Repeated waiting/searching yields almost no actionable consequence for several turns despite scene pressure and available dead-drop clues.",
+        "Scene 1B.1 is not properly covered: Kristin never learns or is told that the dates suggest earlier secret tests, and the token/number sequence are not meaningfully correlated into routing information until a late cue-text shorthand.",
+        "Scene 1B.2 is skipped/underdramatized: the watching man appears, but Kristin does not attempt escape through abandoned service tunnels, is not cornered by patrol, and Brandon does not earn trust by saving her on-page.",
+        "Scene 1B.3 is entirely missing: Brandon never gives the warning about contaminated emergency water, disguised response teams, evacuation tunnels, missing registrations, communications outages, or falsified casualty data.",
+        "Scene 1B.4 is skipped on-page until the exit summary: tactical team arrival, storm-drain escape, and specialized gate code use are reported only in a transition dump the player did not play through.",
+        "Final turn introduces major events in summary form rather than as responsive scene action, racing the transition.",
+        "Several turns repeat nearly identical observation text without progression, despite pursuit pressure at turn 2.",
+        "Narration repeatedly says 'watch the room' / room-like framing in a park scene, weakening scene-local grounding."
+      ],
+      "reasons": [
+        "The judgment must be against the actual turns. Most turns are static repetition: crouching by the bench, scanning, seeing a watcher. That does not satisfy the authored sequence of dead-drop discovery -> Brandon ambiguity/rescue -> Brandon's warning -> ambush/gate-code escape.",
+        "The scene-local canon requires specific discovered materials beneath the bench and consequences from investigating them. Although the opening names some items, the list is misstated and no substantial follow-through gives Kristin actionable understanding from them.",
+        "Ordinary turns require responsive consequences. Here, multiple 'wait' turns mostly restate the same posture and mood, with only one delayed sighting of a watcher and one pressure line. Investigation is not rewarded with usable information.",
+        "The final left-scene turn does provide a reason to go and names what points where, so exit motivation itself is adequate. But it fails overall because it compresses missing beats into exposition after the fact instead of dramatizing them in order across prior turns.",
+        "Protected knowledge is not violated: no JANUS role, selection system, or phase-two material is revealed early. The failure is about omission, repetition, and rushed handoff, not secrecy breaches."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

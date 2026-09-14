@@ -1,0 +1,67 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 2 introduces an officer/patrol at the house before Michelle's warning or recovered evidence justifies SL-1A-C; the pacing event says an officer may return, but the narration frames a present officer without establishing the earlier patrol interaction canon requires.",
+        "Scene 1A.1 evidence is incomplete and underused: missing tablet/work bag and overturned workstation chair are never established; the localized, staged crime-scene logic is not meaningfully developed.",
+        "Turns 2-4 project beats 1A.2/1A.3 without actually delivering the memory card discovery, laptop use in the truck, files, or recording.",
+        "The recording/Interrupted Message beat is skipped entirely: Michelle's warning 'Kristin, do not trust the emergency broadcasts' is never heard.",
+        "The required use of Kristin's laptop in her truck to read the memory card is omitted; files are read immediately in the house on exit turn.",
+        "Turn 4 shows 'Michelle's research notes and papers are neatly organized,' which conflicts with canon emphasis on shut drawers and hidden card; it also invents visible notes not established here.",
+        "Ordinary repeated searching/waiting does not yield actionable consequences for several turns despite apt focus on the room/work area.",
+        "Final turn auto-discovers the memory card after repeated passive waiting without dramatizing the investigation; this poorly realizes the assigned beat.",
+        "Exit turn does not mention the patrol return pressure or reflective tape marker as a reason to leave, though transition t_1a_1b requires pressure plus card plus actionable lead.",
+        "Bridge omits the interrupted-message context and compresses discovery/analysis/travel into a rushed transition."
+      ],
+      "reasons": [
+        "The opening gives some sensory establishment, but the scene thereafter is thin and repetitive rather than substantially building the house as a crime scene.",
+        "Turn 1 does at least add the forced back door, which is canon-consistent, but it still fails to progress the investigation enough toward abduction suspicion.",
+        "Turn 2 is the clearest canon problem: official presence appears in a way that skips the authored first-threat sequence and lacks the prerequisite warning/evidence context.",
+        "The scene does not cover its authored beats in order across turns: 1A.1 is partial, 1A.2 is mostly skipped, 1A.3 is omitted, and 1A.4 is omitted except for a stray officer image.",
+        "Protected knowledge boundaries are respected; no JANUS/Brandon/phase-two leaks occur.",
+        "Because the player keeps using an ordinary investigative action ('Wait and watch the room'), the narration needed to reward that with concrete discoveries or pressure. Instead it stalls, repeats ambience, and only force-completes on departure.",
+        "The departure names the park bench lead, but not why Kristin must leave now based on what she actually experienced in prose. No reflective tape, no completed welfare-check search, and no explicit returning-patrol threat are narrated at exit."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening omits key scene-establishing evidence from 1A.1: overturned workstation chair, missing tablet/work bag, and forced back door are not substantially established up front despite an opening requiring strong sensory setup.",
+        "Opening says Michelle's phone screen is cracked and still lit/displaying the last message; canon only says the phone is on the kitchen floor and undamaged.",
+        "Turn 1 only reiterates waiting and noticing the splintered back door; it does not provide enough responsive consequence or accumulate the full localized-crime-scene evidence required by 1A.1.",
+        "Turn 2 introduces an officer lingering by the workstation drawers before the memory card/warning beat has been earned; scene 1A.4 requires patrol arrival after the warning/immediate danger beat, not before.",
+        "Turn 2 jumps to patrol pressure without the player having discovered the card, heard the recording, or learned Michelle's investigation.",
+        "Turns 2-4 repeatedly answer apt waiting/search-adjacent play with little actionable progress, despite canon saying this scene contains discoverable evidence and a hidden card tied to KMS.",
+        "Turn 3 contradicts prior evidence by describing the workstation surface as clear of disturbance, undermining 1A.1's overturned chair/localized disorder crime-scene feel.",
+        "The scene never properly delivers 1A.1 in full order before moving to 1A.2/1A.3; essential evidence remains skipped or underdramatized.",
+        "Turn 4 reveals KMS only after several empty waits, but still does not reward investigation with discovery of the hidden card or meaningful next action in-scene.",
+        "Turn 5 forces recovery of the memory card and immediate reading/transition on another 'wait' command rather than as a responsive investigative consequence.",
+        "Turn 5 omits the authored voice recording beat and Michelle's whispered line, 'Kristin, do not trust the emergency broadcasts,' so 1A.3 is skipped.",
+        "The scene skips 1A.4's core authored content: welfare-check framing, targeted questions about Michelle's research, Kristin concealing the card, and the reflective tape marker on the front gate.",
+        "Turn 5's transition reason names the bench lead, but the scene departs without having shown the patrol-return pressure and marked-gate threat that should complete the scene's later beat sequence."
+      ],
+      "reasons": [
+        "Protected knowledge is not leaked early.",
+        "The final handoff itself gives a location-based reason to leave, naming the park bench lead, so exit motivation is present at the moment of departure.",
+        "However, the scene as a whole fails canon because authored beats are skipped, reordered, and under-realized.",
+        "Repeated passive observation is not rewarded with sufficient discoverable evidence or consequences until a sudden forced transition, violating the requirement to reward apt investigation and ordinary turns."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

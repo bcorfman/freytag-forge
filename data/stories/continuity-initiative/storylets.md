@@ -72,11 +72,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 1`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -125,11 +122,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 2`
-- target: `turn 2`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 5`
+- latest: `turn 6`
 
 ---
 
@@ -174,11 +168,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 3`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 8`
+- latest: `turn 9`
 
 ---
 
@@ -228,12 +219,9 @@ Each entry below is authoring data, not a player action menu.
 - Patrol officers do not know or disclose the later JANUS bait revelation.
 
 **Pacing window**
-- earliest: `turn 0`
-- target: `turn 3`
-- latest: `turn 3`
-
-**Pacing impact**
-`brief_delay`
+- earliest: `turn 4`
+- target: `turn 6`
+- latest: `turn 7`
 
 ---
 
@@ -252,7 +240,7 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee through the dead drop
-- Transit access card
+- Transit token
 - Handwritten number sequence
 - Photograph of Michelle with Brandon
 - List of earlier disappearance dates
@@ -264,7 +252,7 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - The dates lead Kristin to suspect earlier tests.
 - The photograph makes the unknown man personally important.
-- The transit card and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
+- The transit token and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
 - The number sequence remains unresolved context for later interpretation.
 
 **Effects**
@@ -284,11 +272,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -336,11 +321,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 6`
+- latest: `turn 7`
 
 ---
 
@@ -388,11 +370,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 10`
+- latest: `turn 11`
 
 ---
 
@@ -411,7 +390,7 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Transit access card
+- Transit token
 - Freight-terminal infrastructure
 
 **Dramatic purpose**
@@ -420,7 +399,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin compares declared abandonment with electrical load, ventilation, and recent infrastructure work.
-- The transit card opens access that should not exist at a dead facility.
+- The transit token opens access that should not exist at a dead facility.
+- Kristin maps a dry maintenance ascent into the drainage spine, then leaves it alone because it is too exposed to use now.
 - Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.
 
 **Effects**
@@ -440,11 +420,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -494,11 +471,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 5`
+- latest: `turn 6`
 
 ---
 
@@ -548,11 +522,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 9`
+- latest: `turn 10`
 
 ---
 
@@ -604,15 +575,12 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
-### SL-2A-B — Build the Cover Around a Real Structural Risk
+### SL-2A-B — Build the Cover Around a Real Systems Fault
 
 **Source beats:** [2A.2 — The Infiltration Plan](plot.md#scene-2a2--the-infiltration-plan)
 
@@ -621,13 +589,13 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin and Brandon have concluded that deliberate deeper infiltration is necessary.
 - Kristin and Brandon are preparing entry.
-- The cooling/structural-monitoring weakness is known or discoverable from authored facility information.
+- The cooling-water and ventilation weakness is known or discoverable from authored facility information.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
 - False credentials
-- Facility structural/cooling information
+- Facility cooling-water and ventilation information
 
 **Dramatic purpose**
 - Make the infiltration cover depend on Kristin’s authentic Army infrastructure and operations background rather than pure deception.
@@ -641,7 +609,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Effects**
 - May set `false_identities_ready`.
-- May establish a structural-inspection cover.
+- May establish a cooling-water/ventilation inspection cover.
 - May improve infiltration preparedness.
 - May reduce initial entry pressure.
 
@@ -656,11 +624,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 5`
+- latest: `turn 6`
 
 ---
 
@@ -687,10 +652,11 @@ Each entry below is authoring data, not a player action menu.
 - Preserve dramatic irony: entry can succeed even as Rebecca quietly becomes aware of Brandon.
 
 **Possible realizations**
-- Kristin explains progressive-collapse risk in her own words.
+- Kristin explains the cooling-water fault in her own words.
 - Brandon stays quiet to avoid drawing recognition.
 - Overexplaining may raise suspicion while still succeeding.
 - The supervisor grants restricted-infrastructure access reluctantly.
+- Their temporary credentials open the corridor diagnostic console, giving Kristin limited access to report faults and cycle noncritical doors or lights.
 
 **Effects**
 - May set `restricted_corridor_access`.
@@ -709,11 +675,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 9`
+- latest: `turn 10`
 
 ---
 
@@ -761,11 +724,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -813,11 +773,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 6`
+- latest: `turn 7`
 
 ---
 
@@ -846,7 +803,7 @@ Each entry below is authoring data, not a player action menu.
 - Kristin recognizes phrases Michelle used in private notes.
 - A pattern of delayed transfers and altered classifications becomes visible.
 - Brandon sees operational sabotage; Kristin sees Michelle’s signature.
-- The player may infer organization before knowing its full scale.
+- The player may infer a small hidden resistance link without knowing its scale or whether it can launch an uprising.
 
 **Effects**
 - May set `michelle_resistance_known`.
@@ -864,12 +821,9 @@ Each entry below is authoring data, not a player action menu.
 - The exact uprising plan and broadcast solution remain protected until later scenes.
 
 **Pacing window**
-- earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- earliest: `turn 4`
+- target: `turn 7`
+- latest: `turn 7`
 
 ---
 
@@ -918,11 +872,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -956,7 +907,7 @@ Each entry below is authoring data, not a player action menu.
 - Starts or advances `purge_clock_started`.
 - May establish that Charles's broadcast is imminent.
 - May reduce safe infiltration options as pressure rises.
-- May fire scene pacing complications at declared thresholds.
+- May trigger scene pacing complications at declared thresholds.
 
 **Completion**
 - The pressure event remains in force until the scene transition; this storylet completes once the deadline is understood.
@@ -969,17 +920,14 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 5`
+- latest: `turn 6`
 
 ---
 
-### SL-2C-C — The False Choice Breaks Open
+### SL-2C-C — Evidence or Rescue
 
-**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Michelle Changes the Choice](plot.md#scene-2c4--michelle-changes-the-choice)
+**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
 
 **Allowed scene:** `2C`
 
@@ -987,48 +935,86 @@ Each entry below is authoring data, not a player action menu.
 - The purge/transfer clock is active and understood.
 - Enough evidence exists to expose the conspiracy.
 - Rescue remains possible but dangerous.
-- Michelle’s coded maintenance channel can reach Kristin/Brandon.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Dr. Michelle McGehee through coded communication
 - Copied conspiracy evidence
-- Maintenance network
 
 **Dramatic purpose**
-- Realize the central crisis as a character disagreement, then convert it into the authored combined mission.
-- Keep the player free to argue, hesitate, or explore while pacing prevents indefinite stalling.
+- Let the player inhabit the central crisis before any solution appears.
+- Make every response cost something: delay helps the purge, transmission risks the captives, and rescue risks the proof.
 
 **Possible realizations**
 - Brandon argues for immediate transmission.
 - Kristin refuses to abandon the captives.
 - Their conflict can become personal because of Brandon’s earlier guilt.
-- Michelle’s coded message introduces the manual broadcast/door-opening solution.
+- Kristin can test a partial transmission, an extraction route, or Rebecca’s offer without making either option safe.
 
 **Effects**
 - May set `evidence_ready_to_transmit`.
-- May set `archive_crisis_understood`.
-- May set `combined_broadcast_rescue_plan_known`.
-- May set `rebecca_office_required_for_broadcast`.
-- Establishes `combined_broadcast_rescue_plan_known`, the scene bridge toward reaching Michelle and executing the combined mission.
 
 **Completion**
-- Kristin and Brandon understand that the next objective combines rescue and exposure.
+- Kristin and Brandon understand the evidence/rescue impasse and have real proof in hand.
 
 **Abort**
-- The player causes a validated non-canonical branch that makes the combined plan impossible and chooses to proceed.
+- The player causes a validated non-canonical branch that makes both available paths impossible and chooses to proceed.
 
 **Protected boundary**
-- Exact events of the uprising, Brandon’s sacrifice, facility destruction, and final broadcast outcome remain protected.
+- Exact events of the uprising, Brandon’s sacrifice, Charles’s deluge, and final broadcast outcome remain protected.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
+- target: `turn 10`
+- latest: `turn 11`
 
-**Pacing impact**
-`brief_delay`
+---
+
+### SL-2C-D — Michelle Changes the Choice
+
+**Source beats:** [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- The purge clock is active.
+- Kristin and Brandon have enough proof to transmit.
+- The evidence-or-rescue conflict has been allowed to become real.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Dr. Michelle McGehee through a coded maintenance message
+- Copied conspiracy evidence
+- The maintenance network, Michelle’s partly unsecured holding block, and Rebecca’s secured office
+
+**Dramatic purpose**
+- Turn the apparent binary into a third path only after the player has felt both losses.
+- Give the next scene a coherent point of entry: Michelle’s route reaches her holding block, while the office remains the later manual control point.
+- Raise the danger: the combined mission requires reaching Rebecca’s office before the purge closes the route.
+
+**Possible realizations**
+- Michelle’s message identifies a maintenance route into her partly unsecured holding block and the manual controls in Rebecca’s office.
+- Kristin traces Michelle’s code through the maintenance reports from her holding block to the broadcast controls.
+- Brandon recognizes why a normal broadcast route cannot work while Charles controls JANUS.
+
+**Effects**
+- May set `rebecca_office_required_for_broadcast`.
+- Sets `combined_broadcast_rescue_plan_known` once the group understands the combined mission.
+
+**Completion**
+- The group follows Michelle’s route into her holding block, then commits to reaching Rebecca’s office to broadcast the truth and open the sealed detention sectors.
+
+**Abort**
+- A validated non-canonical branch makes the combined mission impossible and the player chooses to proceed.
+
+**Protected boundary**
+- Exact events of the uprising, Brandon’s sacrifice, Charles’s deluge, and final broadcast outcome remain protected.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 13`
+- latest: `turn 14`
 
 ---
 
@@ -1036,7 +1022,7 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 3A — Reaching Michelle](plot.md#scene-3a--reaching-michelle)
 
-### SL-3A-A — The Rescue Target Is Running an Uprising
+### SL-3A-A — Michelle Has Turned Sabotage Into an Uprising
 
 **Source beats:** [3A.1 — The Detention Block](plot.md#scene-3a1--the-detention-block)
 
@@ -1056,12 +1042,14 @@ Each entry below is authoring data, not a player action menu.
 
 **Dramatic purpose**
 - Pay off Michelle’s agency with an in-person reversal of Kristin’s rescue expectations.
+- Pay off the earlier evidence of a small hidden resistance by showing what it has become in person.
 - Reframe the immediate goal from “get Michelle out” to “help the organized captives expose the whole network.”
 
 **Possible realizations**
 - The reunion is interrupted by Michelle directing others.
 - Kristin tries to prioritize Michelle; she redirects her to the national stakes.
 - Prisoners treat Michelle as an organizer rather than a victim.
+- Before this storylet, Michelle is reachable only through the coded route and must not be a direct dialogue speaker.
 - The reunion can establish that Michelle is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
 - Brandon’s arrival may be met with distrust because of his history.
 
@@ -1083,17 +1071,14 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
 ### SL-3A-B — The “Rescued” Captives Were Being Prepared
 
-**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments), [3A.3 — The Unexpected Prisoner](plot.md#scene-3a3--the-unexpected-prisoner)
+**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments)
 
 **Allowed scene:** `3A`
 
@@ -1105,24 +1090,20 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee
-- Prisoners, including the imprisoned senior official
 - Medical/behavioral experiment records or equipment already present in the authored setting
-- Emergency military override authorization codes
 
 **Dramatic purpose**
 - Raise the moral and political stakes of Charles’s planned broadcast.
 - Show that simply releasing selected prisoners could strengthen the conspiracy.
-- Turn one prisoner into a time-sensitive strategic resource without making the NPC a permanent companion.
 
 **Possible realizations**
-- Michelle explains what she has observed while Kristin sees corroborating evidence, and the framed official hands over his expiring authorization.
-- A conditioned “rescue” plan becomes visible through records or treatment setup while the codes are secured or copied.
+- Michelle explains what she has observed while Kristin sees corroborating evidence.
+- A conditioned “rescue” plan becomes visible through records or treatment setup.
 - Kristin recognizes that public testimony itself has been engineered.
 
 **Effects**
 - May set `behavioral_experiments_known`.
 - May set `conditioned_release_plan_known`.
-- May set `military_override_codes_available` and `charles_framed_officials_known`.
 - May make the broadcast evidence more compelling.
 - May increase danger or moral urgency.
 
@@ -1134,15 +1115,58 @@ Each entry below is authoring data, not a player action menu.
 
 **Protected boundary**
 - Do not invent successful mind control beyond the specific authored methods and goals.
-- The codes do not automatically solve the facility fight or national conspiracy.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
+- target: `turn 6`
+- latest: `turn 7`
 
-**Pacing impact**
-`brief_delay`
+---
+
+### SL-3A-D — The Framed Official’s Window
+
+**Source beats:** [3A.3 — The Unexpected Prisoner](plot.md#scene-3a3--the-unexpected-prisoner)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Kristin has reached Michelle.
+- The experiment stakes are understood.
+- The imprisoned senior official can be reached.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- The imprisoned senior official
+- One-use emergency surface-gate authorization
+
+**Dramatic purpose**
+- Turn the political evidence into a human encounter with someone Charles framed and buried.
+- Give the group a narrow escape resource early enough to react to its cost and deadline.
+
+**Possible realizations**
+- The official explains why Charles framed and detained him.
+- He gives Kristin authorization that can release the emergency surface gates once.
+- A limited system response makes the expiry tied to Charles’s authority activation visible.
+
+**Effects**
+- May set `military_override_codes_available`.
+- May set `charles_framed_officials_known`.
+- May set `override_codes_deadline_known`.
+
+**Completion**
+- The group has a one-use escape authorization and understands that it is a shrinking window, not a general solution.
+
+**Abort**
+- The authority activation voids the code before it can be secured, requiring a declared alternate escape path.
+
+**Protected boundary**
+- The authorization cannot open the sealed detention sectors or replace the later broadcast controls.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 8`
+- latest: `turn 9`
 
 ---
 
@@ -1155,6 +1179,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin has reached Michelle.
 - Michelle’s uprising preparation is in place.
+- The one-use emergency surface-gate authorization is secured.
 - Charles’s planned authority activation remains pending.
 
 **Participants / items**
@@ -1187,11 +1212,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 10`
+- latest: `turn 11`
 
 ---
 
@@ -1213,15 +1235,15 @@ Each entry below is authoring data, not a player action menu.
 - Dr. Michelle McGehee
 - Brandon Corfman
 - JANUS as system
-- Facility doors, cameras, power, structural alarms, and unused corridors
+- Facility doors, cameras, diagnostic readings, and empty service corridors
 
 **Dramatic purpose**
 - Make Kristin’s Army operations mindset the counter to predictive security.
 - Encourage creative free-form disruption rather than one prescribed puzzle solution.
 
 **Possible realizations**
-- Kristin creates unrelated infrastructure alarms.
-- Power cuts or flooding make the group’s true route less legible.
+- Kristin creates false water-pressure and ventilation alarms from the inspection console.
+- Harmless door and light cycles make the group’s true route less legible.
 - The group intentionally chooses tactically irrational movement.
 - A failed disruption can still raise pressure while teaching what JANUS is using.
 
@@ -1240,17 +1262,14 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 3`
+- latest: `turn 4`
 
 ---
 
 ### SL-3B-B — Rebecca Bargains With the Only Thing She Still Has
 
-**Source beats:** [3B.2 — Rebecca’s Office](plot.md#scene-3b2--rebeccas-office), [3B.3 — Charles’s Betrayal](plot.md#scene-3b3--charless-betrayal)
+**Source beats:** [3B.2 — Rebecca’s Office](plot.md#scene-3b2--rebeccas-office)
 
 **Allowed scene:** `3B`
 
@@ -1269,23 +1288,19 @@ Each entry below is authoring data, not a player action menu.
 
 **Dramatic purpose**
 - Put Rebecca’s self-preservation against Michelle’s evidence of her direct responsibility.
-- Allow Charles’s betrayal to collapse Rebecca’s bargaining position in real time.
+- Let the player evaluate Rebecca’s bargain before Charles collapses her position.
 
 **Possible realizations**
 - Rebecca claims surrender is the only way to save the failing facility.
 - Michelle confronts her with approvals for experiments.
 - Rebecca offers all detention-site locations.
-- Charles remotely strips Rebecca of control and locks down the office.
 
 **Effects**
 - May set `rebecca_experiment_approval_confronted`.
 - May set `detention_locations_offer_known`.
-- May set `charles_abandoned_rebecca`.
-- May set `facility_destruction_threat`.
-- May change Rebecca’s status from antagonist-in-control to trapped/self-preserving antagonist.
 
 **Completion**
-- Charles’s remote betrayal has occurred and Rebecca can no longer credibly claim operational control.
+- The group has secured Rebecca’s detention-site information while deciding how much of her word to trust.
 
 **Abort**
 - Rebecca escapes before the confrontation or a non-canonical branch supersedes it.
@@ -1295,11 +1310,56 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
+- target: `turn 7`
+- latest: `turn 8`
 
-**Pacing impact**
-`brief_delay`
+---
+
+### SL-3B-D — Charles Makes the Deluge Real
+
+**Source beats:** [3B.3 — Charles’s Betrayal](plot.md#scene-3b3--charless-betrayal)
+
+**Allowed scene:** `3B`
+
+**Available when**
+- Human security control has replaced JANUS’s predictions.
+- The group has secured the detention-site locations.
+- Rebecca remains in the office under pressure.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Rebecca Jenkins
+- Charles Jenkins through remote communication
+- The office security system and outer access-level water controls
+
+**Dramatic purpose**
+- Give Rebecca’s exposure room to land before Charles demonstrates that she is expendable.
+- Turn Charles’s strategic retreat into a real, contained physical danger rather than an arbitrary disaster.
+
+**Possible realizations**
+- Charles locks down the office and abandons Rebecca while transferring national control.
+- He turns the harmless diagnostic false alarm into a real deluge in the outer access level.
+- Rising water cuts off routes and makes the already-earned drainage and surface-gate resources urgent.
+
+**Effects**
+- May set `charles_abandoned_rebecca`.
+- May set `facility_destruction_threat`.
+- May change Rebecca from an antagonist in control to a trapped, self-preserving antagonist.
+
+**Completion**
+- Charles has committed to flooding the outer access level, and the group has time to react before the relay climax.
+
+**Abort**
+- The deluge has already begun through a validated alternate event, and the relay crisis takes priority.
+
+**Protected boundary**
+- The deluge does not destroy the facility, cause explosions, or decide Brandon’s fate.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 9`
+- latest: `turn 10`
 
 ---
 
@@ -1328,7 +1388,7 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - Brandon chooses the relay because his old access makes him the viable operator.
 - He transmits a confession that authenticates Michelle’s evidence.
-- Security pressure and electrical danger make continued relay control costly.
+- Security lockdown and rising water make continued relay control costly.
 - Kristin or Michelle may argue against him, but the authored situation keeps the relay problem concrete.
 
 **Effects**
@@ -1346,15 +1406,12 @@ Each entry below is authoring data, not a player action menu.
 - A declared fallback solves the relay dependency instead; otherwise incapacitating Brandon beforehand may be game-breaking and must be handled explicitly.
 
 **Protected boundary**
-- Brandon’s final survival/fate remains unresolved until the authored escape/collapse outcome permits it.
+- Brandon’s final survival/fate remains unresolved until the authored flood-and-escape outcome permits it.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 11`
+- latest: `turn 12`
 
 ---
 
@@ -1407,11 +1464,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 3`
+- latest: `turn 4`
 
 ---
 
@@ -1458,45 +1512,42 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 7`
+- latest: `turn 8`
 
 ---
 
-### SL-3C-C — Escape While the Facility Comes Apart
+### SL-3C-C — Escape Through the Deluge
 
-**Source beats:** [3C.3 — The Collapse](plot.md#scene-3c3--the-collapse), [3C.4 — Resolution and New Direction](plot.md#scene-3c4--resolution-and-new-direction)
+**Source beats:** [3C.3 — The Deluge](plot.md#scene-3c3--the-deluge), [3C.4 — Resolution and New Direction](plot.md#scene-3c4--resolution-and-new-direction)
 
 **Allowed scene:** `3C`
 
 **Available when**
-- Charles has activated facility destruction.
+- Charles’s emergency deluge is running, and rising water is closing the outer access level.
 - The prisoners are moving toward escape routes.
-- Kristin can still affect structural/power systems.
+- Kristin can still use the inspection console to control drainage pumps and one watertight barrier.
 
 **Participants / items**
 - Kristin Schweitzer
 - Dr. Michelle McGehee
 - Brandon Corfman only as allowed by his current status/fate
 - Escaping prisoners
-- Facility emergency supports / power systems
-- Surface gates and maintenance tunnels
+- Drainage pumps, a watertight barrier, and the maintenance tunnel
+- Emergency surface gates
 
 **Dramatic purpose**
 - Give Kristin one final infrastructure-and-operations problem while Michelle leads the human evacuation.
 - Move the climax into falling action without removing danger too early.
 
 **Possible realizations**
-- Kristin redirects power to keep some sections supported.
+- Kristin restores power to drainage pumps and holds one barrier long enough for captives to pass.
 - Michelle organizes movement through maintenance tunnels.
 - The group must accept that not every section can be saved.
-- Brandon’s relay action contributes to the surface gates opening if his authored state permits it.
+- Michelle uses the senior official’s authorization to release the surface gates once.
 
 **Effects**
-- May intensify the facility's collapse.
+- May intensify the deluge as Charles seals more access routes.
 - May set `evacuation_route_open`.
 - May set `captives_reaching_surface`.
 - May set `los_angeles_facility_lost`.
@@ -1513,11 +1564,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 11`
+- latest: `turn 12`
 
 ---
 
@@ -1566,11 +1614,8 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 13`
+- latest: `turn 13`
 
 ---
 
@@ -1613,11 +1658,8 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-
-**Pacing impact**
-`brief_delay`
+- target: `turn 14`
+- latest: `turn 14`
 
 ---
 
@@ -1630,10 +1672,10 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-C` | Facility discovery, living captives, national scale |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |
 | [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Kristin-as-bait, Brandon’s role, Michelle’s resistance |
-| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-A` … `SL-2C-C` | Rebecca’s offer, purge pressure, crisis reframing |
+| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-A` … `SL-2C-D` | Rebecca’s offer, purge pressure, lived crisis, combined mission |
 | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
-| [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, collapse, epilogue |
+| [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, deluge escape, epilogue |
 
 ## Canonical scene beats vs. optional storylets
 
@@ -1648,7 +1690,8 @@ Current bridge facts are: `michelle_lead_actionable`, `transport_route_departure
 1. **Optional means optional.** A scene must remain satisfiable even if none of its ordinary storylets are selected. Canonical bridge events may be required, but storylets only provide optional realization guidance for them.
 2. **No fixed action vocabulary.** “Possible realizations” are prompt guidance only. The LLM interprets arbitrary player roleplay and proposes semantic effects.
 3. **Scene-local context first.** Only participating/present/relevant entities should enter the default turn context. Off-scene references should add only public/currently-known facts.
-4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the collapse/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
+   A later scene participant is not automatically present: Brandon cannot speak in 1B until `SL-1B-B` establishes his encounter, Michelle cannot speak directly in 3A until `SL-3A-A`, the imprisoned official cannot speak directly in 3A until `SL-3A-D`, and Rebecca cannot speak directly in 3B until `SL-3B-B` brings the group to her office.
+4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the deluge/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
 5. **Required dependencies stay explicit elsewhere.** The memory card, Brandon, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
 6. **Protected revelations are monotonic.** Optional content can foreshadow later facts, but it must not make a protected revelation true/known before the original scene permits it.
 7. **Effects are bounded proposals.** The exact fact paths, numeric pressure ranges, trigger predicates, and transition priorities belong in validated package data rather than being inferred from prose here.

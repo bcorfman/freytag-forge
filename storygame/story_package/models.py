@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _ID = r"^[a-z][a-z0-9_]*$"
 _SCENE_ID = r"^[1-9][A-Z]$"
@@ -232,6 +232,14 @@ class SceneMetadata(_Model):
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
     item_placements: Mapping[str, str | ItemPlacement] = {}
+    setting_facts: tuple[str, ...] = ()
+
+    @field_validator("setting_facts")
+    @classmethod
+    def non_blank_setting_facts(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not value.strip() for value in values):
+            raise ValueError("setting_facts entries must not be empty or whitespace-only")
+        return values
 
 
 class SceneBeat(_Model):
@@ -273,14 +281,32 @@ class ScenePacing(_Model):
         return self
 
 
+class PacingRealization(_Model):
+    """One player-safe, observable realization of a pacing event."""
+
+    when: tuple[FactPredicate, ...] = ()
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def non_blank_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("text must not be empty")
+        return value
+
+
 class PacingEvent(_Model):
     """A package-declared, deterministic deadline complication."""
 
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
     at_turn: int = Field(ge=0)
+    when: tuple[FactPredicate, ...] = Field(
+        default=(), description="Conditions that must also hold before the event fires."
+    )
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
+    realizations: tuple[PacingRealization, ...] = ()
 
 
 class PacingSource(_Model):
@@ -299,7 +325,6 @@ class Storylet(_Model):
     earliest_turn: int = Field(ge=0)
     target_turn: int = Field(ge=0)
     latest_turn: int = Field(ge=0)
-    pacing_impact: Literal["none", "brief_delay", "pressure_increase", "advance_readiness"]
 
     @model_validator(mode="after")
     def ordered(self) -> Storylet:
@@ -323,7 +348,15 @@ class FactDelivery(_Model):
     source_entity_id: str | None = None
     must_convey: tuple[tuple[str, ...], ...] = Field(min_length=2)
     fallback_text: str = Field(min_length=1)
+    cue_text: str | None = None
     costs: tuple[RouteOperation, ...] = ()
+
+    @field_validator("cue_text")
+    @classmethod
+    def non_empty_cue_text(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("cue_text must not be empty")
+        return value
 
 
 class RouteRealization(_Model):
@@ -358,6 +391,8 @@ class CanonicalRouteEvent(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     activation: ActivationRule
     operations: tuple[RouteOperation, ...] = Field(min_length=1)
+    realization_storylets: tuple[str, ...] = ()
+    fallback_text: str | None = None
 
 
 class StoryletRoutesSource(_Model):

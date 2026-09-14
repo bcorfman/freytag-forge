@@ -101,7 +101,7 @@ def test_phase4_knowledge_evidence(tmp_path, monkeypatch) -> None:
             tmp_path,
             "ordinary_local_clue",
             "Search the desk drawer.",
-            _EvidenceProvider([], [], "A loose screw glints beneath the drawer."),
+            _EvidenceProvider([], [], "A loose screw glints beside the desk."),
         ),
         _run_case(
             tmp_path,
@@ -129,7 +129,7 @@ def test_phase4_knowledge_evidence(tmp_path, monkeypatch) -> None:
                 ["k_sl_1a_b_r2"],
                 ["k_sl_1a_b_r2"],
                 (
-                    "Kristin secures Michelle's hidden memory card and plays its damaged recording: "
+                    "Kristin secures Michelle's memory card under the KMS drawer and plays its damaged recording: "
                     "do not trust emergency broadcasts."
                 ),
             ),

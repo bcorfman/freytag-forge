@@ -1,0 +1,40 @@
+{
+  "name": "escalation-treatment",
+  "story_package": "data/stories/continuity-initiative",
+  "escalation_judge": true,
+  "scripts": {
+    "1A": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "1B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "2B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ],
+    "3B": [
+      {
+        "name": "wait",
+        "inputs": [
+          "Wait and watch the room."
+        ]
+      }
+    ]
+  }
+}
+

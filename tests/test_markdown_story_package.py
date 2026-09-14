@@ -15,7 +15,6 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
-from storygame.story_package.models import ItemPlacement
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -39,18 +38,18 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 30
+    assert len(package.storylets) == 33
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
         "michelle_phone": "on the kitchen floor",
         "kristin_laptop": "in Kristin's truck outside the house",
-        "memory_card": ItemPlacement(
-            placement="taped under a drawer in Michelle's workstation",
-            while_fact_false="memory_card_in_kristins_custody",
-        ),
     }
-    assert set(package.knowledge_indexes.facts_to_knowledge) == set(package.world.facts)
+    assert package.scenes[0].metadata.setting_facts == ("Michelle's workstation drawers are shut.",)
+    pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
+    mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
+    assert mapped_facts <= set(package.world.facts)
+    assert set(package.world.facts) - pacing_facts <= mapped_facts
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
         for realization in route.realizations:
@@ -86,20 +85,70 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
-        "  memory_card:\n"
-        "    placement: taped under a drawer in Michelle's workstation\n"
-        "    while_fact_false: memory_card_in_kristins_custody\n",
-        "  memory_card:\n"
-        "    placement: taped beneath the workstation drawer\n"
+        "item_ids: [memory_card, michelle_phone, kristin_laptop]\n",
+        "item_ids: [memory_card, michelle_phone, kristin_laptop, test_item]\n",
+        1,
+    )
+    contents = contents.replace(
+        "  michelle_phone: on the kitchen floor\n",
+        "  michelle_phone: on the kitchen floor\n"
+        "  test_item:\n"
+        "    placement: beneath the test desk\n"
         "    while_fact_false: michelle_abduction_suspicion\n",
         1,
     )
     plot.write_text(contents, encoding="utf-8")
+    world_path = root / "world.yaml"
+    world = yaml.safe_load(world_path.read_text(encoding="utf-8"))
+    world["items"].append({"id": "test_item", "name": "Test item"})
+    world_path.write_text(yaml.safe_dump(world, sort_keys=False), encoding="utf-8")
 
-    placement = load_story_package(root).scenes[0].metadata.item_placements["memory_card"]
+    placement = load_story_package(root).scenes[0].metadata.item_placements["test_item"]
 
-    assert placement.placement == "taped beneath the workstation drawer"
+    assert placement.placement == "beneath the test desk"
     assert placement.while_fact_false == "michelle_abduction_suspicion"
+
+
+def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        'setting_facts: ["Michelle\'s workstation drawers are shut."]',
+        'setting_facts: ["The test shutters are closed.", "The test lamp is on."]',
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    scene = load_story_package(root).scenes[0]
+
+    assert scene.metadata.setting_facts == ("The test shutters are closed.", "The test lamp is on.")
+
+
+def test_loader_rejects_empty_setting_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        'setting_facts: ["Michelle\'s workstation drawers are shut."]',
+        'setting_facts: ["  "]',
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="setting_facts"):
+        load_story_package(root)
+
+
+def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        'setting_facts: ["Michelle\'s workstation drawers are shut."]\n',
+        "",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    assert load_story_package(root).scenes[0].metadata.setting_facts == ()
 
 
 def test_bare_string_item_placement_remains_a_string() -> None:
@@ -250,7 +299,8 @@ def test_loader_rejects_invalid_knowledge_catalog(tmp_path: Path, mutate: object
 
 
 _AUTHORED_DELIVERY = (
-    "Michelle finds the memory card and plays the damaged recording. The warning concerns emergency broadcasts."
+    "Michelle finds the memory card from under the drawer carved with her initials, KMS, and plays the damaged "
+    "recording. The warning concerns emergency broadcasts."
 )
 
 
@@ -339,8 +389,19 @@ def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
     assert handoff is not None
     assert handoff.candidate.id == "k_sl_1a_b_r2"
     assert handoff.delivery_text == (
+        "Michelle's memory card was taped under the drawer carved with Kristin's initials, KMS. "
         "Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts."
     )
+
+
+def test_1a_deadline_fallback_names_the_kms_drawer() -> None:
+    delivery = next(
+        item for item in load_story_package(PACKAGE).deliveries if item.fact_id == "continuity_initiative_known"
+    )
+
+    assert delivery.scene_id == "1A"
+    assert "KMS" in delivery.fallback_text
+    assert "drawer" in delivery.fallback_text.casefold()
 
 
 def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
@@ -490,10 +551,10 @@ def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> Non
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text())
     candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1b_a_r1")
-    candidate["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
+    candidate["requires"] = [{"fact_id": "brandon_face_known", "equals": True}]
     source.write_text(yaml.safe_dump(catalog, sort_keys=False))
     package = load_story_package(root)
-    assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["michelle_abduction_suspicion"]
+    assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["brandon_face_known"]
 
 
 def test_loader_rejects_selectable_transition_trigger_without_must_convey(tmp_path: Path) -> None:
@@ -527,11 +588,11 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
         ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
         (
             "pacing.yaml",
-            "min_turns: 2\n  nudge_after_turns: 4",
-            "min_turns: 3\n  nudge_after_turns: 2",
+            "min_turns: 8\n  nudge_after_turns: 10",
+            "min_turns: 11\n  nudge_after_turns: 10",
             "turn allocations",
         ),
-        ("storylets.md", "**Pacing impact**", "**Impact**", "lacks sections"),
+        ("storylets.md", "**Pacing window**", "**Window**", "lacks sections"),
         ("storylets.md", "plot.md#scene-1a1", "plot.md#missing", "unknown plot heading"),
     ],
 )
@@ -546,7 +607,7 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 6`", 1))
+    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 14`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 
@@ -589,7 +650,13 @@ def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     pacing = root / "pacing.yaml"
-    pacing.write_text(pacing.read_text().replace("fact_id: michelle_lead_actionable", "fact_id: unknown_fact", 1))
+    pacing.write_text(
+        pacing.read_text().replace(
+            "  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure",
+            "  - fact_id: unknown_fact\n    equals: true\n  - fact_id: patrol_return_pressure",
+            1,
+        )
+    )
     with pytest.raises(StoryPackageError, match="unknown trigger predicate"):
         load_story_package(root)
 
@@ -706,6 +773,17 @@ def test_loader_rejects_delivery_fallback_that_misses_a_required_phrase(tmp_path
     source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="facility_proof.*fallback_text.*fresh tire tracks"):
+        load_story_package(root)
+
+
+def test_loader_rejects_empty_delivery_cue_text(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source, handoffs = _handoffs(root)
+    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "facility_proof")  # type: ignore[index]
+    delivery["cue_text"] = "   "
+    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="cue_text"):
         load_story_package(root)
 
 

@@ -10,7 +10,7 @@ from storygame.runtime.contracts import FactOperation, GameBreakWarning, Resolve
 from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import StoryPackage
 
-SNAPSHOT_VERSION = 2
+SNAPSHOT_VERSION = 3
 
 
 class RuntimeStateError(ValueError):
@@ -36,7 +36,8 @@ class TurnDelivery(BaseModel):
     must_convey_misses: tuple[str, ...] = ()
     recovery_used: bool = False
     fallback_used: bool = False
-    hint_staged: bool = False
+    cue_fact_id: str | None = None
+    complication_text: str | None = None
     handoff_staged: bool = False
     segments_truncated: bool = False
     segments_dropped: int = 0
@@ -53,7 +54,8 @@ class RuntimeSnapshot(BaseModel):
     turn_index: int = Field(ge=0)
     scene_entered_at_turn: int = Field(ge=0)
     turn_records: tuple[TurnRecord, ...] = ()
-    staged_hint_fact_ids: tuple[str, ...] = ()
+    delivered_cue_ids: tuple[str, ...] = ()
+    staged_cue_fact_id: str | None = None
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
 
@@ -74,7 +76,8 @@ class RuntimeState(BaseModel):
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
     pending_proposal: ResolvedTurnProposal | None = None
-    staged_hint_fact_ids: tuple[str, ...] = ()
+    delivered_cue_ids: tuple[str, ...] = ()
+    staged_cue_fact_id: str | None = None
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
 
@@ -116,7 +119,8 @@ class RuntimeState(BaseModel):
             turn_index=self.turn_index,
             scene_entered_at_turn=self.scene_entered_at_turn,
             turn_records=tuple(self.turn_records),
-            staged_hint_fact_ids=self.staged_hint_fact_ids,
+            delivered_cue_ids=self.delivered_cue_ids,
+            staged_cue_fact_id=self.staged_cue_fact_id,
             staged_handoff_fact_ids=self.staged_handoff_fact_ids,
             last_turn_delivery=self.last_turn_delivery,
         )
@@ -132,7 +136,8 @@ class RuntimeState(BaseModel):
         self.turn_index = snapshot.turn_index
         self.scene_entered_at_turn = snapshot.scene_entered_at_turn
         self.turn_records = list(snapshot.turn_records)
-        self.staged_hint_fact_ids = snapshot.staged_hint_fact_ids
+        self.delivered_cue_ids = snapshot.delivered_cue_ids
+        self.staged_cue_fact_id = snapshot.staged_cue_fact_id
         self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
         self.last_turn_delivery = snapshot.last_turn_delivery
 
@@ -211,7 +216,8 @@ class RuntimeState(BaseModel):
         """Commit the typed scene-entry reveal before any opening can render."""
 
         self.scene_entered_at_turn = self.turn_index
-        self.staged_hint_fact_ids = ()
+        self.delivered_cue_ids = ()
+        self.staged_cue_fact_id = None
         self.staged_handoff_fact_ids = ()
         self.facts.assert_fact(Fact(predicate=f"scene_{scene_id.lower()}_entry_known", subject="story", value="true"))
 

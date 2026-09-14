@@ -5,11 +5,18 @@ through a schedule of reveals. The story pressure arrives on its own timetable;
 what that pressure *does* depends on the world's physical state, and what
 Kristin notices depends on her knowledge state.
 
-Status: design agreed; every open question answered on 2026-09-13 (see the end
-of this plan). Execution is tracked in
-[missed-obligation-escalation-implementation.md](missed-obligation-escalation-implementation.md). Re-checked against the
-code on 2026-09-13: none of the four layers beyond Opportunity is built, and
-`latest_turn` still has no runtime effect.
+Status: **implemented on the local branch `obligation-escalation-integration`
+(2026-09-13), not merged** — the owner asked to keep everything local for now.
+All four layers are built: `latest_turn` expiry (optional storylets only), the
+ranked, ledgered Cue, state-matched Complication realizations, and the
+Deadline, plus the 3C resolution ordering and a loader backstop against
+stranded exits. Deterministic evidence is green: 495 tests, and the
+thorough / stalling / wrong-lead persona harness (`python -m storygame.personas`).
+The live quality comparison (Phase 9, option B: scenes 1A, 1B, 2B and 3B, n = 50
+per arm) is built and waiting for the owner's go-ahead. Every open question was
+answered on 2026-09-13; where implementation corrected an answer, see
+"Implementation notes" before "Settled". Execution is tracked in
+[missed-obligation-escalation-implementation.md](missed-obligation-escalation-implementation.md).
 
 **Terminology (settled 2026-09-13).** The fourth layer is called **Deadline**.
 It is the pacing fallback: at `handoff_after_turns` the engine stages
@@ -205,6 +212,44 @@ Pressure that hands over knowledge collapses Complication into Deadline and
 violates `pacing_events_must_create_observable_pressure_not_unearned_knowledge`.
 
 ## Carried-forward defects
+
+**Outcome (2026-09-13).** Every carried-forward defect below is fixed on the
+integration branch except the two deferred items:
+
+- 3C resolution cascade — a resolution event commits only after its realization
+  storylets fire, with a Deadline backstop that shows authored `fallback_text`
+  (owner chose this over sequencing); `portable_archive` starts with Rebecca.
+  `9f3f995`, naming `6afb008`.
+- Bridges claiming more than their activation guarantees — `57d02ae`, past
+  tense `2af3597`.
+- Stale item declarations — `f2e2916`.
+- Pacing reaction window — `95a496e`.
+- Hiding-spot disclosure — `f8fd3ce`; the location must_convey group was then
+  narrowed so narrating the visible KMS carving is not rejected — `112ff66`.
+
+**Found and fixed during implementation.** Offline persona drives exposed exits
+a player could never leave, most of them already present on `main`:
+
+- 1A Deadline rejected because its own fallback named "the card" — a Deadline
+  turn may now name what its staged fallback hands over (`1b213b5`); the same
+  licence for protected terms fixed 2B's JANUS fallback (`441d3c9`).
+- 2A: a player who earned the false identities but skipped the corridor bluff
+  was left with one world-only fact and no Deadline — the Deadline now stages
+  the pending bridge's remaining facts (`864854e`).
+- 3C could never start for a stalling player: 3B's exit did not guarantee
+  Brandon's confession or the detention locations (both 3B canon). 3B now
+  requires them, and the loader enforces resolution entry guarantees
+  (`9f3f995`).
+- 2C's evidence reveal required Michelle's resistance, an optional 2B fact —
+  requirement removed (2C's own beats introduce the resistance network) and the
+  loader now rejects any required reveal whose prerequisite neither entry
+  guarantees nor the scene produces (`4b85c2e`).
+- Cue and complication text that tripped narration safety when repeated
+  ("the park bench", "Michelle's files", "Rebecca's office", "escape route"),
+  a cue that stated Brandon's role, and a cue that invented a freight code —
+  reworded, with generic regression tests (`dfb56d8`, `13e57f7`, `5f23718`).
+
+The original findings follow as history.
 
 Found by a separate continuity audit, re-verified against the package on
 2026-09-12. They are real today, independent of the four layers, and can each
@@ -475,6 +520,39 @@ first. Each was re-verified against the code on 2026-09-13.
     deterministic gate, not live. n ≥ 50 per arm, analysed with `bench compare`.
     No runtime layers-off flag and no comparison against historical ledger
     rows.
+
+### Implementation notes (2026-09-13)
+
+Where building an answer showed its premise was off, the correction is recorded
+here against the question number.
+
+- **Q14.** Not every bridge-activation fact can have a delivery:
+  `rebecca_observing_infiltrators` (2A) is world-only and the loader forbids a
+  delivery without player-visible knowledge. The invariant exempts a fact that
+  no player-visible knowledge establishes and that a world-only knowledge entry
+  available in that scene asserts; errors name the scene and fact (`3f2f1bc`).
+  The runtime half of the guarantee needed its own fix (`864854e`).
+- **Q2.** "Required" also covers any storylet listed in a canonical event's
+  `realization_storylets`, or 3C's resolution storylets would expire before
+  they could be shown; the real package has 24 required storylets, not 19
+  (`9f3f995`).
+- **Q9.** Owner decision: authored `PacingEvent` realizations still play in a
+  resolution scene (so `collapse_3c` is narrated); the resolution gate blocks
+  only engine-generated escalation — cues and Deadline staging (`4e3dc53`).
+- **Q4.** Saves are gated by `RuntimeStateSqliteStore.SCHEMA_VERSION`, which
+  checks nothing about `SNAPSHOT_VERSION`; both were bumped (schema 4) and a
+  test proves version-3 saves are rejected (`3b6439d`).
+- **Q7.** First-match order for `pressure_1a` is card not held, lead actionable,
+  card held, default: an actionable lead always implies custody, so the
+  plan's order would never have selected the lead entry (`4e3dc53`).
+- **Q15.** A thorough player cannot always leave before the nudge turn (3B's
+  `min_turns` equals its nudge), so the persona gate is "no cue and no Deadline
+  delivery", not "exits before nudge" (`c80cac7`).
+- **Q16.** Scope for the first live comparison is option B (1A, 1B, 2B, 3B),
+  chosen by the owner after moving to the Cloudflare Workers Paid plan; the
+  full eight-scene run follows if B works. The cue, complication and
+  disclosure questions are scored by a separate bench-only escalation judge,
+  so the seven-criteria metric of record is unchanged (`b077fdd`, `64a5364`).
 
 ### Settled
 

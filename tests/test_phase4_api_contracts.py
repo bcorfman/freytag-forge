@@ -46,7 +46,7 @@ def test_rejected_http_turn_never_returns_rejected_segments(tmp_path) -> None:
 
 
 def test_accepted_http_turn_preserves_validated_segment_structure(tmp_path) -> None:
-    text = "The loose screw glints beneath the drawer."
+    text = "The loose screw glints beside the desk."
     provider = _Provider(
         {
             "segments": [

@@ -117,7 +117,8 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "must_convey_misses": [],
         "recovery_used": False,
         "fallback_used": False,
-        "hint_staged": False,
+        "cue_fact_id": None,
+        "complication_text": None,
         "handoff_staged": False,
         "segments_truncated": False,
         "segments_dropped": 0,
@@ -324,7 +325,8 @@ def test_turn_request_accepts_the_pre_scene_command_field(tmp_path) -> None:
 
 def test_api_returns_authored_handoff_as_ordinary_narration(tmp_path) -> None:
     authored_text = (
-        "Michelle's hidden memory card holds a damaged recording that warns Kristin not to trust emergency broadcasts."
+        "Michelle's memory card from under the KMS drawer holds a damaged recording that warns Kristin not to trust "
+        "emergency broadcasts."
     )
 
     class _AuthoredProvider(_StubProvider):
@@ -406,9 +408,9 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin finds and secures Michelle's hidden memory card, then plays its "
-                            "damaged recording: "
-                            "do not trust emergency broadcasts."
+                            "Kristin finds and secures Michelle's memory card from under the KMS drawer, then "
+                            "plays its "
+                            "damaged recording: do not trust emergency broadcasts."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r2"],
                     }

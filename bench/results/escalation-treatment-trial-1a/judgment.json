@@ -1,0 +1,30 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": true,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Introduces an officer by Michelle's workstation drawers with no scene-local support.",
+    "Repeats passive waiting without meaningful responsive consequence or actionable discovery for several turns.",
+    "Reveals protected future knowledge early: memory card, Continuity Initiative, 'choose who remains,' confidential source, park bench lead.",
+    "Skips the required investigation of Michelle's work area; discoveries occur without the player searching/opening anything.",
+    "Final exit leaves the scene on a wait command and rushes multiple beats in summary instead of dramatizing the discoveries in order.",
+    "The player is never actually shown finding specific evidence in the workspace before the transition; the narration jumps straight to solved conclusions.",
+    "Adds unsupported detail that Kristin's initials are carved into the drawer as if newly noticed, then uses it as setup without proper investigation."
+  ],
+  "reasons": [
+    "The opening is sensory and establishes the kitchen well enough, so the first turn can be judged scene-locally from that basis.",
+    "Turn 1 is acceptable as a simple pause that reorients on the damaged back door and phone, both canon-consistent.",
+    "Turn 2 fails scene-local consistency by introducing an officer at the workstation drawers; no officer is present in the supplied canon.",
+    "Turns 2-4 do not reward repeated apt searching/watching with actionable information tied to this scene's actual searchable content, namely Michelle's desk/drawers/research area.",
+    "The scene's stated need is to find evidence of where Michelle went, and the canon says her work area has not been searched yet. The authored turns never properly conduct that search before paying off the discoveries.",
+    "Turn 4 surfaces the carved initials cue, but still with a passive watch command and no consequential interaction; this is insufficient dramatization of the assigned investigative beat.",
+    "Turn 5 is a major canon breach and pacing failure: on another 'Wait and watch the room' command, Kristin suddenly recovers a memory card, reads files, learns the Continuity Initiative, learns its purpose, learns of a confidential source, identifies a park bench, and departs. That dumps protected knowledge and multiple future beats at once.",
+    "Because the departure narration summarizes discoveries and travel rather than naming what Kristin actually found through on-page investigation in the workspace, the exit is not properly motivated by what the player was shown discovering in this scene.",
+    "Overall, the scene does not cover its authored beats in order through interactive consequences; it stalls, then leaps ahead."
+  ]
+}

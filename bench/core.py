@@ -39,6 +39,12 @@ CRITERIA = (
     "exit_motivated",
     "rewards_investigation",
 )
+ESCALATION_CRITERIA = (
+    "cue_points_to_missing_thread",
+    "complication_creates_pressure_without_unearned_knowledge",
+    "no_pre_reveal_disclosure",
+)
+ESCALATION_VERDICTS = ("yes", "no", "not_applicable")
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
@@ -127,6 +133,13 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     package_value = variation.get("story_package", variation.get("package"))
     if not isinstance(package_value, str) or not package_value:
         raise ValueError("variation must name story_package")
+    escalation_judge = variation.get("escalation_judge", False)
+    if not isinstance(escalation_judge, bool):
+        raise ValueError("escalation_judge must be a boolean")
+    entry_state = variation.get("entry_state", "bare")
+    if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
+        raise ValueError("entry_state must be bare or thorough")
+    variation["_entry_state"] = entry_state
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
@@ -290,12 +303,65 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
     return package, state
 
 
-def entry_state(state: RuntimeState) -> dict[str, Any]:
-    """Describe the deliberately bare state used when a scene is benched."""
+def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[Any, RuntimeState]:
+    """Build the configured entry state without making a narration request."""
 
+    if variation.get("_entry_state", variation.get("entry_state", "bare")) == "bare":
+        return package_and_state(variation, scene_id)
+
+    from storygame.personas import (
+        PERSONAS,
+        _legacy_package,
+        _ScriptedProvider,
+        _select_thorough,
+        _turn_cap,
+    )
+
+    package = load_story_package(Path(variation["_package_path"]))
+    scene_ids = {scene.metadata.scene_id for scene in package.scenes}
+    if scene_id not in scene_ids:
+        raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
+    state = RuntimeState.bootstrap(package)
+    if state.current_scene_id == scene_id:
+        return package, state
+
+    # The persona harness uses this legacy package only for choosing and
+    # rendering the first storylet reveal. Its IDs match the effective package;
+    # the runtime state stays on the real package so overlays remain in force.
+    persona_package = _legacy_package(package)
+    turn_cap = _turn_cap(persona_package)
+    provider = _ScriptedProvider(persona_package, state)
+    engine = RuntimeEngine(state, provider)
+    for _ in range(turn_cap):
+        if state.current_scene_id == scene_id:
+            return package, state
+        engine._activate_pacing()
+        projection = engine.projector.project(state, "player", "")
+        selected = _select_thorough(persona_package, state, projection.candidates)
+        provider.selected = (selected,) if selected else ()
+        try:
+            engine.turn(PERSONAS["thorough"])
+        except (ProposalValidationError, RuntimeContractError):
+            provider.selected = ()
+            engine.turn(PERSONAS["thorough"])
+        if state.current_scene_id == scene_id:
+            return package, state
+
+    raise RuntimeError(f"scene {scene_id} was not reached within {turn_cap} thorough seeding turns")
+
+
+def entry_state(state: RuntimeState, *, seeded_by: str = "bare") -> dict[str, Any]:
+    """Describe the state used when a scene is benched."""
+
+    projector = KnowledgeProjector()
     return {
         "scene_id": state.current_scene_id,
-        "committed_knowledge_count": len(KnowledgeProjector().project(state, "player", "").committed_knowledge),
+        "committed_knowledge_count": len(projector.project(state, "player", "").committed_knowledge),
+        "earned_knowledge_count": sum(
+            KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
+            for item in state.package.knowledge.knowledge
+        ),
+        "seeded_by": seeded_by,
     }
 
 
@@ -495,8 +561,11 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
 
 
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
-    package, state = package_and_state(variation, scene_id)
-    arrival_entry_state = entry_state(state)
+    package, state = seeded_state_for_scene(variation, scene_id)
+    seeded_by = (
+        "thorough" if variation.get("_entry_state", variation.get("entry_state", "bare")) == "thorough" else "none"
+    )
+    arrival_entry_state = entry_state(state, seeded_by=seeded_by)
     provider = provider_for(state, variation)
     engine = RuntimeEngine(state, provider)
     try:
@@ -527,6 +596,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         narration = join_narration(tuple(segments)) if segments else ""
         if narration:
             handoff = getattr(provider, "authored_handoff", None)
+            delivery = state.last_turn_delivery
+            cue_fact_id = delivery.cue_fact_id
+            cue_text = next(
+                (
+                    item.cue_text
+                    for item in package.deliveries
+                    if item.fact_id == cue_fact_id and item.cue_text is not None
+                ),
+                None,
+            )
             turns.append(
                 {
                     "player_input": player_input,
@@ -545,6 +624,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None
                     else [],
+                    "cue_fact_id": cue_fact_id,
+                    "cue_text": cue_text,
+                    "complication_text": getattr(delivery, "complication_text", None),
+                    "handoff_staged": delivery.handoff_staged,
                 }
             )
         if entered:
@@ -657,6 +740,20 @@ def score_judgments(judgments: list[dict[str, Any]]) -> dict[str, Any]:
             "unattributed": missing_total - sum(attributed.values()),
         },
     }
+
+
+def score_escalation_judgments(judgments: list[dict[str, Any]], judge_calls: int) -> dict[str, Any]:
+    counts: dict[str, dict[str, int]] = {}
+    for criterion in ESCALATION_CRITERIA:
+        criterion_counts = {verdict: 0 for verdict in ESCALATION_VERDICTS}
+        for judgment in judgments:
+            verdict = judgment.get(criterion)
+            if verdict not in criterion_counts:
+                raise ValueError(f"invalid escalation verdict for {criterion}: {verdict!r}")
+            criterion_counts[verdict] += 1
+        counts[criterion] = criterion_counts
+    counts["judge_calls"] = judge_calls
+    return counts
 
 
 def _stats(values: list[float], n_for_mde: int | None = None) -> dict[str, Any]:
@@ -901,6 +998,8 @@ def ledger_row(
         },
         "model": os.getenv("CF_AI_MODEL", "").strip() or DEFAULT_NARRATOR_MODEL,
     }
+    if "escalation" in aggregate:
+        row["escalation"] = aggregate["escalation"]
     if failure_reason is not None:
         row["failure_reason"] = failure_reason
     return row
@@ -957,4 +1056,19 @@ def run_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
     result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "judge CLI failed")
+    return read_json(output_path)
+
+
+def run_escalation_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
+    command = [
+        "node",
+        str(Path(__file__).with_name("escalation-judge.mjs")),
+        "--input",
+        str(input_path),
+        "--output",
+        str(output_path),
+    ]
+    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "escalation judge CLI failed")
     return read_json(output_path)

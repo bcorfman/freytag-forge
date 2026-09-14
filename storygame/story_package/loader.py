@@ -31,6 +31,7 @@ from storygame.story_package.models import (
     normalize_term,
     term_lookup_forms,
 )
+from storygame.story_package.obligations import required_storylet_ids
 
 
 class StoryPackageError(ValueError):
@@ -59,7 +60,6 @@ _REQUIRED_STORYLET_SECTIONS = {
     "Abort",
     "Protected boundary",
     "Pacing window",
-    "Pacing impact",
 }
 
 
@@ -88,10 +88,7 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
         frontmatter = re.match(r"---\n(.*?)\n---\n", body, re.DOTALL)
         if not frontmatter:
             raise StoryPackageError(f"scene {match.group(1)} lacks YAML frontmatter")
-        try:
-            metadata = SceneMetadata.model_validate(yaml.safe_load(frontmatter.group(1)))
-        except (ValidationError, yaml.YAMLError) as exc:
-            raise StoryPackageError(f"invalid frontmatter for scene {match.group(1)}: {exc}") from exc
+        metadata = _parse_scene_metadata(match.group(1), frontmatter.group(1))
         if metadata.scene_id != match.group(1):
             raise StoryPackageError(f"heading and frontmatter disagree for scene {match.group(1)}")
         if set(metadata.bridge_text) != set(metadata.transition_ids):
@@ -106,6 +103,13 @@ def _parse_scenes(text: str) -> tuple[Scene, ...]:
             )
         )
     return tuple(scenes)
+
+
+def _parse_scene_metadata(scene_id: str, source: str) -> SceneMetadata:
+    try:
+        return SceneMetadata.model_validate(yaml.safe_load(source))
+    except (ValidationError, yaml.YAMLError) as exc:
+        raise StoryPackageError(f"invalid frontmatter for scene {scene_id}: {exc}") from exc
 
 
 def _beat_anchor(heading: str) -> str:
@@ -204,7 +208,6 @@ def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set
         window = dict(re.findall(r"-\s*(earliest|target|latest):\s*`([^`]+)`", sections["Pacing window"]))
         if set(window) != {"earliest", "target", "latest"}:
             raise StoryPackageError(f"storylet {match.group(1)} has an invalid pacing window")
-        impact = sections["Pacing impact"].strip("` \n")
         storylets.append(
             Storylet(
                 id=match.group(1),
@@ -215,7 +218,6 @@ def _parse_storylets(text: str, plot_beat_anchors: set[str], plot_scene_ids: set
                 earliest_turn=_turn(window["earliest"]),
                 target_turn=_turn(window["target"]),
                 latest_turn=_turn(window["latest"]),
-                pacing_impact=impact,
             )
         )
     return tuple(storylets)
@@ -595,7 +597,11 @@ def _validate(package: StoryPackage) -> None:
         if operation.op == "assert" and operation.value is True
     )
     asserted_true_facts.update(
-        effect.fact_id for event in package.pacing.events for effect in event.effects if effect.equals is True
+        effect.fact_id
+        for event in package.pacing.events
+        if not event.when
+        for effect in event.effects
+        if effect.equals is True
     )
     for transition in package.pacing.transitions:
         if transition.id in transition_ids:
@@ -634,6 +640,14 @@ def _validate(package: StoryPackage) -> None:
             raise StoryPackageError(f"pacing event '{event.id}' references an unknown transition")
         if {effect.fact_id for effect in event.effects} - set(package.world.facts):
             raise StoryPackageError(f"pacing event '{event.id}' has an unknown effect predicate")
+        if {predicate.fact_id for predicate in event.when} - set(package.world.facts):
+            raise StoryPackageError(f"pacing event '{event.id}' has an unknown event guard predicate")
+        if event.realizations and event.realizations[-1].when:
+            raise StoryPackageError(f"pacing event '{event.id}' must end with an unguarded default realization")
+        if {predicate.fact_id for realization in event.realizations for predicate in realization.when} - set(
+            package.world.facts
+        ):
+            raise StoryPackageError(f"pacing event '{event.id}' has an unknown realization predicate")
         window = windows[event.scene_id]
         if not 0 <= event.at_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"pacing event '{event.id}' escapes its scene pacing window")
@@ -726,17 +740,21 @@ def _validate_deliveries(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
     facts = package.fact_ids
     canonical_events = package.storylet_routes.bridge_events
-    exit_prerequisite_facts = {
-        fact_id
-        for event in canonical_events
-        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of)
-    }
     player_safe_facts = {
         effect.fact_id
         for known in package.knowledge.knowledge
         if known.audience.player_visible
         for effect in known.establishes
     }
+    world_only_facts_by_scene: dict[str, set[str]] = {}
+    for known in package.knowledge.knowledge:
+        if known.audience.kind != "world_only":
+            continue
+        asserted_facts = {
+            effect.fact_id for effect in known.establishes if effect.op == "assert" and effect.value is True
+        }
+        for scene_id in known.available_in_scenes:
+            world_only_facts_by_scene.setdefault(scene_id, set()).update(asserted_facts)
     deliveries_by_fact: dict[str, FactDelivery] = {}
     for delivery in package.deliveries:
         if delivery.fact_id not in facts:
@@ -771,13 +789,145 @@ def _validate_deliveries(package: StoryPackage) -> None:
             raise StoryPackageError(
                 f"delivery for fact '{delivery.fact_id}' has no player-visible knowledge definition"
             )
-    # World-only prerequisites, such as Rebecca's observation, are deliberately
-    # absent from this audit: they arrive from declared world actions rather
-    # than from a player-visible handoff.
-    missing_deliveries = sorted((exit_prerequisite_facts & player_safe_facts) - set(deliveries_by_fact))
-    if missing_deliveries:
-        fact_id = missing_deliveries[0]
-        raise StoryPackageError(f"bridge-required fact '{fact_id}' has no FactDelivery")
+    for event in canonical_events:
+        for fact_id in (*event.activation.all_facts_true, *event.activation.any_of):
+            if fact_id in deliveries_by_fact:
+                continue
+            if fact_id not in player_safe_facts and fact_id in world_only_facts_by_scene.get(event.scene_id, set()):
+                continue
+            raise StoryPackageError(f"scene {event.scene_id} bridge-required fact '{fact_id}' has no FactDelivery")
+
+
+def _asserted_true_route_operations(operations: tuple[RouteOperation, ...]) -> set[str]:
+    return {operation.fact_id for operation in operations if operation.op == "assert" and operation.value is True}
+
+
+def _validate_transition_trigger_sources(package: StoryPackage) -> None:
+    """Ensure every positive transition trigger has a producer in its source scene."""
+
+    asserted_by_scene: dict[str, set[str]] = {}
+    for event in package.storylet_routes.bridge_events:
+        asserted_by_scene.setdefault(event.scene_id, set()).update(_asserted_true_route_operations(event.operations))
+    for event in package.pacing.events:
+        asserted_by_scene.setdefault(event.scene_id, set()).update(
+            effect.fact_id for effect in event.effects if effect.equals is True
+        )
+    for delivery in package.deliveries:
+        asserted_by_scene.setdefault(delivery.scene_id, set()).update(_asserted_true_route_operations(delivery.costs))
+
+    for transition in package.pacing.transitions:
+        for trigger in transition.triggers:
+            source_facts = asserted_by_scene.get(transition.source_scene_id, set())
+            if trigger.equals is True and trigger.fact_id not in source_facts:
+                raise StoryPackageError(
+                    f"scene {transition.source_scene_id} transition '{transition.id}' trigger "
+                    f"'{trigger.fact_id}' is not asserted by a bridge event, pacing event or delivery cost"
+                )
+
+
+def _validate_resolution_entry_guarantees(package: StoryPackage) -> None:
+    """Ensure resolution activations can be true when their scene is reached."""
+
+    incoming_sources: dict[str, set[str]] = {}
+    for transition in package.pacing.transitions:
+        incoming_sources.setdefault(transition.target_scene_id, set()).add(transition.source_scene_id)
+
+    guarantees_by_source: dict[str, set[str]] = {}
+    for source_scene_id in {source for sources in incoming_sources.values() for source in sources}:
+        guarantees: set[str] = set()
+        for event in package.storylet_routes.bridge_events:
+            if event.scene_id != source_scene_id:
+                continue
+            guarantees.update(event.activation.all_facts_true)
+            guarantees.update(_asserted_true_route_operations(event.operations))
+        guarantees_by_source[source_scene_id] = guarantees
+
+    for scene_id in {event.scene_id for event in package.storylet_routes.resolution_events}:
+        source_ids = incoming_sources.get(scene_id, set())
+        if source_ids:
+            guaranteed = set.intersection(*(guarantees_by_source[source_id] for source_id in source_ids))
+        else:
+            guaranteed = set()
+        for event in package.storylet_routes.resolution_events:
+            if event.scene_id != scene_id:
+                continue
+            required = set(event.activation.all_facts_true) | set(event.activation.any_of)
+            missing = required - guaranteed
+            if missing:
+                fact_id = next(iter(sorted(missing)))
+                raise StoryPackageError(
+                    f"scene {scene_id} resolution event '{event.id}' needs '{fact_id}', which entry does not guarantee"
+                )
+            guaranteed.update(_asserted_true_route_operations(event.operations))
+
+
+def _validate_required_reveal_prerequisites(package: StoryPackage) -> None:
+    """Ensure required reveals have an entry guarantee or a local producer."""
+
+    required_storylets = required_storylet_ids(package)
+    incoming_sources: dict[str, set[str]] = {}
+    for transition in package.pacing.transitions:
+        incoming_sources.setdefault(transition.target_scene_id, set()).add(transition.source_scene_id)
+
+    entry_guarantees: dict[str, set[str]] = {}
+    for scene_id, source_scene_ids in incoming_sources.items():
+        source_guarantees = []
+        for source_scene_id in source_scene_ids:
+            source_guarantees.append(
+                {
+                    fact_id
+                    for event in package.storylet_routes.bridge_events
+                    if event.scene_id == source_scene_id
+                    for fact_id in event.activation.all_facts_true
+                }
+                | {
+                    operation.fact_id
+                    for event in package.storylet_routes.bridge_events
+                    if event.scene_id == source_scene_id
+                    for operation in event.operations
+                    if operation.op == "assert" and operation.value is True
+                }
+            )
+        if source_guarantees:
+            entry_guarantees[scene_id] = set.intersection(*source_guarantees)
+
+    local_producers: dict[str, set[str]] = {}
+    for route in package.storylet_routes.storylets:
+        local_producers.setdefault(route.scene_id, set()).update(
+            operation.fact_id
+            for realization in route.realizations
+            for operation in realization.operations
+            if operation.op == "assert" and operation.value is True
+        )
+    for event in package.pacing.events:
+        local_producers.setdefault(event.scene_id, set()).update(
+            effect.fact_id for effect in event.effects if effect.equals is True
+        )
+    for delivery in package.deliveries:
+        local_producers.setdefault(delivery.scene_id, set()).add(delivery.fact_id)
+        local_producers.setdefault(delivery.scene_id, set()).update(
+            operation.fact_id for operation in delivery.costs if operation.op == "assert" and operation.value is True
+        )
+    for known in package.knowledge.knowledge:
+        for scene_id in known.available_in_scenes:
+            local_producers.setdefault(scene_id, set()).update(
+                effect.fact_id for effect in known.establishes if effect.op == "assert" and effect.value is True
+            )
+
+    for known in package.knowledge.knowledge:
+        if known.source.storylet_id not in required_storylets:
+            continue
+        for scene_id in known.available_in_scenes:
+            entry_fact = f"scene_{scene_id.lower()}_entry_known"
+            guaranteed = entry_guarantees.get(scene_id, set())
+            producible = local_producers.get(scene_id, set())
+            for predicate in known.requires:
+                if predicate.equals is True and predicate.fact_id not in guaranteed | producible | {entry_fact}:
+                    raise StoryPackageError(
+                        f"scene {scene_id} reveal '{known.id}' requires '{predicate.fact_id}', "
+                        "which scene entry does not guarantee "
+                        "and the scene cannot produce"
+                    )
 
 
 def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ...]:
@@ -830,8 +980,23 @@ def load_story_package(root: Path) -> StoryPackage:
             raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
         deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
 
-        def event_source(item: dict[str, Any]) -> dict[str, Any]:
+        route_storylet_ids = {item["id"] for item in routes_raw["storylets"]}
+
+        def event_source(item: dict[str, Any], *, resolution: bool) -> dict[str, Any]:
             activation = item.get("activation", {})
+            realization_storylets = item.get("realization_storylets", ())
+            if realization_storylets is None:
+                realization_storylets = ()
+            unknown_storylets = set(realization_storylets) - route_storylet_ids
+            if unknown_storylets:
+                event_kind = "resolution" if resolution else "bridge"
+                raise StoryPackageError(
+                    f"canonical {event_kind} event '{item['id']}' references unknown realization storylet(s): "
+                    f"{sorted(unknown_storylets)}"
+                )
+            fallback_text = item.get("fallback_text")
+            if resolution and (not isinstance(fallback_text, str) or not fallback_text.strip()):
+                raise StoryPackageError(f"resolution event '{item['id']}' must have non-empty fallback_text")
             return {
                 "id": item["id"],
                 "scene_id": item["scene_id"],
@@ -841,6 +1006,8 @@ def load_story_package(root: Path) -> StoryPackage:
                     "at_least": activation.get("at_least", 0),
                 },
                 "operations": item["produces"],
+                "realization_storylets": realization_storylets,
+                "fallback_text": fallback_text,
             }
 
         routes = StoryletRoutesSource.model_validate(
@@ -862,9 +1029,11 @@ def load_story_package(root: Path) -> StoryPackage:
                     }
                     for item in routes_raw["storylets"]
                 ),
-                "bridge_events": tuple(event_source(item) for item in routes_raw.get("canonical_bridge_events", ())),
+                "bridge_events": tuple(
+                    event_source(item, resolution=False) for item in routes_raw.get("canonical_bridge_events", ())
+                ),
                 "resolution_events": tuple(
-                    event_source(item) for item in routes_raw.get("canonical_resolution_events", ())
+                    event_source(item, resolution=True) for item in routes_raw.get("canonical_resolution_events", ())
                 ),
             }
         )
@@ -889,4 +1058,7 @@ def load_story_package(root: Path) -> StoryPackage:
     _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
+    _validate_transition_trigger_sources(package)
+    _validate_resolution_entry_guarantees(package)
+    _validate_required_reveal_prerequisites(package)
     return package

@@ -23,8 +23,9 @@ class RuntimeStateSqliteStore:
     # reinterpret their state under the new revelation contract. Version 3
     # additionally drops the dead narrative_history field, so a session saved
     # under version 2 now fails closed with 'save is incompatible with this
-    # story package' instead of silently loading with a stale shape.
-    SCHEMA_VERSION = 3
+    # story package' instead of silently loading with a stale shape. Version 4
+    # adds the delivered cue ledger to runtime snapshots.
+    SCHEMA_VERSION = 4
 
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)

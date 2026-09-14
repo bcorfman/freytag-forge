@@ -1,0 +1,117 @@
+{
+  "replicates": 2,
+  "completed_replicates": 2,
+  "failed_replicates": 0,
+  "failures": [],
+  "scenes_scored": 1,
+  "max_score": 7,
+  "score_metric": "7-point record: seven equally weighted boolean criteria across 1 scene",
+  "pooled": {
+    "score_points": {
+      "n": 2,
+      "mean": 0.5,
+      "standard_deviation": 0.7071067811865476,
+      "confidence_interval_95": [
+        -5.853,
+        6.853
+      ],
+      "minimum_detectable_effect": 5.473006486383879,
+      "replicate_scores": [
+        1.0,
+        0.0
+      ]
+    },
+    "total": 1,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 1,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 0,
+      "exit_motivated": 0,
+      "rewards_investigation": 0
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 14,
+      "per_criterion_where_attributable": {
+        "progressive": 1
+      },
+      "unattributed": 13
+    }
+  },
+  "per_script": {
+    "wait": {
+      "score_points": {
+        "n": 2,
+        "mean": 0.5,
+        "standard_deviation": 0.7071067811865476,
+        "confidence_interval_95": [
+          -5.853,
+          6.853
+        ],
+        "minimum_detectable_effect": 5.473006486383879,
+        "replicate_scores": [
+          1.0,
+          0.0
+        ]
+      },
+      "example_leakage": 0,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 1,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 0,
+        "exit_motivated": 0,
+        "rewards_investigation": 0
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 14,
+        "per_criterion_where_attributable": {
+          "progressive": 1
+        },
+        "unattributed": 13
+      }
+    }
+  },
+  "replicate_scores": [
+    1.0,
+    0.0
+  ],
+  "example_leakage": 0,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "entry_state": {
+    "scene_id": "1B",
+    "committed_knowledge_count": 1,
+    "earned_knowledge_count": 6,
+    "seeded_by": "thorough"
+  },
+  "escalation": {
+    "cue_points_to_missing_thread": {
+      "yes": 2,
+      "no": 0,
+      "not_applicable": 0
+    },
+    "complication_creates_pressure_without_unearned_knowledge": {
+      "yes": 2,
+      "no": 0,
+      "not_applicable": 0
+    },
+    "no_pre_reveal_disclosure": {
+      "yes": 2,
+      "no": 0,
+      "not_applicable": 0
+    },
+    "judge_calls": 2
+  },
+  "budget": {
+    "projected_workers_ai_neurons": 44.0,
+    "actual_narration_turns": 10,
+    "actual_narration_requests": 15,
+    "estimated_workers_ai_neurons_from_requests": 165.0,
+    "actual_openai_judge_calls": 4,
+    "quota": null
+  }
+}

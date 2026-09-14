@@ -33,8 +33,8 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's hidden memory card and damaged recording; the card points to a "
-                        "dead drop at a bench in the park."
+                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
+                        "points to a dead drop at a bench in the park."
                     ),
                     "grounding_ids": ["k_sl_1a_b_r1"],
                 }
@@ -72,8 +72,8 @@ def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
             {
                 "kind": "narration",
                 "text": (
-                    "Kristin finds and secures Michelle's hidden memory card, then plays its damaged recording: "
-                    "do not trust emergency broadcasts."
+                    "Kristin finds and secures Michelle's memory card under the KMS drawer, then plays its damaged "
+                    "recording: do not trust emergency broadcasts."
                 ),
                 "grounding_ids": [knowledge_id],
             }
@@ -92,12 +92,15 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    engine.turn("Wait.")  # deliberate non-event: advance the declared pressure clock
-    engine.turn("Continue waiting.")  # deliberate non-event: provide the second timed turn
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    turn_count = event.at_turn
+    # These are deliberate non-events: advance the declared pressure clock without player action.
+    for turn_index in range(turn_count):
+        engine.turn("Wait." if turn_index % 2 == 0 else "Keep waiting.")
 
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
     assert "pressure_1a" in state.fired_event_ids
-    assert Fact(predicate="story_elapsed_seconds", subject="story", value="120") in state.facts.asserted
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value=str(turn_count * 60)) in state.facts.asserted
 
 
 def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() -> None:
