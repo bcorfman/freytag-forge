@@ -38,7 +38,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 30
+    assert len(package.storylets) == 33
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -588,8 +588,8 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
         ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
         (
             "pacing.yaml",
-            "min_turns: 2\n  nudge_after_turns: 4",
-            "min_turns: 3\n  nudge_after_turns: 2",
+            "min_turns: 8\n  nudge_after_turns: 10",
+            "min_turns: 11\n  nudge_after_turns: 10",
             "turn allocations",
         ),
         ("storylets.md", "**Pacing window**", "**Window**", "lacks sections"),
@@ -607,7 +607,7 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 6`", 1))
+    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 14`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 

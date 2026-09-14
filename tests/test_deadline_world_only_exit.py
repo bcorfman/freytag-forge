@@ -57,7 +57,8 @@ def test_deliverable_early_then_world_only_deadline_exits_2a() -> None:
     engine = RuntimeEngine(state, provider)
     provider.engine = engine
 
-    for _ in range(30):
+    pre_2a_budget = sum(item.handoff_after_turns for item in package.pacing.scenes[:3]) + 1
+    for _ in range(pre_2a_budget):
         if state.current_scene_id == "2A":
             break
         _drive(engine, provider, None)
@@ -89,7 +90,8 @@ def test_staller_from_2a_still_exits_at_its_deadline() -> None:
     provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
 
-    for _ in range(30):
+    pre_2a_budget = sum(item.handoff_after_turns for item in package.pacing.scenes[:3]) + 1
+    for _ in range(pre_2a_budget):
         if state.current_scene_id == "2A":
             break
         _drive(engine, provider, None)

@@ -206,16 +206,20 @@ def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
         CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
     )
 
-    expected = PACKAGE.pacing.events[0].realizations[expected_index].text
-    all_texts = tuple(realization.text for realization in PACKAGE.pacing.events[0].realizations)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    expected = event.realizations[expected_index].text
+    all_texts = tuple(realization.text for realization in event.realizations)
     engine.turn("Search the kitchen.")
     engine.turn("Check the back door.")
     engine.turn("Inspect the overturned chair.")
+    engine.turn("Trace the patrol marker.")
+    engine.turn("Search the front room.")
 
     assert all(text not in captured[0] for text in all_texts)
-    assert captured[1].count(expected) == 1
-    assert all(text not in captured[1] for text in all_texts if text != expected)
-    assert expected not in captured[2]
+    assert all(text not in captured[index] for index in (1, 2) for text in all_texts)
+    assert captured[3].count(expected) == 1
+    assert all(text not in captured[3] for text in all_texts if text != expected)
+    assert expected not in captured[4]
 
 
 def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
@@ -224,9 +228,15 @@ def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
 
-    engine.turn("Search the kitchen.")
-    engine.turn("Check the back door.")
-    assert state.last_turn_delivery.complication_text == PACKAGE.pacing.events[0].realizations[1].text
+    for player_input in (
+        "Search the kitchen.",
+        "Check the back door.",
+        "Inspect the overturned chair.",
+        "Trace the patrol marker.",
+    ):
+        engine.turn(player_input)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    assert state.last_turn_delivery.complication_text == event.realizations[1].text
 
 
 def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated(monkeypatch) -> None:
@@ -246,8 +256,11 @@ def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated
 
     engine.turn("Keep moving toward the stairs.")
     engine.turn("Help the captives up the stairs.")
+    engine.turn("Open the nearest flood door.")
+    engine.turn("Guide the captives toward the relay.")
 
-    assert PACKAGE.pacing.events[4].realizations[0].text in captured[1]
+    event = next(event for event in PACKAGE.pacing.events if event.id == "collapse_3c")
+    assert event.realizations[0].text in captured[3]
 
 
 def test_unfired_pacing_event_does_not_cross_a_scene_exit() -> None:
@@ -321,12 +334,14 @@ def test_cue_ranking_uses_eligible_source_windows_and_activation_conditions() ->
         "brandon_identified",
         "park_pursuit_resolved",
         "transport_route_identified",
+        "missing_may_be_alive",
     )
 
 
 def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() -> None:
     state = _state_1b()
-    state.turn_index = 3
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1B")
+    state.turn_index = window.nudge_after_turns - 1
     responses = iter(({"segments": [{"kind": "narration", "text": "A clue catches my attention."}]},))
     calls = 0
 
@@ -348,11 +363,13 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert state.last_turn_delivery.cue_fact_id == "transport_route_identified"
     assert state.last_turn_delivery.handoff_staged is False
 
+    state.turn_index = window.handoff_after_turns - 1
     handoff = engine.turn("Search the park.")
     assert state.current_scene_id == "1C"
     assert Fact(predicate="trust_brandon", subject="story", value="true") not in state.facts.asserted
     assert Fact(predicate="transport_route_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="missing_may_be_alive", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
     assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
@@ -368,6 +385,8 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
 def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
     state = _state_2a()
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "2A")
+    state.turn_index = window.handoff_after_turns - 4
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
     engine.turn("Approach the facility entrance.")

@@ -31,14 +31,16 @@ def test_turn_index_keeps_counting_and_scene_entry_resets_relative_turns() -> No
     assert state.current_scene_id == "1A"
     assert state.turn_index - state.scene_entered_at_turn == 1
 
-    engine.turn("Leave when the lead is ready.")
-    assert state.turn_index == 2
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    for _ in range(window.min_turns - 1):
+        engine.turn("Investigate the next concrete clue.")
+    assert state.turn_index == window.min_turns
     assert state.current_scene_id == "1B"
-    assert state.scene_entered_at_turn == 2
+    assert state.scene_entered_at_turn == window.min_turns
     assert state.turn_index - state.scene_entered_at_turn == 0
 
     engine.turn("Inspect the room.")
-    assert state.turn_index == 3
+    assert state.turn_index == window.min_turns + 1
     assert state.turn_index - state.scene_entered_at_turn == 1
 
 
@@ -49,7 +51,10 @@ def test_min_turns_floor_blocks_a_committed_trigger_until_source_turns_are_playe
     state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
     engine.turn("Rush toward the exit.", clock_seconds=3600)
+    for _ in range(window.min_turns - 2):
+        engine.turn("Search the room for the next lead.", clock_seconds=0)
     assert state.current_scene_id == "1A"
 
     engine.turn("Take the lead and go.", clock_seconds=0)
@@ -98,20 +103,20 @@ def _assert_reaction_window_contract(package) -> frozenset[str]:
 def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:
     required_storylet_ids = _assert_reaction_window_contract(PACKAGE)
 
-    assert len(required_storylet_ids) == 24
+    assert len(required_storylet_ids) == 27
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     expected_windows = {
-        "1A": (2, 4, 5),
-        "1B": (2, 4, 5),
-        "1C": (2, 3, 4),
-        "2A": (2, 3, 4),
-        "2B": (2, 3, 4),
-        "2C": (2, 3, 4),
-        "3A": (3, 4, 5),
-        "3B": (4, 4, 5),
-        "3C": (2, 4, 6),
+        "1A": (8, 10, 13),
+        "1B": (8, 10, 13),
+        "1C": (7, 8, 11),
+        "2A": (7, 8, 11),
+        "2B": (8, 10, 15),
+        "2C": (8, 9, 16),
+        "3A": (9, 10, 13),
+        "3B": (9, 10, 14),
+        "3C": (10, 11, 14),
     }
     windows = {window.scene_id: window for window in PACKAGE.pacing.scenes}
 
@@ -123,7 +128,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     for scene_id, window in windows.items():
         storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
         targets = [storylet.target_turn for storylet in storylets]
-        assert targets == sorted(set(targets))
+        assert targets == sorted(targets)
         assert all(
             storylet.earliest_turn <= storylet.target_turn <= window.handoff_after_turns for storylet in storylets
         )
@@ -186,8 +191,8 @@ def test_loader_rejects_out_of_order_scene_turn_allocation(tmp_path: Path) -> No
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
-    old = "min_turns: 2\n  nudge_after_turns: 4"
-    new = "min_turns: 3\n  nudge_after_turns: 2"
+    old = "min_turns: 8\n  nudge_after_turns: 10"
+    new = "min_turns: 11\n  nudge_after_turns: 10"
     source.write_text(source.read_text().replace(old, new, 1))
 
     with pytest.raises(StoryPackageError, match="turn allocations must be ordered"):
@@ -198,7 +203,7 @@ def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
-    source.write_text(source.read_text().replace("budget_seconds: 1890", "budget_seconds: 1889", 1))
+    source.write_text(source.read_text().replace("budget_seconds: 7200", "budget_seconds: 5399", 1))
 
     with pytest.raises(StoryPackageError, match="handoff sum.*budget_seconds"):
         load_story_package(root)

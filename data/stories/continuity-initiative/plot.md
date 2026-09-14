@@ -107,7 +107,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door
+**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
@@ -468,10 +468,10 @@ Michelle has built a small covert network among prisoners and sympathetic worker
 * Altering prisoner classifications
 * Delaying transfers
 * Hiding vulnerable captives from experimental programs
-
-The records prove that Michelle is active inside, but they cannot yet show how far her hidden network reaches.
 * Sending coded messages through maintenance reports
 * Preparing prisoners for an organized uprising
+
+The records prove that Michelle is active inside, but they cannot yet show how far her hidden network reaches.
 
 Michelle is not passively waiting to be rescued. She has already begun dismantling the facility from within.
 

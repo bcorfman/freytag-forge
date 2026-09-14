@@ -32,13 +32,14 @@ def _engine_at(
 
 
 def test_optional_storylet_expires_after_latest_turn_and_never_fires() -> None:
-    engine, state = _engine_at("1A", 3, facts=("michelle_warning_known",))
+    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-C")
+    engine, state = _engine_at("1A", storylet.latest_turn, facts=("michelle_warning_known",))
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
     assert "SL-1A-C" in state.active_event_ids
     facts_before_expiry = state.facts.asserted
 
-    state.turn_index = 4
+    state.turn_index = storylet.latest_turn + 1
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
 
     assert "SL-1A-C" not in state.active_event_ids
@@ -47,7 +48,8 @@ def test_optional_storylet_expires_after_latest_turn_and_never_fires() -> None:
 
 
 def test_expired_optional_storylet_cannot_reopen_through_earned_forward() -> None:
-    engine, state = _engine_at("1A", 4, facts=("michelle_warning_known",))
+    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-C")
+    engine, state = _engine_at("1A", storylet.latest_turn + 1, facts=("michelle_warning_known",))
     state.fired_event_ids.update({"SL-1A-A", "SL-1A-B"})
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
@@ -65,8 +67,8 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
         assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
-def test_real_package_has_twenty_four_required_storylets() -> None:
-    assert len(required_storylet_ids(PACKAGE)) == 24
+def test_real_package_has_twenty_seven_required_storylets() -> None:
+    assert len(required_storylet_ids(PACKAGE)) == 27
 
 
 def test_resolution_scene_does_not_stage_escalation() -> None:
@@ -94,7 +96,8 @@ def test_resolution_scene_does_not_stage_escalation() -> None:
 
 
 def test_snapshot_restore_reapplies_expiry_without_double_expiring() -> None:
-    engine, state = _engine_at("1A", 3, facts=("michelle_warning_known",))
+    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-C")
+    engine, state = _engine_at("1A", storylet.latest_turn, facts=("michelle_warning_known",))
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
     before = state.snapshot()
 
@@ -110,9 +113,9 @@ def test_snapshot_restore_reapplies_expiry_without_double_expiring() -> None:
 
     state.restore_snapshot(before)
     assert "SL-1A-C" in state.active_event_ids
-    assert state.turn_index == 3
+    assert state.turn_index == storylet.latest_turn
 
-    state.turn_index = 4
+    state.turn_index = storylet.latest_turn + 1
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
 
     assert "SL-1A-C" not in state.active_event_ids

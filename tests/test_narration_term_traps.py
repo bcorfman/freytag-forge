@@ -44,7 +44,9 @@ def test_loader_rejects_an_uncommitted_guarded_term_in_scene_frame_situation(tmp
     knowledge = root / "knowledge.yaml"
     contents = knowledge.read_text(encoding="utf-8")
     contents = contents.replace(
-        "situation: A supposedly abandoned freight terminal above an underground installation.",
+        "situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy "
+        "electrical service show that it is active. Kristin and Brandon are in its lower service level, looking for "
+        "a way to confirm what lies deeper below.",
         "situation: A supposedly abandoned freight terminal above a dead drop.",
         1,
     )

@@ -46,6 +46,7 @@ def test_scene_1a_deadline_fallback_is_accepted_and_exits_scene(monkeypatch) -> 
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     engine = RuntimeEngine(state, provider)
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
 
     for player_input in (
         "Search the kitchen.",
@@ -55,6 +56,8 @@ def test_scene_1a_deadline_fallback_is_accepted_and_exits_scene(monkeypatch) -> 
         "Check the front window.",
     ):
         engine.turn(player_input)
+    for _ in range(window.handoff_after_turns - 5):
+        engine.turn("Search the room for a way forward.")
 
     assert state.current_scene_id == "1B"
     assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted

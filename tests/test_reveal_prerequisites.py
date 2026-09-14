@@ -85,7 +85,8 @@ def test_efficient_player_earns_2c_evidence_without_cue_or_deadline() -> None:
     cues: list[str] = []
     deadline = False
 
-    for turn_index in range(1, 40):
+    max_turns = sum(item.handoff_after_turns for item in package.pacing.scenes)
+    for turn_index in range(1, max_turns + 1):
         scene = state.current_scene_id
         engine._activate_pacing()
         known = frozenset(f.predicate for f in state.facts.asserted if str(f.value).lower() == "true")
@@ -118,7 +119,7 @@ def test_efficient_player_earns_2c_evidence_without_cue_or_deadline() -> None:
             deadline |= state.last_turn_delivery.handoff_staged
             if state.current_scene_id != "2C":
                 break
-        if turn_index == 39:
+        if turn_index == max_turns:
             pytest.fail(f"efficient player never left 2C; in {state.current_scene_id}")
 
     assert not cues

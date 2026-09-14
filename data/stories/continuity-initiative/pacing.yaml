@@ -110,7 +110,7 @@ events:
   - fact_id: inspector_cover_under_review
     equals: true
   realizations:
-  - text: The supervisor asks for a second credential check. Their cover will not survive another weak answer.
+  - text: A second credential check threatens their inspector cover.
 - id: archive_sweep_2b
   scene_id: 2B
   at_turn: 8
@@ -240,8 +240,6 @@ transitions:
   target_scene_id: 3A
   priority: 10
   triggers:
-  - fact_id: rebecca_office_required_for_broadcast
-    equals: true
   - fact_id: combined_broadcast_rescue_plan_known
     equals: true
   required_dependencies:

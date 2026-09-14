@@ -1767,9 +1767,6 @@ storylets:
     - op: assert
       fact_id: detention_uprising_started
       value: true
-    - op: assert
-      fact_id: override_codes_deadline_known
-      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
     - t_3a_3b
@@ -2388,6 +2385,7 @@ canonical_bridge_events:
     - park_pursuit_resolved
     - transport_route_identified
     - brandon_identified
+    - missing_may_be_alive
   produces:
   - op: assert
     fact_id: transport_route_departure_ready
@@ -2455,10 +2453,8 @@ canonical_bridge_events:
     all_facts_true:
     - purge_clock_started
     - evidence_ready_to_transmit
+    - rebecca_office_required_for_broadcast
   produces:
-  - op: assert
-    fact_id: rebecca_office_required_for_broadcast
-    value: true
   - op: assert
     fact_id: combined_broadcast_rescue_plan_known
     value: true

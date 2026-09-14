@@ -127,7 +127,7 @@ def _set_true(state: RuntimeState, fact_id: str) -> None:
 @pytest.mark.parametrize(
     ("pool_facts", "fires", "exit_available"),
     [
-        (("transport_route_identified", "brandon_identified"), True, True),
+        (("transport_route_identified", "brandon_identified", "missing_may_be_alive"), True, True),
         (("transport_route_identified",), False, False),
     ],
 )

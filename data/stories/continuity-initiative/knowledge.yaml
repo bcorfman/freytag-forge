@@ -913,7 +913,7 @@ knowledge:
     entity_ids: []
     priority: 0
 - id: k_sl_2a_c_r1
-  statement: 'Kristin persuades a doubtful supervisor that a cooling-water fault could disable the service level, gaining corridor access.'
+  statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
   entity_ids: []
   aliases:
   - restricted corridor access
@@ -1313,7 +1313,7 @@ knowledge:
   - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
   - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
 - id: k_sl_2c_d_r1
-  statement: "Michelle's encrypted message marks a maintenance route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and release the sealed detention sectors."
+  statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
   entity_ids: []
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1333,7 +1333,7 @@ knowledge:
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
 - id: k_sl_2c_d_r2
-  statement: "Kristin traces Michelle's maintenance code into her holding block, then to Rebecca's office, and learns the dangerous plan can save captives only if they seize the broadcast controls."
+  statement: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office, and learns the plan can rescue the captives only if they seize the controls to broadcast the evidence."
   entity_ids: []
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1567,12 +1567,11 @@ knowledge:
     equals: true
   - fact_id: military_override_codes_available
     equals: true
+  - fact_id: override_codes_deadline_known
+    equals: true
   establishes:
   - op: assert
     fact_id: detention_uprising_started
-    value: true
-  - op: assert
-    fact_id: override_codes_deadline_known
     value: true
   source:
     kind: storylet_realization

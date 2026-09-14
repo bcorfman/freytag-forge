@@ -4,7 +4,7 @@ These tests drive the runtime with a scripted provider so CI proves the story
 package and engine support a complete 1A -> 3C playthrough without any model
 call. The clocked variant mirrors the hosted Playwright package-clock recipe;
 the unclocked variant mirrors default 60-second turns and stays within the
-authored 1890-second budget.
+authored package budget.
 """
 
 from __future__ import annotations
@@ -20,77 +20,84 @@ from tests._legacy_package import legacy_package
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 # (selected knowledge id or None, elapsed target, expected scene at turn end)
-CLOCKED_JOURNEY = [
-    ("k_sl_1a_a_r1", 60, "1A"),
-    (None, 120, "1A"),
-    ("k_sl_1a_b_r1", 180, "1B"),
-    ("k_sl_1b_b_r1", 240, "1B"),
-    (None, 300, "1B"),
-    (None, 360, "1B"),
-    ("k_sl_1b_c_r1", 420, "1C"),
-    ("k_sl_1c_a_r2", 480, "1C"),
-    (None, 540, "1C"),
-    ("k_sl_1c_b_r1", 600, "2A"),
-    ("k_sl_2a_b_r1", 660, "2A"),
-    (None, 720, "2A"),
-    ("k_sl_2a_c_r2", 780, "2B"),
-    ("k_sl_2b_a_r2", 840, "2B"),
-    ("k_sl_2b_c_r1", 900, "2B"),
-    (None, 960, "2B"),
-    ("k_sl_2b_b_r1", 1020, "2C"),
-    ("k_sl_2c_a_r2", 1080, "2C"),
-    (None, 1140, "2C"),
-    ("k_sl_2c_c_r1", 1200, "3A"),
-    ("k_sl_3a_a_r1", 1260, "3A"),
-    ("k_sl_3a_b_r2", 1320, "3A"),
-    ("k_sl_3a_c_r1", 1380, "3B"),
-    ("k_sl_3b_a_r1", 1440, "3B"),
-    ("k_sl_3b_b_r1", 1500, "3B"),
-    (None, 1560, "3B"),
-    (None, 1620, "3B"),
-    ("k_sl_3b_c_r1", 1680, "3C"),
-    ("k_sl_3c_a_r1", 1740, "3C"),
-    ("k_sl_3c_b_r1", 1780, "3C"),
-    ("k_sl_3c_c_r1", 1820, "3C"),
-    ("k_sl_3c_d_r1", 1860, "3C"),
-    ("k_sl_3c_e_r1", 1890, "3C"),
-]
-
 # Alternate-realization coverage at the default 60-second turn cadence.
 UNCLOCKED_JOURNEY = [
     ("k_sl_1a_a_r1", "1A"),
     (None, "1A"),
-    ("k_sl_1a_b_r1", "1B"),
+    (None, "1A"),
+    (None, "1A"),
+    ("k_sl_1a_b_r1", "1A"),
+    (None, "1A"),
+    (None, "1A"),
+    (None, "1B"),
     ("k_sl_1b_b_r1", "1B"),
+    ("k_sl_1b_c_r1", "1B"),
     (None, "1B"),
     (None, "1B"),
-    ("k_sl_1b_c_r1", "1C"),
-    ("k_sl_1c_a_r2", "1C"),
+    (None, "1B"),
+    (None, "1B"),
+    (None, "1B"),
     (None, "1C"),
-    ("k_sl_1c_b_r2", "2A"),
-    ("k_sl_2a_b_r1", "2A"),
+    ("k_sl_1c_a_r1", "1C"),
+    ("k_sl_1c_b_r1", "1C"),
+    (None, "1C"),
+    (None, "1C"),
+    (None, "1C"),
+    (None, "1C"),
     (None, "2A"),
-    ("k_sl_2a_c_r2", "2B"),
-    ("k_sl_2b_a_r1", "2B"),
-    ("k_sl_2b_c_r2", "2B"),
+    ("k_sl_2a_b_r1", "2A"),
+    ("k_sl_2a_c_r2", "2A"),
+    (None, "2A"),
+    (None, "2A"),
+    (None, "2A"),
+    (None, "2A"),
     (None, "2B"),
-    ("k_sl_2b_b_r2", "2C"),
-    ("k_sl_2c_a_r2", "2C"),
+    (None, "2B"),
+    ("k_sl_2b_a_r1", "2B"),
+    ("k_sl_2b_b_r1", "2B"),
+    ("k_sl_2b_c_r1", "2B"),
+    (None, "2B"),
+    (None, "2B"),
+    (None, "2B"),
     (None, "2C"),
-    ("k_sl_2c_c_r2", "3A"),
-    ("k_sl_3a_a_r2", "3A"),
-    ("k_sl_3a_b_r1", "3A"),
-    ("k_sl_3a_c_r2", "3B"),
-    ("k_sl_3b_a_r2", "3B"),
-    ("k_sl_3b_b_r2", "3B"),
+    (None, "2C"),
+    ("k_sl_2c_b_r1", "2C"),
+    ("k_sl_2c_c_r1", "2C"),
+    ("k_sl_2c_d_r1", "2C"),
+    (None, "2C"),
+    (None, "2C"),
+    (None, "2C"),
+    (None, "3A"),
+    ("k_sl_3a_a_r1", "3A"),
+    ("k_sl_3a_b_r2", "3A"),
+    ("k_sl_3a_d_r1", "3A"),
+    ("k_sl_3a_c_r1", "3A"),
+    (None, "3A"),
+    (None, "3A"),
+    (None, "3A"),
+    (None, "3A"),
     (None, "3B"),
     (None, "3B"),
-    ("k_sl_3b_c_r2", "3C"),
-    ("k_sl_3c_a_r2", "3C"),
-    ("k_sl_3c_b_r2", "3C"),
-    ("k_sl_3c_c_r2", "3C"),
-    ("k_sl_3c_d_r2", "3C"),
-    ("k_sl_3c_e_r2", "3C"),
+    ("k_sl_3b_a_r1", "3B"),
+    ("k_sl_3b_b_r1", "3B"),
+    ("k_sl_3b_d_r1", "3B"),
+    ("k_sl_3b_c_r1", "3B"),
+    (None, "3B"),
+    (None, "3B"),
+    (None, "3B"),
+    (None, "3C"),
+    (None, "3C"),
+    ("k_sl_3c_a_r1", "3C"),
+    ("k_sl_3c_b_r1", "3C"),
+    ("k_sl_3c_c_r1", "3C"),
+    ("k_sl_3c_d_r1", "3C"),
+    ("k_sl_3c_e_r1", "3C"),
+]
+
+# The package-clock path advances the same scripted turns by one minute each.
+CLOCKED_JOURNEY = [
+    (selection, turn_number * 60, expected_scene)
+    for turn_number, (selection, expected_scene) in enumerate(UNCLOCKED_JOURNEY, start=1)
 ]
 
 
@@ -148,7 +155,7 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
     assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
 
 
-def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
+def test_unclocked_canon_journey_fits_the_authored_budget() -> None:
     package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
     state = RuntimeState.bootstrap(package)
     provider = _ScriptedProvider(package)
@@ -160,10 +167,9 @@ def test_unclocked_canon_journey_fits_the_thirty_minute_budget() -> None:
             f"turn {turn_index} selecting {selection} ended in {state.current_scene_id}, expected {expected_scene}"
         )
 
-    assert (
-        Fact(predicate="story_elapsed_seconds", subject="story", value=str(60 * len(UNCLOCKED_JOURNEY)))
-        in state.facts.asserted
-    )
+    elapsed = Fact(predicate="story_elapsed_seconds", subject="story", value=str(60 * len(UNCLOCKED_JOURNEY)))
+    assert elapsed in state.facts.asserted
+    assert 60 * len(UNCLOCKED_JOURNEY) <= package.pacing.budget_seconds
     assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
 
 
@@ -177,14 +183,22 @@ def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
 
     _drive(engine, provider, "k_sl_1a_a_r1", clock_seconds=120)
     _drive(engine, provider, "k_sl_1a_b_r1", clock_seconds=75)
+    window = next(item for item in package.pacing.scenes if item.scene_id == "1A")
+    for _ in range(window.min_turns - 3):
+        _drive(engine, provider, None, clock_seconds=0)
+    assert state.current_scene_id == "1A"
+    _drive(engine, provider, None, clock_seconds=0)
     assert state.current_scene_id == "1B"
 
-    # Commit the next trigger before the first turn in 1B; its two-turn floor
-    # keeps the committed trigger in the source scene until the next turn.
+    # Commit the next trigger before the first turn in 1B; its authored floor
+    # keeps the committed trigger in the source scene until the floor is met.
     state.facts.assert_fact(Fact(predicate="transport_route_departure_ready", subject="story", value="true"))
     _drive(engine, provider, None, clock_seconds=40)
-    assert state.current_scene_id == "1B", "the source scene must receive its minimum two turns"
+    assert state.current_scene_id == "1B", "the source scene must receive its minimum turns"
 
+    window = next(item for item in package.pacing.scenes if item.scene_id == "1B")
+    for _ in range(window.min_turns - 2):
+        _drive(engine, provider, None, clock_seconds=0)
     _drive(engine, provider, None, clock_seconds=15)
     assert state.current_scene_id == "1C"
 
@@ -195,7 +209,8 @@ def test_scene_1a_handoff_recovers_card_atomically_with_continuity_files() -> No
     provider = _ScriptedProvider()
     engine = RuntimeEngine(state, provider)
 
-    for _ in range(5):
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    for _ in range(window.handoff_after_turns):
         _drive(engine, provider, None)
 
     assert state.current_scene_id == "1B"
