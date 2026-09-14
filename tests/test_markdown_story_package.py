@@ -45,7 +45,10 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_phone": "on the kitchen floor",
         "kristin_laptop": "in Kristin's truck outside the house",
     }
-    assert package.scenes[0].metadata.setting_facts == ("Michelle's workstation drawers are shut.",)
+    assert package.scenes[0].metadata.setting_facts == (
+        "Michelle's workstation drawers are shut.",
+        "Michelle's phone is not damaged.",
+    )
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
     mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
     assert mapped_facts <= set(package.world.facts)
@@ -113,7 +116,7 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut."]',
+        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]',
         'setting_facts: ["The test shutters are closed.", "The test lamp is on."]',
         1,
     )
@@ -128,7 +131,7 @@ def test_loader_rejects_empty_setting_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut."]',
+        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]',
         'setting_facts: ["  "]',
         1,
     )
@@ -142,7 +145,7 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut."]\n',
+        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]\n',
         "",
         1,
     )
