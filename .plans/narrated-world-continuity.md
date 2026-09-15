@@ -365,8 +365,9 @@ Tasks:
   - Also: replace the rule example with an opened box so a state goes in
     `condition`, and add a judge calibration case for a correct capture after
     narration that contradicts the given facts.
-- [ ] Ringer task H: omission rule, opened-box example, carried from the match
-  call; recalibrate the judge with the new case.
+- [x] Ringer task H: omission rule, opened-box example, carried from the match
+  call. Judge recalibrated with the contradictory-narration case: 158/158 in
+  both passes, no judge change needed.
 - [ ] Smoke, then 4 replicates of each variation; tally against 92%.
 
 Operational lessons from round 1 (apply to every live run):

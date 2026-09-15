@@ -60,6 +60,34 @@ def test_things_are_after_scene_and_render_single_value_facts():
     assert provider._setting_fact_rules() == []
 
 
+def test_single_call_rules_require_facts_for_every_change():
+    system = _provider()._system_prompt()
+
+    assert system.endswith(
+        "Every time your story moves or changes a thing, or puts a new thing in a place, "
+        "add that thing to item_facts.\n"
+        'Give only what changed. Use "where" for the place it is now and "condition" for up to two short phrases. '
+        "Example: if she opens the box on the table and picks up the key, the box is "
+        '{"condition": ["open"]} and the key '
+        'is {"where": "in her hand"}.'
+    )
+    assert "Also return item_facts" not in system
+
+
+def test_match_system_describes_references_carried_things_and_new_names():
+    assert _MATCH_SYSTEM == (
+        "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
+        "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
+        'storyteller used. Return only JSON like {"refers": ["name"], "carried": ["name"], "same_as": '
+        '{"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when '
+        'the command uses other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from '
+        "THINGS whose place shows that the player character is holding it or carrying it. In same_as, give each name "
+        "in "
+        'NEW NAMES the name from THINGS that means the same thing, or "new" if it is a different thing. Copy names '
+        "from THINGS exactly."
+    )
+
+
 def test_things_omit_condition_for_empty_condition_list():
     assert _provider()._things_block() == (
         "THINGS:\n- the lantern. Where: on the table. Condition: lit.\n- the gate. Where: at the garden path."
@@ -387,9 +415,12 @@ def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch
     assert result["match_call"] is True
     assert provider.item_facts_match_calls == 1
     assert payloads[0]["system"] == _MATCH_SYSTEM
-    assert all(marker in payloads[0]["user"] for marker in ("COMMAND:", "THINGS:", "NEW NAMES:"))
-    assert "Where:" not in payloads[0]["user"]
-    assert "Condition:" not in payloads[0]["user"]
+    assert all(marker in payloads[0]["user"] for marker in ("COMMAND:", "PLAYER CHARACTER:", "THINGS:", "NEW NAMES:"))
+    assert "PLAYER CHARACTER:\n- Kristin" in payloads[0]["user"]
+    assert "- the lantern\n" in payloads[0]["user"]
+    assert "- the gate\n" in payloads[0]["user"]
+    assert "- the notebook. Where:" not in payloads[0]["user"]
+    assert "- the notebook" in payloads[0]["user"].split("NEW NAMES:", 1)[1]
 
 
 def test_same_as_tracked_name_merges_held_entry(monkeypatch):
@@ -475,14 +506,15 @@ def test_command_reference_adds_non_always_name_and_omits_unreferred_name(monkey
     assert "the box" not in provider._things_block()
 
 
-def test_always_included_names_cover_authored_dependency_carried_and_changed_items():
+def test_always_included_names_cover_authored_dependency_and_changed_items():
     provider = _provider()
     provider._hand_seed_names = set()
     provider.item_facts.update(
         {
             "Michelle's workstation drawers": {"where": "in the house", "condition": []},
             "Michelle's memory card": {"where": "under the drawer", "condition": []},
-            "Kristin's notebook": {"where": "with Kristin", "condition": []},
+            "Kristin's notebook": {"where": "in Kristin's jacket pocket", "condition": []},
+            "toolbox": {"where": "in Kristin's truck", "condition": []},
             "changed thing": {"where": "in the yard", "condition": []},
             "unrelated thing": {"where": "in a shed", "condition": []},
         }
@@ -491,9 +523,33 @@ def test_always_included_names_cover_authored_dependency_carried_and_changed_ite
     names = provider.always_included_names()
     assert "Michelle's workstation drawers" in names
     assert "Michelle's memory card" in names
-    assert "Kristin's notebook" in names
+    assert "Kristin's notebook" not in names
+    assert "toolbox" not in names
     assert "changed thing" in names
     assert "unrelated thing" not in names
+
+
+def test_match_carried_name_adds_only_exact_candidate_to_things(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = {"the lantern"}
+    provider.item_facts.update(
+        {
+            "the notebook": {"where": "in Kristin's jacket pocket", "condition": []},
+            "the toolbox": {"where": "in Kristin's truck", "condition": []},
+        }
+    )
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "carried": ["the notebook"], "same_as": {}},
+    )
+
+    result = provider.prepare_turn("Search the desk.")
+
+    assert result["match_call"] is True
+    assert provider._selected_names == ["the lantern", "the notebook"]
+    assert "the notebook" in provider._things_block()
+    assert "the toolbox" not in provider._things_block()
 
 
 def test_resolve_held_skips_match_when_nothing_is_held(monkeypatch):
@@ -554,11 +610,8 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
         {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
     ]
     assert "Michelle's phone" in result["turns"][7]["item_facts_after"]
-    assert "Kristin's laptop" in result["turns"][8]["item_facts_before"]
-    common_names = set(result["turns"][7]["item_facts_after"]) & set(result["turns"][8]["item_facts_before"])
-    assert common_names
-    for name in common_names:
-        assert result["turns"][7]["item_facts_after"][name] == result["turns"][8]["item_facts_before"][name]
+    assert "Kristin's laptop" not in result["turns"][8]["item_facts_before"]
+    assert result["item_facts_final"]["Michelle's phone"] == result["turns"][7]["item_facts_after"]["Michelle's phone"]
     assert len(calls) == 17
 
 

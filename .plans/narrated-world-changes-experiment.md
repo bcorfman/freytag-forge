@@ -425,8 +425,13 @@ sorts them into (offline human-read categorisation):
   facts ("picks up the phone from the table" when it was in her hand) is scored
   not kept; no calibration case covers that.
 
-Not run at 4 replicates; next steps await Brandon (omission strategy, carried
-detection, per-turn scoring).
+Not run at 4 replicates. Brandon decided: a short omission rule first, carried
+things decided by the match call, and whole-state scoring kept.
+
+A 22nd calibration case (a correct capture after narration that says she picks
+the phone up "from the table" while it was already in her hand) scored 158/158
+in both judge passes, so the judge needs no wording change; the smoke turns it
+marked not kept were ambiguous live narration, not a judge rule gap.
 
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the

@@ -66,18 +66,20 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 
 _SINGLE_CALL_RULES = (
-    "Also return item_facts for each thing your story moved or changed, and for each new thing it put in a place.",
+    "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
     'Give only what changed. Use "where" for the place it is now and "condition" for up to two short phrases. '
-    'Example: if she picks up the key and blows out the cracked, lit lantern, the key is {"where": "in her hand"} '
-    'and the lantern is {"condition": ["dark", "cracked"]}.',
+    'Example: if she opens the box on the table and picks up the key, the box is {"condition": ["open"]} and the key '
+    'is {"where": "in her hand"}.',
 )
 _MATCH_SYSTEM = (
-    "You match names in a story game. COMMAND is what the player typed. THINGS lists the names the game keeps "
-    "track of. NEW NAMES lists names the storyteller used. Return only JSON like "
-    '{"refers": ["name"], "same_as": {"new name": "name"}}. '
-    "In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "
-    '"the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS that means '
-    'the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
+    "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
+    "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
+    'storyteller used. Return only JSON like {"refers": ["name"], "carried": ["name"], "same_as": '
+    '{"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when '
+    'the command uses other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from '
+    "THINGS whose place shows that the player character is holding it or carrying it. In same_as, give each name in "
+    'NEW NAMES the name from THINGS that means the same thing, or "new" if it is a different thing. Copy names '
+    "from THINGS exactly."
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
@@ -200,9 +202,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             for dependency in transition.required_dependencies
         }
         dependency_names = {item.name for item in self.state.package.world.items if item.id in required_ids}
-        protagonist = self._protagonist_name().casefold()
-        carried = {name for name, facts in self.item_facts.items() if protagonist in str(facts["where"]).casefold()}
-        included = set(package_names) | self._hand_seed_names | dependency_names | carried | self._changed_last_turn
+        included = set(package_names) | self._hand_seed_names | dependency_names | self._changed_last_turn
         # Use the live store here.  Tests and bench callers may add tracked
         # things after construction; those things still need to participate in
         # dependency and carried-item selection.
@@ -292,8 +292,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         payload = {
             "system": _MATCH_SYSTEM,
             "user": (
-                f"COMMAND:\n- {player_input}\n\nTHINGS:\n"
-                + "\n".join(f"- {name}" for name in self.item_facts)
+                f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {self._protagonist_name()}\n\nTHINGS:\n"
+                + "\n".join(
+                    f"- {name}" if name in always else f"- {name}. Where: {self.item_facts[name]['where']}."
+                    for name in self.item_facts
+                )
                 + "\n\nNEW NAMES:\n"
                 + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
             ),
@@ -323,6 +326,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 for name in reply["refers"]
                 if isinstance(name, str) and name in self.item_facts and name in candidates
             ]
+            carried = (
+                [
+                    name
+                    for name in reply.get("carried", [])
+                    if isinstance(name, str) and name in self.item_facts and name in candidates
+                ]
+                if isinstance(reply.get("carried"), list)
+                else []
+            )
             for name in held:
                 target = reply["same_as"].get(name)
                 entry = self._held_item_facts[name]
@@ -344,7 +356,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     issues.append(f"item_facts name {name} had no valid match")
                     resolutions[name] = "dropped"
             self._held_item_facts = {}
-            selected = set(self.always_included_names()) | set(refers)
+            selected = set(self.always_included_names()) | set(refers) | set(carried)
             self._selected_names = [name for name in self.item_facts if name in selected]
         return {
             "match_call": True,
