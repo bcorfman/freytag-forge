@@ -16,7 +16,8 @@
     "plot.md": {"replacements": [
       {"old": "Michelle's phone on the kitchen floor; ", "new": ""},
       {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""},
-      {"old": "Michelle's workstation drawers are shut.", "new": "Michelle's carved drawer is shut."}
+      {"old": "Michelle's workstation drawers are shut.", "new": "Michelle's carved drawer is shut."},
+      {"old": ", \"Michelle's phone is not damaged.\"]", "new": "]"}
     ]},
     "pacing.yaml": {"replacements": [
       {"old": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_in_kristins_custody\n    equals: true", "new": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_in_kristins_custody\n    equals: true\n  - fact_id: transport_route_departure_ready\n    equals: true"},

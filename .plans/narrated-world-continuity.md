@@ -342,7 +342,7 @@ Tasks:
 - [x] Ringer task C: remove the not-damaged fact from the two-scene variation
   (adb992f); 4 replicates recorded in
   `bench/results/item-facts-v2-nodamage-two-scene-1a`.
-- [ ] Ringer task D: the same removal in the 40-turn variation.
+- [x] Ringer task D: the same removal in the 40-turn variation.
 - [ ] Ringer task E: judge label split, then calibrate.
 - [ ] Ringer task F: partial entries, new example, merged match call, per-turn
   THINGS selection, persistence of narrated things, per-turn call counts.
