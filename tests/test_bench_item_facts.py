@@ -237,6 +237,8 @@ def test_fact_tracking_score_counts_verdicts_and_causes():
                         "invented_change": "no",
                         "narration_contradicts_given_facts": "no",
                         "dropped_true_condition": "no",
+                        "kept_ended_condition": "no",
+                        "state_as_place": "no",
                         "changes": [{"thing": "the lantern", "change": "warm", "cause": "command"}],
                     }
                 ]
@@ -246,6 +248,8 @@ def test_fact_tracking_score_counts_verdicts_and_causes():
     )
     assert result["facts_after_correct"] == {"yes": 1, "no": 0}
     assert result["dropped_true_condition"] == {"yes": 0, "no": 1}
+    assert result["kept_ended_condition"] == {"yes": 0, "no": 1}
+    assert result["state_as_place"] == {"yes": 0, "no": 1}
     assert result["changes_by_cause"] == {"command": 1, "narrator": 0}
     assert result["turns_judged"] == 1
     assert result["judge_calls"] == 1
@@ -435,6 +439,8 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
                 "invented_change": "no",
                 "narration_contradicts_given_facts": "no",
                 "dropped_true_condition": "no",
+                "kept_ended_condition": "no",
+                "state_as_place": "no",
                 "changes": [],
             }
         ]

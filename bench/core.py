@@ -55,6 +55,8 @@ FACT_TRACKING_CRITERIA = (
     "invented_change",
     "narration_contradicts_given_facts",
     "dropped_true_condition",
+    "kept_ended_condition",
+    "state_as_place",
 )
 FACT_TRACKING_VERDICTS = ("yes", "no")
 FACT_CHANGE_CAUSES = ("command", "narrator")

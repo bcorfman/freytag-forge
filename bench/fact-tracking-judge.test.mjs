@@ -22,6 +22,8 @@ function verdict(overrides = {}) {
         invented_change: "no",
         narration_contradicts_given_facts: "no",
         dropped_true_condition: "no",
+        kept_ended_condition: "no",
+        state_as_place: "no",
         changes: [{ thing: "lantern", change: "warm", cause: "command" }],
         reason: "The warmth is carried forward.",
         ...overrides,
@@ -59,6 +61,8 @@ test("filters turn fields and uses the default model with the strict schema", as
     "invented_change",
     "narration_contradicts_given_facts",
     "dropped_true_condition",
+    "kept_ended_condition",
+    "state_as_place",
     "changes",
     "reason",
   ]);
@@ -97,6 +101,30 @@ test("rejects a verdict with a bad enum", async () => {
 test("rejects a verdict missing dropped_true_condition", async () => {
   const incomplete = verdict();
   delete incomplete.turns[0].dropped_true_condition;
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns },
+      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch(incomplete, []) },
+    ),
+    /invalid verdict/,
+  );
+});
+
+test("rejects a verdict missing kept_ended_condition", async () => {
+  const incomplete = verdict();
+  delete incomplete.turns[0].kept_ended_condition;
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns },
+      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch(incomplete, []) },
+    ),
+    /invalid verdict/,
+  );
+});
+
+test("rejects a verdict missing state_as_place", async () => {
+  const incomplete = verdict();
+  delete incomplete.turns[0].state_as_place;
   await assert.rejects(
     judgeFactTracking(
       { sceneId: "1A", opening: "", turns },
