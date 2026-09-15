@@ -433,6 +433,59 @@ the phone up "from the table" while it was already in her hand) scored 158/158
 in both judge passes, so the judge needs no wording change; the smoke turns it
 marked not kept were ambiguous live narration, not a judge rule gap.
 
+### Round 3 smoke after the omission rule and match-call carried (1d4e51d)
+
+One replicate each. Keys stayed `where`/`condition` with no invalid entries.
+Empty replies fell to 0 of 39 (40-turn) and 2 of 12 (two-scene). 40-turn kept
+facts correct 29/39 (74%, from 19/39), with set down, move between places and
+condition change all correct on this small sample; two-scene 5/12. The match
+call fired 8 and 4 times; in 1B it reported Michelle's phone as carried, so the
+phone stayed in THINGS after the scene change. It also over-refers: for "Check
+that you still have Michelle's phone." it listed the laptop and the drawer as
+referred, putting them in THINGS, and it returned untracked names such as
+"drawer", "bench" and "Kristin" in `refers`, which the engine ignores. Both
+Ringer smoke checks logged FAIL only because the live check still looked for the
+superseded first rule line; the runs were valid. Smoke rows removed from the
+ledger; the 4-replicate runs followed.
+
+### Round 3 two-scene, 4 replicates (1d4e51d)
+
+bench/results/item-facts-v3-two-scene-1a, 47 judged turns, whole-state scoring.
+Round 2 rate is from the no-damage two-scene run (45 turns).
+
+| Change type | Turns | Kept facts correct | Rate | Round 2 | Missed | Invented | Dropped true | Kept ended | State as place | Contradicts facts | Match calls | Things given (avg) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 8 | 7 | 88% | 7/8 | 1 | 1 | 1 | 0 | 0 | 0 | 4 | 2.1 |
+| check a carried thing | 7 | 3 | 43% | 6/7 | 1 | 4 | 0 | 0 | 0 | 2 | 7 | 2.4 |
+| open or close | 4 | 3 | 75% | 0/4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 3.0 |
+| pick up or put away | 8 | 2 | 25% | 5/8 | 0 | 5 | 0 | 1 | 0 | 7 | 5 | 3.2 |
+| move between places | 8 | 5 | 62% | 2/8 | 3 | 2 | 0 | 0 | 0 | 0 | 5 | 3.0 |
+| damage | 4 | 2 | 50% | 0/4 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 3.0 |
+| hand to another character | 4 | 2 | 50% | 2/4 | 2 | 2 | 0 | 0 | 0 | 0 | 4 | 1.8 |
+| leave the scene | 4 | 4 | 100% | 1/2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 3.0 |
+| **All** | 47 | 28 | 60% | 23/45 | 10 | 14 | 1 | 2 | 0 | 9 | 29 | 2.7 |
+
+Continuity judge: contradicts a stated fact 10/47, Kristin acts beyond the
+command 21/47, scene restarts 2/47. 33 match calls in all (29 before turns plus
+end-of-run resolution).
+
+- Opening, moving, damage and leaving the scene improved; only leaving the
+  scene reaches 92%.
+- **Pickups fall to 2/8, and the failure is a cascade from narration**, not
+  capture alone: on "Look carefully at Michelle's phone." the narrator has
+  Kristin pick the phone up, and on "Pick up Michelle's phone and put it in your
+  pocket." all four replicates narrate "Kristin reaches into her pocket and pulls
+  out Michelle's phone" while the reply reports the commanded result, "in
+  Kristin's pocket". The judge marks those invented and contradicting.
+- **The match call makes wrong semantic calls**: "Check who has Michelle's
+  phone now." came back as `{"man": {"where": "on the bench"}}`, and the match
+  call mapped "man" to Michelle's phone, moving the phone to the bench; it also
+  keeps listing the laptop, the drawer and a note in `refers` for commands that
+  mention only the phone, and once reported the laptop as carried.
+- The 40-turn run's narration completed (155 accepted turns) but its
+  fact-tracking judge rejected a reply as an invalid verdict; it is being
+  re-judged from the saved turns.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
