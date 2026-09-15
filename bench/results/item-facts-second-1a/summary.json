@@ -1,0 +1,141 @@
+{
+  "replicates": 4,
+  "completed_replicates": 4,
+  "failed_replicates": 0,
+  "failures": [],
+  "scenes_scored": 1,
+  "max_score": 7,
+  "score_metric": "7-point record: seven equally weighted boolean criteria across 1 scene",
+  "pooled": {
+    "score_points": {
+      "n": 4,
+      "mean": 1.75,
+      "standard_deviation": 0.5,
+      "confidence_interval_95": [
+        0.9545,
+        2.5455
+      ],
+      "minimum_detectable_effect": 3.87,
+      "replicate_scores": [
+        2.0,
+        2.0,
+        1.0,
+        2.0
+      ]
+    },
+    "total": 7,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 4,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 3,
+      "exit_motivated": 0,
+      "rewards_investigation": 0
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 62,
+      "per_criterion_where_attributable": {},
+      "unattributed": 62
+    }
+  },
+  "per_script": {
+    "phone-bag-door": {
+      "score_points": {
+        "n": 4,
+        "mean": 1.75,
+        "standard_deviation": 0.5,
+        "confidence_interval_95": [
+          0.9545,
+          2.5455
+        ],
+        "minimum_detectable_effect": 3.87,
+        "replicate_scores": [
+          2.0,
+          2.0,
+          1.0,
+          2.0
+        ]
+      },
+      "example_leakage": 0,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 4,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 3,
+        "exit_motivated": 0,
+        "rewards_investigation": 0
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 62,
+        "per_criterion_where_attributable": {},
+        "unattributed": 62
+      }
+    }
+  },
+  "replicate_scores": [
+    2.0,
+    2.0,
+    1.0,
+    2.0
+  ],
+  "example_leakage": 0,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "entry_state": {
+    "scene_id": "1A",
+    "committed_knowledge_count": 1,
+    "earned_knowledge_count": 1,
+    "seeded_by": "none"
+  },
+  "continuity": {
+    "contradicts_stated_fact": {
+      "yes": 19,
+      "no": 22
+    },
+    "protagonist_acts_beyond_command": {
+      "yes": 25,
+      "no": 16
+    },
+    "restarts_scene": {
+      "yes": 14,
+      "no": 27
+    },
+    "turns_judged": 41,
+    "judge_calls": 4
+  },
+  "fact_tracking": {
+    "facts_after_correct": {
+      "yes": 28,
+      "no": 13
+    },
+    "missed_change": {
+      "yes": 10,
+      "no": 31
+    },
+    "invented_change": {
+      "yes": 7,
+      "no": 34
+    },
+    "narration_contradicts_given_facts": {
+      "yes": 11,
+      "no": 30
+    },
+    "changes_by_cause": {
+      "command": 0,
+      "narrator": 24
+    },
+    "turns_judged": 41,
+    "judge_calls": 4
+  },
+  "budget": {
+    "projected_workers_ai_neurons": 176.0,
+    "actual_narration_turns": 41,
+    "actual_narration_requests": 93,
+    "estimated_workers_ai_neurons_from_requests": 1023.0,
+    "actual_openai_judge_calls": 12,
+    "quota": null
+  }
+}
