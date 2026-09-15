@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -683,7 +684,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         narration = join_narration(tuple(segments)) if segments else ""
         item_facts_record: dict[str, Any] | None = None
         if isinstance(provider, ItemFactsProvider):
-            facts_before = {name: list(facts) for name, facts in provider.item_facts.items()}
+            facts_before = copy.deepcopy(provider.item_facts)
             raw_item_facts = provider.pending_item_facts()
             try:
                 if provider.item_facts_mode == "second_call":
@@ -773,7 +774,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "rejected_turn_count": len(rejected_turns),
             }
             if isinstance(provider, ItemFactsProvider):
-                record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
+                record["item_facts_final"] = copy.deepcopy(provider.item_facts)
             return record
         return _failed_scene_record(
             variation,
@@ -808,7 +809,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["rejected_turns"] = rejected_turns
         record["rejected_turn_count"] = len(rejected_turns)
     if isinstance(provider, ItemFactsProvider):
-        record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
+        record["item_facts_final"] = copy.deepcopy(provider.item_facts)
     return record
 
 
@@ -854,7 +855,7 @@ def _failed_scene_record(
         record["rejected_turns"] = rejected_turns or []
         record["rejected_turn_count"] = len(rejected_turns or [])
     if isinstance(provider, ItemFactsProvider):
-        record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
+        record["item_facts_final"] = copy.deepcopy(provider.item_facts)
     return record
 
 

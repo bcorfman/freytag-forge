@@ -179,13 +179,16 @@ An `item_facts` variation option tracks plain facts about named things:
 ```json
 "item_facts": {
   "mode": "single_call",
-  "seed": {"the lantern": ["lit"], "the gate": ["closed"]}
+  "seed": {
+    "the lantern": {"where": "on the table", "condition": ["lit"]},
+    "the gate": {"where": "at the garden path", "condition": ["closed"]}
+  }
 }
 ```
 
-The provider adds a `THINGS` section to every opening and turn prompt, in seed order. `single_call` asks the narrator to return `item_facts` beside its normal proposal. `second_call` makes one extra request after each accepted narration to read the command and finished story. Opening facts are ignored because the opening establishes the scene.
+Each thing has one `where` phrase and zero to two `condition` phrases. The provider adds a `THINGS` section to every opening and turn prompt, in seed order. Each line has the shape `- <name>. Where: <where>. Condition: <c1, c2>.`; an empty condition list is rendered as `Condition: none.` `single_call` asks the narrator to return `item_facts` beside its normal proposal. `second_call` makes one extra request after each accepted narration to read the command and finished story. Opening facts are ignored because the opening establishes the scene.
 
-After an accepted turn, returned facts replace the previous facts. Missing or malformed entries keep their old facts. Unknown names are dropped. Phrases are trimmed to 80 characters and each thing keeps at most six phrases. These repairs are listed in `item_facts_issues`. Rejected turns do not change facts. Turn records contain `item_facts_before`, `item_facts_after`, `item_facts_raw`, `item_facts_issues`, and `item_facts_source`; the replicate also contains `item_facts_final`.
+Replies list only the things the story changed. A valid entry replaces that thing's `where` and `condition` entirely. Omitted things stay unchanged with no issue. Malformed entries keep their previous facts, unknown names are dropped, and more than two conditions are trimmed to the first two. Phrases are trimmed to 80 characters for `where` and 40 characters for each condition. These repairs are listed in `item_facts_issues`. Rejected turns do not change facts. Turn records contain `item_facts_before`, `item_facts_after`, `item_facts_raw`, `item_facts_issues`, and `item_facts_source`; the replicate also contains `item_facts_final`.
 
 The three trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, and `item-facts-second.json`.
 

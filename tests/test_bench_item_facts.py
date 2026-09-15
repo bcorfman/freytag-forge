@@ -6,7 +6,7 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import ItemFactsProvider
+from bench.item_facts import ItemFactsProvider, validate_item_facts
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -23,7 +23,10 @@ def _provider(mode="single_call"):
         worker_url="https://worker.example/turn",
         token="",
         state=state,
-        item_facts={"the lantern": ["lit"], "the gate": ["closed"]},
+        item_facts={
+            "the lantern": {"where": "on the table", "condition": ["lit"]},
+            "the gate": {"where": "at the garden path", "condition": []},
+        },
         mode=mode,
     )
 
@@ -42,12 +45,17 @@ class _Response:
         return json.dumps(self.body).encode()
 
 
-def test_things_are_after_scene_and_rules_suppress_authored_item_facts():
+def test_things_are_after_scene_and_render_single_value_facts():
     provider = _provider()
     prompt = provider.assemble_turn_prompt("Look at the back door.")
     user = provider._section_user_prompt(prompt["context"])
 
-    assert "\n\nTHINGS:\n- the lantern: lit\n- the gate: closed\n\nCONSTRAINTS:" in user
+    assert (
+        "\n\nTHINGS:\n"
+        "- the lantern. Where: on the table. Condition: lit.\n"
+        "- the gate. Where: at the garden path. Condition: none.\n\n"
+        "CONSTRAINTS:"
+    ) in user
     assert provider._placement_rules() == []
     assert provider._setting_fact_rules() == []
 
@@ -58,26 +66,76 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
         [
             {
                 "segments": [{"kind": "narration", "text": "The house is quiet."}],
-                "item_facts": {"the lantern": ["warm"], "the gate": ["closed"]},
+                "item_facts": {
+                    "the lantern": {"where": "in her hand", "condition": ["warm"]},
+                    "the gate": {"where": "at the garden path", "condition": []},
+                },
             },
         ]
     )
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(next(payloads)))
 
     provider("Look at the lantern.")
-    assert provider.pending_item_facts() == {"the lantern": ["warm"], "the gate": ["closed"]}
+    assert provider.pending_item_facts() == {
+        "the lantern": {"where": "in her hand", "condition": ["warm"]},
+        "the gate": {"where": "at the garden path", "condition": []},
+    }
     provider.apply_item_facts(provider.pending_item_facts())
     next_prompt = provider.assemble_turn_prompt("Look at the gate.")
-    assert "- the lantern: warm" in provider._section_user_prompt(next_prompt["context"])
+    assert "- the lantern. Where: in her hand. Condition: warm." in provider._section_user_prompt(
+        next_prompt["context"]
+    )
+
+
+def test_apply_item_facts_replaces_valid_entry_and_leaves_omitted_things_unchanged():
+    provider = _provider()
+    facts, issues = provider.apply_item_facts(
+        {"the lantern": {"where": "  in her hand  ", "condition": ["  warm  ", "held"]}}
+    )
+
+    assert facts == {
+        "the lantern": {"where": "in her hand", "condition": ["warm", "held"]},
+        "the gate": {"where": "at the garden path", "condition": []},
+    }
+    assert issues == []
+
+
+def test_apply_item_facts_empty_reply_records_no_issue():
+    provider = _provider()
+
+    facts, issues = provider.apply_item_facts({})
+
+    assert facts == provider.item_facts
+    assert issues == []
 
 
 def test_apply_item_facts_drops_unknown_and_preserves_malformed_entries():
     provider = _provider()
-    facts, issues = provider.apply_item_facts({"the lantern": ["  warm  "], "unknown thing": ["new"], "the gate": [""]})
+    facts, issues = provider.apply_item_facts(
+        {
+            "unknown thing": {"where": "somewhere", "condition": []},
+            "the gate": {"where": "  ", "condition": ["closed"]},
+        }
+    )
 
-    assert facts == {"the lantern": ["warm"], "the gate": ["closed"]}
+    assert facts == provider.item_facts
     assert any("unknown thing" in issue for issue in issues)
     assert any("the gate" in issue for issue in issues)
+
+
+def test_apply_item_facts_trims_third_condition_and_phrase_lengths():
+    provider = _provider()
+    facts, issues = provider.apply_item_facts(
+        {
+            "the lantern": {
+                "where": f"  {'a' * 90}  ",
+                "condition": [f" {'b' * 50} ", "second", "third"],
+            }
+        }
+    )
+
+    assert facts["the lantern"] == {"where": "a" * 80, "condition": ["b" * 40, "second"]}
+    assert any("condition" in issue for issue in issues)
 
 
 def test_second_call_uses_only_things_player_and_story_and_counts_request(monkeypatch):
@@ -86,22 +144,39 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
 
     def open_request(request, **_kwargs):
         requests.append(json.loads(request.data))
-        return _Response({"item_facts": {"the lantern": ["warm"], "the gate": ["closed"]}})
+        return _Response(
+            {
+                "item_facts": {
+                    "the lantern": {"where": "in her hand", "condition": ["warm"]},
+                    "the gate": {"where": "at the garden path", "condition": []},
+                }
+            }
+        )
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     raw = provider.second_call_update("Look at the lantern.", "The lantern feels warm.")
 
-    assert raw == {"the lantern": ["warm"], "the gate": ["closed"]}
+    assert raw == {
+        "the lantern": {"where": "in her hand", "condition": ["warm"]},
+        "the gate": {"where": "at the garden path", "condition": []},
+    }
     assert provider.request_count == 1
     assert "CONSTRAINTS" not in requests[0]["user"]
-    assert requests[0]["user"].startswith("THINGS:\n")
+    assert requests[0]["user"] == (
+        "THINGS:\n"
+        "- the lantern. Where: on the table. Condition: lit.\n"
+        "- the gate. Where: at the garden path. Condition: none.\n\n"
+        "PLAYER:\n- Look at the lantern.\n\n"
+        "STORY:\nThe lantern feels warm."
+    )
     assert requests[0]["system"] == (
         "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
-        '{"item_facts": {"thing": ["fact", "fact"]}}, using only the names in THINGS. '
-        "If STORY moves a thing, someone picks it up or puts it down, or it changes, write its "
-        "new facts and drop facts that are no longer true. Example: if she picks up the lantern "
-        'from the table, the lantern is "in her hand", not "on the table". Keep the other facts '
-        "the same."
+        '{"item_facts": {"thing": {"where": "place", "condition": ["phrase"]}}}. '
+        "List only the things in THINGS that STORY changed. For each one, give where it is now and up to "
+        "two short condition phrases. "
+        "Example: if she picks up the lantern from the table, the lantern is "
+        '{"where": "in her hand", "condition": ["lit"]}. '
+        'If STORY changed nothing, return {"item_facts": {}}.'
     )
 
 
@@ -111,6 +186,22 @@ def test_item_facts_variations_load_and_render_offline(path):
     prompt = core.prompt_for(variation, "1A", "Look at the back door.")
     assert "THINGS:" in prompt["user"]
     assert variation["_package_hash"]
+
+
+@pytest.mark.parametrize(
+    "bad_seed",
+    [
+        [],
+        {"condition": ["lit"]},
+        {"where": "", "condition": []},
+        {"where": "on the table", "condition": "lit"},
+        {"where": "on the table", "condition": [""]},
+        {"where": "on the table", "condition": ["one", "two", "three"]},
+    ],
+)
+def test_item_facts_seed_validation_errors(bad_seed):
+    with pytest.raises(ValueError, match="item_facts"):
+        validate_item_facts({"mode": "single_call", "seed": {"thing": bad_seed}})
 
 
 def test_bad_item_facts_and_fact_tracking_options_are_rejected(tmp_path):
