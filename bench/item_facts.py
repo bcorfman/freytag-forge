@@ -154,13 +154,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return system
 
     def _request(self, payload: dict[str, object]) -> object:
-        request_count = self.request_count
         response = super()._request(payload)
-        # Tests may replace the base transport method, which also replaces its
-        # request counter increment. Keep the bench record accurate in that
-        # case while avoiding a double increment for the normal transport.
-        if self.request_count == request_count:
-            self.request_count += 1
         if isinstance(response, dict):
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
