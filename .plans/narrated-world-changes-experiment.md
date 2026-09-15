@@ -136,12 +136,46 @@ one, so a thing cannot be in two places, and omitted things stay as they were,
 so the model no longer has to copy everything back. Rerun a smoke and then 4 x
 12 for arms A and C.
 
+## Results: single-value fields (2026-09-15)
+
+Recorded in bench/results/item-slots-{single,second}-1a at bc61627. Each thing
+carried one `where` and up to two condition phrases; replies listed only what
+changed.
+
+| | A: single call | C: second call |
+|---|---|---|
+| Kept facts correct (grader) | 42 of 47 | 21 of 34 |
+| Changes missed / invented | 3 / 1 | 4 / 9 |
+| Narration contradicts its given facts | 1 | 8 |
+| Narrated phone changes recorded | 4 of 4 | 5 of 6 |
+| Kristin acts beyond the command | 18 of 47 | 26 of 34 |
+| Scene restarts | 15 of 47 | 12 of 34 |
+| Completed replicates / model calls | 4 of 4 / 58 | 3 of 4 / 74 |
+
+Against the free-list run, the single call went from 21 of 46 correct to 42
+of 47. The format, not the model or the rule count, was the main problem.
+
+## Decision
+
+A second call is not necessary. A single narration call that returns only
+the changed things, each as one `where` and up to two conditions, tracked the
+phone reliably and made the narrator follow the carried facts. The second call
+was worse on every accuracy measure, cost more calls, and invented more
+changes.
+
+Still open, outside this experiment:
+- Scene restarts stay near one turn in three in both arms.
+- A scene opening can still fail on a known-term leak ("forced entry"), which
+  fixed turns do not cover.
+- The two-condition cap can push out a still-true condition such as "not
+  damaged" when two new ones arrive.
+
 ## Steps
 
 1. [x] Build the harness through Ringer (dfe3828, d8b71f8).
 2. [x] Calibrate the fact-tracking grader on hand-labelled turns (8a79a2b).
 3. [x] Smoke run, then rewrite the change wording (ac478d6).
 4. [x] Full run with free phrase lists (f3c7401).
-5. [ ] Switch the harness to single-value fields; smoke, then 4 x 12 for A and C.
+5. [x] Switch the harness to single-value fields; smoke, then 4 x 12 for A and C (bc61627).
 6. [ ] Report the comparison and the decision, then write the full-loop plan
    (capture, story-break check, regenerate or warn, commit, carry forward).

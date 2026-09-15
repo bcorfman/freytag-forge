@@ -1,0 +1,32 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": true,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": false,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening contradicts canon by depicting Michelle's phone with a cracked screen; canon says Michelle's phone is not damaged.",
+    "Turn 1 invents unlocking Michelle's phone with her passcode and 'recently used/charged' clues not established by canon.",
+    "Turn 2 contradicts canon badly: Michelle's work bag is found even though Scene 1A.1 says the work bag is missing; Kristin's laptop is moved into her hand despite being in the truck; back door becomes 'secure/closed'; drawers become open/on the floor though canon says shut until searched.",
+    "Multiple turns continue the false damaged-phone depiction, including blood/fingerprint/message details not in canon.",
+    "Turns 6/9 invent text-message content ('I have to go...') that conflicts with the actual opening text Michelle already sent and substitutes phone evidence for the memory-card warning.",
+    "The hidden memory card is never found despite repeated apt searching of Michelle's work area and cues toward the drawers/KMS.",
+    "The KMS drawer clue is delayed until turn 12 and handled incorrectly; canon requires Kristin to notice the newly carved initials in Scene 1A.1 as part of the house evidence.",
+    "Scene 1A.2 is skipped in substance: no recovery of the memory card, no use of laptop in the truck, no Continuity Initiative files, no population stabilization centers, no research-note line.",
+    "Scene 1A.3 is skipped: no interrupted voice recording, no warning about emergency broadcasts, no someone-entering-house cutoff.",
+    "Scene 1A.4 is skipped/misfired: patrol pressure appears as complication text, but there is no enacted welfare check, no officers asking about Michelle's research, no concealment of the card, no reflective tape on the gate.",
+    "Projected beats race ahead to 1A.2/1A.3 long before those beats are actually dramatized.",
+    "Opening and many turns are thin/repetitive and do not substantially establish or evolve the house as a localized crime scene.",
+    "A cue_fact_id of continuity_initiative_known is attached to the KMS drawer clue before continuity material has been earned, indicating wrong gating/association."
+  ],
+  "reasons": [
+    "Scene remains in the correct location with the correct primary participants, but local canon compliance is poor.",
+    "Responsive consequences are weak: repeated searches of the phone/work bag mostly loop generic prose and fail to pay off investigation with actionable discoveries.",
+    "Protected knowledge is mishandled indirectly by substituting invented phone messages and by associating later knowledge cues incorrectly, though the larger protected secrets are not fully exposed.",
+    "Pacing fails scene requirements: Scene 1A should cover house evidence first, then memory-card investigation, then interrupted warning, then patrol threat; authored beats are skipped rather than progressively uncovered.",
+    "The scene never earns the transition because Kristin is never told the park-bench lead from Michelle's files, and no prose reason to leave is provided."
+  ]
+}
