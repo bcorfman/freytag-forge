@@ -9,13 +9,18 @@ from urllib.error import HTTPError, URLError
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 
 _SINGLE_CALL_RULES = (
-    "Also return item_facts: every thing from THINGS, with its facts as a list of short phrases.",
-    "Change a thing's facts only when your story changes that thing. Keep every other fact the same.",
+    "Also return item_facts, using only the names in THINGS. Do not add new names.",
+    "If your story moves a thing, someone picks it up or puts it down, or it changes, "
+    "write its new facts and drop facts that are no longer true. Example: if she picks up "
+    'the lantern from the table, the lantern is "in her hand", not "on the table".',
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
-    '{"item_facts": {"thing": ["fact", "fact"]}}. List every thing from THINGS. Change a thing\'s facts '
-    "only when STORY changes that thing. Keep every other fact the same."
+    '{"item_facts": {"thing": ["fact", "fact"]}}, using only the names in THINGS. '
+    "If STORY moves a thing, someone picks it up or puts it down, or it changes, write its "
+    "new facts and drop facts that are no longer true. Example: if she picks up the lantern "
+    'from the table, the lantern is "in her hand", not "on the table". Keep the other facts '
+    "the same."
 )
 
 
