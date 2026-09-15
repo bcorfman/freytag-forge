@@ -16,7 +16,8 @@
     ]},
     "plot.md": {"replacements": [
       {"old": "Michelle's phone on the kitchen floor; ", "new": ""},
-      {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""}
+      {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""},
+      {"old": "Michelle's workstation drawers are shut.", "new": "Michelle's carved drawer is shut."}
     ]}
   },
   "scripts": {

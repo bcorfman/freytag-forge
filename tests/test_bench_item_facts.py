@@ -53,11 +53,17 @@ def test_things_are_after_scene_and_render_single_value_facts():
     assert (
         "\n\nTHINGS:\n"
         "- the lantern. Where: on the table. Condition: lit.\n"
-        "- the gate. Where: at the garden path. Condition: none.\n\n"
+        "- the gate. Where: at the garden path.\n\n"
         "CONSTRAINTS:"
     ) in user
     assert provider._placement_rules() == []
     assert provider._setting_fact_rules() == []
+
+
+def test_things_omit_condition_for_empty_condition_list():
+    assert _provider()._things_block() == (
+        "THINGS:\n- the lantern. Where: on the table. Condition: lit.\n- the gate. Where: at the garden path."
+    )
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -165,7 +171,7 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     assert requests[0]["user"] == (
         "THINGS:\n"
         "- the lantern. Where: on the table. Condition: lit.\n"
-        "- the gate. Where: at the garden path. Condition: none.\n\n"
+        "- the gate. Where: at the garden path.\n\n"
         "PLAYER:\n- Look at the lantern.\n\n"
         "STORY:\nThe lantern feels warm."
     )

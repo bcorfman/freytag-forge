@@ -66,8 +66,10 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 
 _SINGLE_CALL_RULES = (
-    "Also return item_facts for each thing in THINGS that your story changed. Use only the names in THINGS.",
-    "For each one, give where it is now and up to two short condition phrases. Example: if she picks up "
+    "Also return item_facts for each thing in THINGS that your story changed. Copy each name exactly "
+    "as it is written in THINGS.",
+    "For each one, give where it is now and up to two short condition phrases. Keep any condition "
+    "that is still true. Example: if she picks up "
     'the lantern from the table, the lantern is {"where": "in her hand", "condition": ["lit"]}.',
 )
 _SECOND_CALL_SYSTEM = (
@@ -129,8 +131,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for name in self.item_facts_seed_names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
-            condition_text = ", ".join(conditions) if conditions else "none"
-            lines.append(f"- {name}. Where: {facts['where']}. Condition: {condition_text}.")
+            line = f"- {name}. Where: {facts['where']}."
+            if conditions:
+                line += f" Condition: {', '.join(conditions)}."
+            lines.append(line)
         return "\n".join(lines)
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
