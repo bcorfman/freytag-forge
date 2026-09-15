@@ -1,7 +1,8 @@
 # Narrated world continuity: implementation plan
 
-Status: Phase 0 measured; its format-change criterion awaits Brandon's accepted
-accuracy. Nothing below is in the game yet. The bench experiment
+Status: Phase 0 round 1 measured and recorded. Round 2 (format v2, bar 92% per
+change type) is approved and not started - see Phase 0. Nothing below is in the
+game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
@@ -233,8 +234,81 @@ for other change types, the design changes before any engine work.
 - [x] Per-change-type accuracy table (kept facts correct, missed, invented) recorded
   in `.plans/narrated-world-changes-experiment.md`.
 - [ ] Any change type below an accuracy Brandon accepts has a proposed format change,
-  re-measured the same way. (Proposals written in the experiment record;
-  awaiting Brandon's accepted accuracy before building and re-measuring.)
+  re-measured the same way.
+
+**Round 2: format v2 (approved by Brandon, not started)**
+
+Accepted accuracy: **92% "kept facts correct" per change type** (Brandon,
+2026-09-15). Round 1 results are in `.plans/narrated-world-changes-experiment.md`:
+only "check a carried thing" reached it; overall 31/48 (two-scene) and 99/157
+(40-turn). Brandon approved building all four proposals below through Ringer.
+State at hand-off: HEAD 8969afb, clean tree, nothing running.
+
+- [ ] Ringer task A (worktree; owns `bench/item_facts.py`, `bench/README.md`,
+  `tests/test_bench_item_facts.py`):
+  - `ItemFactsProvider._things_block`: a thing with no conditions renders as
+    `- <name>. Where: <where>.` with no Condition part (today it renders
+    `Condition: none.`, and the narrator copies `none` back as a condition).
+  - Replace the two `_SINGLE_CALL_RULES` lines with exactly:
+    1. `Also return item_facts for each thing in THINGS that your story changed. Copy each name exactly as it is written in THINGS.`
+    2. `For each one, give where it is now and up to two short condition phrases. Keep any condition that is still true. Example: if she picks up the lantern from the table, the lantern is {"where": "in her hand", "condition": ["lit"]}.`
+  - Leave `_SECOND_CALL_SYSTEM`, `apply_item_facts`, `package_seed` and
+    `validate_item_facts` unchanged; update the tests and the README sentence
+    about `Condition: none.`
+  - Check (offline): `bench prompt --scene 1A --variation
+    bench/variations/item-facts-single.json` gives THINGS exactly
+    `- Michelle's phone. Where: on the kitchen floor. Condition: not damaged.` /
+    `- Michelle's workstation drawers. Where: in Michelle's workstation. Condition: shut.` /
+    `- the back door. Where: at the back of the kitchen. Condition: forced open, frame splintered.` /
+    `- Kristin's laptop. Where: in Kristin's truck outside the house.`;
+    both rule lines are present verbatim and "Use only the names in THINGS" is
+    gone; the `example.json` prompt and `_SECOND_CALL_SYSTEM` are unchanged
+    against the main checkout; full suite and ruff pass; only the owned files
+    changed; export the patch. Confirmed failing on 8969afb.
+- [ ] Ringer task B (worktree, parallel with A; owns only the `overrides` of
+  `bench/variations/item-facts-package-two-scene.json` and
+  `item-facts-package-long.json`; never edits `data/`):
+  - Add `{"old": "Michelle's workstation drawers are shut.", "new": "Michelle's carved drawer is shut."}`
+    to each file's `overrides["plot.md"]["replacements"]`, keeping every
+    existing replacement. The old text occurs once, in the 1A front matter of
+    `plot.md`. The narrator acts on one drawer and kept reporting "drawer",
+    which was dropped as an unknown name. The possessive name matches the other
+    things, and a leading "The" would break exact name matching. If this wins,
+    Phase 3 makes the real `plot.md` change.
+  - Check (offline): for both variations the 1A package seed is, in order,
+    Michelle's phone (on the kitchen floor; not damaged), Kristin's laptop (in
+    Kristin's truck outside the house; no conditions), Michelle's carved drawer
+    (in Kristin and Michelle's shared house; shut), with no seed issues; the
+    effective 1A setting facts no longer mention the workstation drawers; a
+    stubbed run (patch `CloudflareTurnProvider._request`, dummy
+    `CLOUDFLARE_WORKER_URL`/`TOKEN`) plays every fixed turn; existing overrides
+    are kept and nothing outside `overrides` changes. Confirmed failing on
+    8969afb.
+- [ ] Review both patches, apply, commit.
+- [ ] Smoke one replicate of each variation and read the transcripts, then run
+  4 replicates of each: `--scene 1A --script change-types` for two-scene and
+  `--script long-session` for long, output to
+  `bench/results/item-facts-v2-{two-scene,long}-1a`.
+- [ ] Tally per change type against 92%, record both tables and the comparison
+  with round 1 in the experiment record, and state the turn count behind each
+  rate. Types below 92% go to the next strategy rank (an LLM semantic check of
+  the narrated turn) or more replicates for thin samples. Decide with Brandon.
+
+Operational lessons from round 1 (apply to every live run):
+- Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
+  check otherwise retries and reruns the whole spend. Lint does not flag an
+  unknown field such as `"retries"`.
+- A burst of judge failures can be an exhausted OpenAI balance (HTTP 429
+  `insufficient_quota` / `credit_balance_exhausted`), not a rate limit.
+  Diagnose it with one request before rerunning.
+- After each run, keep only successful non-smoke rows in
+  `bench/results/ledger.jsonl`.
+- Change type comes from the scripted command, never from narration. Map each
+  script input to a type and count the fact-tracking judge's verdicts per type.
+- A check that runs a single pytest file must pass `--no-cov`; the repo's 90%
+  coverage gate fails otherwise.
+- Checks that stub `_request` must count their own stub calls, because the
+  base provider's `request_count` increments inside `_request`.
 
 ### Phase 1 - Design decisions
 
