@@ -48,6 +48,8 @@ test("filters turn fields and uses the default model with the strict schema", as
   assert.equal(result.turns.length, 1);
   assert.equal(body.model, "gpt-5.4");
   assert.equal(body.store, false);
+  assert.match(body.input[0].content, /Use cause command only when the player's command itself asks for that change/);
+  assert.match(body.input[0].content, /Looking at, examining, searching, or checking a thing does not ask for moving/);
   assert.deepEqual(Object.keys(sent).sort(), ["item_facts_after", "item_facts_before", "narration", "player_input"]);
   assert.equal(body.text.format.strict, true);
   assert.equal(body.text.format.schema.additionalProperties, false);
