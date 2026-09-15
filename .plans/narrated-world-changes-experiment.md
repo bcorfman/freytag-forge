@@ -384,6 +384,20 @@ narration never mentioned), 151 scored labels per pass, two passes per run.
 Cases, labels and outputs are in the session scratchpad
 (`calibration-v3/`, first run under `pass1/`).
 
+### Round 3 smoke: the example dropped the `where` key (861f041)
+
+One replicate of each variation with capture v3 (partial entries, merged match
+call, per-turn selection, persisting narrated things). The engine side worked:
+"drawer" and "laptop" resolved to Michelle's carved drawer and Kristin's laptop
+through the match call, a condition-only "note" with no place was correctly not
+persisted, THINGS stayed at three things a turn, and the match call fired once
+per run. But the new rule line's example showed only a `condition` key, and the
+narrator stopped using `where`: it returned `{"location": "Kristin's pocket"}`,
+`"owner": "Michelle"` and `"condition": "locked"` as a string, all rejected, so
+most moves were lost (two-scene 5/11, 40-turn 21/37). Not a capture result;
+the line is being replaced with one that names both keys and shows an example of
+each, then re-smoked. Smoke rows removed from the ledger.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,

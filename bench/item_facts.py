@@ -67,9 +67,9 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 _SINGLE_CALL_RULES = (
     "Also return item_facts for each thing your story moved or changed, and for each new thing it put in a place.",
-    "Give only what changed: where it is now, its condition list of up to two short phrases, or both. "
-    "Example: if she blows out the cracked, lit lantern on the table, the lantern is "
-    '{"condition": ["dark", "cracked"]}.',
+    'Give only what changed. Use "where" for the place it is now and "condition" for up to two short phrases. '
+    'Example: if she picks up the key and blows out the cracked, lit lantern, the key is {"where": "in her hand"} '
+    'and the lantern is {"condition": ["dark", "cracked"]}.',
 )
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. THINGS lists the names the game keeps "

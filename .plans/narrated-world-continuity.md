@@ -1,9 +1,10 @@
 # Narrated world continuity: implementation plan
 
-Status: Phase 0 rounds 1 and 2 measured and recorded. Format v2 did not reach
-the 92% bar for any change type except checking a carried thing; the next
-strategy is awaiting Brandon's decision - see Phase 0. Nothing below is in the
-game yet. The bench experiment
+Status: Phase 0 rounds 1 and 2 measured and recorded; format v2 did not reach
+the 92% bar. Round 3 (engine-side capture: partial entries, one merged match
+call, per-turn THINGS selection, persisting narrated things, split judge
+labels) is built, tested and calibrated; its live smoke and 4-replicate runs
+are in progress - see Phase 0. Nothing below is in the game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
