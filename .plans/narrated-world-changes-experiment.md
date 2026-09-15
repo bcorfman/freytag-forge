@@ -482,9 +482,38 @@ end-of-run resolution).
   call mapped "man" to Michelle's phone, moving the phone to the bench; it also
   keeps listing the laptop, the drawer and a note in `refers` for commands that
   mention only the phone, and once reported the laptop as carried.
-- The 40-turn run's narration completed (155 accepted turns) but its
-  fact-tracking judge rejected a reply as an invalid verdict; it is being
-  re-judged from the saved turns.
+### Round 3 40-turn, judge flake and interim numbers
+
+The 40-turn run's narration completed (4 replicates, 155 accepted turns) but the
+fact-tracking judge threw "invalid verdict" and the bench discarded the judging
+of the whole billed run. Re-judging the saved turns one replicate at a time,
+keeping every raw reply, showed the cause: GPT-5.4 returned one verdict FEWER
+than the turns for two replicates (37 for 38, 38 for 39), omitting the last
+turn, with the response complete and every field valid - not truncation. The
+judge requires an exact count and throws. Fix: retry once on a count mismatch
+and name both counts on a second failure.
+
+Interim, from the two replicates that judged (78 turns):
+
+| Change type | Turns | Kept facts correct | Rate |
+|---|---|---|---|
+| look (no change asked) | 15 | 10 | 67% |
+| check a carried thing | 4 | 2 | 50% |
+| open or close | 15 | 8 | 53% |
+| pick up or put away | 16 | 7 | 44% |
+| set down | 8 | 6 | 75% |
+| move between places | 8 | 7 | 88% |
+| condition change | 12 | 11 | 92% |
+| **All** | 78 | 51 | 65% |
+
+- **The opened-box example did not stop a state going in the place field.** One
+  capture, `{"Michelle's carved drawer": {"where": "open"}}`, rode along for the
+  rest of the scene: of 24 turns flagged `state_as_place`, 22 carry that same
+  drawer entry. Under whole-state scoring that single error costs every later
+  turn, and it is the largest single cause of the 40-turn rate.
+- Condition change (92%) and move between places (88%) are the strongest types;
+  pickups (44%) fail mostly through narration contradicting the given facts (9
+  of 16).
 
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the

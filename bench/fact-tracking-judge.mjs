@@ -83,7 +83,7 @@ function playerVisibleTurn(turn) {
 }
 
 function validateVerdict(verdict, expectedLength) {
-  if (!verdict || !Array.isArray(verdict.turns) || verdict.turns.length !== expectedLength) {
+  if (!verdict || !Array.isArray(verdict.turns)) {
     throw new Error("E2E fact-tracking judge returned an invalid verdict.");
   }
   if (
@@ -105,6 +105,9 @@ function validateVerdict(verdict, expectedLength) {
   ) {
     throw new Error("E2E fact-tracking judge returned an invalid verdict.");
   }
+  if (verdict.turns.length !== expectedLength) {
+    return null;
+  }
   return verdict;
 }
 
@@ -114,35 +117,46 @@ export async function judgeFactTracking(
 ) {
   void sceneId;
   const { apiKey, model } = judgeConfiguration(environment);
-  const response = await fetchImpl("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      store: false,
-      input: [
-        { role: "system", content: SYSTEM_MESSAGE },
-        {
-          role: "user",
-          content: JSON.stringify({
-            canon: { scene_id: canon?.scene_id, plot: canon?.plot },
-            opening,
-            turns: turns.map(playerVisibleTurn),
-          }),
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "fact_tracking_judgment",
-          strict: true,
-          schema: FACT_TRACKING_SCHEMA,
-        },
+  const requestBody = {
+    model,
+    store: false,
+    input: [
+      { role: "system", content: SYSTEM_MESSAGE },
+      {
+        role: "user",
+        content: JSON.stringify({
+          canon: { scene_id: canon?.scene_id, plot: canon?.plot },
+          opening,
+          turns: turns.map(playerVisibleTurn),
+        }),
       },
-    }),
-  });
-  if (!response.ok) throw new Error(`E2E fact-tracking judge request failed with HTTP ${response.status}.`);
-  return validateVerdict(JSON.parse(outputText(await response.json())), turns.length);
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "fact_tracking_judgment",
+        strict: true,
+        schema: FACT_TRACKING_SCHEMA,
+      },
+    },
+  };
+  async function requestVerdict() {
+    const response = await fetchImpl("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(requestBody),
+    });
+    if (!response.ok) throw new Error(`E2E fact-tracking judge request failed with HTTP ${response.status}.`);
+    return JSON.parse(outputText(await response.json()));
+  }
+  const first = validateVerdict(await requestVerdict(), turns.length);
+  if (first) return first;
+  const secondVerdict = await requestVerdict();
+  const second = validateVerdict(secondVerdict, turns.length);
+  if (second) return second;
+  throw new Error(
+    `E2E fact-tracking judge returned ${secondVerdict.turns.length} verdicts for ${turns.length} turns.`,
+  );
 }
 
 function argument(name) {

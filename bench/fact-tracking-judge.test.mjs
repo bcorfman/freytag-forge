@@ -76,13 +76,41 @@ test("filters turn fields and uses the default model with the strict schema", as
 });
 
 test("rejects a verdict with the wrong turn count", async () => {
+  const requests = [];
   await assert.rejects(
     judgeFactTracking(
       { sceneId: "1A", opening: "", turns },
-      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch({ turns: [] }, []) },
+      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch({ turns: [] }, requests) },
     ),
-    /invalid verdict/,
+    /0 verdicts for 1 turns/,
   );
+  assert.equal(requests.length, 2);
+});
+
+test("retries a short verdict once and accepts the complete retry", async () => {
+  const requests = [];
+  let calls = 0;
+  const fetchImpl = async (_url, options) => {
+    requests.push(options);
+    calls += 1;
+    const result = calls === 1 ? { turns: [] } : verdict();
+    return { ok: true, status: 200, json: async () => ({ output_text: JSON.stringify(result) }) };
+  };
+  const result = await judgeFactTracking(
+    { sceneId: "1A", opening: "", turns },
+    { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl },
+  );
+  assert.equal(result.turns.length, 1);
+  assert.equal(requests.length, 2);
+});
+
+test("uses one request for a complete verdict", async () => {
+  const requests = [];
+  await judgeFactTracking(
+    { sceneId: "1A", opening: "", turns },
+    { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch(verdict(), requests) },
+  );
+  assert.equal(requests.length, 1);
 });
 
 test("rejects a verdict with a bad enum", async () => {
