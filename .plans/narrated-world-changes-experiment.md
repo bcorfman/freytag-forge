@@ -101,15 +101,47 @@ character says only what they may say, never write IDs, and the ownership rule.
 Four replicates per arm is a small sample. A clear gap is actionable; a narrow
 one means more replicates, not a decision.
 
+## Results: free phrase lists (2026-09-15)
+
+Recorded in bench/results/item-facts-{single,single-minimal,second}-1a at
+ac478d6. Each thing carried a free list of short phrases.
+
+| | A: single call | B: single call, 6 rules | C: second call |
+|---|---|---|---|
+| Kept facts correct (grader) | 21 of 46 | 24 of 45 | 28 of 41 |
+| Narrated phone changes recorded | 2 of 15 | 2 of 10 | 6 of 14 |
+| Changes missed / invented | 22 / 6 | 17 / 8 | 10 / 7 |
+| Things left out / unknown names added | 96 / 30 | 32 / 39 | 7 / 1 |
+| Narration contradicts its given facts | 5 | 4 | 11 |
+| Model calls | 52 | 52 | 93 |
+
+- The first wording ("change a thing's facts only when your story changes
+  that thing") recorded no pickups in any arm; the recorded run used the
+  rewritten wording with a lantern example.
+- A single call barely captures changes, and cutting the rules to six did not
+  help, so rule overload is not the explanation.
+- The second call is better but not reliable. Its errors come largely from the
+  list format: a thing held two locations at once ("on the kitchen floor" and
+  "in Kristin's hand"), contradictory conditions coexisted, locations were
+  dropped, and trivia accumulated. The narrator also sometimes ignored carried
+  facts, placing a held phone on a table.
+- The fact-tracking grader scored 20 of 20 on five constructed cases, twice,
+  after its cause wording was tightened.
+
+## Next: single-value fields
+
+Each thing carries one `where` phrase and up to two `condition` phrases, and a
+reply lists only the things the story changed. A new `where` replaces the old
+one, so a thing cannot be in two places, and omitted things stay as they were,
+so the model no longer has to copy everything back. Rerun a smoke and then 4 x
+12 for arms A and C.
+
 ## Steps
 
-1. [ ] Build the harness through Ringer: the bench narrator subclass (THINGS
-   section, returned-facts extraction, carry forward, second call), the
-   `item_facts` variation option and its per-turn records, the fact-tracking
-   grader, the three arm variations with shared overrides, README and tests.
-   Deterministic offline check with a fake narrator.
-2. [ ] Calibrate the fact-tracking grader on hand-labelled turns.
-3. [ ] Smoke run: one replicate per arm, read the artifacts.
-4. [ ] Full run: 4 x 12 per arm; record only successful rows in the ledger.
-5. [ ] Report the comparison and the decision, then write the full-loop plan
+1. [x] Build the harness through Ringer (dfe3828, d8b71f8).
+2. [x] Calibrate the fact-tracking grader on hand-labelled turns (8a79a2b).
+3. [x] Smoke run, then rewrite the change wording (ac478d6).
+4. [x] Full run with free phrase lists (f3c7401).
+5. [ ] Switch the harness to single-value fields; smoke, then 4 x 12 for A and C.
+6. [ ] Report the comparison and the decision, then write the full-loop plan
    (capture, story-break check, regenerate or warn, commit, carry forward).
