@@ -312,6 +312,7 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
     class FakeProvider:
         request_count = 0
         recovery_count = 0
+        last_projection = None
 
         def opening(self) -> dict[str, object]:
             return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
@@ -337,6 +338,121 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
 
     assert result["status"] == "failed"
     assert "invalid_grounding_reference" in result["failure_reason"]
+
+
+def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monkeypatch) -> None:
+    payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": []}],
+        "selected_knowledge_ids": [],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+        last_projection = None
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            return payload
+
+    variation = {
+        "name": "fixed-turns",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: FakeProvider())
+
+    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "ok"
+    assert result["fixed_turns"] == 3
+    assert [turn["turn_number"] for turn in result["turns"]] == [1, 2, 3]
+    assert result["rejected_turns"] == []
+
+
+def test_run_scene_fixed_turns_records_rejection_and_continues(monkeypatch) -> None:
+    rejected_payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": ["k_invented_source"]}],
+        "selected_knowledge_ids": [],
+    }
+    accepted_payload = {
+        "segments": [{"kind": "narration", "text": "A known detail.", "grounding_ids": []}],
+        "selected_knowledge_ids": [],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+        last_projection = None
+
+        def __init__(self) -> None:
+            self.payloads = iter((rejected_payload, accepted_payload, accepted_payload))
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            return next(self.payloads)
+
+    provider = FakeProvider()
+    variation = {
+        "name": "fixed-rejection",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: provider)
+
+    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "ok"
+    assert [turn["turn_number"] for turn in result["turns"]] == [2, 3]
+    rejection = result["rejected_turns"][0]
+    assert rejection["turn_number"] == 1
+    assert rejection["player_input"] == "Search the drawer."
+    assert rejection["rejection_code"] == "invalid_grounding_reference"
+    assert rejection["rejection_reason"]
+    assert result["rejected_turn_count"] == 1
+
+
+def test_run_scene_fixed_turns_provider_outage_still_fails(monkeypatch) -> None:
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            raise NarrationProviderError("provider down", 503, "PROVIDER_DOWN")
+
+    variation = {
+        "name": "fixed-outage",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: FakeProvider())
+
+    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "failed"
+    assert result["fixed_turns"] == 3
+    assert "PROVIDER_DOWN" in result["failure_reason"]
+
+
+@pytest.mark.parametrize("fixed_turns", [True, 0, -1, "12"])
+def test_invalid_fixed_turns_are_rejected(tmp_path, fixed_turns) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["fixed_turns"] = fixed_turns
+    path = tmp_path / "invalid-fixed-turns.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="fixed_turns must be a positive integer"):
+        load_variation(path)
 
 
 def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None:

@@ -172,6 +172,8 @@ For each criterion, `yes` means the defect is present. Results appear as a
 
 `entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `committed_knowledge_count` (the knowledge the narrator is shown at entry), `earned_knowledge_count` (the player-visible knowledge already earned), and `seeded_by`: `none` for bare and `thorough` for seeded runs.
 
+`fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
+
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:
 
 ```json

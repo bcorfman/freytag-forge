@@ -2,6 +2,7 @@
   "name": "continuity-1a",
   "story_package": "data/stories/continuity-initiative",
   "continuity_judge": true,
+  "fixed_turns": 12,
   "scripts": {
     "1A": [
       {

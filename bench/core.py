@@ -138,6 +138,11 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     escalation_judge = variation.get("escalation_judge", False)
     if not isinstance(escalation_judge, bool):
         raise ValueError("escalation_judge must be a boolean")
+    fixed_turns = variation.get("fixed_turns")
+    if fixed_turns is not None and (
+        isinstance(fixed_turns, bool) or not isinstance(fixed_turns, int) or fixed_turns <= 0
+    ):
+        raise ValueError("fixed_turns must be a positive integer")
     continuity_judge = variation.get("continuity_judge", False)
     if not isinstance(continuity_judge, bool):
         raise ValueError("continuity_judge must be a boolean")
@@ -145,6 +150,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
         raise ValueError("entry_state must be bare or thorough")
     variation["_entry_state"] = entry_state
+    variation["_fixed_turns"] = fixed_turns
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
@@ -578,14 +584,39 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
         return _failed_scene_record(variation, scene_id, script, provider, error, entry_state=arrival_entry_state)
     turns = []
+    rejected_turns = []
+    fixed_turns = variation.get("_fixed_turns", variation.get("fixed_turns"))
     inputs = script["inputs"]
     quota = None
-    for turn_number in range(max_turns):
-        player_input = inputs[turn_number % len(inputs)]
+    turn_limit = fixed_turns if fixed_turns is not None else max_turns
+    for turn_index in range(turn_limit):
+        turn_number = turn_index + 1
+        player_input = inputs[turn_index % len(inputs)]
         prior_scene = state.current_scene_id
         try:
             proposal = _turn_with_rate_limit_retry(engine, player_input)
-        except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
+        except (ProposalValidationError, RuntimeContractError) as error:
+            if fixed_turns is None:
+                return _failed_scene_record(
+                    variation,
+                    scene_id,
+                    script,
+                    provider,
+                    error,
+                    opening=opening.narration,
+                    turns=turns,
+                    entry_state=arrival_entry_state,
+                )
+            rejected_turns.append(
+                {
+                    "turn_number": turn_number,
+                    "player_input": player_input,
+                    "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
+                    "rejection_reason": str(error),
+                }
+            )
+            continue
+        except NarrationProviderError as error:
             return _failed_scene_record(
                 variation,
                 scene_id,
@@ -595,6 +626,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 opening=opening.narration,
                 turns=turns,
                 entry_state=arrival_entry_state,
+                rejected_turns=rejected_turns,
             )
         entered = state.current_scene_id != prior_scene
         segments = proposal.segments[:-1] if entered else proposal.segments
@@ -635,9 +667,33 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "handoff_staged": delivery.handoff_staged,
                 }
             )
+            if fixed_turns is not None:
+                turns[-1]["turn_number"] = turn_number
         if entered:
             break
     else:
+        if fixed_turns is not None:
+            return {
+                "status": "ok",
+                "replicate": 0,
+                "script": script["name"],
+                "scene_id": scene_id,
+                "opening": opening.narration,
+                "turns": turns,
+                "completed": quota is None and bool(turns),
+                "quota": quota,
+                "narration_turns": len(turns),
+                "example_leakage": count_example_leakage(
+                    (turn["narration"] for turn in turns), variation.get("_resolved_output_example")
+                ),
+                "narration_requests": provider.request_count,
+                "recovery_requests": provider.recovery_count,
+                "package": str(package.root) if hasattr(package, "root") else str(variation["_package_path"]),
+                "entry_state": arrival_entry_state,
+                "fixed_turns": fixed_turns,
+                "rejected_turns": rejected_turns,
+                "rejected_turn_count": len(rejected_turns),
+            }
         return _failed_scene_record(
             variation,
             scene_id,
@@ -648,7 +704,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             turns=turns,
             entry_state=arrival_entry_state,
         )
-    return {
+    record = {
         "status": "ok",
         "replicate": 0,
         "script": script["name"],
@@ -666,6 +722,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         "package": str(package.root) if hasattr(package, "root") else str(variation["_package_path"]),
         "entry_state": arrival_entry_state,
     }
+    if fixed_turns is not None:
+        record["fixed_turns"] = fixed_turns
+        record["rejected_turns"] = rejected_turns
+        record["rejected_turn_count"] = len(rejected_turns)
+    return record
 
 
 def _failed_scene_record(
@@ -678,6 +739,7 @@ def _failed_scene_record(
     opening: str = "",
     turns: list[dict[str, Any]] | None = None,
     entry_state: dict[str, Any] | None = None,
+    rejected_turns: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     error_code = getattr(error, "error_code", "") or getattr(error, "code", "")
     reason = f"{error_code}: {error}" if error_code else str(error)
@@ -703,6 +765,11 @@ def _failed_scene_record(
     }
     if entry_state is not None:
         record["entry_state"] = entry_state
+    fixed_turns = variation.get("_fixed_turns", variation.get("fixed_turns"))
+    if fixed_turns is not None:
+        record["fixed_turns"] = fixed_turns
+        record["rejected_turns"] = rejected_turns or []
+        record["rejected_turn_count"] = len(rejected_turns or [])
     return record
 
 
