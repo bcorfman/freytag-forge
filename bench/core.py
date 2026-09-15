@@ -45,6 +45,8 @@ ESCALATION_CRITERIA = (
     "no_pre_reveal_disclosure",
 )
 ESCALATION_VERDICTS = ("yes", "no", "not_applicable")
+CONTINUITY_CRITERIA = ("contradicts_stated_fact", "protagonist_acts_beyond_command", "restarts_scene")
+CONTINUITY_VERDICTS = ("yes", "no")
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
@@ -136,6 +138,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     escalation_judge = variation.get("escalation_judge", False)
     if not isinstance(escalation_judge, bool):
         raise ValueError("escalation_judge must be a boolean")
+    continuity_judge = variation.get("continuity_judge", False)
+    if not isinstance(continuity_judge, bool):
+        raise ValueError("continuity_judge must be a boolean")
     entry_state = variation.get("entry_state", "bare")
     if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
         raise ValueError("entry_state must be bare or thorough")
@@ -756,6 +761,22 @@ def score_escalation_judgments(judgments: list[dict[str, Any]], judge_calls: int
     return counts
 
 
+def score_continuity_judgments(judgments: list[dict[str, Any]], judge_calls: int) -> dict[str, Any]:
+    counts = {criterion: {verdict: 0 for verdict in CONTINUITY_VERDICTS} for criterion in CONTINUITY_CRITERIA}
+    turns_judged = 0
+    for judgment in judgments:
+        for turn in judgment.get("turns", []):
+            turns_judged += 1
+            for criterion in CONTINUITY_CRITERIA:
+                verdict = turn.get(criterion)
+                if verdict not in CONTINUITY_VERDICTS:
+                    raise ValueError(f"invalid continuity verdict for {criterion}: {verdict!r}")
+                counts[criterion][verdict] += 1
+    counts["turns_judged"] = turns_judged
+    counts["judge_calls"] = judge_calls
+    return counts
+
+
 def _stats(values: list[float], n_for_mde: int | None = None) -> dict[str, Any]:
     count = len(values)
     average = mean(values) if values else None
@@ -1000,6 +1021,8 @@ def ledger_row(
     }
     if "escalation" in aggregate:
         row["escalation"] = aggregate["escalation"]
+    if "continuity" in aggregate:
+        row["continuity"] = aggregate["continuity"]
     if failure_reason is not None:
         row["failure_reason"] = failure_reason
     return row
@@ -1071,4 +1094,19 @@ def run_escalation_judges(input_path: Path, output_path: Path) -> dict[str, Any]
     result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "escalation judge CLI failed")
+    return read_json(output_path)
+
+
+def run_continuity_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
+    command = [
+        "node",
+        str(Path(__file__).with_name("continuity-judge.mjs")),
+        "--input",
+        str(input_path),
+        "--output",
+        str(output_path),
+    ]
+    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "continuity judge CLI failed")
     return read_json(output_path)

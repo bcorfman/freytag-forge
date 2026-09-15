@@ -158,6 +158,16 @@ counts appear in an `escalation` block in `summary.json` and the ledger row:
 }
 ```
 
+`continuity_judge` is an optional boolean and defaults to `false`. When true,
+the bench makes one extra judge call per successful replicate and judges every
+turn. It checks `contradicts_stated_fact` (the narration conflicts with known
+facts), `protagonist_acts_beyond_command` (the player character does more than
+commanded), and `restarts_scene` (the scene or its opening is started again).
+For each criterion, `yes` means the defect is present. Results appear as a
+`continuity` block in `summary.json` and the ledger row with yes/no counts,
+`turns_judged`, and `judge_calls`. See
+`bench/variations/continuity-1a.json` for the `phone-bag-door` Scene 1A script.
+
 `beat_delivery` is `details` for beat noun phrases or `prose` for the authored beat paragraph. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
 
 `entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `committed_knowledge_count` (the knowledge the narrator is shown at entry), `earned_knowledge_count` (the player-visible knowledge already earned), and `seeded_by`: `none` for bare and `thorough` for seeded runs.

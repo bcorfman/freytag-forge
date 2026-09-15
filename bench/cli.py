@@ -28,10 +28,12 @@ from bench.core import (
     package_and_state,
     preview_rules,
     prompt_for,
+    run_continuity_judges,
     run_escalation_judges,
     run_judges,
     run_scene,
     scenes_scored_for_row,
+    score_continuity_judgments,
     score_escalation_judgments,
     score_judgments,
     scripts_for,
@@ -516,6 +518,31 @@ def _run(args: argparse.Namespace) -> int:
             judgments = []
             escalation = score_escalation_judgments([], 0)
         judge_failure_reason = judge_failure_reason or escalation_failure_reason
+    continuity = None
+    continuity_failure_reason = None
+    if variation.get("continuity_judge", False):
+        continuity_path = args.out / "continuity-judgments.json"
+        try:
+            continuity_judged = (
+                run_continuity_judges(pending, continuity_path) if judged_runs else {"judgments": [], "judge_calls": 0}
+            )
+            continuity_judgments = continuity_judged["judgments"]
+            if len(continuity_judgments) != len(judged_runs):
+                raise RuntimeError(
+                    f"continuity judge returned {len(continuity_judgments)} result(s) for "
+                    f"{len(judged_runs)} completed run(s)"
+                )
+            continuity = score_continuity_judgments(
+                continuity_judgments,
+                continuity_judged.get("judge_calls", 0),
+            )
+        except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
+            continuity_failure_reason = _failure_reason(error)
+            failed_runs.extend(judged_runs)
+            judged_runs = []
+            judgments = []
+            continuity = score_continuity_judgments([], 0)
+        judge_failure_reason = judge_failure_reason or continuity_failure_reason
     if judgments:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -529,12 +556,16 @@ def _run(args: argparse.Namespace) -> int:
     )
     if escalation is not None:
         aggregate["escalation"] = escalation
+    if continuity is not None:
+        aggregate["continuity"] = continuity
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
         "actual_narration_requests": sum(run["narration_requests"] for run in runs),
         "estimated_workers_ai_neurons_from_requests": sum(run["narration_requests"] for run in runs) * 330 / 30,
-        "actual_openai_judge_calls": judged.get("judge_calls", 0) + (escalation or {}).get("judge_calls", 0),
+        "actual_openai_judge_calls": judged.get("judge_calls", 0)
+        + (escalation or {}).get("judge_calls", 0)
+        + (continuity or {}).get("judge_calls", 0),
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:

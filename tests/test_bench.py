@@ -773,6 +773,135 @@ def test_non_boolean_escalation_judge_is_rejected(tmp_path) -> None:
         load_variation(path)
 
 
+def test_continuity_judge_is_opt_in_and_added_to_summary_ledger_and_spend(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "continuity-arm",
+        "continuity_judge": True,
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA}
+    judgment["missing_or_wrong"] = []
+    continuity_judgment = {
+        "turns": [
+            {
+                "turn": 1,
+                "contradicts_stated_fact": "yes",
+                "protagonist_acts_beyond_command": "no",
+                "restarts_scene": "no",
+                "reason": "The phone is cracked.",
+            }
+        ]
+    }
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [{"player_input": "Inspect the drawer.", "narration": "The drawer catches."}],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(
+        bench_cli,
+        "run_continuity_judges",
+        lambda *_: {"judgments": [continuity_judgment], "judge_calls": 2},
+    )
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["continuity"]["contradicts_stated_fact"] == {"yes": 1, "no": 0}
+    assert summary["continuity"]["turns_judged"] == 1
+    assert summary["budget"]["actual_openai_judge_calls"] == 3
+    row = ledger_rows(ledger)[0]
+    assert row["continuity"] == summary["continuity"]
+    assert row["spend"]["judge_calls"] == 3
+
+
+def test_continuity_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "ordinary-arm",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA} | {"missing_or_wrong": []}
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(bench_cli, "run_continuity_judges", lambda *_: pytest.fail("opt-in judge was called"))
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert "continuity" not in summary
+    assert "continuity" not in ledger_rows(ledger)[0]
+
+
+def test_non_boolean_continuity_judge_is_rejected(tmp_path) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["continuity_judge"] = "yes"
+    path = tmp_path / "invalid-continuity.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+    with pytest.raises(ValueError, match="continuity_judge must be a boolean"):
+        load_variation(path)
+
+
 def test_run_writes_failed_turns_to_all_turn_records_without_changing_judged_records(monkeypatch, tmp_path) -> None:
     variation = {
         "name": "failed-selection",
