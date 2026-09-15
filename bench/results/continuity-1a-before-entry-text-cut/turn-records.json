@@ -1,0 +1,1314 @@
+{
+  "scene_id": "1A",
+  "package_path": "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/be2e13ed-7975-4ab9-bf35-e6211925793c/scratchpad/ringer-continuity-trial/before-arm/data/stories/continuity-initiative",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "phone-bag-door",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin stands in the kitchen, her eyes fixed on Michelle's phone, still lying on the floor where it must have fallen. She takes a step closer, her gaze drifting to the surrounding area, taking in the overturned workstation chair and the scattered papers on the desk. The kitchen is quiet, the only sound the hum of the refrigerator in the corner.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a surge of relief that it's still intact, and begins to examine it more closely. The phone's screen is cracked, but only slightly, and the damage doesn't seem to be affecting its functionality.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 1
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin scans the room, her eyes settling on the overturned workstation chair and the empty space where Michelle's work bag should be. She moves to the area where Michelle's workstation was, her gaze sweeping over the desk and the drawers, which are still shut. Kristin's eyes land on the kitchen, where Michelle's phone lies on the floor, and she feels a surge of unease.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 2
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky screen door and steps out into the backyard, her eyes scanning the area around the back door. The frame is splintered, and the lock is torn from its hinges, but there's no sign of forced entry or struggle. Kristin's gaze lingers on the damage, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 3
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor. The screen is dark, but the phone itself appears undamaged, a stark contrast to the chaos that surrounds it. She picks it up, feeling a mix of relief and unease as she turns it over in her hands. The phone's case is scratched in a few places, but there's no visible damage to the screen or the body. Kristin's eyes scan the kitchen, taking in the quiet, the stillness, and the sense of unease that settles in the pit of her stomach.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.",
+          "handoff_staged": false,
+          "turn_number": 4
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is thick with the smell of coffee, and the silence is oppressive. She moves towards the counter, her gaze falling on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes linger on the phone for a moment before she continues her search. She moves towards the living room, her eyes scanning the space for any sign of Michelle's work bag. The room is tidy, but there's a sense of disarray, as though Michelle had been in a hurry to leave.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 5
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of fresh paint wafts out, mingling with the acrid smell of smoke from the nearby fires. She steps out into the overcast morning, her eyes scanning the damage to the door frame, where a small splinter of wood is torn away, and a faint scratch mars the surface. The surrounding area is quiet, with only a few scattered debris and a discarded trash can, its contents spilling out onto the ground.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 6
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a surge of concern as she turns it over in her hands, searching for any sign of what might have happened to Michelle. The phone itself seems undamaged, but Kristin's eyes scan the screen for any message or notification that might have been missed.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 7
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is thick with the smell of coffee, and the silence is oppressive. She moves towards the counter, her gaze falling on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes narrow as she takes in the sight of the undamaged phone, a stark contrast to the chaos outside. Kristin's eyes move to the back door, where the frame shows signs of recent damage. She can see the faint outline of a handprint on the door, and her mind starts racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "turn_number": 8
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of fresh paint wafts out, mingling with the acrid smell of smoke from the nearby fires. The door frame shows a recent scrape, and a few splinters are missing, as though someone had forced their way in. Kristin's eyes scan the surrounding area, but the yard is quiet, the only sound the distant wail of sirens.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks the screen for any signs of damage or messages. The phone's screen is intact, but the last message she sees is the one Michelle sent her, a little after 4:00am, which Kristin had missed by minutes.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": "continuity_initiative_known",
+          "cue_text": "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.",
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 10
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is thick with the smell of coffee, and the silence is oppressive. She moves towards the kitchen island, her gaze falling on Michelle's phone, still lying on the floor where it must have fallen. Kristin's eyes narrow as she takes in the scene, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 11
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the smell of smoke from the nearby fires. The frame is splintered, and a small piece of wood is torn loose, as though someone had forced their way in. Kristin's eyes scan the area, taking in the damage, and her mind starts to piece together the events of the past few hours.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 13,
+      "recovery_requests": 0,
+      "package": "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/be2e13ed-7975-4ab9-bf35-e6211925793c/scratchpad/ringer-continuity-trial/before-arm/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 12,
+      "rejected_turns": [],
+      "rejected_turn_count": 0
+    },
+    {
+      "status": "ok",
+      "replicate": 2,
+      "script": "phone-bag-door",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin stands in the kitchen, her eyes fixed on Michelle's phone, still lying on the floor where it must have fallen. She takes a step closer, her gaze drifting to the overturned workstation chair, the scattered papers, and the empty space where Michelle's tablet and work bag should be. The kitchen behind her is quiet, the only sound the hum of the refrigerator and the creak of the old house settling.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she turns it over in her hands, checking for any signs of damage. The phone appears to be in good condition, with no visible cracks or scratches, and Kristin's eyes scan the screen for any messages or notifications.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 1
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. She spots Michelle's phone on the floor, its screen cracked but still intact. She walks over to the phone, picks it up, and examines it briefly before putting it back on the floor. Her gaze then falls on the workstation, where Michelle's chair lies overturned. Kristin approaches the workstation, her eyes scanning the area for any sign of Michelle's work bag or any other clue.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 2
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes aside the curtain and steps closer to the back door, her eyes scanning the frame for any signs of forced entry. The wood around the lock is splintered, and the metal is bent, but it's clear that someone made an effort to break in without leaving a clear trail. Kristin's gaze lingers on the damage, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 3
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's eyes scan the phone's surface, taking in the familiar design and the faint scratches on the back, but there's nothing out of the ordinary that catches her attention.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.",
+          "handoff_staged": false,
+          "turn_number": 4
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is still, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen island, where Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze follows the path of the phone, and her eyes land on the empty space where Michelle's work bag usually sits. Kristin's eyes narrow as she takes in the scene. The back door frame shows signs of recent damage, and the absence of Michelle's work bag is a clear indication that she left in a hurry.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 5
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the acrid smell of smoke from the nearby fires. The frame is splintered, and a few shards of wood are scattered on the ground outside, but the door itself still hangs on its hinges. Kristin steps inside, her eyes scanning the kitchen, where Michelle's phone lies on the floor, its screen dark and unresponsive.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 6
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin kneels down beside the kitchen counter, her eyes fixed on Michelle's phone, which lies on the floor, its screen dark and unresponsive. She picks it up, feeling a surge of concern as she turns it over in her hands, checking for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's fingers dance across the screen, trying to wake it up, but the phone remains stubbornly silent.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 7
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is thick with the smell of coffee, and the silence is oppressive. She spots Michelle's phone on the floor, its screen dark and unresponsive. She walks over to the phone, picks it up, and examines it briefly before putting it back down. Her gaze falls on the kitchen table, where Michelle's usual spot is empty, and her eyes move to the living room, where Michelle's workstation is located. Kristin heads towards the living room, her footsteps quiet on the carpet. She approaches Michelle's workstation, her eyes scanning the surface for any sign of Michelle's work bag or any other clue.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "turn_number": 8
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the smell of smoke from the nearby fires. The frame is splintered, and a small piece of wood is torn loose, as though someone had forced their way in. Kristin's eyes scan the area, taking in the damage, and her mind starts to piece together the events of the past few hours.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's eyes scan the phone's surface, taking in the familiar design and the faint scratches on the back, but there's nothing out of the ordinary that catches her attention.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": "continuity_initiative_known",
+          "cue_text": "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.",
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 10
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is still, and the only sound is the hum of the refrigerator in the background. She moves towards the kitchen island, where Michelle's phone lies on the floor, its screen dark and unresponsive. Kristin's gaze follows the path of the phone, and her eyes land on the empty space where Michelle's work bag usually sits. Kristin's eyes narrow as she takes in the scene. The back door frame shows signs of recent damage, and the absence of Michelle's work bag and tablet suggests a hasty departure.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 11
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of fresh paint wafts out, mingling with the acrid smell of smoke and ozone from the emergency alerts that still linger in the air. The door frame shows a small dent, and a few splinters are missing, as though someone had forced their way in. Kristin's eyes scan the area, taking in the small patch of disturbed grass and the faint scratch on the wall, but there's no sign of Michelle or any other intruder.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 13,
+      "recovery_requests": 0,
+      "package": "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/be2e13ed-7975-4ab9-bf35-e6211925793c/scratchpad/ringer-continuity-trial/before-arm/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 12,
+      "rejected_turns": [],
+      "rejected_turn_count": 0
+    },
+    {
+      "status": "ok",
+      "replicate": 3,
+      "script": "phone-bag-door",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin stands in the kitchen, her eyes fixed on Michelle's phone, still lying on the floor where it must have fallen. She takes a step closer, her gaze drifting to the surrounding area, taking in the overturned workstation chair and the scattered papers on the floor. The kitchen is quiet, the only sound the hum of the refrigerator in the corner.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a surge of relief that it's not damaged, and turns it over in her hands, searching for any clues. The phone's screen remains black, but Kristin's eyes scan the device's exterior, taking in the familiar design and the faint scratches on its back.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 1
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin scans the room, her eyes settling on the overturned workstation chair and the empty space where Michelle's work bag should be. She moves to the desk, running her hand over the surface, feeling for any sign of disturbance or hidden compartments. Her fingers brush against the edge of a drawer, and she pulls it open, revealing a neatly organized space with files and papers neatly stacked.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 2
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes aside the curtain and steps closer to the back door, her eyes scanning the frame for any signs of forced entry. The wood is splintered, and a faint scratch runs along the edge of the door, but it's clear that whoever entered didn't try to conceal their actions. Kristin's gaze lingers on the damage, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 3
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's eyes scan the phone's surface, taking in the familiar design and the faint scratches on the back, but there's nothing out of the ordinary that catches her attention.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.",
+          "handoff_staged": false,
+          "turn_number": 4
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is still, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen table, where Michelle's workstation is set up. The desk is cluttered with papers, pens, and a few scattered notes, but there's no sign of Michelle's work bag. Kristin's gaze falls on the kitchen floor, where Michelle's phone lies, its screen dark and unresponsive.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 5
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the acrid smell of smoke from the nearby fires. The door frame shows signs of recent damage, with splintered wood and a faint scratch on the surrounding wall, as though someone had forced their way in. Kristin's eyes scan the area, taking in the scene, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 6
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is still, and the only sound is the hum of the refrigerator in the background. She moves towards the kitchen island, her gaze falling on Michelle's phone, which lies on the floor, its screen dark and unresponsive. Kristin's eyes move to the rest of the kitchen, taking in the familiar layout, before focusing on the living room, where Michelle's workstation is located.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 8
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin crouches beside the kitchen floor, her eyes scanning the phone's screen and body for any signs of damage or tampering. The phone's screen is dark, but the device itself looks intact, its casing unbroken and its charging port undamaged. Kristin's fingers brush against the phone's surface as she reaches for it, her mind racing with the implications of Michelle's disappearance.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "turn_number": 10
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen table, where Michelle's workstation is set up, and begins to search through the drawers, her fingers running over the familiar shapes of Michelle's pens and papers. The drawers are shut, but Kristin knows Michelle's habits well enough to know that she would have left her work bag here, or at least a note or some clue to where she went.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 11
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 9,
+      "example_leakage": 0,
+      "narration_requests": 13,
+      "recovery_requests": 0,
+      "package": "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/be2e13ed-7975-4ab9-bf35-e6211925793c/scratchpad/ringer-continuity-trial/before-arm/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 12,
+      "rejected_turns": [
+        {
+          "turn_number": 7,
+          "player_input": "Look carefully at Michelle's phone.",
+          "rejection_code": "narration_known_term_leak",
+          "rejection_reason": "narration mentions unavailable knowledge 'forced entry'"
+        },
+        {
+          "turn_number": 9,
+          "player_input": "Look at the back door.",
+          "rejection_code": "narration_known_term_leak",
+          "rejection_reason": "narration mentions unavailable knowledge 'forced entry'"
+        },
+        {
+          "turn_number": 12,
+          "player_input": "Look at the back door.",
+          "rejection_code": "narration_known_term_leak",
+          "rejection_reason": "narration mentions unavailable knowledge 'forced entry'"
+        }
+      ],
+      "rejected_turn_count": 3
+    },
+    {
+      "status": "ok",
+      "replicate": 4,
+      "script": "phone-bag-door",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin stands in the kitchen, her eyes fixed on Michelle's phone, still lying on the floor where it must have fallen. She takes a step closer, her gaze drifting to the overturned workstation chair, the scattered papers, and the empty space where Michelle's tablet and work bag should be. The back door, once ajar, now hangs crookedly on its hinges, the frame splintered and scratched.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a surge of concern as she turns it over in her hands, searching for any sign of what might have happened to Michelle. The phone itself seems undamaged, but Kristin's eyes are drawn to the screen, where a single text message from Michelle remains, its timestamp from just a little after 4:00am.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 1
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin scans the room, her eyes moving from the overturned workstation chair to the empty space where Michelle's work bag should be. She approaches the desk, her gaze sweeping over the neat stacks of papers and the neatly organized drawers. Kristin's eyes land on the drawers, and she pulls the top one open, revealing a neatly folded stack of papers and a few pens.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 2
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes aside the curtain and steps closer to the back door, her eyes scanning the frame for any signs of forced entry. The wood is splintered, and the lock is torn from its hinges, but it's clear that whoever entered the house didn't take the time to clean up after themselves. Kristin's gaze lingers on the damage, her mind racing with possibilities.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 3
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she turns it over in her hands, checking for any signs of damage. The phone appears to be in good condition, with no visible cracks or dents, and Kristin's eyes narrow as she tries to recall the last time she saw Michelle using it.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.",
+          "handoff_staged": false,
+          "turn_number": 4
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is still, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen table, where Michelle's workstation is set up. The desk is cluttered with papers, pens, and a few scattered notes, but there's no sign of Michelle's work bag. Kristin's gaze falls on the kitchen floor, where Michelle's phone lies undamaged, its screen dark and unresponsive.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 5
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the acrid smell of smoke from the nearby fires. The frame is splintered, and a small piece of wood is torn loose, as though someone had forced their way in. Kristin's eyes scan the area, taking in the scattered leaves and the faint impression of a boot print in the dirt.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 6
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's eyes scan the phone's surface, taking in the familiar design and the faint scratches on the back, but there's no indication of what might have happened to Michelle.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 7
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen table, where Michelle's workstation is set up. The drawers are shut, but Kristin can see that they're not locked. She begins to open the drawers, one by one, searching for any sign of Michelle's work bag or a clue to where she might have gone.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "turn_number": 8
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of damp earth wafts in, mingling with the smell of smoke from the nearby fires. The frame is splintered, and a small piece of wood is torn loose, as though someone had forced their way in. Kristin's eyes scan the area, taking in the small patch of disturbed earth and the faint impressions of footprints in the dirt.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narration": "Kristin bends down to examine Michelle's phone, which lies on the kitchen floor, its screen dark and unresponsive. She picks it up, feeling a mix of relief and concern as she checks for any signs of damage, but Michelle's phone appears to be in good condition. Kristin's eyes scan the phone's surface, taking in the familiar design and the faint scratches on the back, but there's nothing out of the ordinary that catches her attention.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": "continuity_initiative_known",
+          "cue_text": "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.",
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 10
+        },
+        {
+          "player_input": "Search for Michelle's work bag and any clue to where she went.",
+          "narration": "Kristin steps into the house, her eyes scanning the kitchen for any sign of Michelle. The air is stale, and the only sound is the hum of the refrigerator in the corner. She moves towards the kitchen table, where Michelle's workstation is set up. The desk is cluttered with papers, pens, and a few scattered notes, but there's no sign of Michelle's work bag. Kristin's gaze falls on the kitchen floor, where Michelle's phone lies, its screen dark and unresponsive.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 11
+        },
+        {
+          "player_input": "Look at the back door.",
+          "narration": "Kristin pushes open the creaky back door, and a faint scent of fresh paint wafts out, mingling with the acrid smell of smoke from the nearby fires. The door frame shows a small scratch, and a few splinters are missing, as though someone had forced their way in. Kristin's eyes scan the area, taking in the slight disarray of the yard, but nothing seems out of place, except for the faint scratch on the door frame.",
+          "left_scene": false,
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 13,
+      "recovery_requests": 0,
+      "package": "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/be2e13ed-7975-4ab9-bf35-e6211925793c/scratchpad/ringer-continuity-trial/before-arm/data/stories/continuity-initiative",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 12,
+      "rejected_turns": [],
+      "rejected_turn_count": 0
+    }
+  ]
+}
