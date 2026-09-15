@@ -6,7 +6,7 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import ItemFactsProvider, validate_item_facts
+from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -230,6 +230,7 @@ def test_fact_tracking_score_counts_verdicts_and_causes():
                         "missed_change": "no",
                         "invented_change": "no",
                         "narration_contradicts_given_facts": "no",
+                        "dropped_true_condition": "no",
                         "changes": [{"thing": "the lantern", "change": "warm", "cause": "command"}],
                     }
                 ]
@@ -238,6 +239,7 @@ def test_fact_tracking_score_counts_verdicts_and_causes():
         1,
     )
     assert result["facts_after_correct"] == {"yes": 1, "no": 0}
+    assert result["dropped_true_condition"] == {"yes": 0, "no": 1}
     assert result["changes_by_cause"] == {"command": 1, "narrator": 0}
     assert result["turns_judged"] == 1
     assert result["judge_calls"] == 1
@@ -255,6 +257,100 @@ def test_variations_without_item_facts_keep_the_original_provider(monkeypatch):
         classmethod(lambda cls, state, **kwargs: cls(worker_url="", token="", state=state)),
     )
     assert type(core.provider_for(state, variation)) is CloudflareTurnProvider
+
+
+def test_package_seed_scene_1a_matches_authored_things():
+    state = RuntimeState(package=PACKAGE, current_scene_id="1A", phase="exposition")
+    state._assert_scene_entry_fact("1A")
+    things, issues = package_seed(PACKAGE, state, "1A")
+    assert things == {
+        "Michelle's phone": {"where": "on the kitchen floor", "condition": ["not damaged"]},
+        "Kristin's laptop": {"where": "in Kristin's truck outside the house", "condition": []},
+        "Michelle's workstation drawers": {
+            "where": "in Kristin and Michelle's shared house",
+            "condition": ["shut"],
+        },
+    }
+    assert issues == []
+
+
+def test_package_seed_hides_guarded_3c_archive():
+    state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase="resolution")
+    state._assert_scene_entry_fact("3C")
+    things, _ = package_seed(PACKAGE, state, "3C")
+    assert things["Portable data case"] == {"where": "with Rebecca in her hands", "condition": []}
+    state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
+    things, _ = package_seed(PACKAGE, state, "3C")
+    assert "Portable data case" not in things
+
+
+@pytest.mark.parametrize("change", [{"fixed_turns": 1}, {"scene": "9Z", "fixed_turns": 1, "script": "x"}])
+def test_continue_to_validation_errors(tmp_path, change):
+    source = json.loads(SINGLE.read_text())
+    source["continue_to"] = {"scene": "1B", "fixed_turns": 1, "script": "missing"}
+    source["continue_to"].update(change)
+    if change == {"fixed_turns": 1}:
+        source.pop("fixed_turns")
+    path = tmp_path / "invalid-continuation.json"
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError, match="continue_to"):
+        load_variation(path)
+
+
+def test_package_seed_clashing_hand_seed_is_rejected(tmp_path):
+    source = json.loads(SINGLE.read_text())
+    source["item_facts"] = {
+        "mode": "single_call",
+        "seed_from_package": True,
+        "seed": {"Michelle's phone": {"where": "x", "condition": []}},
+    }
+    path = tmp_path / "clash.json"
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError, match="clash"):
+        load_variation(path)
+
+
+def test_package_seed_parses_new_and_reports_unparseable_setting_facts(tmp_path):
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    replacement = scene.model_copy(
+        update={
+            "metadata": scene.metadata.model_copy(
+                update={"setting_facts": ("A lamp is bright.", "This has no predicate.")}
+            )
+        }
+    )
+    package = PACKAGE.model_copy(
+        update={"scenes": tuple(replacement if item is scene else item for item in PACKAGE.scenes)}
+    )
+    things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
+    assert things["A lamp"] == {"where": "in Kristin and Michelle's shared house", "condition": ["bright"]}
+    assert any("could not be parsed" in issue for issue in issues)
+
+
+def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):
+    calls = []
+
+    def request(_provider, _payload):
+        calls.append(True)
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {},
+        }
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+    assert result["status"] == "ok"
+    assert len(result["turns"]) == 12
+    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 8 + ["1B"] * 4
+    assert result["scene_transitions"] == [
+        {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
+    ]
+    assert result["turns"][7]["item_facts_after"] == result["turns"][8]["item_facts_before"]
+    assert len(calls) == 13
 
 
 def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_path):
@@ -282,6 +378,7 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
                 "missed_change": "no",
                 "invented_change": "no",
                 "narration_contradicts_given_facts": "no",
+                "dropped_true_condition": "no",
                 "changes": [],
             }
         ]

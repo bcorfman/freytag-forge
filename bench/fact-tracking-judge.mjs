@@ -7,6 +7,7 @@ const FACT_TRACKING_CRITERIA = [
   "missed_change",
   "invented_change",
   "narration_contradicts_given_facts",
+  "dropped_true_condition",
 ];
 const VERDICTS = ["yes", "no"];
 const CAUSES = ["command", "narrator"];
@@ -23,6 +24,7 @@ const FACT_TRACKING_SCHEMA = {
           missed_change: { type: "string", enum: VERDICTS },
           invented_change: { type: "string", enum: VERDICTS },
           narration_contradicts_given_facts: { type: "string", enum: VERDICTS },
+          dropped_true_condition: { type: "string", enum: VERDICTS },
           changes: {
             type: "array",
             items: {
@@ -48,7 +50,7 @@ const FACT_TRACKING_SCHEMA = {
 };
 
 const SYSTEM_MESSAGE =
-  "You check whether a story game tracked the state of things correctly, one turn at a time. Each turn gives the player's command, the narration, item_facts_before (the facts the narrator was given) and item_facts_after (the facts the game kept after the turn). For every turn answer yes or no and give one short reason. facts_after_correct: yes if item_facts_after matches what item_facts_before plus this turn's narration shows about each thing. missed_change: yes if the narration clearly changed a thing's place, holder or condition but item_facts_after did not record it. invented_change: yes if item_facts_after records a change the narration did not show. narration_contradicts_given_facts: yes if the narration states something about a thing that conflicts with item_facts_before without showing it change during the turn. In changes, list each change the narration showed, with a cause for each. Use cause command only when the player's command itself asks for that change, such as picking up the phone after the command pick up the phone. Looking at, examining, searching, or checking a thing does not ask for moving, taking, opening, or damaging it, so a change like that is cause narrator. Wording differences that mean the same thing are not errors.";
+  "You check whether a story game tracked the state of things correctly, one turn at a time. Each turn gives the player's command, the narration, item_facts_before (the facts the narrator was given) and item_facts_after (the facts the game kept after the turn). For every turn answer yes or no and give one short reason. facts_after_correct: yes if item_facts_after matches what item_facts_before plus this turn's narration shows about each thing. missed_change: yes if the narration clearly changed a thing's place, holder or condition but item_facts_after did not record it. invented_change: yes if item_facts_after records a change the narration did not show. narration_contradicts_given_facts: yes if the narration states something about a thing that conflicts with item_facts_before without showing it change during the turn. dropped_true_condition: yes if item_facts_after no longer lists a condition phrase from item_facts_before for a thing, and nothing in the narration showed that condition stop being true. In changes, list each change the narration showed, with a cause for each. Use cause command only when the player's command itself asks for that change, such as picking up the phone after the command pick up the phone. Looking at, examining, searching, or checking a thing does not ask for moving, taking, opening, or damaging it, so a change like that is cause narrator. Wording differences that mean the same thing are not errors.";
 
 function outputText(response) {
   if (typeof response?.output_text === "string") return response.output_text;
@@ -72,6 +74,7 @@ function playerVisibleTurn(turn) {
     narration: turn.narration,
     item_facts_before: turn.item_facts_before,
     item_facts_after: turn.item_facts_after,
+    ...(Object.hasOwn(turn, "scene_id") ? { scene_id: turn.scene_id } : {}),
   };
 }
 
@@ -151,21 +154,42 @@ function sceneBlock(source, heading, nextHeading) {
   return source.slice(start, end < 0 ? undefined : end);
 }
 
-export function packageCanon(sceneId, packagePath) {
+export function packageCanon(sceneId, packagePath, extraSceneIds = []) {
   const root = resolve(packagePath);
   const plot = readFileSync(resolve(root, "plot.md"), "utf8");
   const sceneIds = [...plot.matchAll(/^## Scene ([1-9][A-Z])\b/gm)].map((match) => match[1]);
   const nextScene = sceneIds[sceneIds.indexOf(sceneId) + 1];
+  const selectedSceneIds = [
+    sceneId,
+    ...extraSceneIds.filter((extraSceneId, index) => extraSceneId !== sceneId && extraSceneIds.indexOf(extraSceneId) === index),
+  ];
   return {
     scene_id: sceneId,
-    plot: sceneBlock(plot, `## Scene ${sceneId}`, nextScene ? `## Scene ${nextScene}` : "\u0000"),
+    plot: selectedSceneIds
+      .map((selectedSceneId) => {
+        const nextSelectedScene = sceneIds[sceneIds.indexOf(selectedSceneId) + 1];
+        return sceneBlock(
+          plot,
+          `## Scene ${selectedSceneId}`,
+          nextSelectedScene ? `## Scene ${nextSelectedScene}` : "\u0000",
+        );
+      })
+      .join(""),
   };
 }
 
 async function main() {
   const input = JSON.parse(readFileSync(argument("--input"), "utf8"));
   const judgments = [];
-  const canon = packageCanon(input.scene_id, input.package_path);
+  const extraSceneIds = [];
+  for (const run of input.runs) {
+    for (const turn of run.turns) {
+      if (typeof turn.scene_id === "string" && !extraSceneIds.includes(turn.scene_id)) {
+        extraSceneIds.push(turn.scene_id);
+      }
+    }
+  }
+  const canon = packageCanon(input.scene_id, input.package_path, extraSceneIds);
   for (const run of input.runs) {
     judgments.push(
       await judgeFactTracking(

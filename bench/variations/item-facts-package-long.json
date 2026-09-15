@@ -1,0 +1,24 @@
+{
+  "name": "item-facts-package-long",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 40,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {"mode": "single_call", "seed_from_package": true},
+  "system_prompt": {
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"where\":\"on the table\",\"condition\":[\"dark\"]}}}"
+  },
+  "overrides": {
+    "knowledge.yaml": {"replacements": [
+      {"old": "Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor.", "new": "Michelle has not answered her calls or her early-morning text."},
+      {"old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.", "new": "The house is quiet and Michelle is missing."}
+    ]},
+    "plot.md": {"replacements": [
+      {"old": "Michelle's phone on the kitchen floor; ", "new": ""},
+      {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""}
+    ]}
+  },
+  "scripts": {"1A": [{"name": "long-session", "inputs": [
+    "Look carefully at Michelle's phone.", "Pick up Michelle's phone.", "Wipe the dust off the screen of Michelle's phone.", "Press the power button on Michelle's phone.", "Put Michelle's phone in your jacket pocket.", "Open the drawer with your initials carved into it.", "Look inside the open drawer.", "Close the drawer.", "Go out to your truck and bring your laptop inside.", "Set your laptop on Michelle's workstation.", "Open your laptop.", "Plug Michelle's phone into your laptop to charge it.", "Look at the back door.", "Unplug Michelle's phone and hold it.", "Set Michelle's phone on the kitchen counter.", "Close your laptop.", "Carry your laptop back out to the truck.", "Look around the kitchen for anything you missed.", "Pick up Michelle's phone from the kitchen counter.", "Check that you still have Michelle's phone."
+  ]}]}
+}

@@ -190,13 +190,15 @@ Each thing has one `where` phrase and zero to two `condition` phrases. The provi
 
 Replies list only the things the story changed. A valid entry replaces that thing's `where` and `condition` entirely. Omitted things stay unchanged with no issue. Malformed entries keep their previous facts, unknown names are dropped, and more than two conditions are trimmed to the first two. Phrases are trimmed to 80 characters for `where` and 40 characters for each condition. These repairs are listed in `item_facts_issues`. Rejected turns do not change facts. Turn records contain `item_facts_before`, `item_facts_after`, `item_facts_raw`, `item_facts_issues`, and `item_facts_source`; the replicate also contains `item_facts_final`.
 
-The three trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, and `item-facts-second.json`.
+Set `seed_from_package` to `true` to seed placements and parseable setting facts from the story package; an optional hand-written `seed` is appended after those things. Seed problems are recorded as `item_facts_seed_issues`. `continue_to` can play a second scene with its own `scene`, `fixed_turns`, and script name. Its facts carry over, package-seeded things are added, and no second opening is narrated. Accepted turns include `scene_id`; cross-scene runs include `scene_transitions`.
+
+The trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, `item-facts-second.json`, `item-facts-package-two-scene.json`, and `item-facts-package-long.json`.
 
 ## Fact-tracking judge
 
-Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, and whether narration conflicts with the facts it received. It also records shown changes by `command` or `narrator` cause.
+Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, whether narration conflicts with the facts it received, and whether a true condition was dropped. It also records shown changes by `command` or `narrator` cause.
 
-The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those four checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.
+The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those five checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.
 
 `fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
 

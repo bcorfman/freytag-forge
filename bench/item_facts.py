@@ -7,6 +7,63 @@ from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.validation import predicate_matches
+from storygame.story_package.models import FactPredicate, ItemPlacement
+
+
+def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
+    """Build tracked things from the authored placements and setting facts."""
+
+    scene = next((item for item in package.scenes if item.metadata.scene_id == scene_id), None)
+    if scene is None:
+        raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
+    items = {item.id: item for item in package.world.items}
+    locations = {location.id: location for location in package.world.locations}
+    things: dict[str, dict] = {}
+    issues: list[str] = []
+    for item_id, placement in scene.metadata.item_placements.items():
+        item = items.get(item_id)
+        if item is None:
+            issues.append(f"scene {scene_id} placement references unknown item {item_id!r}")
+            continue
+        if isinstance(placement, ItemPlacement) and placement.while_fact_false:
+            guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
+            if predicate_matches(guard, state.facts):
+                continue
+        where = placement if isinstance(placement, str) else placement.placement
+        if len(where) > 80:
+            issues.append(f"placement for {item.name!r} is longer than 80 characters")
+            continue
+        things[item.name] = {"where": where, "condition": []}
+
+    location = locations.get(scene.metadata.location_id)
+    location_name = location.name if location is not None else scene.metadata.location_id
+    for setting in scene.metadata.setting_facts:
+        phrase = setting.strip()
+        if phrase.endswith("."):
+            phrase = phrase[:-1].rstrip()
+        matched = next(
+            (name for name in things if phrase.startswith(f"{name} is ") or phrase.startswith(f"{name} are ")), None
+        )
+        if matched is not None:
+            condition = phrase[len(matched) + (4 if phrase.startswith(f"{matched} is ") else 5) :].strip()
+            if len(things[matched]["condition"]) >= 2 or len(condition) > 40:
+                issues.append(f"setting fact for {matched!r} could not be added as a condition")
+                continue
+            things[matched]["condition"].append(condition)
+            continue
+        separator = next((separator for separator in (" is ", " are ") if separator in phrase), None)
+        if separator is None:
+            issues.append(f"setting fact {setting!r} could not be parsed")
+            continue
+        name, condition = (part.strip() for part in phrase.split(separator, 1))
+        where = f"in {location_name}"
+        if not name or len(where) > 80 or len(condition) > 40:
+            issues.append(f"setting fact {setting!r} exceeds item-facts limits")
+            continue
+        things[name] = {"where": where, "condition": [condition]}
+    return things, issues
+
 
 _SINGLE_CALL_RULES = (
     "Also return item_facts for each thing in THINGS that your story changed. Use only the names in THINGS.",
@@ -30,6 +87,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         *,
         item_facts: Mapping[str, Mapping[str, object]],
         mode: str,
+        seed_issues: list[str] | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__(**kwargs)
@@ -38,6 +96,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         }
         self.item_facts_seed_names = tuple(self.item_facts)
         self.item_facts_mode = mode
+        self.item_facts_seed_issues = list(seed_issues or [])
         self._pending_item_facts: object = None
         self._pending_item_facts_present = False
 
@@ -49,6 +108,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         prompt_variant: Mapping[str, object] | None = None,
         item_facts: Mapping[str, Mapping[str, object]],
         mode: str,
+        seed_issues: list[str] | None = None,
     ) -> ItemFactsProvider:
         # Let the shipped provider perform its normal environment validation and
         # then reuse the resolved transport settings for this bench subclass.
@@ -61,6 +121,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             prompt_variant=prompt_variant,
             item_facts=item_facts,
             mode=mode,
+            seed_issues=seed_issues,
         )
 
     def _things_block(self) -> str:
@@ -93,7 +154,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return system
 
     def _request(self, payload: dict[str, object]) -> object:
+        request_count = self.request_count
         response = super()._request(payload)
+        # Tests may replace the base transport method, which also replaces its
+        # request counter increment. Keep the bench record accurate in that
+        # case while avoiding a double increment for the normal transport.
+        if self.request_count == request_count:
+            self.request_count += 1
         if isinstance(response, dict):
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
@@ -178,13 +245,16 @@ def validate_item_facts(value: object) -> tuple[str, dict[str, dict[str, object]
     """Validate and copy a variation's item_facts option."""
 
     if not isinstance(value, dict):
-        raise ValueError("item_facts must be an object with mode and a non-empty seed")
+        raise ValueError("item_facts must be an object with mode and seed")
     mode = value.get("mode")
     if mode not in {"single_call", "second_call"}:
         raise ValueError("item_facts must have mode single_call or second_call")
-    seed = value.get("seed")
-    if not isinstance(seed, dict) or not seed:
-        raise ValueError("item_facts must have a non-empty seed object")
+    seed_from_package = value.get("seed_from_package", False)
+    if not isinstance(seed_from_package, bool):
+        raise ValueError("item_facts seed_from_package must be a boolean")
+    seed = value.get("seed", {})
+    if not isinstance(seed, dict) or (not seed and not seed_from_package):
+        raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")
     copied: dict[str, dict[str, object]] = {}
     for name, facts in seed.items():
         if not isinstance(name, str) or not name.strip():

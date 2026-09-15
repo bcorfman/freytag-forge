@@ -1,0 +1,30 @@
+{
+  "name": "item-facts-package-two-scene",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 8,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {"mode": "single_call", "seed_from_package": true},
+  "continue_to": {"scene": "1B", "fixed_turns": 4, "script": "carry-and-hand-off"},
+  "system_prompt": {
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"where\":\"on the table\",\"condition\":[\"dark\"]}}}"
+  },
+  "overrides": {
+    "knowledge.yaml": {"replacements": [
+      {"old": "Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor.", "new": "Michelle has not answered her calls or her early-morning text."},
+      {"old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.", "new": "The house is quiet and Michelle is missing."}
+    ]},
+    "plot.md": {"replacements": [
+      {"old": "Michelle's phone on the kitchen floor; ", "new": ""},
+      {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""}
+    ]}
+  },
+  "scripts": {
+    "1A": [{"name": "change-types", "inputs": [
+      "Look carefully at Michelle's phone.", "Open the drawer with your initials carved into it.", "Pick up Michelle's phone and put it in your pocket.", "Go out to your truck and bring your laptop inside.", "Carry your laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Leave the house and drive to the park with Michelle's phone."
+    ]}],
+    "1B": [{"name": "carry-and-hand-off", "inputs": [
+      "Check that you still have Michelle's phone.", "Look around the bench for anything Michelle left.", "Walk over to the man watching you and hand him Michelle's phone.", "Check who has Michelle's phone now."
+    ]}]
+  }
+}

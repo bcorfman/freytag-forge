@@ -413,7 +413,8 @@ def _run(args: argparse.Namespace) -> int:
                 f"(run scenes_scored=1, baseline scenes_scored={baseline_coverage}); "
                 "rerun with --allow-coverage-mismatch to compare anyway"
             )
-    planned_turns = sum(len(script["inputs"]) + 1 for script in scripts) * args.replicates
+    continuation_turns = variation.get("_continue_to", {}).get("fixed_turns", 0)
+    planned_turns = sum(len(script["inputs"]) + 1 + continuation_turns for script in scripts) * args.replicates
     projected = planned_turns * 330 / 30
     _confirm(args, projected, len(scripts))
     args.out.mkdir(parents=True, exist_ok=True)
