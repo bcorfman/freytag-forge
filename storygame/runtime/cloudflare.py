@@ -282,10 +282,10 @@ class CloudflareTurnProvider:
         scene_setting = self._scene_setting()
         context = {
             "player_input": player_input,
-            # The scene's own establishing material. Without it a turn carries one sentence
-            # of frame and a few terse statements, so the narrator has nothing authored to
-            # be concrete with and answers an apt search with "you find nothing". This is
-            # the scene's first beat only, so it cannot narrate ahead of the player.
+            # The scene's own current frame and turn-specific authored material. Without
+            # it a turn carries one sentence of frame and a few terse statements, so the
+            # narrator has nothing authored to be concrete with and answers an apt search
+            # with "you find nothing".
             "scene_setting": scene_setting,
             "knowledge_context": {
                 # sayable_knowledge is the speakers' dialogue basis; repeating it for the
@@ -595,7 +595,7 @@ class CloudflareTurnProvider:
         )
 
     def _scene_setting(self) -> dict[str, object]:
-        """The authored paragraph the player read on entering, safe to send every turn.
+        """Return authored beat material that the player can earn on this turn.
 
         Beat prose is added only for storylets whose reveals are candidates on
         this turn. The scene's beats describe what later reveals contain - Scene
@@ -605,7 +605,7 @@ class CloudflareTurnProvider:
         player can earn now.
         """
 
-        setting: dict[str, object] = {"entry_text": self._current_scene().entry_text.rstrip()}
+        setting: dict[str, object] = {}
         beats = self._candidate_beats() if self.last_projection and self.last_projection.candidates else ()
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={"beats_projected": tuple(beat.anchor for beat in beats)}
@@ -945,7 +945,6 @@ class CloudflareTurnProvider:
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
             scene_setting = user.get("scene_setting")
             if isinstance(scene_setting, dict):
-                scene.extend(paragraphs(scene_setting["entry_text"]))
                 for beat in scene_setting.get("beats", []):
                     if not isinstance(beat, dict):
                         continue

@@ -6,6 +6,7 @@
 ## Running Tests
 
 - `TMPDIR=/tmp uv run pytest -q`; finish feature work with `uv run ruff check --fix . && uv run ruff format .`.
+- Ringer kills a task's check after 60 s by default, and manifest `timeout_s` covers only the worker. The full suite takes about 3 minutes, so any Ringer check that runs it (or a replay or build) must be launched with a raised limit: `RINGER_CHECK_TIMEOUT_S=900 ./ringer.py run manifest.json ...`. Time the check once against the unmodified build and set the limit well above that.
 ## Tooling
 
 - Prefer Serena MCP tools over `grep`/`sed`/`cat` for anything code-shaped:

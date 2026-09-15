@@ -1548,12 +1548,11 @@ def test_a_sustained_outage_still_fails_closed(monkeypatch) -> None:
     assert len(attempts) == 2, "exactly one retry, never an unbounded loop"
 
 
-def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypatch) -> None:
-    """A turn needs authored place detail, but not the reveal the scene is built around.
+def test_turn_omits_the_scene_entry_text_and_its_protected_beat(monkeypatch) -> None:
+    """The player already read the entry text when the scene opened.
 
-    Without any authored setting the narrator answered an apt search with "you find
-    nothing". With the beat prose or the location's own name, Scene 2B would hand it
-    JANUS before the player earns it - the archive is literally named "JANUS archive".
+    Resending it every turn made the narrator re-arrive at the scene. Protected beats
+    and terms must still stay out.
     """
 
     captured: list[dict[str, object]] = []
@@ -1574,7 +1573,7 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         user = captured[-1]["user"]
         scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
 
-        assert scene.metadata.entry_text.strip().splitlines()[0] in user
+        assert scene.metadata.entry_text.strip().splitlines()[0] not in user, f"{scene_id} resent its entry text"
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
