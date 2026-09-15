@@ -170,6 +170,36 @@ Still open, outside this experiment:
 - The two-condition cap can push out a still-true condition such as "not
   damaged" when two new ones arrive.
 
+## Breadth: change types across two scenes (2026-09-15)
+
+Recorded in bench/results/item-facts-package-two-scene-1a. THINGS seeded from
+the package (Michelle's phone, Kristin's laptop, Michelle's workstation
+drawers); 8 turns in 1A, an offline advance, 4 turns in 1B; 4 replicates,
+single call, single-value fields. Change type is taken from the scripted
+command, not the narration. Judge calibrated on 13 constructed cases (68 of
+68 twice).
+
+| Change type | Turns | Kept facts correct | Missed | Invented | Dropped true condition | Contradicts facts | Unknown names dropped | Malformed |
+|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 8 | 8 | 0 | 0 | 0 | 0 | 9 | 0 |
+| check a carried thing | 8 | 6 | 0 | 1 | 0 | 1 | 0 | 0 |
+| open or close | 4 | 1 | 3 | 0 | 0 | 0 | 5 | 1 |
+| pick up or put away | 8 | 6 | 0 | 2 | 0 | 3 | 0 | 1 |
+| move between places | 8 | 3 | 5 | 0 | 0 | 1 | 5 | 0 |
+| damage | 4 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
+| hand to another character | 4 | 1 | 2 | 0 | 1 | 0 | 0 | 2 |
+| leave the scene | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 2 |
+| **All** | 48 | 31 | 12 | 3 | 1 | 5 | 19 | 6 |
+
+Continuity judge: contradicts a stated fact 17 of 48, Kristin acts beyond the
+command 20 of 48, scene restarts 3 of 48.
+
+- Pickups and carrying across the transition hold up, as in the Scene 1A run.
+- Opening, moving between places and handing over fall well short. Most of the
+  misses coincide with the narrator naming a thing outside THINGS ("drawer",
+  "laptop", "man watching her"), which the harness drops.
+- "Condition: none." comes back as a literal `none` condition.
+
 ## Steps
 
 1. [x] Build the harness through Ringer (dfe3828, d8b71f8).
