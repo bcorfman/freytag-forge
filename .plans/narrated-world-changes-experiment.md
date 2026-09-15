@@ -313,6 +313,50 @@ command 86 of 154, scene restarts 8 of 154. Six turns rejected.
   story break is Phase 1a/1d territory, not a format problem.
 - Protagonist acting beyond the command rose to 31/47 and 86/154.
 
+### Two-scene without the not-damaged fact
+
+Brandon's correction: the round-2 damage result was a test-design error, not a
+narration failure. The narrator was given `Condition: not damaged` and obeyed
+it, which is correct behaviour. adb992f removes "Michelle's phone is not
+damaged." from the two-scene variation's overlay (the only line in the 1A or 1B
+prompt that fixed the phone as undamaged; no handoff text fired on those
+turns). Four replicates in bench/results/item-facts-v2-nodamage-two-scene-1a,
+45 judged turns:
+
+| Change type | Turns | Kept facts correct | Missed | Invented | Dropped true condition | Contradicts facts | Unknown names | Malformed |
+|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 8 | 7 | 1 | 0 | 0 | 0 | 4 | 3 |
+| check a carried thing | 7 | 6 | 0 | 1 | 0 | 2 | 0 | 0 |
+| open or close | 4 | 0 | 4 | 0 | 0 | 0 | 9 | 0 |
+| pick up or put away | 8 | 5 | 0 | 2 | 0 | 6 | 0 | 0 |
+| move between places | 8 | 2 | 5 | 1 | 0 | 1 | 2 | 2 |
+| damage | 4 | 0 | 4 | 3 | 2 | 0 | 0 | 0 |
+| hand to another character | 4 | 2 | 2 | 0 | 0 | 0 | 0 | 1 |
+| leave the scene | 2 | 1 | 1 | 1 | 0 | 0 | 1 | 0 |
+| **All** | 45 | 23 | 17 | 8 | 2 | 9 | 16 | 6 |
+
+- **Damage is now narrated and captured in all four replicates**
+  (`"condition": ["cracked"]`, once with "loose back cover"). The turns still
+  score as not kept because of place, not damage: three record the phone "on the
+  kitchen wall" and one "on the kitchen floor" although Kristin picked it back
+  up, and one misses a new "dark" condition.
+- Everything else is within noise of round 2 at four replicates.
+
+### What the flagged condition turns actually were
+
+Reading the nine `dropped_true_condition` turns of the 40-turn run shows the
+label mixes different mistakes: 2 replaced a still-true condition (plugging in
+recorded `["charging"]` and lost `not damaged`, and the place became "in
+Kristin's laptop"); 2 put a state in the place field (`{"where": "open"}` for
+the drawer); 3 kept a condition the narration ended (`charging` after
+unplugging); 1 was a judge error (closed to open marked as dropping closed);
+1 followed self-contradicting narration. Set-down turns split the same way:
+"Set your laptop on Michelle's workstation" lost the move 7 of 8 times, every
+time to the name "laptop" or a reply of empty entries
+(`{"equipment": {}, "laptop": {}, ...}`), while "Set Michelle's phone on the
+kitchen counter" recorded the place 8 of 8 and failed only on conditions.
+The round 3 decisions in the continuity plan follow from this.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,

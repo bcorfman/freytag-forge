@@ -301,6 +301,53 @@ State at hand-off: HEAD 8969afb, clean tree, nothing running.
 - [ ] Types below 92% go to the next strategy rank (an LLM semantic check of
   the narrated turn) or more replicates for thin samples. Decide with Brandon.
 
+**Round 3: capture that records the world, not the narrator's wording (approved
+by Brandon, 2026-09-15)**
+
+Round 2 showed the remaining failures are engine capture, not narrator
+compliance. Decisions:
+
+- **Names are the engine's job.** Brandon does not care whether the narrator
+  copies names; the engine must record the change against the right thing.
+  "drawer" must resolve to Michelle's carved drawer.
+- **Narrated things persist** (1c), so an unmatched name is either an existing
+  thing under another name or a new thing, never silently dropped.
+- **THINGS is selected per turn**, never the whole store. Always included: the
+  current scene's authored things, progression dependencies, things the
+  protagonist carries, and things changed last turn. Anything else only when
+  the player's command refers to it.
+- **One merged match call** decides both open questions, before narration: in,
+  the command, the tracked names and last turn's unresolved names; out, the
+  names the command refers to and, for each unresolved name, the tracked thing
+  it is or `new`. A variant-name change therefore lands one turn late, but
+  before the next prompt is built. The call is skipped when no tracked thing
+  sits outside the always-included groups and nothing is unresolved, so a
+  typical turn is one narration call and the worst case two.
+  - **Bookmark (fallback if the merged call does not pan out):** separate
+    calls - a refer call before narration and a resolve call straight after
+    it - giving up to three calls a turn but no one-turn delay.
+- **Partial entries**: a reply entry may omit `where` (place kept) or
+  `condition` (conditions kept); an empty entry is ignored. Replace the rule
+  example with one where only a condition changes and another condition is
+  kept, so a state cannot wipe a place and a new condition does not erase a
+  still-true one.
+- **Judge**: split the loose `dropped_true_condition` label into dropped
+  still-true condition, kept ended condition, and state recorded as a place;
+  recalibrate on constructed cases before trusting it.
+- **No cancelling facts**: a scripted state change must not run against an
+  authored fact asserting the opposite. "Michelle's phone is not damaged." is
+  removed from the two-scene variation (adb992f) and from the 40-turn one.
+
+Tasks:
+- [x] Ringer task C: remove the not-damaged fact from the two-scene variation
+  (adb992f); 4 replicates recorded in
+  `bench/results/item-facts-v2-nodamage-two-scene-1a`.
+- [ ] Ringer task D: the same removal in the 40-turn variation.
+- [ ] Ringer task E: judge label split, then calibrate.
+- [ ] Ringer task F: partial entries, new example, merged match call, per-turn
+  THINGS selection, persistence of narrated things, per-turn call counts.
+- [ ] Smoke, then 4 replicates of each variation; tally against 92%.
+
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
   check otherwise retries and reruns the whole spend. Lint does not flag an
@@ -353,6 +400,15 @@ things (status `carried`) follow the character across scenes; untaken things sta
 with their scene. Alternatives: let a reply add a capped number of new things;
 track places as well as things. Decide whether narrator-invented objects should
 persist at all, and the prompt-size cap.
+
+**1c decision (Brandon, 2026-09-15).** Narrated things persist: a thing the
+narration introduces becomes a tracked thing rather than a dropped unknown name,
+and the tracked store may grow. The prompt does not grow with it. Each turn's
+THINGS carries only the tracked things the player's input refers to and those a
+current story beat or progression involves; nothing is ranked and truncated to
+a cap. Consequence: the engine must resolve a reply's name to an existing thing
+before creating a new one ("drawer" and "Michelle's carved drawer" must not
+become two things), and it must not rely on the narrator copying names exactly.
 
 **1d. Cause and regeneration.** Recommended: the narrator labels `cause` in the
 same reply (measured in Phase 2 before relying on it); one regeneration with a

@@ -1,0 +1,37 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening lacks substantial sensory establishment beyond a brief scan; it does not richly set the shared house as a disturbed crime scene.",
+    "Turn 1 examining Michelle's phone gives almost no consequential discovery; handling the phone should make the missing tablet/work bag and localized disorder stand out or otherwise advance suspicion.",
+    "Turn 2 breaks canon: the carved drawer is canonically shut and hides a memory card taped beneath it, not a note inside. Opening it should not produce a note with KMS.",
+    "The hidden memory card is never discovered despite direct investigation of the exact authored clue location.",
+    "Scene 1A.1 is inadequately covered: forced back door and overturned chair are mentioned in opening, but missing tablet/work bag, localized non-burglarized disorder, and resulting abduction suspicion are not meaningfully established.",
+    "Turns repeatedly fail to reward apt searching of Michelle's work area; the player investigates key evidence but gets no actionable result.",
+    "Turn 4 introduces patrol pressure only as a complication blurb, but the actual narration ignores the officer's presence and consequences.",
+    "Laptop continuity is confused: Turn 4 says Kristin retrieves laptop from truck, but item state is not updated; Turn 5 has her 'grab her laptop' from the truck again while already carrying it in narration.",
+    "Turn 5 response contradicts player intent: player asks to carry laptop back out to truck, but narration has her going to the truck to grab it and return toward the house.",
+    "Turn 6/7 phone continuity is inconsistent: after throwing phone against wall, narration says she picks it up, but item state leaves it 'on the kitchen wall'; next turn player picks it up 'from the floor.'",
+    "Turn 7 invents new phone facts (battery charged, password locked) after Turn 1 established it as dark and unresponsive, without adequate causal explanation.",
+    "Scene 1A.2 and 1A.3 are skipped: no memory card use, no truck-laptop review of files, no Continuity Initiative reveal, no population stabilization centers, no research sentence, no interrupted recording, no warning about emergency broadcasts.",
+    "Scene 1A.4 is skipped: no actual welfare-check interaction, no targeted questions about Michelle's research, no concealment of the memory card, no reflective tape noticed on the front gate.",
+    "The scene transitions to 1B without satisfying or narrating the required reason to go: the player is never told about Michelle's files referencing a park bench or any equivalent concrete lead.",
+    "Turn 8 in 1B is an unmotivated scene change on a mundane inventory-check action; left_scene is false but the scene_id changes anyway, and the player never read an exit-motivating bridge.",
+    "1B content introduced from nowhere: bench, watching man, piece of paper in bush. These are outside 1A and unsupported by any discovered lead.",
+    "Turn 10 searching the bench yields a small piece of paper in a bush, which is not the authored 1A lead and further demonstrates transition without proper setup.",
+    "Turn 11 action consequence fails: player hands the man Michelle's phone, but Turn 12 reveals Kristin still has it, nullifying the action."
+  ],
+  "reasons": [
+    "The authored beats for scene 1A were not covered in order across the scene. The story stalled around the phone and drawer, then jumped to scene 1B without earning the transition.",
+    "Multiple responses are non-responsive or contradictory to player actions, violating ordinary-turn consequence requirements.",
+    "Core local canon is violated by replacing the hidden memory card with an invented note and by failing to use the carved drawer clue correctly.",
+    "Investigation is not rewarded even when the player directly inspects the phone, the carved drawer, and retrieves the laptop needed for the card review.",
+    "Protected knowledge is not leaked early, but that alone is insufficient; the scene fails on canon fidelity, pacing, responsiveness, and transition motivation."
+  ]
+}
