@@ -3,8 +3,9 @@
 Status: Phase 0 rounds 1 and 2 measured and recorded; format v2 did not reach
 the 92% bar. Round 3 (engine-side capture: partial entries, one merged match
 call, per-turn THINGS selection, persisting narrated things, split judge
-labels) is built, tested and calibrated; its live smoke and 4-replicate runs
-are in progress - see Phase 0. Nothing below is in the game yet. The bench experiment
+labels) is measured: two-scene 28/47 and 40-turn 64/155, no change type at
+92%, with one recurring defect (a state recorded as a thing's place) causing
+most of the 40-turn loss - see Phase 0. Nothing below is in the game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
@@ -368,7 +369,16 @@ Tasks:
 - [x] Ringer task H: omission rule, opened-box example, carried from the match
   call. Judge recalibrated with the contradictory-narration case: 158/158 in
   both passes, no judge change needed.
-- [ ] Smoke, then 4 replicates of each variation; tally against 92%.
+- [x] Smoke, then 4 replicates of each variation; tally against 92%.
+  (Two-scene 28/47 = 60%; 40-turn 64/155 = 41%. No change type reaches 92%.
+  One defect dominates the 40-turn result: three of four replicates recorded
+  the drawer's state as its place on the same turn, and the replicate that did
+  not scored 27/38 = 71%. The judge needed a retry fix first, a84c90c.)
+- [ ] Decide the next strategy for a state landing in `where`: two rank-1 rule
+  attempts (naming both keys, then an opened-box example) have not fixed it.
+  Brandon to choose - an LLM semantic check of the captured entry (rank 2, for
+  example folding a normalise step into the match call that already fires), or
+  a different reply shape that cannot confuse state with place.
 
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed

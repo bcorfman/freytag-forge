@@ -515,6 +515,45 @@ Interim, from the two replicates that judged (78 turns):
   pickups (44%) fail mostly through narration contradicting the given facts (9
   of 16).
 
+### Round 3 40-turn, all four replicates (a84c90c)
+
+bench/results/item-facts-v3-long-1a, 155 judged turns, whole-state scoring.
+Round 2 rate is from the 40-turn v2 run (154 turns).
+
+| Change type | Turns | Kept facts correct | Rate | Round 2 | Missed | Invented | Dropped true | Kept ended | State as place | Contradicts facts |
+|---|---|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 28 | 12 | 43% | 83% | 4 | 1 | 1 | 1 | 16 | 3 |
+| check a carried thing | 8 | 2 | 25% | 100% | 0 | 0 | 0 | 0 | 4 | 4 |
+| open or close | 31 | 8 | 26% | 66% | 11 | 14 | 4 | 6 | 20 | 9 |
+| pick up or put away | 32 | 10 | 31% | 63% | 2 | 4 | 0 | 1 | 13 | 15 |
+| set down | 16 | 6 | 38% | 33% | 2 | 2 | 4 | 2 | 8 | 0 |
+| move between places | 16 | 9 | 56% | 50% | 1 | 0 | 0 | 1 | 9 | 1 |
+| condition change | 24 | 17 | 71% | 67% | 3 | 4 | 0 | 1 | 9 | 1 |
+| **All** | 155 | 64 | 41% | 66% | 23 | 25 | 9 | 12 | 79 | 33 |
+
+Continuity judge: contradicts a stated fact 40/155, Kristin acts beyond the
+command 52/155, scene restarts 13/155. 27 match calls across the run.
+
+**One defect produces most of the loss.** Per replicate:
+
+| Replicate | Kept facts correct | State as place |
+|---|---|---|
+| 1 | 9/38 (24%) | 21 |
+| 2 | 24/40 (60%) | 24 |
+| 3 | 4/39 (10%) | 34 |
+| 4 | **27/38 (71%)** | **0** |
+
+In replicates 1, 2 and 3 the same turn - "Open the drawer with your initials
+carved into it." - returned the drawer's state as its place
+(`{"where": "open"}`, once as `{"condition": ["open"], "where": "open"}`, once
+under the short name "drawer" that the match call resolved). Under whole-state
+scoring that single wrong entry fails nearly every later turn of the scene.
+Replicate 4 never made it and scored 71%, the best 40-turn rate measured so far.
+
+So the opened-box example (rank-1 rule, second attempt at this defect) did not
+stop a state landing in `where`. No change type reaches 92%; the ceiling with
+the defect absent is about 71%.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
