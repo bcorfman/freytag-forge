@@ -204,18 +204,36 @@ for other change types, the design changes before any engine work.
 **Decisions before starting**: none.
 
 **Tasks**
-- [ ] Ringer: extend `bench/item_facts.py` so a variation can seed THINGS from
+- [x] Ringer: extend `bench/item_facts.py` so a variation can seed THINGS from
   the package's own `item_placements` and setting facts for the scene instead of
   a hand-written seed, excluding anything the player has not been shown.
-- [ ] Ringer: add a two-scene variation and script that exercises opening a
+  (49333a0: `seed_from_package`; guarded placements are skipped.)
+- [x] Ringer: add a two-scene variation and script that exercises opening a
   drawer, taking the laptop to the truck, damaging something, handing a thing to
   another character, and leaving the scene; carry tracked state across the
-  transition in the bench.
-- [ ] Ringer: add a long-session variation (at least 40 fixed turns) to expose
+  transition in the bench. (49333a0: `item-facts-package-two-scene.json`, 8
+  turns in 1A, offline advance, 4 turns in 1B.)
+- [x] Ringer: add a long-session variation (at least 40 fixed turns) to expose
   drift and the two-condition cap pushing out a still-true condition.
-- [ ] Calibrate `bench/fact-tracking-judge.mjs` on constructed cases for each new
-  change type before trusting it.
+  (49333a0: `item-facts-package-long.json`; judge adds
+  `dropped_true_condition`.)
+- [x] Calibrate `bench/fact-tracking-judge.mjs` on constructed cases for each new
+  change type before trusting it. (13 cases: drawer, laptop move, damage,
+  hand-off, scene exit, cap push-out. First pass 66 and 67 of 68: a dropped
+  condition also counted as invented. fd95156 made the two criteria disjoint;
+  then 68 of 68 twice, after correcting one label that the new wording made
+  wrong - a replaced condition is invented, not dropped.)
 - [ ] Smoke one replicate per variation, read transcripts, then 4 replicates.
+  Two-scene smoke done (12 of 12 turns, offline transition, facts carried).
+  The first long smoke left 1A on turn 13 through the pacing handoff; b11d04f
+  keeps that variation in 1A, and its smoke must be rerun. The first
+  4-replicate two-scene run narrated 3 full replicates, but every judge call
+  returned HTTP 429 `credit_balance_exhausted`, so it was discarded. Blocked
+  until OpenAI API credits are added. Seen in every replicate so far:
+  - the narrator uses names outside THINGS ("drawer", "laptop"), so the change is dropped;
+  - "Condition: none." comes back as a literal `none` condition;
+  - an occasional malformed or missing `item_facts`;
+  - once, a thing name as a top-level reply key failed the strict contract (`extra_forbidden`).
 
 **Exit criteria**
 - Per-change-type accuracy table (kept facts correct, missed, invented) recorded
