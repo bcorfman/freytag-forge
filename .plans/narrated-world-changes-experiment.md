@@ -200,6 +200,56 @@ command 20 of 48, scene restarts 3 of 48.
   "laptop", "man watching her"), which the harness drops.
 - "Condition: none." comes back as a literal `none` condition.
 
+## Breadth: a 40-turn session in Scene 1A (2026-09-15)
+
+Recorded in bench/results/item-facts-package-long-1a. Same seeding and format;
+20 commands cycled twice; the variation's pacing overlay keeps the story in
+1A. 4 replicates, 157 judged turns; three turns were rejected (two invalid
+proposals, one known-term leak).
+
+| Change type | Turns | Kept facts correct | Missed | Invented | Dropped true condition | Contradicts facts | Unknown names dropped | Malformed |
+|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 31 | 19 | 11 | 0 | 0 | 8 | 19 | 0 |
+| check a carried thing | 8 | 8 | 0 | 0 | 0 | 2 | 0 | 0 |
+| open or close | 32 | 24 | 7 | 1 | 1 | 8 | 16 | 1 |
+| pick up or put away | 32 | 20 | 1 | 3 | 2 | 9 | 0 | 0 |
+| set down | 15 | 8 | 7 | 0 | 0 | 2 | 19 | 0 |
+| move between places | 15 | 6 | 8 | 0 | 1 | 2 | 1 | 0 |
+| condition change | 24 | 14 | 4 | 8 | 6 | 2 | 0 | 0 |
+| **All** | 157 | 99 | 38 | 12 | 10 | 33 | 55 | 1 |
+
+Continuity judge: contradicts a stated fact 71 of 157, Kristin acts beyond the
+command 77 of 157, scene restarts 5 of 157.
+
+- No drift over the session: 49 of 80 correct in turns 1-20, 50 of 77 in
+  turns 21-40.
+- Checking a carried thing and pickups hold; setting down, moving between
+  places and changing a condition are weakest.
+- Condition changes carry most of the invented changes (8) and dropped true
+  conditions (6): a reply that gives only the new condition loses one that is
+  still true, without the two-slot cap being reached.
+- Unknown names again track the misses: 19 in set-down turns, 16 in
+  open/close turns ("drawer" for "Michelle's workstation drawers").
+- Narration contradicts its given facts on about one turn in five, far more
+  than the 1 in 47 of the 12-turn Scene 1A run.
+
+## Proposed format changes (not yet measured)
+
+Ordered by the project's rule: remove a mechanism first, then a short rule.
+
+1. Names outside THINGS. The drawers are one plural thing while the story and
+   the commands act on one drawer. Author the drawer with Kristin's initials
+   as its own thing in plot.md, and replace "Use only the names in THINGS"
+   with "Copy each name exactly as it is written in THINGS."
+2. "Condition: none." Leave the Condition part out of a line whose list is
+   empty.
+3. Lost still-true conditions. Add to the existing example line: "Keep any
+   condition that is still true." Phase 1a's closed status would take damage
+   out of free conditions; decide there.
+4. Stray top-level keys stay a rejected turn; no format change.
+
+Re-measure with the same two variations, 4 replicates each.
+
 ## Steps
 
 1. [x] Build the harness through Ringer (dfe3828, d8b71f8).

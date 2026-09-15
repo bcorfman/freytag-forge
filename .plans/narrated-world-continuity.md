@@ -1,6 +1,7 @@
 # Narrated world continuity: implementation plan
 
-Status: not started. Nothing below is in the game yet. The bench experiment
+Status: Phase 0 measured; its format-change criterion awaits Brandon's accepted
+accuracy. Nothing below is in the game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
@@ -223,23 +224,17 @@ for other change types, the design changes before any engine work.
   condition also counted as invented. fd95156 made the two criteria disjoint;
   then 68 of 68 twice, after correcting one label that the new wording made
   wrong - a replaced condition is invented, not dropped.)
-- [ ] Smoke one replicate per variation, read transcripts, then 4 replicates.
-  Two-scene smoke done (12 of 12 turns, offline transition, facts carried).
-  The first long smoke left 1A on turn 13 through the pacing handoff; b11d04f
-  keeps that variation in 1A, and its smoke must be rerun. The first
-  4-replicate two-scene run narrated 3 full replicates, but every judge call
-  returned HTTP 429 `credit_balance_exhausted`, so it was discarded. Blocked
-  until OpenAI API credits are added. Seen in every replicate so far:
-  - the narrator uses names outside THINGS ("drawer", "laptop"), so the change is dropped;
-  - "Condition: none." comes back as a literal `none` condition;
-  - an occasional malformed or missing `item_facts`;
-  - once, a thing name as a top-level reply key failed the strict contract (`extra_forbidden`).
+- [x] Smoke one replicate per variation, read transcripts, then 4 replicates.
+  (Two-scene: 48 judged turns, c7e49cf. Long: b11d04f keeps the session in
+  1A and 5829d38 records an invalid proposal as a rejected turn; 157 judged
+  turns.)
 
 **Exit criteria**
-- Per-change-type accuracy table (kept facts correct, missed, invented) recorded
+- [x] Per-change-type accuracy table (kept facts correct, missed, invented) recorded
   in `.plans/narrated-world-changes-experiment.md`.
-- Any change type below an accuracy Brandon accepts has a proposed format change,
-  re-measured the same way.
+- [ ] Any change type below an accuracy Brandon accepts has a proposed format change,
+  re-measured the same way. (Proposals written in the experiment record;
+  awaiting Brandon's accepted accuracy before building and re-measuring.)
 
 ### Phase 1 - Design decisions
 
