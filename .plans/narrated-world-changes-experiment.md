@@ -233,7 +233,7 @@ command 77 of 157, scene restarts 5 of 157.
 - Narration contradicts its given facts on about one turn in five, far more
   than the 1 in 47 of the 12-turn Scene 1A run.
 
-## Proposed format changes (not yet measured)
+## Proposed format changes (measured in round 2 below)
 
 Ordered by the project's rule: remove a mechanism first, then a short rule.
 
@@ -249,6 +249,76 @@ Ordered by the project's rule: remove a mechanism first, then a short rule.
 4. Stray top-level keys stay a rejected turn; no format change.
 
 Re-measure with the same two variations, 4 replicates each.
+
+## Round 2: format v2 against the 92% bar (2026-09-15)
+
+Proposals 1-3 applied in 40efb98 (no empty Condition part, "Copy each name
+exactly as it is written in THINGS.", "Keep any condition that is still true.",
+and a bench overlay renaming the 1A drawer fact to "Michelle's carved drawer").
+Same scripts, judges and tally as round 1; 4 replicates each. Bar: 92% kept
+facts correct per change type.
+
+Two-scene (bench/results/item-facts-v2-two-scene-1a), 47 judged turns:
+
+| Change type | Turns | Kept facts correct | Rate | Round 1 | Missed | Invented | Dropped true condition | Contradicts facts | Unknown names | Malformed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 8 | 8 | 100% | 8/8 | 0 | 0 | 0 | 0 | 8 | 1 |
+| check a carried thing | 7 | 6 | 86% | 6/8 | 0 | 1 | 0 | 1 | 0 | 3 |
+| open or close | 4 | 0 | 0% | 1/4 | 4 | 0 | 0 | 0 | 5 | 0 |
+| pick up or put away | 8 | 6 | 75% | 6/8 | 1 | 0 | 0 | 6 | 0 | 1 |
+| move between places | 8 | 1 | 13% | 3/8 | 5 | 1 | 0 | 2 | 2 | 2 |
+| damage | 4 | 0 | 0% | 2/4 | 4 | 4 | 0 | 1 | 0 | 0 |
+| hand to another character | 4 | 3 | 75% | 1/4 | 0 | 0 | 1 | 0 | 0 | 0 |
+| leave the scene | 4 | 3 | 75% | 4/4 | 1 | 0 | 0 | 0 | 2 | 2 |
+| **All** | 47 | 27 | 57% | 31/48 | 15 | 6 | 1 | 10 | 17 | 9 |
+
+Continuity judge: contradicts a stated fact 14 of 47, Kristin acts beyond the
+command 31 of 47, scene restarts 5 of 47. One turn rejected.
+
+40-turn (bench/results/item-facts-v2-long-1a), 154 judged turns:
+
+| Change type | Turns | Kept facts correct | Rate | Round 1 | Missed | Invented | Dropped true condition | Contradicts facts | Unknown names | Malformed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| look (no change asked) | 30 | 25 | 83% | 19/31 | 3 | 0 | 1 | 2 | 14 | 2 |
+| check a carried thing | 8 | 8 | 100% | 8/8 | 0 | 0 | 0 | 2 | 0 | 0 |
+| open or close | 29 | 19 | 66% | 24/32 | 7 | 3 | 2 | 0 | 13 | 0 |
+| pick up or put away | 32 | 20 | 63% | 20/32 | 1 | 1 | 3 | 13 | 0 | 2 |
+| set down | 15 | 5 | 33% | 8/15 | 7 | 2 | 0 | 4 | 23 | 2 |
+| move between places | 16 | 8 | 50% | 6/15 | 7 | 3 | 0 | 2 | 3 | 3 |
+| condition change | 24 | 16 | 67% | 14/24 | 4 | 3 | 3 | 3 | 0 | 0 |
+| **All** | 154 | 101 | 66% | 99/157 | 29 | 12 | 9 | 26 | 53 | 9 |
+
+Continuity judge: contradicts a stated fact 72 of 154, Kristin acts beyond the
+command 86 of 154, scene restarts 8 of 154. Six turns rejected.
+
+- **Only "check a carried thing" meets 92%** (8/8 in the 40-turn run; 6/7 in
+  two-scene). Every other type with a real change is below it in both runs.
+- **No overall gain.** 57% against 65% (two-scene) and 66% against 63%
+  (40-turn) are within noise at these sample sizes. Per-type gains (look
+  83% from 61%, move between places 50% from 40%, condition change 67% from
+  58%) and losses (set down, open or close) are four-replicate swings.
+- **Empty conditions fixed.** No `none` condition came back.
+- **Dropped true conditions barely moved** (9 against 10 in the 40-turn run).
+- **"Copy each name exactly" did not stop short names.** Across both runs the
+  most-dropped names are still `drawer` (11) and `laptop` (10), then things the
+  narrator adds that were never tracked (`Michelle's research notes` 7,
+  `research notes` 6, `back door frame` 6). Set-down turns alone dropped 23.
+  The carved-drawer rename did make exact copies appear, but opening it was
+  still reported as `shut`.
+- **Damage 0/4 is a narration failure, not a capture failure.** In all four
+  replicates the narrator refused the change ("miraculously, it doesn't
+  shatter") and capture faithfully kept `not damaged`, then placed the phone
+  "on the kitchen wall" after she had picked it up. The authored setting fact
+  "Michelle's phone is not damaged." is the likely cause; a player-caused
+  story break is Phase 1a/1d territory, not a format problem.
+- Protagonist acting beyond the command rose to 31/47 and 86/154.
+
+Conclusion: a short prompt rule has now been tried for both main failure
+mechanisms (names and kept conditions) without reaching the bar. By the
+project's ranking the next step is an LLM semantic check of the narrated turn,
+or removing the name-matching mechanism (for example accepting a reply whose
+name uniquely matches a tracked thing's head noun, decided by the engine
+rather than by the narrator). Decision pending with Brandon.
 
 ## Steps
 

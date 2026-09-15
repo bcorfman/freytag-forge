@@ -1,7 +1,8 @@
 # Narrated world continuity: implementation plan
 
-Status: Phase 0 round 1 measured and recorded. Round 2 (format v2, bar 92% per
-change type) is approved and not started - see Phase 0. Nothing below is in the
+Status: Phase 0 rounds 1 and 2 measured and recorded. Format v2 did not reach
+the 92% bar for any change type except checking a carried thing; the next
+strategy is awaiting Brandon's decision - see Phase 0. Nothing below is in the
 game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
@@ -234,7 +235,9 @@ for other change types, the design changes before any engine work.
 - [x] Per-change-type accuracy table (kept facts correct, missed, invented) recorded
   in `.plans/narrated-world-changes-experiment.md`.
 - [ ] Any change type below an accuracy Brandon accepts has a proposed format change,
-  re-measured the same way.
+  re-measured the same way. (Round 2 re-measured format v2: still below 92% for
+  every change type except checking a carried thing. Open until Brandon picks
+  the next strategy.)
 
 **Round 2: format v2 (approved by Brandon, not started)**
 
@@ -244,7 +247,7 @@ only "check a carried thing" reached it; overall 31/48 (two-scene) and 99/157
 (40-turn). Brandon approved building all four proposals below through Ringer.
 State at hand-off: HEAD 8969afb, clean tree, nothing running.
 
-- [ ] Ringer task A (worktree; owns `bench/item_facts.py`, `bench/README.md`,
+- [x] Ringer task A (worktree; owns `bench/item_facts.py`, `bench/README.md`,
   `tests/test_bench_item_facts.py`):
   - `ItemFactsProvider._things_block`: a thing with no conditions renders as
     `- <name>. Where: <where>.` with no Condition part (today it renders
@@ -265,7 +268,7 @@ State at hand-off: HEAD 8969afb, clean tree, nothing running.
     gone; the `example.json` prompt and `_SECOND_CALL_SYSTEM` are unchanged
     against the main checkout; full suite and ruff pass; only the owned files
     changed; export the patch. Confirmed failing on 8969afb.
-- [ ] Ringer task B (worktree, parallel with A; owns only the `overrides` of
+- [x] Ringer task B (worktree, parallel with A; owns only the `overrides` of
   `bench/variations/item-facts-package-two-scene.json` and
   `item-facts-package-long.json`; never edits `data/`):
   - Add `{"old": "Michelle's workstation drawers are shut.", "new": "Michelle's carved drawer is shut."}`
@@ -284,14 +287,18 @@ State at hand-off: HEAD 8969afb, clean tree, nothing running.
     `CLOUDFLARE_WORKER_URL`/`TOKEN`) plays every fixed turn; existing overrides
     are kept and nothing outside `overrides` changes. Confirmed failing on
     8969afb.
-- [ ] Review both patches, apply, commit.
-- [ ] Smoke one replicate of each variation and read the transcripts, then run
+- [x] Review both patches, apply, commit. (40efb98; both passed first attempt,
+  both checks confirmed failing on cab3e34.)
+- [x] Smoke one replicate of each variation and read the transcripts, then run
   4 replicates of each: `--scene 1A --script change-types` for two-scene and
   `--script long-session` for long, output to
-  `bench/results/item-facts-v2-{two-scene,long}-1a`.
-- [ ] Tally per change type against 92%, record both tables and the comparison
+  `bench/results/item-facts-v2-{two-scene,long}-1a`. (Smoke rows removed from
+  the ledger; both full runs passed their checks.)
+- [x] Tally per change type against 92%, record both tables and the comparison
   with round 1 in the experiment record, and state the turn count behind each
-  rate. Types below 92% go to the next strategy rank (an LLM semantic check of
+  rate. (Two-scene 27/47, 40-turn 101/154; only "check a carried thing" meets
+  92%.)
+- [ ] Types below 92% go to the next strategy rank (an LLM semantic check of
   the narrated turn) or more replicates for thin samples. Decide with Brandon.
 
 Operational lessons from round 1 (apply to every live run):
