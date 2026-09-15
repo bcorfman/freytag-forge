@@ -1,0 +1,182 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const FACT_TRACKING_CRITERIA = [
+  "facts_after_correct",
+  "missed_change",
+  "invented_change",
+  "narration_contradicts_given_facts",
+];
+const VERDICTS = ["yes", "no"];
+const CAUSES = ["command", "narrator"];
+const FACT_TRACKING_SCHEMA = {
+  type: "object",
+  properties: {
+    turns: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          turn: { type: "integer" },
+          facts_after_correct: { type: "string", enum: VERDICTS },
+          missed_change: { type: "string", enum: VERDICTS },
+          invented_change: { type: "string", enum: VERDICTS },
+          narration_contradicts_given_facts: { type: "string", enum: VERDICTS },
+          changes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                thing: { type: "string" },
+                change: { type: "string" },
+                cause: { type: "string", enum: CAUSES },
+              },
+              required: ["thing", "change", "cause"],
+              additionalProperties: false,
+            },
+          },
+          reason: { type: "string" },
+        },
+        required: ["turn", ...FACT_TRACKING_CRITERIA, "changes", "reason"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["turns"],
+  additionalProperties: false,
+};
+
+const SYSTEM_MESSAGE =
+  "You check whether a story game tracked the state of things correctly, one turn at a time. Each turn gives the player's command, the narration, item_facts_before (the facts the narrator was given) and item_facts_after (the facts the game kept after the turn). For every turn answer yes or no and give one short reason. facts_after_correct: yes if item_facts_after matches what item_facts_before plus this turn's narration shows about each thing. missed_change: yes if the narration clearly changed a thing's place, holder or condition but item_facts_after did not record it. invented_change: yes if item_facts_after records a change the narration did not show. narration_contradicts_given_facts: yes if the narration states something about a thing that conflicts with item_facts_before without showing it change during the turn. In changes, list each change the narration showed, with cause command if the player's command asked for it and narrator if the narrator added it on its own. Wording differences that mean the same thing are not errors.";
+
+function outputText(response) {
+  if (typeof response?.output_text === "string") return response.output_text;
+  for (const item of response?.output || []) {
+    for (const content of item?.content || []) {
+      if (content?.type === "output_text" && typeof content.text === "string") return content.text;
+    }
+  }
+  return "";
+}
+
+function judgeConfiguration(environment) {
+  const apiKey = environment.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("E2E fact-tracking judge requires OPENAI_API_KEY.");
+  return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
+}
+
+function playerVisibleTurn(turn) {
+  return {
+    player_input: turn.player_input,
+    narration: turn.narration,
+    item_facts_before: turn.item_facts_before,
+    item_facts_after: turn.item_facts_after,
+  };
+}
+
+function validateVerdict(verdict, expectedLength) {
+  if (!verdict || !Array.isArray(verdict.turns) || verdict.turns.length !== expectedLength) {
+    throw new Error("E2E fact-tracking judge returned an invalid verdict.");
+  }
+  if (
+    !verdict.turns.every(
+      (item) =>
+        item &&
+        Number.isInteger(item.turn) &&
+        FACT_TRACKING_CRITERIA.every((criterion) => VERDICTS.includes(item[criterion])) &&
+        typeof item.reason === "string" &&
+        Array.isArray(item.changes) &&
+        item.changes.every(
+          (change) =>
+            change &&
+            typeof change.thing === "string" &&
+            typeof change.change === "string" &&
+            CAUSES.includes(change.cause),
+        ),
+    )
+  ) {
+    throw new Error("E2E fact-tracking judge returned an invalid verdict.");
+  }
+  return verdict;
+}
+
+export async function judgeFactTracking(
+  { sceneId, opening, turns },
+  { environment = process.env, fetchImpl = fetch, canon } = {},
+) {
+  void sceneId;
+  const { apiKey, model } = judgeConfiguration(environment);
+  const response = await fetchImpl("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      store: false,
+      input: [
+        { role: "system", content: SYSTEM_MESSAGE },
+        {
+          role: "user",
+          content: JSON.stringify({
+            canon: { scene_id: canon?.scene_id, plot: canon?.plot },
+            opening,
+            turns: turns.map(playerVisibleTurn),
+          }),
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "fact_tracking_judgment",
+          strict: true,
+          schema: FACT_TRACKING_SCHEMA,
+        },
+      },
+    }),
+  });
+  if (!response.ok) throw new Error(`E2E fact-tracking judge request failed with HTTP ${response.status}.`);
+  return validateVerdict(JSON.parse(outputText(await response.json())), turns.length);
+}
+
+function argument(name) {
+  const index = process.argv.indexOf(name);
+  if (index < 0 || !process.argv[index + 1]) throw new Error(`Missing ${name}.`);
+  return process.argv[index + 1];
+}
+
+function sceneBlock(source, heading, nextHeading) {
+  const start = source.indexOf(heading);
+  if (start < 0) return "";
+  const end = source.indexOf(nextHeading, start + heading.length);
+  return source.slice(start, end < 0 ? undefined : end);
+}
+
+export function packageCanon(sceneId, packagePath) {
+  const root = resolve(packagePath);
+  const plot = readFileSync(resolve(root, "plot.md"), "utf8");
+  const sceneIds = [...plot.matchAll(/^## Scene ([1-9][A-Z])\b/gm)].map((match) => match[1]);
+  const nextScene = sceneIds[sceneIds.indexOf(sceneId) + 1];
+  return {
+    scene_id: sceneId,
+    plot: sceneBlock(plot, `## Scene ${sceneId}`, nextScene ? `## Scene ${nextScene}` : "\u0000"),
+  };
+}
+
+async function main() {
+  const input = JSON.parse(readFileSync(argument("--input"), "utf8"));
+  const judgments = [];
+  const canon = packageCanon(input.scene_id, input.package_path);
+  for (const run of input.runs) {
+    judgments.push(
+      await judgeFactTracking(
+        { sceneId: input.scene_id, opening: run.opening, turns: run.turns },
+        { canon },
+      ),
+    );
+  }
+  writeFileSync(argument("--output"), JSON.stringify({ judgments, judge_calls: judgments.length }, null, 2) + "\n");
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
+}

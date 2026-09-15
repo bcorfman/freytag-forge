@@ -17,6 +17,7 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
+from bench.item_facts import ItemFactsProvider, validate_item_facts
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
     CloudflareTurnProvider,
@@ -47,6 +48,14 @@ ESCALATION_CRITERIA = (
 ESCALATION_VERDICTS = ("yes", "no", "not_applicable")
 CONTINUITY_CRITERIA = ("contradicts_stated_fact", "protagonist_acts_beyond_command", "restarts_scene")
 CONTINUITY_VERDICTS = ("yes", "no")
+FACT_TRACKING_CRITERIA = (
+    "facts_after_correct",
+    "missed_change",
+    "invented_change",
+    "narration_contradicts_given_facts",
+)
+FACT_TRACKING_VERDICTS = ("yes", "no")
+FACT_CHANGE_CAUSES = ("command", "narrator")
 REFERENCE_MDE_AT_FOUR = 3.87
 DEFAULT_NARRATOR_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 LEDGER_PATH = Path(__file__).resolve().parent / "results" / "ledger.jsonl"
@@ -146,11 +155,19 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     continuity_judge = variation.get("continuity_judge", False)
     if not isinstance(continuity_judge, bool):
         raise ValueError("continuity_judge must be a boolean")
+    fact_tracking_judge = variation.get("fact_tracking_judge", False)
+    if not isinstance(fact_tracking_judge, bool):
+        raise ValueError("fact_tracking_judge must be a boolean")
+    item_facts = None
+    if "item_facts" in variation:
+        item_facts = validate_item_facts(variation["item_facts"])
     entry_state = variation.get("entry_state", "bare")
     if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
         raise ValueError("entry_state must be bare or thorough")
     variation["_entry_state"] = entry_state
     variation["_fixed_turns"] = fixed_turns
+    variation["_fact_tracking_judge"] = fact_tracking_judge
+    variation["_item_facts"] = item_facts
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
@@ -386,6 +403,17 @@ def preview_rules(variation: dict[str, Any], scene_id: str | None = None) -> lis
 
 
 def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTurnProvider:
+    item_facts = variation.get("_item_facts")
+    if item_facts is None and "item_facts" in variation:
+        item_facts = validate_item_facts(variation["item_facts"])
+    if item_facts is not None:
+        mode, seed = item_facts
+        return ItemFactsProvider.from_environment(
+            state,
+            prompt_variant=variation["_prompt_variant"],
+            item_facts=seed,
+            mode=mode,
+        )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
 
@@ -480,7 +508,23 @@ def prompt_for(
     storylet: str | None = None,
 ) -> dict[str, str]:
     package, state = package_and_state(variation, scene_id)
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"])
+    item_facts = variation.get("_item_facts")
+    if item_facts is None and "item_facts" in variation:
+        item_facts = validate_item_facts(variation["item_facts"])
+    if item_facts is not None:
+        mode, seed = item_facts
+        provider = ItemFactsProvider(
+            worker_url="",
+            token="",
+            state=state,
+            prompt_variant=variation["_prompt_variant"],
+            item_facts=seed,
+            mode=mode,
+        )
+    else:
+        provider = CloudflareTurnProvider(
+            worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"]
+        )
     RuntimeEngine(state, provider)._activate_pacing()
     if beat is not None and storylet is not None:
         raise ValueError("--beat and --storylet select the turn in different ways; name only one")
@@ -581,6 +625,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     engine = RuntimeEngine(state, provider)
     try:
         opening = engine.opening()
+        if isinstance(provider, ItemFactsProvider):
+            provider.discard_pending_item_facts()
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
         return _failed_scene_record(variation, scene_id, script, provider, error, entry_state=arrival_entry_state)
     turns = []
@@ -596,6 +642,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         try:
             proposal = _turn_with_rate_limit_retry(engine, player_input)
         except (ProposalValidationError, RuntimeContractError) as error:
+            if isinstance(provider, ItemFactsProvider):
+                # The narrator reply belongs to a turn the runtime rejected.
+                # Do not let its side-channel payload reach the next accepted turn.
+                provider.discard_pending_item_facts()
             if fixed_turns is None:
                 return _failed_scene_record(
                     variation,
@@ -631,7 +681,34 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         entered = state.current_scene_id != prior_scene
         segments = proposal.segments[:-1] if entered else proposal.segments
         narration = join_narration(tuple(segments)) if segments else ""
-        if narration:
+        item_facts_record: dict[str, Any] | None = None
+        if isinstance(provider, ItemFactsProvider):
+            facts_before = {name: list(facts) for name, facts in provider.item_facts.items()}
+            raw_item_facts = provider.pending_item_facts()
+            try:
+                if provider.item_facts_mode == "second_call":
+                    raw_item_facts = provider.second_call_update(player_input, narration)
+                facts_after, fact_issues = provider.apply_item_facts(raw_item_facts)
+            except NarrationProviderError as error:
+                return _failed_scene_record(
+                    variation,
+                    scene_id,
+                    script,
+                    provider,
+                    error,
+                    opening=opening.narration,
+                    turns=turns,
+                    entry_state=arrival_entry_state,
+                    rejected_turns=rejected_turns,
+                )
+            item_facts_record = {
+                "item_facts_before": facts_before,
+                "item_facts_after": facts_after,
+                "item_facts_raw": raw_item_facts,
+                "item_facts_issues": fact_issues,
+                "item_facts_source": provider.item_facts_mode,
+            }
+        if narration or isinstance(provider, ItemFactsProvider):
             handoff = getattr(provider, "authored_handoff", None)
             delivery = state.last_turn_delivery
             cue_fact_id = delivery.cue_fact_id
@@ -643,37 +720,38 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 ),
                 None,
             )
-            turns.append(
-                {
-                    "player_input": player_input,
-                    "narration": narration,
-                    "left_scene": entered,
-                    "beats_projected": list(state.last_turn_delivery.beats_projected),
-                    "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
-                    "authored_handoff_candidate_id": (handoff.candidate.id if handoff is not None else None),
-                    "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
-                    "grounding_ids": sorted(
-                        {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
-                    ),
-                    "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
-                    "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
-                    "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
-                    "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
-                    if provider.last_projection is not None
-                    else [],
-                    "cue_fact_id": cue_fact_id,
-                    "cue_text": cue_text,
-                    "complication_text": getattr(delivery, "complication_text", None),
-                    "handoff_staged": delivery.handoff_staged,
-                }
-            )
+            turn_record = {
+                "player_input": player_input,
+                "narration": narration,
+                "left_scene": entered,
+                "beats_projected": list(state.last_turn_delivery.beats_projected),
+                "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                "authored_handoff_candidate_id": (handoff.candidate.id if handoff is not None else None),
+                "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
+                "grounding_ids": sorted(
+                    {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
+                ),
+                "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
+                "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
+                "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
+                "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
+                if provider.last_projection is not None
+                else [],
+                "cue_fact_id": cue_fact_id,
+                "cue_text": cue_text,
+                "complication_text": getattr(delivery, "complication_text", None),
+                "handoff_staged": delivery.handoff_staged,
+            }
+            if item_facts_record is not None:
+                turn_record.update(item_facts_record)
+            turns.append(turn_record)
             if fixed_turns is not None:
                 turns[-1]["turn_number"] = turn_number
         if entered:
             break
     else:
         if fixed_turns is not None:
-            return {
+            record = {
                 "status": "ok",
                 "replicate": 0,
                 "script": script["name"],
@@ -694,6 +772,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "rejected_turns": rejected_turns,
                 "rejected_turn_count": len(rejected_turns),
             }
+            if isinstance(provider, ItemFactsProvider):
+                record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
+            return record
         return _failed_scene_record(
             variation,
             scene_id,
@@ -726,6 +807,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["fixed_turns"] = fixed_turns
         record["rejected_turns"] = rejected_turns
         record["rejected_turn_count"] = len(rejected_turns)
+    if isinstance(provider, ItemFactsProvider):
+        record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
     return record
 
 
@@ -770,6 +853,8 @@ def _failed_scene_record(
         record["fixed_turns"] = fixed_turns
         record["rejected_turns"] = rejected_turns or []
         record["rejected_turn_count"] = len(rejected_turns or [])
+    if isinstance(provider, ItemFactsProvider):
+        record["item_facts_final"] = {name: list(facts) for name, facts in provider.item_facts.items()}
     return record
 
 
@@ -839,6 +924,29 @@ def score_continuity_judgments(judgments: list[dict[str, Any]], judge_calls: int
                 if verdict not in CONTINUITY_VERDICTS:
                     raise ValueError(f"invalid continuity verdict for {criterion}: {verdict!r}")
                 counts[criterion][verdict] += 1
+    counts["turns_judged"] = turns_judged
+    counts["judge_calls"] = judge_calls
+    return counts
+
+
+def score_fact_tracking_judgments(judgments: list[dict[str, Any]], judge_calls: int) -> dict[str, Any]:
+    counts = {criterion: {verdict: 0 for verdict in FACT_TRACKING_VERDICTS} for criterion in FACT_TRACKING_CRITERIA}
+    changes_by_cause = {cause: 0 for cause in FACT_CHANGE_CAUSES}
+    turns_judged = 0
+    for judgment in judgments:
+        for turn in judgment.get("turns", []):
+            turns_judged += 1
+            for criterion in FACT_TRACKING_CRITERIA:
+                verdict = turn.get(criterion)
+                if verdict not in FACT_TRACKING_VERDICTS:
+                    raise ValueError(f"invalid fact-tracking verdict for {criterion}: {verdict!r}")
+                counts[criterion][verdict] += 1
+            for change in turn.get("changes", []):
+                cause = change.get("cause")
+                if cause not in changes_by_cause:
+                    raise ValueError(f"invalid fact-tracking change cause: {cause!r}")
+                changes_by_cause[cause] += 1
+    counts["changes_by_cause"] = changes_by_cause
     counts["turns_judged"] = turns_judged
     counts["judge_calls"] = judge_calls
     return counts
@@ -1090,6 +1198,8 @@ def ledger_row(
         row["escalation"] = aggregate["escalation"]
     if "continuity" in aggregate:
         row["continuity"] = aggregate["continuity"]
+    if "fact_tracking" in aggregate:
+        row["fact_tracking"] = aggregate["fact_tracking"]
     if failure_reason is not None:
         row["failure_reason"] = failure_reason
     return row
@@ -1176,4 +1286,19 @@ def run_continuity_judges(input_path: Path, output_path: Path) -> dict[str, Any]
     result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "continuity judge CLI failed")
+    return read_json(output_path)
+
+
+def run_fact_tracking_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
+    command = [
+        "node",
+        str(Path(__file__).with_name("fact-tracking-judge.mjs")),
+        "--input",
+        str(input_path),
+        "--output",
+        str(output_path),
+    ]
+    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
     return read_json(output_path)

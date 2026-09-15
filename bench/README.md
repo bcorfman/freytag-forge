@@ -172,6 +172,29 @@ For each criterion, `yes` means the defect is present. Results appear as a
 
 `entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `committed_knowledge_count` (the knowledge the narrator is shown at entry), `earned_knowledge_count` (the player-visible knowledge already earned), and `seeded_by`: `none` for bare and `thorough` for seeded runs.
 
+## Item facts
+
+An `item_facts` variation option tracks plain facts about named things:
+
+```json
+"item_facts": {
+  "mode": "single_call",
+  "seed": {"the lantern": ["lit"], "the gate": ["closed"]}
+}
+```
+
+The provider adds a `THINGS` section to every opening and turn prompt, in seed order. `single_call` asks the narrator to return `item_facts` beside its normal proposal. `second_call` makes one extra request after each accepted narration to read the command and finished story. Opening facts are ignored because the opening establishes the scene.
+
+After an accepted turn, returned facts replace the previous facts. Missing or malformed entries keep their old facts. Unknown names are dropped. Phrases are trimmed to 80 characters and each thing keeps at most six phrases. These repairs are listed in `item_facts_issues`. Rejected turns do not change facts. Turn records contain `item_facts_before`, `item_facts_after`, `item_facts_raw`, `item_facts_issues`, and `item_facts_source`; the replicate also contains `item_facts_final`.
+
+The three trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, and `item-facts-second.json`.
+
+## Fact-tracking judge
+
+Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, and whether narration conflicts with the facts it received. It also records shown changes by `command` or `narrator` cause.
+
+The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those four checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.
+
 `fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
 
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:

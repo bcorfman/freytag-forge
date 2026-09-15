@@ -1,0 +1,98 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { judgeFactTracking } from "./fact-tracking-judge.mjs";
+
+const turns = [
+  {
+    player_input: "Look at the lantern.",
+    narration: "The lantern feels warm.",
+    item_facts_before: { lantern: ["lit"] },
+    item_facts_after: { lantern: ["warm"] },
+    secret: "must not be sent",
+  },
+];
+
+function verdict(overrides = {}) {
+  return {
+    turns: [
+      {
+        turn: 1,
+        facts_after_correct: "yes",
+        missed_change: "no",
+        invented_change: "no",
+        narration_contradicts_given_facts: "no",
+        changes: [{ thing: "lantern", change: "warm", cause: "command" }],
+        reason: "The warmth is carried forward.",
+        ...overrides,
+      },
+    ],
+  };
+}
+
+function fakeFetch(result, capture) {
+  return async (_url, options) => {
+    capture.push(JSON.parse(options.body));
+    return { ok: true, status: 200, json: async () => ({ output_text: JSON.stringify(result) }) };
+  };
+}
+
+test("filters turn fields and uses the default model with the strict schema", async () => {
+  const requests = [];
+  const result = await judgeFactTracking(
+    { sceneId: "1A", opening: "ignored", turns },
+    { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch(verdict(), requests) },
+  );
+  const body = requests[0];
+  const sent = JSON.parse(body.input[1].content).turns[0];
+
+  assert.equal(result.turns.length, 1);
+  assert.equal(body.model, "gpt-5.4");
+  assert.equal(body.store, false);
+  assert.deepEqual(Object.keys(sent).sort(), ["item_facts_after", "item_facts_before", "narration", "player_input"]);
+  assert.equal(body.text.format.strict, true);
+  assert.equal(body.text.format.schema.additionalProperties, false);
+  assert.equal(body.text.format.schema.properties.turns.items.additionalProperties, false);
+  assert.equal(
+    body.text.format.schema.properties.turns.items.properties.changes.items.additionalProperties,
+    false,
+  );
+});
+
+test("rejects a verdict with the wrong turn count", async () => {
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns },
+      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch({ turns: [] }, []) },
+    ),
+    /invalid verdict/,
+  );
+});
+
+test("rejects a verdict with a bad enum", async () => {
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns },
+      {
+        environment: { OPENAI_API_KEY: "test-key" },
+        fetchImpl: fakeFetch(verdict({ missed_change: "maybe" }), []),
+      },
+    ),
+    /invalid verdict/,
+  );
+});
+
+test("rejects a change with a bad cause", async () => {
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns },
+      {
+        environment: { OPENAI_API_KEY: "test-key" },
+        fetchImpl: fakeFetch(
+          verdict({ changes: [{ thing: "lantern", change: "warm", cause: "story" }] }),
+          [],
+        ),
+      },
+    ),
+    /invalid verdict/,
+  );
+});

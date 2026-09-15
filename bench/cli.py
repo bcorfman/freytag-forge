@@ -30,11 +30,13 @@ from bench.core import (
     prompt_for,
     run_continuity_judges,
     run_escalation_judges,
+    run_fact_tracking_judges,
     run_judges,
     run_scene,
     scenes_scored_for_row,
     score_continuity_judgments,
     score_escalation_judgments,
+    score_fact_tracking_judgments,
     score_judgments,
     scripts_for,
     successful_ledger_rows,
@@ -543,6 +545,33 @@ def _run(args: argparse.Namespace) -> int:
             judgments = []
             continuity = score_continuity_judgments([], 0)
         judge_failure_reason = judge_failure_reason or continuity_failure_reason
+    fact_tracking = None
+    fact_tracking_failure_reason = None
+    if variation.get("fact_tracking_judge", False):
+        fact_tracking_path = args.out / "fact-tracking-judgments.json"
+        try:
+            fact_tracking_judged = (
+                run_fact_tracking_judges(pending, fact_tracking_path)
+                if judged_runs
+                else {"judgments": [], "judge_calls": 0}
+            )
+            fact_tracking_judgments = fact_tracking_judged["judgments"]
+            if len(fact_tracking_judgments) != len(judged_runs):
+                raise RuntimeError(
+                    f"fact-tracking judge returned {len(fact_tracking_judgments)} result(s) for "
+                    f"{len(judged_runs)} completed run(s)"
+                )
+            fact_tracking = score_fact_tracking_judgments(
+                fact_tracking_judgments,
+                fact_tracking_judged.get("judge_calls", 0),
+            )
+        except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
+            fact_tracking_failure_reason = _failure_reason(error)
+            failed_runs.extend(judged_runs)
+            judged_runs = []
+            judgments = []
+            fact_tracking = score_fact_tracking_judgments([], 0)
+        judge_failure_reason = judge_failure_reason or fact_tracking_failure_reason
     if judgments:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -558,6 +587,8 @@ def _run(args: argparse.Namespace) -> int:
         aggregate["escalation"] = escalation
     if continuity is not None:
         aggregate["continuity"] = continuity
+    if fact_tracking is not None:
+        aggregate["fact_tracking"] = fact_tracking
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
@@ -565,7 +596,8 @@ def _run(args: argparse.Namespace) -> int:
         "estimated_workers_ai_neurons_from_requests": sum(run["narration_requests"] for run in runs) * 330 / 30,
         "actual_openai_judge_calls": judged.get("judge_calls", 0)
         + (escalation or {}).get("judge_calls", 0)
-        + (continuity or {}).get("judge_calls", 0),
+        + (continuity or {}).get("judge_calls", 0)
+        + (fact_tracking or {}).get("judge_calls", 0),
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:
