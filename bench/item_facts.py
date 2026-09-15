@@ -71,6 +71,14 @@ _SINGLE_CALL_RULES = (
     "Example: if she blows out the cracked, lit lantern on the table, the lantern is "
     '{"condition": ["dark", "cracked"]}.',
 )
+_MATCH_SYSTEM = (
+    "You match names in a story game. COMMAND is what the player typed. THINGS lists the names the game keeps "
+    "track of. NEW NAMES lists names the storyteller used. Return only JSON like "
+    '{"refers": ["name"], "same_as": {"new name": "name"}}. '
+    "In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "
+    '"the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS that means '
+    'the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
+)
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
     '{"item_facts": {"thing": {"where": "place", "condition": ["phrase"]}}}. List only the things '
@@ -282,7 +290,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
         self.item_facts_match_calls += 1
         payload = {
-            "system": 'You match names. Return JSON with "refers" and "same_as". Use exact tracked names.',
+            "system": _MATCH_SYSTEM,
             "user": (
                 f"COMMAND:\n- {player_input}\n\nTHINGS:\n"
                 + "\n".join(f"- {name}" for name in self.item_facts)

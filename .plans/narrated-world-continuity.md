@@ -346,7 +346,7 @@ Tasks:
 - [x] Ringer task E: judge label split (e1f835c), calibrated on 21 constructed
   cases: 149/151 and 151/151 after fixing one case; residual misses are
   `kept_ended_condition` over-firing on drawer-opened cases.
-- [ ] Ringer task F: partial entries, new example, merged match call, per-turn
+- [x] Ringer task F: partial entries, new example, merged match call, per-turn
   THINGS selection, persistence of narrated things, per-turn call counts.
 - [ ] Smoke, then 4 replicates of each variation; tally against 92%.
 

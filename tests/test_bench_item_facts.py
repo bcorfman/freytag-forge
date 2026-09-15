@@ -6,7 +6,7 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
+from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, package_seed, validate_item_facts
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -337,6 +337,200 @@ def test_package_seed_parses_new_and_reports_unparseable_setting_facts(tmp_path)
     assert any("could not be parsed" in issue for issue in issues)
 
 
+def test_where_only_entry_keeps_existing_conditions():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"where": "in her hand"}})
+    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+
+
+def test_condition_only_entry_keeps_existing_place():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"condition": ["dark"]}})
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["dark"]}
+
+
+def test_empty_entries_are_ignored_for_tracked_and_untracked_names():
+    provider = _provider()
+    facts, issues = provider.apply_item_facts({"the lantern": {}, "new thing": {}})
+    assert facts == provider.item_facts
+    assert provider._held_item_facts == {}
+    assert any("empty item_facts entry" in issue for issue in issues)
+
+
+def test_valid_untracked_name_is_held_with_its_entry():
+    provider = _provider()
+    provider.apply_item_facts({"the notebook": {"where": "on the desk", "condition": ["open"]}})
+    assert provider._held_item_facts == {"the notebook": {"where": "on the desk", "condition": ["open"]}}
+
+
+def test_prepare_turn_skips_match_when_all_things_are_always_included(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args, **_kwargs: pytest.fail("unexpected match"))
+    result = provider.prepare_turn("Inspect the lantern.")
+    assert result["match_call"] is False
+    assert provider.item_facts_match_calls == 0
+    assert provider._selected_names == provider.always_included_names()
+
+
+def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    payloads = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {"the notebook": "new"}},
+    )
+    result = provider.prepare_turn("Search the desk.")
+    assert result["match_call"] is True
+    assert provider.item_facts_match_calls == 1
+    assert payloads[0]["system"] == _MATCH_SYSTEM
+    assert all(marker in payloads[0]["user"] for marker in ("COMMAND:", "THINGS:", "NEW NAMES:"))
+    assert "Where:" not in payloads[0]["user"]
+    assert "Condition:" not in payloads[0]["user"]
+
+
+def test_same_as_tracked_name_merges_held_entry(monkeypatch):
+    provider = _provider()
+    provider.apply_item_facts({"the old lamp": {"where": "by the door", "condition": ["warm"]}})
+    provider._hand_seed_names = set(provider.item_facts)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the old lamp": "the lantern"}},
+    )
+    result = provider.prepare_turn("Carry the old lamp.")
+    assert result["resolutions"] == {"the old lamp": "the lantern"}
+    assert provider.item_facts["the lantern"] == {"where": "by the door", "condition": ["warm"]}
+    assert "the old lamp" not in provider.item_facts
+
+
+def test_same_as_new_with_where_adds_a_tracked_thing(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"where": "on the desk", "condition": ["open"]}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the notebook": "new"}},
+    )
+    result = provider.prepare_turn("Pick up the notebook.")
+    assert result["resolutions"] == {"the notebook": "new"}
+    assert provider.item_facts["the notebook"] == {"where": "on the desk", "condition": ["open"]}
+
+
+def test_same_as_new_without_where_drops_held_thing(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"condition": ["open"]}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the notebook": "new"}},
+    )
+    result = provider.prepare_turn("Read the notebook.")
+    assert result["resolutions"] == {"the notebook": "dropped"}
+    assert "the notebook" not in provider.item_facts
+    assert any("no valid match" in issue for issue in result["match_issues"])
+
+
+def test_invalid_match_reply_drops_held_names_without_raising(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"oops": 1})
+    result = provider.prepare_turn("Open the notebook.")
+    assert result["resolutions"] == {"the notebook": "dropped"}
+    assert provider._held_item_facts == {}
+    assert result["match_issues"] == ["invalid item_facts match reply"]
+
+
+def test_match_transport_exception_drops_held_names(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+
+    def fail(*_args):
+        raise OSError("offline")
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", fail)
+    result = provider.prepare_turn("Open the notebook.")
+    assert result["resolutions"] == {"the notebook": "dropped"}
+    assert any("match failed: offline" in issue for issue in result["match_issues"])
+    assert provider._held_item_facts == {}
+
+
+def test_command_reference_adds_non_always_name_and_omits_unreferred_name(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = {"the lantern"}
+    provider.item_facts["the box"] = {"where": "under the bench", "condition": []}
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": ["the gate"], "same_as": {}})
+    result = provider.prepare_turn("Open the gate.")
+    assert result["match_call"] is True
+    assert provider._selected_names == ["the lantern", "the gate"]
+    assert "the box" not in provider._selected_names
+    assert "the gate" in provider._things_block()
+    assert "the box" not in provider._things_block()
+
+
+def test_always_included_names_cover_authored_dependency_carried_and_changed_items():
+    provider = _provider()
+    provider._hand_seed_names = set()
+    provider.item_facts.update(
+        {
+            "Michelle's workstation drawers": {"where": "in the house", "condition": []},
+            "Michelle's memory card": {"where": "under the drawer", "condition": []},
+            "Kristin's notebook": {"where": "with Kristin", "condition": []},
+            "changed thing": {"where": "in the yard", "condition": []},
+            "unrelated thing": {"where": "in a shed", "condition": []},
+        }
+    )
+    provider._changed_last_turn = {"changed thing"}
+    names = provider.always_included_names()
+    assert "Michelle's workstation drawers" in names
+    assert "Michelle's memory card" in names
+    assert "Kristin's notebook" in names
+    assert "changed thing" in names
+    assert "unrelated thing" not in names
+
+
+def test_resolve_held_skips_match_when_nothing_is_held(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
+    result = provider.resolve_held()
+    assert result["match_call"] is False
+    assert provider.item_facts_match_calls == 0
+
+
+def test_stubbed_run_attributes_resolved_change_to_earlier_turn(monkeypatch):
+    calls = []
+
+    def request(_provider, payload):
+        calls.append(payload)
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": [], "same_as": {"new notebook": "new"}}
+        response = {
+            "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {},
+        }
+        if len(calls) == 2:
+            response["item_facts"] = {"new notebook": {"where": "on the desk", "condition": ["open"]}}
+        return response
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(SINGLE)
+    variation["_fixed_turns"] = 2
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+    earlier = result["turns"][0]
+    assert earlier["item_facts_resolutions"] == {"new notebook": "new"}
+    assert earlier["item_facts_after"]["new notebook"] == {"where": "on the desk", "condition": ["open"]}
+
+
 def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):
     calls = []
 
@@ -361,6 +555,10 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     ]
     assert "Michelle's phone" in result["turns"][7]["item_facts_after"]
     assert "Kristin's laptop" in result["turns"][8]["item_facts_before"]
+    common_names = set(result["turns"][7]["item_facts_after"]) & set(result["turns"][8]["item_facts_before"])
+    assert common_names
+    for name in common_names:
+        assert result["turns"][7]["item_facts_after"][name] == result["turns"][8]["item_facts_before"][name]
     assert len(calls) == 17
 
 
