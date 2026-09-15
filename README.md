@@ -8,9 +8,10 @@ Write the move. Earn the reveal. Live with the consequence.
 
 - **Just type.** Tell your character what to do. No menus, no parser syntax.
 - **Earn every reveal.** Secrets land only when your action earns them, in the author's own words.
-- **Canon holds.** No invented facts, wrong-speaker lines, or plot jumping ahead.
-- **Delay costs you.** Live pacing pressure makes every detour a real choice.
-- **Bad turns never stick.** A rejected turn changes nothing, and moves that would break the story warn you first.
+- **Canon holds.** No invented facts, wrong speakers, or plot jumping ahead. A bad turn is thrown out whole.
+- **Delay costs you.** The clock keeps running, so every detour is a real choice.
+- **Break the story on purpose.** Moves that would wreck what comes next warn you first. Push on or take it back.
+- **Any story, one engine.** Authors write Markdown; the engine plays it.
 
 ## For contributors
 

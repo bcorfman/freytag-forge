@@ -8,41 +8,39 @@ gameplay code stays story-agnostic. Commands are in [README.md](../README.md).
 
 - FastAPI, React, a Cloudflare Worker and SQLite. The adapter owns transport,
   CORS, deployment identity and persistence.
-- The API serves sessions, turns, game-break decisions, segments and a
+- The API serves sessions, turns, game-break decisions and segments, plus a
   compatibility `lines` field.
 
 ## Turn contract
 
-- The player types ordinary in-world commands. Declarative storylets and pacing
-  make delay a player choice; prose never picks a branch for the player.
-- Facts are the only durable truth. Each turn projects bounded scene-local
-  material to the narrator (never protected reveals, delivery text, routes,
-  source IDs, future effects or transcript memory), parses its untrusted JSON,
-  validates the prose against a cloned fact store, then commits atomically or
-  not at all.
-- Validation rejects prose that names unearned knowledge, cites an ungiven fact,
-  misattributes speech or runs ahead of the plot. A projected beat's own prose
+- The player types in-world commands. Declarative storylets and pacing make
+  delay a player choice; prose never picks a branch.
+- Facts are the only durable truth. The narrator sees bounded scene-local
+  material only: never protected reveals, delivery text, routes, source IDs,
+  future effects or transcript memory.
+- Each turn parses the narrator's untrusted JSON and validates the prose
+  against a cloned fact store. It rejects unearned knowledge, ungiven facts,
+  misattributed speech and plot running ahead. A projected beat's prose
   licenses that beat's vocabulary for the turn, never protected knowledge.
-- A rejected turn restores the exact pre-turn snapshot, including across save
-  and load. A threatened future dependency opens a game-break choice:
-  `proceed` commits the branch, `return_to_scene` rejects it.
+- A turn commits atomically or restores the exact pre-turn snapshot, including
+  across save and load. A threatened future dependency opens a game-break
+  choice: `proceed` commits the branch, `return_to_scene` rejects it.
 
 ## Authored reveal handoff
 
 - Opt-in per candidate: complete `action_evidence` and non-empty
   `delivery_text`; anything incomplete follows the normal path.
-- The runtime alone decides each turn whether the action earned a reveal. The
-  exact matcher needs every evidence group, rejects negations and never composes
-  two matches; missed phrasings get author-reviewed aliases, never similarity
+- The runtime alone decides whether an action earned a reveal. The exact
+  matcher needs every evidence group, rejects negations and never composes two
+  matches. Missed phrasings get author-reviewed aliases, never similarity
   scoring or model intent.
-- Exactly one match inserts the delivery sentence and validates the whole
-  composed turn, including grounding repair: a multi-word term cites its single
-  committed owner, else the handed-off candidate; an ambiguous term fails. A tie
-  or miss commits nothing.
+- Exactly one match inserts the delivery sentence and validates the composed
+  turn. Grounding repair cites a multi-word term's single committed owner, else
+  the handed-off candidate; an ambiguous term, a tie or a miss commits nothing.
 
 ## Package validation
 
 - Loading rejects malformed source, bad references, invalid effects, ambiguous
   transitions, timing errors, dependency cycles and stale saves.
-- A scene whose own authored prose names a multi-word knowledge term it does not
-  commit is rejected, so faithful repetition can never fail turn validation.
+- It also rejects a scene whose own prose names a multi-word knowledge term the
+  scene does not commit, so faithful repetition never fails turn validation.
