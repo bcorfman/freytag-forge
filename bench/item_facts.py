@@ -7,8 +7,6 @@ from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.contracts import RuntimeContractError
-from storygame.runtime.validation import ProposalValidationError
 
 _SINGLE_CALL_RULES = (
     "Also return item_facts: every thing from THINGS, with its facts as a list of short phrases.",
@@ -80,19 +78,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _setting_fact_rules(self) -> list[str]:
         return []
-
-    def _parse_eligible_proposal(self, response: object) -> object:
-        try:
-            return super()._parse_eligible_proposal(response)
-        except RuntimeContractError as error:
-            # An uncommitted grounding is a runtime rejection for the fixed-turn
-            # item-facts replay. Keep its side-channel reply out of recovery.
-            if getattr(error, "summary", "") == "segment grounding is not committed or selected knowledge":
-                raise ProposalValidationError(
-                    "segment grounding is not committed or selected knowledge",
-                    code="invalid_grounding_reference",
-                ) from error
-            raise
 
     def _system_prompt(self) -> str:
         system = super()._system_prompt()
