@@ -357,6 +357,33 @@ time to the name "laptop" or a reply of empty entries
 kitchen counter" recorded the place 8 of 8 and failed only on conditions.
 The round 3 decisions in the continuity plan follow from this.
 
+### Judge v3 calibration (e1f835c)
+
+The fact-tracking judge now grades seven criteria: `dropped_true_condition`
+(a still-true condition removed), `kept_ended_condition` (a condition the
+narration ended is still listed) and `state_as_place` (a state recorded as a
+thing's where) replace the loose single label, and a thing the narration
+introduces and the game keeps is correct, not invented. Calibrated on 21
+constructed cases (the 13 round-1 cases relabelled plus 8 new: unplugged but
+still charging, charging correctly removed, drawer state as its place, a
+still-true condition replaced, a condition added with the old one kept, a
+narrated notebook kept, the same notebook not kept, and a new thing the
+narration never mentioned), 151 scored labels per pass, two passes per run.
+
+- First run: 149/151 and 150/151. Two misses on one case were a construction
+  error in the case, not the judge: the narration plugged the phone into
+  Kristin's laptop while the given facts left the laptop in her truck, so
+  "narration contradicts given facts" was the correct call. The plug-in cases
+  were rebuilt with the laptop on the kitchen counter.
+- Rerun: 149/151 and 151/151. Every remaining miss across the four passes
+  (3 in all) is `kept_ended_condition` marked yes on a drawer-opened case whose
+  after-state had correctly removed `shut`; the judge's own reasons misstate the
+  after-state. Accepted, with the caveat that `kept_ended_condition` may be
+  slightly overcounted on opening turns.
+
+Cases, labels and outputs are in the session scratchpad
+(`calibration-v3/`, first run under `pass1/`).
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,

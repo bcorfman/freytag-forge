@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.validation import predicate_matches
+from storygame.runtime.validation import ProgressionValidator, predicate_matches
 from storygame.story_package.models import FactPredicate, ItemPlacement
 
 
@@ -66,11 +66,10 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 
 _SINGLE_CALL_RULES = (
-    "Also return item_facts for each thing in THINGS that your story changed. Copy each name exactly "
-    "as it is written in THINGS.",
-    "For each one, give where it is now and up to two short condition phrases. Keep any condition "
-    "that is still true. Example: if she picks up "
-    'the lantern from the table, the lantern is {"where": "in her hand", "condition": ["lit"]}.',
+    "Also return item_facts for each thing your story moved or changed, and for each new thing it put in a place.",
+    "Give only what changed: where it is now, its condition list of up to two short phrases, or both. "
+    "Example: if she blows out the cracked, lit lantern on the table, the lantern is "
+    '{"condition": ["dark", "cracked"]}.',
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
@@ -101,6 +100,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_seed_issues = list(seed_issues or [])
         self._pending_item_facts: object = None
         self._pending_item_facts_present = False
+        self._held_item_facts: dict[str, dict[str, object]] = {}
+        self._changed_last_turn: set[str] = set()
+        self._selected_names: list[str] | None = None
+        self.item_facts_match_calls = 0
+        package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
+        self._hand_seed_names = {name for name in self.item_facts if name not in package_names}
 
     @classmethod
     def from_environment(
@@ -128,7 +133,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _things_block(self) -> str:
         lines = ["THINGS:"]
-        for name in self.item_facts_seed_names:
+        names = self._selected_names if self._selected_names is not None else self.always_included_names()
+        for name in names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
             line = f"- {name}. Where: {facts['where']}."
@@ -176,6 +182,61 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._pending_item_facts = None
         self._pending_item_facts_present = False
 
+    def always_included_names(self) -> list[str]:
+        package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
+        required_ids = {
+            dependency
+            for transition in ProgressionValidator(self.state.package)._reachable_transitions(
+                self.state.current_scene_id
+            )
+            for dependency in transition.required_dependencies
+        }
+        dependency_names = {item.name for item in self.state.package.world.items if item.id in required_ids}
+        protagonist = self._protagonist_name().casefold()
+        carried = {name for name, facts in self.item_facts.items() if protagonist in str(facts["where"]).casefold()}
+        included = set(package_names) | self._hand_seed_names | dependency_names | carried | self._changed_last_turn
+        # Use the live store here.  Tests and bench callers may add tracked
+        # things after construction; those things still need to participate in
+        # dependency and carried-item selection.
+        return [name for name in self.item_facts if name in included]
+
+    def facts_for_names(self, names: list[str] | tuple[str, ...] | set[str]) -> dict[str, dict[str, object]]:
+        wanted = set(names)
+        return {
+            name: {"where": facts["where"], "condition": list(facts["condition"])}
+            for name, facts in self.item_facts.items()
+            if name in wanted
+        }
+
+    @staticmethod
+    def _valid_entry(value: object) -> bool:
+        if not isinstance(value, dict) or not value:
+            return False
+        if "where" in value and (not isinstance(value["where"], str) or not value["where"].strip()):
+            return False
+        if "condition" in value and (
+            not isinstance(value["condition"], list)
+            or any(not isinstance(item, str) or not item.strip() for item in value["condition"])
+        ):
+            return False
+        return "where" in value or "condition" in value
+
+    def _merge_entry(self, name: str, value: dict[str, object]) -> bool:
+        facts = self.item_facts[name]
+        if "where" in value:
+            where = value["where"]
+            if not isinstance(where, str) or not where.strip():
+                return False
+            facts["where"] = where.strip()[:80]
+        if "condition" in value:
+            condition = value["condition"]
+            if not isinstance(condition, list) or any(
+                not isinstance(item, str) or not item.strip() for item in condition
+            ):
+                return False
+            facts["condition"] = [item.strip()[:40] for item in condition[:2]]
+        return True
+
     def apply_item_facts(self, raw: object) -> tuple[dict[str, dict[str, object]], list[str]]:
         previous = {
             name: {"where": facts["where"], "condition": list(facts["condition"])}
@@ -186,40 +247,108 @@ class ItemFactsProvider(CloudflareTurnProvider):
             issues.append("item_facts must be an object mapping thing names to fact objects")
             return previous, issues
 
-        for name in raw:
+        self._held_item_facts = {}
+        changed: set[str] = set()
+        for name, value in raw.items():
             if name not in self.item_facts:
-                issues.append(f"unknown item_facts name {name!r} was dropped")
-
-        updated: dict[str, dict[str, object]] = {}
-        for name in self.item_facts_seed_names:
-            if name not in raw:
-                updated[name] = previous[name]
+                if isinstance(value, dict) and not value:
+                    continue
+                if self._valid_entry(value):
+                    self._held_item_facts[name] = copy.deepcopy(value)
+                    issues.append(f"item_facts name {name} held for matching")
+                else:
+                    issues.append(f"unknown item_facts name {name!r} was dropped")
                 continue
-            value = raw[name]
-            if (
-                not isinstance(value, dict)
-                or not isinstance(value.get("where"), str)
-                or not value["where"].strip()
-                or not isinstance(value.get("condition"), list)
-                or any(not isinstance(phrase, str) or not phrase.strip() for phrase in value["condition"])
-            ):
-                issues.append(
-                    f"item_facts for {name!r} must have a non-empty where and a list of non-empty condition strings"
-                )
-                updated[name] = previous[name]
+            if isinstance(value, dict) and not value:
+                issues.append(f"empty item_facts entry for {name} ignored")
                 continue
-            conditions = value["condition"]
-            if len(conditions) > 2:
+            if not self._valid_entry(value):
+                issues.append(f"item_facts for {name!r} has invalid where or condition")
+                continue
+            before = copy.deepcopy(self.item_facts[name])
+            if self._merge_entry(name, value) and before != self.item_facts[name]:
+                changed.add(name)
+            if isinstance(value.get("condition"), list) and len(value["condition"]) > 2:
                 issues.append(f"item_facts for {name!r} has more than two condition phrases; kept the first two")
-            updated[name] = {
-                "where": value["where"].strip()[:80],
-                "condition": [phrase.strip()[:40] for phrase in conditions[:2]],
-            }
+        self._changed_last_turn = changed
+        return copy.deepcopy(self.item_facts), issues
 
-        self.item_facts = updated
+    def prepare_turn(self, player_input: str) -> dict[str, object]:
+        always = self.always_included_names()
+        candidates = [name for name in self.item_facts if name not in always]
+        held = list(self._held_item_facts)
+        if not candidates and not held:
+            self._selected_names = always
+            return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
+        self.item_facts_match_calls += 1
+        payload = {
+            "system": 'You match names. Return JSON with "refers" and "same_as". Use exact tracked names.',
+            "user": (
+                f"COMMAND:\n- {player_input}\n\nTHINGS:\n"
+                + "\n".join(f"- {name}" for name in self.item_facts)
+                + "\n\nNEW NAMES:\n"
+                + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
+            ),
+            "max_tokens": 200,
+            "response_format": {"type": "json_object"},
+        }
+        issues: list[str] = []
+        resolutions: dict[str, str] = {}
+        try:
+            reply = CloudflareTurnProvider._request(self, payload)
+        except Exception as error:
+            reply = None
+            issues.append(f"item_facts match failed: {error}")
+        valid = (
+            isinstance(reply, dict) and isinstance(reply.get("refers"), list) and isinstance(reply.get("same_as"), dict)
+        )
+        if not valid:
+            if held:
+                issues.append("invalid item_facts match reply")
+            for name in held:
+                resolutions[name] = "dropped"
+            self._held_item_facts = {}
+            self._selected_names = always
+        else:
+            refers = [
+                name
+                for name in reply["refers"]
+                if isinstance(name, str) and name in self.item_facts and name in candidates
+            ]
+            for name in held:
+                target = reply["same_as"].get(name)
+                entry = self._held_item_facts[name]
+                if isinstance(target, str) and target in self.item_facts:
+                    before = copy.deepcopy(self.item_facts[target])
+                    if self._merge_entry(target, entry):
+                        if before != self.item_facts[target]:
+                            self._changed_last_turn.add(target)
+                        resolutions[name] = target
+                    else:
+                        resolutions[name] = "dropped"
+                elif target == "new" and isinstance(entry.get("where"), str) and entry["where"].strip():
+                    self.item_facts[name] = {"where": entry["where"].strip()[:80], "condition": []}
+                    self._merge_entry(name, entry)
+                    self.item_facts_seed_names = (*self.item_facts_seed_names, name)
+                    self._changed_last_turn.add(name)
+                    resolutions[name] = "new"
+                else:
+                    issues.append(f"item_facts name {name} had no valid match")
+                    resolutions[name] = "dropped"
+            self._held_item_facts = {}
+            selected = set(self.always_included_names()) | set(refers)
+            self._selected_names = [name for name in self.item_facts if name in selected]
         return {
-            name: {"where": facts["where"], "condition": list(facts["condition"])} for name, facts in updated.items()
-        }, issues
+            "match_call": True,
+            "match_raw": copy.deepcopy(reply),
+            "match_issues": issues,
+            "resolutions": resolutions,
+        }
+
+    def resolve_held(self) -> dict[str, object]:
+        if not self._held_item_facts:
+            return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
+        return self.prepare_turn("(none)")
 
     def second_call_update(self, player_input: str, narration: str) -> object:
         payload = {

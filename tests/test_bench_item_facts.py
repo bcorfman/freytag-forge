@@ -359,8 +359,9 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     assert result["scene_transitions"] == [
         {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
     ]
-    assert result["turns"][7]["item_facts_after"] == result["turns"][8]["item_facts_before"]
-    assert len(calls) == 13
+    assert "Michelle's phone" in result["turns"][7]["item_facts_after"]
+    assert "Kristin's laptop" in result["turns"][8]["item_facts_before"]
+    assert len(calls) == 17
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
