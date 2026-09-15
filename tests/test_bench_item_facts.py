@@ -7,7 +7,7 @@ import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
 from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
-from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -351,6 +351,56 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     ]
     assert result["turns"][7]["item_facts_after"] == result["turns"][8]["item_facts_before"]
     assert len(calls) == 13
+
+
+def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
+    calls = []
+
+    def request(_provider, _payload):
+        calls.append(True)
+        response = {
+            "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {"Michelle's phone": {"where": "in her hand", "condition": []}},
+        }
+        if len(calls) in (4, 5):
+            response["things"] = []
+        return response
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(SINGLE)
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+
+    assert result["status"] == "ok"
+    assert len(result["turns"]) == 11
+    assert result["rejected_turns"][0]["turn_number"] == 3
+    assert result["rejected_turns"][0]["rejection_code"] == "INVALID_PROPOSAL"
+    assert result["turns"][2]["item_facts_before"] == result["turns"][1]["item_facts_after"]
+
+
+def test_other_narration_provider_error_still_fails_fixed_turn_run(monkeypatch):
+    calls = []
+
+    def request(_provider, _payload):
+        calls.append(True)
+        if len(calls) == 4:
+            raise NarrationProviderError("service unavailable", 503, "UNAVAILABLE")
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {},
+        }
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(SINGLE)
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+
+    assert result["status"] == "failed"
+    assert result["failure_reason"].startswith("UNAVAILABLE:")
 
 
 def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_path):

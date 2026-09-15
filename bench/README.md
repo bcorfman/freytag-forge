@@ -200,7 +200,7 @@ Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, na
 
 The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those five checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.
 
-`fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
+`fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; an invalid proposal after recovery is recorded as a rejected turn, while a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
 
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:
 

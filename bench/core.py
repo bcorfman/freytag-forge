@@ -703,6 +703,20 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             prior_scene = state.current_scene_id
             try:
                 proposal = _turn_with_rate_limit_retry(engine, player_input)
+            except NarrationProviderError as error:
+                if fixed_turns is None or error.error_code != "INVALID_PROPOSAL":
+                    raise
+                if isinstance(provider, ItemFactsProvider):
+                    provider.discard_pending_item_facts()
+                rejected_turns.append(
+                    {
+                        "turn_number": turn_number,
+                        "player_input": player_input,
+                        "rejection_code": "INVALID_PROPOSAL",
+                        "rejection_reason": str(error),
+                    }
+                )
+                continue
             except (ProposalValidationError, RuntimeContractError) as error:
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
