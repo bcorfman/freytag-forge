@@ -398,6 +398,36 @@ most moves were lost (two-scene 5/11, 40-turn 21/37). Not a capture result;
 the line is being replaced with one that names both keys and shows an example of
 each, then re-smoked. Smoke rows removed from the ledger.
 
+### Round 3 re-smoke with both keys named (7727375)
+
+The narrator is back to `where` and `condition` (7 and 21 `where` entries, 0
+invalid entries, 0 and 1 rejected turns; match call 3 and 2 times). Scores are
+still low (two-scene 2/12, 40-turn 19/39), and reading every failing turn
+sorts them into (offline human-read categorisation):
+
+| | 40-turn | Two-scene |
+|---|---|---|
+| Correct | 19 | 2 |
+| Narrator narrated a change but returned nothing (`{}` or `null`) | 8 | 3 |
+| Capture wrong this turn | 6 | 6 |
+| Narration contradicts its given facts, capture itself fine | 6 | 1 |
+
+- **Omissions**: "puts it in her jacket pocket", "carries the laptop back into
+  the house", handing the phone to the man, all with an empty reply.
+- **State as place, cascading**: `{"drawer": {"where": "open"}}` resolved to
+  the carved drawer, which then kept `shut` and had "open" as its place; every
+  later 1A turn is failed again on that one error, and in 1B, where the
+  drawer's THINGS line had no real place, the narrator put it at the park.
+- **Carried rule false positive**: "in Kristin's truck outside the house"
+  contains the protagonist's name, so the laptop was always included in 1B,
+  whose authored seed is empty.
+- **Judge**: a correct capture after narration that contradicts the given
+  facts ("picks up the phone from the table" when it was in her hand) is scored
+  not kept; no calibration case covers that.
+
+Not run at 4 replicates; next steps await Brandon (omission strategy, carried
+detection, per-turn scoring).
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,

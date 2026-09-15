@@ -349,6 +349,24 @@ Tasks:
   `kept_ended_condition` over-firing on drawer-opened cases.
 - [x] Ringer task F: partial entries, new example, merged match call, per-turn
   THINGS selection, persistence of narrated things, per-turn call counts.
+- [x] Ringer task G: the rule line names both reply keys (7727375); the first
+  v3 smoke had lost `where` to invented keys.
+- [ ] Re-smoke findings (7727375) decided by Brandon, 2026-09-15:
+  - **Omissions** (a change narrated but not reported, about 1 turn in 5): a
+    short rule first, replacing line 1; if it does not hold, the next turn's
+    match call also reads the last narration and adds changes the reply left
+    out.
+  - **Carried** is decided by the match call, not by the protagonist's name in
+    a place ("in Kristin's truck" was wrongly carried). The call already fires
+    exactly when things sit outside the other groups; it gets their places and
+    the player character's name and returns the ones being held or carried.
+  - **Scoring stays whole-state**: a persistent capture error keeps failing
+    later turns.
+  - Also: replace the rule example with an opened box so a state goes in
+    `condition`, and add a judge calibration case for a correct capture after
+    narration that contradicts the given facts.
+- [ ] Ringer task H: omission rule, opened-box example, carried from the match
+  call; recalibrate the judge with the new case.
 - [ ] Smoke, then 4 replicates of each variation; tally against 92%.
 
 Operational lessons from round 1 (apply to every live run):
