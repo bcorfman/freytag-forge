@@ -72,8 +72,9 @@ function judgeConfiguration(environment) {
   return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
 }
 
-function playerVisibleTurn(turn) {
+function playerVisibleTurn(turn, index) {
   return {
+    turn_number: Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1,
     player_input: turn.player_input,
     narration: turn.narration,
     item_facts_before: turn.item_facts_before,
@@ -82,7 +83,7 @@ function playerVisibleTurn(turn) {
   };
 }
 
-function validateVerdict(verdict, expectedLength) {
+function validateVerdict(verdict, expectedTurns) {
   if (!verdict || !Array.isArray(verdict.turns)) {
     throw new Error("E2E fact-tracking judge returned an invalid verdict.");
   }
@@ -90,7 +91,6 @@ function validateVerdict(verdict, expectedLength) {
     !verdict.turns.every(
       (item) =>
         item &&
-        Number.isInteger(item.turn) &&
         FACT_TRACKING_CRITERIA.every((criterion) => VERDICTS.includes(item[criterion])) &&
         typeof item.reason === "string" &&
         Array.isArray(item.changes) &&
@@ -105,10 +105,29 @@ function validateVerdict(verdict, expectedLength) {
   ) {
     throw new Error("E2E fact-tracking judge returned an invalid verdict.");
   }
-  if (verdict.turns.length !== expectedLength) {
-    return null;
+  const expected = new Set(expectedTurns);
+  const actualCounts = new Map();
+  for (const item of verdict.turns) {
+    if (Number.isInteger(item.turn)) actualCounts.set(item.turn, (actualCounts.get(item.turn) || 0) + 1);
   }
-  return verdict;
+  const missing = expectedTurns.filter((turn) => !actualCounts.has(turn));
+  const unexpected = [...actualCounts]
+    .filter(([turn, count]) => !expected.has(turn) || count > 1)
+    .flatMap(([turn, count]) => Array(Math.max(1, count - (expected.has(turn) ? 1 : 0))).fill(turn));
+  if (
+    verdict.turns.length !== expectedTurns.length ||
+    missing.length ||
+    unexpected.length ||
+    verdict.turns.some((item) => !Number.isInteger(item.turn))
+  ) {
+    return { missing, unexpected };
+  }
+  const byTurn = new Map(verdict.turns.map((item) => [item.turn, item]));
+  return { verdict: { turns: expectedTurns.map((turn) => byTurn.get(turn)) } };
+}
+
+function turnMismatchError(mismatch) {
+  return `E2E fact-tracking judge returned the wrong turn numbers (missing: ${mismatch.missing.join(", ") || "none"}; unexpected: ${mismatch.unexpected.join(", ") || "none"}).`;
 }
 
 export async function judgeFactTracking(
@@ -117,11 +136,12 @@ export async function judgeFactTracking(
 ) {
   void sceneId;
   const { apiKey, model } = judgeConfiguration(environment);
+  const expectedTurns = turns.map((turn, index) => (Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1));
   const requestBody = {
     model,
     store: false,
     input: [
-      { role: "system", content: SYSTEM_MESSAGE },
+      { role: "system", content: `${SYSTEM_MESSAGE} Copy each turn's turn_number into turn.` },
       {
         role: "user",
         content: JSON.stringify({
@@ -149,14 +169,13 @@ export async function judgeFactTracking(
     if (!response.ok) throw new Error(`E2E fact-tracking judge request failed with HTTP ${response.status}.`);
     return JSON.parse(outputText(await response.json()));
   }
-  const first = validateVerdict(await requestVerdict(), turns.length);
-  if (first) return first;
-  const secondVerdict = await requestVerdict();
-  const second = validateVerdict(secondVerdict, turns.length);
-  if (second) return second;
-  throw new Error(
-    `E2E fact-tracking judge returned ${secondVerdict.turns.length} verdicts for ${turns.length} turns.`,
-  );
+  let mismatch;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const checked = validateVerdict(await requestVerdict(), expectedTurns);
+    if (checked.verdict) return checked.verdict;
+    mismatch = checked;
+  }
+  throw new Error(turnMismatchError(mismatch));
 }
 
 function argument(name) {

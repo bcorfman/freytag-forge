@@ -50,49 +50,19 @@ function judgeConfiguration(environment) {
   return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
 }
 
-function playerVisibleTurn(turn) {
-  return { player_input: turn.player_input, narration: turn.narration };
+function playerVisibleTurn(turn, index) {
+  return {
+    turn_number: Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1,
+    player_input: turn.player_input,
+    narration: turn.narration,
+  };
 }
 
-export async function judgeContinuity(
-  { sceneId, opening, turns },
-  { environment = process.env, fetchImpl = fetch, canon } = {},
-) {
-  void sceneId;
-  const { apiKey, model } = judgeConfiguration(environment);
-  const response = await fetchImpl("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      store: false,
-      input: [
-        { role: "system", content: SYSTEM_MESSAGE },
-        {
-          role: "user",
-          content: JSON.stringify({
-            canon: { scene_id: canon?.scene_id, plot: canon?.plot },
-            opening,
-            turns: turns.map(playerVisibleTurn),
-          }),
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "scene_continuity_judgment",
-          strict: true,
-          schema: CONTINUITY_SCHEMA,
-        },
-      },
-    }),
-  });
-  if (!response.ok) throw new Error(`E2E continuity judge request failed with HTTP ${response.status}.`);
-  const verdict = JSON.parse(outputText(await response.json()));
+function validateVerdict(verdict, expectedTurns) {
+  if (!verdict || !Array.isArray(verdict.turns)) {
+    throw new Error("E2E continuity judge returned an invalid verdict.");
+  }
   if (
-    !verdict ||
-    !Array.isArray(verdict.turns) ||
-    verdict.turns.length !== turns.length ||
     !verdict.turns.every(
       (item) =>
         item &&
@@ -102,7 +72,70 @@ export async function judgeContinuity(
   ) {
     throw new Error("E2E continuity judge returned an invalid verdict.");
   }
-  return verdict;
+  const expected = new Set(expectedTurns);
+  const actualCounts = new Map();
+  for (const item of verdict.turns) {
+    if (Number.isInteger(item.turn)) actualCounts.set(item.turn, (actualCounts.get(item.turn) || 0) + 1);
+  }
+  const missing = expectedTurns.filter((turn) => !actualCounts.has(turn));
+  const unexpected = [...actualCounts]
+    .filter(([turn, count]) => !expected.has(turn) || count > 1)
+    .flatMap(([turn, count]) => Array(Math.max(1, count - (expected.has(turn) ? 1 : 0))).fill(turn));
+  if (
+    verdict.turns.length !== expectedTurns.length ||
+    missing.length ||
+    unexpected.length ||
+    verdict.turns.some((item) => !Number.isInteger(item.turn))
+  ) {
+    return { missing, unexpected };
+  }
+  const byTurn = new Map(verdict.turns.map((item) => [item.turn, item]));
+  return { verdict: { turns: expectedTurns.map((turn) => byTurn.get(turn)) } };
+}
+
+function turnMismatchError(mismatch) {
+  return `E2E continuity judge returned the wrong turn numbers (missing: ${mismatch.missing.join(", ") || "none"}; unexpected: ${mismatch.unexpected.join(", ") || "none"}).`;
+}
+
+export async function judgeContinuity(
+  { sceneId, opening, turns },
+  { environment = process.env, fetchImpl = fetch, canon } = {},
+) {
+  void sceneId;
+  const { apiKey, model } = judgeConfiguration(environment);
+  const expectedTurns = turns.map((turn, index) => (Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1));
+  const requestBody = {
+    model,
+    store: false,
+    input: [
+      { role: "system", content: `${SYSTEM_MESSAGE} Copy each turn's turn_number into turn.` },
+      {
+        role: "user",
+        content: JSON.stringify({
+          canon: { scene_id: canon?.scene_id, plot: canon?.plot },
+          opening,
+          turns: turns.map(playerVisibleTurn),
+        }),
+      },
+    ],
+    text: { format: { type: "json_schema", name: "scene_continuity_judgment", strict: true, schema: CONTINUITY_SCHEMA } },
+  };
+  async function requestVerdict() {
+    const response = await fetchImpl("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(requestBody),
+    });
+    if (!response.ok) throw new Error(`E2E continuity judge request failed with HTTP ${response.status}.`);
+    return JSON.parse(outputText(await response.json()));
+  }
+  let mismatch;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const checked = validateVerdict(await requestVerdict(), expectedTurns);
+    if (checked.verdict) return checked.verdict;
+    mismatch = checked;
+  }
+  throw new Error(turnMismatchError(mismatch));
 }
 
 function argument(name) {

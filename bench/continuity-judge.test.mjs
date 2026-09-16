@@ -52,7 +52,7 @@ test("continuity judge uses a strict schema and only sends player-visible turn f
   assert.equal(request.text.format.schema.additionalProperties, false);
   assert.equal(request.text.format.schema.properties.turns.items.additionalProperties, false);
   assert.deepEqual(JSON.parse(request.input[1].content).turns, [
-    { player_input: "Look at the phone.", narration: "The phone lies on the floor." },
+    { turn_number: 1, player_input: "Look at the phone.", narration: "The phone lies on the floor." },
   ]);
 });
 
@@ -66,7 +66,7 @@ test("continuity judge rejects the wrong number of turns and invalid verdicts", 
   const options = { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: async () => response({ turns: [] }) };
   await assert.rejects(
     judgeContinuity({ sceneId: "1A", opening: "Opening.", turns: [{ player_input: "Look.", narration: "Seen." }] }, options),
-    /invalid verdict/,
+    /wrong turn numbers/,
   );
   await assert.rejects(
     judgeContinuity(
@@ -78,4 +78,70 @@ test("continuity judge rejects the wrong number of turns and invalid verdicts", 
     ),
     /invalid verdict/,
   );
+});
+
+function continuityVerdict(turn) {
+  return { ...verdict.turns[0], turn };
+}
+
+test("continuity judge sends and returns saved turn numbers across a gap", async () => {
+  const requests = [];
+  const result = await judgeContinuity(
+    { sceneId: "1A", opening: "", turns: [1, 2, 3, 5].map((turn) => ({ turn_number: turn })) },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async (_url, options) => {
+        requests.push(JSON.parse(options.body));
+        return response({ turns: [5, 1, 3, 2].map(continuityVerdict) });
+      },
+    },
+  );
+  assert.deepEqual(JSON.parse(requests[0].input[1].content).turns.map((turn) => turn.turn_number), [1, 2, 3, 5]);
+  assert.deepEqual(result.turns.map((turn) => turn.turn), [1, 2, 3, 5]);
+});
+
+test("continuity judge retries positional numbers once and names the mismatch", async () => {
+  let calls = 0;
+  await assert.rejects(
+    judgeContinuity(
+      { sceneId: "1A", opening: "", turns: [1, 2, 3, 5].map((turn) => ({ turn_number: turn })) },
+      {
+        environment: { OPENAI_API_KEY: "test-key" },
+        fetchImpl: async () => {
+          calls += 1;
+          return response({ turns: [1, 2, 3, 4].map(continuityVerdict) });
+        },
+      },
+    ),
+    /missing: 5; unexpected: 4/,
+  );
+  assert.equal(calls, 2);
+});
+
+test("continuity judge retries a short first reply", async () => {
+  let calls = 0;
+  const result = await judgeContinuity(
+    { sceneId: "1A", opening: "", turns: [{ turn_number: 1 }, { turn_number: 2 }] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async () => response({ turns: calls++ === 0 ? [continuityVerdict(1)] : [continuityVerdict(1), continuityVerdict(2)] }),
+    },
+  );
+  assert.deepEqual(result.turns.map((turn) => turn.turn), [1, 2]);
+  assert.equal(calls, 2);
+});
+
+test("continuity judge falls back to positions when turn_number is absent", async () => {
+  let sent;
+  await judgeContinuity(
+    { sceneId: "1A", opening: "", turns: [{}, {}, {}, {}] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async (_url, options) => {
+        sent = JSON.parse(options.body);
+        return response({ turns: [1, 2, 3, 4].map(continuityVerdict) });
+      },
+    },
+  );
+  assert.deepEqual(JSON.parse(sent.input[1].content).turns.map((turn) => turn.turn_number), [1, 2, 3, 4]);
 });

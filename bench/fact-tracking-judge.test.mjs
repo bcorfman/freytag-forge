@@ -53,7 +53,7 @@ test("filters turn fields and uses the default model with the strict schema", as
   assert.equal(body.store, false);
   assert.match(body.input[0].content, /Use cause command only when the player's command itself asks for that change/);
   assert.match(body.input[0].content, /Looking at, examining, searching, or checking a thing does not ask for moving/);
-  assert.deepEqual(Object.keys(sent).sort(), ["item_facts_after", "item_facts_before", "narration", "player_input"]);
+  assert.deepEqual(Object.keys(sent).sort(), ["item_facts_after", "item_facts_before", "narration", "player_input", "turn_number"]);
   assert.deepEqual(body.text.format.schema.properties.turns.items.required, [
     "turn",
     "facts_after_correct",
@@ -82,7 +82,7 @@ test("rejects a verdict with the wrong turn count", async () => {
       { sceneId: "1A", opening: "", turns },
       { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch({ turns: [] }, requests) },
     ),
-    /0 verdicts for 1 turns/,
+    /missing: 1; unexpected: none/,
   );
   assert.equal(requests.length, 2);
 });
@@ -172,7 +172,7 @@ test("passes scene_id when present and omits it otherwise", async () => {
     },
     {
       environment: { OPENAI_API_KEY: "test-key" },
-      fetchImpl: fakeFetch({ turns: [verdict().turns[0], verdict().turns[0]] }, requests),
+      fetchImpl: fakeFetch({ turns: [{ ...verdict().turns[0], turn: 1 }, { ...verdict().turns[0], turn: 2 }] }, requests),
     },
   );
   const sent = JSON.parse(requests[0].input[1].content).turns;
@@ -204,4 +204,45 @@ test("rejects a change with a bad cause", async () => {
     ),
     /invalid verdict/,
   );
+});
+
+function numberedTurns(numbers) {
+  return numbers.map((turn_number) => ({ ...turns[0], turn_number }));
+}
+
+test("sends and returns real turn numbers across a gap", async () => {
+  const requests = [];
+  const result = await judgeFactTracking(
+    { sceneId: "1A", opening: "", turns: numberedTurns([1, 2, 3, 5]) },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: fakeFetch({ turns: [5, 1, 3, 2].map((turn) => verdict().turns[0] && { ...verdict().turns[0], turn }) }, requests),
+    },
+  );
+  assert.deepEqual(JSON.parse(requests[0].input[1].content).turns.map((turn) => turn.turn_number), [1, 2, 3, 5]);
+  assert.deepEqual(result.turns.map((turn) => turn.turn), [1, 2, 3, 5]);
+});
+
+test("retries positional numbers once and names missing and unexpected turns", async () => {
+  const requests = [];
+  await assert.rejects(
+    judgeFactTracking(
+      { sceneId: "1A", opening: "", turns: numberedTurns([1, 2, 3, 5]) },
+      { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch({ turns: [1, 2, 3, 4].map((turn) => ({ ...verdict().turns[0], turn })) }, requests) },
+    ),
+    /missing: 5; unexpected: 4/,
+  );
+  assert.equal(requests.length, 2);
+});
+
+test("uses positional turn numbers when records have none", async () => {
+  const requests = [];
+  await judgeFactTracking(
+    { sceneId: "1A", opening: "", turns: [{ ...turns[0] }, { ...turns[0] }] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: fakeFetch({ turns: [{ ...verdict().turns[0], turn: 1 }, { ...verdict().turns[0], turn: 2 }] }, requests),
+    },
+  );
+  assert.deepEqual(JSON.parse(requests[0].input[1].content).turns.map((turn) => turn.turn_number), [1, 2]);
 });
