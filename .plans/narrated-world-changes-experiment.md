@@ -554,6 +554,39 @@ So the opened-box example (rank-1 rule, second attempt at this defect) did not
 stop a state landing in `where`. No change type reaches 92%; the ceiling with
 the defect absent is about 71%.
 
+### Round 3 smoke with the place key (40c97d2)
+
+Brandon's choice: ask for `place` instead of `where`, since "where is it now?"
+invites "open". One replicate each.
+
+| | Two-scene | 40-turn |
+|---|---|---|
+| Kept facts correct | 10/12 (83%) | 9/40 (22%) |
+| State as place | 0 | 30 |
+| Reply keys `place` / `where` | 14 / 0 | 36 / 0 |
+| Invalid entries, empty replies | 0, 0 | 0, 2 |
+
+The rename fixed the key itself: the narrator used `place` every time, never the
+legacy `where`, and sent no invalid entries. It did not stop a state being the
+ANSWER, but the remaining failure is now confined to commands that open or close
+something:
+
+- turn 8, "Close the drawer." -> `{"Michelle's carved drawer": {"place": "closed"}}`
+- turn 26, "Open the drawer with your initials carved into it." -> `{"place": "open"}`
+- turns 6 and 7 were correct, handling `shut` as a condition, so the model only
+  confuses the two when the command itself is to open or close.
+
+That single entry costs the rest of the run under whole-state scoring: set down
+0/4, move between places 0/4 and check a carried thing 0/2 are all collateral
+from the drawer having no real place. The script composition explains the gap
+between the two runs - one open/close turn in twelve (83%) versus eight in forty
+(22%) - not a difference in the format.
+
+Next decision for Brandon: a third rank-1 rule attempt, an LLM normalisation of
+a returned place in the match call (rank 2, the call already fires on most
+turns), or accept the two-scene 83% and take the state-versus-place question
+into the engine work.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
