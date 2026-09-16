@@ -13,6 +13,8 @@ dependencies = [
     "rich>=15.0.0",
     "uvicorn>=0.52.1",
     "pyyaml>=6.0.3",
+    "spacy>=3.8.16",
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
 ]
 
 [tool.uv]
