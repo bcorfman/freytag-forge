@@ -816,8 +816,18 @@ Whole-state accuracy by round, same scripts:
   places 88% (16 turns) and check a carried thing 75%.
 - Damage is 0 of 4 again, all four missed. Pickups remain weak (38% and 59%)
   and are dominated by narration contradicting its given facts (5 and 14 turns).
-- Continuity: contradicts a stated fact 12/47 and 54/159; acts beyond the
-  command 25/47 and 68/159; scene restarts 2/47 and 10/159.
+- Continuity: contradicts a stated fact 12/47 and 54/159; scene restarts 2/47
+  and 10/159.
+- **Narrator initiative is not a failure** (principle 1: a narrated change
+  belongs to the world whoever caused it; only a story-breaking change is
+  refused). The useful statistic is whether its consequences were captured. The
+  narrator acted unprompted on 25 two-scene turns, of which 15 kept facts
+  correct and 7 missed the change, and on 68 forty-turn turns, of which 39 kept
+  facts correct and 25 missed - about 58% captured, 32 changes silently lost
+  across both runs. Every failing turn is listed in
+  `bench/results/round4-failures.md`, which counts capture defects and narration
+  that contradicts canon or its given facts, and annotates initiative as
+  context.
 
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
