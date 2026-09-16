@@ -74,14 +74,16 @@ _SINGLE_CALL_RULES = (
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
     "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-    "storyteller used. PLACES lists text the storyteller gave as a thing's place. Return only JSON like "
+    "storyteller used. PLACES lists a thing's name and the text the storyteller gave as its place. Return only JSON "
+    "like "
     '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}, "places": {"name": "place"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
     'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
     "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
-    'that means the same thing, or "new" if it is a different thing. In places, answer for each name in PLACES with '
-    '"place" if the text names a spot or a holder, like "on the kitchen table", or "state" if it tells how the thing '
-    'is, like "open" or "broken". Copy names from THINGS exactly.'
+    'that means the same thing, or "new" if it is a different thing. In places, use the thing\'s NAME as the key, '
+    'never the text. Answer "place" when the text says where the thing is, like "on the kitchen counter" or "in '
+    'her hand", and "state" only when the text says how the thing is, like "open" or "broken". Copy names from '
+    "THINGS exactly."
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
