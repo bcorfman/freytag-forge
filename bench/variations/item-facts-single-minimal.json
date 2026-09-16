@@ -7,10 +7,10 @@
   "item_facts": {
     "mode": "single_call",
     "seed": {
-      "Michelle's phone": {"where": "on the kitchen floor", "condition": ["not damaged"]},
-      "Michelle's workstation drawers": {"where": "in Michelle's workstation", "condition": ["shut"]},
-      "the back door": {"where": "at the back of the kitchen", "condition": ["forced open", "frame splintered"]},
-      "Kristin's laptop": {"where": "in Kristin's truck outside the house", "condition": []}
+      "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
+      "drawer": {"place": "in Michelle's workstation", "condition": ["shut"]},
+      "the back door": {"place": "at the back of the kitchen", "condition": ["forced open", "frame splintered"]},
+      "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []}
     }
   },
   "system_prompt": {
@@ -22,7 +22,7 @@
       "Never write IDs or story bookkeeping into the prose.",
       "Do not copy sentences from the SCENE section."
     ],
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"where\":\"on the table\",\"condition\":[\"dark\"]}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"on the table\",\"condition\":[\"dark\"]}}}"
   },
   "overrides": {
     "knowledge.yaml": {

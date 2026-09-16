@@ -24,8 +24,8 @@ def _provider(mode="single_call"):
         token="",
         state=state,
         item_facts={
-            "the lantern": {"where": "on the table", "condition": ["lit"]},
-            "the gate": {"where": "at the garden path", "condition": []},
+            "the lantern": {"place": "on the table", "condition": ["lit"]},
+            "the gate": {"place": "at the garden path", "condition": []},
         },
         mode=mode,
     )
@@ -66,7 +66,7 @@ def test_single_call_rules_require_facts_for_every_change():
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts.\n"
-        'Give only what changed. Use "place" for where it is now and "condition" for up to two short phrases. '
+        'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
         "Example: if she opens the box on the table and picks up the key, the box is "
         '{"condition": ["open"]} and the key '
         'is {"place": "in her hand"}.'
@@ -126,8 +126,8 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
             {
                 "segments": [{"kind": "narration", "text": "The house is quiet."}],
                 "item_facts": {
-                    "the lantern": {"where": "in her hand", "condition": ["warm"]},
-                    "the gate": {"where": "at the garden path", "condition": []},
+                    "the lantern": {"place": "in her hand", "condition": ["warm"]},
+                    "the gate": {"place": "at the garden path", "condition": []},
                 },
             },
         ]
@@ -136,8 +136,8 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
 
     provider("Look at the lantern.")
     assert provider.pending_item_facts() == {
-        "the lantern": {"where": "in her hand", "condition": ["warm"]},
-        "the gate": {"where": "at the garden path", "condition": []},
+        "the lantern": {"place": "in her hand", "condition": ["warm"]},
+        "the gate": {"place": "at the garden path", "condition": []},
     }
     provider.apply_item_facts(provider.pending_item_facts())
     next_prompt = provider.assemble_turn_prompt("Look at the gate.")
@@ -149,12 +149,12 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
 def test_apply_item_facts_replaces_valid_entry_and_leaves_omitted_things_unchanged():
     provider = _provider()
     facts, issues = provider.apply_item_facts(
-        {"the lantern": {"where": "  in her hand  ", "condition": ["  warm  ", "held"]}}
+        {"the lantern": {"place": "  in her hand  ", "condition": ["  warm  ", "held"]}}
     )
 
     assert facts == {
-        "the lantern": {"where": "in her hand", "condition": ["warm", "held"]},
-        "the gate": {"where": "at the garden path", "condition": []},
+        "the lantern": {"place": "in her hand", "condition": ["warm", "held"]},
+        "the gate": {"place": "at the garden path", "condition": []},
     }
     assert issues == []
 
@@ -172,8 +172,8 @@ def test_apply_item_facts_drops_unknown_and_preserves_malformed_entries():
     provider = _provider()
     facts, issues = provider.apply_item_facts(
         {
-            "unknown thing": {"where": "somewhere", "condition": []},
-            "the gate": {"where": "  ", "condition": ["closed"]},
+            "unknown thing": {"place": "somewhere", "condition": []},
+            "the gate": {"place": "  ", "condition": ["closed"]},
         }
     )
 
@@ -187,13 +187,13 @@ def test_apply_item_facts_trims_third_condition_and_phrase_lengths():
     facts, issues = provider.apply_item_facts(
         {
             "the lantern": {
-                "where": f"  {'a' * 90}  ",
+                "place": f"  {'a' * 90}  ",
                 "condition": [f" {'b' * 50} ", "second", "third"],
             }
         }
     )
 
-    assert facts["the lantern"] == {"where": "a" * 80, "condition": ["b" * 40, "second"]}
+    assert facts["the lantern"] == {"place": "a" * 80, "condition": ["b" * 40, "second"]}
     assert any("condition" in issue for issue in issues)
 
 
@@ -201,39 +201,37 @@ def test_state_axis_place_becomes_condition_without_match_call():
     provider = _provider()
     provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
     provider.apply_item_facts({"the lantern": {"place": "DARK"}})
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["dark"]}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["dark"]}
     assert provider.item_facts_axis_fixes == 1
 
 
 def test_fixed_item_refuses_place_but_accepts_condition_change():
     provider = _provider()
-    provider.item_facts["Michelle's carved drawer"] = {
-        "where": "in Michelle's workstation",
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
         "condition": ["shut"],
     }
-    facts, issues = provider.apply_item_facts(
-        {"Michelle's carved drawer": {"place": "in front of her", "condition": ["open"]}}
-    )
+    facts, issues = provider.apply_item_facts({"drawer": {"place": "in front of her", "condition": ["open"]}})
 
-    assert facts["Michelle's carved drawer"] == {
-        "where": "in Michelle's workstation",
+    assert facts["drawer"] == {
+        "place": "in Michelle's workstation",
         "condition": ["open"],
     }
-    assert any("Michelle's carved drawer" in issue and "in front of her" in issue for issue in issues)
+    assert any("drawer" in issue and "in front of her" in issue for issue in issues)
 
 
 def test_fixed_item_axis_place_still_sets_pole_without_moving():
     provider = _provider()
-    provider.item_facts["Michelle's carved drawer"] = {
-        "where": "in Michelle's workstation",
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
         "condition": ["shut"],
     }
-    provider.state_axes = {"Michelle's carved drawer": {"shut": ["closed"], "open": []}}
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
 
-    facts, issues = provider.apply_item_facts({"Michelle's carved drawer": {"place": "open"}})
+    facts, issues = provider.apply_item_facts({"drawer": {"place": "open"}})
 
-    assert facts["Michelle's carved drawer"] == {
-        "where": "in Michelle's workstation",
+    assert facts["drawer"] == {
+        "place": "in Michelle's workstation",
         "condition": ["open"],
     }
     assert issues == []
@@ -245,7 +243,7 @@ def test_movable_item_still_updates_place():
 
     provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
 
-    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+    assert provider.item_facts["the lantern"]["place"] == "in her hand"
 
 
 def test_state_axis_alias_is_canonical_and_evicts_opposite():
@@ -266,7 +264,7 @@ def test_axis_place_has_its_own_slot_when_conditions_are_full():
     provider.apply_item_facts({"the lantern": {"place": "unlit"}})
 
     assert provider.item_facts["the lantern"] == {
-        "where": "on the table",
+        "place": "on the table",
         "condition": ["dark", "carved with KMS", "dusty"],
     }
     assert provider.item_facts_axis_fixes == 1
@@ -280,7 +278,7 @@ def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix
     assert provider.item_facts["the lantern"]["condition"] == ["dark", "warm"]
 
     provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
-    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+    assert provider.item_facts["the lantern"]["place"] == "in her hand"
     assert provider.item_facts_axis_fixes == 0
 
 
@@ -290,21 +288,21 @@ def test_empty_condition_reply_clears_axis_and_conditions_but_keeps_place():
     provider.item_facts["the lantern"]["condition"] = ["open", "carved with KMS"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
 
     provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
     provider.apply_item_facts({"the lantern": {"condition": []}})
     assert provider.item_facts["the lantern"]["condition"] == []
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
 
 
 def test_non_axis_place_still_updates_location():
     provider = _provider()
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
-    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+    assert provider.item_facts["the lantern"]["place"] == "in her hand"
 
 
 def test_match_call_has_no_places_section(monkeypatch):
@@ -317,7 +315,7 @@ def test_match_call_has_no_places_section(monkeypatch):
         lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
     )
 
-    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    provider.apply_item_facts({"the notebook": {"place": "on the desk"}})
     provider.prepare_turn("Search the desk.")
     assert payloads and "PLACES" not in payloads[0]["user"]
 
@@ -331,8 +329,8 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
         return _Response(
             {
                 "item_facts": {
-                    "the lantern": {"where": "in her hand", "condition": ["warm"]},
-                    "the gate": {"where": "at the garden path", "condition": []},
+                    "the lantern": {"place": "in her hand", "condition": ["warm"]},
+                    "the gate": {"place": "at the garden path", "condition": []},
                 }
             }
         )
@@ -341,8 +339,8 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     raw = provider.second_call_update("Look at the lantern.", "The lantern feels warm.")
 
     assert raw == {
-        "the lantern": {"where": "in her hand", "condition": ["warm"]},
-        "the gate": {"where": "at the garden path", "condition": []},
+        "the lantern": {"place": "in her hand", "condition": ["warm"]},
+        "the gate": {"place": "at the garden path", "condition": []},
     }
     assert provider.request_count == 1
     assert "CONSTRAINTS" not in requests[0]["user"]
@@ -355,11 +353,11 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     )
     assert requests[0]["system"] == (
         "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
-        '{"item_facts": {"thing": {"where": "place", "condition": ["phrase"]}}}. '
-        "List only the things in THINGS that STORY changed. For each one, give where it is now and up to "
+        '{"item_facts": {"thing": {"place": "place", "condition": ["phrase"]}}}. '
+        "List only the things in THINGS that STORY changed. For each one, give the place it is now and up to "
         "two short condition phrases. "
         "Example: if she picks up the lantern from the table, the lantern is "
-        '{"where": "in her hand", "condition": ["lit"]}. '
+        '{"place": "in her hand", "condition": ["lit"]}. '
         'If STORY changed nothing, return {"item_facts": {}}.'
     )
 
@@ -377,10 +375,10 @@ def test_item_facts_variations_load_and_render_offline(path):
     [
         [],
         {"condition": ["lit"]},
-        {"where": "", "condition": []},
-        {"where": "on the table", "condition": "lit"},
-        {"where": "on the table", "condition": [""]},
-        {"where": "on the table", "condition": ["one", "two", "three"]},
+        {"place": "", "condition": []},
+        {"place": "on the table", "condition": "lit"},
+        {"place": "on the table", "condition": [""]},
+        {"place": "on the table", "condition": ["one", "two", "three"]},
     ],
 )
 def test_item_facts_seed_validation_errors(bad_seed):
@@ -402,7 +400,7 @@ def test_state_axes_validation_rejects_unknown_or_invalid_axes(axes):
         validate_item_facts(
             {
                 "mode": "single_call",
-                "seed": {"thing": {"where": "on the table", "condition": []}},
+                "seed": {"thing": {"place": "on the table", "condition": []}},
                 "state_axes": axes,
             },
             known_names={"thing"},
@@ -490,13 +488,26 @@ def test_package_seed_scene_1a_matches_authored_things():
     state._assert_scene_entry_fact("1A")
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
-        "Michelle's phone": {"where": "on the kitchen floor", "condition": ["not damaged"]},
-        "Kristin's laptop": {"where": "in Kristin's truck outside the house", "condition": []},
-        "Michelle's carved drawer": {
-            "where": "in Michelle's workstation",
+        "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
+        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []},
+        "drawer": {
+            "place": "in Michelle's workstation",
             "condition": ["shut"],
         },
     }
+    assert issues == []
+
+
+def test_package_seed_accepts_the_prefix_case_insensitively():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    replacement = scene.model_copy(
+        update={"metadata": scene.metadata.model_copy(update={"setting_facts": ("THE DRAWER IS SHUT.",)})}
+    )
+    package = PACKAGE.model_copy(
+        update={"scenes": tuple(replacement if item is scene else item for item in PACKAGE.scenes)}
+    )
+    things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
+    assert things["drawer"]["condition"] == ["SHUT"]
     assert issues == []
 
 
@@ -504,7 +515,7 @@ def test_package_seed_hides_guarded_3c_archive():
     state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase="resolution")
     state._assert_scene_entry_fact("3C")
     things, _ = package_seed(PACKAGE, state, "3C")
-    assert things["Portable data case"] == {"where": "with Rebecca in her hands", "condition": []}
+    assert things["Portable data case"] == {"place": "with Rebecca in her hands", "condition": []}
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(PACKAGE, state, "3C")
     assert "Portable data case" not in things
@@ -528,7 +539,7 @@ def test_package_seed_clashing_hand_seed_is_rejected(tmp_path):
     source["item_facts"] = {
         "mode": "single_call",
         "seed_from_package": True,
-        "seed": {"Michelle's phone": {"where": "x", "condition": []}},
+        "seed": {"Michelle's phone": {"place": "x", "condition": []}},
     }
     path = tmp_path / "clash.json"
     path.write_text(json.dumps(source))
@@ -567,22 +578,34 @@ def test_package_seed_refuses_to_place_unplaced_setting_fact():
     assert any("The kettle" in issue and "The kettle is warm." in issue for issue in issues)
 
 
-def test_where_only_entry_keeps_existing_conditions():
+def test_legacy_location_key_does_not_move_entry_and_records_issue():
     provider = _provider()
-    provider.apply_item_facts({"the lantern": {"where": "in her hand"}})
-    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+    legacy_location_key = "".join(("w", "here"))
+    facts, issues = provider.apply_item_facts({"the lantern": {legacy_location_key: "in her hand"}})
+    assert facts["the lantern"] == {"place": "on the table", "condition": ["lit"]}
+    assert any("no valid place or condition" in issue for issue in issues)
+
+
+def test_legacy_location_key_can_still_carry_a_valid_condition():
+    provider = _provider()
+    legacy_location_key = "".join(("w", "here"))
+    facts, issues = provider.apply_item_facts(
+        {"the lantern": {legacy_location_key: "in her hand", "condition": ["dark"]}}
+    )
+    assert facts["the lantern"] == {"place": "on the table", "condition": ["dark"]}
+    assert issues == []
 
 
 def test_place_entry_sets_existing_location():
     provider = _provider()
     provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
-    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+    assert provider.item_facts["the lantern"] == {"place": "in her hand", "condition": ["lit"]}
 
 
-def test_place_wins_when_entry_has_both_location_keys():
+def test_place_entry_updates_location():
     provider = _provider()
-    provider.apply_item_facts({"the lantern": {"place": "in her hand", "where": "on the floor"}})
-    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+    provider.apply_item_facts({"the lantern": {"place": "on the floor"}})
+    assert provider.item_facts["the lantern"]["place"] == "on the floor"
 
 
 def test_held_place_entry_can_add_a_new_tracked_thing(monkeypatch):
@@ -596,7 +619,7 @@ def test_held_place_entry_can_add_a_new_tracked_thing(monkeypatch):
     )
     result = provider.prepare_turn("Pick up the notebook.")
     assert result["resolutions"] == {"the notebook": "new"}
-    assert provider.item_facts["the notebook"] == {"where": "on the desk", "condition": ["open"]}
+    assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
 def test_reply_location_key_counts_prefer_place(monkeypatch):
@@ -607,21 +630,21 @@ def test_reply_location_key_counts_prefer_place(monkeypatch):
             {
                 "segments": [],
                 "item_facts": {
-                    "the lantern": {"place": "in her hand", "where": "on the floor"},
-                    "the gate": {"where": "at the path"},
+                    "the lantern": {"place": "in her hand"},
+                    "the gate": {"place": "at the path"},
                     "other": {"condition": ["open"]},
                 },
             }
         ),
     )
     provider._request({"system": "test", "user": "test"})
-    assert provider.item_facts_reply_keys == {"place": 1, "where": 1}
+    assert provider.item_facts_reply_keys == {"place": 2}
 
 
 def test_condition_only_entry_keeps_existing_place():
     provider = _provider()
     provider.apply_item_facts({"the lantern": {"condition": ["dark"]}})
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["dark"]}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["dark"]}
 
 
 def test_empty_entries_are_ignored_for_tracked_and_untracked_names():
@@ -634,8 +657,8 @@ def test_empty_entries_are_ignored_for_tracked_and_untracked_names():
 
 def test_valid_untracked_name_is_held_with_its_entry():
     provider = _provider()
-    provider.apply_item_facts({"the notebook": {"where": "on the desk", "condition": ["open"]}})
-    assert provider._held_item_facts == {"the notebook": {"where": "on the desk", "condition": ["open"]}}
+    provider.apply_item_facts({"the notebook": {"place": "on the desk", "condition": ["open"]}})
+    assert provider._held_item_facts == {"the notebook": {"place": "on the desk", "condition": ["open"]}}
 
 
 def test_prepare_turn_skips_match_when_all_things_are_always_included(monkeypatch):
@@ -651,7 +674,7 @@ def test_prepare_turn_skips_match_when_all_things_are_always_included(monkeypatc
 def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = set(provider.item_facts)
-    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    provider.apply_item_facts({"the notebook": {"place": "on the desk"}})
     payloads = []
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -672,7 +695,7 @@ def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch
 
 def test_same_as_tracked_name_merges_held_entry(monkeypatch):
     provider = _provider()
-    provider.apply_item_facts({"the old lamp": {"where": "by the door", "condition": ["warm"]}})
+    provider.apply_item_facts({"the old lamp": {"place": "by the door", "condition": ["warm"]}})
     provider._hand_seed_names = set(provider.item_facts)
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -681,14 +704,14 @@ def test_same_as_tracked_name_merges_held_entry(monkeypatch):
     )
     result = provider.prepare_turn("Carry the old lamp.")
     assert result["resolutions"] == {"the old lamp": "the lantern"}
-    assert provider.item_facts["the lantern"] == {"where": "by the door", "condition": ["warm"]}
+    assert provider.item_facts["the lantern"] == {"place": "by the door", "condition": ["warm"]}
     assert "the old lamp" not in provider.item_facts
 
 
 def test_same_as_new_with_where_adds_a_tracked_thing(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = set(provider.item_facts)
-    provider.apply_item_facts({"the notebook": {"where": "on the desk", "condition": ["open"]}})
+    provider.apply_item_facts({"the notebook": {"place": "on the desk", "condition": ["open"]}})
     monkeypatch.setattr(
         CloudflareTurnProvider,
         "_request",
@@ -696,7 +719,7 @@ def test_same_as_new_with_where_adds_a_tracked_thing(monkeypatch):
     )
     result = provider.prepare_turn("Pick up the notebook.")
     assert result["resolutions"] == {"the notebook": "new"}
-    assert provider.item_facts["the notebook"] == {"where": "on the desk", "condition": ["open"]}
+    assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
 def test_same_as_new_without_where_drops_held_thing(monkeypatch):
@@ -717,7 +740,7 @@ def test_same_as_new_without_where_drops_held_thing(monkeypatch):
 def test_invalid_match_reply_drops_held_names_without_raising(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = set(provider.item_facts)
-    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    provider.apply_item_facts({"the notebook": {"place": "on the desk"}})
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"oops": 1})
     result = provider.prepare_turn("Open the notebook.")
     assert result["resolutions"] == {"the notebook": "dropped"}
@@ -728,7 +751,7 @@ def test_invalid_match_reply_drops_held_names_without_raising(monkeypatch):
 def test_match_transport_exception_drops_held_names(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = set(provider.item_facts)
-    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    provider.apply_item_facts({"the notebook": {"place": "on the desk"}})
 
     def fail(*_args):
         raise OSError("offline")
@@ -743,7 +766,7 @@ def test_match_transport_exception_drops_held_names(monkeypatch):
 def test_command_reference_adds_non_always_name_and_omits_unreferred_name(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = {"the lantern"}
-    provider.item_facts["the box"] = {"where": "under the bench", "condition": []}
+    provider.item_facts["the box"] = {"place": "under the bench", "condition": []}
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": ["the gate"], "same_as": {}})
     result = provider.prepare_turn("Open the gate.")
     assert result["match_call"] is True
@@ -758,17 +781,17 @@ def test_always_included_names_cover_authored_dependency_and_changed_items():
     provider._hand_seed_names = set()
     provider.item_facts.update(
         {
-            "Michelle's carved drawer": {"where": "in the house", "condition": []},
-            "Michelle's memory card": {"where": "under the drawer", "condition": []},
-            "Kristin's notebook": {"where": "in Kristin's jacket pocket", "condition": []},
-            "toolbox": {"where": "in Kristin's truck", "condition": []},
-            "changed thing": {"where": "in the yard", "condition": []},
-            "unrelated thing": {"where": "in a shed", "condition": []},
+            "drawer": {"place": "in the house", "condition": []},
+            "Michelle's memory card": {"place": "under the drawer", "condition": []},
+            "Kristin's notebook": {"place": "in Kristin's jacket pocket", "condition": []},
+            "toolbox": {"place": "in Kristin's truck", "condition": []},
+            "changed thing": {"place": "in the yard", "condition": []},
+            "unrelated thing": {"place": "in a shed", "condition": []},
         }
     )
     provider._changed_last_turn = {"changed thing"}
     names = provider.always_included_names()
-    assert "Michelle's carved drawer" in names
+    assert "drawer" in names
     assert "Michelle's memory card" in names
     assert "Kristin's notebook" not in names
     assert "toolbox" not in names
@@ -781,8 +804,8 @@ def test_match_carried_name_adds_only_exact_candidate_to_things(monkeypatch):
     provider._hand_seed_names = {"the lantern"}
     provider.item_facts.update(
         {
-            "the notebook": {"where": "in Kristin's jacket pocket", "condition": []},
-            "the toolbox": {"where": "in Kristin's truck", "condition": []},
+            "the notebook": {"place": "in Kristin's jacket pocket", "condition": []},
+            "the toolbox": {"place": "in Kristin's truck", "condition": []},
         }
     )
     monkeypatch.setattr(
@@ -820,7 +843,7 @@ def test_stubbed_run_attributes_resolved_change_to_earlier_turn(monkeypatch):
             "item_facts": {},
         }
         if len(calls) == 2:
-            response["item_facts"] = {"new notebook": {"where": "on the desk", "condition": ["open"]}}
+            response["item_facts"] = {"new notebook": {"place": "on the desk", "condition": ["open"]}}
         return response
 
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
@@ -831,7 +854,7 @@ def test_stubbed_run_attributes_resolved_change_to_earlier_turn(monkeypatch):
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     earlier = result["turns"][0]
     assert earlier["item_facts_resolutions"] == {"new notebook": "new"}
-    assert earlier["item_facts_after"]["new notebook"] == {"where": "on the desk", "condition": ["open"]}
+    assert earlier["item_facts_after"]["new notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
 def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):

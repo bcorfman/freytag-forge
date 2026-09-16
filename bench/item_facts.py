@@ -29,21 +29,29 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
             guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
             if predicate_matches(guard, state.facts):
                 continue
-        where = placement if isinstance(placement, str) else placement.placement
-        if len(where) > 80:
+        place = placement if isinstance(placement, str) else placement.placement
+        if len(place) > 80:
             issues.append(f"placement for {item.name!r} is longer than 80 characters")
             continue
-        things[item.name] = {"where": where, "condition": []}
+        things[item.name] = {"place": place, "condition": []}
 
     for setting in scene.metadata.setting_facts:
         phrase = setting.strip()
         if phrase.endswith("."):
             phrase = phrase[:-1].rstrip()
-        matched = next(
-            (name for name in things if phrase.startswith(f"{name} is ") or phrase.startswith(f"{name} are ")), None
+        matched_prefix = next(
+            (
+                (name, prefix)
+                for name in things
+                for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
+                if phrase.casefold().startswith(prefix.casefold())
+            ),
+            None,
         )
+        matched = matched_prefix[0] if matched_prefix is not None else None
         if matched is not None:
-            condition = phrase[len(matched) + (4 if phrase.startswith(f"{matched} is ") else 5) :].strip()
+            condition = phrase[len(matched_prefix[1]) :].strip()
+            condition = condition.removeprefix("is ").removeprefix("are ").strip()
             if len(things[matched]["condition"]) >= 2 or len(condition) > 40:
                 issues.append(f"setting fact for {matched!r} could not be added as a condition")
                 continue
@@ -63,7 +71,7 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 _SINGLE_CALL_RULES = (
     "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
-    'Give only what changed. Use "place" for where it is now and "condition" for up to two short phrases. '
+    'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
     'Example: if she opens the box on the table and picks up the key, the box is {"condition": ["open"]} and the key '
     'is {"place": "in her hand"}.',
 )
@@ -79,10 +87,10 @@ _MATCH_SYSTEM = (
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
-    '{"item_facts": {"thing": {"where": "place", "condition": ["phrase"]}}}. List only the things '
-    "in THINGS that STORY changed. For each one, give where it is now and up to two short condition phrases. "
+    '{"item_facts": {"thing": {"place": "place", "condition": ["phrase"]}}}. List only the things '
+    "in THINGS that STORY changed. For each one, give the place it is now and up to two short condition phrases. "
     "Example: if she picks up the lantern from the table, the lantern is "
-    '{"where": "in her hand", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
+    '{"place": "in her hand", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 )
 
 
@@ -100,7 +108,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
     ) -> None:
         super().__init__(**kwargs)
         self.item_facts = {
-            name: {"where": facts["where"], "condition": list(facts["condition"])} for name, facts in item_facts.items()
+            name: {"place": facts["place"], "condition": list(facts["condition"])} for name, facts in item_facts.items()
         }
         self.item_facts_seed_names = tuple(self.item_facts)
         self.item_facts_mode = mode
@@ -113,7 +121,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._selected_names: list[str] | None = None
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
-        self.item_facts_reply_keys = {"place": 0, "where": 0}
+        self.item_facts_reply_keys = {"place": 0}
         self._item_facts_issues: list[str] = []
         package = getattr(self.state, "package", None)
         self._fixed_item_names = {
@@ -156,7 +164,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for name in names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
-            line = f"- {name}. Place: {facts['where']}."
+            line = f"- {name}. Place: {facts['place']}."
             axes = self.state_axes.get(name)
             if axes:
                 poles = list(axes)
@@ -203,10 +211,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             item_facts = response.get("item_facts")
             if isinstance(item_facts, dict):
                 for entry in item_facts.values():
-                    if isinstance(entry, dict):
-                        key = "place" if "place" in entry else "where" if "where" in entry else None
-                        if key is not None:
-                            self.item_facts_reply_keys[key] += 1
+                    if isinstance(entry, dict) and "place" in entry:
+                        self.item_facts_reply_keys["place"] += 1
             cleaned = dict(response)
             cleaned.pop("item_facts", None)
             return cleaned
@@ -240,7 +246,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def facts_for_names(self, names: list[str] | tuple[str, ...] | set[str]) -> dict[str, dict[str, object]]:
         wanted = set(names)
         return {
-            name: {"where": facts["where"], "condition": list(facts["condition"])}
+            name: {"place": facts["place"], "condition": list(facts["condition"])}
             for name, facts in self.item_facts.items()
             if name in wanted
         }
@@ -249,31 +255,29 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _valid_entry(value: object) -> bool:
         if not isinstance(value, dict) or not value:
             return False
-        location_key = "place" if "place" in value else "where"
-        if location_key in value and (not isinstance(value[location_key], str) or not value[location_key].strip()):
+        if "place" in value and (not isinstance(value["place"], str) or not value["place"].strip()):
             return False
         if "condition" in value and (
             not isinstance(value["condition"], list)
             or any(not isinstance(item, str) or not item.strip() for item in value["condition"])
         ):
             return False
-        return location_key in value or "condition" in value
+        return "place" in value or "condition" in value
 
     def _merge_entry(self, name: str, value: dict[str, object]) -> bool:
         facts = self.item_facts[name]
-        location_key = "place" if "place" in value else "where"
-        if location_key in value:
-            where = value[location_key]
-            if not isinstance(where, str) or not where.strip():
+        if "place" in value:
+            place = value["place"]
+            if not isinstance(place, str) or not place.strip():
                 return False
-            pole = self._axis_match(name, where)
+            pole = self._axis_match(name, place)
             if pole is None:
                 if name in self._fixed_item_names:
                     self._item_facts_issues.append(
-                        f"item_facts for {name!r} refused place {where.strip()[:80]!r} because it is fixed"
+                        f"item_facts for {name!r} refused place {place.strip()[:80]!r} because it is fixed"
                     )
                 else:
-                    facts["where"] = where.strip()[:80]
+                    facts["place"] = place.strip()[:80]
             else:
                 self._apply_conditions(name, [pole], replace=False)
                 self.item_facts_axis_fixes += 1
@@ -319,7 +323,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def apply_item_facts(self, raw: object) -> tuple[dict[str, dict[str, object]], list[str]]:
         previous = {
-            name: {"where": facts["where"], "condition": list(facts["condition"])}
+            name: {"place": facts["place"], "condition": list(facts["condition"])}
             for name, facts in self.item_facts.items()
         }
         issues: list[str] = []
@@ -344,7 +348,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 issues.append(f"empty item_facts entry for {name} ignored")
                 continue
             if not self._valid_entry(value):
-                issues.append(f"item_facts for {name!r} has invalid where or condition")
+                issues.append(f"item_facts for {name!r} has no valid place or condition")
                 continue
             before = copy.deepcopy(self.item_facts[name])
             if self._merge_entry(name, value) and before != self.item_facts[name]:
@@ -368,14 +372,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
             }
         self.item_facts_match_calls += 1
         match_things = [
-            f"- {name}" if name in always else f"- {name}. Place: {self.item_facts[name]['where']}."
+            f"- {name}" if name in always else f"- {name}. Place: {self.item_facts[name]['place']}."
             for name in self.item_facts
         ]
         for name in held:
             entry = self._held_item_facts[name]
-            location = entry.get("place", entry.get("where"))
-            if isinstance(location, str) and location.strip():
-                match_things.append(f"- {name}. Place: {location.strip()[:80]}.")
+            place = entry.get("place")
+            if isinstance(place, str) and place.strip():
+                match_things.append(f"- {name}. Place: {place.strip()[:80]}.")
         payload = {
             "system": _MATCH_SYSTEM,
             "user": (
@@ -433,11 +437,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 elif (
                     target == "new"
                     and self._valid_entry(entry)
-                    and isinstance(entry.get("place", entry.get("where")), str)
-                    and entry.get("place", entry.get("where")).strip()
+                    and isinstance(entry.get("place"), str)
+                    and entry.get("place").strip()
                 ):
-                    location = entry.get("place", entry.get("where"))
-                    self.item_facts[name] = {"where": location.strip()[:80], "condition": []}
+                    place = entry.get("place")
+                    self.item_facts[name] = {"place": place.strip()[:80], "condition": []}
                     self._merge_entry(name, entry)
                     self.item_facts_seed_names = (*self.item_facts_seed_names, name)
                     self._changed_last_turn.add(name)
@@ -505,9 +509,9 @@ def validate_item_facts(
             raise ValueError("item_facts seed names must be non-empty strings")
         if (
             not isinstance(facts, dict)
-            or not isinstance(facts.get("where"), str)
-            or not facts["where"].strip()
-            or len(facts["where"].strip()) > 80
+            or not isinstance(facts.get("place"), str)
+            or not facts["place"].strip()
+            or len(facts["place"].strip()) > 80
             or not isinstance(facts.get("condition"), list)
             or len(facts["condition"]) > 2
             or not all(
@@ -516,10 +520,10 @@ def validate_item_facts(
             )
         ):
             raise ValueError(
-                f"item_facts seed for {name!r} must have a where and zero to two non-empty condition phrases"
+                f"item_facts seed for {name!r} must have a place and zero to two non-empty condition phrases"
             )
         copied[name] = {
-            "where": facts["where"].strip(),
+            "place": facts["place"].strip(),
             "condition": [condition.strip() for condition in facts["condition"]],
         }
     state_axes = value.get("state_axes", {})

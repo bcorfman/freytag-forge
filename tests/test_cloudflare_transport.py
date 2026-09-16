@@ -1631,7 +1631,7 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     assert (
         "Say who owns a thing the first time you name it: Michelle's memory card, Michelle's phone, "
-        "Kristin's laptop, Michelle's carved drawer." in rules
+        "Kristin's laptop." in rules
     )
 
 
@@ -1790,7 +1790,7 @@ def test_real_scene_1a_pre_reveal_prompts_keep_the_card_location_out(monkeypatch
         assert "under the drawer" not in body
         assert "beneath the drawer" not in body
         assert "drawer carved with" not in body
-        assert "Michelle's carved drawer is shut.".casefold() in body
+        assert "drawer is shut.".casefold() in body
 
 
 def test_real_scene_1a_accepts_visible_carving_on_turns_one_through_four(monkeypatch) -> None:
