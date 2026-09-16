@@ -104,7 +104,7 @@ def parser() -> argparse.ArgumentParser:
             "\n"
             "  # a specific beat of that scene, with the player's action\n"
             "  python -m bench prompt --scene 1A --beat 1A.2 \\\n"
-            '      --player-input "Search the drawers under her workstation."\n'
+            '      --player-input "Search under the drawer in her workstation."\n'
             "\n"
             "  # read it as text instead of JSON\n"
             "  python -m bench prompt --scene 1A --text\n"

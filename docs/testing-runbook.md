@@ -77,7 +77,7 @@ TMPDIR=/tmp uv run pytest -q --no-cov <tests from the table>
 
 ```bash
 uv run python -m bench prompt --scene 1A --text
-uv run python -m bench prompt --scene 1A --beat 1A.2 --text --player-input "Search the drawers under her workstation."
+uv run python -m bench prompt --scene 1A --beat 1A.2 --text --player-input "Search under the drawer in her workstation."
 uv run python -m bench describe --variation bench/variations/authored-handoff-phase1.json --json
 ```
 

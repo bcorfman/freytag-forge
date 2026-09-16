@@ -70,7 +70,7 @@
           "new": ""
         },
         {
-          "old": "  cue_text: Structural alarms flash while doors open and close in different parts of the facility.\n",
+          "old": "  cue_text: Water-pressure warnings flash while doors open and close in empty service corridors.\n",
           "new": ""
         },
         {
@@ -90,7 +90,7 @@
     "pacing.yaml": {
       "replacements": [
         {
-          "old": "  realizations:\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: false\n    text: An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.\n  - when:\n    - fact_id: michelle_lead_actionable\n      equals: true\n    text: The patrol is coming back and it is time to leave.\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: true\n    text: The patrol is back and searching the house for something Kristin now carries.\n  - text: The patrol is returning to the house.\n",
+          "old": "  realizations:\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: false\n    text: An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.\n  - when:\n    - fact_id: michelle_lead_actionable\n      equals: true\n    text: The patrol is coming back and it is time to leave.\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: true\n    text: The patrol is back and searching the house for something Kristin now carries.\n  - text: The patrol is returning to the house.\n",
           "new": ""
         },
         {
@@ -106,7 +106,7 @@
           "new": ""
         },
         {
-          "old": "  realizations:\n  - text: The facility shakes. Dust and pieces of the ceiling fall around them.\n",
+          "old": "  realizations:\n  - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.\n",
           "new": ""
         },
         {
@@ -114,11 +114,11 @@
           "new": ""
         },
         {
-          "old": "  realizations:\n  - text: The emergency override codes will expire soon.\n",
+          "old": "  realizations:\n  - text: The emergency-gate authorization will expire soon.\n",
           "new": ""
         },
         {
-          "old": "  realizations:\n  - text: A distant blast shakes the facility. Charles's destruction sequence drives blasts section by section toward them. They have little time left.\n",
+          "old": "  realizations:\n  - text: Charles has opened the emergency deluge in the outer access level. Water is spreading toward the command routes.\n",
           "new": ""
         }
       ]

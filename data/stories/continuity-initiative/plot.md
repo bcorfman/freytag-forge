@@ -117,7 +117,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
-Kristin notices one of the drawers on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
+Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
@@ -149,7 +149,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
 
-An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open drawers, so the card remains undiscovered; they discover and confiscate nothing.
+An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
