@@ -1,0 +1,3603 @@
+{
+  "scene_id": "1A",
+  "package_path": "/tmp/bench-package-6sd5md3e",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "change-types",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into the house, her eyes scanning the familiar space for any sign of Michelle. She looks around the living room, taking in the overturned workstation chair and the empty space where Michelle's tablet and work bag usually sit. Kristin's gaze falls on the back door, which appears to have been forced open.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narrated_command": "Look carefully at Michelle's phone.",
+          "narration": "Kristin picks up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 1
+        },
+        {
+          "player_input": "Open the drawer with your initials carved into it.",
+          "narrated_command": "Open the drawer with your initials carved into it.",
+          "narration": "Kristin approaches Michelle's workstation and looks at the drawer with the KMS initials carved into it. She carefully opens the drawer, revealing a space that was previously shut. Inside, she finds a few pens, a notebook, and a small USB drive.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "drawer"
+          ],
+          "item_facts_before": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "shut"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "open",
+                "unexamined"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "USB drive": {
+              "condition": [
+                "unexamined"
+              ],
+              "place": "in drawer"
+            },
+            "drawer": {
+              "condition": [
+                "open"
+              ],
+              "place": "open"
+            }
+          },
+          "item_facts_issues": [
+            "item_facts for 'drawer' refused place 'in drawer' because it is fixed"
+          ],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "drawer",
+              "Kristin"
+            ],
+            "same_as": {
+              "USB drive": "drawer"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "USB drive": "drawer"
+          },
+          "turn_number": 2
+        },
+        {
+          "player_input": "Pick up Michelle's phone and put it in your pocket.",
+          "narrated_command": "Pick up Michelle's phone. Put it in your pocket.",
+          "narration": "Kristin reaches into the room and picks up Michelle's phone. She puts the phone in her pocket.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 3
+        },
+        {
+          "player_input": "Go out to your truck and bring your laptop inside.",
+          "narrated_command": "Go out to your truck. Bring your laptop inside.",
+          "narration": "Kristin walks out to her truck, which is parked on the street in front of the house. She unlocks the truck and opens the driver's side door. Kristin retrieves her laptop from the passenger seat and closes the truck door. She walks back to the house, laptop in hand.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.",
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's truck outside the house",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 4
+        },
+        {
+          "player_input": "Carry your laptop back out to the truck.",
+          "narrated_command": "Carry your laptop back out to the truck.",
+          "narration": "Kristin carefully makes her way back to her truck, her eyes scanning the surrounding area for any signs of Michelle. She opens the door and sets her laptop on the passenger seat. She closes the door and takes a moment to look around the quiet neighborhood.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in the truck"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 5
+        },
+        {
+          "player_input": "Take Michelle's phone out and throw it hard against the kitchen wall.",
+          "narrated_command": "Take Michelle's phone out. Throw it hard against the kitchen wall.",
+          "narration": "Kristin pulls out Michelle's phone from her pocket and throws it hard against the kitchen wall.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the kitchen floor"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 6
+        },
+        {
+          "player_input": "Pick up Michelle's phone from the floor.",
+          "narrated_command": "Pick up Michelle's phone from the floor.",
+          "narration": "Kristin bends down to pick up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 7
+        },
+        {
+          "player_input": "Leave the house and drive to the park with Michelle's phone.",
+          "narrated_command": "Leave the house. Drive to the park with Michelle's phone.",
+          "narration": "Kristin carefully exits the house, looking around cautiously. She gets into her truck and starts the engine. She drives through the emergency-clogged streets, Michelle's broken phone lying on the passenger seat.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone",
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin's laptop",
+              "house",
+              "park"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 8
+        },
+        {
+          "player_input": "Check that you still have Michelle's phone.",
+          "narrated_command": "Check that you still have Michelle's phone.",
+          "narration": "Kristin looks down at the passenger seat and sees Michelle's phone, its screen cracked and unresponsive.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look around the bench for anything Michelle left.",
+          "narrated_command": "Look around the bench for anything Michelle left.",
+          "narration": "Kristin scans the area around the bench, searching for any signs of Michelle's presence. She notices a small piece of paper on the ground near the service path. The paper appears to be a receipt from a local coffee shop, but there's a handwritten note on the back that reads 'Meet me at the old warehouse at midnight.'",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [],
+          "item_facts_before": {},
+          "item_facts_after": {
+            "note": {
+              "place": "on the receipt",
+              "condition": [
+                "handwritten"
+              ]
+            },
+            "receipt": {
+              "place": "on the ground",
+              "condition": [
+                "crumpled"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "note": {
+              "condition": [
+                "handwritten"
+              ],
+              "place": "on the receipt"
+            },
+            "receipt": {
+              "condition": [
+                "crumpled"
+              ],
+              "place": "on the ground"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "bench",
+              "Michelle"
+            ],
+            "same_as": {
+              "note": "note",
+              "receipt": "receipt"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "note": "new",
+            "receipt": "new"
+          },
+          "turn_number": 10
+        },
+        {
+          "player_input": "Walk over to the man watching you and hand him Michelle's phone.",
+          "narrated_command": "Walk over to the man watching you. Hand him Michelle's phone.",
+          "narration": "Kristin approaches the man watching her, a mixture of caution and determination on her face. She holds out Michelle's phone, its screen cracked and dark. The man's eyes flicker to the phone, and for a moment, Kristin wonders if he'll take it.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 11
+        },
+        {
+          "player_input": "Check who has Michelle's phone now.",
+          "narrated_command": "Check who has Michelle's phone now.",
+          "narration": "Kristin looks down at Michelle's phone in her hand, its screen cracked and unresponsive.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The pursuers are closing in through the park. The pursuit is not over.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 29,
+      "recovery_requests": 2,
+      "package": "/tmp/bench-package-6sd5md3e",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 8,
+      "rejected_turns": [],
+      "rejected_turn_count": 0,
+      "scene_transitions": [
+        {
+          "from_scene": "1A",
+          "to_scene": "1B",
+          "after_turn": 8,
+          "advanced_offline": true
+        }
+      ],
+      "item_facts_final": {
+        "Michelle's phone": {
+          "place": "in Kristin's hand",
+          "condition": [
+            "broken"
+          ]
+        },
+        "Kristin's laptop": {
+          "place": "in the truck",
+          "condition": [
+            "closed"
+          ]
+        },
+        "drawer": {
+          "place": "in Michelle's workstation",
+          "condition": [
+            "open",
+            "unexamined"
+          ]
+        },
+        "note": {
+          "place": "on the receipt",
+          "condition": [
+            "handwritten"
+          ]
+        },
+        "receipt": {
+          "place": "on the ground",
+          "condition": [
+            "crumpled"
+          ]
+        }
+      },
+      "item_facts_seed_issues": [],
+      "item_facts_match_calls": 14,
+      "item_facts_reply_keys": {
+        "place": 19
+      },
+      "item_facts_axis_fixes": 1
+    },
+    {
+      "status": "ok",
+      "replicate": 2,
+      "script": "change-types",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into the house, her eyes scanning the familiar space for any sign of Michelle. She looks around the living room, taking in the overturned workstation chair and the empty space where Michelle's tablet and work bag usually sit. Kristin's gaze falls on the back door, where she notices the forced back door frame.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narrated_command": "Look carefully at Michelle's phone.",
+          "narration": "Kristin picks up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 1
+        },
+        {
+          "player_input": "Open the drawer with your initials carved into it.",
+          "narrated_command": "Open the drawer with your initials carved into it.",
+          "narration": "Kristin approaches Michelle's workstation and looks at the drawer with the KMS initials carved into it. She gently pulls the drawer open. Inside, she sees a few scattered papers and a memory card.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "drawer"
+          ],
+          "item_facts_before": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "shut"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "open"
+              ]
+            },
+            "memory card": {
+              "place": "in drawer",
+              "condition": [
+                "scattered papers nearby"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "drawer": {
+              "condition": [
+                "open"
+              ],
+              "place": "open"
+            },
+            "memory card": {
+              "condition": [
+                "scattered papers nearby"
+              ],
+              "place": "in drawer"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "drawer",
+              "Kristin"
+            ],
+            "same_as": {
+              "memory card": "memory card"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "memory card": "new"
+          },
+          "turn_number": 2
+        },
+        {
+          "player_input": "Pick up Michelle's phone and put it in your pocket.",
+          "narrated_command": "Pick up Michelle's phone. Put it in your pocket.",
+          "narration": "Kristin reaches into the room and picks up Michelle's phone, which was lying on the floor. She puts the phone in her pocket, feeling a mix of concern and determination. The house remains quiet, with no signs of Michelle or any other intruders.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 3
+        },
+        {
+          "player_input": "Go out to your truck and bring your laptop inside.",
+          "narrated_command": "Go out to your truck. Bring your laptop inside.",
+          "narration": "Kristin walks out to her truck, which is parked on the street in front of the house. She unlocks the door and gets in, starting the engine. She grabs her laptop from the passenger seat and closes the door behind her. Kristin walks back to the house, laptop in hand.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.",
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's truck outside the house",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hands",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 4
+        },
+        {
+          "player_input": "Carry your laptop back out to the truck.",
+          "narrated_command": "Carry your laptop back out to the truck.",
+          "narration": "Kristin carefully exits the house, her eyes scanning the surrounding area for any signs of Michelle or potential witnesses. She walks back to her truck, which is parked a short distance away, and opens the door. Kristin's laptop is still in her hands, and she places it on the passenger seat.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hands",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "on the passenger seat",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 5
+        },
+        {
+          "player_input": "Take Michelle's phone out and throw it hard against the kitchen wall.",
+          "narrated_command": "Take Michelle's phone out. Throw it hard against the kitchen wall.",
+          "narration": "Kristin pulls out Michelle's phone from her pocket and throws it hard against the kitchen wall. The phone hits the wall with a loud crack, its screen shattering into a thousand pieces. The phone lies on the floor, its screen now a dark, jagged mess.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the floor"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {
+              "phone": "Michelle's phone"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "phone": "Michelle's phone"
+          },
+          "turn_number": 6
+        },
+        {
+          "player_input": "Pick up Michelle's phone from the floor.",
+          "narrated_command": "Pick up Michelle's phone from the floor.",
+          "narration": "Kristin bends down to pick up Michelle's phone from the floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 7
+        },
+        {
+          "player_input": "Leave the house and drive to the park with Michelle's phone.",
+          "narrated_command": "Leave the house. Drive to the park with Michelle's phone.",
+          "narration": "Kristin carefully exits the house, looking around cautiously. She gets into her truck and starts the engine. She drives through the emergency-clogged streets, Michelle's phone lying on the passenger seat.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone",
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "on the passenger seat",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "on the passenger seat",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 8
+        },
+        {
+          "player_input": "Check that you still have Michelle's phone.",
+          "narrated_command": "Check that you still have Michelle's phone.",
+          "narration": "Kristin looks at the passenger seat, where Michelle's phone is still lying, its screen cracked and dark.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone",
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "on the passenger seat",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "on the passenger seat",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look around the bench for anything Michelle left.",
+          "narrated_command": "Look around the bench for anything Michelle left.",
+          "narration": "Kristin scans the area around the bench, searching for any signs of Michelle's presence. She notices a small piece of paper on the ground near the service path. The paper appears to be a receipt from a local coffee shop, but there's a handwritten note on the back that reads 'Meet me at the old warehouse at midnight.'",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [],
+          "item_facts_before": {},
+          "item_facts_after": {
+            "note": {
+              "place": "on the receipt",
+              "condition": [
+                "handwritten"
+              ]
+            },
+            "receipt": {
+              "place": "on the ground",
+              "condition": [
+                "crumpled"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "note": {
+              "condition": [
+                "handwritten"
+              ],
+              "place": "on the receipt"
+            },
+            "receipt": {
+              "condition": [
+                "crumpled"
+              ],
+              "place": "on the ground"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "bench",
+              "Michelle"
+            ],
+            "same_as": {
+              "note": "note",
+              "receipt": "receipt"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "note": "new",
+            "receipt": "new"
+          },
+          "turn_number": 10
+        },
+        {
+          "player_input": "Walk over to the man watching you and hand him Michelle's phone.",
+          "narrated_command": "Walk over to the man watching you. Hand him Michelle's phone.",
+          "narration": "Kristin walks over to the man watching her, a mixture of caution and determination on her face. She hands him Michelle's phone, which is still on the passenger seat, its screen cracked and unresponsive. The man takes the phone, his eyes flicking to the broken screen before returning to Kristin.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in the man's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 11
+        },
+        {
+          "player_input": "Check who has Michelle's phone now.",
+          "narrated_command": "Check who has Michelle's phone now.",
+          "narration": "The man in the distance is holding Michelle's phone, its screen cracked and dark.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The pursuers are closing in through the park. The pursuit is not over.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in the man's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 30,
+      "recovery_requests": 2,
+      "package": "/tmp/bench-package-6sd5md3e",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 8,
+      "rejected_turns": [],
+      "rejected_turn_count": 0,
+      "scene_transitions": [
+        {
+          "from_scene": "1A",
+          "to_scene": "1B",
+          "after_turn": 8,
+          "advanced_offline": true
+        }
+      ],
+      "item_facts_final": {
+        "Michelle's phone": {
+          "place": "in the man's hand",
+          "condition": [
+            "broken"
+          ]
+        },
+        "Kristin's laptop": {
+          "place": "on the passenger seat",
+          "condition": [
+            "closed"
+          ]
+        },
+        "drawer": {
+          "place": "in Michelle's workstation",
+          "condition": [
+            "open"
+          ]
+        },
+        "memory card": {
+          "place": "in drawer",
+          "condition": [
+            "scattered papers nearby"
+          ]
+        },
+        "note": {
+          "place": "on the receipt",
+          "condition": [
+            "handwritten"
+          ]
+        },
+        "receipt": {
+          "place": "on the ground",
+          "condition": [
+            "crumpled"
+          ]
+        }
+      },
+      "item_facts_seed_issues": [],
+      "item_facts_match_calls": 15,
+      "item_facts_reply_keys": {
+        "place": 19
+      },
+      "item_facts_axis_fixes": 1
+    },
+    {
+      "status": "ok",
+      "replicate": 3,
+      "script": "change-types",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into the house, her eyes scanning the familiar space. She looks around the living room, taking in the overturned workstation chair and the empty space where Michelle's tablet and work bag usually sit. Kristin's gaze falls on the back door, which appears to have been forced open.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narrated_command": "Look carefully at Michelle's phone.",
+          "narration": "Kristin picks up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 1
+        },
+        {
+          "player_input": "Open the drawer with your initials carved into it.",
+          "narrated_command": "Open the drawer with your initials carved into it.",
+          "narration": "Kristin approaches Michelle's workstation and looks at the drawer with the KMS initials carved into it. She carefully opens the drawer, revealing its contents. Inside, she finds a few pens, a notebook, and a USB drive.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "drawer"
+          ],
+          "item_facts_before": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "shut"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "open",
+                "unexamined"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "USB drive": {
+              "condition": [
+                "unexamined"
+              ],
+              "place": "in drawer"
+            },
+            "drawer": {
+              "condition": [
+                "open"
+              ],
+              "place": "in Michelle's workstation"
+            }
+          },
+          "item_facts_issues": [
+            "item_facts for 'drawer' refused place 'in drawer' because it is fixed"
+          ],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "drawer",
+              "Kristin"
+            ],
+            "same_as": {
+              "USB drive": "drawer"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "USB drive": "drawer"
+          },
+          "turn_number": 2
+        },
+        {
+          "player_input": "Pick up Michelle's phone and put it in your pocket.",
+          "narrated_command": "Pick up Michelle's phone. Put it in your pocket.",
+          "narration": "Kristin reaches into the room and picks up Michelle's phone. She puts the phone in her pocket.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 3
+        },
+        {
+          "player_input": "Go out to your truck and bring your laptop inside.",
+          "narrated_command": "Go out to your truck. Bring your laptop inside.",
+          "narration": "Kristin walks out to her truck, which is parked on the street in front of the house. She unlocks the truck and opens the driver's side door. Kristin retrieves her laptop from the passenger seat and closes the truck door. She walks back to the house, laptop in hand.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.",
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's truck outside the house",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 4
+        },
+        {
+          "player_input": "Carry your laptop back out to the truck.",
+          "narrated_command": "Carry your laptop back out to the truck.",
+          "narration": "Kristin carefully makes her way back to her truck, laptop in hand. She opens the truck door and sets the laptop down on the passenger seat. Kristin closes the truck door and takes a moment to look around the quiet neighborhood.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in the truck"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 5
+        },
+        {
+          "player_input": "Take Michelle's phone out and throw it hard against the kitchen wall.",
+          "narrated_command": "Take Michelle's phone out. Throw it hard against the kitchen wall.",
+          "narration": "Kristin pulls out Michelle's phone from her pocket and throws it hard against the kitchen wall.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the kitchen floor"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 6
+        },
+        {
+          "player_input": "Pick up Michelle's phone from the floor.",
+          "narrated_command": "Pick up Michelle's phone from the floor.",
+          "narration": "Kristin bends down to pick up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 7
+        },
+        {
+          "player_input": "Leave the house and drive to the park with Michelle's phone.",
+          "narrated_command": "Leave the house. Drive to the park with Michelle's phone.",
+          "narration": "Kristin carefully exits the house, looking around cautiously. She gets into her truck and starts the engine. She drives through the congested streets, Michelle's broken phone lying on the passenger seat.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone",
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            },
+            "Kristin's laptop": {
+              "place": "in the truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin's laptop",
+              "the house",
+              "the park"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 8
+        },
+        {
+          "player_input": "Check that you still have Michelle's phone.",
+          "narrated_command": "Check that you still have Michelle's phone.",
+          "narration": "Kristin looks down at the passenger seat and sees Michelle's phone, its screen cracked and unresponsive.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the passenger seat"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look around the bench for anything Michelle left.",
+          "narrated_command": "Look around the bench for anything Michelle left.",
+          "narration": "Kristin scans the area around the bench, searching for any signs of Michelle's presence. She notices a small piece of paper on the ground near the service path. The paper appears to be a receipt from a local coffee shop, but there's a handwritten note on the back that reads 'Meet me at the old warehouse at midnight.'",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [],
+          "item_facts_before": {},
+          "item_facts_after": {
+            "note": {
+              "place": "on the receipt",
+              "condition": [
+                "handwritten"
+              ]
+            },
+            "receipt": {
+              "place": "on the ground",
+              "condition": [
+                "crumpled"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "note": {
+              "condition": [
+                "handwritten"
+              ],
+              "place": "on the receipt"
+            },
+            "receipt": {
+              "condition": [
+                "crumpled"
+              ],
+              "place": "on the ground"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "bench",
+              "Michelle"
+            ],
+            "same_as": {
+              "note": "note",
+              "receipt": "receipt"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "note": "new",
+            "receipt": "new"
+          },
+          "turn_number": 10
+        },
+        {
+          "player_input": "Walk over to the man watching you and hand him Michelle's phone.",
+          "narrated_command": "Walk over to the man watching you. Hand him Michelle's phone.",
+          "narration": "Kristin walks over to the man watching her, her eyes fixed on his face. She hands him Michelle's phone, her hand extended in a deliberate gesture. The man takes the phone, his expression unreadable, and Kristin waits for a reaction.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the passenger seat",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in the man's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 11
+        },
+        {
+          "player_input": "Check who has Michelle's phone now.",
+          "narrated_command": "Check who has Michelle's phone now.",
+          "narration": "The man in the distance is holding Michelle's phone, its screen cracked and unresponsive.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The pursuers are closing in through the park. The pursuit is not over.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in the man's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in the man's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "Kristin"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 12,
+      "example_leakage": 0,
+      "narration_requests": 30,
+      "recovery_requests": 3,
+      "package": "/tmp/bench-package-6sd5md3e",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 8,
+      "rejected_turns": [],
+      "rejected_turn_count": 0,
+      "scene_transitions": [
+        {
+          "from_scene": "1A",
+          "to_scene": "1B",
+          "after_turn": 8,
+          "advanced_offline": true
+        }
+      ],
+      "item_facts_final": {
+        "Michelle's phone": {
+          "place": "in the man's hand",
+          "condition": [
+            "broken"
+          ]
+        },
+        "Kristin's laptop": {
+          "place": "in the truck",
+          "condition": [
+            "closed"
+          ]
+        },
+        "drawer": {
+          "place": "in Michelle's workstation",
+          "condition": [
+            "open",
+            "unexamined"
+          ]
+        },
+        "note": {
+          "place": "on the receipt",
+          "condition": [
+            "handwritten"
+          ]
+        },
+        "receipt": {
+          "place": "on the ground",
+          "condition": [
+            "crumpled"
+          ]
+        }
+      },
+      "item_facts_seed_issues": [],
+      "item_facts_match_calls": 14,
+      "item_facts_reply_keys": {
+        "place": 20
+      },
+      "item_facts_axis_fixes": 0
+    },
+    {
+      "status": "ok",
+      "replicate": 4,
+      "script": "change-types",
+      "scene_id": "1A",
+      "opening": "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into the house, her eyes scanning the familiar space. The air inside is stale, and the silence is oppressive. She moves towards the living room, her boots creaking on the hardwood floor.",
+      "turns": [
+        {
+          "player_input": "Look carefully at Michelle's phone.",
+          "narrated_command": "Look carefully at Michelle's phone.",
+          "narration": "Kristin picks up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 1
+        },
+        {
+          "player_input": "Open the drawer with your initials carved into it.",
+          "narrated_command": "Open the drawer with your initials carved into it.",
+          "narration": "Kristin approaches Michelle's workstation and looks at the drawer with her initials carved into it.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "drawer"
+          ],
+          "item_facts_before": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "shut"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "drawer": {
+              "place": "in Michelle's workstation",
+              "condition": [
+                "open"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "drawer": {
+              "condition": [
+                "open"
+              ],
+              "place": "in Michelle's workstation"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "drawer"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 2
+        },
+        {
+          "player_input": "Pick up Michelle's phone and put it in your pocket.",
+          "narrated_command": "Pick up Michelle's phone. Put it in your pocket.",
+          "narration": "Kristin reaches into the room and picks up Michelle's phone.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a1--michelle-is-gone",
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_a_r1",
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hands",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 3
+        },
+        {
+          "player_input": "Carry your laptop back out to the truck.",
+          "narrated_command": "Carry your laptop back out to the truck.",
+          "narration": "Kristin walks back to her truck, opens the door, and retrieves her laptop.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Kristin's laptop"
+          ],
+          "item_facts_before": {
+            "Kristin's laptop": {
+              "place": "in Kristin's truck outside the house",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Kristin's laptop": {
+              "place": "in Kristin's truck",
+              "condition": [
+                "closed"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Kristin's laptop": {
+              "condition": [
+                "closed"
+              ],
+              "place": "in Kristin's truck"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Kristin's laptop"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 5
+        },
+        {
+          "player_input": "Take Michelle's phone out and throw it hard against the kitchen wall.",
+          "narrated_command": "Take Michelle's phone out. Throw it hard against the kitchen wall.",
+          "narration": "Kristin pulls out Michelle's phone from her pocket and throws it hard against the kitchen wall. The phone hits the wall with a loud crash, its screen shattering into pieces. Kristin walks over to the wall, where the phone lies in pieces.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's pocket",
+              "condition": []
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "on the kitchen floor"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 6
+        },
+        {
+          "player_input": "Pick up Michelle's phone from the floor.",
+          "narrated_command": "Pick up Michelle's phone from the floor.",
+          "narration": "Kristin bends down to pick up Michelle's phone from the kitchen floor.",
+          "left_scene": false,
+          "scene_id": "1A",
+          "beats_projected": [
+            "scene-1a2--michelles-last-investigation",
+            "scene-1a3--the-interrupted-message"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [],
+          "candidates_offered": [
+            "k_sl_1a_b_r1",
+            "k_sl_1a_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "on the kitchen floor",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 7
+        },
+        {
+          "player_input": "Check that you still have Michelle's phone.",
+          "narrated_command": "Check that you still have Michelle's phone.",
+          "narration": "Kristin checks her hand and sees Michelle's phone, its screen cracked and unresponsive.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 9
+        },
+        {
+          "player_input": "Look around the bench for anything Michelle left.",
+          "narrated_command": "Look around the bench for anything Michelle left.",
+          "narration": "Kristin scans the area around the bench, searching for any signs of Michelle's presence. She notices a small piece of paper on the ground near the service path. The paper appears to be a receipt from a local coffee shop, but there's a handwritten note on the back that reads 'Meet me at the old warehouse at midnight.'",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [],
+          "item_facts_before": {},
+          "item_facts_after": {
+            "note": {
+              "place": "on the receipt",
+              "condition": [
+                "handwritten"
+              ]
+            },
+            "receipt": {
+              "place": "on the ground",
+              "condition": [
+                "crumpled"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "note": {
+              "condition": [
+                "handwritten"
+              ],
+              "place": "on the receipt"
+            },
+            "receipt": {
+              "condition": [
+                "crumpled"
+              ],
+              "place": "on the ground"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "bench",
+              "Michelle"
+            ],
+            "same_as": {
+              "note": "note",
+              "receipt": "receipt"
+            }
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {
+            "note": "new",
+            "receipt": "new"
+          },
+          "turn_number": 10
+        },
+        {
+          "player_input": "Walk over to the man watching you and hand him Michelle's phone.",
+          "narrated_command": "Walk over to the man watching you. Hand him Michelle's phone.",
+          "narration": "Kristin approaches the man watching her, a mix of caution and determination on her face. She holds out Michelle's phone, its screen cracked and dark. The man's eyes flicker to the phone, and for a moment, Kristin wonders if he'll take it.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": null,
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone",
+              "the man",
+              "Kristin"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 11
+        },
+        {
+          "player_input": "Check who has Michelle's phone now.",
+          "narrated_command": "Check who has Michelle's phone now.",
+          "narration": "Kristin looks down at Michelle's phone in her hand, its screen cracked and dark.",
+          "left_scene": false,
+          "scene_id": "1B",
+          "beats_projected": [
+            "scene-1b2--the-man-following-her",
+            "scene-1b3--brandons-warning"
+          ],
+          "selected_knowledge_ids": [],
+          "authored_handoff_candidate_id": null,
+          "model_selected_knowledge_ids": [],
+          "grounding_ids": [
+            "k_scene_1a_entry"
+          ],
+          "model_grounding_ids": [],
+          "shadow_matched_candidate_id": null,
+          "prompt_candidate_ids": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "candidates_offered": [
+            "k_sl_1b_a_r1",
+            "k_sl_1b_a_r2",
+            "k_sl_1b_b_r1",
+            "k_sl_1b_b_r2"
+          ],
+          "cue_fact_id": null,
+          "cue_text": null,
+          "complication_text": "The pursuers are closing in through the park. The pursuit is not over.",
+          "handoff_staged": false,
+          "things_given": [
+            "Michelle's phone"
+          ],
+          "item_facts_before": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_after": {
+            "Michelle's phone": {
+              "place": "in Kristin's hand",
+              "condition": [
+                "broken"
+              ]
+            }
+          },
+          "item_facts_raw": {
+            "Michelle's phone": {
+              "condition": [
+                "broken"
+              ],
+              "place": "in Kristin's hand"
+            }
+          },
+          "item_facts_issues": [],
+          "item_facts_source": "single_call",
+          "item_facts_held": [],
+          "match_call": true,
+          "match_raw": {
+            "refers": [
+              "Michelle's phone"
+            ],
+            "same_as": {}
+          },
+          "match_issues": [],
+          "item_facts_resolutions": {},
+          "turn_number": 12
+        }
+      ],
+      "completed": true,
+      "quota": null,
+      "narration_turns": 10,
+      "example_leakage": 0,
+      "narration_requests": 30,
+      "recovery_requests": 4,
+      "package": "/tmp/bench-package-6sd5md3e",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 8,
+      "rejected_turns": [
+        {
+          "turn_number": 4,
+          "player_input": "Go out to your truck and bring your laptop inside.",
+          "rejection_code": "INVALID_PROPOSAL",
+          "rejection_reason": "('narration service returned an invalid proposal (grounding_ids:extra_forbidden)', 502, 'INVALID_PROPOSAL')"
+        },
+        {
+          "turn_number": 8,
+          "player_input": "Leave the house and drive to the park with Michelle's phone.",
+          "rejection_code": "INVALID_PROPOSAL",
+          "rejection_reason": "(\"narration service returned an invalid proposal (Michelle's phone:extra_forbidden)\", 502, 'INVALID_PROPOSAL')"
+        }
+      ],
+      "rejected_turn_count": 2,
+      "scene_transitions": [
+        {
+          "from_scene": "1A",
+          "to_scene": "1B",
+          "after_turn": 8,
+          "advanced_offline": true
+        }
+      ],
+      "item_facts_final": {
+        "Michelle's phone": {
+          "place": "in Kristin's hand",
+          "condition": [
+            "broken"
+          ]
+        },
+        "Kristin's laptop": {
+          "place": "in Kristin's truck",
+          "condition": [
+            "closed"
+          ]
+        },
+        "drawer": {
+          "place": "in Michelle's workstation",
+          "condition": [
+            "open"
+          ]
+        },
+        "note": {
+          "place": "on the receipt",
+          "condition": [
+            "handwritten"
+          ]
+        },
+        "receipt": {
+          "place": "on the ground",
+          "condition": [
+            "crumpled"
+          ]
+        }
+      },
+      "item_facts_seed_issues": [],
+      "item_facts_match_calls": 13,
+      "item_facts_reply_keys": {
+        "place": 14
+      },
+      "item_facts_axis_fixes": 0
+    }
+  ]
+}
