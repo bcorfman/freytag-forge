@@ -582,10 +582,45 @@ from the drawer having no real place. The script composition explains the gap
 between the two runs - one open/close turn in twelve (83%) versus eight in forty
 (22%) - not a difference in the format.
 
-Next decision for Brandon: a third rank-1 rule attempt, an LLM normalisation of
-a returned place in the match call (rank 2, the call already fires on most
-turns), or accept the two-scene 83% and take the state-versus-place question
-into the engine work.
+Brandon chose the match-call normalisation (rank 2, the call already fires on
+most turns).
+
+### Round 3 smoke with place normalisation (225a3fe)
+
+The match call now remembers each captured place and asks whether the text is a
+place or a state; a state restores the previous location and becomes the
+thing's condition. One replicate each.
+
+| | Two-scene | 40-turn |
+|---|---|---|
+| Kept facts correct | 7/12 (58%) | 20/38 (53%) |
+| Previous smoke | 10/12 (83%) | 9/40 (22%) |
+| State left in a place field | 0 | 0 |
+| Place fixes | 0 | 3 |
+| Match calls per turn | 0.92 | 0.87 |
+
+- **The defect it targeted is gone**: no state remains in any place field, and
+  the drawer now keeps "in Kristin and Michelle's shared house" with condition
+  `["closed"]` after "Close the drawer." The 40-turn run more than doubled.
+- **But the fix misfires.** Of three corrections, one was right (the drawer) and
+  two destroyed correct captures: asked about Michelle's phone at
+  "on the kitchen counter", the match model answered "state", so the harness
+  restored "in Kristin's hand" and made the counter a condition. That is why the
+  two-scene replicate fell.
+- **The question is also mis-keyed.** The model sometimes answers `places` by the
+  place TEXT rather than the thing's name
+  (`{"in Kristin's hand": "state", "on the kitchen counter": "place"}`); those
+  answers match no remembered name and are silently ignored, wasting the call.
+- Cost is now about two model calls per turn (one narration, ~0.9 match).
+- The two-scene losses are otherwise narration faults, not capture: the narrator
+  opens the drawer and reports nothing, says the phone was on a coffee table
+  when it was in hand, or introduces a note it never reports.
+- Known gap in the implementation: a place captured on a run's FINAL turn is
+  never checked, because `resolve_held` returns early when nothing is held.
+
+Next: tighten only the wording - key the answer by the thing's name, and
+contrast "on the kitchen counter" (a place) with "open" (a state) - then
+re-smoke before spending on four replicates.
 
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
