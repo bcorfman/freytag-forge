@@ -1,0 +1,29 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": true,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": true,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening underestablishes the house as a sensory crime scene; it names key props but gives little concrete atmosphere or responsive detail.",
+    "Turn 1 search of Michelle's phone yields no meaningful consequence beyond picking it up; canon says handling the phone can make the missing tablet/work bag stand out and should build abduction suspicion.",
+    "Turn 2 opens the KMS-carved drawer but does not reveal or even search for the hidden memory card taped beneath it; this fails to reward apt investigation of the drawer.",
+    "Turn 2 also projects 1A.2/1A.3 too early without actually delivering those beats.",
+    "Turn 3 contradicts prior state by acting as though Michelle's phone is still on the floor after Turn 1 already put it in Kristin's hand.",
+    "By Turn 4 the patrol-pressure complication appears before Michelle's warning is established, which is outside SL-1A-C availability and mis-times the threat beat.",
+    "Turn 4's officer lingering at drawers is presented while Kristin is simply fetching the laptop, but there is no actual welfare check/search interaction, no questioning about Michelle's research, and no reflective gate marker.",
+    "Scene skips core authored beats: missing tablet/work bag absence, localized/staged disorder inference, memory card discovery, Continuity Initiative files, Michelle's warning recording, and the marked gate after patrol departure.",
+    "Repeated investigation of key scene objects keeps returning almost nothing actionable."
+  ],
+  "reasons": [
+    "The scene remains local to 1A and does not reveal protected future knowledge.",
+    "However, it fails strict canon coverage: 1A.1 is only thinly established, and 1A.2-1A.4 are not properly dramatized across the supplied turns.",
+    "Ordinary turns need responsive consequences. Looking at the phone and opening the suspicious drawer should have advanced evidence discovery; instead they mostly restate object handling.",
+    "State continuity breaks on the phone's location, which is a direct canon inconsistency within the scene transcript.",
+    "Pacing is not progressive in the required sense: projected later beats appear without earned revelation, while the actual narrated content withholds the scene's required discoveries.",
+    "The investigation is not rewarded despite apt, repeated searching of exactly the canon-relevant items and area."
+  ]
+}
