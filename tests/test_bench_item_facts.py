@@ -218,6 +218,22 @@ def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix
     assert provider.item_facts_axis_fixes == 0
 
 
+def test_empty_condition_reply_clears_axis_and_conditions_but_keeps_place():
+    provider = _provider()
+    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
+    provider.item_facts["the lantern"]["condition"] = ["open", "carved with KMS"]
+
+    provider.apply_item_facts({"the lantern": {"condition": []}})
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": []}
+
+    provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
+    provider.apply_item_facts({"the lantern": {"condition": []}})
+    assert provider.item_facts["the lantern"]["condition"] == []
+
+    provider.apply_item_facts({"the lantern": {"condition": []}})
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": []}
+
+
 def test_non_axis_place_still_updates_location():
     provider = _provider()
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
