@@ -705,24 +705,37 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             turn_number = len(turns) + len(rejected_turns) + 1
             player_input = turn_inputs[turn_index % len(turn_inputs)]
             prior_scene = state.current_scene_id
-            match_info = {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
+            match_info = {
+                "match_call": False,
+                "match_raw": None,
+                "match_issues": [],
+                "resolutions": {},
+                "place_normalisations": {},
+            }
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(player_input)
-                if pending_item_record is not None and match_info["resolutions"]:
-                    pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
-                    resolved_names = [
-                        target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}
-                    ]
-                    resolved_names.extend(
-                        name
-                        for name, target in match_info["resolutions"].items()
-                        if target == "new" and name in provider.item_facts
-                    )
-                    for held_name, target in match_info["resolutions"].items():
-                        if target != held_name:
-                            pending_item_record["item_facts_after"].pop(held_name, None)
-                    pending_item_record["item_facts_after"].update(provider.facts_for_names(resolved_names))
-                    pending_item_record = None
+                if pending_item_record is not None:
+                    if match_info["place_normalisations"]:
+                        pending_item_record["place_normalisations"].update(match_info["place_normalisations"])
+                        pending_item_record["item_facts_after"].update(
+                            provider.facts_for_names(list(match_info["place_normalisations"]))
+                        )
+                    if match_info["resolutions"]:
+                        pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
+                        resolved_names = [
+                            target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}
+                        ]
+                        resolved_names.extend(
+                            name
+                            for name, target in match_info["resolutions"].items()
+                            if target == "new" and name in provider.item_facts
+                        )
+                        for held_name, target in match_info["resolutions"].items():
+                            if target != held_name:
+                                pending_item_record["item_facts_after"].pop(held_name, None)
+                        pending_item_record["item_facts_after"].update(provider.facts_for_names(resolved_names))
+                    if match_info["place_normalisations"] or match_info["resolutions"]:
+                        pending_item_record = None
             try:
                 proposal = _turn_with_rate_limit_retry(engine, player_input)
             except NarrationProviderError as error:
@@ -780,6 +793,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "match_raw": match_info["match_raw"],
                     "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
+                    "place_normalisations": {},
                 }
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
@@ -820,7 +834,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     turn_record.update(item_facts_record)
                 turn_record["turn_number"] = turn_number
                 turns.append(turn_record)
-                if item_facts_record is not None and provider._held_item_facts:
+                if item_facts_record is not None and (provider._held_item_facts or provider._remembered_places):
                     pending_item_record = turn_record
             if entered:
                 scene_transitions.append(
@@ -864,14 +878,22 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             play_turns(continue_to["fixed_turns"], continuation_script["inputs"], stop_on_exit=False)
         if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
             match_info = provider.resolve_held()
-            if pending_item_record is not None and match_info["resolutions"]:
-                pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
-                names = [target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}]
-                names.extend(name for name, target in match_info["resolutions"].items() if target == "new")
-                for held_name, target in match_info["resolutions"].items():
-                    if target != held_name:
-                        pending_item_record["item_facts_after"].pop(held_name, None)
-                pending_item_record["item_facts_after"].update(provider.facts_for_names(names))
+            if pending_item_record is not None:
+                if match_info["place_normalisations"]:
+                    pending_item_record["place_normalisations"].update(match_info["place_normalisations"])
+                    pending_item_record["item_facts_after"].update(
+                        provider.facts_for_names(list(match_info["place_normalisations"]))
+                    )
+                if match_info["resolutions"]:
+                    pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
+                    names = [
+                        target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}
+                    ]
+                    names.extend(name for name, target in match_info["resolutions"].items() if target == "new")
+                    for held_name, target in match_info["resolutions"].items():
+                        if target != held_name:
+                            pending_item_record["item_facts_after"].pop(held_name, None)
+                    pending_item_record["item_facts_after"].update(provider.facts_for_names(names))
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError, RuntimeError) as error:
         return _failed_scene_record(
             variation,
@@ -914,6 +936,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["item_facts_seed_issues"] = list(provider.item_facts_seed_issues)
         record["item_facts_match_calls"] = provider.item_facts_match_calls
         record["item_facts_reply_keys"] = dict(provider.item_facts_reply_keys)
+        record["item_facts_place_fixes"] = provider.item_facts_place_fixes
     return record
 
 

@@ -74,12 +74,14 @@ _SINGLE_CALL_RULES = (
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
     "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-    'storyteller used. Return only JSON like {"refers": ["name"], "carried": ["name"], "same_as": '
-    '{"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when '
-    'the command uses other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from '
-    "THINGS whose place shows that the player character is holding it or carrying it. In same_as, give each name in "
-    'NEW NAMES the name from THINGS that means the same thing, or "new" if it is a different thing. Copy names '
-    "from THINGS exactly."
+    "storyteller used. PLACES lists text the storyteller gave as a thing's place. Return only JSON like "
+    '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}, "places": {"name": "place"}}. '
+    "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
+    'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
+    "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
+    'that means the same thing, or "new" if it is a different thing. In places, answer for each name in PLACES with '
+    '"place" if the text names a spot or a holder, like "on the kitchen table", or "state" if it tells how the thing '
+    'is, like "open" or "broken". Copy names from THINGS exactly.'
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
@@ -111,9 +113,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._pending_item_facts: object = None
         self._pending_item_facts_present = False
         self._held_item_facts: dict[str, dict[str, object]] = {}
+        self._remembered_places: dict[str, dict[str, str]] = {}
         self._changed_last_turn: set[str] = set()
         self._selected_names: list[str] | None = None
         self.item_facts_match_calls = 0
+        self.item_facts_place_fixes = 0
         self.item_facts_reply_keys = {"place": 0, "where": 0}
         package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
         self._hand_seed_names = {name for name in self.item_facts if name not in package_names}
@@ -284,6 +288,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 issues.append(f"item_facts for {name!r} has invalid where or condition")
                 continue
             before = copy.deepcopy(self.item_facts[name])
+            location_key = "place" if "place" in value else "where"
+            if location_key in value and isinstance(value[location_key], str) and value[location_key].strip():
+                self._remembered_places[name] = {
+                    "text": value[location_key].strip(),
+                    "where": str(before["where"]),
+                }
             if self._merge_entry(name, value) and before != self.item_facts[name]:
                 changed.add(name)
             if isinstance(value.get("condition"), list) and len(value["condition"]) > 2:
@@ -295,9 +305,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         always = self.always_included_names()
         candidates = [name for name in self.item_facts if name not in always]
         held = list(self._held_item_facts)
-        if not candidates and not held:
+        remembered_places = copy.deepcopy(self._remembered_places)
+        if not candidates and not held and not remembered_places:
             self._selected_names = always
-            return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
+            return {
+                "match_call": False,
+                "match_raw": None,
+                "match_issues": [],
+                "resolutions": {},
+                "place_normalisations": {},
+            }
         self.item_facts_match_calls += 1
         match_things = [
             f"- {name}" if name in always else f"- {name}. Place: {self.item_facts[name]['where']}."
@@ -315,12 +332,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 + "\n".join(match_things)
                 + "\n\nNEW NAMES:\n"
                 + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
+                + (
+                    "\n\nPLACES:\n"
+                    + "\n".join(f"- {name}: {place['text']}" for name, place in remembered_places.items())
+                    if remembered_places
+                    else ""
+                )
             ),
             "max_tokens": 200,
             "response_format": {"type": "json_object"},
         }
         issues: list[str] = []
         resolutions: dict[str, str] = {}
+        place_normalisations: dict[str, str] = {}
         try:
             reply = CloudflareTurnProvider._request(self, payload)
         except Exception as error:
@@ -337,6 +361,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._held_item_facts = {}
             self._selected_names = always
         else:
+            places = reply.get("places")
+            if isinstance(places, dict):
+                for name, kind in places.items():
+                    remembered = remembered_places.get(name)
+                    if remembered is None:
+                        continue
+                    if kind == "state":
+                        text = remembered["text"][:40]
+                        self.item_facts[name]["where"] = remembered["where"]
+                        self.item_facts[name]["condition"] = [text]
+                        self._changed_last_turn.add(name)
+                        place_normalisations[name] = text
+                        self.item_facts_place_fixes += 1
             refers = [
                 name
                 for name in reply["refers"]
@@ -380,16 +417,24 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._held_item_facts = {}
             selected = set(self.always_included_names()) | set(refers) | set(carried)
             self._selected_names = [name for name in self.item_facts if name in selected]
+        self._remembered_places = {}
         return {
             "match_call": True,
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": resolutions,
+            "place_normalisations": place_normalisations,
         }
 
     def resolve_held(self) -> dict[str, object]:
         if not self._held_item_facts:
-            return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
+            return {
+                "match_call": False,
+                "match_raw": None,
+                "match_issues": [],
+                "resolutions": {},
+                "place_normalisations": {},
+            }
         return self.prepare_turn("(none)")
 
     def second_call_update(self, player_input: str, narration: str) -> object:

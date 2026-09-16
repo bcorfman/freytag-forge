@@ -78,13 +78,14 @@ def test_match_system_describes_references_carried_things_and_new_names():
     assert _MATCH_SYSTEM == (
         "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
         "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-        'storyteller used. Return only JSON like {"refers": ["name"], "carried": ["name"], "same_as": '
-        '{"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when '
-        'the command uses other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from '
-        "THINGS whose place shows that the player character is holding it or carrying it. In same_as, give each name "
-        "in "
-        'NEW NAMES the name from THINGS that means the same thing, or "new" if it is a different thing. Copy names '
-        "from THINGS exactly."
+        "storyteller used. PLACES lists text the storyteller gave as a thing's place. Return only JSON like "
+        '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}, "places": {"name": '
+        '"place"}}. In refers, list each name from THINGS that the command talks about, even when the command uses '
+        'other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place '
+        "shows that the player character is holding it or carrying it. In same_as, give each name in NEW NAMES the "
+        'name from THINGS that means the same thing, or "new" if it is a different thing. In places, answer for each '
+        'name in PLACES with "place" if the text names a spot or a holder, like "on the kitchen table", or "state" '
+        'if it tells how the thing is, like "open" or "broken". Copy names from THINGS exactly.'
     )
 
 
@@ -170,6 +171,66 @@ def test_apply_item_facts_trims_third_condition_and_phrase_lengths():
 
     assert facts["the lantern"] == {"where": "a" * 80, "condition": ["b" * 40, "second"]}
     assert any("condition" in issue for issue in issues)
+
+
+def test_match_state_place_restores_location_and_adds_condition(monkeypatch):
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "open"}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {}, "places": {"the lantern": "state"}},
+    )
+
+    result = provider.prepare_turn("Open the lantern.")
+
+    assert result["place_normalisations"] == {"the lantern": "open"}
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["open"]}
+
+
+def test_match_place_leaves_captured_location_alone(monkeypatch):
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {}, "places": {"the lantern": "place"}},
+    )
+
+    result = provider.prepare_turn("Carry the lantern.")
+
+    assert result["place_normalisations"] == {}
+    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+
+
+@pytest.mark.parametrize("reply", [{"refers": [], "same_as": {}}, {"refers": [], "same_as": {}, "places": []}])
+def test_missing_or_malformed_places_reply_changes_nothing(monkeypatch, reply):
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "open"}})
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: reply)
+
+    result = provider.prepare_turn("Open the lantern.")
+
+    assert result["place_normalisations"] == {}
+    assert provider.item_facts["the lantern"] == {"where": "open", "condition": ["lit"]}
+
+
+def test_places_section_is_present_only_for_remembered_places(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    payloads = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
+    )
+
+    provider.apply_item_facts({"the lantern": {"place": "open"}})
+    provider.prepare_turn("Open the lantern.")
+    assert "PLACES:\n- the lantern: open" in payloads[0]["user"]
+
+    provider.prepare_turn("Look at the lantern.")
+    assert len(payloads) == 1
 
 
 def test_second_call_uses_only_things_player_and_story_and_counts_request(monkeypatch):
@@ -668,7 +729,7 @@ def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
         response = {
             "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
             "selected_knowledge_ids": [],
-            "item_facts": {"Michelle's phone": {"where": "in her hand", "condition": []}},
+            "item_facts": {},
         }
         if len(calls) in (4, 5):
             response["things"] = []
