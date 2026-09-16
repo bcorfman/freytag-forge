@@ -449,8 +449,8 @@ def test_package_seed_scene_1a_matches_authored_things():
     assert things == {
         "Michelle's phone": {"where": "on the kitchen floor", "condition": ["not damaged"]},
         "Kristin's laptop": {"where": "in Kristin's truck outside the house", "condition": []},
-        "Michelle's workstation drawers": {
-            "where": "in Kristin and Michelle's shared house",
+        "Michelle's carved drawer": {
+            "where": "in Michelle's workstation",
             "condition": ["shut"],
         },
     }
@@ -506,8 +506,22 @@ def test_package_seed_parses_new_and_reports_unparseable_setting_facts(tmp_path)
         update={"scenes": tuple(replacement if item is scene else item for item in PACKAGE.scenes)}
     )
     things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
-    assert things["A lamp"] == {"where": "in Kristin and Michelle's shared house", "condition": ["bright"]}
+    assert "A lamp" not in things
+    assert any("A lamp" in issue and "A lamp is bright." in issue for issue in issues)
     assert any("could not be parsed" in issue for issue in issues)
+
+
+def test_package_seed_refuses_to_place_unplaced_setting_fact():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    replacement = scene.model_copy(
+        update={"metadata": scene.metadata.model_copy(update={"setting_facts": ("The kettle is warm.",)})}
+    )
+    package = PACKAGE.model_copy(
+        update={"scenes": tuple(replacement if item is scene else item for item in PACKAGE.scenes)}
+    )
+    things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
+    assert "The kettle" not in things
+    assert any("The kettle" in issue and "The kettle is warm." in issue for issue in issues)
 
 
 def test_where_only_entry_keeps_existing_conditions():
@@ -701,7 +715,7 @@ def test_always_included_names_cover_authored_dependency_and_changed_items():
     provider._hand_seed_names = set()
     provider.item_facts.update(
         {
-            "Michelle's workstation drawers": {"where": "in the house", "condition": []},
+            "Michelle's carved drawer": {"where": "in the house", "condition": []},
             "Michelle's memory card": {"where": "under the drawer", "condition": []},
             "Kristin's notebook": {"where": "in Kristin's jacket pocket", "condition": []},
             "toolbox": {"where": "in Kristin's truck", "condition": []},
@@ -711,7 +725,7 @@ def test_always_included_names_cover_authored_dependency_and_changed_items():
     )
     provider._changed_last_turn = {"changed thing"}
     names = provider.always_included_names()
-    assert "Michelle's workstation drawers" in names
+    assert "Michelle's carved drawer" in names
     assert "Michelle's memory card" in names
     assert "Kristin's notebook" not in names
     assert "toolbox" not in names

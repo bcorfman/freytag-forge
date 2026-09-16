@@ -18,7 +18,6 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
     if scene is None:
         raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
     items = {item.id: item for item in package.world.items}
-    locations = {location.id: location for location in package.world.locations}
     things: dict[str, dict] = {}
     issues: list[str] = []
     for item_id, placement in scene.metadata.item_placements.items():
@@ -36,8 +35,6 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
             continue
         things[item.name] = {"where": where, "condition": []}
 
-    location = locations.get(scene.metadata.location_id)
-    location_name = location.name if location is not None else scene.metadata.location_id
     for setting in scene.metadata.setting_facts:
         phrase = setting.strip()
         if phrase.endswith("."):
@@ -57,11 +54,10 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
             issues.append(f"setting fact {setting!r} could not be parsed")
             continue
         name, condition = (part.strip() for part in phrase.split(separator, 1))
-        where = f"in {location_name}"
-        if not name or len(where) > 80 or len(condition) > 40:
+        if not name or len(condition) > 40:
             issues.append(f"setting fact {setting!r} exceeds item-facts limits")
             continue
-        things[name] = {"where": where, "condition": [condition]}
+        issues.append(f"setting fact for unplaced thing {name!r}: {setting!r}")
     return things, issues
 
 
