@@ -175,6 +175,20 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
+    if item_facts is not None:
+        package = load_story_package(Path(variation["_package_path"]))
+        known_names = set(item_facts[1])
+        if variation.get("item_facts", {}).get("seed_from_package", False):
+            for scene in package.scenes:
+                state = RuntimeState(
+                    package=package,
+                    current_scene_id=scene.metadata.scene_id,
+                    phase=scene.metadata.freytag_phase,
+                )
+                state._assert_scene_entry_fact(scene.metadata.scene_id)
+                known_names.update(package_seed(package, state, scene.metadata.scene_id)[0])
+        item_facts = validate_item_facts(variation["item_facts"], known_names=known_names)
+        variation["_item_facts"] = item_facts
     if item_facts is not None and variation.get("item_facts", {}).get("seed_from_package", False):
         package = load_story_package(Path(variation["_package_path"]))
         hand_seed = item_facts[1]
@@ -453,7 +467,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     if item_facts is None and "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
     if item_facts is not None:
-        mode, seed = item_facts
+        mode, seed, state_axes = item_facts
         seed_issues: list[str] = []
         if variation.get("item_facts", {}).get("seed_from_package", False):
             package_things, seed_issues = package_seed(state.package, state, state.current_scene_id)
@@ -466,6 +480,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
             prompt_variant=variation["_prompt_variant"],
             item_facts=seed,
             mode=mode,
+            state_axes=state_axes,
             seed_issues=seed_issues,
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
@@ -566,7 +581,7 @@ def prompt_for(
     if item_facts is None and "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
     if item_facts is not None:
-        mode, seed = item_facts
+        mode, seed, state_axes = item_facts
         provider = ItemFactsProvider(
             worker_url="",
             token="",
@@ -574,6 +589,7 @@ def prompt_for(
             prompt_variant=variation["_prompt_variant"],
             item_facts=seed,
             mode=mode,
+            state_axes=state_axes,
         )
         if variation.get("item_facts", {}).get("seed_from_package", False):
             package_things, seed_issues = package_seed(package, state, state.current_scene_id)
@@ -710,16 +726,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
-                "place_normalisations": {},
             }
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(player_input)
                 if pending_item_record is not None:
-                    if match_info["place_normalisations"]:
-                        pending_item_record["place_normalisations"].update(match_info["place_normalisations"])
-                        pending_item_record["item_facts_after"].update(
-                            provider.facts_for_names(list(match_info["place_normalisations"]))
-                        )
                     if match_info["resolutions"]:
                         pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
                         resolved_names = [
@@ -734,7 +744,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                             if target != held_name:
                                 pending_item_record["item_facts_after"].pop(held_name, None)
                         pending_item_record["item_facts_after"].update(provider.facts_for_names(resolved_names))
-                    if match_info["place_normalisations"] or match_info["resolutions"]:
+                    if match_info["resolutions"]:
                         pending_item_record = None
             try:
                 proposal = _turn_with_rate_limit_retry(engine, player_input)
@@ -793,7 +803,6 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "match_raw": match_info["match_raw"],
                     "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
-                    "place_normalisations": {},
                 }
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
@@ -834,7 +843,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     turn_record.update(item_facts_record)
                 turn_record["turn_number"] = turn_number
                 turns.append(turn_record)
-                if item_facts_record is not None and (provider._held_item_facts or provider._remembered_places):
+                if item_facts_record is not None and provider._held_item_facts:
                     pending_item_record = turn_record
             if entered:
                 scene_transitions.append(
@@ -878,22 +887,14 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             play_turns(continue_to["fixed_turns"], continuation_script["inputs"], stop_on_exit=False)
         if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
             match_info = provider.resolve_held()
-            if pending_item_record is not None:
-                if match_info["place_normalisations"]:
-                    pending_item_record["place_normalisations"].update(match_info["place_normalisations"])
-                    pending_item_record["item_facts_after"].update(
-                        provider.facts_for_names(list(match_info["place_normalisations"]))
-                    )
-                if match_info["resolutions"]:
-                    pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
-                    names = [
-                        target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}
-                    ]
-                    names.extend(name for name, target in match_info["resolutions"].items() if target == "new")
-                    for held_name, target in match_info["resolutions"].items():
-                        if target != held_name:
-                            pending_item_record["item_facts_after"].pop(held_name, None)
-                    pending_item_record["item_facts_after"].update(provider.facts_for_names(names))
+            if pending_item_record is not None and match_info["resolutions"]:
+                pending_item_record["item_facts_resolutions"].update(match_info["resolutions"])
+                names = [target for target in match_info["resolutions"].values() if target not in {"dropped", "new"}]
+                names.extend(name for name, target in match_info["resolutions"].items() if target == "new")
+                for held_name, target in match_info["resolutions"].items():
+                    if target != held_name:
+                        pending_item_record["item_facts_after"].pop(held_name, None)
+                pending_item_record["item_facts_after"].update(provider.facts_for_names(names))
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError, RuntimeError) as error:
         return _failed_scene_record(
             variation,
@@ -936,7 +937,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["item_facts_seed_issues"] = list(provider.item_facts_seed_issues)
         record["item_facts_match_calls"] = provider.item_facts_match_calls
         record["item_facts_reply_keys"] = dict(provider.item_facts_reply_keys)
-        record["item_facts_place_fixes"] = provider.item_facts_place_fixes
+        record["item_facts_axis_fixes"] = provider.item_facts_axis_fixes
     return record
 
 

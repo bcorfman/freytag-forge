@@ -4,7 +4,7 @@
   "fixed_turns": 8,
   "continuity_judge": true,
   "fact_tracking_judge": true,
-  "item_facts": {"mode": "single_call", "seed_from_package": true},
+  "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"Michelle's carved drawer": {"shut": ["closed"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}}},
   "continue_to": {"scene": "1B", "fixed_turns": 4, "script": "carry-and-hand-off"},
   "system_prompt": {
     "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"condition\":[\"dark\"]}}}"

@@ -74,16 +74,12 @@ _SINGLE_CALL_RULES = (
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
     "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-    "storyteller used. PLACES lists a thing's name and the text the storyteller gave as its place. Return only JSON "
-    "like "
-    '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}, "places": {"name": "place"}}. '
+    "storyteller used. Return only JSON like "
+    '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
     'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
     "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
-    'that means the same thing, or "new" if it is a different thing. In places, use the thing\'s NAME as the key, '
-    'never the text. Answer "place" when the text says where the thing is, like "on the kitchen counter" or "in '
-    'her hand", and "state" only when the text says how the thing is, like "open" or "broken". Copy names from '
-    "THINGS exactly."
+    'that means the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
@@ -102,6 +98,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         *,
         item_facts: Mapping[str, Mapping[str, object]],
         mode: str,
+        state_axes: Mapping[str, Mapping[str, list[str]]] | None = None,
         seed_issues: list[str] | None = None,
         **kwargs: object,
     ) -> None:
@@ -115,11 +112,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._pending_item_facts: object = None
         self._pending_item_facts_present = False
         self._held_item_facts: dict[str, dict[str, object]] = {}
-        self._remembered_places: dict[str, dict[str, str]] = {}
+        self.state_axes = copy.deepcopy(state_axes or {})
         self._changed_last_turn: set[str] = set()
         self._selected_names: list[str] | None = None
         self.item_facts_match_calls = 0
-        self.item_facts_place_fixes = 0
+        self.item_facts_axis_fixes = 0
         self.item_facts_reply_keys = {"place": 0, "where": 0}
         package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
         self._hand_seed_names = {name for name in self.item_facts if name not in package_names}
@@ -132,6 +129,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         prompt_variant: Mapping[str, object] | None = None,
         item_facts: Mapping[str, Mapping[str, object]],
         mode: str,
+        state_axes: Mapping[str, Mapping[str, list[str]]] | None = None,
         seed_issues: list[str] | None = None,
     ) -> ItemFactsProvider:
         # Let the shipped provider perform its normal environment validation and
@@ -145,6 +143,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             prompt_variant=prompt_variant,
             item_facts=item_facts,
             mode=mode,
+            state_axes=state_axes,
             seed_issues=seed_issues,
         )
 
@@ -251,15 +250,40 @@ class ItemFactsProvider(CloudflareTurnProvider):
             where = value[location_key]
             if not isinstance(where, str) or not where.strip():
                 return False
-            facts["where"] = where.strip()[:80]
+            pole = self._axis_match(name, where)
+            if pole is None:
+                facts["where"] = where.strip()[:80]
+            else:
+                self._apply_conditions(name, [pole], replace=False)
+                self.item_facts_axis_fixes += 1
         if "condition" in value:
             condition = value["condition"]
             if not isinstance(condition, list) or any(
                 not isinstance(item, str) or not item.strip() for item in condition
             ):
                 return False
-            facts["condition"] = [item.strip()[:40] for item in condition[:2]]
+            self._apply_conditions(name, condition[:2])
         return True
+
+    def _axis_match(self, name: str, text: str) -> str | None:
+        folded = text.strip().casefold()
+        for pole, aliases in self.state_axes.get(name, {}).items():
+            if folded == pole.casefold() or any(folded == alias.casefold() for alias in aliases):
+                return pole
+        return None
+
+    def _apply_conditions(self, name: str, conditions: list[str], *, replace: bool = True) -> None:
+        axes = self.state_axes.get(name, {})
+        applied: list[str] = []
+        for condition in conditions:
+            pole = self._axis_match(name, condition)
+            applied.append(pole if pole is not None else condition.strip()[:40])
+        existing = [] if replace else list(self.item_facts[name]["condition"])
+        for pole in applied:
+            if pole in axes:
+                opposite = next(other for other in axes if other != pole)
+                existing = [condition for condition in existing if condition != opposite]
+        self.item_facts[name]["condition"] = list(dict.fromkeys(existing + applied))[:2]
 
     def apply_item_facts(self, raw: object) -> tuple[dict[str, dict[str, object]], list[str]]:
         previous = {
@@ -290,12 +314,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 issues.append(f"item_facts for {name!r} has invalid where or condition")
                 continue
             before = copy.deepcopy(self.item_facts[name])
-            location_key = "place" if "place" in value else "where"
-            if location_key in value and isinstance(value[location_key], str) and value[location_key].strip():
-                self._remembered_places[name] = {
-                    "text": value[location_key].strip(),
-                    "where": str(before["where"]),
-                }
             if self._merge_entry(name, value) and before != self.item_facts[name]:
                 changed.add(name)
             if isinstance(value.get("condition"), list) and len(value["condition"]) > 2:
@@ -307,15 +325,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
         always = self.always_included_names()
         candidates = [name for name in self.item_facts if name not in always]
         held = list(self._held_item_facts)
-        remembered_places = copy.deepcopy(self._remembered_places)
-        if not candidates and not held and not remembered_places:
+        if not candidates and not held:
             self._selected_names = always
             return {
                 "match_call": False,
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
-                "place_normalisations": {},
             }
         self.item_facts_match_calls += 1
         match_things = [
@@ -334,19 +350,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 + "\n".join(match_things)
                 + "\n\nNEW NAMES:\n"
                 + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
-                + (
-                    "\n\nPLACES:\n"
-                    + "\n".join(f"- {name}: {place['text']}" for name, place in remembered_places.items())
-                    if remembered_places
-                    else ""
-                )
             ),
             "max_tokens": 200,
             "response_format": {"type": "json_object"},
         }
         issues: list[str] = []
         resolutions: dict[str, str] = {}
-        place_normalisations: dict[str, str] = {}
         try:
             reply = CloudflareTurnProvider._request(self, payload)
         except Exception as error:
@@ -363,19 +372,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._held_item_facts = {}
             self._selected_names = always
         else:
-            places = reply.get("places")
-            if isinstance(places, dict):
-                for name, kind in places.items():
-                    remembered = remembered_places.get(name)
-                    if remembered is None:
-                        continue
-                    if kind == "state":
-                        text = remembered["text"][:40]
-                        self.item_facts[name]["where"] = remembered["where"]
-                        self.item_facts[name]["condition"] = [text]
-                        self._changed_last_turn.add(name)
-                        place_normalisations[name] = text
-                        self.item_facts_place_fixes += 1
             refers = [
                 name
                 for name in reply["refers"]
@@ -419,13 +415,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._held_item_facts = {}
             selected = set(self.always_included_names()) | set(refers) | set(carried)
             self._selected_names = [name for name in self.item_facts if name in selected]
-        self._remembered_places = {}
         return {
             "match_call": True,
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": resolutions,
-            "place_normalisations": place_normalisations,
         }
 
     def resolve_held(self) -> dict[str, object]:
@@ -435,7 +429,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
-                "place_normalisations": {},
             }
         return self.prepare_turn("(none)")
 
@@ -457,7 +450,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return response
 
 
-def validate_item_facts(value: object) -> tuple[str, dict[str, dict[str, object]]] | None:
+def validate_item_facts(
+    value: object, *, known_names: set[str] | None = None
+) -> tuple[str, dict[str, dict[str, object]], dict[str, dict[str, list[str]]]] | None:
     """Validate and copy a variation's item_facts option."""
 
     if not isinstance(value, dict):
@@ -494,4 +489,28 @@ def validate_item_facts(value: object) -> tuple[str, dict[str, dict[str, object]
             "where": facts["where"].strip(),
             "condition": [condition.strip() for condition in facts["condition"]],
         }
-    return mode, copied
+    state_axes = value.get("state_axes", {})
+    if not isinstance(state_axes, dict):
+        raise ValueError("item_facts state_axes must be an object")
+    copied_axes: dict[str, dict[str, list[str]]] = {}
+    for name, axes in state_axes.items():
+        if not isinstance(name, str) or not name.strip() or (known_names is not None and name not in known_names):
+            raise ValueError(f"item_facts state_axes names an unknown thing {name!r}")
+        if not isinstance(axes, dict) or len(axes) != 2:
+            raise ValueError(f"item_facts state_axes for {name!r} must have exactly two poles")
+        copied_poles: dict[str, list[str]] = {}
+        words: set[str] = set()
+        for pole, aliases in axes.items():
+            if not isinstance(pole, str) or not pole.strip() or not isinstance(aliases, list):
+                raise ValueError(f"item_facts state axis for {name!r} has an invalid pole or aliases")
+            pole = pole.strip()
+            all_words = [pole, *aliases]
+            if any(not isinstance(word, str) or not word.strip() for word in all_words):
+                raise ValueError(f"item_facts state axis for {name!r} has an empty pole or alias")
+            folded = [word.strip().casefold() for word in all_words]
+            if words.intersection(folded):
+                raise ValueError(f"item_facts state axis for {name!r} repeats a word under both poles")
+            words.update(folded)
+            copied_poles[pole] = [alias.strip() for alias in aliases]
+        copied_axes[name] = copied_poles
+    return mode, copied, copied_axes

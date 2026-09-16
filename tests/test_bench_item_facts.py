@@ -75,21 +75,9 @@ def test_single_call_rules_require_facts_for_every_change():
 
 
 def test_match_system_describes_references_carried_things_and_new_names():
-    assert _MATCH_SYSTEM == (
-        "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
-        "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-        "storyteller used. PLACES lists a thing's name and the text the storyteller gave as its place. Return only "
-        "JSON "
-        "like "
-        '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}, "places": {"name": '
-        '"place"}}. In refers, list each name from THINGS that the command talks about, even when the command uses '
-        'other words, like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place '
-        "shows that the player character is holding it or carrying it. In same_as, give each name in NEW NAMES the "
-        'name from THINGS that means the same thing, or "new" if it is a different thing. In places, use the thing\'s '
-        'NAME as the key, never the text. Answer "place" when the text says where the thing is, like '
-        '"on the kitchen counter" or "in her hand", '
-        'and "state" only when the text says how the thing is, like "open" or "broken". Copy names from THINGS exactly.'
-    )
+    assert "PLACES" not in _MATCH_SYSTEM
+    assert '"places"' not in _MATCH_SYSTEM
+    assert '"refers"' in _MATCH_SYSTEM and '"carried"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
 
 
 def test_things_omit_condition_for_empty_condition_list():
@@ -176,49 +164,33 @@ def test_apply_item_facts_trims_third_condition_and_phrase_lengths():
     assert any("condition" in issue for issue in issues)
 
 
-def test_match_state_place_restores_location_and_adds_condition(monkeypatch):
+def test_state_axis_place_becomes_condition_without_match_call():
     provider = _provider()
-    provider.apply_item_facts({"the lantern": {"place": "open"}})
-    monkeypatch.setattr(
-        CloudflareTurnProvider,
-        "_request",
-        lambda *_args: {"refers": [], "same_as": {}, "places": {"the lantern": "state"}},
-    )
-
-    result = provider.prepare_turn("Open the lantern.")
-
-    assert result["place_normalisations"] == {"the lantern": "open"}
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["open"]}
+    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
+    provider.apply_item_facts({"the lantern": {"place": "OPEN"}})
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["lit", "open"]}
+    assert provider.item_facts_axis_fixes == 1
 
 
-def test_match_place_leaves_captured_location_alone(monkeypatch):
+def test_state_axis_alias_is_canonical_and_evicts_opposite():
     provider = _provider()
+    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
+    provider.item_facts["the lantern"]["condition"] = ["shut"]
+    provider.apply_item_facts({"the lantern": {"condition": ["closed"]}})
+    assert provider.item_facts["the lantern"]["condition"] == ["shut"]
+
+    provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
+    assert provider.item_facts["the lantern"]["condition"] == ["open"]
+
+
+def test_non_axis_place_still_updates_location():
+    provider = _provider()
+    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
-    monkeypatch.setattr(
-        CloudflareTurnProvider,
-        "_request",
-        lambda *_args: {"refers": [], "same_as": {}, "places": {"the lantern": "place"}},
-    )
-
-    result = provider.prepare_turn("Carry the lantern.")
-
-    assert result["place_normalisations"] == {}
-    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+    assert provider.item_facts["the lantern"]["where"] == "in her hand"
 
 
-@pytest.mark.parametrize("reply", [{"refers": [], "same_as": {}}, {"refers": [], "same_as": {}, "places": []}])
-def test_missing_or_malformed_places_reply_changes_nothing(monkeypatch, reply):
-    provider = _provider()
-    provider.apply_item_facts({"the lantern": {"place": "open"}})
-    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: reply)
-
-    result = provider.prepare_turn("Open the lantern.")
-
-    assert result["place_normalisations"] == {}
-    assert provider.item_facts["the lantern"] == {"where": "open", "condition": ["lit"]}
-
-
-def test_places_section_is_present_only_for_remembered_places(monkeypatch):
+def test_match_call_has_no_places_section(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = set(provider.item_facts)
     payloads = []
@@ -228,12 +200,9 @@ def test_places_section_is_present_only_for_remembered_places(monkeypatch):
         lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
     )
 
-    provider.apply_item_facts({"the lantern": {"place": "open"}})
-    provider.prepare_turn("Open the lantern.")
-    assert "PLACES:\n- the lantern: open" in payloads[0]["user"]
-
-    provider.prepare_turn("Look at the lantern.")
-    assert len(payloads) == 1
+    provider.apply_item_facts({"the notebook": {"where": "on the desk"}})
+    provider.prepare_turn("Search the desk.")
+    assert payloads and "PLACES" not in payloads[0]["user"]
 
 
 def test_second_call_uses_only_things_player_and_story_and_counts_request(monkeypatch):
@@ -302,12 +271,50 @@ def test_item_facts_seed_validation_errors(bad_seed):
         validate_item_facts({"mode": "single_call", "seed": {"thing": bad_seed}})
 
 
+@pytest.mark.parametrize(
+    "axes",
+    [
+        {"unknown": {"shut": [], "open": []}},
+        {"thing": {"shut": [], "open": [], "ajar": []}},
+        {"thing": {"shut": []}},
+        {"thing": {"shut": ["closed"], "open": [" CLOSED "]}},
+    ],
+)
+def test_state_axes_validation_rejects_unknown_or_invalid_axes(axes):
+    with pytest.raises(ValueError, match="item_facts"):
+        validate_item_facts(
+            {
+                "mode": "single_call",
+                "seed": {"thing": {"where": "on the table", "condition": []}},
+                "state_axes": axes,
+            },
+            known_names={"thing"},
+        )
+
+
 def test_bad_item_facts_and_fact_tracking_options_are_rejected(tmp_path):
     source = json.loads(SINGLE.read_text())
     source["item_facts"] = {"mode": "single_call", "seed": {"thing": []}}
     path = tmp_path / "bad-facts.json"
     path.write_text(json.dumps(source))
     with pytest.raises(ValueError, match="item_facts"):
+        load_variation(path)
+
+
+@pytest.mark.parametrize(
+    "axes",
+    [
+        {"unknown": {"shut": [], "open": []}},
+        {"thing": {"shut": [], "open": [], "ajar": []}},
+        {"thing": {"shut": []}},
+    ],
+)
+def test_variation_load_rejects_invalid_state_axes(tmp_path, axes):
+    source = json.loads(SINGLE.read_text())
+    source["item_facts"]["state_axes"] = axes
+    path = tmp_path / "bad-axes.json"
+    path.write_text(json.dumps(source))
+    with pytest.raises(ValueError, match="state_axes"):
         load_variation(path)
 
     source = json.loads(SINGLE.read_text())
