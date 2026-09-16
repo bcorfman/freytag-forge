@@ -75,6 +75,16 @@ def test_single_call_rules_require_facts_for_every_change():
 
 
 def test_match_system_describes_references_carried_things_and_new_names():
+    assert _MATCH_SYSTEM == (
+        "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
+        "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
+        "storyteller used. Return only JSON like "
+        '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}}. '
+        "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
+        'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
+        "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
+        'that means the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
+    )
     assert "PLACES" not in _MATCH_SYSTEM
     assert '"places"' not in _MATCH_SYSTEM
     assert '"refers"' in _MATCH_SYSTEM and '"carried"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
@@ -166,21 +176,46 @@ def test_apply_item_facts_trims_third_condition_and_phrase_lengths():
 
 def test_state_axis_place_becomes_condition_without_match_call():
     provider = _provider()
-    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
-    provider.apply_item_facts({"the lantern": {"place": "OPEN"}})
-    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["lit", "open"]}
+    provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
+    provider.apply_item_facts({"the lantern": {"place": "DARK"}})
+    assert provider.item_facts["the lantern"] == {"where": "on the table", "condition": ["dark"]}
     assert provider.item_facts_axis_fixes == 1
 
 
 def test_state_axis_alias_is_canonical_and_evicts_opposite():
     provider = _provider()
-    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
-    provider.item_facts["the lantern"]["condition"] = ["shut"]
-    provider.apply_item_facts({"the lantern": {"condition": ["closed"]}})
-    assert provider.item_facts["the lantern"]["condition"] == ["shut"]
+    provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
+    provider.apply_item_facts({"the lantern": {"condition": ["unlit"]}})
+    assert provider.item_facts["the lantern"]["condition"] == ["dark"]
 
-    provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
-    assert provider.item_facts["the lantern"]["condition"] == ["open"]
+    provider.apply_item_facts({"the lantern": {"condition": ["lit"]}})
+    assert provider.item_facts["the lantern"]["condition"] == ["lit"]
+
+
+def test_axis_place_has_its_own_slot_when_conditions_are_full():
+    provider = _provider()
+    provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
+    provider.item_facts["the lantern"]["condition"] = ["carved with KMS", "dusty"]
+
+    provider.apply_item_facts({"the lantern": {"place": "unlit"}})
+
+    assert provider.item_facts["the lantern"] == {
+        "where": "on the table",
+        "condition": ["dark", "carved with KMS", "dusty"],
+    }
+    assert provider.item_facts_axis_fixes == 1
+
+
+def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix_axis():
+    provider = _provider()
+    provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
+    provider.apply_item_facts({"the lantern": {"condition": ["unlit"]}})
+    provider.apply_item_facts({"the lantern": {"condition": ["warm"]}})
+    assert provider.item_facts["the lantern"]["condition"] == ["dark", "warm"]
+
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+    assert provider.item_facts_axis_fixes == 0
 
 
 def test_non_axis_place_still_updates_location():

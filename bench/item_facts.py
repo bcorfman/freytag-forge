@@ -273,17 +273,25 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return None
 
     def _apply_conditions(self, name: str, conditions: list[str], *, replace: bool = True) -> None:
-        axes = self.state_axes.get(name, {})
-        applied: list[str] = []
+        current_axis: str | None = None
+        non_axis: list[str] = []
+        for condition in self.item_facts[name]["condition"]:
+            pole = self._axis_match(name, condition)
+            if pole is not None:
+                current_axis = pole
+            else:
+                non_axis.append(condition)
+        if replace:
+            non_axis = []
         for condition in conditions:
             pole = self._axis_match(name, condition)
-            applied.append(pole if pole is not None else condition.strip()[:40])
-        existing = [] if replace else list(self.item_facts[name]["condition"])
-        for pole in applied:
-            if pole in axes:
-                opposite = next(other for other in axes if other != pole)
-                existing = [condition for condition in existing if condition != opposite]
-        self.item_facts[name]["condition"] = list(dict.fromkeys(existing + applied))[:2]
+            if pole is not None:
+                current_axis = pole
+            else:
+                non_axis.append(condition.strip()[:40])
+        self.item_facts[name]["condition"] = ([current_axis] if current_axis is not None else []) + list(
+            dict.fromkeys(non_axis)
+        )[:2]
 
     def apply_item_facts(self, raw: object) -> tuple[dict[str, dict[str, object]], list[str]]:
         previous = {
