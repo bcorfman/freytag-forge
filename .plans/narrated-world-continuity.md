@@ -105,7 +105,7 @@ is always told the current state.
 The bench-only harness `bench/item_facts.py` (`ItemFactsProvider`, a subclass of
 `storygame.runtime.cloudflare.CloudflareTurnProvider`) adds a THINGS section to
 the narrator prompt and reads changed facts back from the narrator's reply. Each
-tracked thing has one `where` phrase and up to two `condition` phrases:
+tracked thing has one `place` phrase and up to two `condition` phrases:
 
 ```text
 THINGS:
@@ -178,11 +178,11 @@ overrides that deleted the phone's location from authored prose.
 
 Each normal turn:
 
-1. **Prompt** carries THINGS: every tracked thing's current `where` and
+1. **Prompt** carries THINGS: every tracked thing's current `place` and
    `condition`, from engine state. No other prompt line states a tracked thing's
    changeable facts.
 2. **Narrate and capture in one call.** The reply adds `item_changes`: for each
-   changed thing, its new `where`, up to two `condition` phrases, a closed
+   changed thing, its new `place`, up to two `condition` phrases, a closed
    `status`, and `cause` (`command` or `narrator`).
 3. **Validate the capture** deterministically: known names only, format, status
    in its closed list. Malformed entries are dropped and recorded, never guessed.
@@ -331,7 +331,7 @@ compliance. Decisions:
   - **Bookmark (fallback if the merged call does not pan out):** separate
     calls - a refer call before narration and a resolve call straight after
     it - giving up to three calls a turn but no one-turn delay.
-- **Partial entries**: a reply entry may omit `where` (place kept) or
+- **Partial entries**: a reply entry may omit `place` (place kept) or
   `condition` (conditions kept); an empty entry is ignored. Replace the rule
   example with one where only a condition changes and another condition is
   kept, so a state cannot wipe a place and a new condition does not erase a
@@ -396,7 +396,7 @@ Tasks:
     6 across 159 turns - so the gain came from DELETING the failed place
     normalisation and from an empty condition list clearing a stale pole, not
     from routing a pole out of the place field.
-- [ ] Decide the next strategy for a state landing in `where`: two rank-1 rule
+- [ ] Decide the next strategy for a state landing in `place`: two rank-1 rule
   attempts (naming both keys, then an opened-box example) have not fixed it.
   Brandon to choose - an LLM semantic check of the captured entry (rank 2, for
   example folding a normalise step into the match call that already fires), or
@@ -424,7 +424,7 @@ Operational lessons from round 1 (apply to every live run):
 Brandon with the Phase 0 evidence; do not build until decided.
 
 **1a. Story-break status.** Recommended: add a closed `status` per tracked thing
-- `intact`, `destroyed`, `lost`, `carried` - alongside free-text `where` and
+- `intact`, `destroyed`, `lost`, `carried` - alongside free-text `place` and
 `condition`. The engine maps `destroyed` and `lost` to the `destroyed` predicate
 the dependency analysis already reads (add `lost` as its own predicate only if the
 story needs to tell them apart). Alternatives: an LLM judgement per change to a
@@ -520,6 +520,42 @@ one-line hint, sharing or separate from the existing recovery budget (decide),
 then fall back to accepting the turn with that single change refused and the
 narration regenerated a second time only if Brandon accepts the cost.
 
+**1e. Containment: characters and things share one tree.** Asked for by Brandon
+on 2026-09-16, after a run recorded the laptop "in her hand" with no record of
+whether Kristin was at the truck or in the house: "The truck contains Kristin, or
+the house contains Kristin, or even the 'outside' contains Kristin. That way,
+when Kristin is holding something like a phone, that object is in the same
+location as Kristin is." Settled: characters are tracked with a place exactly
+like things, a held or carried thing's container is the character, and where
+anything is in the world is found by walking up the chain (phone in Kristin,
+Kristin in the truck, truck outside the house). Moving Kristin moves what she
+holds without touching those things' records.
+
+The same model absorbs the dropped container-shaped replies from round 5,
+`{"kitchen counter": {"contents": ["Michelle's phone"]}}`: each listed thing's
+container becomes the kitchen counter.
+
+Open, with recommended defaults:
+- **What a place stores.** Recommended: keep the narrator-facing place phrase
+  ("in Kristin's hand", "on the kitchen counter") and add a resolved `container`
+  naming a tracked thing, character or authored area. The narrator keeps reading
+  natural phrases; the engine reasons over containers. Alternative: replace the
+  phrase with container plus a relation word (in, on, under, with).
+- **Where the tree is authored.** Recommended: areas with a parent in
+  `world.yaml` (house > kitchen; outside the house > Kristin's truck), and each
+  scene's placements naming their immediate container, added scene by scene as
+  problems surface. Alternative: derive areas from placement phrases at load.
+- **How a place phrase resolves to a container.** Recommended: the existing
+  match call also maps each new place phrase to a tracked container name, since
+  this is meaning, not wording. A phrase that resolves to nothing records the
+  place with no container rather than guessing the scene.
+- **The player character in THINGS.** Recommended: the player character's own
+  line (for example "Kristin. Place: in the kitchen.") is sent every turn,
+  because every command is about what she does and where. Other characters and
+  containers follow the reference rule in 1c.
+- **Scope of the first build.** Recommended: the bench item-facts harness first,
+  as with declared axes, then the runtime in Phase 4.
+
 **Exit criteria**
 - Each decision recorded in this plan under its heading, with the chosen option
   and the reason.
@@ -569,7 +605,7 @@ narration regenerated a second time only if Brandon accepts the cost.
 ### Phase 4 - Runtime state and persistence
 
 **Tasks**
-- [ ] Ringer: add tracked-thing state to `RuntimeState` (`where`, `condition`,
+- [ ] Ringer: add tracked-thing state to `RuntimeState` (`place`, `condition`,
   `status` per tracked thing), initialised from the package on scene entry,
   carried across transitions per 1c, included in snapshots so rejected turns and
   rewinds restore it.
