@@ -1,0 +1,1113 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking carefully did not ask her to pick up the phone."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was established on the kitchen floor, not on a table."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the screen matches the command and adds no conflict."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button matches the command."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Putting the phone in her jacket pocket matches the command."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She only approaches the desk and does not open the drawer as commanded."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says Michelle's carved drawer is open, but canon says it is shut and no earlier turn opened it."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Closing the drawer matches the command and follows the prior narration state."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck, retrieving the laptop, and returning with it all fit the command."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It states the carved drawer is open and adds extra actions and observations not requested."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Turning it on goes beyond simply opening the laptop."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Taking out the phone and plugging it in are necessary to carry out the command."
+        },
+        {
+          "turn": 13,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the back door did not ask her to find the memory card or read files."
+        },
+        {
+          "turn": 14,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was plugged into her laptop, not sitting free with no signs of use."
+        },
+        {
+          "turn": 15,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 16,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the laptop is still plugged into the phone even though the phone was set on the counter separately."
+        },
+        {
+          "turn": 17,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Carrying the laptop back to the truck matches the command."
+        },
+        {
+          "turn": 18,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen is within the command and does not conflict with prior state."
+        },
+        {
+          "turn": 19,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "Instead of picking up the phone, it has her re-enter the house and rediscover the kitchen scene."
+        },
+        {
+          "turn": 20,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was last on the kitchen counter, not in her pocket."
+        },
+        {
+          "turn": 21,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Examining the phone is consistent with the command."
+        },
+        {
+          "turn": 22,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says she picks it up from the table, but it was on the kitchen counter."
+        },
+        {
+          "turn": 23,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the screen matches the command."
+        },
+        {
+          "turn": 24,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Trying Michelle's password goes beyond pressing the power button."
+        },
+        {
+          "turn": 25,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Putting the phone in her jacket pocket matches the command."
+        },
+        {
+          "turn": 26,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the carved drawer matches the command."
+        },
+        {
+          "turn": 27,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking inside the already open drawer matches the command."
+        },
+        {
+          "turn": 28,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It only has her look at the open drawer instead of closing it."
+        },
+        {
+          "turn": 29,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She goes to the truck and unlocks it but does not bring the laptop inside."
+        },
+        {
+          "turn": 30,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the laptop on the workstation matches the command."
+        },
+        {
+          "turn": 31,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The laptop was on the workstation, but the narration puts it back in the truck and does not open it."
+        },
+        {
+          "turn": 32,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of plugging it in, she heads to her truck."
+        },
+        {
+          "turn": 33,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone was to be unplugged from her laptop, not a wall outlet, and extra description is added."
+        },
+        {
+          "turn": 34,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 35,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She leaves the truck and walks to the house instead of closing the laptop."
+        },
+        {
+          "turn": 36,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Carrying the laptop out to the truck matches the command."
+        },
+        {
+          "turn": 37,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen and noticing the phone on the counter fits the command."
+        },
+        {
+          "turn": 38,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with her walking into the house and noticing the phone instead of picking it up."
+        },
+        {
+          "turn": 39,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It implies the phone is on the kitchen counter, not with her, and replays entering the house and searching again."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone when the command was only to look at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was established on the kitchen floor, not the coffee table."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the phone matches the command and adds no conflict."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button matches the command."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says she pulls the phone out of her pocket instead of putting it in."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the carved drawer matches the command and the drawer was shut before."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking inside adds new details but no stated conflict."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The drawer was already opened in prior narration, so saying she tries to close it because it is ajar conflicts with the commanded close action."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "She goes to the truck and takes the laptop as requested."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "After setting the laptop down, she also boots it and enters her password unasked."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The laptop had already been set on the workstation, not still in her hand."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Opening the laptop is extra physical action beyond merely plugging in the phone."
+        },
+        {
+          "turn": 13,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of looking at the back door, she finds the hidden memory card and reads files."
+        },
+        {
+          "turn": 14,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone was plugged into the laptop, not the wall, and she also tries to turn it on unasked."
+        },
+        {
+          "turn": 15,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the counter matches the command."
+        },
+        {
+          "turn": 16,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The laptop had been on the workstation, not still in her hand."
+        },
+        {
+          "turn": 17,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Carrying the laptop back to the truck matches the command."
+        },
+        {
+          "turn": 18,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen is consistent with prior state."
+        },
+        {
+          "turn": 19,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It narrates her walking into the house and rediscovering the kitchen as if re-entering the scene."
+        },
+        {
+          "turn": 20,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It restarts with her walking into the house and looking around as though newly arriving."
+        },
+        {
+          "turn": 21,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone when the command was only to look at it."
+        },
+        {
+          "turn": 22,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It places the phone on a table rather than the established kitchen counter."
+        },
+        {
+          "turn": 23,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says the phone was in her pocket, conflicting with it being on the counter, and adds taking it out."
+        },
+        {
+          "turn": 24,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button matches the command."
+        },
+        {
+          "turn": 25,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Placing the phone in her jacket pocket matches the command."
+        },
+        {
+          "turn": 26,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with her walking into the house and does not actually open the drawer."
+        },
+        {
+          "turn": 27,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She opens the drawer even though the command only asked to look inside it."
+        },
+        {
+          "turn": 28,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of closing the drawer, she only approaches and looks at it."
+        },
+        {
+          "turn": 29,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Retrieving the laptop from the truck matches the command."
+        },
+        {
+          "turn": 30,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the laptop on the workstation matches the command."
+        },
+        {
+          "turn": 31,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The laptop was already on the workstation, but narration has her go to the truck instead of opening it."
+        },
+        {
+          "turn": 32,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She heads to the truck instead of actually plugging the phone into the laptop."
+        },
+        {
+          "turn": 33,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Examining the damaged back door matches the command and fits the opening."
+        },
+        {
+          "turn": 34,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone had been plugged into the laptop, not a charger, and she checks it beyond the command."
+        },
+        {
+          "turn": 35,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 36,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It moves her to the truck and has her close the laptop there, conflicting with the laptop being inside on the workstation."
+        },
+        {
+          "turn": 37,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the laptop was on the passenger seat, conflicting with it being inside the house/on the workstation."
+        },
+        {
+          "turn": 38,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen is consistent, despite extra descriptive clutter."
+        },
+        {
+          "turn": 39,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It narrates her walking into the house again and newly noticing the phone."
+        },
+        {
+          "turn": 40,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of checking whether she still has it, she picks up the phone from the counter, implying she did not have it."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Command was only to look carefully, but narration has Kristin pick up the phone."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was established on the kitchen floor, not on a coffee table."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the phone screen matches the command and adds no conflict."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button follows the command without adding conflicting state."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of pocketing the phone, narration says she pulls it out of her pocket, reversing the action."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She only approaches the desk; the commanded drawer is not opened."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It treats the drawer as already open after no prior successful opening, and adds rummaging for a notebook."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It describes the drawer as open instead of closing it as commanded."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and retrieving the laptop matches the command."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It refers to the carved drawer as open, conflicting with the canon that the drawer is shut."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The laptop had been brought inside and set on the workstation, but narration relocates it back to the truck instead of opening it."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Narration sends Kristin to the truck though the command was only to plug in the phone to her laptop."
+        },
+        {
+          "turn": 13,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of looking at the back door, narration jumps to finding the memory card and reading files."
+        },
+        {
+          "turn": 14,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It adds trying to power on the phone beyond merely unplugging and holding it."
+        },
+        {
+          "turn": 15,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone had been established on the kitchen floor earlier, not the kitchen counter."
+        },
+        {
+          "turn": 16,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It implies the laptop is in the truck and has Kristin walk around rather than simply closing it."
+        },
+        {
+          "turn": 17,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Command says carry the laptop back out, but narration puts it onto the passenger seat and adds scanning the neighborhood."
+        },
+        {
+          "turn": 18,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen is fine, but picking up and examining the phone goes beyond the command."
+        },
+        {
+          "turn": 19,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It has Kristin walk into the house and notice the phone again as if re-entering and rediscovering the scene."
+        },
+        {
+          "turn": 20,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the phone is in her pocket, though the previous narration never picked it up from the counter."
+        },
+        {
+          "turn": 21,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Examining the phone in hand matches the look-carefully command."
+        },
+        {
+          "turn": 22,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It places the phone on a table, conflicting with the established kitchen counter location."
+        },
+        {
+          "turn": 23,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the screen follows the command without contradiction."
+        },
+        {
+          "turn": 24,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "After pressing power, narration adds trying multiple passwords, which was not requested."
+        },
+        {
+          "turn": 25,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Placing the phone in her jacket pocket matches the command."
+        },
+        {
+          "turn": 26,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Canon says Michelle's carved drawer is shut, but narration makes it slightly ajar and adds finding a notebook."
+        },
+        {
+          "turn": 27,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking into the already open drawer follows from the immediately previous narration."
+        },
+        {
+          "turn": 28,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "She goes to the truck, retrieves the laptop, and brings it inside as commanded."
+        },
+        {
+          "turn": 29,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Setting down the laptop is fine, but adding the chair observation and computer hum exceeds the command."
+        },
+        {
+          "turn": 30,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The laptop was just brought inside and set on the workstation, but narration moves it back to the truck instead of opening it."
+        },
+        {
+          "turn": 31,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It sends Kristin to the truck and changes laptop setup details beyond the simple plug-in command."
+        },
+        {
+          "turn": 32,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It adds reflection about when Michelle last used the phone beyond unplugging and holding it."
+        },
+        {
+          "turn": 33,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 34,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Narration again places the laptop in the truck and has Kristin walk around instead of just closing it."
+        },
+        {
+          "turn": 35,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Instead of carrying the laptop back out to the truck, she lifts it out of the passenger seat and keeps holding it."
+        },
+        {
+          "turn": 36,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen and noting the phone on the counter fits the command."
+        },
+        {
+          "turn": 37,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin walking into the house and adds unlocking knowledge of the password beyond simply picking up the phone."
+        },
+        {
+          "turn": 38,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Given the prior turn put the phone in her hand/pocket state again, checking she still has it is consistent."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone instead of only examining it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was established on the kitchen floor, not the coffee table."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping and seeing the screen wake fits the command."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button matches the command."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Putting the phone in her pocket matches the command."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "She only approaches the drawer and does not contradict canon."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says she opens the drawer though it was already open, and canon says Michelle's carved drawer is shut."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It describes the drawer as slightly ajar despite canon stating it is shut."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and bringing in the laptop matches the command."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Booting up the laptop and describing desk clutter goes beyond merely setting it down."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The laptop had been brought inside and set on the workstation, but narration puts it back in the truck."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It sends her to the truck and implies the laptop is there, conflicting with it being on the workstation."
+        },
+        {
+          "turn": 13,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Instead of looking at the back door, she finds the hidden memory card and reads files."
+        },
+        {
+          "turn": 14,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Unplugging the phone and holding it matches the command."
+        },
+        {
+          "turn": 15,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 16,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It claims the laptop is still in the truck even though it was previously set on the workstation."
+        },
+        {
+          "turn": 17,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the laptop is still in the passenger seat after earlier narration placed it elsewhere."
+        },
+        {
+          "turn": 18,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the kitchen and noticing the phone on the counter fits prior narration."
+        },
+        {
+          "turn": 19,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It has Kristin walk into the house and notice the phone anew instead of simply picking it up."
+        },
+        {
+          "turn": 20,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was last left on the kitchen counter, not confirmed in her pocket."
+        },
+        {
+          "turn": 21,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It takes the phone from a table despite prior placement on the counter and adds an unasked pickup."
+        },
+        {
+          "turn": 22,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was on the kitchen counter, not the table."
+        },
+        {
+          "turn": 23,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Wiping the screen matches the command."
+        },
+        {
+          "turn": 24,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Pressing the power button matches the command."
+        },
+        {
+          "turn": 25,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Placing the phone in her pocket matches the command."
+        },
+        {
+          "turn": 26,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Canon says the carved drawer is shut and hides a memory card underneath, not a USB drive inside."
+        },
+        {
+          "turn": 27,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Peering into the open drawer matches the command."
+        },
+        {
+          "turn": 28,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She only looks at the open drawer instead of closing it."
+        },
+        {
+          "turn": 29,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Retrieving the laptop from the truck matches the command."
+        },
+        {
+          "turn": 30,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the laptop on the workstation matches the command."
+        },
+        {
+          "turn": 31,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "After bringing the laptop inside and setting it on the workstation, narration places it back in the truck."
+        },
+        {
+          "turn": 32,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It sends her to the truck to plug in the phone, conflicting with the laptop being inside."
+        },
+        {
+          "turn": 33,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Unplugging and holding the phone matches the command."
+        },
+        {
+          "turn": 34,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Setting the phone on the kitchen counter matches the command."
+        },
+        {
+          "turn": 35,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It invents extra movement to the truck and again places the laptop there after it was inside."
+        },
+        {
+          "turn": 36,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The command says carry it back out, but narration says she grabs it from the truck and leaves it on the passenger seat."
+        },
+        {
+          "turn": 37,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up and examines the phone though the command was only to look around the kitchen."
+        },
+        {
+          "turn": 38,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It re-enters the house and re-notices the phone as if newly encountered."
+        },
+        {
+          "turn": 39,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was last on the kitchen counter, not established as being in her pocket."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

@@ -3,9 +3,11 @@
 Status: Phase 0 rounds 1 and 2 measured and recorded; format v2 did not reach
 the 92% bar. Round 3 (engine-side capture: partial entries, one merged match
 call, per-turn THINGS selection, persisting narrated things, split judge
-labels) is measured: two-scene 28/47 and 40-turn 64/155, no change type at
-92%, with one recurring defect (a state recorded as a thing's place) causing
-most of the 40-turn loss - see Phase 0. Nothing below is in the game yet. The bench experiment
+labels) is measured. Final four-replicate numbers, after the place key and the
+match-call normalisation: two-scene 26/48 and 40-turn 71/156, no change type at
+92%, and a state still lands in a place field on 81 of 156 turns - see Phase 0.
+The next move is the declared state axes candidate under Phase 1a, not another
+bench round. Nothing below is in the game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
@@ -370,10 +372,20 @@ Tasks:
   call. Judge recalibrated with the contradictory-narration case: 158/158 in
   both passes, no judge change needed.
 - [x] Smoke, then 4 replicates of each variation; tally against 92%.
-  (Two-scene 28/47 = 60%; 40-turn 64/155 = 41%. No change type reaches 92%.
-  One defect dominates the 40-turn result: three of four replicates recorded
-  the drawer's state as its place on the same turn, and the replicate that did
-  not scored 27/38 = 71%. The judge needed a retry fix first, a84c90c.)
+  - Before the place key: two-scene 28/47 = 60%; 40-turn 64/155 = 41%, where
+    three of four replicates recorded the drawer's state as its place on the
+    same turn and the replicate that did not scored 27/38 = 71%. The judge
+    needed a retry fix first (a84c90c).
+  - After the place key, match-call carried things and place normalisation
+    (417e4f1): two-scene 26/48 = 54%; 40-turn 71/156 = 46%. No change type
+    reaches 92% in either run; the best is 75% on three two-scene types.
+  - The normalisation does not work: 81 of 156 turns still carry a state in a
+    place field, and the corrections that did fire were wrong. The match call
+    runs on the same 8B narrator model, so the semantic check is done by the
+    model that made the error.
+  - Round 3 did not beat round 2 on the 40-turn script (63% then, 46% now);
+    the comparison is indicative, not clean, because the package overlays and
+    the judge criteria both changed.
 - [ ] Decide the next strategy for a state landing in `where`: two rank-1 rule
   attempts (naming both keys, then an opened-box example) have not fixed it.
   Brandon to choose - an LLM semantic check of the captured entry (rank 2, for

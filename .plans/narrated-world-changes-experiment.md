@@ -656,6 +656,72 @@ with `open|closed` declared for the drawer, "Close the drawer." has somewhere to
 land that is not the place field, and a place answer that is not a declared state
 value is simply left alone.
 
+## Round 3 measurement: four replicates each (417e4f1)
+
+The measurement of record for round 3, on the committed state (place key, match
+call for names/carried/places, normalisation). Smoke replicates are not quoted.
+
+Two-scene, bench/results/item-facts-v3-place-two-scene-1a, 48 judged turns:
+
+| Change type | Turns | Correct | Rate |
+|---|---|---|---|
+| look (no change asked) | 8 | 6 | 75% |
+| check a carried thing | 8 | 4 | 50% |
+| open or close | 4 | 3 | 75% |
+| pick up or put away | 8 | 3 | 38% |
+| move between places | 8 | 5 | 62% |
+| damage | 4 | 0 | 0% |
+| hand to another character | 4 | 2 | 50% |
+| leave the scene | 4 | 3 | 75% |
+| **All** | 48 | 26 | 54% |
+
+40-turn, bench/results/item-facts-v3-place-long-1a, 156 judged turns:
+
+| Change type | Turns | Correct | Rate | State as place | Invented |
+|---|---|---|---|---|---|
+| look (no change asked) | 29 | 16 | 55% | 14 | 7 |
+| check a carried thing | 8 | 3 | 38% | 5 | 2 |
+| open or close | 31 | 15 | 48% | 19 | 15 |
+| pick up or put away | 32 | 12 | 38% | 14 | 10 |
+| set down | 16 | 7 | 44% | 10 | 5 |
+| move between places | 16 | 5 | 31% | 10 | 10 |
+| condition change | 24 | 13 | 54% | 9 | 6 |
+| **All** | 156 | 71 | 46% | 81 | 55 |
+
+Continuity: contradicts a stated fact 57/156, acts beyond the command 64/156,
+scene restarts 11/156. 140 match calls, about 0.9 per turn, so capture costs
+roughly two model calls a turn.
+
+**No change type reaches 92% in either run.** The best is 75% on three two-scene
+types with four to eight turns behind each.
+
+**The normalisation does not work, and the reason is structural.** 81 of 156
+turns still carry a state in a place field. In replicate 1, 34 turns carried one
+while the normalisation fired twice - and both times it was wrong, calling
+`Kristin's laptop` at "in the truck" and at "on the passenger seat of her truck"
+a state. The match call runs on the SAME 8B narrator model through
+`CloudflareTurnProvider._request`, so the rank-2 semantic check is being
+performed by the model that made the error in the first place. That is why
+asking it to classify place-versus-state fails at scale while costing a second
+call per turn.
+
+**Round 3 did not beat round 2 on whole-state accuracy.** The 40-turn script
+scored 99/157 (63%) in round 2 against 71/156 (46%) now; two-scene was 23/45
+(51%) in round 2 against 26/48 (54%). The comparison is indicative, not clean:
+the packages differ (carved drawer rename, the not-damaged fact removed) and the
+judge gained two criteria, though `facts_after_correct` is defined as before.
+
+Conclusion: further prompt wording has been tried three times against the
+state-as-place defect (name both keys, opened-box example, rename to `place`)
+and a semantic check once, without reaching the bar. The next move is the
+declared state axes candidate under Phase 1a - deterministic, authored, and
+needing no model call - not another bench round.
+
+Judge note: the fact-tracking judge again returned fewer verdicts than turns even
+with its retry, so the bench discarded the whole run's judging; re-judging the
+saved turns one replicate at a time succeeded on all four (39/39, 40/40, 38/38,
+39/39). Judging a replicate per call is the reliable shape.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
