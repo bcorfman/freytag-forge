@@ -796,8 +796,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     None,
                 )
                 handoff = getattr(provider, "authored_handoff", None)
+                narrated_command = engine.last_player_command
+                if narrated_command is None:
+                    narrated_command = player_input
                 turn_record = {
                     "player_input": player_input,
+                    "narrated_command": narrated_command,
                     "narration": narration,
                     "left_scene": entered,
                     "scene_id": prior_scene,

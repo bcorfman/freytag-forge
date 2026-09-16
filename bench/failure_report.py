@@ -90,6 +90,8 @@ def build_section(
             suffix = " [narrator initiative]" if took_initiative else ""
             body.append(f"### r{rep} turn {turn['turn_number']} ({turn.get('scene_id')}) - {', '.join(names)}{suffix}")
             body.append("- COMMAND: " + str(turn.get("player_input", "")))
+            if "narrated_command" in turn and turn["narrated_command"] != turn.get("player_input"):
+                body.append("- NARRATED COMMAND: " + str(turn["narrated_command"]))
             body.append("- NARRATION: " + str(turn.get("narration", "")))
             body.append("- GIVEN: " + json.dumps(turn.get("item_facts_before")))
             body.append("- REPLY: " + json.dumps(turn.get("item_facts_raw")))

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from bench.failure_report import build_section
 
 
@@ -79,3 +81,27 @@ def test_every_listed_turn_has_continuity_reason_and_renamed_failure(tmp_path):
     assert "- FACT JUDGE: fact 1\n- CONTINUITY JUDGE: continuity 1" in report
     assert "facts_after_wrong: 1" in report
     assert "facts_after_correct" not in report
+
+
+@pytest.mark.parametrize("narrated_command", [None, "Check the item."])
+def test_narrated_command_is_omitted_when_missing_or_unchanged(tmp_path, narrated_command):
+    path = tmp_path / "results"
+    _write_results(path, [1], [_fact(1, facts_after_correct="no")], [])
+    records = json.loads((path / "all-turn-records.json").read_text())
+    if narrated_command is None:
+        records["runs"][0]["turns"][0].pop("narrated_command", None)
+    else:
+        records["runs"][0]["turns"][0]["narrated_command"] = narrated_command
+    (path / "all-turn-records.json").write_text(json.dumps(records))
+
+    assert "- NARRATED COMMAND:" not in _report(path)
+
+
+def test_narrated_command_is_printed_when_different(tmp_path):
+    path = tmp_path / "results"
+    _write_results(path, [1], [_fact(1, facts_after_correct="no")], [])
+    records = json.loads((path / "all-turn-records.json").read_text())
+    records["runs"][0]["turns"][0]["narrated_command"] = "Go out to your truck. Bring your laptop inside."
+    (path / "all-turn-records.json").write_text(json.dumps(records))
+
+    assert "- NARRATED COMMAND: Go out to your truck. Bring your laptop inside." in _report(path)

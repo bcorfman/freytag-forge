@@ -21,6 +21,7 @@ Each turn record also carries delivery telemetry: `cue_fact_id` identifies a sta
 missing fact, `cue_text` is that fact delivery's visible cue (or `null`),
 `complication_text` is optional complication text (or `null`), and
 `handoff_staged` says whether a deadline handoff was staged.
+The `narrated_command` field records the command text actually sent to the narrator; `player_input` remains the scripted input.
 
 ## Commands
 

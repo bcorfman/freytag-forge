@@ -366,12 +366,18 @@ def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monke
     }
     monkeypatch.setattr(core, "provider_for", lambda *_: FakeProvider())
 
-    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+    result = core.run_scene(
+        variation,
+        "1A",
+        {"name": "fixed", "inputs": ["Go out to your truck and bring your laptop inside."]},
+    )
 
     assert result["status"] == "ok"
     assert result["fixed_turns"] == 3
     assert [turn["turn_number"] for turn in result["turns"]] == [1, 2, 3]
     assert result["rejected_turns"] == []
+    assert all("narrated_command" in turn for turn in result["turns"])
+    assert result["turns"][0]["narrated_command"] == "Go out to your truck. Bring your laptop inside."
 
 
 def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
