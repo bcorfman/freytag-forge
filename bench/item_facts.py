@@ -67,9 +67,9 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 _SINGLE_CALL_RULES = (
     "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
-    'Give only what changed. Use "where" for the place it is now and "condition" for up to two short phrases. '
+    'Give only what changed. Use "place" for where it is now and "condition" for up to two short phrases. '
     'Example: if she opens the box on the table and picks up the key, the box is {"condition": ["open"]} and the key '
-    'is {"where": "in her hand"}.',
+    'is {"place": "in her hand"}.',
 )
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
@@ -114,6 +114,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._changed_last_turn: set[str] = set()
         self._selected_names: list[str] | None = None
         self.item_facts_match_calls = 0
+        self.item_facts_reply_keys = {"place": 0, "where": 0}
         package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
         self._hand_seed_names = {name for name in self.item_facts if name not in package_names}
 
@@ -147,7 +148,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for name in names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
-            line = f"- {name}. Where: {facts['where']}."
+            line = f"- {name}. Place: {facts['where']}."
             if conditions:
                 line += f" Condition: {', '.join(conditions)}."
             lines.append(line)
@@ -178,6 +179,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if isinstance(response, dict):
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
+            item_facts = response.get("item_facts")
+            if isinstance(item_facts, dict):
+                for entry in item_facts.values():
+                    if isinstance(entry, dict):
+                        key = "place" if "place" in entry else "where" if "where" in entry else None
+                        if key is not None:
+                            self.item_facts_reply_keys[key] += 1
             cleaned = dict(response)
             cleaned.pop("item_facts", None)
             return cleaned
@@ -220,19 +228,21 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _valid_entry(value: object) -> bool:
         if not isinstance(value, dict) or not value:
             return False
-        if "where" in value and (not isinstance(value["where"], str) or not value["where"].strip()):
+        location_key = "place" if "place" in value else "where"
+        if location_key in value and (not isinstance(value[location_key], str) or not value[location_key].strip()):
             return False
         if "condition" in value and (
             not isinstance(value["condition"], list)
             or any(not isinstance(item, str) or not item.strip() for item in value["condition"])
         ):
             return False
-        return "where" in value or "condition" in value
+        return location_key in value or "condition" in value
 
     def _merge_entry(self, name: str, value: dict[str, object]) -> bool:
         facts = self.item_facts[name]
-        if "where" in value:
-            where = value["where"]
+        location_key = "place" if "place" in value else "where"
+        if location_key in value:
+            where = value[location_key]
             if not isinstance(where, str) or not where.strip():
                 return False
             facts["where"] = where.strip()[:80]
@@ -289,14 +299,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._selected_names = always
             return {"match_call": False, "match_raw": None, "match_issues": [], "resolutions": {}}
         self.item_facts_match_calls += 1
+        match_things = [
+            f"- {name}" if name in always else f"- {name}. Place: {self.item_facts[name]['where']}."
+            for name in self.item_facts
+        ]
+        for name in held:
+            entry = self._held_item_facts[name]
+            location = entry.get("place", entry.get("where"))
+            if isinstance(location, str) and location.strip():
+                match_things.append(f"- {name}. Place: {location.strip()[:80]}.")
         payload = {
             "system": _MATCH_SYSTEM,
             "user": (
                 f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {self._protagonist_name()}\n\nTHINGS:\n"
-                + "\n".join(
-                    f"- {name}" if name in always else f"- {name}. Where: {self.item_facts[name]['where']}."
-                    for name in self.item_facts
-                )
+                + "\n".join(match_things)
                 + "\n\nNEW NAMES:\n"
                 + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
             ),
@@ -346,8 +362,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         resolutions[name] = target
                     else:
                         resolutions[name] = "dropped"
-                elif target == "new" and isinstance(entry.get("where"), str) and entry["where"].strip():
-                    self.item_facts[name] = {"where": entry["where"].strip()[:80], "condition": []}
+                elif (
+                    target == "new"
+                    and self._valid_entry(entry)
+                    and isinstance(entry.get("place", entry.get("where")), str)
+                    and entry.get("place", entry.get("where")).strip()
+                ):
+                    location = entry.get("place", entry.get("where"))
+                    self.item_facts[name] = {"where": location.strip()[:80], "condition": []}
                     self._merge_entry(name, entry)
                     self.item_facts_seed_names = (*self.item_facts_seed_names, name)
                     self._changed_last_turn.add(name)

@@ -52,8 +52,8 @@ def test_things_are_after_scene_and_render_single_value_facts():
 
     assert (
         "\n\nTHINGS:\n"
-        "- the lantern. Where: on the table. Condition: lit.\n"
-        "- the gate. Where: at the garden path.\n\n"
+        "- the lantern. Place: on the table. Condition: lit.\n"
+        "- the gate. Place: at the garden path.\n\n"
         "CONSTRAINTS:"
     ) in user
     assert provider._placement_rules() == []
@@ -66,10 +66,10 @@ def test_single_call_rules_require_facts_for_every_change():
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts.\n"
-        'Give only what changed. Use "where" for the place it is now and "condition" for up to two short phrases. '
+        'Give only what changed. Use "place" for where it is now and "condition" for up to two short phrases. '
         "Example: if she opens the box on the table and picks up the key, the box is "
         '{"condition": ["open"]} and the key '
-        'is {"where": "in her hand"}.'
+        'is {"place": "in her hand"}.'
     )
     assert "Also return item_facts" not in system
 
@@ -90,7 +90,7 @@ def test_match_system_describes_references_carried_things_and_new_names():
 
 def test_things_omit_condition_for_empty_condition_list():
     assert _provider()._things_block() == (
-        "THINGS:\n- the lantern. Where: on the table. Condition: lit.\n- the gate. Where: at the garden path."
+        "THINGS:\n- the lantern. Place: on the table. Condition: lit.\n- the gate. Place: at the garden path."
     )
 
 
@@ -116,7 +116,7 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
     }
     provider.apply_item_facts(provider.pending_item_facts())
     next_prompt = provider.assemble_turn_prompt("Look at the gate.")
-    assert "- the lantern. Where: in her hand. Condition: warm." in provider._section_user_prompt(
+    assert "- the lantern. Place: in her hand. Condition: warm." in provider._section_user_prompt(
         next_prompt["context"]
     )
 
@@ -198,8 +198,8 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     assert "CONSTRAINTS" not in requests[0]["user"]
     assert requests[0]["user"] == (
         "THINGS:\n"
-        "- the lantern. Where: on the table. Condition: lit.\n"
-        "- the gate. Where: at the garden path.\n\n"
+        "- the lantern. Place: on the table. Condition: lit.\n"
+        "- the gate. Place: at the garden path.\n\n"
         "PLAYER:\n- Look at the lantern.\n\n"
         "STORY:\nThe lantern feels warm."
     )
@@ -371,6 +371,51 @@ def test_where_only_entry_keeps_existing_conditions():
     assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
 
 
+def test_place_entry_sets_existing_location():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+    assert provider.item_facts["the lantern"] == {"where": "in her hand", "condition": ["lit"]}
+
+
+def test_place_wins_when_entry_has_both_location_keys():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "in her hand", "where": "on the floor"}})
+    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+
+
+def test_held_place_entry_can_add_a_new_tracked_thing(monkeypatch):
+    provider = _provider()
+    provider._hand_seed_names = set(provider.item_facts)
+    provider.apply_item_facts({"the notebook": {"place": "on the desk", "condition": ["open"]}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the notebook": "new"}},
+    )
+    result = provider.prepare_turn("Pick up the notebook.")
+    assert result["resolutions"] == {"the notebook": "new"}
+    assert provider.item_facts["the notebook"] == {"where": "on the desk", "condition": ["open"]}
+
+
+def test_reply_location_key_counts_prefer_place(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {
+                "segments": [],
+                "item_facts": {
+                    "the lantern": {"place": "in her hand", "where": "on the floor"},
+                    "the gate": {"where": "at the path"},
+                    "other": {"condition": ["open"]},
+                },
+            }
+        ),
+    )
+    provider._request({"system": "test", "user": "test"})
+    assert provider.item_facts_reply_keys == {"place": 1, "where": 1}
+
+
 def test_condition_only_entry_keeps_existing_place():
     provider = _provider()
     provider.apply_item_facts({"the lantern": {"condition": ["dark"]}})
@@ -419,7 +464,7 @@ def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch
     assert "PLAYER CHARACTER:\n- Kristin" in payloads[0]["user"]
     assert "- the lantern\n" in payloads[0]["user"]
     assert "- the gate\n" in payloads[0]["user"]
-    assert "- the notebook. Where:" not in payloads[0]["user"]
+    assert "- the notebook. Place: on the desk." in payloads[0]["user"]
     assert "- the notebook" in payloads[0]["user"].split("NEW NAMES:", 1)[1]
 
 

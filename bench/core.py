@@ -913,6 +913,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["item_facts_final"] = copy.deepcopy(provider.item_facts)
         record["item_facts_seed_issues"] = list(provider.item_facts_seed_issues)
         record["item_facts_match_calls"] = provider.item_facts_match_calls
+        record["item_facts_reply_keys"] = dict(provider.item_facts_reply_keys)
     return record
 
 
