@@ -410,6 +410,45 @@ dependency-bearing thing (principle 4, second rank); package-declared breaking
 words (brittle, last). Decide also which things carry dependencies beyond
 transition `required_dependencies` (for example reveal sources).
 
+**1a candidate: declared state axes** (added 2026-09-16, from the `supersede()` /
+single-valued-fact idea on MemPalace's knowledge-graph page; Brandon asked for it
+to be recorded here). A package declares, per tracked item, one or more sets of
+mutually exclusive state values - `open|closed` for a drawer, `damaged|not
+damaged` for the phone. Two engine consequences, both deterministic and free of
+model calls:
+
+- A captured condition on an axis **supersedes** the other value on that axis
+  instead of accumulating. This is the kept-ended-condition class: `shut`
+  surviving after the drawer is opened, 12 of 155 turns in the round-3 40-turn
+  run.
+- A captured `place` whose text exactly equals a declared state value for that
+  thing is recorded as that thing's **condition**, not its place. This is the
+  "Close the drawer." -> `{"place": "closed"}` case, the single defect that cost
+  three of four replicates most of their score.
+
+If both hold, this **replaces** the match-call place normalisation rather than
+adding to it. That normalisation is measured: of three corrections in one live
+replicate, one was right (the drawer) and two destroyed correct locations
+(Michelle's phone at "on the kitchen counter" judged a state), and it costs about
+0.9 extra model calls per turn.
+
+Relation to the `status` proposal above: `status` is itself one such axis, so
+declared axes generalise it; decide whether `status` stays a separate closed
+field or becomes the reserved axis every item has.
+
+**Open, not decided:**
+- Matching a returned field against an authored closed vocabulary is lexical.
+  It is not the thing principle 4 rules out - that is scanning free-form
+  narration prose - but it is adjacent, and Brandon has not ruled on it.
+- Where axes are declared (`world.yaml` item field, or `plot.md` front matter,
+  with `plot.md` settled first per principle 9).
+- What happens to a captured condition that is on no axis: presumably free text
+  that coexists, still capped at two phrases.
+- What happens when an axis value is also a legitimate place for some thing
+  (a boat whose place is "open water"): the rule must be per item, not global.
+- Authoring cost is one declaration per openable or breakable item, and it
+  generalises across packages with no per-story code.
+
 **1b. Authored text that states changeable facts.** Scene 1A examples: placement
 `michelle_phone: on the kitchen floor`; setting fact "Michelle's phone is not
 damaged."; the 1A scene frame in `knowledge.yaml` ("Michelle's undamaged phone is
