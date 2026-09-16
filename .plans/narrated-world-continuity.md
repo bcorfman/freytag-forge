@@ -3,11 +3,12 @@
 Status: Phase 0 rounds 1 and 2 measured and recorded; format v2 did not reach
 the 92% bar. Round 3 (engine-side capture: partial entries, one merged match
 call, per-turn THINGS selection, persisting narrated things, split judge
-labels) is measured. Final four-replicate numbers, after the place key and the
-match-call normalisation: two-scene 26/48 and 40-turn 71/156, no change type at
-92%, and a state still lands in a place field on 81 of 156 turns - see Phase 0.
-The next move is the declared state axes candidate under Phase 1a, not another
-bench round. Nothing below is in the game yet. The bench experiment
+labels) is measured, and round 4 added Brandon's binary state axes. Final
+four-replicate numbers: two-scene 28/47 (60%) and 40-turn 105/159 (66%), the
+best 40-turn value measured. A state now lands in a place field on 0 of 206
+turns, against 81 of 156 in round 3, and capture costs about 0.14-0.5 match
+calls a turn instead of 0.9. Still no change type reaches 92% on a sample worth
+quoting - see Phase 0. Nothing below is in the game yet. The bench experiment
 that justifies the design is complete and recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
@@ -386,6 +387,15 @@ Tasks:
   - Round 3 did not beat round 2 on the 40-turn script (63% then, 46% now);
     the comparison is indicative, not clean, because the package overlays and
     the judge criteria both changed.
+  - Round 4, binary state axes (f461739): two-scene 28/47 = 60%; 40-turn
+    105/159 = 66%, the best 40-turn figure of the project, past round 2's 63%.
+    State as place is 0 of 206 turns and kept-ended conditions are 0 and 3.
+    Only open or close reaches 92%, on 4 two-scene turns, which is too thin to
+    count; the best broad figures are move between places 88% and check a
+    carried thing 75%. The axes themselves fired rarely - 0 fixes in two-scene,
+    6 across 159 turns - so the gain came from DELETING the failed place
+    normalisation and from an empty condition list clearing a stale pole, not
+    from routing a pole out of the place field.
 - [ ] Decide the next strategy for a state landing in `where`: two rank-1 rule
   attempts (naming both keys, then an opened-box example) have not fixed it.
   Brandon to choose - an LLM semantic check of the captured entry (rank 2, for
@@ -448,7 +458,18 @@ Relation to the `status` proposal above: `status` is itself one such axis, so
 declared axes generalise it; decide whether `status` stays a separate closed
 field or becomes the reserved axis every item has.
 
+**Measured in the bench (round 4, f461739):** declared axes were built into the
+item-facts harness with the declaration in the variation rather than the package
+schema. Brandon settled three points during the build: an axis is exactly two
+opposite poles with aliases, never a list; an axis value occupies a slot of its
+own and evicts only its opposite, because "lit" is not the opposite of "open";
+and an empty condition list clears the axis value, so a state reads unknown
+rather than stale. Results above.
+
 **Open, not decided:**
+- Whether a NON-empty condition reply that names no pole should also clear the
+  axis value. Today it preserves it, which is deliberate but asymmetric with the
+  empty-list rule.
 - Matching a returned field against an authored closed vocabulary is lexical.
   It is not the thing principle 4 rules out - that is scanning free-form
   narration prose - but it is adjacent, and Brandon has not ruled on it.

@@ -9,51 +9,51 @@
   "pooled": {
     "score_points": {
       "n": 4,
-      "mean": 0.75,
-      "standard_deviation": 0.5,
+      "mean": 1.0,
+      "standard_deviation": 0.0,
       "confidence_interval_95": [
-        -0.045499999999999985,
-        1.5455
+        1.0,
+        1.0
       ],
       "minimum_detectable_effect": 3.87,
       "replicate_scores": [
         1.0,
-        0.0,
+        1.0,
         1.0,
         1.0
       ]
     },
-    "total": 3,
+    "total": 4,
     "per_criterion": {
       "canon_consistent": 0,
       "scene_local": 0,
       "progressive": 0,
       "rich": 0,
-      "protected_safe": 3,
+      "protected_safe": 4,
       "exit_motivated": 0,
       "rewards_investigation": 0
     },
     "graded_secondary": {
       "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
-      "total": 63,
+      "total": 54,
       "per_criterion_where_attributable": {},
-      "unattributed": 63
+      "unattributed": 54
     }
   },
   "per_script": {
     "change-types": {
       "score_points": {
         "n": 4,
-        "mean": 0.75,
-        "standard_deviation": 0.5,
+        "mean": 1.0,
+        "standard_deviation": 0.0,
         "confidence_interval_95": [
-          -0.045499999999999985,
-          1.5455
+          1.0,
+          1.0
         ],
         "minimum_detectable_effect": 3.87,
         "replicate_scores": [
           1.0,
-          0.0,
+          1.0,
           1.0,
           1.0
         ]
@@ -64,21 +64,21 @@
         "scene_local": 0,
         "progressive": 0,
         "rich": 0,
-        "protected_safe": 3,
+        "protected_safe": 4,
         "exit_motivated": 0,
         "rewards_investigation": 0
       },
       "graded_secondary": {
         "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
-        "total": 63,
+        "total": 54,
         "per_criterion_where_attributable": {},
-        "unattributed": 63
+        "unattributed": 54
       }
     }
   },
   "replicate_scores": [
     1.0,
-    0.0,
+    1.0,
     1.0,
     1.0
   ],
@@ -92,61 +92,61 @@
   },
   "continuity": {
     "contradicts_stated_fact": {
-      "yes": 8,
-      "no": 40
+      "yes": 12,
+      "no": 35
     },
     "protagonist_acts_beyond_command": {
-      "yes": 23,
-      "no": 25
+      "yes": 25,
+      "no": 22
     },
     "restarts_scene": {
-      "yes": 1,
-      "no": 47
+      "yes": 2,
+      "no": 45
     },
-    "turns_judged": 48,
+    "turns_judged": 47,
     "judge_calls": 4
   },
   "fact_tracking": {
     "facts_after_correct": {
-      "yes": 26,
-      "no": 22
+      "yes": 28,
+      "no": 19
     },
     "missed_change": {
-      "yes": 12,
-      "no": 36
+      "yes": 13,
+      "no": 34
     },
     "invented_change": {
-      "yes": 7,
+      "yes": 6,
       "no": 41
     },
     "narration_contradicts_given_facts": {
-      "yes": 6,
-      "no": 42
+      "yes": 7,
+      "no": 40
     },
     "dropped_true_condition": {
-      "yes": 4,
-      "no": 44
+      "yes": 0,
+      "no": 47
     },
     "kept_ended_condition": {
       "yes": 0,
-      "no": 48
+      "no": 47
     },
     "state_as_place": {
       "yes": 0,
-      "no": 48
+      "no": 47
     },
     "changes_by_cause": {
-      "command": 28,
-      "narrator": 14
+      "command": 25,
+      "narrator": 13
     },
-    "turns_judged": 48,
+    "turns_judged": 47,
     "judge_calls": 4
   },
   "budget": {
     "projected_workers_ai_neurons": 572.0,
-    "actual_narration_turns": 48,
-    "actual_narration_requests": 97,
-    "estimated_workers_ai_neurons_from_requests": 1067.0,
+    "actual_narration_turns": 47,
+    "actual_narration_requests": 85,
+    "estimated_workers_ai_neurons_from_requests": 935.0,
     "actual_openai_judge_calls": 12,
     "quota": null
   }

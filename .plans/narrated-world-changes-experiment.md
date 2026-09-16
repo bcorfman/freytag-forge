@@ -756,9 +756,68 @@ One replicate each after the axis-slot fix:
   being opened for 7 of 12 turns, and the same reply shape kept the 40-turn
   drawer `open` after "Close the drawer."
 
-Open for Brandon: what an empty condition list means for an axis value - clear
-it, keep it, or treat the axis as unknown. Not assumed; rule C was already
-wrong once.
+Brandon chose: an empty list clears the axis value, so the state reads unknown
+rather than stale (f461739). A non-empty reply naming no pole still preserves
+the axis value; that asymmetry is deliberate and still open.
+
+## Round 4 measurement: four replicates each (f461739)
+
+bench/results/item-facts-v3-place-*, both judges clean (4 calls each).
+
+Two-scene, 47 judged turns:
+
+| Change type | Turns | Correct | Rate |
+|---|---|---|---|
+| look (no change asked) | 8 | 5 | 62% |
+| check a carried thing | 7 | 5 | 71% |
+| open or close | 4 | 4 | **100%** |
+| pick up or put away | 8 | 3 | 38% |
+| move between places | 8 | 6 | 75% |
+| damage | 4 | 0 | 0% |
+| hand to another character | 4 | 2 | 50% |
+| leave the scene | 4 | 3 | 75% |
+| **All** | 47 | 28 | 60% |
+
+40-turn, 159 judged turns:
+
+| Change type | Turns | Correct | Rate |
+|---|---|---|---|
+| look (no change asked) | 31 | 22 | 71% |
+| check a carried thing | 8 | 6 | 75% |
+| open or close | 32 | 19 | 59% |
+| pick up or put away | 32 | 19 | 59% |
+| set down | 16 | 9 | 56% |
+| move between places | 16 | 14 | 88% |
+| condition change | 24 | 16 | 67% |
+| **All** | 159 | 105 | 66% |
+
+Whole-state accuracy by round, same scripts:
+
+| | Two-scene | 40-turn |
+|---|---|---|
+| Round 2 (format v2) | 23/45 (51%) | 99/157 (63%) |
+| Round 3 (capture v3) | 28/47 (60%) | 64/155 (41%) |
+| Round 3 (place key + normalisation) | 26/48 (54%) | 71/156 (46%) |
+| **Round 4 (binary axes)** | **28/47 (60%)** | **105/159 (66%)** |
+
+- **The 40-turn script is at its best measured value**, 66%, up from 46% and
+  past round 2's 63%. Two-scene is level with its best, 60%.
+- **State as place is gone**: 0 of 206 turns across both runs, against 81 of 156
+  in round 3. Kept-ended conditions are 0 and 3.
+- **Capture is cheaper**: 26 and 23 match calls for 47 and 159 turns, about 0.5
+  and 0.14 a turn, against roughly 0.9 when the normalisation call existed.
+- **But the axes themselves did little work**: 0 axis fixes in the two-scene run
+  and 6 across 159 turns in the 40-turn run. Most of the gain comes from
+  DELETING the failed normalisation and from an empty list clearing a stale
+  pole, not from routing a pole out of the place field. The honest reading is
+  that round 4 removed damage rather than adding capability.
+- **No change type reaches 92%** except open or close in the two-scene run, 4 of
+  4 turns, which is too thin to count. The best broad figures are move between
+  places 88% (16 turns) and check a carried thing 75%.
+- Damage is 0 of 4 again, all four missed. Pickups remain weak (38% and 59%)
+  and are dominated by narration contradicting its given facts (5 and 14 turns).
+- Continuity: contradicts a stated fact 12/47 and 54/159; acts beyond the
+  command 25/47 and 68/159; scene restarts 2/47 and 10/159.
 
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
