@@ -762,7 +762,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
             if isinstance(provider, ItemFactsProvider):
-                things_given = list(provider._selected_names or provider.always_included_names())
+                things_given = list(provider._selected_names) if provider._selected_names is not None else []
                 facts_before = provider.facts_for_names(things_given)
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":

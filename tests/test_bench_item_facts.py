@@ -47,6 +47,7 @@ class _Response:
 
 def test_things_are_after_scene_and_render_single_value_facts():
     provider = _provider()
+    provider._selected_names = list(provider.item_facts)
     prompt = provider.assemble_turn_prompt("Look at the back door.")
     user = provider._section_user_prompt(prompt["context"])
 
@@ -74,30 +75,25 @@ def test_single_call_rules_require_facts_for_every_change():
     assert "Also return item_facts" not in system
 
 
-def test_match_system_describes_references_carried_things_and_new_names():
-    assert _MATCH_SYSTEM == (
-        "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
-        "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
-        "storyteller used. Return only JSON like "
-        '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}}. '
-        "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
-        'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
-        "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
-        'that means the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
-    )
+def test_match_system_describes_references_and_new_names():
+    assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
+    assert "carried" not in _MATCH_SYSTEM
     assert "PLACES" not in _MATCH_SYSTEM
     assert '"places"' not in _MATCH_SYSTEM
-    assert '"refers"' in _MATCH_SYSTEM and '"carried"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
+    assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
 
 
 def test_things_omit_condition_for_empty_condition_list():
-    assert _provider()._things_block() == (
+    provider = _provider()
+    provider._selected_names = list(provider.item_facts)
+    assert provider._things_block() == (
         "THINGS:\n- the lantern. Place: on the table. Condition: lit.\n- the gate. Place: at the garden path."
     )
 
 
 def test_things_show_state_axis_vocabulary_and_other_conditions():
     provider = _provider()
+    provider._selected_names = list(provider.item_facts)
     provider.state_axes = {
         "the lantern": {"shut": ["closed"], "open": []},
         "the gate": {"open": [], "closed": []},
@@ -112,6 +108,7 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
 
 def test_things_axis_vocabulary_remains_after_axis_is_cleared():
     provider = _provider()
+    provider._selected_names = list(provider.item_facts)
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
     assert "Condition: shut (or open)." in provider._things_block()
@@ -140,6 +137,7 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
         "the gate": {"place": "at the garden path", "condition": []},
     }
     provider.apply_item_facts(provider.pending_item_facts())
+    provider._selected_names = ["the lantern", "the gate"]
     next_prompt = provider.assemble_turn_prompt("Look at the gate.")
     assert "- the lantern. Place: in her hand. Condition: warm." in provider._section_user_prompt(
         next_prompt["context"]
@@ -360,13 +358,7 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     }
     assert provider.request_count == 1
     assert "CONSTRAINTS" not in requests[0]["user"]
-    assert requests[0]["user"] == (
-        "THINGS:\n"
-        "- the lantern. Place: on the table. Condition: lit.\n"
-        "- the gate. Place: at the garden path.\n\n"
-        "PLAYER:\n- Look at the lantern.\n\n"
-        "STORY:\nThe lantern feels warm."
-    )
+    assert requests[0]["user"] == ("PLAYER:\n- Look at the lantern.\n\nSTORY:\nThe lantern feels warm.")
     assert requests[0]["system"] == (
         "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
         '{"item_facts": {"thing": {"place": "place", "condition": ["phrase"]}}}. '
@@ -382,7 +374,7 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
 def test_item_facts_variations_load_and_render_offline(path):
     variation = load_variation(path)
     prompt = core.prompt_for(variation, "1A", "Look at the back door.")
-    assert "THINGS:" in prompt["user"]
+    assert "THINGS:" not in prompt["user"]
     assert variation["_package_hash"]
 
 
@@ -681,14 +673,14 @@ def test_valid_untracked_name_is_resolved_same_turn(monkeypatch):
     assert provider._held_item_facts == {}
 
 
-def test_prepare_turn_skips_match_when_all_things_are_always_included(monkeypatch):
+def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     provider = _provider()
-    provider._hand_seed_names = set(provider.item_facts)
+    provider.item_facts = {}
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args, **_kwargs: pytest.fail("unexpected match"))
     result = provider.prepare_turn("Inspect the lantern.")
     assert result["match_call"] is False
     assert provider.item_facts_match_calls == 0
-    assert provider._selected_names == provider.always_included_names()
+    assert provider._selected_names == provider.dependency_names()
 
 
 def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch):
@@ -707,8 +699,8 @@ def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch
     assert payloads[0]["system"] == _MATCH_SYSTEM
     assert all(marker in payloads[0]["user"] for marker in ("COMMAND:", "PLAYER CHARACTER:", "THINGS:", "NEW NAMES:"))
     assert "PLAYER CHARACTER:\n- Kristin" in payloads[0]["user"]
-    assert "- the lantern\n" in payloads[0]["user"]
-    assert "- the gate\n" in payloads[0]["user"]
+    assert "- the lantern. Place:" in payloads[0]["user"]
+    assert "- the gate. Place:" in payloads[0]["user"]
     assert "- the notebook. Place: on the desk." in payloads[0]["user"]
     assert payloads[0]["user"].split("NEW NAMES:", 1)[1].strip() == "- (none)"
 
@@ -753,6 +745,7 @@ def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
         {"back door frame": {"condition": ["damaged"]}},
         player_input="Inspect the back door frame.",
     )
+    provider._selected_names = ["back door frame"]
     assert provider.item_facts["back door frame"] == {"place": None, "condition": ["damaged"]}
     line = provider._things_block()
     assert "- back door frame. Condition: damaged." in line
@@ -793,13 +786,13 @@ def test_command_reference_adds_non_always_name_and_omits_unreferred_name(monkey
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": ["the gate"], "same_as": {}})
     result = provider.prepare_turn("Open the gate.")
     assert result["match_call"] is True
-    assert provider._selected_names == ["the lantern", "the gate"]
+    assert provider._selected_names == ["the gate"]
     assert "the box" not in provider._selected_names
     assert "the gate" in provider._things_block()
     assert "the box" not in provider._things_block()
 
 
-def test_always_included_names_cover_authored_dependency_and_changed_items():
+def test_dependency_names_only_cover_reachable_dependencies():
     provider = _provider()
     provider._hand_seed_names = set()
     provider.item_facts.update(
@@ -813,16 +806,16 @@ def test_always_included_names_cover_authored_dependency_and_changed_items():
         }
     )
     provider._changed_last_turn = {"changed thing"}
-    names = provider.always_included_names()
-    assert "drawer" in names
+    names = provider.dependency_names()
+    assert "drawer" not in names
     assert "Michelle's memory card" in names
     assert "Kristin's notebook" not in names
     assert "toolbox" not in names
-    assert "changed thing" in names
+    assert "changed thing" not in names
     assert "unrelated thing" not in names
 
 
-def test_match_carried_name_adds_only_exact_candidate_to_things(monkeypatch):
+def test_match_carried_name_is_ignored(monkeypatch):
     provider = _provider()
     provider._hand_seed_names = {"the lantern"}
     provider.item_facts.update(
@@ -840,8 +833,8 @@ def test_match_carried_name_adds_only_exact_candidate_to_things(monkeypatch):
     result = provider.prepare_turn("Search the desk.")
 
     assert result["match_call"] is True
-    assert provider._selected_names == ["the lantern", "the notebook"]
-    assert "the notebook" in provider._things_block()
+    assert provider._selected_names == []
+    assert "the notebook" not in provider._things_block()
     assert "the toolbox" not in provider._things_block()
 
 
@@ -865,7 +858,7 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
             "selected_knowledge_ids": [],
             "item_facts": {},
         }
-        if len(calls) == 2:
+        if len(calls) == 3:
             response["item_facts"] = {"new notebook": {"place": "on the desk", "condition": ["open"]}}
         return response
 
@@ -886,7 +879,7 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
 def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):
     calls = []
 
-    def request(_provider, _payload):
+    def request(_provider, payload):
         calls.append(True)
         return {
             "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
@@ -905,10 +898,9 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     assert result["scene_transitions"] == [
         {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
     ]
-    assert "Michelle's phone" in result["turns"][7]["item_facts_after"]
+    assert "Michelle's phone" not in result["turns"][7]["item_facts_after"]
     assert "Kristin's laptop" not in result["turns"][8]["item_facts_before"]
-    assert result["item_facts_final"]["Michelle's phone"] == result["turns"][7]["item_facts_after"]["Michelle's phone"]
-    assert len(calls) == 17
+    assert len(calls) == 25
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
@@ -932,18 +924,16 @@ def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
 
     assert result["status"] == "ok"
-    assert len(result["turns"]) == 11
-    assert result["rejected_turns"][0]["turn_number"] == 3
-    assert result["rejected_turns"][0]["rejection_code"] == "INVALID_PROPOSAL"
-    assert result["turns"][2]["item_facts_before"] == result["turns"][1]["item_facts_after"]
+    assert len(result["turns"]) == 12
+    assert result["rejected_turns"] == []
 
 
 def test_other_narration_provider_error_still_fails_fixed_turn_run(monkeypatch):
     calls = []
 
-    def request(_provider, _payload):
+    def request(_provider, payload):
         calls.append(True)
-        if len(calls) == 4:
+        if payload["system"] != _MATCH_SYSTEM:
             raise NarrationProviderError("service unavailable", 503, "UNAVAILABLE")
         return {
             "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],

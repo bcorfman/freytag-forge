@@ -79,10 +79,9 @@ _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
     "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
     "storyteller used. Return only JSON like "
-    '{"refers": ["name"], "carried": ["name"], "same_as": {"new name": "name"}}. '
+    '{"refers": ["name"], "same_as": {"new name": "name"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
-    'like "the old lamp" for "Grandma\'s lamp". In carried, list each name from THINGS whose place shows that the '
-    "player character is holding it or carrying it. In same_as, give each name in NEW NAMES the name from THINGS "
+    'like "the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS '
     'that means the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
 )
 _SECOND_CALL_SYSTEM = (
@@ -165,8 +164,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
 
     def _things_block(self) -> str:
+        names = self._selected_names if self._selected_names is not None else self.dependency_names()
+        if not names:
+            return ""
         lines = ["THINGS:"]
-        names = self._selected_names if self._selected_names is not None else self.always_included_names()
         for name in names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
@@ -195,6 +196,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         rendered = super()._section_user_prompt(user)
         things = self._things_block()
+        if not things:
+            return rendered
         marker = "\n\nCONSTRAINTS:"
         if marker in rendered:
             return rendered.replace(marker, f"\n\n{things}{marker}", 1)
@@ -239,8 +242,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def last_item_facts_match(self) -> dict[str, object]:
         return copy.deepcopy(self._last_item_facts_match)
 
-    def always_included_names(self) -> list[str]:
-        package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
+    def dependency_names(self) -> list[str]:
         required_ids = {
             dependency
             for transition in ProgressionValidator(self.state.package)._reachable_transitions(
@@ -249,11 +251,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             for dependency in transition.required_dependencies
         }
         dependency_names = {item.name for item in self.state.package.world.items if item.id in required_ids}
-        included = set(package_names) | self._hand_seed_names | dependency_names | self._changed_last_turn
-        # Use the live store here.  Tests and bench callers may add tracked
-        # things after construction; those things still need to participate in
-        # dependency and carried-item selection.
-        return [name for name in self.item_facts if name in included]
+        return [name for name in self.item_facts if name in dependency_names]
 
     def facts_for_names(self, names: list[str] | tuple[str, ...] | set[str]) -> dict[str, dict[str, object]]:
         wanted = set(names)
@@ -348,9 +346,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             line += f" Condition: {', '.join(facts['condition'])}."
         return line
 
-    def _match_payload(self, player_input: str, new_names: list[str], always: set[str]) -> dict[str, object]:
+    def _match_payload(self, player_input: str, new_names: list[str], dependencies: set[str]) -> dict[str, object]:
         match_things = [
-            self._match_thing_line(name, self.item_facts[name], bare=name in always) for name in self.item_facts
+            self._match_thing_line(name, self.item_facts[name], bare=name in dependencies) for name in self.item_facts
         ]
         match_things.extend(self._match_thing_line(name, self._held_item_facts[name]) for name in new_names)
         return {
@@ -381,8 +379,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return
         issues: list[str] = []
         resolutions: dict[str, str] = {}
-        always = set(self.always_included_names())
-        payload = self._match_payload(player_input, names, always)
+        dependencies = set(self.dependency_names())
+        payload = self._match_payload(player_input, names, dependencies)
         self.item_facts_match_calls += 1
         try:
             reply = CloudflareTurnProvider._request(self, payload)
@@ -454,10 +452,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return copy.deepcopy(self.item_facts), issues
 
     def prepare_turn(self, player_input: str) -> dict[str, object]:
-        always = self.always_included_names()
-        candidates = [name for name in self.item_facts if name not in always]
+        dependencies = self.dependency_names()
+        candidates = [name for name in self.item_facts if name not in dependencies]
         if not candidates:
-            self._selected_names = always
+            self._selected_names = dependencies
             result = {
                 "match_call": False,
                 "match_raw": None,
@@ -467,7 +465,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._last_item_facts_match = copy.deepcopy(result)
             return result
         self.item_facts_match_calls += 1
-        payload = self._match_payload(player_input, [], set(always))
+        payload = self._match_payload(player_input, [], set(dependencies))
         issues: list[str] = []
         try:
             reply = CloudflareTurnProvider._request(self, payload)
@@ -478,23 +476,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
             isinstance(reply, dict) and isinstance(reply.get("refers"), list) and isinstance(reply.get("same_as"), dict)
         )
         if not valid:
-            self._selected_names = always
+            self._selected_names = dependencies
         else:
-            refers = [
-                name
-                for name in reply["refers"]
-                if isinstance(name, str) and name in self.item_facts and name in candidates
-            ]
-            carried = (
-                [
-                    name
-                    for name in reply.get("carried", [])
-                    if isinstance(name, str) and name in self.item_facts and name in candidates
-                ]
-                if isinstance(reply.get("carried"), list)
-                else []
-            )
-            selected = set(self.always_included_names()) | set(refers) | set(carried)
+            refers = [name for name in reply["refers"] if isinstance(name, str) and name in self.item_facts]
+            selected = set(dependencies) | set(refers)
             self._selected_names = [name for name in self.item_facts if name in selected]
         result = {
             "match_call": True,
@@ -506,9 +491,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return result
 
     def second_call_update(self, player_input: str, narration: str) -> object:
+        things = self._things_block()
+        things_prefix = f"{things}\n\n" if things else ""
         payload = {
             "system": _SECOND_CALL_SYSTEM,
-            "user": f"{self._things_block()}\n\nPLAYER:\n- {player_input}\n\nSTORY:\n{narration}",
+            "user": f"{things_prefix}PLAYER:\n- {player_input}\n\nSTORY:\n{narration}",
             "max_tokens": 400,
             "response_format": {"type": "json_object"},
         }
