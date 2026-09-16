@@ -154,7 +154,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
             facts = self.item_facts[name]
             conditions = facts["condition"]
             line = f"- {name}. Place: {facts['where']}."
-            if conditions:
+            axes = self.state_axes.get(name)
+            if axes:
+                poles = list(axes)
+                axis_value = next((condition for condition in conditions if condition in axes), None)
+                non_axis = [condition for condition in conditions if condition not in axes]
+                if axis_value is None:
+                    condition_text = f"{poles[0]} or {poles[1]}"
+                else:
+                    opposite = poles[1] if axis_value == poles[0] else poles[0]
+                    condition_text = f"{axis_value} (or {opposite})"
+                if non_axis:
+                    condition_text += f", {', '.join(non_axis)}"
+                line += f" Condition: {condition_text}."
+            elif conditions:
                 line += f" Condition: {', '.join(conditions)}."
             lines.append(line)
         return "\n".join(lines)

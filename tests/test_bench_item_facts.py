@@ -96,6 +96,29 @@ def test_things_omit_condition_for_empty_condition_list():
     )
 
 
+def test_things_show_state_axis_vocabulary_and_other_conditions():
+    provider = _provider()
+    provider.state_axes = {
+        "the lantern": {"shut": ["closed"], "open": []},
+        "the gate": {"open": [], "closed": []},
+    }
+    provider.item_facts["the lantern"]["condition"] = ["shut", "dusty"]
+    assert provider._things_block() == (
+        "THINGS:\n"
+        "- the lantern. Place: on the table. Condition: shut (or open), dusty.\n"
+        "- the gate. Place: at the garden path. Condition: open or closed."
+    )
+
+
+def test_things_axis_vocabulary_remains_after_axis_is_cleared():
+    provider = _provider()
+    provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
+    provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
+    assert "Condition: shut (or open)." in provider._things_block()
+    provider.apply_item_facts({"the lantern": {"condition": []}})
+    assert "Condition: shut or open." in provider._things_block()
+
+
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
     provider = _provider()
     payloads = iter(
