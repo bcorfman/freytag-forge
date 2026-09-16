@@ -622,6 +622,40 @@ Next: tighten only the wording - key the answer by the thing's name, and
 contrast "on the kitchen counter" (a place) with "open" (a state) - then
 re-smoke before spending on four replicates.
 
+### Round 3 smoke after the wording fix (ef03215)
+
+| | Two-scene | 40-turn |
+|---|---|---|
+| Kept facts correct | 10/12 (83%) | 16/40 (40%) |
+| Previous smoke | 7/12 (58%) | 20/38 (53%) |
+| Place fixes | 0 | 1, and it was wrong |
+| Answers keyed by text (ignored) | 2 of 11 | 7 of 38 |
+| State left in a place field | 0 | 0 |
+| Match calls per turn | 0.92 | 0.95 |
+
+The wording fix worked on its target: mis-keyed answers fell from 17 of 31
+before it to 2 of 11 and 7 of 38, and the destructive corrections nearly
+stopped. The one correction the 40-turn run did make was still wrong -
+`Kristin's laptop` at "in the truck" judged a state.
+
+**But the defect moved rather than died.** With the narrator no longer putting a
+state in the place field, it now gives a plausible WRONG PLACE instead: turn 6,
+"Open the drawer with your initials carved into it.", returned
+`{"place": "in front of Kristin"}`. The normalisation cannot catch that, because
+it really is a place, and the drawer then keeps it for the whole run (turns 8,
+26, 28, 35, 39). Worse, the open/closed state is now never recorded at all: after
+"Close the drawer." the drawer's condition list is empty. Open or close scored
+2/8, pick up or put away 1/8, set down 1/4, move between places 1/4.
+
+Single replicates are noisy - the 40-turn figure moved 22%, 53%, 40% across three
+smokes of successive fixes - so these are read as direction, not measurement. The
+four-replicate run on this committed state is the measurement of record.
+
+This is the case for the declared state axes candidate recorded under Phase 1a:
+with `open|closed` declared for the drawer, "Close the drawer." has somewhere to
+land that is not the place field, and a place answer that is not a declared state
+value is simply left alone.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
