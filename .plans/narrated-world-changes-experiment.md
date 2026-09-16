@@ -722,6 +722,44 @@ with its retry, so the bench discarded the whole run's judging; re-judging the
 saved turns one replicate at a time succeeded on all four (39/39, 40/40, 38/38,
 39/39). Judging a replicate per call is the reliable shape.
 
+## Round 4: binary state axes (d4ca5b2, 9fb31be)
+
+Brandon's design, corrected twice by him during the build: an axis is EXACTLY
+two opposite poles with optional aliases (`{"shut": ["closed"], "open": []}`),
+because recording one pole implies the negation of the other; and an axis value
+occupies a slot of its own, evicting only its opposite, because "lit" is not the
+opposite of "open" and a lantern may be both lit and open. The match call's
+place question, which measured 1 correct correction in 3, was deleted.
+
+One replicate each after the axis-slot fix:
+
+| | Two-scene | 40-turn |
+|---|---|---|
+| Kept facts correct | 4/12 (33%) | 31/40 (78%) |
+| States left in a place field | 0 | 0 |
+| Axis fixes (pole given as a location) | 0 | 0 |
+| Canonicalisations observed | 0 | 1 |
+| Match calls per turn | 0.42 | 0.15 |
+
+- **The state-as-place defect is gone** in both runs, and capture now costs far
+  less: match calls fell from about 0.9 a turn to 0.15-0.42 once the places
+  question was removed.
+- **But the axes barely fired.** Zero pole-as-location fixes in either run and
+  one canonicalisation in 52 turns, so neither figure is evidence that axes
+  work. The 40-turn 78%, the best measured all round, and the two-scene 33%,
+  the worst, both come from elsewhere.
+- **A rule I specified is actively harmful.** I wrote that a condition reply
+  preserves the current axis value unless the reply itself names a pole. The
+  narrator's way of saying a state ended is an EMPTY condition list -
+  `{"drawer": {"condition": []}}` - so the stale pole survives and is charged
+  against every later turn. In the two-scene run the drawer stayed `shut` after
+  being opened for 7 of 12 turns, and the same reply shape kept the 40-turn
+  drawer `open` after "Close the drawer."
+
+Open for Brandon: what an empty condition list means for an axis value - clear
+it, keep it, or treat the axis as unknown. Not assumed; rule C was already
+wrong once.
+
 Conclusion: a short prompt rule has now been tried for both main failure
 mechanisms (names and kept conditions) without reaching the bar. By the
 project's ranking the next step is an LLM semantic check of the narrated turn,
