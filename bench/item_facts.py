@@ -72,8 +72,8 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 _SINGLE_CALL_RULES = (
     "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
     'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-    'Example: if she opens the box on the table and picks up the key, the box is {"condition": ["open"]} and the key '
-    'is {"place": "in her hand"}.',
+    'Example: if she throws a cup at the wall, it breaks and falls, so the cup is {"place": "on the floor", '
+    '"condition": ["broken"]}.',
 )
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
@@ -119,6 +119,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.state_axes = copy.deepcopy(state_axes or {})
         self._changed_last_turn: set[str] = set()
         self._selected_names: list[str] | None = None
+        self._last_item_facts_match: dict[str, object] = {
+            "match_call": False,
+            "match_raw": None,
+            "match_issues": [],
+            "resolutions": {},
+        }
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
         self.item_facts_reply_keys = {"place": 0}
@@ -164,7 +170,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for name in names:
             facts = self.item_facts[name]
             conditions = facts["condition"]
-            line = f"- {name}. Place: {facts['place']}."
+            place = facts.get("place")
+            line = f"- {name}."
+            if isinstance(place, str) and place.strip():
+                line += f" Place: {place.strip()}."
             axes = self.state_axes.get(name)
             if axes:
                 poles = list(axes)
@@ -227,6 +236,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._pending_item_facts = None
         self._pending_item_facts_present = False
 
+    def last_item_facts_match(self) -> dict[str, object]:
+        return copy.deepcopy(self._last_item_facts_match)
+
     def always_included_names(self) -> list[str]:
         package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
         required_ids = {
@@ -272,11 +284,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 return False
             pole = self._axis_match(name, place)
             if pole is None:
-                if name in self._fixed_item_names:
+                current_place = facts.get("place")
+                repeated_place = (
+                    isinstance(current_place, str) and current_place.strip().casefold() == place.strip().casefold()
+                )
+                if name in self._fixed_item_names and not repeated_place:
                     self._item_facts_issues.append(
                         f"item_facts for {name!r} refused place {place.strip()[:80]!r} because it is fixed"
                     )
-                else:
+                elif not repeated_place:
                     facts["place"] = place.strip()[:80]
             else:
                 self._apply_conditions(name, [pole], replace=False)
@@ -321,7 +337,86 @@ class ItemFactsProvider(CloudflareTurnProvider):
             dict.fromkeys(non_axis)
         )[:2]
 
-    def apply_item_facts(self, raw: object) -> tuple[dict[str, dict[str, object]], list[str]]:
+    def _match_thing_line(self, name: str, facts: Mapping[str, object], *, bare: bool = False) -> str:
+        if bare:
+            return f"- {name}"
+        line = f"- {name}."
+        place = facts.get("place")
+        if isinstance(place, str) and place.strip():
+            line += f" Place: {place.strip()[:80]}."
+        elif facts.get("condition"):
+            line += f" Condition: {', '.join(facts['condition'])}."
+        return line
+
+    def _match_payload(self, player_input: str, new_names: list[str], always: set[str]) -> dict[str, object]:
+        match_things = [
+            self._match_thing_line(name, self.item_facts[name], bare=name in always) for name in self.item_facts
+        ]
+        match_things.extend(self._match_thing_line(name, self._held_item_facts[name]) for name in new_names)
+        return {
+            "system": _MATCH_SYSTEM,
+            "user": (
+                f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {self._protagonist_name()}\n\nTHINGS:\n"
+                + "\n".join(match_things)
+                + "\n\nNEW NAMES:\n"
+                + ("\n".join(f"- {name}" for name in new_names) if new_names else "- (none)")
+            ),
+            "max_tokens": 200,
+            "response_format": {"type": "json_object"},
+        }
+
+    def _add_new_item(self, name: str, entry: dict[str, object]) -> None:
+        place = entry.get("place")
+        self.item_facts[name] = {
+            "place": place.strip()[:80] if isinstance(place, str) else None,
+            "condition": [],
+        }
+        self._merge_entry(name, entry)
+        self.item_facts_seed_names = (*self.item_facts_seed_names, name)
+        self._changed_last_turn.add(name)
+
+    def _resolve_new_items(self, player_input: str) -> None:
+        names = list(self._held_item_facts)
+        if not names:
+            return
+        issues: list[str] = []
+        resolutions: dict[str, str] = {}
+        always = set(self.always_included_names())
+        payload = self._match_payload(player_input, names, always)
+        self.item_facts_match_calls += 1
+        try:
+            reply = CloudflareTurnProvider._request(self, payload)
+        except Exception as error:
+            reply = None
+            issues.append(f"item_facts match failed: {error}")
+        valid = (
+            isinstance(reply, dict) and isinstance(reply.get("refers"), list) and isinstance(reply.get("same_as"), dict)
+        )
+        if not valid:
+            issues.append("invalid item_facts match reply")
+        for name in names:
+            entry = self._held_item_facts[name]
+            target = reply.get("same_as", {}).get(name) if isinstance(reply, dict) else None
+            if isinstance(target, str) and target != name and target in self.item_facts:
+                before = copy.deepcopy(self.item_facts[target])
+                self._merge_entry(target, entry)
+                if before != self.item_facts[target]:
+                    self._changed_last_turn.add(target)
+                resolutions[name] = target
+            else:
+                self._add_new_item(name, entry)
+                resolutions[name] = "new"
+        self._held_item_facts = {}
+        self._last_item_facts_match = {
+            "match_call": True,
+            "match_raw": copy.deepcopy(reply),
+            "match_issues": issues,
+            "resolutions": resolutions,
+        }
+
+    def apply_item_facts(
+        self, raw: object, *, player_input: str = "(none)"
+    ) -> tuple[dict[str, dict[str, object]], list[str]]:
         previous = {
             name: {"place": facts["place"], "condition": list(facts["condition"])}
             for name, facts in self.item_facts.items()
@@ -340,7 +435,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 if self._valid_entry(value):
                     self._held_item_facts[name] = copy.deepcopy(value)
-                    issues.append(f"item_facts name {name} held for matching")
                 else:
                     issues.append(f"unknown item_facts name {name!r} was dropped")
                 continue
@@ -356,43 +450,25 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if isinstance(value.get("condition"), list) and len(value["condition"]) > 2:
                 issues.append(f"item_facts for {name!r} has more than two condition phrases; kept the first two")
         self._changed_last_turn = changed
+        self._resolve_new_items(player_input)
         return copy.deepcopy(self.item_facts), issues
 
     def prepare_turn(self, player_input: str) -> dict[str, object]:
         always = self.always_included_names()
         candidates = [name for name in self.item_facts if name not in always]
-        held = list(self._held_item_facts)
-        if not candidates and not held:
+        if not candidates:
             self._selected_names = always
-            return {
+            result = {
                 "match_call": False,
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
             }
+            self._last_item_facts_match = copy.deepcopy(result)
+            return result
         self.item_facts_match_calls += 1
-        match_things = [
-            f"- {name}" if name in always else f"- {name}. Place: {self.item_facts[name]['place']}."
-            for name in self.item_facts
-        ]
-        for name in held:
-            entry = self._held_item_facts[name]
-            place = entry.get("place")
-            if isinstance(place, str) and place.strip():
-                match_things.append(f"- {name}. Place: {place.strip()[:80]}.")
-        payload = {
-            "system": _MATCH_SYSTEM,
-            "user": (
-                f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {self._protagonist_name()}\n\nTHINGS:\n"
-                + "\n".join(match_things)
-                + "\n\nNEW NAMES:\n"
-                + ("\n".join(f"- {name}" for name in held) if held else "- (none)")
-            ),
-            "max_tokens": 200,
-            "response_format": {"type": "json_object"},
-        }
+        payload = self._match_payload(player_input, [], set(always))
         issues: list[str] = []
-        resolutions: dict[str, str] = {}
         try:
             reply = CloudflareTurnProvider._request(self, payload)
         except Exception as error:
@@ -402,11 +478,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
             isinstance(reply, dict) and isinstance(reply.get("refers"), list) and isinstance(reply.get("same_as"), dict)
         )
         if not valid:
-            if held:
-                issues.append("invalid item_facts match reply")
-            for name in held:
-                resolutions[name] = "dropped"
-            self._held_item_facts = {}
             self._selected_names = always
         else:
             refers = [
@@ -423,51 +494,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 if isinstance(reply.get("carried"), list)
                 else []
             )
-            for name in held:
-                target = reply["same_as"].get(name)
-                entry = self._held_item_facts[name]
-                if isinstance(target, str) and target in self.item_facts:
-                    before = copy.deepcopy(self.item_facts[target])
-                    if self._merge_entry(target, entry):
-                        if before != self.item_facts[target]:
-                            self._changed_last_turn.add(target)
-                        resolutions[name] = target
-                    else:
-                        resolutions[name] = "dropped"
-                elif (
-                    target == "new"
-                    and self._valid_entry(entry)
-                    and isinstance(entry.get("place"), str)
-                    and entry.get("place").strip()
-                ):
-                    place = entry.get("place")
-                    self.item_facts[name] = {"place": place.strip()[:80], "condition": []}
-                    self._merge_entry(name, entry)
-                    self.item_facts_seed_names = (*self.item_facts_seed_names, name)
-                    self._changed_last_turn.add(name)
-                    resolutions[name] = "new"
-                else:
-                    issues.append(f"item_facts name {name} had no valid match")
-                    resolutions[name] = "dropped"
-            self._held_item_facts = {}
             selected = set(self.always_included_names()) | set(refers) | set(carried)
             self._selected_names = [name for name in self.item_facts if name in selected]
-        return {
+        result = {
             "match_call": True,
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
-            "resolutions": resolutions,
+            "resolutions": {},
         }
-
-    def resolve_held(self) -> dict[str, object]:
-        if not self._held_item_facts:
-            return {
-                "match_call": False,
-                "match_raw": None,
-                "match_issues": [],
-                "resolutions": {},
-            }
-        return self.prepare_turn("(none)")
+        self._last_item_facts_match = copy.deepcopy(result)
+        return result
 
     def second_call_update(self, player_input: str, narration: str) -> object:
         payload = {

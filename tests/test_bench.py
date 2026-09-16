@@ -22,6 +22,7 @@ from bench.core import (
     score_judgments,
     welch_t_test,
 )
+from bench.item_facts import _MATCH_SYSTEM
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -371,6 +372,27 @@ def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monke
     assert result["fixed_turns"] == 3
     assert [turn["turn_number"] for turn in result["turns"]] == [1, 2, 3]
     assert result["rejected_turns"] == []
+
+
+def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
+    def request(_provider, payload):
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": [], "same_as": {"receipt": "receipt"}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin examines the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {"receipt": {"place": "on the ground", "condition": ["crumpled"]}},
+        }
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
+    variation["_fixed_turns"] = 1
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+
+    turn = result["turns"][0]
+    assert turn["item_facts_after"]["receipt"] == {"place": "on the ground", "condition": ["crumpled"]}
+    assert turn["item_facts_held"] == []
+    assert turn["item_facts_resolutions"] == {"receipt": "new"}
 
 
 def test_run_scene_fixed_turns_records_rejection_and_continues(monkeypatch) -> None:
