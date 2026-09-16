@@ -205,6 +205,49 @@ def test_state_axis_place_becomes_condition_without_match_call():
     assert provider.item_facts_axis_fixes == 1
 
 
+def test_fixed_item_refuses_place_but_accepts_condition_change():
+    provider = _provider()
+    provider.item_facts["Michelle's carved drawer"] = {
+        "where": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    facts, issues = provider.apply_item_facts(
+        {"Michelle's carved drawer": {"place": "in front of her", "condition": ["open"]}}
+    )
+
+    assert facts["Michelle's carved drawer"] == {
+        "where": "in Michelle's workstation",
+        "condition": ["open"],
+    }
+    assert any("Michelle's carved drawer" in issue and "in front of her" in issue for issue in issues)
+
+
+def test_fixed_item_axis_place_still_sets_pole_without_moving():
+    provider = _provider()
+    provider.item_facts["Michelle's carved drawer"] = {
+        "where": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"Michelle's carved drawer": {"shut": ["closed"], "open": []}}
+
+    facts, issues = provider.apply_item_facts({"Michelle's carved drawer": {"place": "open"}})
+
+    assert facts["Michelle's carved drawer"] == {
+        "where": "in Michelle's workstation",
+        "condition": ["open"],
+    }
+    assert issues == []
+    assert provider.item_facts_axis_fixes == 1
+
+
+def test_movable_item_still_updates_place():
+    provider = _provider()
+
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+
+    assert provider.item_facts["the lantern"]["where"] == "in her hand"
+
+
 def test_state_axis_alias_is_canonical_and_evicts_opposite():
     provider = _provider()
     provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}

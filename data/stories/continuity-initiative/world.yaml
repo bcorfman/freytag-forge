@@ -79,6 +79,7 @@ items:
   name: Kristin's laptop
 - id: michelle_drawer
   name: Michelle's carved drawer
+  fixed: true
 - id: transit_card
   name: Transit token
 - id: override_codes

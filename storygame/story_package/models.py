@@ -167,6 +167,11 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class Item(Entity):
+    # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
+    fixed: bool = False
+
+
 _LEADING_DETERMINERS = frozenset({"the", "a", "an", "this", "that", "her", "his", "their", "its"})
 
 
@@ -214,7 +219,7 @@ class WorldSource(_Model):
     protagonist_id: str = Field(pattern=_ID)
     locations: tuple[Entity, ...]
     npcs: tuple[Entity, ...]
-    items: tuple[Entity, ...]
+    items: tuple[Item, ...]
     facts: tuple[str, ...] = ()
     protected_knowledge: tuple[str, ...] = ()
 

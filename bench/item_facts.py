@@ -114,7 +114,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
         self.item_facts_reply_keys = {"place": 0, "where": 0}
-        package_names, _ = package_seed(self.state.package, self.state, self.state.current_scene_id)
+        self._item_facts_issues: list[str] = []
+        package = getattr(self.state, "package", None)
+        self._fixed_item_names = {
+            item.name for item in getattr(getattr(package, "world", None), "items", ()) if getattr(item, "fixed", False)
+        }
+        package_names, _ = (
+            package_seed(package, self.state, self.state.current_scene_id) if package is not None else ({}, [])
+        )
         self._hand_seed_names = {name for name in self.item_facts if name not in package_names}
 
     @classmethod
@@ -261,7 +268,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 return False
             pole = self._axis_match(name, where)
             if pole is None:
-                facts["where"] = where.strip()[:80]
+                if name in self._fixed_item_names:
+                    self._item_facts_issues.append(
+                        f"item_facts for {name!r} refused place {where.strip()[:80]!r} because it is fixed"
+                    )
+                else:
+                    facts["where"] = where.strip()[:80]
             else:
                 self._apply_conditions(name, [pole], replace=False)
                 self.item_facts_axis_fixes += 1
@@ -316,6 +328,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return previous, issues
 
         self._held_item_facts = {}
+        self._item_facts_issues = issues
         changed: set[str] = set()
         for name, value in raw.items():
             if name not in self.item_facts:
