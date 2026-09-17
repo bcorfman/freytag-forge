@@ -1,15 +1,15 @@
 # Narrated world continuity: implementation plan
 
-Status: Phase 0 rounds 1 and 2 measured and recorded; format v2 did not reach
-the 92% bar. Round 3 (engine-side capture: partial entries, one merged match
-call, per-turn THINGS selection, persisting narrated things, split judge
-labels) is measured, and round 4 added Brandon's binary state axes. Final
-four-replicate numbers: two-scene 28/47 (60%) and 40-turn 105/159 (66%), the
-best 40-turn value measured. A state now lands in a place field on 0 of 206
-turns, against 81 of 156 in round 3, and capture costs about 0.14-0.5 match
-calls a turn instead of 0.9. Still no change type reaches 92% on a sample worth
-quoting - see Phase 0. Nothing below is in the game yet. The bench experiment
-that justifies the design is complete and recorded in
+Status (2026-09-17): Phase 0 bench work is in rounds 5-7 on branch
+`narration-phone-fixes`. Round 6 (two-scene, 4 replicates, commit cc1e422) cut
+turns with a real failure from 26/47 to 19/46, facts-after-wrong from 15 to 7,
+missed changes from 10 to 3 and state-as-place from 2 to 0. Round 7 is fixing
+the two defects round 6 exposed (the name matcher merging a new thing into its
+container, and turns rejected for forbidden top-level reply keys); see
+"Rounds 5-7" at the end of Phase 0 for exact state, measurements and the next
+steps. Nothing is in the shipped game yet except the compound-command splitter
+in `RuntimeEngine.turn` and the empty-reply-key tolerance in
+`CloudflareTurnProvider`. The earlier bench experiment is recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
 
@@ -396,11 +396,98 @@ Tasks:
     6 across 159 turns - so the gain came from DELETING the failed place
     normalisation and from an empty condition list clearing a stale pole, not
     from routing a pole out of the place field.
-- [ ] Decide the next strategy for a state landing in `place`: two rank-1 rule
-  attempts (naming both keys, then an opened-box example) have not fixed it.
-  Brandon to choose - an LLM semantic check of the captured entry (rank 2, for
-  example folding a normalise step into the match call that already fires), or
-  a different reply shape that cannot confuse state with place.
+- [x] A state landing in `place`: resolved by declared binary axes plus the
+  round 6 changes; state_as_place was 0 of 46 turns in round 6.
+
+**Rounds 5-7: one word for place, reply changes that land, tight context
+(2026-09-16/17, branch `narration-phone-fixes`)**
+
+Decisions Brandon made in these rounds (all saved as standing rules):
+- A thing's location is `place` in every layer - prompts, store, recorded JSON,
+  judges, reports, docs. `where` is gone, with no alias (e655ec5).
+- There is one drawer in the story; it is named `drawer`, and `plot.md`,
+  `knowledge.yaml` and `pacing.yaml` never say "drawers" (e655ec5, 1c82bd8).
+- Compound player commands are split into one sentence per action by the
+  engine, deterministically, never by an LLM. Evidence: "Go out to your truck
+  and bring your laptop inside." finished 2/6 joined vs 6/6 as "Go out to your
+  truck. Bring your laptop inside." (`bench/results/split-command-1a`).
+  Implemented with a spaCy parse in `storygame/runtime/command_split.py`,
+  called from `RuntimeEngine.turn`; spaCy and en_core_web_sm are locked runtime
+  dependencies (8a5b1d4). Bench records keep `narrated_command` (cc1e422).
+- Every well-formed change a narrator reply reports must land in state on that
+  turn; a dropped change is a severe failure however rare. New names resolve in
+  the same call; a self-mapped, omitted or unmatched name becomes a new thing;
+  a condition-only new thing has `place: None` (f7dda9c).
+- THINGS carries a tracked thing only when the command refers to it (match
+  call `refers`) or a reachable transition requires it. Not scene placement,
+  not being held, not changed last turn, not a projected beat. "Only send the
+  laptop when the command mentions it." The match call no longer asks for
+  `carried` (716c0ba).
+- Fix order for narration defects: a short prompt rule first, then an LLM
+  semantic check, never regex over narration. The thrown phone was fixed at
+  rank 1 by replacing the narrator's example with a thrown cup that "breaks and
+  falls" to `{"place": "on the floor", "condition": ["broken"]}` (f7dda9c).
+- Characters join the containment tree (decision 1e below, not built yet).
+
+Also done: judges send and must echo real `turn_number`s with one retry
+(4e27f99); `bench/failure_report.py` builds the per-round failure report and
+prints both judges' reasons (`--section LABEL=DIR`, `--facts`, `--title`,
+`--preamble-file`, `--out`); a fixed thing no longer logs a refusal when its
+current place is repeated.
+
+Round 6 measurement (`bench/results/item-facts-v7-two-scene-1a`,
+`bench/results/round6-failures.md`): thrown phone recorded on the floor broken
+4/4; receipt and note recorded on the turn they appear 4/4; THINGS about one
+line a turn. Remaining failures, worst first:
+1. The matcher merged a narrated "USB drive" (place "in drawer") into `drawer`
+   in 2/4 replicates, losing the drive and putting its condition on the drawer.
+2. Turns rejected with INVALID_PROPOSAL for forbidden top-level reply keys.
+3. `closed` added to the laptop without narration (declared axis).
+4. Narration drift the judges flag: phone left "on the passenger seat" then
+   handed over without being picked up; the continuity judge also overreaches on
+   details it was not given (passenger seat, the bench scene).
+
+Round 7 (in progress):
+- [x] Rejection diagnosis probe, 10 replicates x 8 Scene 1A turns, raw replies
+  captured (scratch probe, not in repo): 0/80 turns rejected but 7/97 narration
+  replies had forbidden top-level keys, each costing a recovery request (8
+  recoveries in 80 turns): empty `grounding_ids` (3), empty `known` (1), an item
+  change at top level such as `"truck": {"place": "on the road", ...}` (2, lost
+  even when recovery succeeds), `"Michelle's phone": {"owner": "Michelle"}` (1).
+- [x] Fix: `CloudflareTurnProvider._clean_reply` drops empty extra top-level
+  keys (counted in `reply_keys_dropped`); `ItemFactsProvider` lifts top-level
+  place/condition entries into `item_facts` (counted in `item_facts_lifted`,
+  never overriding an existing entry); other non-empty extras still fail
+  (6d670de).
+- [x] Matcher wording bake-off, 8 fixed cases x 10 calls per prompt, scored as
+  the engine resolves (self-map = new): current 61/80; wording A ("the very same
+  object ... A thing that is in, on or under another thing is a different
+  object, like a key in a box.") 67/80, USB drive kept separate 10/10 vs 1/10,
+  small regressions (memory card 8/10, note 9/10); wording B (keep "means the
+  same thing", add the in/on/under sentence) 60/80, USB drive 0/10 - rejected.
+  A "card" taped under the drawer never maps to Michelle's memory card under any
+  wording: an open short-name problem.
+- [ ] Ringer task running when this was written: install wording A in
+  `_MATCH_SYSTEM`, and stop `ItemFactsProvider._request` creating an empty
+  `item_facts` when nothing is lifted (the 6d670de patch turns "narrator omitted
+  item_facts" into "nothing changed"). Manifest and check:
+  `/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/b88364f9-ce7c-4f5a-a987-9d9831df05e1/scratchpad/r12/`
+  (scratch; if gone, recreate from this paragraph). Review, apply, run the full
+  suite, commit.
+- [ ] Re-run the rejection probe on the fixed code (same shape: two-scene
+  variation cut to Scene 1A, `fixed_turns` 8, judges off, 10 replicates, wrap
+  `ItemFactsProvider._request` to record extra top-level keys per narration
+  reply). Compare against the baseline above: recovery requests per 80 turns,
+  replies with extra keys that still fail, `reply_keys_dropped`,
+  `item_facts_lifted`, rejections. Report whether it is a real improvement.
+- [ ] Then a four-replicate two-scene round with judges (smoke first), build
+  `bench/results/round7-failures.md` with `bench.failure_report`, compare with
+  round 6, and check the USB-drive turn resolves as a new thing.
+- [ ] Next candidates, in Brandon's priority order once he picks: decision 1e
+  (containment tree with characters, including container-shaped
+  `{"kitchen counter": {"contents": [...]}}` replies, which are still dropped);
+  the invented `closed` on the laptop; the "card" short-name mapping; judge
+  overreach on ungiven details.
 
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
@@ -417,6 +504,18 @@ Operational lessons from round 1 (apply to every live run):
   coverage gate fails otherwise.
 - Checks that stub `_request` must count their own stub calls, because the
   base provider's `request_count` increments inside `_request`.
+- Write briefs and scripts with QUOTED heredocs (`<<'EOF'`). An unquoted
+  heredoc ran backtick-quoted commands inside a brief (`uv add spacy`) against
+  the real repository; it had to be reverted with git checkout and uv sync.
+- Never wait on a run with `pgrep -f <manifest name>` from a shell whose own
+  command line contains that name; it matches itself and never exits.
+- A judge's verdict `turn` field was positional before 4e27f99; older result
+  files must be matched to turns by position, never by that number.
+- `git add -A -- . ':(exclude).venv'` fails when `.venv` is gitignored; use
+  plain `git add -A`.
+- The bench's `ItemFactsProvider._request` sits between the HTTP call and
+  proposal validation, so structural reply fixes for the bench go there and
+  shipped-provider fixes go in `CloudflareTurnProvider._request`.
 
 ### Phase 1 - Design decisions
 
@@ -750,3 +849,12 @@ small plan or task.
   `bench/results/item-facts-*-1a`, `bench/results/continuity-1a-*-entry-text-cut`.
 - Experiment record: `.plans/narrated-world-changes-experiment.md`.
 - Ringer: `/home/bcorfman/dev/ringer/ringer.py` (`lint`, `run`, `hud`).
+- Current bench variation for this work:
+  `bench/variations/item-facts-package-two-scene.json` (8 turns in 1A, 4 in
+  1B; run with `--scene 1A`, `continue_to` plays 1B) and
+  `bench/variations/item-facts-package-long.json` (40 turns).
+- Failure report:
+  `.venv/bin/python -m bench.failure_report --title "Round N failures" --preamble-file <txt> --section two-scene=bench/results/<dir> --out bench/results/roundN-failures.md`
+- Round results: `bench/results/round5-failures.md`,
+  `bench/results/round6-failures.md`, `bench/results/item-facts-v7-two-scene-1a`,
+  `bench/results/split-command-1a`.
