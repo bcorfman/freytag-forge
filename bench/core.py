@@ -895,6 +895,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         ),
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
+        "reply_keys_dropped": dict(getattr(provider, "reply_keys_dropped", {})),
         "package": str(package.root) if hasattr(package, "root") else str(variation["_package_path"]),
         "entry_state": arrival_entry_state,
     }
@@ -910,6 +911,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["item_facts_match_calls"] = provider.item_facts_match_calls
         record["item_facts_reply_keys"] = dict(provider.item_facts_reply_keys)
         record["item_facts_axis_fixes"] = provider.item_facts_axis_fixes
+        record["item_facts_lifted"] = provider.item_facts_lifted
     return record
 
 
@@ -945,6 +947,7 @@ def _failed_scene_record(
         "example_leakage": 0,
         "narration_requests": provider.request_count,
         "recovery_requests": provider.recovery_count,
+        "reply_keys_dropped": dict(getattr(provider, "reply_keys_dropped", {})),
         "package": str(variation["_package_path"]),
     }
     if entry_state is not None:
@@ -956,6 +959,7 @@ def _failed_scene_record(
         record["rejected_turn_count"] = len(rejected_turns or [])
     if isinstance(provider, ItemFactsProvider):
         record["item_facts_final"] = copy.deepcopy(provider.item_facts)
+        record["item_facts_lifted"] = provider.item_facts_lifted
     return record
 
 

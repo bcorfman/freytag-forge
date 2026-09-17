@@ -200,6 +200,8 @@ Set `seed_from_package` to `true` to seed placed things from the story package; 
 
 The trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, `item-facts-second.json`, `item-facts-package-two-scene.json`, and `item-facts-package-long.json`.
 
+Empty unknown reply fields are dropped, while misplaced item changes are moved into `item_facts` and counted in replicate telemetry.
+
 ## Fact-tracking judge
 
 Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, whether narration conflicts with the facts it received, and whether a true condition was dropped. It also records shown changes by `command` or `narrator` cause.

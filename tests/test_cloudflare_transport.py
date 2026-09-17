@@ -337,6 +337,33 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
 
 
+def test_transport_drops_empty_unknown_reply_keys_but_keeps_nonempty_extras(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Valid."}], "known": []})}
+        ),
+    )
+
+    reply = provider._request({"system": "", "user": ""})
+
+    assert reply == {"segments": [{"kind": "narration", "text": "Valid."}]}
+    assert provider.reply_keys_dropped == {"known": 1}
+    assert parse_turn_proposal(reply).segments
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {"segments": [{"kind": "narration", "text": "Valid."}], "grounding_ids": ["bad"]}
+        ),
+    )
+    with pytest.raises(RuntimeContractError):
+        parse_turn_proposal(provider._request({"system": "", "user": ""}))
+
+
 def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)

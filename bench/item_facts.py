@@ -96,6 +96,8 @@ _SECOND_CALL_SYSTEM = (
 class ItemFactsProvider(CloudflareTurnProvider):
     """Cloudflare provider with a bench-only, plain-facts side channel."""
 
+    allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
+
     def __init__(
         self,
         *,
@@ -127,6 +129,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
         self.item_facts_reply_keys = {"place": 0}
+        self.item_facts_lifted = 0
         self._item_facts_issues: list[str] = []
         package = getattr(self.state, "package", None)
         self._fixed_item_names = {
@@ -218,6 +221,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _request(self, payload: dict[str, object]) -> object:
         response = super()._request(payload)
         if isinstance(response, dict):
+            if "segments" in response:
+                item_facts = response.get("item_facts")
+                if "item_facts" not in response:
+                    item_facts = {}
+                    response["item_facts"] = item_facts
+                if isinstance(item_facts, dict):
+                    for name, entry in list(response.items()):
+                        if name in self.allowed_reply_keys:
+                            continue
+                        if isinstance(entry, dict) and ({"place", "condition"} & entry.keys()):
+                            if name not in item_facts:
+                                item_facts[name] = entry
+                                self.item_facts_lifted += 1
+                            del response[name]
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
             item_facts = response.get("item_facts")

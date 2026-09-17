@@ -209,6 +209,8 @@ def _plain(text: str) -> str:
 class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
+    allowed_reply_keys = {"segments", "selected_knowledge_ids"}
+
     def __init__(
         self,
         *,
@@ -234,6 +236,7 @@ class CloudflareTurnProvider:
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
+        self.reply_keys_dropped: dict[str, int] = {}
 
     @classmethod
     def from_environment(
@@ -1472,8 +1475,19 @@ class CloudflareTurnProvider:
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
         if isinstance(body, dict) and isinstance(body.get("narration"), str):
-            return self._decode_narration(body["narration"])
-        return body
+            body = self._decode_narration(body["narration"])
+        return self._clean_reply(body)
+
+    def _clean_reply(self, reply: object) -> object:
+        """Drop empty unknown fields from narration replies to avoid needless retries."""
+        if not isinstance(reply, dict) or "segments" not in reply:
+            return reply
+        cleaned = dict(reply)
+        for key, value in reply.items():
+            if key not in self.allowed_reply_keys and value in ([], {}, "", None):
+                del cleaned[key]
+                self.reply_keys_dropped[key] = self.reply_keys_dropped.get(key, 0) + 1
+        return cleaned
 
     def _decode_narration(self, narration: str) -> object:
         """Parse the reply, keeping its finished segments when the model was cut off mid-word.

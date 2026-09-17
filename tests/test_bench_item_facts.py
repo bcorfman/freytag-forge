@@ -144,6 +144,48 @@ def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(m
     )
 
 
+def test_item_facts_lifts_misplaced_changes_without_overriding_explicit_facts(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {
+                "segments": [{"kind": "narration", "text": "The change is clear."}],
+                "selected_knowledge_ids": [],
+                "truck": {"condition": ["moving"], "place": "on the road"},
+                "the lantern": {"place": "wrong", "condition": ["wrong"]},
+                "item_facts": {"the lantern": {"place": "right", "condition": ["lit"]}},
+            }
+        ),
+    )
+
+    reply = provider._request({"system": "", "user": ""})
+
+    assert reply["segments"]
+    assert provider.pending_item_facts() == {
+        "the lantern": {"place": "right", "condition": ["lit"]},
+        "truck": {"condition": ["moving"], "place": "on the road"},
+    }
+    assert provider.item_facts_lifted == 1
+
+
+def test_item_facts_keeps_empty_side_channel_and_match_reply(monkeypatch):
+    provider = _provider()
+    replies = iter(
+        [
+            {"segments": [{"kind": "narration", "text": "Nothing changes."}], "item_facts": {}},
+            {"refers": [], "same_as": {}},
+        ]
+    )
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(next(replies)))
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "segments": [{"kind": "narration", "text": "Nothing changes."}]
+    }
+    assert provider.pending_item_facts() == {}
+    assert CloudflareTurnProvider._request(provider, {"system": "", "user": ""}) == {"refers": [], "same_as": {}}
+
+
 def test_apply_item_facts_replaces_valid_entry_and_leaves_omitted_things_unchanged():
     provider = _provider()
     facts, issues = provider.apply_item_facts(
