@@ -169,6 +169,39 @@ def test_item_facts_lifts_misplaced_changes_without_overriding_explicit_facts(mo
     assert provider.item_facts_lifted == 1
 
 
+def test_item_facts_does_not_create_empty_side_channel_when_nothing_is_lifted(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": "Nothing changes."}]}),
+    )
+
+    reply = provider._request({"system": "", "user": ""})
+
+    assert reply == {"segments": [{"kind": "narration", "text": "Nothing changes."}]}
+    assert "item_facts" not in reply
+    assert provider.pending_item_facts() is None
+
+
+def test_item_facts_creates_side_channel_for_a_lifted_entry(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {
+                "segments": [{"kind": "narration", "text": "The truck moves."}],
+                "truck": {"place": "on the road"},
+            }
+        ),
+    )
+
+    reply = provider._request({"system": "", "user": ""})
+
+    assert reply["segments"]
+    assert provider.pending_item_facts() == {"truck": {"place": "on the road"}}
+    assert provider.item_facts_lifted == 1
+
+
 def test_item_facts_keeps_empty_side_channel_and_match_reply(monkeypatch):
     provider = _provider()
     replies = iter(

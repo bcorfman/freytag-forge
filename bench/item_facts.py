@@ -82,7 +82,8 @@ _MATCH_SYSTEM = (
     '{"refers": ["name"], "same_as": {"new name": "name"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
     'like "the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS '
-    'that means the same thing, or "new" if it is a different thing. Copy names from THINGS exactly.'
+    'that is the very same object, or "new" if it is a different object. A thing that is in, on or under another '
+    "thing is a different object, like a key in a box. Copy names from THINGS exactly."
 )
 _SECOND_CALL_SYSTEM = (
     "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
@@ -223,9 +224,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if isinstance(response, dict):
             if "segments" in response:
                 item_facts = response.get("item_facts")
-                if "item_facts" not in response:
-                    item_facts = {}
-                    response["item_facts"] = item_facts
                 if isinstance(item_facts, dict):
                     for name, entry in list(response.items()):
                         if name in self.allowed_reply_keys:
@@ -234,6 +232,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             if name not in item_facts:
                                 item_facts[name] = entry
                                 self.item_facts_lifted += 1
+                            del response[name]
+                elif "item_facts" not in response:
+                    lifted = {
+                        name: entry
+                        for name, entry in list(response.items())
+                        if name not in self.allowed_reply_keys
+                        and isinstance(entry, dict)
+                        and ({"place", "condition"} & entry.keys())
+                    }
+                    if lifted:
+                        response["item_facts"] = lifted
+                        item_facts = lifted
+                        self.item_facts_lifted += len(lifted)
+                        for name in lifted:
                             del response[name]
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
