@@ -467,13 +467,9 @@ Round 7 (in progress):
   same thing", add the in/on/under sentence) 60/80, USB drive 0/10 - rejected.
   A "card" taped under the drawer never maps to Michelle's memory card under any
   wording: an open short-name problem.
-- [ ] Ringer task running when this was written: install wording A in
-  `_MATCH_SYSTEM`, and stop `ItemFactsProvider._request` creating an empty
-  `item_facts` when nothing is lifted (the 6d670de patch turns "narrator omitted
-  item_facts" into "nothing changed"). Manifest and check:
-  `/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/b88364f9-ce7c-4f5a-a987-9d9831df05e1/scratchpad/r12/`
-  (scratch; if gone, recreate from this paragraph). Review, apply, run the full
-  suite, commit.
+- [x] Wording A installed in `_MATCH_SYSTEM`, and `ItemFactsProvider._request`
+  no longer creates an empty `item_facts` unless an entry is lifted (2f85fec,
+  634 tests pass).
 - [ ] Re-run the rejection probe on the fixed code (same shape: two-scene
   variation cut to Scene 1A, `fixed_turns` 8, judges off, 10 replicates, wrap
   `ItemFactsProvider._request` to record extra top-level keys per narration
