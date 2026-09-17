@@ -470,12 +470,14 @@ Round 7 (in progress):
 - [x] Wording A installed in `_MATCH_SYSTEM`, and `ItemFactsProvider._request`
   no longer creates an empty `item_facts` unless an entry is lifted (2f85fec,
   634 tests pass).
-- [ ] Re-run the rejection probe on the fixed code (same shape: two-scene
-  variation cut to Scene 1A, `fixed_turns` 8, judges off, 10 replicates, wrap
-  `ItemFactsProvider._request` to record extra top-level keys per narration
-  reply). Compare against the baseline above: recovery requests per 80 turns,
-  replies with extra keys that still fail, `reply_keys_dropped`,
-  `item_facts_lifted`, rejections. Report whether it is a real improvement.
+- [x] Re-ran the rejection probe on the fixed code (10 x 8 Scene 1A turns,
+  raw keys captured before cleaning). Real improvement in cost and risk, not in
+  model behaviour: recovery requests 8 -> 1 per 80 turns; replies with forbidden
+  top-level keys 7/97 -> 8/90 (the model still emits them), but now handled
+  without a retry - empty values dropped (grounding_ids 2, known 2, and one reply
+  dumping 17 SCENE detail names as empty objects), one misplaced item entry
+  lifted; rejections 0 -> 0 (not a discriminating number at this sample).
+  "Narrator omitted item_facts" issues 1 -> 2, now honestly recorded.
 - [ ] Then a four-replicate two-scene round with judges (smoke first), build
   `bench/results/round7-failures.md` with `bench.failure_report`, compare with
   round 6, and check the USB-drive turn resolves as a new thing.
