@@ -75,6 +75,19 @@ test("filters turn fields and uses the default model with the strict schema", as
   );
 });
 
+test("fact rubric separates given conflicts and allows introduced refinements", async () => {
+  const requests = [];
+  await judgeFactTracking(
+    { sceneId: "1A", opening: "", turns },
+    { environment: { OPENAI_API_KEY: "test-key" }, fetchImpl: fakeFetch(verdict(), requests) },
+  );
+  const rubric = requests[0].input[0].content;
+  assert.match(rubric, /facts_after_correct: answer only whether item_facts_after matches what the narration shows/);
+  assert.match(rubric, /judge that only under narration_contradicts_given_facts/);
+  assert.match(rubric, /more specific place or state that fits inside the given one is consistent/);
+  assert.match(rubric, /not in item_facts_before but that the narration introduces is never an invented change/);
+});
+
 test("rejects a verdict with the wrong turn count", async () => {
   const requests = [];
   await assert.rejects(

@@ -6,6 +6,8 @@ const CONTINUITY_CRITERIA = [
   "contradicts_stated_fact",
   "protagonist_acts_beyond_command",
   "restarts_scene",
+  "command_not_finished",
+  "reveals_hidden_canon",
 ];
 const CONTINUITY_VERDICTS = ["yes", "no"];
 const CONTINUITY_SCHEMA = {
@@ -20,6 +22,8 @@ const CONTINUITY_SCHEMA = {
           contradicts_stated_fact: { type: "string", enum: CONTINUITY_VERDICTS },
           protagonist_acts_beyond_command: { type: "string", enum: CONTINUITY_VERDICTS },
           restarts_scene: { type: "string", enum: CONTINUITY_VERDICTS },
+          command_not_finished: { type: "string", enum: CONTINUITY_VERDICTS },
+          reveals_hidden_canon: { type: "string", enum: CONTINUITY_VERDICTS },
           reason: { type: "string" },
         },
         required: ["turn", ...CONTINUITY_CRITERIA, "reason"],
@@ -32,7 +36,7 @@ const CONTINUITY_SCHEMA = {
 };
 
 const SYSTEM_MESSAGE =
-  "You judge the narrator of an interactive roleplay, one player turn at a time. For every turn in turns, answer three questions with yes or no and give one short reason. The canon is reference only and is never narration; it is the story's ground truth, including the scene's item_placements and setting_facts. contradicts_stated_fact: answer yes if the turn's narration states something about the physical state or position of a thing that conflicts with the canon, the opening, or an earlier turn's narration. Examples: an object described as damaged or cracked when setting_facts say it is not damaged; an object somewhere other than its item_placements when no player command moved it. A detail the canon never mentions is not a contradiction. protagonist_acts_beyond_command: answer yes if the narration has the player character physically do something the player's command did not ask for, such as picking up, moving, opening or taking an object, or going somewhere else. Looking, noticing, thinking, feeling, and small movements needed to carry out the command are not beyond it. restarts_scene: answer yes if the narration describes the player character arriving at, entering, or stepping into the scene's location, or discovering something already described in the opening or an earlier turn as though it were new. Continuing to act inside the location is not a restart.";
+  "You judge the narrator of an interactive roleplay, one player turn at a time. For every turn in turns, answer five questions with yes or no and give one short reason. Use the canon block for that turn's scene_id. A change of scene_id means the story moved to a new scene; arriving in the new scene is not a restart. The canon is reference only and is never narration; it is the story's ground truth. item_placements and setting_facts only say where things start in a scene. given_facts is the current truth at the start of each turn and wins over item_placements, setting_facts and earlier narration. A more specific place or state that fits inside the given one is consistent, not a contradiction and not an invented change. For example, on the passenger seat is inside the truck, parked on the street is outside the house, and broken is a correct general word for a cracked or shattered screen. contradicts_stated_fact: answer yes if the turn's narration states something about the physical state or position of a thing that conflicts with the canon, the opening, an earlier turn's narration, or given_facts. A detail the canon never mentions is not a contradiction. A command from an earlier turn is not evidence that its action happened; only narration and given_facts are evidence. For example, if the command said to hand the phone to the man but the narration only showed her holding it out, she still has it. protagonist_acts_beyond_command: answer yes if the narration has the player character physically do something the player's command did not ask for, such as picking up, moving, opening or taking an object, or going somewhere else. This is never by itself a contradiction. Looking, noticing, thinking, feeling, and small movements needed to carry out the command are not beyond it. restarts_scene: answer yes if the narration describes the player character arriving at, entering, or stepping into the scene's location, or discovering something already described in the opening or an earlier turn as though it were new. Continuing to act inside the location is not a restart. command_not_finished: answer yes if the narration stops before the action the command asked for is done. She must reach the place the command named, hand over the thing, put it where the command said, or bring it where the command said. If the command needs another character to act, such as taking a thing or answering, the narration must show what that character does; only holding a thing out is not finished. reveals_hidden_canon: answer yes if the narration shows a thing the canon marks as hidden in a Hidden canon line before the player's own action reaches its hidden spot, or puts that thing somewhere other than its hidden spot. For example, if a memory card is taped beneath a drawer, narration that finds it inside the drawer when she opens it is yes.";
 
 function outputText(response) {
   if (typeof response?.output_text === "string") return response.output_text;
@@ -50,11 +54,13 @@ function judgeConfiguration(environment) {
   return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
 }
 
-function playerVisibleTurn(turn, index) {
+function playerVisibleTurn(turn, index, sceneId) {
   return {
     turn_number: Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1,
+    scene_id: turn.scene_id ?? sceneId,
     player_input: turn.player_input,
     narration: turn.narration,
+    given_facts: turn.item_facts_before ?? {},
   };
 }
 
@@ -114,7 +120,7 @@ export async function judgeContinuity(
         content: JSON.stringify({
           canon: { scene_id: canon?.scene_id, plot: canon?.plot },
           opening,
-          turns: turns.map(playerVisibleTurn),
+          turns: turns.map((turn, index) => playerVisibleTurn(turn, index, sceneId)),
         }),
       },
     ],
@@ -151,21 +157,41 @@ function sceneBlock(source, heading, nextHeading) {
   return source.slice(start, end < 0 ? undefined : end);
 }
 
-export function packageCanon(sceneId, packagePath) {
+export function packageCanon(sceneId, packagePath, extraSceneIds = []) {
   const root = resolve(packagePath);
   const plot = readFileSync(resolve(root, "plot.md"), "utf8");
   const sceneIds = [...plot.matchAll(/^## Scene ([1-9][A-Z])\b/gm)].map((match) => match[1]);
-  const nextScene = sceneIds[sceneIds.indexOf(sceneId) + 1];
+  const selectedSceneIds = [
+    sceneId,
+    ...extraSceneIds.filter((extraSceneId, index) => extraSceneId !== sceneId && extraSceneIds.indexOf(extraSceneId) === index),
+  ];
   return {
     scene_id: sceneId,
-    plot: sceneBlock(plot, `## Scene ${sceneId}`, nextScene ? `## Scene ${nextScene}` : "\u0000"),
+    plot: selectedSceneIds
+      .map((selectedSceneId) => {
+        const nextSelectedScene = sceneIds[sceneIds.indexOf(selectedSceneId) + 1];
+        return sceneBlock(
+          plot,
+          `## Scene ${selectedSceneId}`,
+          nextSelectedScene ? `## Scene ${nextSelectedScene}` : "\u0000",
+        );
+      })
+      .join(""),
   };
 }
 
 async function main() {
   const input = JSON.parse(readFileSync(argument("--input"), "utf8"));
   const judgments = [];
-  const canon = packageCanon(input.scene_id, input.package_path);
+  const extraSceneIds = [];
+  for (const run of input.runs) {
+    for (const turn of run.turns) {
+      if (typeof turn.scene_id === "string" && !extraSceneIds.includes(turn.scene_id)) {
+        extraSceneIds.push(turn.scene_id);
+      }
+    }
+  }
+  const canon = packageCanon(input.scene_id, input.package_path, extraSceneIds);
   for (const run of input.runs) {
     judgments.push(await judgeContinuity({ sceneId: input.scene_id, opening: run.opening, turns: run.turns }, { canon }));
   }

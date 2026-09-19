@@ -15,7 +15,7 @@ FACT = [
     "kept_ended_condition",
     "state_as_place",
 ]
-CONT = ["contradicts_stated_fact", "restarts_scene"]
+CONT = ["contradicts_stated_fact", "restarts_scene", "command_not_finished", "reveals_hidden_canon"]
 MISSING_FACT = "(no fact-tracking verdict)"
 MISSING_CONT = "(no continuity verdict)"
 

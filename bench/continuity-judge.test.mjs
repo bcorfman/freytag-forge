@@ -14,17 +14,22 @@ const verdict = {
       contradicts_stated_fact: "no",
       protagonist_acts_beyond_command: "yes",
       restarts_scene: "no",
+      command_not_finished: "no",
+      reveals_hidden_canon: "no",
       reason: "The narration picks up the phone.",
     },
   ],
 };
 
-test("continuity judge uses a strict schema and only sends player-visible turn fields", async () => {
+test("continuity judge uses a strict schema and sends scene and given fields only", async () => {
   let request;
   const turns = [
     {
       player_input: "Look at the phone.",
       narration: "The phone lies on the floor.",
+      scene_id: "1A",
+      item_facts_before: { phone: { place: "her hands" } },
+      item_facts_after: { phone: { place: "floor" } },
       candidates_offered: ["must not leak"],
       selected_knowledge_ids: ["must not leak"],
     },
@@ -52,7 +57,23 @@ test("continuity judge uses a strict schema and only sends player-visible turn f
   assert.equal(request.text.format.schema.additionalProperties, false);
   assert.equal(request.text.format.schema.properties.turns.items.additionalProperties, false);
   assert.deepEqual(JSON.parse(request.input[1].content).turns, [
-    { turn_number: 1, player_input: "Look at the phone.", narration: "The phone lies on the floor." },
+    {
+      turn_number: 1,
+      scene_id: "1A",
+      player_input: "Look at the phone.",
+      narration: "The phone lies on the floor.",
+      given_facts: { phone: { place: "her hands" } },
+    },
+  ]);
+  assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
+  assert.deepEqual(request.text.format.schema.properties.turns.items.required, [
+    "turn",
+    "contradicts_stated_fact",
+    "protagonist_acts_beyond_command",
+    "restarts_scene",
+    "command_not_finished",
+    "reveals_hidden_canon",
+    "reason",
   ]);
 });
 
@@ -60,6 +81,12 @@ test("packageCanon returns the whole scene block", () => {
   const canon = packageCanon("1A", "data/stories/continuity-initiative");
   assert.match(canon.plot, /Michelle's phone is not damaged\./);
   assert.doesNotMatch(canon.plot, /## Scene 1B/);
+});
+
+test("packageCanon includes extra scene blocks", () => {
+  const canon = packageCanon("1A", "data/stories/continuity-initiative", ["1B"]);
+  assert.match(canon.plot, /## Scene 1A/);
+  assert.match(canon.plot, /## Scene 1B/);
 });
 
 test("continuity judge rejects the wrong number of turns and invalid verdicts", async () => {

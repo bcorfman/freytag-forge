@@ -149,3 +149,14 @@ def test_clean_turns_are_omitted_without_all_turns(tmp_path):
 
     assert "clean" not in report
     assert "clean turns:" not in report
+
+
+@pytest.mark.parametrize("label", ["command_not_finished", "reveals_hidden_canon"])
+def test_new_continuity_labels_are_failures(tmp_path, label):
+    path = tmp_path / "results"
+    _write_results(path, [1], [_fact(1)], [_cont(1, **{label: "yes"})])
+
+    report = _report(path)
+
+    assert f"### r1 turn 1 (1A) - {label}" in report
+    assert f"{label}: 1" in report
