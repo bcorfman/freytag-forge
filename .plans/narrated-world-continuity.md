@@ -631,16 +631,24 @@ Order:
   2B.2 "Kristin Was Bait" is a source of SL-2B-B, but neither realization
   reveals it (both assert only Brandon's JANUS role), so no realization links
   it and it never reaches the narrator.
-- [ ] Step 2: judge fixes and recalibration; then re-judge round 7's saved
-  turns (judge calls only) for an honest baseline. Judge fixes landed
-  (cd33b32). Scored against Brandon's round 7 comments turned into labels
-  (114 continuity, 117 fact cells): continuity 27% -> 89.5%
-  (contradicts_stated_fact 70% -> 95%), fact 83% -> 88.9%; bar 90%. Open:
-  the fact judge now accepts the invented laptop `closed` 4/4 (regression);
-  three label questions for Brandon (turn 1 "look carefully" finished?, USB
-  drive as reveals_hidden_canon?, USB drive "unopened" invented?). The
-  rubric examples come from round 7, so this score is optimistic for new
-  stories.
+- [x] Step 2: judge fixes (cd33b32) and tuning (2b8d6b3), then round 7's saved
+  turns re-judged (8 judge calls each time). Scored against Brandon's round 7
+  comments turned into labels (114 continuity, 113 fact cells; labels and
+  scorer in the session scratchpad):
+
+  | Judge | Round 7 judges | After fixes | After tuning |
+  |---|---|---|---|
+  | continuity | 27.2% | 91.2% | **96.5%** |
+  | fact | 82.9% | 89.4% | **95.6%** |
+
+  Brandon's label rulings, 2026-09-19: a look command is finished whether or
+  not Kristin picks the thing up; an invented USB drive in the drawer IS a
+  hidden-canon reveal, because the only drive in the story is the one taped
+  beneath the drawer; its own condition is then moot. The four remaining
+  fact-judge misses all call a condition the narration never showed
+  (`crumpled`, `handwritten`, `found`) invented, which the tuned rule makes
+  correct and the labels too lenient. Caveat: the rubric examples come from
+  round 7, so these rates are optimistic for a new story.
 - [ ] Step 3, billed: B2, B3 and C2 prompt changes (and any C1 fix), smoke
   first, then 4 replicates.
 
