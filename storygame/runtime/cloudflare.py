@@ -650,10 +650,15 @@ class CloudflareTurnProvider:
         return context
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
-        """Return the authored beats belonging to projected storylets."""
+        """Return beats authored as the source of reveals offered this turn."""
 
         package = self.state.package
         storylets = {storylet.id: storylet for storylet in package.storylets}
+        realizations = {
+            (route.id, realization.id): realization
+            for route in package.storylet_routes.storylets
+            for realization in route.realizations
+        }
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
         seen: set[str] = set()
         selected: list[SceneBeat] = []
@@ -664,14 +669,11 @@ class CloudflareTurnProvider:
             storylet = storylets.get(knowledge.source.storylet_id)
             if storylet is None:
                 continue
-            candidate_terms = self._candidate_terms(candidate)
-            for anchor in storylet.source_links:
+            realization = realizations.get((storylet.id, knowledge.source.realization_id))
+            anchors = realization.source_beats if realization and realization.source_beats else storylet.source_links
+            for anchor in anchors:
                 beat = beats_by_anchor.get(anchor)
-                if (
-                    anchor not in seen
-                    and beat is not None
-                    and len(candidate_terms & self._content_terms(beat.prose)) >= 2
-                ):
+                if anchor not in seen and beat is not None:
                     seen.add(anchor)
                     selected.append(beat)
         return tuple(selected)
@@ -705,20 +707,6 @@ class CloudflareTurnProvider:
             "with",
         }
         return {word for word in re.findall(r"[a-z0-9]+", text.casefold()) if len(word) > 2 and word not in stopwords}
-
-    def _candidate_terms(self, candidate: object) -> set[str]:
-        values = [candidate.statement, *(term for group in candidate.must_convey for term in group)]
-        entity_terms = {
-            term
-            for entity in (
-                *self.state.package.world.npcs,
-                *self.state.package.world.items,
-                *self.state.package.world.locations,
-            )
-            for value in (entity.name, *entity.aliases)
-            for term in self._content_terms(value)
-        }
-        return set().union(*(self._content_terms(value) for value in values)) - entity_terms
 
     def _scene_entry(self) -> dict[str, object]:
         """Expose the package-authored frame and first beat the opening must dramatize, never invent."""

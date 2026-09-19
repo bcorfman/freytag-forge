@@ -67,6 +67,42 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
             assert effects == set(realization.operations)
 
 
+def test_loader_rejects_missing_source_beats_on_multi_beat_realization(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "storylet-routes.yaml"
+    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
+    realization = next(
+        realization
+        for route in routes["storylets"]
+        if route["id"] == "SL-1B-B"
+        for realization in route["realization_options"]
+        if realization["id"] == "SL-1B-B-R1"
+    )
+    realization.pop("source_beats")
+    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*SL-1B-B.*source_beats"):
+        load_story_package(root)
+
+
+def test_loader_rejects_source_beat_outside_realization_storylet(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "storylet-routes.yaml"
+    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
+    realization = next(
+        realization
+        for route in routes["storylets"]
+        if route["id"] == "SL-1B-B"
+        for realization in route["realization_options"]
+        if realization["id"] == "SL-1B-B-R1"
+    )
+    realization["source_beats"] = ["scene-1a1--michelles-gone"]
+    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*outside its storylet"):
+        load_story_package(root)
+
+
 def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
     plot = package / "plot.md"

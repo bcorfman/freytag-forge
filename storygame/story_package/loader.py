@@ -676,12 +676,24 @@ def _validate(package: StoryPackage) -> None:
     for route in package.storylet_routes.storylets:
         if route.scene_id not in scenes or route.id not in route_ids:
             raise StoryPackageError("storylet route references unknown scene")
+        storylet = next(storylet for storylet in package.storylets if storylet.id == route.id)
+        source_links = set(storylet.source_links)
         window = windows[route.scene_id]
         if not 0 <= route.earliest_turn <= route.target_turn <= route.latest_turn <= window.handoff_after_turns:
             raise StoryPackageError(f"storylet '{route.id}' escapes its scene pacing window")
         if {item.fact_id for item in route.activation_conditions} - set(package.world.facts):
             raise StoryPackageError(f"storylet route '{route.id}' has an unknown activation fact")
         for realization in route.realizations:
+            invalid_source_beats = set(realization.source_beats) - source_links
+            if invalid_source_beats:
+                raise StoryPackageError(
+                    f"realization '{realization.id}' of storylet '{route.id}' names source beat(s) "
+                    f"outside its storylet: {sorted(invalid_source_beats)}"
+                )
+            if len(source_links) > 1 and not realization.source_beats:
+                raise StoryPackageError(
+                    f"realization '{realization.id}' of storylet '{route.id}' must declare source_beats"
+                )
             if {operation.fact_id for operation in realization.operations} - set(package.world.facts):
                 raise StoryPackageError(f"storylet route '{route.id}' has an unknown operation fact")
             if set(realization.protected_knowledge_boundaries) - set(package.world.protected_knowledge):

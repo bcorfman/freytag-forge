@@ -367,6 +367,7 @@ class FactDelivery(_Model):
 class RouteRealization(_Model):
     id: str = Field(min_length=1)
     dramatic_intent: str = Field(min_length=1)
+    source_beats: tuple[str, ...] = ()
     operations: tuple[RouteOperation, ...] = ()
     eligible_storylet_event_id: str | None = None
     helps_transition_triggers: tuple[str, ...] = ()

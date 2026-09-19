@@ -102,6 +102,19 @@ only through an eligible storylet realization with those exact operations.
 Pacing events remain authored in `pacing.yaml`; their job is observable pressure,
 not unearned knowledge or arbitrary scene transitions.
 
+Each realization may declare `source_beats`, the `plot.md` beat anchors whose
+knowledge it reveals. It is required for every realization of a storylet with
+more than one source beat; a single-beat storylet may omit it. If omitted, the
+runtime uses the storylet's source beat links.
+
+```yaml
+  - id: SL-1C-C-R1
+    dramatic_intent: Read the logistics categories.
+    source_beats: [scene-1c3--the-nationwide-network]
+    operations:
+    - {op: assert, fact_id: national_detention_network_known, value: true}
+```
+
 Required storylet reveals must not depend on a true fact that is unavailable at scene entry and cannot be made true in that scene.
 The loader checks incoming bridge guarantees, scene storylet and pacing effects, `FactDelivery` entries and costs, scene knowledge, and the scene entry fact.
 Add a delivery or another scene-local producer when a required reveal needs an earlier fact.

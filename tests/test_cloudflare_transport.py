@@ -281,6 +281,29 @@ def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> Non
     assert candidate["statement"] == package.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
+def test_candidate_beats_project_the_1b_dead_drop_for_offered_candidates() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1b_a_r1"), SimpleNamespace(id="k_sl_1b_a_r2"))
+    )
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
+
+
+def test_candidate_beats_use_each_realization_source_beats_only() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1c_c_r1"),))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1c3--the-nationwide-network",)
+
+
+def test_candidate_beats_omit_unoffered_storylet_realizations() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1b_a_r1"),))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
+
+
 def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(monkeypatch) -> None:
     captured: list[dict[str, object]] = []
 
