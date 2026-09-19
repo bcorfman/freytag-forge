@@ -34,7 +34,7 @@ def _write_results(path, record_turns, fact_turns, cont_turns):
     (path / "continuity-judgments.json").write_text(json.dumps({"judgments": [{"turns": cont_turns}]}))
 
 
-def _report(path):
+def _report(path, *, all_turns=False):
     lines = []
     counts = []
     build_section(
@@ -43,6 +43,7 @@ def _report(path):
         {1: json.loads((path / "fact-tracking-judgments.json").read_text())["judgments"][0]["turns"]},
         lines,
         counts,
+        all_turns=all_turns,
     )
     return "\n".join(counts + lines)
 
@@ -105,3 +106,46 @@ def test_narrated_command_is_printed_when_different(tmp_path):
     (path / "all-turn-records.json").write_text(json.dumps(records))
 
     assert "- NARRATED COMMAND: Go out to your truck. Bring your laptop inside." in _report(path)
+
+
+def test_all_turns_includes_clean_turn_with_full_body_and_count(tmp_path):
+    path = tmp_path / "results"
+    _write_results(path, [1, 2], [_fact(1), _fact(2, facts_after_correct="no")], [_cont(1), _cont(2)])
+    records = json.loads((path / "all-turn-records.json").read_text())
+    records["runs"][0]["turns"][0].update(
+        {
+            "narrated_command": "Inspect the item.",
+            "item_facts_before": {"item": {"place": "table"}},
+            "item_facts_raw": {"item": {"place": "hands"}},
+            "item_facts_after": {"item": {"place": "hands", "condition": []}},
+            "item_facts_issues": ["issue"],
+        }
+    )
+    (path / "all-turn-records.json").write_text(json.dumps(records))
+
+    report = _report(path, all_turns=True)
+
+    assert "  - clean turns: 1" in report
+    assert (
+        "### r1 turn 1 (1A) - clean\n"
+        "- COMMAND: Check the item.\n"
+        "- NARRATED COMMAND: Inspect the item.\n"
+        "- NARRATION: The item is here.\n"
+        '- GIVEN: {"item": {"place": "table"}}\n'
+        '- REPLY: {"item": {"place": "hands"}}\n'
+        '- AFTER: {"item": {"place": "hands", "condition": []}}\n'
+        '- ISSUES: ["issue"]\n'
+        "- FACT JUDGE: fact 1\n"
+        "- CONTINUITY JUDGE: continuity 1\n"
+    ) in report
+    assert "### r1 turn 2 (1A) - facts_after_wrong" in report
+
+
+def test_clean_turns_are_omitted_without_all_turns(tmp_path):
+    path = tmp_path / "results"
+    _write_results(path, [1, 2], [_fact(1), _fact(2, facts_after_correct="no")], [_cont(1), _cont(2)])
+
+    report = _report(path)
+
+    assert "clean" not in report
+    assert "clean turns:" not in report

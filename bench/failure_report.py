@@ -57,6 +57,8 @@ def build_section(
     facts: dict[int, list[dict]],
     lines: list[str],
     counts: list[str],
+    *,
+    all_turns: bool = False,
 ) -> None:
     source = json.loads((results / "all-turn-records.json").read_text())
     runs = source["runs"]
@@ -64,6 +66,7 @@ def build_section(
     total = sum(len(run["turns"]) for run in runs)
     tally: dict[str, int] = {}
     failing_turns = 0
+    clean_turns = 0
     initiative = kept_correct = missed = 0
     body: list[str] = []
 
@@ -83,12 +86,19 @@ def build_section(
                 if fact and fact.get("missed_change") == "yes":
                     missed += 1
             if not names:
-                continue
-            failing_turns += 1
-            for name in names:
-                tally[name] = tally.get(name, 0) + 1
+                if not all_turns:
+                    continue
+                clean_turns += 1
+                heading_names = ["clean"]
+            else:
+                failing_turns += 1
+                for name in names:
+                    tally[name] = tally.get(name, 0) + 1
+                heading_names = names
             suffix = " [narrator initiative]" if took_initiative else ""
-            body.append(f"### r{rep} turn {turn['turn_number']} ({turn.get('scene_id')}) - {', '.join(names)}{suffix}")
+            body.append(
+                f"### r{rep} turn {turn['turn_number']} ({turn.get('scene_id')}) - {', '.join(heading_names)}{suffix}"
+            )
             body.append("- COMMAND: " + str(turn.get("player_input", "")))
             if "narrated_command" in turn and turn["narrated_command"] != turn.get("player_input"):
                 body.append("- NARRATED COMMAND: " + str(turn["narrated_command"]))
@@ -105,6 +115,8 @@ def build_section(
     counts.append(f"**{label} ({len(runs)} replicates, {total} turns)** - {failing_turns} turns with a real failure")
     for name, count in sorted(tally.items(), key=lambda pair: (-pair[1], pair[0])):
         counts.append(f"  - {name}: {count}")
+    if all_turns:
+        counts.append(f"  - clean turns: {clean_turns}")
     share = f"{100 * kept_correct / initiative:.0f}%" if initiative else "n/a"
     counts.append(
         f"  - narrator initiative (context, not a failure): {initiative} turns; of those, "
@@ -121,6 +133,7 @@ def main() -> None:
     parser.add_argument("--title", required=True)
     parser.add_argument("--preamble-file", type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--all-turns", action="store_true")
     args = parser.parse_args()
 
     sections = dict(item.split("=", 1) for item in args.section)
@@ -138,7 +151,7 @@ def main() -> None:
         runs = json.loads((results / "all-turn-records.json").read_text())["runs"]
         fact_path = Path(overrides[label]) if label in overrides else results / "fact-tracking-judgments.json"
         fact_map = fact_map_from_probe(fact_path) if label in overrides else _judgment_map(fact_path, runs)
-        build_section(label, results, fact_map, section_lines, counts)
+        build_section(label, results, fact_map, section_lines, counts, all_turns=args.all_turns)
     args.out.write_text("\n".join(lines + counts + section_lines) + "\n")
 
 
