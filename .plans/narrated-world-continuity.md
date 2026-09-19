@@ -649,8 +649,25 @@ Order:
   (`crumpled`, `handwritten`, `found`) invented, which the tuned rule makes
   correct and the labels too lenient. Caveat: the rubric examples come from
   round 7, so these rates are optimistic for a new story.
-- [ ] Step 3, billed: B2, B3 and C2 prompt changes (and any C1 fix), smoke
-  first, then 4 replicates.
+- [x] Step 3 code: B2, B3 and C2 prompt changes (a5df264, 649 passed). The
+  turn rule is "Finish each action the player gives."; the bench replaces the
+  scene-placement rule with "Each thing starts at the place THINGS gives it."
+  through a shared `_object_place_rule()` the bench overrides, so both the turn
+  and opening paths change; the reply example is a cup that cracks in two; both
+  variations' output examples drop "on the table".
+- [ ] Step 3 measurement, billed and awaiting Brandon's go-ahead: one smoke
+  replicate of the two-scene bench, read, then 4 replicates into
+  `bench/results/item-facts-v9-two-scene-1a`. Questions it answers: does the
+  drawer still yield an invented USB drive now that the card is not named in
+  the prompt (Brandon: the only drive in the story is the taped one); does the
+  narrator still invent a pick-up source; does the laptop still arrive
+  `closed`; is the hand-over completed.
+- [ ] Also done outside this repo: Ringer gained `check_timeout_s` per task and
+  `RINGER_CHECK_TIMEOUT_S` as a run default (branch `check-timeout-override`,
+  1d074ea, 269 tests pass). Until that reaches Ringer's main, AGENTS.md's
+  instruction to raise the check timeout does not work: the limit is the
+  hard-coded 60 seconds, so task checks run only the affected test files and
+  Claude runs the full suite before applying each patch.
 
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
