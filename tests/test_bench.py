@@ -381,6 +381,9 @@ def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monke
 
 
 def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+
     def request(_provider, payload):
         if payload["system"] == _MATCH_SYSTEM:
             return {"refers": [], "same_as": {"receipt": "receipt"}}
