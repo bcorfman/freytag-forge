@@ -108,7 +108,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials in drawer
+**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 

@@ -3,11 +3,13 @@
 Status (2026-09-17): Phase 0 bench work is in rounds 5-7 on branch
 `narration-phone-fixes`. Round 6 (two-scene, 4 replicates, commit cc1e422) cut
 turns with a real failure from 26/47 to 19/46, facts-after-wrong from 15 to 7,
-missed changes from 10 to 3 and state-as-place from 2 to 0. Round 7 is fixing
-the two defects round 6 exposed (the name matcher merging a new thing into its
-container, and turns rejected for forbidden top-level reply keys); see
-"Rounds 5-7" at the end of Phase 0 for exact state, measurements and the next
-steps. Nothing is in the shipped game yet except the compound-command splitter
+missed changes from 10 to 3 and state-as-place from 2 to 0. Round 7 (f5df910)
+fixed both defects round 6 exposed - rejections 2 -> 0, recoveries 11 -> 3,
+USB drive kept separate 2/2 - but turns with a real failure were 23/48, mostly
+narration contradictions and judge overreach rather than capture. Brandon
+reviewed every round 7 turn (`bench/results/round7.md`, his comments inline) and
+approved the round 8 fixes on 2026-09-19; see "Round 8" at the end of Phase 0
+for the decisions, tasks and order. Nothing is in the shipped game yet except the compound-command splitter
 in `RuntimeEngine.turn` and the empty-reply-key tolerance in
 `CloudflareTurnProvider`. The earlier bench experiment is recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
@@ -478,14 +480,124 @@ Round 7 (in progress):
   dumping 17 SCENE detail names as empty objects), one misplaced item entry
   lifted; rejections 0 -> 0 (not a discriminating number at this sample).
   "Narrator omitted item_facts" issues 1 -> 2, now honestly recorded.
-- [ ] Then a four-replicate two-scene round with judges (smoke first), build
-  `bench/results/round7-failures.md` with `bench.failure_report`, compare with
-  round 6, and check the USB-drive turn resolves as a new thing.
+- [x] Four-replicate two-scene round with judges (smoke first) at f5df910:
+  `bench/results/item-facts-v8-two-scene-1a`, `bench/results/round7-failures.md`.
+  - Plumbing fixed: rejected turns 2 -> 0; recovery requests 11 -> 3; the
+    USB drive in the drawer resolves as a new thing 2/2 (round 6: 0/2, merged
+    into `drawer`); kept-ended conditions 3 -> 0; dropped still-true 1 -> 0.
+  - Headline did not improve: turns with a real failure 19/46 -> 23/48;
+    facts-after-wrong 7 -> 12, invented 8 -> 11, canon contradictions 11 -> 18,
+    missed 3 -> 2.
+  - Replicates are highly correlated in both rounds (turn 1 narration identical
+    4/4 both rounds; several turns 1-2 distinct first sentences), so a single
+    command moving 2 -> 4 is within noise. Four replicates here are closer to
+    one or two independent samples.
+  - Most of the rise is not capture. Real capture defects: the invented
+    `closed` on the laptop (turn 4, flagged 3/4) and one laptop move
+    arguably missed (r3 turn 5). The rest:
+    - Narration invents a place to pick up from: "Pick up Michelle's phone.
+      Put it in your pocket." gives "reaches for Michelle's phone on the
+      table" 4/4, because turn 1's "Look carefully" already put it in her
+      hands. The fact judge also marks facts-after wrong although the pocket
+      is recorded correctly.
+    - Laptop "on the passenger seat" narration contradicts "in Kristin's
+      truck" 3/4 (same as round 6).
+    - Continuity judge overreach: turn 12 "Check who has Michelle's phone"
+      4/4 flagged because the command said hand it over, while the narration
+      only held it out (3/4 omit item_facts, correctly no change); turn 7
+      "shattered into pieces" cannot be picked up 3/4; broken vs shattered.
+    - Design disagreements: the fact judge calls a narrated new `truck`
+      (moving, on the road) invented; narrated things persist by decision 1c.
+    - Canon leak not flagged by either judge: the narrator finds "memory card"
+      IN the drawer 2/4 (canon: taped beneath, hidden until found), recorded
+      as a new `memory card` separate from the hidden tracked card - the
+      short-name problem again, now also a protected-knowledge leak.
 - [ ] Next candidates, in Brandon's priority order once he picks: decision 1e
   (containment tree with characters, including container-shaped
   `{"kitchen counter": {"contents": [...]}}` replies, which are still dropped);
-  the invented `closed` on the laptop; the "card" short-name mapping; judge
-  overreach on ungiven details.
+  the invented `closed` on the laptop; the "card" short-name mapping (now
+  also an early reveal of the hidden memory card); the narrator inventing a
+  pick-up source for a thing already held; judge overreach on ungiven details
+  and on commands the narration did not complete; more independent replicates
+  before trusting per-command swings. (Superseded by Round 8 below.)
+
+**Round 8: fixes from Brandon's round 7 review (approved 2026-09-19)**
+
+Source: every round 7 turn with Brandon's comments, `bench/results/round7.md`.
+Each finding below was traced to its mechanism before a fix was proposed.
+
+Findings and decisions:
+- **A. Hidden-card leak (shipped runtime).** `CloudflareTurnProvider._owner_rules`
+  names every item in the scene's `item_ids`, so every 1A and 1B prompt ends
+  "Say who owns a thing the first time you name it: Michelle's memory card,
+  ...". The narrator then finds the card IN the drawer (r2, r3) or a USB drive
+  in its place (r1, r4); canon has it taped beneath, hidden until found. Fix:
+  name only items with a placement in the current scene that no
+  `while_fact_false` guard hides. A found item carried into a later scene loses
+  its owner hint until Phase 4 tracks carried things. Brandon also changed
+  the 1A.1 detail "KMS initials in drawer" to "KMS initials carved in drawer"
+  in `plot.md`.
+- **B1. Invented `closed` on the laptop (4/4).** `ItemFactsProvider._things_block`
+  renders a thing whose axis value is unknown as `Condition: closed or open.`,
+  which asks the narrator to pick one. Fix: no Condition part for an unknown
+  axis value.
+- **B2. Invented pick-up source.** "Pick up Michelle's phone." while THINGS says
+  it is in her hands gives "reaches for the phone on the table" (4/4); the
+  laptop "from the desk" (r3 t5). "On the table" comes from the output example
+  "She looks at the lantern on the table."; "Keep each object where the scene
+  puts it." points at nothing once the bench strips placements from SCENE.
+  Fix, replacing not adding: example "She looks at the lantern. Its light has
+  gone out."; the rule becomes "Each thing starts at the place THINGS gives
+  it."
+- **B3. "Shattered into pieces" recorded as `broken` (4/4).** The narrator copies
+  "broken" from the thrown-cup example. Fix: an example whose condition reuses
+  its own story's words: if she drops a cup and it cracks in two, the cup is
+  `{"place": "on the floor", "condition": ["cracked in two"]}`. Decided for
+  Phase 1a/2: smashing Michelle's phone (the memory card's fallback) raises
+  the game-break warning; if the player goes ahead, the phone is in pieces and
+  destroyed as a whole.
+- **B4. Stale AFTER in the report.** On a reply with no `item_facts`,
+  `apply_item_facts` returns early without clearing `_changed_last_turn`, so
+  `bench/core.py` shows the previous turn's changes (receipt, note) as this
+  turn's AFTER. Stored state is unaffected. Fix: a missing `item_facts` means
+  no change; clear the set; record the issue as "narrator omitted item_facts".
+- **C1. Receipt and "old warehouse at midnight" (4/4, not in the package).**
+  Investigate: 1B turns project beats 1B.2 and 1B.3 but never 1B.1 (Michelle's
+  Dead Drop), so SCENE never describes the bench; the fitting candidate
+  `k_sl_1b_a_r2` (a photograph in the dead drop) was offered 16 times and
+  picked 0. The watching man's only permitted speech is the scene frame "The
+  park is an immediate place of pursuit and uncertainty." Findings below.
+- **C2. Commands left unfinished** (r3 t5 laptop never reaches the truck; t8
+  never names the park 3/4; t11 handoff only held out 4/4). Fix: replace
+  "Answer what the player did." with "Finish each action the player gives."
+- **Judges** (measurement only; Brandon agreed there is no tie-break vote, the
+  two judges get disjoint scopes and the same GIVEN facts, and a judge never
+  edits narration - runtime correction is decision 1d's regeneration):
+  1. The continuity judge reads 1A canon for 1B turns (`packageCanon` uses the
+     run's starting scene). Give each turn its own scene's canon and mark the
+     transition.
+  2. Its rubric calls a thing away from its placement "when no player command
+     moved it" a contradiction, against principle 1. Send each turn's GIVEN
+     facts and state that they are the current truth over authored placements
+     and earlier narration.
+  3. Both judges: a more specific place or state inside the given one is not a
+     contradiction (passenger seat in the truck; street outside the house;
+     broken for a cracked screen).
+  4. Fact judge: a narrated new thing is not invented (1c);
+     `facts_after_wrong` means AFTER does not match the narration, not that
+     the narration contradicts GIVEN.
+  5. Acting beyond the command is never a contradiction; add
+     `command_not_finished` and `reveals_hidden_canon` labels. Recalibrate on
+     cases taken from round 7, labelled by Brandon's comments.
+
+Order:
+- [ ] Step 1, no billing: Ringer tasks for A (with the test and overlay
+  updates Brandon's `plot.md` change needs), B1 and B4; the read-only C1
+  investigation.
+- [ ] Step 2: judge fixes and recalibration; then re-judge round 7's saved
+  turns (judge calls only) for an honest baseline.
+- [ ] Step 3, billed: B2, B3 and C2 prompt changes (and any C1 fix), smoke
+  first, then 4 replicates.
 
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
