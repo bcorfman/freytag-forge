@@ -4,7 +4,7 @@
   "overrides": {
     "plot.md": {
       "replacements": [
-        {"old": "KMS initials in drawer", "new": "KMS initials carved beneath the drawer"}
+        {"old": "KMS initials carved in drawer", "new": "KMS initials carved beneath the drawer"}
       ]
     }
   }

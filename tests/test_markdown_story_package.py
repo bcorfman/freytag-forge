@@ -218,7 +218,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     details = (
         "**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation "
         "chair; "
-        "forced back door; KMS initials in drawer\n"
+        "forced back door; KMS initials carved in drawer\n"
     )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
 

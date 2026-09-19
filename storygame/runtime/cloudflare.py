@@ -33,7 +33,7 @@ from storygame.runtime.validation import (
     predicate_matches,
     unconveyed_terms,
 )
-from storygame.story_package.models import FactPredicate, ItemPlacement, Scene, SceneBeat, SceneMetadata
+from storygame.story_package.models import FactPredicate, Item, ItemPlacement, Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -453,29 +453,36 @@ class CloudflareTurnProvider:
         rules.extend(self._setting_fact_rules())
         return rules
 
-    def _owner_rules(self) -> list[str]:
+    def _visible_placed_items(self) -> dict[str, tuple[Item, str | ItemPlacement]]:
         scene_items = {item.id: item for item in self.state.package.world.items}
+        visible: dict[str, tuple[Item, str | ItemPlacement]] = {}
+        for item_id, placement in self._current_scene().item_placements.items():
+            item = scene_items.get(item_id)
+            if item is None:
+                continue
+            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
+                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
+                if predicate_matches(guard, self.state.facts):
+                    continue
+            visible[item_id] = (item, placement)
+        return visible
+
+    def _owner_rules(self) -> list[str]:
+        visible_items = self._visible_placed_items()
         possessive_items = [
-            scene_items[item_id].name
+            visible_items[item_id][0].name
             for item_id in self._current_scene().item_ids
-            if item_id in scene_items and re.fullmatch(r".+['’]s\s+.+", scene_items[item_id].name)
+            if item_id in visible_items and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
         ]
         if not possessive_items:
             return []
         return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
 
     def _placement_rules(self) -> list[str]:
-        scene_items = {item.id: item for item in self.state.package.world.items}
         rules = []
-        for item_id, placement in self._current_scene().item_placements.items():
-            if item_id not in scene_items:
-                continue
-            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-                if predicate_matches(guard, self.state.facts):
-                    continue
+        for item, placement in self._visible_placed_items().values():
             placement_text = placement if isinstance(placement, str) else placement.placement
-            rules.append(f"{scene_items[item_id].name} is {placement_text}.")
+            rules.append(f"{item.name} is {placement_text}.")
         return rules
 
     def _setting_fact_rules(self) -> list[str]:

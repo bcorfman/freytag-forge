@@ -162,11 +162,11 @@ def test_overlay_changes_effective_package_hash_and_assembled_prompt() -> None:
     example = load_variation(VARIATION)
     overlay = load_variation(OVERLAY_VARIATION)
     assert overlay["_package_hash"] != example["_package_hash"]
-    assert "KMS initials in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
+    assert "KMS initials carved in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
 
     prompt = prompt_for(overlay, "1A", PLAYER_INPUT)
     assert "- KMS initials carved beneath the drawer" in prompt["user"]
-    assert "- KMS initials in drawer" not in prompt["user"]
+    assert "- KMS initials carved in drawer" not in prompt["user"]
 
 
 def test_ledger_rows_round_trip_through_log(tmp_path, capsys) -> None:

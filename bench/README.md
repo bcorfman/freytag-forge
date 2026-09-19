@@ -217,7 +217,7 @@ An optional `overrides` object patches package files in a temporary effective co
   "overrides": {
     "plot.md": {
       "replacements": [
-        {"old": "KMS initials in drawer", "new": "KMS initials carved beneath the drawer"}
+        {"old": "KMS initials carved in drawer", "new": "KMS initials carved beneath the drawer"}
       ]
     }
   }

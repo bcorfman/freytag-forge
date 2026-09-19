@@ -1656,9 +1656,60 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+
+
+def test_turn_rules_omit_unplaced_possessive_scene_item() -> None:
+    memory_card = next(item for item in PACKAGE.world.items if item.id == "memory_card")
+    custom_card = memory_card.model_copy(update={"name": "Avery's hidden card"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_card if item.id == memory_card.id else item for item in PACKAGE.world.items)}
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE.model_copy(update={"world": custom_world}))
+    )
+
+    rules = provider._turn_rules()
+
+    assert "Avery's hidden card" not in " ".join(rules)
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+
+
+def test_turn_rules_omit_guarded_placement_after_fact_is_asserted() -> None:
+    archive = next(item for item in PACKAGE.world.items if item.id == "portable_archive")
+    custom_archive = archive.model_copy(update={"name": "Rebecca's data case"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_archive if item.id == archive.id else item for item in PACKAGE.world.items)}
+    )
+    state = RuntimeState.bootstrap(PACKAGE.model_copy(update={"world": custom_world}))
+    state.current_scene_id = "3C"
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Rebecca's data case" in next(rule for rule in provider._turn_rules() if "Say who owns" in rule)
+
+    state.facts.assert_fact(Fact(predicate="portable_archive_secured", subject="story", value="true"))
+
+    assert not any("Rebecca's data case" in rule for rule in provider._turn_rules())
+
+
+def test_opening_rules_omit_unplaced_memory_card(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    provider.opening()
+
+    assert "Michelle's memory card" not in captured["payload"]["user"]
     assert (
-        "Say who owns a thing the first time you name it: Michelle's memory card, Michelle's phone, "
-        "Kristin's laptop." in rules
+        "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop."
+        in captured["payload"]["user"]
     )
 
 
