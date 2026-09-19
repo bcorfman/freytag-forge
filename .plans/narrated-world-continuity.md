@@ -566,7 +566,35 @@ Findings and decisions:
   Dead Drop), so SCENE never describes the bench; the fitting candidate
   `k_sl_1b_a_r2` (a photograph in the dead drop) was offered 16 times and
   picked 0. The watching man's only permitted speech is the scene frame "The
-  park is an immediate place of pursuit and uncertainty." Findings below.
+  park is an immediate place of pursuit and uncertainty." Findings (read-only
+  investigation, 2026-09-19; prompt rebuilt offline after the bench's own
+  offline 1A->1B advance):
+  1. **The dead drop never reaches the narrator.** `_candidate_beats` sends a
+     storylet's source beat only when the candidate's words and the beat
+     prose share at least two content words. SL-1B-A's only source beat,
+     1B.1, shares zero with both of its candidates (the prose never says
+     dead drop, photograph, token or sequence), so it is always dropped;
+     SL-1B-B's Brandon beats 1B.2 and 1B.3 pass. The one committed statement
+     about the card says only "learns the place she used to trade
+     information", never "a dead drop at a bench". Nothing links the bench
+     to the photograph candidate, so "anything Michelle left" gets a stock
+     clue. This gate is a keyword match over authored text (not narration)
+     used as a runtime gate. Options for Brandon: give each realization an
+     authored source-beat link in `storylet-routes.yaml` and drop the word
+     overlap; or always send a single-beat storylet's beat; or author the
+     dead drop into the 1B.1 prose (`plot.md` first).
+  2. **Stale 1A material in the 1B prompt.** SCENE still carries 1A's entry
+     statement "The house is quiet and Michelle is missing.", and CONSTRAINTS
+     carries a 1A complication as "This happens now. Show it in the scene:
+     The patrol is checking parked vehicles and speaking to neighbors. The
+     house is no longer the only place under watch." Not yet known whether
+     this is the bench's offline advance or the runtime.
+  3. **Scene-entry knowledge becomes NPC speech.** `k_scene_1b_entry` is
+     public, so every NPC present "may say this aloud"; Brandon's only
+     permitted line is the scene frame. Candidate fix: exclude
+     `source.kind: scene_entry` knowledge from NPC sayable lines.
+  4. Identical narration 4/4 is the model's default for an identical prompt;
+     replicates are not independent samples.
 - **C2. Commands left unfinished** (r3 t5 laptop never reaches the truck; t8
   never names the park 3/4; t11 handoff only held out 4/4). Fix: replace
   "Answer what the player did." with "Finish each action the player gives."
@@ -591,11 +619,28 @@ Findings and decisions:
      cases taken from round 7, labelled by Brandon's comments.
 
 Order:
-- [ ] Step 1, no billing: Ringer tasks for A (with the test and overlay
+- [x] Step 1, no billing: Ringer tasks for A (with the test and overlay
   updates Brandon's `plot.md` change needs), B1 and B4; the read-only C1
-  investigation.
+  investigation. (A dafcc77, B1+B4 e3dec65; full suite 642 passed with the
+  env-dependent test deselected.)
+- [x] C1 option (a), approved by Brandon 2026-09-19: each realization names
+  its `source_beats` in `storylet-routes.yaml` (required when its storylet
+  has more than one beat, fail closed at load); `_candidate_beats` uses those
+  links and no word overlap (c7ec63f, 647 passed). The 1B dead-drop
+  candidates now project beat 1B.1. Open story question for Brandon: beat
+  2B.2 "Kristin Was Bait" is a source of SL-2B-B, but neither realization
+  reveals it (both assert only Brandon's JANUS role), so no realization links
+  it and it never reaches the narrator.
 - [ ] Step 2: judge fixes and recalibration; then re-judge round 7's saved
-  turns (judge calls only) for an honest baseline.
+  turns (judge calls only) for an honest baseline. Judge fixes landed
+  (cd33b32). Scored against Brandon's round 7 comments turned into labels
+  (114 continuity, 117 fact cells): continuity 27% -> 89.5%
+  (contradicts_stated_fact 70% -> 95%), fact 83% -> 88.9%; bar 90%. Open:
+  the fact judge now accepts the invented laptop `closed` 4/4 (regression);
+  three label questions for Brandon (turn 1 "look carefully" finished?, USB
+  drive as reveals_hidden_canon?, USB drive "unopened" invented?). The
+  rubric examples come from round 7, so this score is optimistic for new
+  stories.
 - [ ] Step 3, billed: B2, B3 and C2 prompt changes (and any C1 fix), smoke
   first, then 4 replicates.
 
