@@ -102,7 +102,7 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
     assert provider._things_block() == (
         "THINGS:\n"
         "- the lantern. Place: on the table. Condition: shut (or open), dusty.\n"
-        "- the gate. Place: at the garden path. Condition: open or closed."
+        "- the gate. Place: at the garden path."
     )
 
 
@@ -113,7 +113,7 @@ def test_things_axis_vocabulary_remains_after_axis_is_cleared():
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
     assert "Condition: shut (or open)." in provider._things_block()
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert "Condition: shut or open." in provider._things_block()
+    assert "Condition:" not in provider._things_block().splitlines()[1]
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -239,6 +239,31 @@ def test_apply_item_facts_empty_reply_records_no_issue():
 
     assert facts == provider.item_facts
     assert issues == []
+
+
+def test_apply_item_facts_omitted_reply_clears_transient_state():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+    state_after_change = provider.item_facts.copy()
+
+    facts, issues = provider.apply_item_facts(None)
+
+    assert facts == state_after_change
+    assert provider._changed_last_turn == set()
+    assert provider._held_item_facts == {}
+    assert issues == ["narrator omitted item_facts"]
+
+
+def test_apply_item_facts_non_dict_reply_clears_transient_state():
+    provider = _provider()
+    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+
+    facts, issues = provider.apply_item_facts("not an object")
+
+    assert facts == provider.item_facts
+    assert provider._changed_last_turn == set()
+    assert provider._held_item_facts == {}
+    assert issues == ["item_facts must be an object mapping thing names to fact objects"]
 
 
 def test_apply_item_facts_adds_unknown_and_preserves_malformed_entries(monkeypatch):

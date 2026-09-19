@@ -184,14 +184,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 poles = list(axes)
                 axis_value = next((condition for condition in conditions if condition in axes), None)
                 non_axis = [condition for condition in conditions if condition not in axes]
-                if axis_value is None:
-                    condition_text = f"{poles[0]} or {poles[1]}"
-                else:
+                if axis_value is not None:
                     opposite = poles[1] if axis_value == poles[0] else poles[0]
                     condition_text = f"{axis_value} (or {opposite})"
-                if non_axis:
-                    condition_text += f", {', '.join(non_axis)}"
-                line += f" Condition: {condition_text}."
+                    if non_axis:
+                        condition_text += f", {', '.join(non_axis)}"
+                    line += f" Condition: {condition_text}."
+                elif non_axis:
+                    line += f" Condition: {', '.join(non_axis)}."
             elif conditions:
                 line += f" Condition: {', '.join(conditions)}."
             lines.append(line)
@@ -450,7 +450,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
         }
         issues: list[str] = []
         if not isinstance(raw, dict):
-            issues.append("item_facts must be an object mapping thing names to fact objects")
+            self._changed_last_turn = set()
+            self._held_item_facts = {}
+            self._item_facts_issues = issues
+            if raw is None:
+                issues.append("narrator omitted item_facts")
+            else:
+                issues.append("item_facts must be an object mapping thing names to fact objects")
             return previous, issues
 
         self._held_item_facts = {}
