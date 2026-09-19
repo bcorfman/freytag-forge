@@ -6,7 +6,7 @@
   "fact_tracking_judge": true,
   "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"shut": ["closed"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}}},
   "system_prompt": {
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"condition\":[\"dark\"]}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"condition\":[\"dark\"]}}}"
   },
   "overrides": {
     "knowledge.yaml": {"replacements": [

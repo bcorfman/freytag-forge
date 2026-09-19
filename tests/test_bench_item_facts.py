@@ -68,11 +68,27 @@ def test_single_call_rules_require_facts_for_every_change():
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-        "Example: if she throws a cup at the wall, it breaks and falls, so the cup is "
+        "Example: if she drops a cup and it cracks in two, the cup is "
         '{"place": "on the floor", '
-        '"condition": ["broken"]}.'
+        '"condition": ["cracked in two"]}.'
     )
     assert "Also return item_facts" not in system
+
+
+def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
+    provider = _provider()
+
+    assert "Each thing starts at the place THINGS gives it." in provider._turn_rules()
+    assert "Keep each object where the scene puts it." not in provider._turn_rules()
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    user = provider.last_prompt["user"]
+    assert "Each thing starts at the place THINGS gives it." in user
+    assert "Keep each object where the scene puts it." not in user
 
 
 def test_match_system_describes_references_and_new_names():

@@ -364,6 +364,9 @@ class CloudflareTurnProvider:
 
         return getattr(self, "authored_handoff", None) is not None
 
+    def _object_place_rule(self) -> str:
+        return "Keep each object where the scene puts it."
+
     def _turn_rules(self) -> list[str]:
         """State the rules that apply to this turn.
 
@@ -415,8 +418,8 @@ class CloudflareTurnProvider:
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
             "Use the places and details the story gives you.",
-            "Keep each object where the scene puts it.",
-            f"Answer what the player did. Only show {self._protagonist_name()} doing what the player said.",
+            self._object_place_rule(),
+            f"Finish each action the player gives. Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
             *(
@@ -590,7 +593,7 @@ class CloudflareTurnProvider:
             "Do not say anything that goes against the entry text or the beat details.",
             "Do not make up new objects, clues, or things inside containers.",
             "Never write IDs or story bookkeeping into the prose.",
-            "Keep each object where the scene puts it.",
+            self._object_place_rule(),
         ]
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())

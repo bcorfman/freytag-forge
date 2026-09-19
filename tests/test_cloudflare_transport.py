@@ -1956,6 +1956,8 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
 
     assert "Use the places and details the story gives you." in rules
     assert "Keep each object where the scene puts it." in rules
+    assert "Finish each action the player gives. Only show Kristin doing what the player said." in rules
+    assert "Answer what the player did. Only show Kristin doing what the player said." not in rules
 
 
 def test_selection_duty_uses_one_random_choice_rule() -> None:
