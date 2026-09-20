@@ -167,6 +167,11 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class Item(Entity):
+    # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
+    fixed: bool = False
+
+
 _LEADING_DETERMINERS = frozenset({"the", "a", "an", "this", "that", "her", "his", "their", "its"})
 
 
@@ -214,7 +219,7 @@ class WorldSource(_Model):
     protagonist_id: str = Field(pattern=_ID)
     locations: tuple[Entity, ...]
     npcs: tuple[Entity, ...]
-    items: tuple[Entity, ...]
+    items: tuple[Item, ...]
     facts: tuple[str, ...] = ()
     protected_knowledge: tuple[str, ...] = ()
 
@@ -362,6 +367,7 @@ class FactDelivery(_Model):
 class RouteRealization(_Model):
     id: str = Field(min_length=1)
     dramatic_intent: str = Field(min_length=1)
+    source_beats: tuple[str, ...] = ()
     operations: tuple[RouteOperation, ...] = ()
     eligible_storylet_event_id: str | None = None
     helps_transition_triggers: tuple[str, ...] = ()

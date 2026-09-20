@@ -1,0 +1,34 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": true,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Michelle's phone is canonically not damaged, but the scene repeatedly makes it cracked/broken.",
+    "Michelle's workstation drawer with newly carved KMS initials is not meaningfully surfaced until a very late cue, despite repeated searching near the workstation.",
+    "The missing tablet and work bag are never actually established as absence evidence in responsive prose.",
+    "The overturned workstation chair and forced back door are mentioned, but the localized/staged nature of the disorder is not developed into abduction suspicion.",
+    "Michelle's hidden memory card is never found despite many turns and clear opportunities to investigate the authored location.",
+    "Kristin's laptop in her truck is never used; Scene 1A.2 is skipped.",
+    "The Continuity Initiative files and Michelle's research note are never revealed; Scene 1A.2 is skipped.",
+    "Michelle's interrupted voice recording and warning not to trust emergency broadcasts are never revealed; Scene 1A.3 is skipped.",
+    "The federal patrol welfare-check/search interaction never actually occurs on-page; only pressure text mentions patrol return, so Scene 1A.4 is skipped.",
+    "The reflective tape marking on the front gate is never discovered.",
+    "Repeated searches of the phone/back door/work-bag area return little or nothing actionable, failing to reward apt investigation.",
+    "Opening establishment is thin relative to the supplied opening requirement; it gives little sensory grounding beyond basic object placement."
+  ],
+  "reasons": [
+    "This scene stays in the correct location with the correct protagonist and does not leak protected future knowledge, but it fails major scene-canon obligations.",
+    "A hard contradiction appears immediately: canon says Michelle's phone is not damaged, while the narration repeatedly calls it cracked and refers to broken glass.",
+    "The scene does not cover the authored beats across its turns. 1A.1 is only partially and weakly dramatized; 1A.2, 1A.3, and 1A.4 are effectively absent.",
+    "The player repeatedly investigates relevant evidence, but the narration mostly loops inert descriptions instead of escalating findings or consequences.",
+    "Storylet opportunities are projected, but projected beats are not credit. The actual prose the player sees does not deliver the memory card discovery, file review, warning recording, or patrol search.",
+    "Pressure events are mentioned out of band, but ordinary turns do not responsively convert them into a visible patrol encounter with questions about Michelle's research.",
+    "Because no actionable lead is revealed in prose, the transition to the park is not motivated and the scene never earns its exit.",
+    "The opening and subsequent turns lack substantial sensory scene establishment and do little to turn the house into a convincing crime scene rather than a generic empty house."
+  ]
+}

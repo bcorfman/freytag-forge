@@ -1,0 +1,18 @@
+{
+  "name": "continuity-1a",
+  "story_package": "data/stories/continuity-initiative",
+  "continuity_judge": true,
+  "fixed_turns": 12,
+  "scripts": {
+    "1A": [
+      {
+        "name": "phone-bag-door",
+        "inputs": [
+          "Look carefully at Michelle's phone.",
+          "Search for Michelle's work bag and any clue to where she went.",
+          "Look at the back door."
+        ]
+      }
+    ]
+  }
+}

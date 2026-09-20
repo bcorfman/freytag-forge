@@ -21,6 +21,7 @@ Each turn record also carries delivery telemetry: `cue_fact_id` identifies a sta
 missing fact, `cue_text` is that fact delivery's visible cue (or `null`),
 `complication_text` is optional complication text (or `null`), and
 `handoff_staged` says whether a deadline handoff was staged.
+The `narrated_command` field records the command text actually sent to the narrator; `player_input` remains the scripted input.
 
 ## Commands
 
@@ -158,9 +159,56 @@ counts appear in an `escalation` block in `summary.json` and the ledger row:
 }
 ```
 
+`continuity_judge` is an optional boolean and defaults to `false`. When true,
+the bench makes one extra judge call per successful replicate and judges every
+turn. It checks `contradicts_stated_fact` (the narration conflicts with known
+facts), `protagonist_acts_beyond_command` (the player character does more than
+commanded), and `restarts_scene` (the scene or its opening is started again).
+Each judge request includes the saved `turn_number`, and the judge must copy it
+into each verdict's `turn`; records without one use their 1-based position.
+Returned verdicts are matched by these numbers, with a single retry for a mismatch.
+For each criterion, `yes` means the defect is present. Results appear as a
+`continuity` block in `summary.json` and the ledger row with yes/no counts,
+`turns_judged`, and `judge_calls`. See
+`bench/variations/continuity-1a.json` for the `phone-bag-door` Scene 1A script.
+
 `beat_delivery` is `details` for beat noun phrases or `prose` for the authored beat paragraph. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
 
 `entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `committed_knowledge_count` (the knowledge the narrator is shown at entry), `earned_knowledge_count` (the player-visible knowledge already earned), and `seeded_by`: `none` for bare and `thorough` for seeded runs.
+
+## Item facts
+
+An `item_facts` variation option tracks plain facts about named things:
+
+```json
+"item_facts": {
+  "mode": "single_call",
+  "seed": {
+    "the lantern": {"place": "on the table", "condition": ["lit"]},
+    "the gate": {"place": "at the garden path", "condition": ["closed"]}
+  }
+}
+```
+
+Each thing has one place phrase and zero to two `condition` phrases. A new thing with only a condition has `place: None` and no place is shown in prompts or records. The optional `state_axes` map declares pairs of opposite poles for tracked things; each pole may have aliases. A matching pole or alias is stored as its canonical pole, and it evicts the opposite pole. The narrator is asked for `place`; only `place` replies are accepted. Each turn sends `THINGS` only for things named by the command and things required by reachable scene transitions. Placement, hand-written seeds, held things, and changes from the previous turn do not add things. `single_call` asks the narrator to return `item_facts` beside its normal proposal. `second_call` makes one extra request after each accepted narration to read the command and finished story. Opening facts are ignored because the opening establishes the scene.
+
+In `THINGS`, a tracked thing with a state axis shows a known canonical value first with its opposite in parentheses, such as `Condition: shut (or open)`. If the axis has no current value, no axis condition is shown. Other conditions follow the axis hint. Aliases are not shown.
+
+Replies list only the things the story changed. Entries are partial: a `place` key replaces the location, while an omitted key keeps the old value. Fixed things in the story package keep their authored place when a non-axis place is reported, and the refusal is recorded in `item_facts_issues`. Repeating a fixed thing's current place is not a refusal. If a location matches a state-axis pole or alias, it leaves the location unchanged and records the canonical pole as a condition. An empty `condition` list clears the thing's conditions, including its state-axis value. A non-empty condition list replaces non-axis conditions while preserving the current axis unless it names a pole. Empty entries are ignored. The match reply names the tracked things that the command talks about. A failed match sends only dependencies and records an issue. Every valid new name is matched and resolved in the same turn. A different tracked name receives the entry; any other match result keeps the new name as a new thing. A failed or invalid match also keeps the new thing and records an issue. Phrases are trimmed to 80 characters for the location and 40 characters for each condition. These repairs are listed in `item_facts_issues`. Rejected turns do not change facts. Turn records contain `things_given`, `item_facts_before`, `item_facts_after`, `item_facts_raw`, `item_facts_issues`, `item_facts_source`, `item_facts_held`, `match_call`, `match_raw`, `match_issues`, and `item_facts_resolutions`; the replicate also contains `item_facts_final`, `item_facts_match_calls`, `item_facts_reply_keys`, and `item_facts_axis_fixes`.
+
+Set `seed_from_package` to `true` to seed placed things from the story package; an optional hand-written `seed` is appended after those things. A setting fact adds a condition only when that thing already has a placement. A setting fact about an unplaced thing is reported as a seed issue instead of placing it at the scene location. Seed problems are recorded as `item_facts_seed_issues`. `continue_to` can play a second scene with its own `scene`, `fixed_turns`, and script name. Its facts carry over, package-seeded things are added, and no second opening is narrated. Accepted turns include `scene_id`; cross-scene runs include `scene_transitions`.
+
+The trial arms are `item-facts-single.json`, `item-facts-single-minimal.json`, `item-facts-second.json`, `item-facts-package-two-scene.json`, and `item-facts-package-long.json`.
+
+Empty unknown reply fields are dropped, while misplaced item changes are moved into `item_facts` and counted in replicate telemetry.
+
+## Fact-tracking judge
+
+Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, whether narration conflicts with the facts it received, and whether a true condition was dropped. It also records shown changes by `command` or `narrator` cause.
+
+The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those five checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.
+
+`fixed_turns` is an optional positive integer. It plays exactly that many turns without requiring the scene to be left. A turn the runtime rejects is recorded in `rejected_turns` with its turn number, input, rejection code, and reason, then play continues as it would for a player; an invalid proposal after recovery is recorded as a rejected turn, while a narration provider outage still fails the replicate. Accepted turns carry `turn_number`, and judges see only accepted turns. `continuity-1a.json` uses 12 fixed turns.
 
 An optional `overrides` object patches package files in a temporary effective copy. The source package is never modified. Targeted replacements use a relative filename and exact one-occurrence string replacements:
 
@@ -169,7 +217,7 @@ An optional `overrides` object patches package files in a temporary effective co
   "overrides": {
     "plot.md": {
       "replacements": [
-        {"old": "KMS initials in drawer", "new": "KMS initials carved beneath the drawer"}
+        {"old": "KMS initials carved in drawer", "new": "KMS initials carved beneath the drawer"}
       ]
     }
   }

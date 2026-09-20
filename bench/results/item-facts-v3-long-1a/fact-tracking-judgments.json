@@ -1,0 +1,2403 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from on the kitchen floor to in Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows Kristin picks up the phone, and after-facts record that move."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone is picked up from the table even though it was already in Kristin's hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Wiping dust does not clearly add a tracked condition here, so no state change was needed."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Pressing the power button did not clearly change tracked place, holder, or condition."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to in Kristin's jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being pocketed, and after-facts record that move."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "changed from shut to open",
+              "cause": "command"
+            }
+          ],
+          "reason": "Drawer opening was shown, but after-facts put the state in where and dropped the prior shut condition instead of replacing it cleanly with open."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "No new change happened, but the drawer still has a state recorded as where."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the drawer closing, but after-facts keep open as a condition and use closed as where."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from in Kristin's truck outside the house to in her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but the drawer still incorrectly keeps open and uses a state as where."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from in her hand to on Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration sets the laptop on the workstation, but after-facts leave it in her hand."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "changed from closed to open",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration opens the laptop in her hand, but after-facts put the state open in where instead of condition."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's jacket pocket to plugged into Kristin's laptop",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone plugged into the laptop and the phone charging, but after-facts only move the phone to in Kristin's laptop and miss charging; narration also wrongly says the laptop was already open on the counter."
+        },
+        {
+          "turn": 13,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's memory card",
+              "change": "introduced as recovered from under the carved drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration introduces and recovers the memory card, but after-facts omit it entirely; the narration also conflicts with the drawer being closed."
+        },
+        {
+          "turn": 14,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to in Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but earlier bad drawer state remains carried forward."
+        },
+        {
+          "turn": 15,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to on the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but the drawer facts still remain incorrect."
+        },
+        {
+          "turn": 16,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration says the laptop is open on the passenger seat of the truck, conflicting with prior facts, and after-facts add closed as a condition while still leaving where as open and missing the move back to the truck."
+        },
+        {
+          "turn": 17,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from open/in truck context to in her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration supports holding the laptop, but after-facts still inherit the bad drawer where-state."
+        },
+        {
+          "turn": 18,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Kitchen search changes nothing, but the drawer still incorrectly uses a state as where."
+        },
+        {
+          "turn": 19,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration only says she sees the phone on the counter, but after-facts move it into her hand without narration support."
+        },
+        {
+          "turn": 20,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she pulls the phone from her pocket, conflicting with before-facts that had it in her hand."
+        },
+        {
+          "turn": 21,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "No tracked change occurs, but the drawer still has a state recorded as where."
+        },
+        {
+          "turn": 22,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she picks up the phone from the table even though before-facts already had it in her hand."
+        },
+        {
+          "turn": 23,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "gained clean condition",
+              "cause": "command"
+            }
+          ],
+          "reason": "This time the narration supports adding a clean condition to the phone, and after-facts record it."
+        },
+        {
+          "turn": 24,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Turning on and unlocking the phone is not tracked as a listed place, holder, or condition here."
+        },
+        {
+          "turn": 25,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to in her jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being placed in the jacket pocket, and after-facts match."
+        },
+        {
+          "turn": 26,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "changed from closed to open",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration says she opens the drawer, but before-facts oddly still had open as a condition; after-facts again put the state in where and mishandle prior conditions."
+        },
+        {
+          "turn": 27,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "No change occurs, but the drawer still incorrectly uses open as where."
+        },
+        {
+          "turn": 28,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows closing the drawer, but after-facts record closed as where instead of keeping a normal place and using condition only."
+        },
+        {
+          "turn": 29,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "After-facts stay the same correctly, though narration conflicts by having her retrieve a laptop she was already holding."
+        },
+        {
+          "turn": 30,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from in her hand to on Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but the closed condition shown in narration is dropped without being ended."
+        },
+        {
+          "turn": 31,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration wrongly has Kristin go to the truck and pull out the laptop despite it being on the workstation, and after-facts fail to record any such move."
+        },
+        {
+          "turn": 32,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in her jacket pocket to plugged into Kristin's laptop",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being plugged into the laptop, but after-facts store the plugged state as where instead of a place/holder plus condition."
+        },
+        {
+          "turn": 33,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to in Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "The phone move back to her hand is tracked correctly from the prior recorded state."
+        },
+        {
+          "turn": 34,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to on the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but the phone's clean condition is dropped even though narration does not show it stopping."
+        },
+        {
+          "turn": 35,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the laptop closing on the workstation, but after-facts do not add a closed condition."
+        },
+        {
+          "turn": 36,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from on Michelle's workstation to in her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows Kristin picking up the laptop, and after-facts record it in her hand."
+        },
+        {
+          "turn": 37,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration only says she sees the phone on the counter, but after-facts move it into her hand without narration support."
+        },
+        {
+          "turn": 38,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says she pulls the phone from her pocket even though before-facts had it in her hand."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from on the kitchen floor to in Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows the phone picked up, and after-state records that move."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone is on the coffee table, conflicting with before-state saying it is already in Kristin's hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Wiping the screen changes no tracked fact."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Pressing the button shows no tracked place or condition change."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to in her jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone placed in her pocket, and after-state matches."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration does not open the drawer, but after-state changes where to 'open' and wrongly keeps 'shut' as a condition."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "condition changed from shut to open",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration says the drawer is open, but before-state already incorrectly used 'open' as a place."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "condition changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Closing should change the drawer's condition, but after-state leaves where as state-like 'open' and invents no real location."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from in Kristin's truck outside the house to in the house",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop is brought inside as recorded, though the drawer still has an old state-as-place problem."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration only says the laptop is still in the house, so no tracked change is needed."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she picks the laptop up from the coffee table, conflicting with before-state placing it in the house without that move shown, and it does not show opening."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in her jacket pocket to plugged into Kristin's laptop",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone plugged into the laptop, and after-state reflects that holder change."
+        },
+        {
+          "turn": 13,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "memory card",
+              "change": "new item introduced and recovered by Kristin from under the carved drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration introduces and moves the memory card, but after-state omits it."
+        },
+        {
+          "turn": 14,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to in Kristin's hand",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "condition became dead",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration wrongly says unplugged from the wall, conflicting with before-state, and invents the dead condition without prior support from play."
+        },
+        {
+          "turn": 15,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to on the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "The move is recorded, but the true 'dead' condition is dropped without narration ending it."
+        },
+        {
+          "turn": 16,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Closing the laptop adds no tracked fact here."
+        },
+        {
+          "turn": 17,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from in her hand to in the truck",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the laptop carried to the truck, and after-state matches."
+        },
+        {
+          "turn": 18,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from on the kitchen counter to in Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration explicitly has Kristin pick up the phone while searching, and after-state records that."
+        },
+        {
+          "turn": 19,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says the phone is on the kitchen counter, conflicting with before-state saying it is already in Kristin's hand."
+        },
+        {
+          "turn": 20,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she pulls the phone from her pocket, conflicting with before-state saying it is in her hand."
+        },
+        {
+          "turn": 21,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she takes the phone from her pocket, but before-state has it in her hand."
+        },
+        {
+          "turn": 22,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she picks up the phone from the table, conflicting with before-state placing it in her hand."
+        },
+        {
+          "turn": 23,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Wiping the screen changes no tracked fact."
+        },
+        {
+          "turn": 24,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Pressing the power button shows no tracked change."
+        },
+        {
+          "turn": 25,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in Kristin's hand to in her jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone put into her jacket pocket, and after-state matches."
+        },
+        {
+          "turn": 26,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "condition changed from closed to open",
+              "cause": "command"
+            },
+            {
+              "thing": "notebook",
+              "change": "new item introduced in the drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration opens the drawer and introduces a notebook, and after-state records both, despite earlier location phrasing issues."
+        },
+        {
+          "turn": 27,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Looking inside confirms the notebook remains in the drawer; no new tracked change."
+        },
+        {
+          "turn": 28,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "condition changed from open to closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the drawer being closed, and after-state records it."
+        },
+        {
+          "turn": 29,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration only shows Kristin unlocking the truck door, not yet moving the laptop."
+        },
+        {
+          "turn": 30,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says she sets the laptop on the workstation, but before-state still had it in the truck and no retrieval was shown this turn."
+        },
+        {
+          "turn": 31,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Opening the laptop does not alter tracked place or listed conditions."
+        },
+        {
+          "turn": 32,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in her jacket pocket to plugged into Kristin's laptop",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone plugged into the laptop on the workstation, and after-state matches."
+        },
+        {
+          "turn": 33,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Examining the back door changes no tracked item fact."
+        },
+        {
+          "turn": 34,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to in her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone unplugged from the desk charger and picked up, and after-state records it."
+        },
+        {
+          "turn": 35,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from in her hand to on the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration and after-state agree on setting the phone on the counter."
+        },
+        {
+          "turn": 36,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Closing the laptop causes no tracked change in these facts."
+        },
+        {
+          "turn": 37,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from on Michelle's workstation to in Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration only shows picking up the laptop; carrying it to the truck is not yet shown, so after-state should not place it there."
+        },
+        {
+          "turn": 38,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from on the kitchen counter to in Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration has Kristin pick up the phone during the kitchen search, and after-state matches."
+        },
+        {
+          "turn": 39,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone is on the counter, conflicting with before-state placing it in Kristin's hand."
+        },
+        {
+          "turn": 40,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says she pulls the phone from her pocket, but before-state says it is in her hand."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows Kristin picks up the phone, and after-state records that move."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone is picked up from the table, conflicting with it already being in Kristin's hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Wiping the screen changes no tracked place, holder, or condition."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Pressing the power button shows no tracked state change."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to her jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being put in the jacket pocket, and after-state matches."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "yes",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "opened",
+              "cause": "command"
+            }
+          ],
+          "reason": "The drawer was opened, but after-state wrongly puts state in where and keeps shut."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "After-state still uses open as the drawer's where instead of a place."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration closes the drawer, but after-state keeps state in where and swaps condition text improperly."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's truck outside the house to her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but drawer where is still incorrectly a state."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's hand to Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but drawer where remains an invalid state."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "opened",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration opens the laptop, but after-state records no open condition and still has bad drawer where."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's jacket pocket to plugged into Kristin's laptop on Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone was plugged into the laptop, not located in the laptop, and drawer where is still a state."
+        },
+        {
+          "turn": 13,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's memory card",
+              "change": "introduced and recovered from under the carved drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration introduces and recovers the memory card, but after-state omits it and still has bad drawer where."
+        },
+        {
+          "turn": 14,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move to her hand is tracked, but drawer where is still an invalid state."
+        },
+        {
+          "turn": 15,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but drawer where is still incorrectly open."
+        },
+        {
+          "turn": 16,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration closes the laptop, but no closed condition is recorded and drawer where is still bad."
+        },
+        {
+          "turn": 17,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Michelle's workstation to Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but drawer where remains a state."
+        },
+        {
+          "turn": 18,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen counter to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration has Kristin pick up the phone while looking, and after-state matches, but drawer where is still invalid."
+        },
+        {
+          "turn": 19,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration only notices the phone on the counter, conflicting with it already being in Kristin's hand."
+        },
+        {
+          "turn": 20,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Checking the phone in hand changes nothing, but drawer where is still a state."
+        },
+        {
+          "turn": 21,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Examining the phone and failing password adds no tracked change, but drawer where stays invalid."
+        },
+        {
+          "turn": 22,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says she picks up the phone from the table though it was already in her hand."
+        },
+        {
+          "turn": 23,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Wiping the screen changes nothing tracked, but drawer where is still wrong."
+        },
+        {
+          "turn": 24,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Pressing the power button shows no tracked change, but drawer where remains invalid."
+        },
+        {
+          "turn": 25,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to Kristin's jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but drawer where is still a state."
+        },
+        {
+          "turn": 26,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says Kristin opens the drawer, but given facts already had it open/closed inconsistently with no shown change."
+        },
+        {
+          "turn": 27,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Looking into the drawer changes nothing, but drawer where is still a state."
+        },
+        {
+          "turn": 28,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration says the drawer is already closed, conflicting with given where=open without a shown change."
+        },
+        {
+          "turn": 29,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Retrieving a laptop already in hand shows no tracked change, and drawer where is still invalid."
+        },
+        {
+          "turn": 30,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's hand to Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but drawer where remains a state."
+        },
+        {
+          "turn": 31,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration wrongly places the laptop in the truck and after-state moves it there without the command's requested opening."
+        },
+        {
+          "turn": 32,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's jacket pocket to plugged into Kristin's laptop in her truck",
+              "cause": "command"
+            }
+          ],
+          "reason": "After-state places the phone generically in the truck instead of plugged into the laptop, and drawer where is still invalid."
+        },
+        {
+          "turn": 33,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from plugged into Kristin's laptop to Kristin's hand",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "became dead",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Phone becomes dead and moves to her hand, but dead was newly invented from narration flavor and drawer where is still invalid."
+        },
+        {
+          "turn": 34,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Phone move is tracked, but the true dead condition was dropped and drawer where is still bad."
+        },
+        {
+          "turn": 35,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration closes the laptop, but no condition records that, and drawer where is still invalid."
+        },
+        {
+          "turn": 36,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's truck to Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Laptop move is tracked, but drawer where remains an invalid state."
+        },
+        {
+          "turn": 37,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen counter to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration picks up the phone during a look action, and after-state matches, but drawer where is still wrong."
+        },
+        {
+          "turn": 38,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Narration only notices the phone on the counter, conflicting with it already being in Kristin's hand."
+        },
+        {
+          "turn": 39,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "yes",
+          "changes": [],
+          "reason": "Checking the phone in hand changes nothing, but drawer where remains invalid."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows the phone being picked up, and after-facts record that."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone was picked up from the table, conflicting with it already being in Kristin's hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Wiping the screen changes no tracked fact, and after-facts stay the same."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Pressing the power button shows no tracked place or condition change."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to her jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being put in the jacket pocket, and after-facts match."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration only has Kristin look for the drawer; after-facts invent moving it to in front of Kristin."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's carved drawer",
+              "change": "changed from shut to open",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration explicitly opens the drawer, and after-facts record it as open."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Command was to close it, but narration only says the drawer is open; after-facts fail to record the commanded closing because none happened in narration."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's truck outside the house to her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows Kristin retrieving the laptop, and after-facts match."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from her hand to Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the laptop set on the workstation, and after-facts match."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration contradicts the laptop being on the workstation by saying it is in the truck, and after-facts wrongly move it there without shown transfer."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from her jacket pocket to Kristin's truck",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "gained condition charging",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone plugged into the laptop in the truck, so truck location and charging are correct."
+        },
+        {
+          "turn": 13,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "memory card",
+              "change": "introduced and recovered by Kristin from under the drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration introduces and recovers the memory card, but after-facts omit it."
+        },
+        {
+          "turn": 14,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's truck to her hand",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "lost condition charging",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows unplugging and holding the phone, so removing charging and moving it to her hand is correct."
+        },
+        {
+          "turn": 15,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from her hand to the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone set on the kitchen counter, and after-facts match."
+        },
+        {
+          "turn": 16,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration closes the laptop but no open/closed laptop condition was previously tracked, so unchanged facts are acceptable."
+        },
+        {
+          "turn": 17,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's truck to her hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows Kristin lifting the laptop out and holding it, and after-facts match."
+        },
+        {
+          "turn": 18,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen counter to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration says Kristin picks up the phone while searching, and after-facts record that."
+        },
+        {
+          "turn": 19,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says the phone is on the counter even though before-facts already have it in Kristin's hand."
+        },
+        {
+          "turn": 20,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Checking the phone in her hand does not change tracked facts."
+        },
+        {
+          "turn": 21,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Examining the phone in her hand changes nothing tracked."
+        },
+        {
+          "turn": 22,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration again says the phone is picked up from the table although before-facts have it already in hand."
+        },
+        {
+          "turn": 23,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Wiping the screen adds no tracked change."
+        },
+        {
+          "turn": 24,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Powering on to a lock screen is not a tracked place/holder/condition change here."
+        },
+        {
+          "turn": 25,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to Kristin's jacket pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone being pocketed, and after-facts match."
+        },
+        {
+          "turn": 26,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration only looks at the already open drawer, so no tracked change occurs."
+        },
+        {
+          "turn": 27,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "yes",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration only peers into the open drawer; after-facts wrongly change the drawer's location to in the drawer and drop its open condition."
+        },
+        {
+          "turn": 28,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration shows no new tracked change, and after-facts stay the same."
+        },
+        {
+          "turn": 29,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from her hand to Michelle's workstation",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the laptop being set on the workstation, and after-facts match."
+        },
+        {
+          "turn": 30,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration contradicts the laptop being on the workstation by saying she pulls it out from the truck, and after-facts invent moving it to her hand."
+        },
+        {
+          "turn": 31,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "plugged into Kristin's laptop",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "gained condition charging",
+              "cause": "command"
+            }
+          ],
+          "reason": "After-facts put the phone in Kristin's laptop but fail to record charging, which the plugging-to-charge narration implies."
+        },
+        {
+          "turn": 32,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's laptop to Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows unplugging and holding the phone, and after-facts match."
+        },
+        {
+          "turn": 33,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's hand to the kitchen counter",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows setting the phone on the kitchen counter, and after-facts match."
+        },
+        {
+          "turn": 34,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "gained condition closed",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration explicitly closes the laptop in her hand, and after-facts add closed."
+        },
+        {
+          "turn": 35,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says she walks back to the truck with the laptop still in hand; tracked facts remain the same."
+        },
+        {
+          "turn": 36,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen counter to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration says she picks up the phone while searching, and after-facts record it."
+        },
+        {
+          "turn": 37,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration says she notices the phone on the counter though before-facts already place it in her hand."
+        },
+        {
+          "turn": 38,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Checking the phone screen in hand does not change tracked facts."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 6
+}

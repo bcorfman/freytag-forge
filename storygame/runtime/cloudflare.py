@@ -33,7 +33,7 @@ from storygame.runtime.validation import (
     predicate_matches,
     unconveyed_terms,
 )
-from storygame.story_package.models import FactPredicate, ItemPlacement, Scene, SceneBeat, SceneMetadata
+from storygame.story_package.models import FactPredicate, Item, ItemPlacement, Scene, SceneBeat, SceneMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +209,8 @@ def _plain(text: str) -> str:
 class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
+    allowed_reply_keys = {"segments", "selected_knowledge_ids"}
+
     def __init__(
         self,
         *,
@@ -234,6 +236,7 @@ class CloudflareTurnProvider:
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
+        self.reply_keys_dropped: dict[str, int] = {}
 
     @classmethod
     def from_environment(
@@ -282,10 +285,10 @@ class CloudflareTurnProvider:
         scene_setting = self._scene_setting()
         context = {
             "player_input": player_input,
-            # The scene's own establishing material. Without it a turn carries one sentence
-            # of frame and a few terse statements, so the narrator has nothing authored to
-            # be concrete with and answers an apt search with "you find nothing". This is
-            # the scene's first beat only, so it cannot narrate ahead of the player.
+            # The scene's own current frame and turn-specific authored material. Without
+            # it a turn carries one sentence of frame and a few terse statements, so the
+            # narrator has nothing authored to be concrete with and answers an apt search
+            # with "you find nothing".
             "scene_setting": scene_setting,
             "knowledge_context": {
                 # sayable_knowledge is the speakers' dialogue basis; repeating it for the
@@ -361,6 +364,9 @@ class CloudflareTurnProvider:
 
         return getattr(self, "authored_handoff", None) is not None
 
+    def _object_place_rule(self) -> str:
+        return "Keep each object where the scene puts it."
+
     def _turn_rules(self) -> list[str]:
         """State the rules that apply to this turn.
 
@@ -412,8 +418,8 @@ class CloudflareTurnProvider:
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
             "Use the places and details the story gives you.",
-            "Keep each object where the scene puts it.",
-            f"Answer what the player did. Only show {self._protagonist_name()} doing what the player said.",
+            self._object_place_rule(),
+            f"Finish each action the player gives. Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
             *(
@@ -450,29 +456,36 @@ class CloudflareTurnProvider:
         rules.extend(self._setting_fact_rules())
         return rules
 
-    def _owner_rules(self) -> list[str]:
+    def _visible_placed_items(self) -> dict[str, tuple[Item, str | ItemPlacement]]:
         scene_items = {item.id: item for item in self.state.package.world.items}
+        visible: dict[str, tuple[Item, str | ItemPlacement]] = {}
+        for item_id, placement in self._current_scene().item_placements.items():
+            item = scene_items.get(item_id)
+            if item is None:
+                continue
+            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
+                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
+                if predicate_matches(guard, self.state.facts):
+                    continue
+            visible[item_id] = (item, placement)
+        return visible
+
+    def _owner_rules(self) -> list[str]:
+        visible_items = self._visible_placed_items()
         possessive_items = [
-            scene_items[item_id].name
+            visible_items[item_id][0].name
             for item_id in self._current_scene().item_ids
-            if item_id in scene_items and re.fullmatch(r".+['’]s\s+.+", scene_items[item_id].name)
+            if item_id in visible_items and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
         ]
         if not possessive_items:
             return []
         return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
 
     def _placement_rules(self) -> list[str]:
-        scene_items = {item.id: item for item in self.state.package.world.items}
         rules = []
-        for item_id, placement in self._current_scene().item_placements.items():
-            if item_id not in scene_items:
-                continue
-            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-                if predicate_matches(guard, self.state.facts):
-                    continue
+        for item, placement in self._visible_placed_items().values():
             placement_text = placement if isinstance(placement, str) else placement.placement
-            rules.append(f"{scene_items[item_id].name} is {placement_text}.")
+            rules.append(f"{item.name} is {placement_text}.")
         return rules
 
     def _setting_fact_rules(self) -> list[str]:
@@ -580,7 +593,7 @@ class CloudflareTurnProvider:
             "Do not say anything that goes against the entry text or the beat details.",
             "Do not make up new objects, clues, or things inside containers.",
             "Never write IDs or story bookkeeping into the prose.",
-            "Keep each object where the scene puts it.",
+            self._object_place_rule(),
         ]
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
@@ -595,7 +608,7 @@ class CloudflareTurnProvider:
         )
 
     def _scene_setting(self) -> dict[str, object]:
-        """The authored paragraph the player read on entering, safe to send every turn.
+        """Return authored beat material that the player can earn on this turn.
 
         Beat prose is added only for storylets whose reveals are candidates on
         this turn. The scene's beats describe what later reveals contain - Scene
@@ -605,7 +618,7 @@ class CloudflareTurnProvider:
         player can earn now.
         """
 
-        setting: dict[str, object] = {"entry_text": self._current_scene().entry_text.rstrip()}
+        setting: dict[str, object] = {}
         beats = self._candidate_beats() if self.last_projection and self.last_projection.candidates else ()
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={"beats_projected": tuple(beat.anchor for beat in beats)}
@@ -640,10 +653,15 @@ class CloudflareTurnProvider:
         return context
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
-        """Return the authored beats belonging to projected storylets."""
+        """Return beats authored as the source of reveals offered this turn."""
 
         package = self.state.package
         storylets = {storylet.id: storylet for storylet in package.storylets}
+        realizations = {
+            (route.id, realization.id): realization
+            for route in package.storylet_routes.storylets
+            for realization in route.realizations
+        }
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
         seen: set[str] = set()
         selected: list[SceneBeat] = []
@@ -654,14 +672,11 @@ class CloudflareTurnProvider:
             storylet = storylets.get(knowledge.source.storylet_id)
             if storylet is None:
                 continue
-            candidate_terms = self._candidate_terms(candidate)
-            for anchor in storylet.source_links:
+            realization = realizations.get((storylet.id, knowledge.source.realization_id))
+            anchors = realization.source_beats if realization and realization.source_beats else storylet.source_links
+            for anchor in anchors:
                 beat = beats_by_anchor.get(anchor)
-                if (
-                    anchor not in seen
-                    and beat is not None
-                    and len(candidate_terms & self._content_terms(beat.prose)) >= 2
-                ):
+                if anchor not in seen and beat is not None:
                     seen.add(anchor)
                     selected.append(beat)
         return tuple(selected)
@@ -695,20 +710,6 @@ class CloudflareTurnProvider:
             "with",
         }
         return {word for word in re.findall(r"[a-z0-9]+", text.casefold()) if len(word) > 2 and word not in stopwords}
-
-    def _candidate_terms(self, candidate: object) -> set[str]:
-        values = [candidate.statement, *(term for group in candidate.must_convey for term in group)]
-        entity_terms = {
-            term
-            for entity in (
-                *self.state.package.world.npcs,
-                *self.state.package.world.items,
-                *self.state.package.world.locations,
-            )
-            for value in (entity.name, *entity.aliases)
-            for term in self._content_terms(value)
-        }
-        return set().union(*(self._content_terms(value) for value in values)) - entity_terms
 
     def _scene_entry(self) -> dict[str, object]:
         """Expose the package-authored frame and first beat the opening must dramatize, never invent."""
@@ -945,7 +946,6 @@ class CloudflareTurnProvider:
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
             scene_setting = user.get("scene_setting")
             if isinstance(scene_setting, dict):
-                scene.extend(paragraphs(scene_setting["entry_text"]))
                 for beat in scene_setting.get("beats", []):
                     if not isinstance(beat, dict):
                         continue
@@ -1473,8 +1473,19 @@ class CloudflareTurnProvider:
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
         if isinstance(body, dict) and isinstance(body.get("narration"), str):
-            return self._decode_narration(body["narration"])
-        return body
+            body = self._decode_narration(body["narration"])
+        return self._clean_reply(body)
+
+    def _clean_reply(self, reply: object) -> object:
+        """Drop empty unknown fields from narration replies to avoid needless retries."""
+        if not isinstance(reply, dict) or "segments" not in reply:
+            return reply
+        cleaned = dict(reply)
+        for key, value in reply.items():
+            if key not in self.allowed_reply_keys and value in ([], {}, "", None):
+                del cleaned[key]
+                self.reply_keys_dropped[key] = self.reply_keys_dropped.get(key, 0) + 1
+        return cleaned
 
     def _decode_narration(self, narration: str) -> object:
         """Parse the reply, keeping its finished segments when the model was cut off mid-word.

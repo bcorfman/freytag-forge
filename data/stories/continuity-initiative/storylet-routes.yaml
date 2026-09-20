@@ -534,6 +534,7 @@ storylets:
   - id: SL-1A-A-R1
     dramatic_intent: Connect forced entry, blood, missing work materials, or localized disorder into a credible
       forced-removal theory.
+    source_beats: [scene-1a1--michelle-is-gone]
     operations:
     - op: assert
       fact_id: michelle_abduction_suspicion
@@ -571,6 +572,7 @@ storylets:
   realization_options:
   - id: SL-1A-B-R1
     dramatic_intent: Find and secure Michelle's hidden memory card first, then read its files and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
+    source_beats: [scene-1a2--michelles-last-investigation, scene-1a3--the-interrupted-message]
     operations:
     - op: assert
       fact_id: memory_card_in_kristins_custody
@@ -597,6 +599,7 @@ storylets:
   - id: SL-1A-B-R2
     dramatic_intent: Find and secure Michelle's hidden memory card first, then play its damaged warning; its interrupted
       ending plus the house evidence is enough to support abduction suspicion even before every file is understood.
+    source_beats: [scene-1a2--michelles-last-investigation, scene-1a3--the-interrupted-message]
     operations:
     - op: assert
       fact_id: memory_card_in_kristins_custody
@@ -794,6 +797,7 @@ storylets:
   - id: SL-1B-B-R1
     dramatic_intent: Brandon intervenes against the patrol, identifies himself as Michelle’s contact, and credibly
       connects her transit clue to a route used by the removal operation without revealing the facility itself.
+    source_beats: [scene-1b2--the-man-following-her, scene-1b3--brandons-warning]
     operations:
     - op: assert
       fact_id: trust_brandon
@@ -817,6 +821,7 @@ storylets:
   - id: SL-1B-B-R2
     dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work and that the
       missing may still be alive, but withholds the protected JANUS role.
+    source_beats: [scene-1b2--the-man-following-her, scene-1b3--brandons-warning]
     operations:
     - op: assert
       fact_id: brandon_identified
@@ -1033,6 +1038,7 @@ storylets:
   - id: SL-1C-C-R1
     dramatic_intent: Read logistics categories and understand that the Los Angeles site is part of a national detention
       network.
+    source_beats: [scene-1c3--the-nationwide-network]
     operations:
     - op: assert
       fact_id: national_detention_network_known
@@ -1047,6 +1053,7 @@ storylets:
   - id: SL-1C-C-R2
     dramatic_intent: Understand Charles and Rebecca’s reconstruction strategy and conclude that exposing and disrupting
       the operation requires deeper access than a local rescue attempt can provide.
+    source_beats: [scene-1c4--the-architects-revealed]
     operations:
     - op: assert
       fact_id: architects_strategy_known
@@ -1181,6 +1188,7 @@ storylets:
   realization_options:
   - id: SL-2A-C-R1
     dramatic_intent: Kristin convincingly explains the cooling-water risk and gains restricted corridor access, including limited use of the inspection console.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
     operations:
     - op: assert
       fact_id: restricted_corridor_access
@@ -1198,6 +1206,7 @@ storylets:
   - id: SL-2A-C-R2
     dramatic_intent: An imperfect explanation still gets conditional corridor and inspection-console access while quietly
       increasing observation pressure.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
     operations:
     - op: assert
       fact_id: restricted_corridor_access
@@ -1294,6 +1303,7 @@ storylets:
   - id: SL-2B-B-R1
     dramatic_intent: Find Brandon’s name in JANUS build records; the records both authenticate JANUS and force the
       confrontation over his role.
+    source_beats: [scene-2b3--brandons-role]
     operations:
     - op: assert
       fact_id: brandon_janus_role_known
@@ -1309,6 +1319,7 @@ storylets:
   - id: SL-2B-B-R2
     dramatic_intent: Delay confrontation long enough to corroborate his name, then establish both authorship and
       his claimed break with Charles.
+    source_beats: [scene-2b3--brandons-role]
     operations:
     - op: assert
       fact_id: brandon_janus_role_known
@@ -2134,6 +2145,7 @@ storylets:
   - id: SL-3C-C-R1
     dramatic_intent: Redirect power/supports enough to open an evacuation route and move surviving captives toward
       the surface.
+    source_beats: [scene-3c3--the-deluge]
     operations:
     - op: assert
       fact_id: evacuation_route_open
@@ -2148,6 +2160,7 @@ storylets:
   - id: SL-3C-C-R2
     dramatic_intent: Use maintenance tunnels and the opened gates to get captives out while accepting loss of the
       Los Angeles facility.
+    source_beats: [scene-3c3--the-deluge, scene-3c4--resolution-and-new-direction]
     operations:
     - op: assert
       fact_id: captives_reaching_surface

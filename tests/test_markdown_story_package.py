@@ -44,9 +44,10 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert package.scenes[0].metadata.item_placements == {
         "michelle_phone": "on the kitchen floor",
         "kristin_laptop": "in Kristin's truck outside the house",
+        "michelle_drawer": "in Michelle's workstation",
     }
     assert package.scenes[0].metadata.setting_facts == (
-        "Michelle's workstation drawers are shut.",
+        "The drawer is shut.",
         "Michelle's phone is not damaged.",
     )
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
@@ -64,6 +65,42 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
                 for effect in package.knowledge_indexes.by_id[knowledge_id].establishes
             }
             assert effects == set(realization.operations)
+
+
+def test_loader_rejects_missing_source_beats_on_multi_beat_realization(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "storylet-routes.yaml"
+    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
+    realization = next(
+        realization
+        for route in routes["storylets"]
+        if route["id"] == "SL-1B-B"
+        for realization in route["realization_options"]
+        if realization["id"] == "SL-1B-B-R1"
+    )
+    realization.pop("source_beats")
+    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*SL-1B-B.*source_beats"):
+        load_story_package(root)
+
+
+def test_loader_rejects_source_beat_outside_realization_storylet(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    source = root / "storylet-routes.yaml"
+    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
+    realization = next(
+        realization
+        for route in routes["storylets"]
+        if route["id"] == "SL-1B-B"
+        for realization in route["realization_options"]
+        if realization["id"] == "SL-1B-B-R1"
+    )
+    realization["source_beats"] = ["scene-1a1--michelles-gone"]
+    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*outside its storylet"):
+        load_story_package(root)
 
 
 def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Path) -> None:
@@ -88,8 +125,8 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
-        "item_ids: [memory_card, michelle_phone, kristin_laptop]\n",
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, test_item]\n",
+        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer]\n",
+        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, test_item]\n",
         1,
     )
     contents = contents.replace(
@@ -116,7 +153,7 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]',
+        'setting_facts: ["The drawer is shut.", "Michelle\'s phone is not damaged."]',
         'setting_facts: ["The test shutters are closed.", "The test lamp is on."]',
         1,
     )
@@ -131,7 +168,7 @@ def test_loader_rejects_empty_setting_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]',
+        'setting_facts: ["The drawer is shut.", "Michelle\'s phone is not damaged."]',
         'setting_facts: ["  "]',
         1,
     )
@@ -145,7 +182,7 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["Michelle\'s workstation drawers are shut.", "Michelle\'s phone is not damaged."]\n',
+        'setting_facts: ["The drawer is shut.", "Michelle\'s phone is not damaged."]\n',
         "",
         1,
     )
@@ -217,7 +254,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     details = (
         "**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation "
         "chair; "
-        "forced back door; KMS initials in drawer\n"
+        "forced back door; KMS initials carved in drawer\n"
     )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
 

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from storygame.runtime.command_split import split_command
 from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -46,7 +47,7 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
 
 
 @pytest.mark.parametrize("player_input", POLICY_INPUTS)
-def test_every_policy_style_reaches_the_provider_unchanged(player_input: str) -> None:
+def test_every_policy_style_reaches_the_provider_as_normalized(player_input: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     calls: list[str] = []
     state.active_event_ids.add("SL-1A-B")
@@ -54,7 +55,7 @@ def test_every_policy_style_reaches_the_provider_unchanged(player_input: str) ->
 
     engine.turn(player_input)
 
-    assert calls == [player_input]
+    assert calls == [" ".join(split_command(player_input))]
     assert "SL-1A-B" in state.fired_event_ids
 
 

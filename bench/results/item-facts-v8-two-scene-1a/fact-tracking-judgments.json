@@ -1,0 +1,870 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "The phone was picked up as narrated and recorded correctly."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "drawer",
+              "change": "changed from shut to open",
+              "cause": "command"
+            },
+            {
+              "thing": "USB drive",
+              "change": "newly introduced inside the drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The drawer opens and a new USB drive is introduced in the drawer."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved to Kristin's pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration wrongly says the phone was on the table, conflicting with prior facts."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's truck outside the house to Kristin's hands",
+              "cause": "command"
+            },
+            {
+              "thing": "Kristin's laptop",
+              "change": "is closed",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Laptop ends in her hands closed, but narration conflicts by placing it on the passenger seat before retrieval."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "moved from Kristin's hands to the truck passenger seat",
+              "cause": "command"
+            }
+          ],
+          "reason": "The laptop is carried out and set back in the truck."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from Kristin's pocket to the kitchen floor",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "became broken",
+              "cause": "command"
+            }
+          ],
+          "reason": "The phone is thrown, shattered, and ends up on the floor."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "The broken phone is picked up and remains broken."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "No tracked item changes; the phone stays in hand and laptop stays in the truck."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "This only confirms the phone remains in Kristin's hand broken."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "receipt",
+              "change": "newly introduced on the ground",
+              "cause": "narrator"
+            },
+            {
+              "thing": "note",
+              "change": "newly introduced on the receipt",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The search reveals a receipt and a handwritten note, both recorded."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "is held out toward the watching man but remains in Kristin's hand in the narration shown",
+              "cause": "command"
+            }
+          ],
+          "reason": "It wrongly re-added the note and receipt despite no mention here, and did not record any transfer of the phone."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "The narration confirms the phone is still in Kristin's hand."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Looking carefully did not request taking it, but the narration did show Kristin picking it up and after-facts recorded that."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "drawer",
+              "change": "condition changed from shut to open",
+              "cause": "command"
+            },
+            {
+              "thing": "memory card",
+              "change": "new item introduced in drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The drawer was opened and the memory card was revealed inside; after-facts match."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed to in Kristin's pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Before-facts had the phone in Kristin's hands, but narration said she reached for it on the table without showing that change first."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed from in Kristin's truck outside the house to in Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration contradicts the given truck placement by saying the truck is on the street and the laptop is on the passenger seat, and after-facts add closed without narration showing it."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed from in Kristin's hands to in the truck",
+              "cause": "command"
+            }
+          ],
+          "reason": "Carrying it back out to the truck is shown and recorded correctly."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from in Kristin's pocket to on the kitchen floor",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "condition changed to broken",
+              "cause": "command"
+            }
+          ],
+          "reason": "The narration shows the phone thrown, shattered, and ending on the floor; after-facts match well enough."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "Picking up the broken phone from the floor is shown and recorded correctly."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "The narration keeps the phone in Kristin's hands and laptop in the truck, matching after-facts."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Checking the phone caused no state change and after-facts stayed the same."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "receipt",
+              "change": "new item introduced on the ground",
+              "cause": "narrator"
+            },
+            {
+              "thing": "receipt",
+              "change": "condition changed to crumpled",
+              "cause": "narrator"
+            },
+            {
+              "thing": "note",
+              "change": "new item introduced on the receipt",
+              "cause": "narrator"
+            },
+            {
+              "thing": "note",
+              "change": "condition changed to handwritten",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The narration introduced the receipt and note and after-facts recorded them."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "She only holds out the phone; the narration does not show the man taking it, so no change is correct."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "The narration confirms the phone is still in Kristin's hand, matching after-facts."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows Kristin picking up the phone, and after-facts record that correctly."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "drawer",
+              "change": "condition changed from shut to open",
+              "cause": "command"
+            },
+            {
+              "thing": "memory card",
+              "change": "new item introduced in drawer with found condition",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The drawer is opened and a memory card is revealed inside; after-facts match."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed to in Kristin's pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Before-facts say the phone was already in Kristin's hands, but narration wrongly says it was on the table without showing that change."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed from in Kristin's truck outside the house to inside the house",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration moves the laptop inside, but after-facts invent the closed condition."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed to in Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration says she heads toward the door while carrying it, but does not show it reaching the truck; it also contradicts the given fact by calling it on the desk."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from in Kristin's pocket to on the kitchen floor",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "condition changed to broken",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the phone thrown, shattered, and ending on the floor; after-facts match."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "Picking up the broken phone is correctly tracked."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration keeps the phone in Kristin's hand, and after-facts keep the same state."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "This is just a check; no item state changes."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "receipt",
+              "change": "new item introduced on the ground with crumpled condition",
+              "cause": "narrator"
+            },
+            {
+              "thing": "note",
+              "change": "new item introduced on the receipt with handwritten condition",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration introduces a receipt and note, and after-facts record them."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "She offers the phone but the narration does not show the man taking it, so no change is correct."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Narration confirms the phone is still in Kristin's hands, matching after-facts."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration shows Kristin picking up the phone, and after-facts record that correctly."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "drawer",
+              "change": "condition changed from shut to open",
+              "cause": "command"
+            },
+            {
+              "thing": "USB drive",
+              "change": "new item revealed in the drawer",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The narration introduces a small USB drive, but canon says the hidden item is a memory card, so the added USB drive is not supported by the given facts."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from in Kristin's hands to in Kristin's pocket",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration says the phone is picked up from the table, conflicting with before-facts that it was already in Kristin's hands."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed from in Kristin's truck outside the house to in Kristin's hand",
+              "cause": "command"
+            }
+          ],
+          "reason": "The narration says the laptop was on the passenger seat, conflicting with the given before-fact that it was just in the truck outside the house; after-facts also add a closed condition not shown."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Kristin's laptop",
+              "change": "place changed from in Kristin's hand to in the truck",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows Kristin carrying the laptop back to the truck, matching the recorded place."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from in Kristin's pocket to on the kitchen floor",
+              "cause": "command"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "condition changed to broken",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows the screen shattering, but after-facts record broken rather than the shown shattered/cracked state."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "place changed from on the kitchen floor to in Kristin's hands",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration shows Kristin picking up the broken phone from the floor, and after-facts keep that correctly."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "After-facts invent a truck item with place and moving state even though the narration did not establish it as a tracked item change."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "This is only a check, and the after-facts match the unchanged phone state."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [
+            {
+              "thing": "receipt",
+              "change": "new item introduced on the ground",
+              "cause": "narrator"
+            },
+            {
+              "thing": "note",
+              "change": "new item introduced on the receipt",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "The narration introduces the receipt and handwritten note, and after-facts record them."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "Kristin only holds out the phone; the narration does not show it changing hands, so keeping it in her hands is correct."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "dropped_true_condition": "no",
+          "kept_ended_condition": "no",
+          "state_as_place": "no",
+          "changes": [],
+          "reason": "This is another check action, and the phone remains correctly listed in Kristin's hands."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

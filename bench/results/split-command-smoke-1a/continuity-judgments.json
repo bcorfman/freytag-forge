@@ -1,0 +1,69 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The command was only to look carefully, but the narration has Kristin pick up the phone."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the carved drawer matches the command and does not conflict with canon; the drawer was shut and is now opened."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the phone was still lying on the floor, but turn 1 already established Kristin picked it up."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Bringing the laptop inside was commanded, but unlocking/opening the truck and closing the door are extra physical actions beyond that command."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone even though the command only asked to look at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the shut drawer matches the command and does not conflict with prior facts."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Picking up the phone fits the command; omitting the pocketing is not a contradiction."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and bringing the laptop back inside follows the command and matches canon."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

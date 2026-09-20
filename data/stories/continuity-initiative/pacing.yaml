@@ -10,7 +10,7 @@ events:
   - when:
     - fact_id: memory_card_in_kristins_custody
       equals: false
-    text: An officer from the patrol comes back and lingers at Michelle's workstation drawers without opening them.
+    text: An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.
   - when:
     - fact_id: michelle_lead_actionable
       equals: true

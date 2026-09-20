@@ -1,0 +1,357 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She was told to look carefully, but the narration also has her pick up the phone and check the screen."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It only has her approach and identify the KMS drawer; it does not actually open it, but adds no contradiction."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the phone is on the table, but canon/opening place it on the kitchen floor and no one moved it there consistently."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and retrieving the laptop matches the command and canon placement."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "After bringing the laptop inside, this says it is back on the passenger seat and has Kristin place it there, undoing prior state beyond the command."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "After throwing the phone, the narration also has Kristin walk over, pick it up, and examine it."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone was in Kristin's pocket/picked up earlier, so describing it as on the kitchen floor conflicts with prior narration."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Leaving for the park fits, but locking the back door was an extra physical action not requested."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says she checks her hand and the phone is there, though earlier she had it in her pocket while driving."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching around the bench and noticing a paper does not conflict with established facts."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Walking to the man and handing him the phone matches the command and prior park scene."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It newly places the man on the bench despite only an unspecified watching man being established, and frames him as a fresh discovery."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She was told to look at the phone, but narration also has her pick it up."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the specified drawer fits the command, and the notebook does not contradict canon."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says she pulls the phone from her pocket even though earlier narration never put it there."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and bringing the laptop inside matches the command and canon placement."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Taking the laptop back out to the truck matches the command."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Throwing the phone matches, but narration also has her pick it up afterward unasked."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Previous turn ended with her already holding the phone, so it is not on the floor; examining it also goes beyond simply picking it up."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Leaving and driving to the park fits, but locking the back door was extra physical action not requested."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Checking her pocket and confirming the phone is there fits the command."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the bench is responsive, and added observations are part of looking."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Walking to the man and handing over the phone matches the command."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "After the prior turn, the man should have the phone, so finding it in her pocket conflicts with established narration."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She was told to look carefully, but the narration also has her pick up the phone."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the carved drawer matches the command, and the notebook does not conflict with canon."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It follows from turn 1 that she already had the phone in her pocket."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "She goes to the truck and retrieves the laptop as asked."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Previous turn said she retrieved the laptop, so grabbing it from the truck again conflicts, and she heads back toward the house instead of carrying it out to the truck."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Canon states Michelle's phone is not damaged, but this turn cracks the screen."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again describes the phone as cracked and adds an examination beyond simply picking it up."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She is told to leave and drive to the park, but the narration also locks the back door and only places the phone on the seat."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The command asks whether she still has the phone, but the narration says it is on the passenger seat instead."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It introduces the bench and surrounding park as if newly encountered and has her search trash bags beyond just looking around the bench."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Handing over the phone fits, but clenching her hand into a fist goes beyond the command."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It answers the check, but also adds new pursuit action unrelated to the command."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone, but the command only asked to look at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Opening the carved drawer matches the command, and the notebook does not conflict with canon."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Earlier narration established the phone was already in her possession."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Going to the truck and bringing the laptop inside matches the command and canon placement."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says she retrieves the laptop from the truck even though the prior turn brought it inside, and adds closing/placing it back."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "The phone is described as cracked, conflicting with the canon fact that Michelle's phone is not damaged."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It keeps the cracked damage contradiction and adds extra examination beyond simply picking it up."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Locking the back door was not requested; otherwise leaving for the park follows the command."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It places the phone in her hand after she gave it no new handling, adds extra checking, and treats the park setting as already established offscreen."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking around the bench matches the command, and the added park details do not directly conflict with canon."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Walking to the man and handing over the phone directly follows the command."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "After the previous turn gave the phone to the man, this turn wrongly shows it back in Kristin's hand."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

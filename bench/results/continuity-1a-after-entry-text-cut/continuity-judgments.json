@@ -1,0 +1,294 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the phone does not imply picking it up and turning it over."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching the house for the bag and clues matches the command and adds no conflict."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the back door does not require stepping outside through the screen door."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again has Kristin pick up the phone instead of only examining it."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It resets Kristin as stepping into the house and moves from searching for the bag to unlocking and checking the phone."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Examining the phone is expanded into kneeling down and picking it up."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house and shifts from searching for the bag to inspecting the back door."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone was previously picked up, so describing it as lying on the floor conflicts with earlier narration, and picking it up exceeds a careful look."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "After earlier turns had Kristin pick up the phone, saying it lies on the floor conflicts with the established state."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone though the command only asked to look carefully at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching rooms for the bag fits the command and adds no conflict."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It says she steps into the kitchen even though she was already there in the opening."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone despite only being asked to look at it."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Continuing to search the house matches the command without extra physical actions."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone although the player only asked to examine it."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Room-to-room searching is within the request and does not reset the scene."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It moves her outside through a screen door and calls the surface pristine, conflicting with the forced-entry back door already established."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Reaching toward the phone is a small movement tied to examining it, and no contradiction is stated."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching for the bag and noticing damage while in the house fits the command."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone, which goes beyond merely looking at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the phone was left on the floor, but the prior turn had Kristin pick it up."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She steps outside, beyond simply looking at the back door."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again places the phone on the floor after she already picked it up, and has her pick it up again."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says Michelle's phone lies on the floor despite earlier narration having Kristin pick it up."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again has the phone lying on the floor after earlier pickup, and turning it on exceeds just looking carefully."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching rooms and noticing the damaged back door fits the command and prior facts."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again states the phone lies on the floor after prior pickup, and has her pick it up."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching for the bag and noticing the back door damage fits the request without conflicting details."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up and handles the phone though the command only asked to look at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It says Michelle's phone lies on the floor again after turn 1 had Kristin pick it up, treating the scene as reset."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It has Kristin step into the kitchen as if newly arriving and reach for the door handle beyond simply looking."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again says the phone is on the floor despite earlier pickup, and has Kristin pick it up."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house and shows the phone back on the floor, then has her pick it up."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It changes the forced-entry damage to just a small scratch/smudge and has Kristin push the back door open instead of only looking."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again places the phone on the floor after prior pickups and has Kristin pick it up and press the power button."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It begins with Kristin stepping into the house and rediscovering the kitchen details as if new."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again says the phone lies on the floor after earlier pickup and has Kristin pick it up."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It says the phone lies on the kitchen floor again despite earlier turns where Kristin picked it up."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It has Kristin push the back door open, which goes beyond merely looking at it."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

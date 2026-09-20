@@ -1,0 +1,189 @@
+{
+  "replicates": 4,
+  "completed_replicates": 3,
+  "failed_replicates": 1,
+  "failures": [
+    {
+      "status": "failed",
+      "replicate": 4,
+      "script": "phone-bag-door",
+      "scene_id": "1A",
+      "opening": "",
+      "turns": [],
+      "completed": false,
+      "quota": null,
+      "failure_reason": "narration_known_term_leak: narration mentions unavailable knowledge 'forced entry'",
+      "narration_turns": 0,
+      "example_leakage": 0,
+      "narration_requests": 1,
+      "recovery_requests": 0,
+      "package": "/tmp/bench-package-chyweovu",
+      "entry_state": {
+        "scene_id": "1A",
+        "committed_knowledge_count": 1,
+        "earned_knowledge_count": 1,
+        "seeded_by": "none"
+      },
+      "fixed_turns": 12,
+      "rejected_turns": [],
+      "rejected_turn_count": 0,
+      "item_facts_final": {
+        "Michelle's phone": {
+          "where": "on the kitchen floor",
+          "condition": [
+            "not damaged"
+          ]
+        },
+        "Michelle's workstation drawers": {
+          "where": "in Michelle's workstation",
+          "condition": [
+            "shut"
+          ]
+        },
+        "the back door": {
+          "where": "at the back of the kitchen",
+          "condition": [
+            "forced open",
+            "frame splintered"
+          ]
+        },
+        "Kristin's laptop": {
+          "where": "in Kristin's truck outside the house",
+          "condition": []
+        }
+      }
+    }
+  ],
+  "scenes_scored": 1,
+  "max_score": 7,
+  "score_metric": "7-point record: seven equally weighted boolean criteria across 1 scene",
+  "pooled": {
+    "score_points": {
+      "n": 3,
+      "mean": 1.6666666666666667,
+      "standard_deviation": 0.5773502691896257,
+      "confidence_interval_95": [
+        0.2323333333333335,
+        3.101
+      ],
+      "minimum_detectable_effect": 4.468691083527704,
+      "replicate_scores": [
+        1.0,
+        2.0,
+        2.0
+      ]
+    },
+    "total": 5,
+    "per_criterion": {
+      "canon_consistent": 0,
+      "scene_local": 3,
+      "progressive": 0,
+      "rich": 0,
+      "protected_safe": 2,
+      "exit_motivated": 0,
+      "rewards_investigation": 0
+    },
+    "graded_secondary": {
+      "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+      "total": 39,
+      "per_criterion_where_attributable": {},
+      "unattributed": 39
+    }
+  },
+  "per_script": {
+    "phone-bag-door": {
+      "score_points": {
+        "n": 3,
+        "mean": 1.6666666666666667,
+        "standard_deviation": 0.5773502691896257,
+        "confidence_interval_95": [
+          0.2323333333333335,
+          3.101
+        ],
+        "minimum_detectable_effect": 4.468691083527704,
+        "replicate_scores": [
+          1.0,
+          2.0,
+          2.0
+        ]
+      },
+      "example_leakage": 0,
+      "per_criterion": {
+        "canon_consistent": 0,
+        "scene_local": 3,
+        "progressive": 0,
+        "rich": 0,
+        "protected_safe": 2,
+        "exit_motivated": 0,
+        "rewards_investigation": 0
+      },
+      "graded_secondary": {
+        "metric": "missing_or_wrong entries (fewer is better); separate from the seven-criteria score",
+        "total": 39,
+        "per_criterion_where_attributable": {},
+        "unattributed": 39
+      }
+    }
+  },
+  "replicate_scores": [
+    1.0,
+    2.0,
+    2.0
+  ],
+  "example_leakage": 0,
+  "criteria_weighting": "All seven booleans are weighted equally despite very different difficulty.",
+  "entry_state": {
+    "scene_id": "1A",
+    "committed_knowledge_count": 1,
+    "earned_knowledge_count": 1,
+    "seeded_by": "none"
+  },
+  "continuity": {
+    "contradicts_stated_fact": {
+      "yes": 15,
+      "no": 19
+    },
+    "protagonist_acts_beyond_command": {
+      "yes": 26,
+      "no": 8
+    },
+    "restarts_scene": {
+      "yes": 12,
+      "no": 22
+    },
+    "turns_judged": 34,
+    "judge_calls": 3
+  },
+  "fact_tracking": {
+    "facts_after_correct": {
+      "yes": 21,
+      "no": 13
+    },
+    "missed_change": {
+      "yes": 4,
+      "no": 30
+    },
+    "invented_change": {
+      "yes": 9,
+      "no": 25
+    },
+    "narration_contradicts_given_facts": {
+      "yes": 8,
+      "no": 26
+    },
+    "changes_by_cause": {
+      "command": 2,
+      "narrator": 13
+    },
+    "turns_judged": 34,
+    "judge_calls": 3
+  },
+  "budget": {
+    "projected_workers_ai_neurons": 176.0,
+    "actual_narration_turns": 34,
+    "actual_narration_requests": 74,
+    "estimated_workers_ai_neurons_from_requests": 814.0,
+    "actual_openai_judge_calls": 9,
+    "quota": null
+  }
+}

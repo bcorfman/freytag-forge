@@ -1,0 +1,65 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening underestablishes the house as a sensory crime scene; it names key props but gives little concrete atmosphere or responsive detail.",
+        "Turn 1 search of Michelle's phone yields no meaningful consequence beyond picking it up; canon says handling the phone can make the missing tablet/work bag stand out and should build abduction suspicion.",
+        "Turn 2 opens the KMS-carved drawer but does not reveal or even search for the hidden memory card taped beneath it; this fails to reward apt investigation of the drawer.",
+        "Turn 2 also projects 1A.2/1A.3 too early without actually delivering those beats.",
+        "Turn 3 contradicts prior state by acting as though Michelle's phone is still on the floor after Turn 1 already put it in Kristin's hand.",
+        "By Turn 4 the patrol-pressure complication appears before Michelle's warning is established, which is outside SL-1A-C availability and mis-times the threat beat.",
+        "Turn 4's officer lingering at drawers is presented while Kristin is simply fetching the laptop, but there is no actual welfare check/search interaction, no questioning about Michelle's research, and no reflective gate marker.",
+        "Scene skips core authored beats: missing tablet/work bag absence, localized/staged disorder inference, memory card discovery, Continuity Initiative files, Michelle's warning recording, and the marked gate after patrol departure.",
+        "Repeated investigation of key scene objects keeps returning almost nothing actionable."
+      ],
+      "reasons": [
+        "The scene remains local to 1A and does not reveal protected future knowledge.",
+        "However, it fails strict canon coverage: 1A.1 is only thinly established, and 1A.2-1A.4 are not properly dramatized across the supplied turns.",
+        "Ordinary turns need responsive consequences. Looking at the phone and opening the suspicious drawer should have advanced evidence discovery; instead they mostly restate object handling.",
+        "State continuity breaks on the phone's location, which is a direct canon inconsistency within the scene transcript.",
+        "Pacing is not progressive in the required sense: projected later beats appear without earned revelation, while the actual narrated content withholds the scene's required discoveries.",
+        "The investigation is not rewarded despite apt, repeated searching of exactly the canon-relevant items and area."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": true,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": true,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening under-establishes the house as a sensory crime scene; it names key clues without substantial scene grounding.",
+        "Turn 1 fails to give any consequential observation from examining Michelle's phone; canon says handling the phone can make the missing tablet/work bag stand out.",
+        "Turn 1 also omits responsive crime-scene consequences despite apt searching.",
+        "Turn 2 invents a 'small compartment' inside the drawer, which is not in canon; the hidden memory card is taped beneath the drawer, not revealed by an inner compartment.",
+        "Turn 2 does not actually reward opening/searching the KMS-marked drawer with the hidden memory card or even a discoverable beneath-drawer clue.",
+        "Turn 2 projects 1A.2 and 1A.3 too early without earning them in narration.",
+        "Turn 3 contradicts current state by narrating picking up the phone from the floor after it was already in Kristin's hand/pocket.",
+        "Turn 4 brings patrol pressure as a complication before the warning/recording is known; canon/storylet C requires Michelle's recovered warning to establish the immediate danger first.",
+        "Turn 4's patrol beat is also misrealized: the officer 'comes back and lingers' rather than an actual welfare check / targeted questioning / search of Michelle's work area.",
+        "Scene skips core authored beats: no meaningful reconciliation of forced entry/missing work bag and tablet/overturned chair into abduction suspicion; no memory card recovery; no Continuity Initiative files; no warning recording; no reflective tape marker."
+      ],
+      "reasons": [
+        "The scene remains in the correct location with correct principal items, and it does not reveal protected future knowledge.",
+        "However, acceptance requires the scene's authored beats to be covered in order across turns. This scene stalls on low-information handling and never delivers the core discoveries.",
+        "Ordinary investigative turns must have responsive consequences. Repeated apt searches of the phone and KMS drawer return little or incorrect information the player can act on.",
+        "The hidden-memory-card logic is mishandled: canon specifically places it taped beneath the workstation drawer carved with KMS, and it stays hidden until Kristin finds it.",
+        "State continuity breaks on the phone interaction, showing unreliable scene tracking.",
+        "Pressure is mistimed: the patrol threat should follow Michelle's recovered warning, not precede it merely because turn count advanced.",
+        "Because the player is never told the actionable park-bench lead, transition motivation is not yet relevant, but the scene as authored still fails for missing required beats and poor realization of the beat it attempted."
+      ]
+    }
+  ],
+  "judge_calls": 2
+}

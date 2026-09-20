@@ -1,4 +1,4 @@
-"""LLM-first turn coordinator; it never parses ordinary roleplay text."""
+"""LLM-first turn coordinator; it normalizes player commands before narration."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Callable
 from copy import deepcopy
 
 from storygame.runtime.canonical_events import CanonicalEventMixin
+from storygame.runtime.command_split import split_command
 from storygame.runtime.contracts import (
     FactOperation,
     GameBreakWarning,
@@ -43,6 +44,7 @@ class RuntimeEngine(CanonicalEventMixin):
         self.projector = projector or KnowledgeProjector()
         self.narration_validator = NarrationSafetyValidator()
         self.last_projection: TurnKnowledgeContext | None = None
+        self.last_player_command: str | None = None
 
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
@@ -66,6 +68,8 @@ class RuntimeEngine(CanonicalEventMixin):
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
+        command_text = " ".join(split_command(player_input))
+        self.last_player_command = command_text
         self.state.require_turn_allowed()
         before = self.state.snapshot()
         try:
@@ -78,18 +82,18 @@ class RuntimeEngine(CanonicalEventMixin):
                     "handoff_staged": bool(self.state.staged_handoff_fact_ids),
                 }
             )
-            self.last_projection = self.projector.project(self.state, "player", player_input)
-            provider_proposal = parse_turn_proposal(self.provider(player_input))
+            self.last_projection = self.projector.project(self.state, "player", command_text)
+            provider_proposal = parse_turn_proposal(self.provider(command_text))
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
             )
             proposal, _ = self.reveal_resolver.resolve(
-                self.state, self.last_projection, provider_proposal, self.projector, player_input
+                self.state, self.last_projection, provider_proposal, self.projector, command_text
             )
             self.validator.validate_effects(self.state, proposal)
             candidate_state = deepcopy(self.state)
             candidate_state.apply_proposal(proposal)
-            self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, player_input)
+            self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, command_text)
         except (ProposalValidationError, RuntimeContractError):
             self.state.restore_snapshot(before)
             raise

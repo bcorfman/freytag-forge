@@ -281,6 +281,29 @@ def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> Non
     assert candidate["statement"] == package.knowledge_indexes.by_id["k_sl_1a_c_r1"].statement
 
 
+def test_candidate_beats_project_the_1b_dead_drop_for_offered_candidates() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1b_a_r1"), SimpleNamespace(id="k_sl_1b_a_r2"))
+    )
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
+
+
+def test_candidate_beats_use_each_realization_source_beats_only() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1c_c_r1"),))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1c3--the-nationwide-network",)
+
+
+def test_candidate_beats_omit_unoffered_storylet_realizations() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1b_a_r1"),))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
+
+
 def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(monkeypatch) -> None:
     captured: list[dict[str, object]] = []
 
@@ -335,6 +358,33 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     )
 
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
+
+
+def test_transport_drops_empty_unknown_reply_keys_but_keeps_nonempty_extras(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Valid."}], "known": []})}
+        ),
+    )
+
+    reply = provider._request({"system": "", "user": ""})
+
+    assert reply == {"segments": [{"kind": "narration", "text": "Valid."}]}
+    assert provider.reply_keys_dropped == {"known": 1}
+    assert parse_turn_proposal(reply).segments
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response(
+            {"segments": [{"kind": "narration", "text": "Valid."}], "grounding_ids": ["bad"]}
+        ),
+    )
+    with pytest.raises(RuntimeContractError):
+        parse_turn_proposal(provider._request({"system": "", "user": ""}))
 
 
 def test_transport_is_unavailable_without_url_or_on_bad_worker_responses(monkeypatch) -> None:
@@ -1548,12 +1598,11 @@ def test_a_sustained_outage_still_fails_closed(monkeypatch) -> None:
     assert len(attempts) == 2, "exactly one retry, never an unbounded loop"
 
 
-def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypatch) -> None:
-    """A turn needs authored place detail, but not the reveal the scene is built around.
+def test_turn_omits_the_scene_entry_text_and_its_protected_beat(monkeypatch) -> None:
+    """The player already read the entry text when the scene opened.
 
-    Without any authored setting the narrator answered an apt search with "you find
-    nothing". With the beat prose or the location's own name, Scene 2B would hand it
-    JANUS before the player earns it - the archive is literally named "JANUS archive".
+    Resending it every turn made the narrator re-arrive at the scene. Protected beats
+    and terms must still stay out.
     """
 
     captured: list[dict[str, object]] = []
@@ -1574,7 +1623,7 @@ def test_turn_carries_the_scene_entry_text_but_never_its_protected_beat(monkeypa
         user = captured[-1]["user"]
         scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == scene_id)
 
-        assert scene.metadata.entry_text.strip().splitlines()[0] in user
+        assert scene.metadata.entry_text.strip().splitlines()[0] not in user, f"{scene_id} resent its entry text"
         assert scene.opening_beat.prose not in user, f"{scene_id} leaked its opening beat prose"
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
@@ -1630,9 +1679,60 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
 
     rules = provider._turn_rules()
 
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+
+
+def test_turn_rules_omit_unplaced_possessive_scene_item() -> None:
+    memory_card = next(item for item in PACKAGE.world.items if item.id == "memory_card")
+    custom_card = memory_card.model_copy(update={"name": "Avery's hidden card"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_card if item.id == memory_card.id else item for item in PACKAGE.world.items)}
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE.model_copy(update={"world": custom_world}))
+    )
+
+    rules = provider._turn_rules()
+
+    assert "Avery's hidden card" not in " ".join(rules)
+    assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+
+
+def test_turn_rules_omit_guarded_placement_after_fact_is_asserted() -> None:
+    archive = next(item for item in PACKAGE.world.items if item.id == "portable_archive")
+    custom_archive = archive.model_copy(update={"name": "Rebecca's data case"})
+    custom_world = PACKAGE.world.model_copy(
+        update={"items": tuple(custom_archive if item.id == archive.id else item for item in PACKAGE.world.items)}
+    )
+    state = RuntimeState.bootstrap(PACKAGE.model_copy(update={"world": custom_world}))
+    state.current_scene_id = "3C"
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Rebecca's data case" in next(rule for rule in provider._turn_rules() if "Say who owns" in rule)
+
+    state.facts.assert_fact(Fact(predicate="portable_archive_secured", subject="story", value="true"))
+
+    assert not any("Rebecca's data case" in rule for rule in provider._turn_rules())
+
+
+def test_opening_rules_omit_unplaced_memory_card(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    provider.opening()
+
+    assert "Michelle's memory card" not in captured["payload"]["user"]
     assert (
-        "Say who owns a thing the first time you name it: Michelle's memory card, Michelle's phone, Kristin's laptop."
-        in rules
+        "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop."
+        in captured["payload"]["user"]
     )
 
 
@@ -1791,7 +1891,7 @@ def test_real_scene_1a_pre_reveal_prompts_keep_the_card_location_out(monkeypatch
         assert "under the drawer" not in body
         assert "beneath the drawer" not in body
         assert "drawer carved with" not in body
-        assert "Michelle's workstation drawers are shut.".casefold() in body
+        assert "drawer is shut.".casefold() in body
 
 
 def test_real_scene_1a_accepts_visible_carving_on_turns_one_through_four(monkeypatch) -> None:
@@ -1856,6 +1956,8 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
 
     assert "Use the places and details the story gives you." in rules
     assert "Keep each object where the scene puts it." in rules
+    assert "Finish each action the player gives. Only show Kristin doing what the player said." in rules
+    assert "Answer what the player did. Only show Kristin doing what the player said." not in rules
 
 
 def test_selection_duty_uses_one_random_choice_rule() -> None:

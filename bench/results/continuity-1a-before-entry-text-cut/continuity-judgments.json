@@ -1,0 +1,336 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Says the phone screen is cracked though canon says Michelle's phone is not damaged, and Kristin picks it up when told only to look."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Searching the room and noting the shut drawers fits the command and established scene."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says there is no sign of forced entry even though canon says the back door shows forced entry, and Kristin steps outside just to look at the door."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Describing the phone as undamaged is consistent, but she picks it up although the command only asked to look carefully."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It has Kristin stepping into the house as if arriving anew and moving into another room beyond the requested search focus."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the back door does not require stepping outside into the yard."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone being undamaged is fine, but Kristin picks it up and starts checking it beyond simply looking carefully."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house again and adds discovery-like scene framing already established."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes open the back door even though the command only asked to look at it."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Checking messages requires picking up/using the phone, which goes beyond just looking carefully at it."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It again describes Kristin stepping into the house as though newly entering, resetting the scene."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes open the back door instead of merely examining it."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up and handles the phone when the command only asked to look carefully at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house and says the phone screen is cracked, contradicting the undamaged phone."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "It stays focused on examining the back door and matches the forced-entry detail."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone again instead of only looking at it."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It begins with Kristin stepping into the house again as though newly arriving."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes the back door open and then steps inside, actions beyond merely looking at it."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone and tries to wake it up, going beyond just examining it."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house and has her pick up and put down the phone while searching."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes open the back door, which is more than simply looking at it."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up the phone when the command only asked to look carefully at it."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It again narrates Kristin stepping into the house as if re-entering the scene."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes open the back door instead of only looking at it."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She picks up and handles the phone, going beyond merely looking at it."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It says she pulls open a workstation drawer, but canon says the drawers are shut."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "Looking at the back door and noticing damage fits the command and existing facts."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone was already picked up in turn 1, so describing it still on the floor conflicts; picking it up again also exceeds looking."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It narrates Kristin stepping into the house again and reintroduces already-seen details as new."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She pushes open the back door instead of just looking at it."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It again has Kristin step into the house and rediscover the room layout."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It describes the phone on the floor after earlier narration had her pick it up, and reaching for it goes beyond looking."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house, and says she begins searching drawers though canon says the drawers are shut."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the phone is fine, but Kristin also picks it up, which was not requested."
+        },
+        {
+          "turn": 2,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The search turns into opening a drawer, which goes beyond searching for the bag generally."
+        },
+        {
+          "turn": 3,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "no",
+          "reason": "She only moves close enough to inspect the back door, matching the command."
+        },
+        {
+          "turn": 4,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone was previously picked up in turn 1, so describing it as still lying on the floor conflicts; picking it up again also exceeds the command."
+        },
+        {
+          "turn": 5,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It describes Kristin stepping into the house again as if newly arriving in the scene."
+        },
+        {
+          "turn": 6,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Looking at the back door becomes pushing it open, which is an extra physical action."
+        },
+        {
+          "turn": 7,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "The phone had already been picked up earlier, so saying it lies on the floor conflicts; picking it up again exceeds the command."
+        },
+        {
+          "turn": 8,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "yes",
+          "reason": "It restarts with Kristin stepping into the house again and has her open drawers beyond the requested search."
+        },
+        {
+          "turn": 9,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "She is told to look at the back door, but the narration has her push it open."
+        },
+        {
+          "turn": 10,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "It again places the phone on the floor after earlier narration had Kristin pick it up, and she picks it up without being told to."
+        },
+        {
+          "turn": 11,
+          "contradicts_stated_fact": "no",
+          "protagonist_acts_beyond_command": "no",
+          "restarts_scene": "yes",
+          "reason": "It restarts the scene by describing Kristin stepping into the house again."
+        },
+        {
+          "turn": 12,
+          "contradicts_stated_fact": "yes",
+          "protagonist_acts_beyond_command": "yes",
+          "restarts_scene": "no",
+          "reason": "Opening the back door goes beyond merely looking, and the damage is minimized to a small scratch despite earlier narration and opening describing obvious splintering/forced entry."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

@@ -81,11 +81,12 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone, kristin_laptop]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer]
 item_placements:
   michelle_phone: on the kitchen floor
   kristin_laptop: in Kristin's truck outside the house
-setting_facts: ["Michelle's workstation drawers are shut.", "Michelle's phone is not damaged."]
+  michelle_drawer: in Michelle's workstation
+setting_facts: ["The drawer is shut.", "Michelle's phone is not damaged."]
 entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
@@ -107,7 +108,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials in drawer
+**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; overturned workstation chair; forced back door; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
@@ -116,7 +117,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
-Kristin notices one of the drawers on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
+Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
@@ -148,7 +149,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
 
-An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open drawers, so the card remains undiscovered; they discover and confiscate nothing.
+An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked the front gate with a strip of reflective tape.
 

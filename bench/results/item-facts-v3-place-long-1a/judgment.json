@@ -1,0 +1,29 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening underestablishes the scene: little sensory grounding beyond generic scanning; does not substantially establish the house/crime-scene feel required for an opening.",
+    "Scene 1A.1 is poorly covered: missing tablet and work bag are mostly not established early; forced back door and overturned chair are only briefly named in opening and not meaningfully investigated; the localized/staged nature of the disturbance is not drawn out.",
+    "The carved KMS drawer is mishandled repeatedly. Canon says the drawer is shut; turns inconsistently open/close it, sometimes narrate opening without state change, and fail to inspect beneath it where the hidden card actually is taped.",
+    "Repeated apt searching does not reward investigation. Looking at the phone, drawer, kitchen, and back door mostly yields null/generic responses instead of actionable discoveries the scene canon says are here.",
+    "Turn 7 invents visible 'Michelle's research notes' inside the drawer. The canon for the crucial evidence is a hidden memory card taped beneath the carved drawer; visible research notes in that drawer are unsupported and distract from the authored clue path.",
+    "Turn 10/13 mishandle progression and causality: cue text about KMS appears very late after the player already acted on that drawer, and turn 13 answers 'Look at the back door' by jumping to recovery and reading of the memory card instead of responding locally to the commanded object.",
+    "Scene 1A.2 is not properly dramatized in order. Kristin should find the memory card, then use her laptop in the truck to read it. The scene delays discovery, skips the careful find, inconsistently places the laptop, and reads the files in response to an unrelated command.",
+    "Scene 1A.3 is skipped. The interrupted voice recording with Michelle's warning ('Kristin, do not trust the emergency broadcasts') is never actually delivered to the player.",
+    "Bridge lead to Scene 1B is never properly established in prose. The player is not told that Michelle's files reference an ordinary park bench/dead drop exchange point, so the actionable reason to leave is missing.",
+    "Scene 1A.4 is skipped. The authored welfare-check/search focused on Michelle's research, Kristin's concealment of the card, and the reflective tape on the gate never occur as readable scene content.",
+    "Turn-level world/state consistency is poor: laptop and phone locations contradict prior turns (e.g. laptop set on workstation then suddenly back in truck; phone plugged into laptop 'to charge' then treated as unplugged from wall; carrying/placing actions ignored or reset).",
+    "Turns repeatedly race or stall improperly: many ordinary commands get generic tautological outputs, while one unrelated command dumps a major discovery. This violates progressive revelation and responsive consequence."
+  ],
+  "reasons": [
+    "The scene fails both as individual turns and as a whole scene sequence. It does not cover the authored beats of 1A in order across turns.",
+    "Protected knowledge is not improperly revealed early; that part is safe.",
+    "However, safety alone is insufficient because core local canon, responsiveness, investigation rewards, and required scene beats are missing or wrong."
+  ]
+}

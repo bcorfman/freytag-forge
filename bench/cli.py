@@ -28,11 +28,15 @@ from bench.core import (
     package_and_state,
     preview_rules,
     prompt_for,
+    run_continuity_judges,
     run_escalation_judges,
+    run_fact_tracking_judges,
     run_judges,
     run_scene,
     scenes_scored_for_row,
+    score_continuity_judgments,
     score_escalation_judgments,
+    score_fact_tracking_judgments,
     score_judgments,
     scripts_for,
     successful_ledger_rows,
@@ -100,7 +104,7 @@ def parser() -> argparse.ArgumentParser:
             "\n"
             "  # a specific beat of that scene, with the player's action\n"
             "  python -m bench prompt --scene 1A --beat 1A.2 \\\n"
-            '      --player-input "Search the drawers under her workstation."\n'
+            '      --player-input "Search under the drawer in her workstation."\n'
             "\n"
             "  # read it as text instead of JSON\n"
             "  python -m bench prompt --scene 1A --text\n"
@@ -409,7 +413,8 @@ def _run(args: argparse.Namespace) -> int:
                 f"(run scenes_scored=1, baseline scenes_scored={baseline_coverage}); "
                 "rerun with --allow-coverage-mismatch to compare anyway"
             )
-    planned_turns = sum(len(script["inputs"]) + 1 for script in scripts) * args.replicates
+    continuation_turns = variation.get("_continue_to", {}).get("fixed_turns", 0)
+    planned_turns = sum(len(script["inputs"]) + 1 + continuation_turns for script in scripts) * args.replicates
     projected = planned_turns * 330 / 30
     _confirm(args, projected, len(scripts))
     args.out.mkdir(parents=True, exist_ok=True)
@@ -516,6 +521,58 @@ def _run(args: argparse.Namespace) -> int:
             judgments = []
             escalation = score_escalation_judgments([], 0)
         judge_failure_reason = judge_failure_reason or escalation_failure_reason
+    continuity = None
+    continuity_failure_reason = None
+    if variation.get("continuity_judge", False):
+        continuity_path = args.out / "continuity-judgments.json"
+        try:
+            continuity_judged = (
+                run_continuity_judges(pending, continuity_path) if judged_runs else {"judgments": [], "judge_calls": 0}
+            )
+            continuity_judgments = continuity_judged["judgments"]
+            if len(continuity_judgments) != len(judged_runs):
+                raise RuntimeError(
+                    f"continuity judge returned {len(continuity_judgments)} result(s) for "
+                    f"{len(judged_runs)} completed run(s)"
+                )
+            continuity = score_continuity_judgments(
+                continuity_judgments,
+                continuity_judged.get("judge_calls", 0),
+            )
+        except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
+            continuity_failure_reason = _failure_reason(error)
+            failed_runs.extend(judged_runs)
+            judged_runs = []
+            judgments = []
+            continuity = score_continuity_judgments([], 0)
+        judge_failure_reason = judge_failure_reason or continuity_failure_reason
+    fact_tracking = None
+    fact_tracking_failure_reason = None
+    if variation.get("fact_tracking_judge", False):
+        fact_tracking_path = args.out / "fact-tracking-judgments.json"
+        try:
+            fact_tracking_judged = (
+                run_fact_tracking_judges(pending, fact_tracking_path)
+                if judged_runs
+                else {"judgments": [], "judge_calls": 0}
+            )
+            fact_tracking_judgments = fact_tracking_judged["judgments"]
+            if len(fact_tracking_judgments) != len(judged_runs):
+                raise RuntimeError(
+                    f"fact-tracking judge returned {len(fact_tracking_judgments)} result(s) for "
+                    f"{len(judged_runs)} completed run(s)"
+                )
+            fact_tracking = score_fact_tracking_judgments(
+                fact_tracking_judgments,
+                fact_tracking_judged.get("judge_calls", 0),
+            )
+        except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
+            fact_tracking_failure_reason = _failure_reason(error)
+            failed_runs.extend(judged_runs)
+            judged_runs = []
+            judgments = []
+            fact_tracking = score_fact_tracking_judgments([], 0)
+        judge_failure_reason = judge_failure_reason or fact_tracking_failure_reason
     if judgments:
         (args.out / "judgment.json").write_text(
             json.dumps(judgments[0], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -529,12 +586,19 @@ def _run(args: argparse.Namespace) -> int:
     )
     if escalation is not None:
         aggregate["escalation"] = escalation
+    if continuity is not None:
+        aggregate["continuity"] = continuity
+    if fact_tracking is not None:
+        aggregate["fact_tracking"] = fact_tracking
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
         "actual_narration_requests": sum(run["narration_requests"] for run in runs),
         "estimated_workers_ai_neurons_from_requests": sum(run["narration_requests"] for run in runs) * 330 / 30,
-        "actual_openai_judge_calls": judged.get("judge_calls", 0) + (escalation or {}).get("judge_calls", 0),
+        "actual_openai_judge_calls": judged.get("judge_calls", 0)
+        + (escalation or {}).get("judge_calls", 0)
+        + (continuity or {}).get("judge_calls", 0)
+        + (fact_tracking or {}).get("judge_calls", 0),
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:

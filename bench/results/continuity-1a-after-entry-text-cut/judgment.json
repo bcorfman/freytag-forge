@@ -1,0 +1,39 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": true,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening lacks substantial sensory establishment beyond a brief visual summary.",
+    "Scene 1A.1 is only partially covered and never meaningfully reconciled into abduction suspicion.",
+    "Repeated searches for the work bag and clues produce no actionable discovery despite canon saying the scene should reward investigation.",
+    "Michelle's workstation drawer with newly carved KMS initials is never noticed or examined.",
+    "Michelle's hidden memory card is never found.",
+    "Kristin's laptop in her truck is never used.",
+    "Continuity Initiative files are never read.",
+    "Michelle's research note 'They are not preparing to protect people. They are preparing to choose who remains.' is never revealed.",
+    "Michelle's interrupted voice recording is never heard.",
+    "The concrete lead to the park bench is never given to the player.",
+    "The federal patrol welfare-check/search beat is not actually dramatized; only off-screen complication text appears.",
+    "The officers' specific interest in Michelle's research is never shown in narration.",
+    "The reflective tape marking on the front gate is never noticed.",
+    "No transition reason is established in prose because the actionable lead is never found.",
+    "Turn 5 introduces unlocking Michelle's phone and viewing missed calls/texts, which is not an authored scene beat and replaces the requested search result."
+  ],
+  "reasons": [
+    "The scene stays in the correct location with the correct principal characters/items, and it does not leak protected knowledge.",
+    "However, it fails scene canon because the authored beats for 1A.2, 1A.3, and 1A.4 are skipped entirely, and even 1A.1 is weakly handled.",
+    "Ordinary turns do not produce responsive consequences: the player repeatedly searches for Michelle's work bag and clues, but narration loops back to the phone or generic searching without new actionable information.",
+    "The canon explicitly says the KMS-carved drawer should be noticed as worth closer inspection; the scene never surfaces that clue, blocking the hidden memory card unfairly.",
+    "The memory card, laptop-in-truck step, Continuity Initiative revelation, warning recording, and park-bench lead are mandatory authored content for this scene arc and are absent.",
+    "Pressure text about the patrol returning is insufficient substitute for dramatizing the welfare check/search interaction the player actually experiences.",
+    "The scene is not progressive: it stalls in repetitive phone examination instead of advancing from physical evidence, to hidden evidence, to warning, to official threat.",
+    "The opening, though serviceable, is not richly established enough given that an opening was supplied and should ground the house with stronger sensory scene-setting.",
+    "No protected knowledge is revealed early, so that criterion passes.",
+    "Because the player never learns what was found and where it points, there is no motivated exit toward Scene 1B."
+  ]
+}

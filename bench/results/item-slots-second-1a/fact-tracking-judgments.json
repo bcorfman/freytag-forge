@@ -1,0 +1,410 @@
+{
+  "judgments": [
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hand",
+              "cause": "narrator"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "unlocked by Kristin",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration contradicts the given undamaged phone by calling the screen cracked, and after invents recently used/charged conditions not clearly established."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Kristin",
+              "change": "moved to the living room/workstation area",
+              "cause": "command"
+            }
+          ],
+          "reason": "After invents many changes not shown: phone dropped/damaged, drawers moved/opened, back door changed, and laptop moved to Kristin's hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "the back door",
+              "change": "its frame is described as recently damaged/forced",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration says the door frame shows damage, but after keeps the door secure instead of recording the forced state."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the floor to Kristin's hand",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "After adds lit status, but narration only says she examines the dark cracked phone and picks it up."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Michelle's work bag",
+              "change": "found on the floor near the couch",
+              "cause": "command"
+            }
+          ],
+          "reason": "Narration adds the work bag's location, and nothing in after conflicts with tracked facts."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "screen flickers to life / functioning confirmed",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "After matches the already damaged lit phone and records no extra changes."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [],
+          "reason": "Narration wrongly places the phone lying on the coffee table even though before says it is in Kristin's hand, but after itself does not change."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration is consistent with the existing damaged lit phone in Kristin's hand, and after adds nothing unsupported."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [],
+          "reason": "Narration again wrongly says the phone lies on the coffee table despite before saying Kristin is holding it, but after remains unchanged."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration matches the already closed damaged back door, and after correctly keeps the same facts."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hand",
+              "cause": "narrator"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "screen lit up and showed a password prompt",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "After matches narration, but narration says the screen is cracked, conflicting with given fact that the phone was not damaged."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Michelle's workstation drawers",
+              "change": "first drawer changed from shut to open/slightly ajar",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Drawer opening was shown, but after wrongly moved the drawers as a location and invented Kristin's laptop being in her hand."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only re-describes the back door; after invents the workstation drawers becoming closed."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration shows no item change, but after changes phone conditions and drawer condition."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration adds observations about missing bag but shows no tracked item state change, and after stays the same."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only examines the back door, and after correctly keeps all facts unchanged."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Trying phone combinations does not visibly change tracked item state; after correctly remains unchanged."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration confirms the work bag is absent but changes none of the tracked items, and after matches that."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Only inspection of the back door occurs; after correctly records no change."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration keeps the phone locked with password prompt, so unchanged after is correct."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Searching and not finding the bag does not change tracked item facts, and after remains consistent."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only describes the already-forced back door as slightly ajar; after unchanged is fine."
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "turn": 1,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "moved from the kitchen floor to Kristin's hands",
+              "cause": "narrator"
+            },
+            {
+              "thing": "Michelle's phone",
+              "change": "condition changed to cracked and lit",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration newly says the phone is cracked, conflicting with given fact not damaged, though after-state matches the narration."
+        },
+        {
+          "turn": 2,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Laptop condition changed to none in after-state, but narration showed no change to the laptop."
+        },
+        {
+          "turn": 3,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only re-describes the back door; after-state matches."
+        },
+        {
+          "turn": 4,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [
+            {
+              "thing": "Michelle's phone",
+              "change": "condition shown as locked",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration still shows the screen flickering/displaying, so lit was missed, and after-state drops lit without narration showing it stop being lit."
+        },
+        {
+          "turn": 5,
+          "facts_after_correct": "no",
+          "missed_change": "no",
+          "invented_change": "yes",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "After-state adds workstation drawers as unlocked, but narration never mentions the drawers changing."
+        },
+        {
+          "turn": 6,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "the back door",
+              "change": "moved from closed/open hanging to being pushed open",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration says fresh paint from recent repairs, conflicting with the previously splintered forced door, and the door was pushed open but after-state did not record it as open."
+        },
+        {
+          "turn": 7,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Examining the phone shows no definite state change beyond existing cracked and locked."
+        },
+        {
+          "turn": 8,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only reports search results; no tracked item changes occur."
+        },
+        {
+          "turn": 9,
+          "facts_after_correct": "no",
+          "missed_change": "yes",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "yes",
+          "changes": [
+            {
+              "thing": "the back door",
+              "change": "moved to an open state when Kristin pushes it open",
+              "cause": "narrator"
+            }
+          ],
+          "reason": "Narration again implies fresh recent repairs conflicting with the damaged door, and opening the door was not recorded in after-state."
+        },
+        {
+          "turn": 10,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration does not clearly change any tracked fact; after-state is consistent enough."
+        },
+        {
+          "turn": 11,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration finds keys and wallet elsewhere but does not change any tracked item's state."
+        },
+        {
+          "turn": 12,
+          "facts_after_correct": "yes",
+          "missed_change": "no",
+          "invented_change": "no",
+          "narration_contradicts_given_facts": "no",
+          "changes": [],
+          "reason": "Narration only re-inspects the back door; after-state matches."
+        }
+      ]
+    }
+  ],
+  "judge_calls": 3
+}

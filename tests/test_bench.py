@@ -22,6 +22,7 @@ from bench.core import (
     score_judgments,
     welch_t_test,
 )
+from bench.item_facts import _MATCH_SYSTEM
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -161,11 +162,11 @@ def test_overlay_changes_effective_package_hash_and_assembled_prompt() -> None:
     example = load_variation(VARIATION)
     overlay = load_variation(OVERLAY_VARIATION)
     assert overlay["_package_hash"] != example["_package_hash"]
-    assert "KMS initials in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
+    assert "KMS initials carved in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
 
     prompt = prompt_for(overlay, "1A", PLAYER_INPUT)
     assert "- KMS initials carved beneath the drawer" in prompt["user"]
-    assert "- KMS initials in drawer" not in prompt["user"]
+    assert "- KMS initials carved in drawer" not in prompt["user"]
 
 
 def test_ledger_rows_round_trip_through_log(tmp_path, capsys) -> None:
@@ -312,6 +313,7 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
     class FakeProvider:
         request_count = 0
         recovery_count = 0
+        last_projection = None
 
         def opening(self) -> dict[str, object]:
             return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
@@ -337,6 +339,151 @@ def test_run_scene_records_a_narration_safety_rejection_instead_of_crashing(monk
 
     assert result["status"] == "failed"
     assert "invalid_grounding_reference" in result["failure_reason"]
+
+
+def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monkeypatch) -> None:
+    payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": []}],
+        "selected_knowledge_ids": [],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+        last_projection = None
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            return payload
+
+    variation = {
+        "name": "fixed-turns",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: FakeProvider())
+
+    result = core.run_scene(
+        variation,
+        "1A",
+        {"name": "fixed", "inputs": ["Go out to your truck and bring your laptop inside."]},
+    )
+
+    assert result["status"] == "ok"
+    assert result["fixed_turns"] == 3
+    assert [turn["turn_number"] for turn in result["turns"]] == [1, 2, 3]
+    assert result["rejected_turns"] == []
+    assert all("narrated_command" in turn for turn in result["turns"])
+    assert result["turns"][0]["narrated_command"] == "Go out to your truck. Bring your laptop inside."
+
+
+def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+
+    def request(_provider, payload):
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": [], "same_as": {"receipt": "receipt"}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin examines the room."}],
+            "selected_knowledge_ids": [],
+            "item_facts": {"receipt": {"place": "on the ground", "condition": ["crumpled"]}},
+        }
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
+    variation["_fixed_turns"] = 1
+    result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
+
+    turn = result["turns"][0]
+    assert turn["item_facts_after"]["receipt"] == {"place": "on the ground", "condition": ["crumpled"]}
+    assert turn["item_facts_held"] == []
+    assert turn["item_facts_resolutions"] == {"receipt": "new"}
+
+
+def test_run_scene_fixed_turns_records_rejection_and_continues(monkeypatch) -> None:
+    rejected_payload = {
+        "segments": [{"kind": "narration", "text": "A quiet detail.", "grounding_ids": ["k_invented_source"]}],
+        "selected_knowledge_ids": [],
+    }
+    accepted_payload = {
+        "segments": [{"kind": "narration", "text": "A known detail.", "grounding_ids": []}],
+        "selected_knowledge_ids": [],
+    }
+
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+        last_projection = None
+
+        def __init__(self) -> None:
+            self.payloads = iter((rejected_payload, accepted_payload, accepted_payload))
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            return next(self.payloads)
+
+    provider = FakeProvider()
+    variation = {
+        "name": "fixed-rejection",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: provider)
+
+    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "ok"
+    assert [turn["turn_number"] for turn in result["turns"]] == [2, 3]
+    rejection = result["rejected_turns"][0]
+    assert rejection["turn_number"] == 1
+    assert rejection["player_input"] == "Search the drawer."
+    assert rejection["rejection_code"] == "invalid_grounding_reference"
+    assert rejection["rejection_reason"]
+    assert result["rejected_turn_count"] == 1
+
+
+def test_run_scene_fixed_turns_provider_outage_still_fails(monkeypatch) -> None:
+    class FakeProvider:
+        request_count = 0
+        recovery_count = 0
+
+        def opening(self) -> dict[str, object]:
+            return {"segments": [{"kind": "narration", "text": "A quiet house."}]}
+
+        def __call__(self, _: str) -> dict[str, object]:
+            raise NarrationProviderError("provider down", 503, "PROVIDER_DOWN")
+
+    variation = {
+        "name": "fixed-outage",
+        "_package_path": str(PACKAGE),
+        "_fixed_turns": 3,
+        "_prompt_variant": {"include_output_example": True, "output_example": "{}", "beat_delivery": "details"},
+    }
+    monkeypatch.setattr(core, "provider_for", lambda *_: FakeProvider())
+
+    result = core.run_scene(variation, "1A", {"name": "fixed", "inputs": ["Search the drawer."]})
+
+    assert result["status"] == "failed"
+    assert result["fixed_turns"] == 3
+    assert "PROVIDER_DOWN" in result["failure_reason"]
+
+
+@pytest.mark.parametrize("fixed_turns", [True, 0, -1, "12"])
+def test_invalid_fixed_turns_are_rejected(tmp_path, fixed_turns) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["fixed_turns"] = fixed_turns
+    path = tmp_path / "invalid-fixed-turns.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="fixed_turns must be a positive integer"):
+        load_variation(path)
 
 
 def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None:
@@ -770,6 +917,135 @@ def test_non_boolean_escalation_judge_is_rejected(tmp_path) -> None:
     path.write_text(json.dumps(source), encoding="utf-8")
 
     with pytest.raises(ValueError, match="escalation_judge must be a boolean"):
+        load_variation(path)
+
+
+def test_continuity_judge_is_opt_in_and_added_to_summary_ledger_and_spend(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "continuity-arm",
+        "continuity_judge": True,
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA}
+    judgment["missing_or_wrong"] = []
+    continuity_judgment = {
+        "turns": [
+            {
+                "turn": 1,
+                "contradicts_stated_fact": "yes",
+                "protagonist_acts_beyond_command": "no",
+                "restarts_scene": "no",
+                "reason": "The phone is cracked.",
+            }
+        ]
+    }
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [{"player_input": "Inspect the drawer.", "narration": "The drawer catches."}],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(
+        bench_cli,
+        "run_continuity_judges",
+        lambda *_: {"judgments": [continuity_judgment], "judge_calls": 2},
+    )
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["continuity"]["contradicts_stated_fact"] == {"yes": 1, "no": 0}
+    assert summary["continuity"]["turns_judged"] == 1
+    assert summary["budget"]["actual_openai_judge_calls"] == 3
+    row = ledger_rows(ledger)[0]
+    assert row["continuity"] == summary["continuity"]
+    assert row["spend"]["judge_calls"] == 3
+
+
+def test_continuity_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "ordinary-arm",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Inspect the drawer."]}
+    judgment = {criterion: False for criterion in CRITERIA} | {"missing_or_wrong": []}
+    record = {
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "_confirm", lambda *_: None)
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(bench_cli, "run_continuity_judges", lambda *_: pytest.fail("opt-in judge was called"))
+    ledger = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", ledger)
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path / "run"),
+        ]
+    )
+    assert bench_cli._run(args) == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert "continuity" not in summary
+    assert "continuity" not in ledger_rows(ledger)[0]
+
+
+def test_non_boolean_continuity_judge_is_rejected(tmp_path) -> None:
+    source = json.loads(VARIATION.read_text(encoding="utf-8"))
+    source["continuity_judge"] = "yes"
+    path = tmp_path / "invalid-continuity.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+    with pytest.raises(ValueError, match="continuity_judge must be a boolean"):
         load_variation(path)
 
 

@@ -1,0 +1,132 @@
+{
+  "judgments": [
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 2 invents a note/compartment instead of the hidden memory card beneath the carved drawer; the drawer's shut state is mishandled.",
+        "Scene 1A.1 is only thinly established: missing tablet/work bag and the significance of the localized disorder are not meaningfully conveyed in responsive play.",
+        "The opening and early turns lack substantial sensory scene establishment for the house-as-crime-scene setup.",
+        "The scene fails to reward direct investigation of the carved drawer/work area with the authored discovery of the memory card.",
+        "Scene 1A.2 is skipped: Kristin never secures the memory card and never uses her laptop to read Michelle's files in the truck.",
+        "Scene 1A.3 is skipped: no authored voice recording, no warning not to trust emergency broadcasts, no interrupted intrusion on the recording.",
+        "Scene 1A.4 is skipped/misfired: a patrol lingering is mentioned, but there is no proper welfare-check interaction, no targeted questions about Michelle's research, and no reflective tape on the front gate noticed afterward.",
+        "The transition to Scene 1B happens without the required actionable lead from Michelle's files and without the player being told what was found and where it points.",
+        "Turn 8 attempts to leave for the park without earned motivation; narration gives no prose reason tied to discovered evidence.",
+        "Turn 9 in Scene 1B invents non-canon park evidence (receipt, warehouse note), compounding the bad handoff from Scene 1A.",
+        "Repeated apt searching/investigation in Scene 1A keeps returning little or nothing actionable despite canon saying the memory card is here."
+      ],
+      "reasons": [
+        "Scene-local canon requires ordered coverage of 1A.1 through 1A.4 across the scene. This play never delivers the essential middle beats: hidden memory card discovery, file review on Kristin's laptop in the truck, Michelle's interrupted warning, and the patrol's explicit welfare-check/search behavior.",
+        "The carved drawer is the key investigative affordance in this scene. The player opens it directly, and the narration invents a note rather than revealing or leading to the taped memory card beneath the drawer. That is a direct canon failure and a failure to reward investigation.",
+        "The only consistently handled item fact is that Michelle's phone is not damaged. But the phone is not the scene's main lead, and the narration stalls on it while ignoring the authored evidence chain.",
+        "The opening should strongly establish the familiar house transformed into a selective, unsettling crime scene. Instead it gives a brief scan and then mostly flat object handling, without substantial sensory grounding or accumulating consequences.",
+        "Ordinary turns should produce responsive consequences. Several turns are near-null or contradictory, especially around the laptop and repeated phone handling, while core searchable evidence remains undiscovered.",
+        "Protected knowledge is mostly respected, but that alone is not enough: the scene still fails because canon beats are omitted and the scene exits without an earned, narrated pointer to the park.",
+        "A left-scene/handoff moment must tell the player what was found and where it points. Here Kristin simply decides to drive to the park; no memory-card files or bench reference have been discovered in prose, so the departure is unmotivated and invalid."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 2 invents a note/compartment instead of the hidden memory card taped beneath the carved drawer.",
+        "The carved drawer's state is inconsistent: canon says it begins shut and the turn opens it, but item state remains shut afterward.",
+        "Scene 1A.1 evidence is only partially covered and never meaningfully reconciled into abduction suspicion: missing tablet/work bag and forced back door are not developed responsively.",
+        "Scene 1A.2 is skipped: Kristin never finds the memory card, never uses the laptop on it, and never learns the Continuity Initiative files or Michelle's notes.",
+        "Scene 1A.3 is skipped: no interrupted voice recording, no warning not to trust emergency broadcasts.",
+        "Scene 1A.4 is mishandled: patrol pressure appears as a complication before the warning is known, and the actual welfare-check/search interaction and reflective gate tape are never narrated.",
+        "Transition to 1B occurs without the required actionable lead from Michelle's files and without naming in prose what was found and where it points.",
+        "Turn 8 says Kristin leaves for the park with only Michelle's phone; canon requires the park lead to come from Michelle's files on the memory card.",
+        "Turn 10 in Scene 1B fails investigation reward: apt searching of the bench yields nothing actionable despite canon that Michelle's files reference this bench as an exchange point.",
+        "Opening scene establishment is thin: little sensory grounding of the damaged neighborhood/house beyond a quick scan."
+      ],
+      "reasons": [
+        "The supplied playthrough does not stay scene-local to 1A because it exits the house and enters 1B without earning the 1A transition conditions in narration. No memory card is secured, no Michelle lead becomes actionable, and no reason to go to the park is given to the player beyond an unsupported action.",
+        "The central authored beats for Scene 1A are missing or replaced. The hidden canon specifically says a memory card is taped beneath the workstation drawer carved with KMS; the narration substitutes an invented note in a compartment. That breaks item and plot canon.",
+        "Progression is not in the authored order across turns. The scene should move from crime-scene evidence, to hidden card and files/recording, to patrol threat. Instead, it loops on Michelle's phone, introduces patrol pressure early as an offscreen complication, and leaves before the key revelations happen.",
+        "Ordinary turns often lack responsive consequences. Repeated interactions with the phone mostly restate that it is dark/not damaged. Searching the drawer does not uncover the canonical hidden item. Searching the bench later returns nothing despite being the destination of the scene bridge.",
+        "The opening does not substantially establish the house as a vivid, sensory crime scene. It mentions the chair and forced door but omits richer sensory detail and the broader disorder/absence cues needed for an opening under the supplied standards.",
+        "Protected knowledge is not violated, but safety on that axis does not rescue the scene because the required local canon beats and transition motivation are absent."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Opening underestablishes the house scene; little sensory grounding beyond generic scanning.",
+        "Turn 1 fails to reward careful inspection of Michelle's phone with any meaningful observation or consequence tied to scene 1A.1.",
+        "Turn 2 contradicts canon: the carved drawer is shut and hides a memory card taped beneath it, not a note inside; the drawer being 'recently searched' is unsupported.",
+        "Scene 1A.1 evidence is incompletely and weakly dramatized: missing tablet/work bag are never established; forced back door and overturned chair are only briefly mentioned in opening and not meaningfully investigated.",
+        "The hidden memory card is never found in scene 1A, so 1A.2 is skipped.",
+        "Continuity Initiative files, population stabilization centers, and Michelle's research note are never revealed in scene 1A, so 1A.2 is skipped.",
+        "Michelle's interrupted warning recording is never found or heard in scene 1A, so 1A.3 is skipped.",
+        "The welfare-check/search beat is mishandled: only a complication line about an officer lingering appears; no actual patrol interaction, targeted questions, concealment of the card, or reflective tape discovery.",
+        "Scene transitions to 1B without satisfying or narrating the required local lead: no memory card in custody, no actionable park lead from Michelle's files, no patrol-return pressure motivating departure in prose.",
+        "Turn 8 leaves the house for the park without giving the player the authored reason why the park matters; the narration names no files, bench exchange, or pointer from what Kristin found.",
+        "The scene repeatedly fails to reward apt searching of Michelle's work area and phone with actionable discoveries the canon says are present here.",
+        "Several ordinary turns have negligible responsive consequence or muddled state handling (e.g. laptop retrieval, phone pocketing).",
+        "State handling is inconsistent: narration says laptop is retrieved but item state keeps it in the truck; phone is thrown at wall yet later picked up from floor.",
+        "Scene 1B content introduced after an invalid handoff is also nonlocal/canon-unsafe for judging scene 1A continuity, including invented receipt/'old oak' clue not sourced by canon."
+      ],
+      "reasons": [
+        "Judging scene 1A against its authored beats, the scene does not cover 1A.2, 1A.3, or 1A.4 in order across turns, and only lightly touches 1A.1.",
+        "The canon requires Michelle's memory card to remain hidden beneath the carved KMS drawer until found; replacing that with a note is a direct scene-local contradiction.",
+        "The only valid transition out of 1A requires Michelle's lead to become actionable through the memory card/files plus pressure to leave, and the departure narration must tell the player what was found and where it points. That never happens.",
+        "Investigative actions that should naturally surface house evidence or the hidden card mostly return empty or generic narration, so the scene does not reward investigation as required.",
+        "Protected knowledge is mostly respected, but overall canon compliance still fails due to skipped beats, contradictions, weak establishment, and invalid exit."
+      ]
+    },
+    {
+      "verdict": "fail",
+      "canon_consistent": false,
+      "scene_local": false,
+      "progressive": false,
+      "rich": false,
+      "protected_safe": true,
+      "exit_motivated": false,
+      "rewards_investigation": false,
+      "missing_or_wrong": [
+        "Turn 2 invents a note/compartment instead of the hidden memory card beneath the carved drawer; drawer state handling is inconsistent with opening it.",
+        "Scene 1A never delivers the required memory card recovery, laptop use in the truck, Continuity Initiative files, Michelle's notes, or interrupted warning recording.",
+        "Scene 1A never delivers the welfare-check/search beat with officers asking specifically about Michelle's research, nor the reflective tape marking on the front gate.",
+        "The transition from 1A to 1B happens without the required actionable lead being narrated from Michelle's files and without Kristin securing the memory card.",
+        "Turn 8 attempts departure to the park but does not narrate what Kristin found and where it points; left_scene should not hand off successfully on that basis.",
+        "Opening/early turns establish the house only thinly and omit key scene evidence such as missing tablet/work bag and the localized nature of the disturbance.",
+        "Repeated investigation of authored evidence does not reward the player with actionable discoveries; searching the bench in 1B also returns nothing despite canon saying Michelle's files point there.",
+        "Turn 6/7 handling of the phone is physically inconsistent: after being thrown against the wall it is said to be picked up there, then next turn picked up from the floor.",
+        "Turn 4/5 laptop continuity is muddled: she retrieves the laptop, then 'carry your laptop back out to the truck' narrates grabbing it from the truck again rather than reflecting current possession.",
+        "Turn 9 in scene 1B projects later beats without having covered 1B's entrance logic from 1A."
+      ],
+      "reasons": [
+        "Scene 1A's authored beats were not covered in order across its turns. 1A.1 is only partially touched, while 1A.2, 1A.3, and 1A.4 are effectively skipped.",
+        "The judge requires scene-local canon only. The scene departs to 1B without the local prerequisites being actually narrated to the player: no memory card in custody, no Michelle files, no park-bench lead.",
+        "The narration repeatedly misses responsive consequences on ordinary investigative turns. Looking at the phone, opening the carved drawer, and retrieving the laptop should have advanced the crime-scene and hidden-evidence beats much more concretely.",
+        "Investigation is not rewarded. The most important searchable object in the scene—the carved drawer with KMS—returns a fabricated note instead of the canon memory card, and later searches never recover the required evidence.",
+        "Pacing/progression is poor: later-beat projections appear in metadata, but the readable narration does not progressively reveal Michelle's investigation. It stalls, then jumps scenes.",
+        "Protected knowledge is not leaked early, which is the one major criterion the scene does satisfy.",
+        "The opening has some atmosphere but is not substantial enough given the supplied opening requirement; it should more fully establish the disrupted house, forced back door, workstation, kitchen, and the emotionally familiar space turned crime scene.",
+        "Exit motivation fails. Even if the system moved to 1B, the player was not told in prose that Michelle's files referenced an ordinary park bench or that Kristin was following that lead, so the handoff is unjustified from the player's read text."
+      ]
+    }
+  ],
+  "judge_calls": 4
+}

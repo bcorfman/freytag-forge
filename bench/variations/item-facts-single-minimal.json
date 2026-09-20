@@ -1,0 +1,65 @@
+{
+  "name": "item-facts-single-minimal",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 12,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed": {
+      "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
+      "drawer": {"place": "in Michelle's workstation", "condition": ["shut"]},
+      "the back door": {"place": "at the back of the kitchen", "condition": ["forced open", "frame splintered"]},
+      "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []}
+    }
+  },
+  "system_prompt": {
+    "rules": [
+      "Show what happens right after the player acts.",
+      "Use only what the SCENE and THINGS sections tell you.",
+      "Do not make up new objects, clues, or things inside containers.",
+      "A character may only say what you were told that character can say.",
+      "Never write IDs or story bookkeeping into the prose.",
+      "Do not copy sentences from the SCENE section."
+    ],
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"on the table\",\"condition\":[\"dark\"]}}}"
+  },
+  "overrides": {
+    "knowledge.yaml": {
+      "replacements": [
+        {
+          "old": "Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor.",
+          "new": "Michelle has not answered her calls or her early-morning text."
+        },
+        {
+          "old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.",
+          "new": "The house is quiet and Michelle is missing."
+        }
+      ]
+    },
+    "plot.md": {
+      "replacements": [
+        {
+          "old": "Michelle's phone on the kitchen floor; ",
+          "new": ""
+        },
+        {
+          "old": "* Michelle's phone remains on the kitchen floor undamaged.\n",
+          "new": ""
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "phone-bag-door",
+        "inputs": [
+          "Look carefully at Michelle's phone.",
+          "Search for Michelle's work bag and any clue to where she went.",
+          "Look at the back door."
+        ]
+      }
+    ]
+  }
+}
