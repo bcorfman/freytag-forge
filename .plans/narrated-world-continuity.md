@@ -1,8 +1,9 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-19): Phase 0 bench work is in round 8 on branch
-`narration-phone-fixes`, HEAD `45f431a`, working tree clean apart from the
-untracked `bench/results/item-facts-v8-smoke-two-scene-1a/`. Nothing is running.
+Status (2026-09-19, evening): Phase 0 bench work is in round 8. All of round 8
+is now merged to `main` (PR #469 from `narration-phone-fixes`, PR #470 from
+`narrated-beat`), HEAD `38bf187`, tree clean, nothing running, full suite green
+(649 tests, no deselections - the worker-URL test is hermetic since 2b8d6b3).
 
 Round 8 is Brandon's line-by-line review of every round 7 turn
 (`bench/results/round7.md`, his comments inline) turned into fixes. All of its
@@ -691,9 +692,10 @@ Order:
 
 **State at hand-off (2026-09-19)**
 
-Branch `narration-phone-fixes`, HEAD `45f431a`, nothing running, tree clean
-apart from the untracked `bench/results/item-facts-v8-smoke-two-scene-1a/`
-(round 7's smoke; its ledger row was removed, keep it untracked or delete it).
+`main` at `38bf187`, nothing running, tree clean, full suite green (649
+tests). Round 8 reached main through PR #469 (`narration-phone-fixes`) and PR
+#470 (`narrated-beat`, Brandon's 2B.2 writing fix plus a stale-beat test
+revision); round 7's smoke directory is now committed.
 
 Round 8 commits, oldest first:
 
@@ -728,19 +730,18 @@ Open items, in the order to pick them up:
    a receipt now that beat 1B.1 reaches the prompt. Then build the round 8
    report with `bench/failure_report.py` and put Brandon's comments in it as in
    round 7.
-2. **Beat 2B.2 "Kristin Was Bait" reaches no realization** (found while doing
-   C1(a)). It is a source beat of SL-2B-B, but both realizations assert only
-   Brandon's JANUS role, so nothing links 2B.2 and the narrator can never be
-   told it; meanwhile the fact `archive_crisis_understood` is described as
-   Kristin having learned "the bait/Brandon revelations". This is a writing
-   problem, so per Brandon's standing practice it goes to ChatGPT Desktop with
-   a self-contained prompt: add a third realization SL-2B-B-R3 with
-   `source_beats: [scene-2b2--kristin-was-bait]` asserting a new fact
-   `kristin_was_bait`, its knowledge record `k_sl_2b_b_r3` modelled on
-   `k_sl_2b_b_r1`, and a line under SL-2B-B's **Possible realizations** in
-   `storylets.md`; no code and no `plot.md` change. Apply the result through a
-   Ringer task whose check loads the package, because the loader now rejects a
-   realization naming a beat outside its own storylet.
+2. ~~**Beat 2B.2 "Kristin Was Bait" reaches no realization.**~~ DONE by
+   Brandon in ChatGPT Desktop, merged as PR #470 (`5407346`). SL-2B-B gained a
+   third realization SL-2B-B-R3 with
+   `source_beats: [scene-2b2--kristin-was-bait]`, asserting a new fact
+   `kristin_was_bait` declared in `world.yaml`, `knowledge.yaml` and the
+   route file's `new_fact_ids`; knowledge record `k_sl_2b_b_r3` is modelled on
+   `k_sl_2b_b_r1` and gated on `janus_evidence`; the storylet's completion
+   became `any_fact_true: [brandon_janus_role_known, kristin_was_bait]`, so
+   either revelation can complete it; `storylets.md` gained the matching
+   realization and effect lines. Verified: the package loads, every beat of
+   every storylet is now linked by some realization (none orphaned), and the
+   full suite passes.
 3. **Merge Ringer's `check-timeout-override`**, then raise task check timeouts
    and correct the AGENTS.md line about `RINGER_CHECK_TIMEOUT_S`.
 4. **Carry the judge calibration into the repo.** Brandon's round 7 rulings are
