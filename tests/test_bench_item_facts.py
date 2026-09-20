@@ -68,10 +68,12 @@ def test_single_call_rules_require_facts_for_every_change():
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-        "Example: if she drops a cup and it cracks in two, the cup is "
+        "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
         '"condition": ["cracked in two"]}.'
     )
+    assert 'falls, so the cup is {"place": "on the floor"' in system
+    assert '"condition": ["cracked in two"]' in system
     assert "Also return item_facts" not in system
 
 
