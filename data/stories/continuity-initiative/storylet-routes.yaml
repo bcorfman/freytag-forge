@@ -214,6 +214,11 @@ new_fact_ids:
   used_by_storylets:
   - SL-2B-A
   used_by_transitions: []
+- id: kristin_was_bait
+  definition: Charles left Michelle’s evidence accessible so Kristin would expose Brandon’s hidden network.
+  used_by_storylets:
+  - SL-2B-B
+  used_by_transitions: []
 - id: brandon_janus_role_known
   definition: Kristin knows Brandon helped develop JANUS.
   used_by_storylets:
@@ -1332,10 +1337,23 @@ storylets:
     - t_2b_2c
     protected_knowledge_boundaries:
     - phase_two
+  - id: SL-2B-B-R3
+    dramatic_intent: Reveal that Charles expected Kristin to seek Brandon and left Michelle’s evidence accessible to expose Brandon’s hidden network.
+    source_beats: [scene-2b2--kristin-was-bait]
+    operations:
+    - op: assert
+      fact_id: kristin_was_bait
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_2b_2c
+    protected_knowledge_boundaries:
+    - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: brandon_janus_role_known
-      equals: true
+    - any_fact_true:
+      - brandon_janus_role_known
+      - kristin_was_bait
     abort_when:
     - scene_id_not: 2B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations

@@ -1,0 +1,32 @@
+{
+  "verdict": "fail",
+  "canon_consistent": false,
+  "scene_local": false,
+  "progressive": false,
+  "rich": false,
+  "protected_safe": true,
+  "exit_motivated": false,
+  "rewards_investigation": false,
+  "missing_or_wrong": [
+    "Opening lacks substantial scene establishment for the house beyond generic stale air/silence.",
+    "Turn 1 examining Michelle's phone gives no meaningful detail or consequence; misses chance to connect phone on kitchen floor to missing tablet/work bag or localized disturbance.",
+    "Scene 1A.1 beats largely absent: no overturned workstation chair, no forced back door, no missing tablet/work bag, no localized/staged disorder, no abduction suspicion earned.",
+    "Turn 2 explicitly asks to open the carved drawer, but narration only has Kristin look at it; the drawer remains shut with no responsive consequence.",
+    "Hidden memory card is never found in Scene 1A despite direct investigation of the drawer/workstation area.",
+    "Continuity Initiative files, population stabilization centers, and Michelle's alarming note are never discovered in Scene 1A.",
+    "Interrupted warning recording is never discovered or heard in Scene 1A.",
+    "Federal welfare-check/search scene is not properly dramatized: only a complication line about an officer lingering; no patrol arrival, questioning, targeted office search, concealment of card, or reflective tape mark.",
+    "Transition to Scene 1B occurs without the required actionable lead from Michelle's files/card and without prose naming what was found and where it points.",
+    "At turn 8 the player leaves for the park arbitrarily with Michelle's broken phone; no scene-local reason connects the park to discovered evidence.",
+    "Scene introduces non-canon evidence in 1B: receipt/note about 'old warehouse at midnight' instead of park-bench source lead from Michelle's files.",
+    "Item continuity error: turn 3 says Kristin reaches for Michelle's phone on the table, but canon and prior turns place it elsewhere (in hands/from kitchen floor).",
+    "Ordinary investigative turns repeatedly return little or nothing actionable, failing to reward apt searching of phone, drawer, workstation, and laptop route.",
+    "Scene progression skips authored beat order for 1A: 1A.1 not established, 1A.2/1A.3 not achieved, 1A.4 not achieved before departure."
+  ],
+  "reasons": [
+    "The judge must evaluate Scene 1A against its local canon and beat order. This playthrough does not cover the mandatory authored beats of the scene.",
+    "Responsive consequences are weak throughout: examining the phone, opening the drawer, and moving the laptop mostly just restate object movement without discoveries or meaningful pressure.",
+    "The transition trigger in canon requires memory_card_in_kristins_custody, michelle_lead_actionable, and patrol_return_pressure; the narrated departure supplies none of the required player-facing discoveries.",
+    "Protected knowledge is not leaked early, but safety on that axis does not rescue the scene from major canon and progression failures."
+  ]
+}

@@ -219,10 +219,11 @@ def test_scene_1a_handoff_recovers_card_atomically_with_continuity_files() -> No
 
 
 def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -> set[str]:
-    """Every fact still committable from this state, ignoring turn order."""
+    """Every fact still committable from this state, including Deadline recovery."""
 
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
-    facts = set(seed_facts) | pacing_facts
+    delivery_facts = {delivery.fact_id for delivery in package.deliveries}
+    facts = set(seed_facts) | pacing_facts | delivery_facts
     changed = True
     while changed:
         changed = False
@@ -250,13 +251,13 @@ def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -
 
 
 def test_no_single_reveal_can_strand_a_scene_exit() -> None:
-    """No realization may consume the only route to its own scene's exit.
+    """No realization may make its scene exit unreachable.
 
     A storylet fires once. When two authored beats share a storylet and only one
     of them establishes the outgoing trigger, choosing the other permanently
-    strands the player: recovering Michelle's damaged recording used to consume
-    Scene 1A's only source of `michelle_lead_actionable`, leaving the game
-    unwinnable in the opening scene.
+    strands the player unless a canonical bridge or its Deadline delivery can
+    still establish the exit fact. Storylets are optional guidance; the
+    Deadline is the authored recovery path for a missed bridge prerequisite.
     """
 
     stranded = []
