@@ -99,16 +99,15 @@ is always told the current state.
   script that executes the artifact and fails loudly with reasons, confirms the
   check fails on the unmodified build, reviews the patch, then applies and
   commits it. Worktrees start detached at HEAD: commit before running.
-- **A Ringer check is killed after 60 seconds** on Ringer's current main: the
-  limit is the constant `CHECK_TIMEOUT_S` in `ringer.py` and no override exists
-  there, so `RINGER_CHECK_TIMEOUT_S` (in AGENTS.md) does nothing yet. Until the
-  branch below is merged, give each task's check only the test files its change
-  touches (about 15 seconds), and run the full suite yourself before applying
-  the patch. Ringer branch `check-timeout-override` (`1d074ea` in
-  `~/dev/ringer`, 269 tests pass) adds a per-task `check_timeout_s` and
-  `RINGER_CHECK_TIMEOUT_S` as a run default; once it is on main, raise the
-  timeout and let checks run `TMPDIR=/tmp uv run pytest -q` (about 4 minutes),
-  and correct the AGENTS.md line.
+- **Raise a slow check's timeout explicitly.** A Ringer check is killed after 60
+  seconds unless the task sets `"check_timeout_s": 900` or the run sets
+  `RINGER_CHECK_TIMEOUT_S=900`; `timeout_s` covers only the worker. Both
+  settings exist as of `~/dev/ringer` commit 6b3f85e (merged locally on
+  2026-09-19, not upstream), proven by a run whose check slept 75 seconds and
+  still reported. On any other machine, check that `check_timeout_for` exists
+  in `ringer.py` first: while it did not, two checks in round 8 were killed
+  mid-suite and retried for nothing, which is indistinguishable from a failing
+  check.
 - **Billed runs**: smoke-test one replicate and read the artifacts before any
   larger run. Keep only successful rows in `bench/results/ledger.jsonl`; remove
   failed rows and smoke-run rows.
@@ -742,8 +741,12 @@ Open items, in the order to pick them up:
    realization and effect lines. Verified: the package loads, every beat of
    every storylet is now linked by some realization (none orphaned), and the
    full suite passes.
-3. **Merge Ringer's `check-timeout-override`**, then raise task check timeouts
-   and correct the AGENTS.md line about `RINGER_CHECK_TIMEOUT_S`.
+3. ~~**Merge Ringer's `check-timeout-override`.**~~ DONE 2026-09-19: merged to
+   the local Ringer main (`6b3f85e`), README credit added for the project's
+   contributor rule (`d368115`), 269 tests pass, and a proof run confirmed a
+   check may now sleep 75 seconds. AGENTS.md and the working rule above now
+   describe `check_timeout_s`. Not pushed: `origin` is
+   NateBJones-Projects/ringer, so upstreaming it is a PR Brandon opens.
 4. **Carry the judge calibration into the repo.** Brandon's round 7 rulings are
    encoded as labels (114 continuity cells, 113 fact cells) in the session
    scratchpad, with `check_calib.py` (scores judge output against them and
