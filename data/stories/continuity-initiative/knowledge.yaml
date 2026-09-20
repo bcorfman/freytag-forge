@@ -62,6 +62,8 @@ facts:
     automatically known to Kristin.
 - id: kristin_deliberately_left_behind
   purpose: JANUS records show Kristin was deliberately left behind.
+- id: kristin_was_bait
+  purpose: Kristin knows Charles left Michelle’s evidence accessible so she would expose Brandon’s hidden network.
 - id: brandon_janus_role_known
   purpose: Kristin knows Brandon wrote JANUS AI software to identify threats.
 - id: brandon_claimed_reform_motive
@@ -1106,6 +1108,32 @@ knowledge:
     kind: storylet_realization
     storylet_id: SL-2B-B
     realization_id: SL-2B-B-R2
+  relevance:
+    entity_ids: []
+    priority: 0
+- id: k_sl_2b_b_r3
+  statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
+  entity_ids: []
+  aliases:
+  - kristin was bait
+  - janus evidence
+  - brandon hidden network
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2B
+  requires:
+  - fact_id: janus_evidence
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: kristin_was_bait
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2B-B
+    realization_id: SL-2B-B-R3
   relevance:
     entity_ids: []
     priority: 0

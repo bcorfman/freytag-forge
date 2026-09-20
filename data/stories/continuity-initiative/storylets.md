@@ -754,16 +754,18 @@ Each entry below is authoring data, not a player action menu.
 - She withholds the discovery briefly and observes Brandon first.
 - Brandon admits writing AI software for JANUS to identify threats.
 - Kristin challenges whether Brandon is still manipulating her.
+- Kristin learns Charles left Michelle’s evidence accessible so she would expose Brandon’s hidden network.
 
 **Effects**
 - May set `brandon_janus_role_known`.
 - May set `brandon_claimed_reform_motive`.
+- May set `kristin_was_bait`.
 - May set `janus_evidence` when the development records are preserved/authenticated as evidence.
 - May substantially change `trust_brandon`.
 - May leave Brandon more or less suspicious depending on accepted interaction facts.
 
 **Completion**
-- Brandon’s original role and claimed break with Charles are explicit between him and Kristin.
+- Brandon’s original role and claimed break with Charles are explicit between him and Kristin, or Kristin learns Charles used her to expose Brandon’s hidden network.
 
 **Abort**
 - Brandon is absent/unavailable and the confrontation must be deferred by declared package logic.
