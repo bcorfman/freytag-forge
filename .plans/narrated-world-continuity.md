@@ -1,17 +1,29 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-17): Phase 0 bench work is in rounds 5-7 on branch
-`narration-phone-fixes`. Round 6 (two-scene, 4 replicates, commit cc1e422) cut
-turns with a real failure from 26/47 to 19/46, facts-after-wrong from 15 to 7,
-missed changes from 10 to 3 and state-as-place from 2 to 0. Round 7 (f5df910)
-fixed both defects round 6 exposed - rejections 2 -> 0, recoveries 11 -> 3,
-USB drive kept separate 2/2 - but turns with a real failure were 23/48, mostly
-narration contradictions and judge overreach rather than capture. Brandon
-reviewed every round 7 turn (`bench/results/round7.md`, his comments inline) and
-approved the round 8 fixes on 2026-09-19; see "Round 8" at the end of Phase 0
-for the decisions, tasks and order. Nothing is in the shipped game yet except the compound-command splitter
-in `RuntimeEngine.turn` and the empty-reply-key tolerance in
-`CloudflareTurnProvider`. The earlier bench experiment is recorded in
+Status (2026-09-19): Phase 0 bench work is in round 8 on branch
+`narration-phone-fixes`, HEAD `45f431a`, working tree clean apart from the
+untracked `bench/results/item-facts-v8-smoke-two-scene-1a/`. Nothing is running.
+
+Round 8 is Brandon's line-by-line review of every round 7 turn
+(`bench/results/round7.md`, his comments inline) turned into fixes. All of its
+CODE is committed and the full suite passes (649 tests). What remains is one
+billed bench run that measures those fixes, which needs Brandon's go-ahead, and
+one story question for ChatGPT Desktop. Read "Round 8" at the end of Phase 0,
+then "State at hand-off (2026-09-19)" at its end, which lists every commit,
+every open item and the exact next commands.
+
+Rounds 5-7 for context: round 6 (cc1e422) cut turns with a real failure from
+26/47 to 19/46; round 7 (f5df910) fixed the plumbing round 6 exposed -
+rejections 2 -> 0, recoveries 11 -> 3 - but turns with a real failure were
+23/48, and Brandon's review showed most of that rise was judge error rather
+than capture, which is what round 8 fixed first.
+
+Four changes now ARE in the shipped game (everything else is still bench-only):
+the compound-command splitter in `RuntimeEngine.turn`, the empty-reply-key
+tolerance in `CloudflareTurnProvider`, the owner rule that no longer names
+hidden items (`dafcc77`), a turn's beats chosen from authored realization links
+instead of shared words (`c7ec63f`), and the turn rule "Finish each action the
+player gives." (`a5df264`). The earlier bench experiment is recorded in
 `.plans/narrated-world-changes-experiment.md`. This plan is self-contained so
 it can be picked up in a new chat with no other context.
 
@@ -86,8 +98,16 @@ is always told the current state.
   script that executes the artifact and fails loudly with reasons, confirms the
   check fails on the unmodified build, reviews the patch, then applies and
   commits it. Worktrees start detached at HEAD: commit before running.
-- **Raise the Ringer check timeout** when a check runs the full suite (about 3
-  minutes): `RINGER_CHECK_TIMEOUT_S=900 ./ringer.py run manifest.json ...`.
+- **A Ringer check is killed after 60 seconds** on Ringer's current main: the
+  limit is the constant `CHECK_TIMEOUT_S` in `ringer.py` and no override exists
+  there, so `RINGER_CHECK_TIMEOUT_S` (in AGENTS.md) does nothing yet. Until the
+  branch below is merged, give each task's check only the test files its change
+  touches (about 15 seconds), and run the full suite yourself before applying
+  the patch. Ringer branch `check-timeout-override` (`1d074ea` in
+  `~/dev/ringer`, 269 tests pass) adds a per-task `check_timeout_s` and
+  `RINGER_CHECK_TIMEOUT_S` as a run default; once it is on main, raise the
+  timeout and let checks run `TMPDIR=/tmp uv run pytest -q` (about 4 minutes),
+  and correct the AGENTS.md line.
 - **Billed runs**: smoke-test one replicate and read the artifacts before any
   larger run. Keep only successful rows in `bench/results/ledger.jsonl`; remove
   failed rows and smoke-run rows.
@@ -669,6 +689,92 @@ Order:
   hard-coded 60 seconds, so task checks run only the affected test files and
   Claude runs the full suite before applying each patch.
 
+**State at hand-off (2026-09-19)**
+
+Branch `narration-phone-fixes`, HEAD `45f431a`, nothing running, tree clean
+apart from the untracked `bench/results/item-facts-v8-smoke-two-scene-1a/`
+(round 7's smoke; its ledger row was removed, keep it untracked or delete it).
+
+Round 8 commits, oldest first:
+
+| Commit | What |
+|---|---|
+| `2604417` | Round 7 results, the every-turn report with Brandon's comments, `bench/failure_report.py` changes |
+| `7fda86a` | Brandon's `plot.md` wording "KMS initials carved in drawer"; the round 8 plan |
+| `cd33b32` | Judge faults 1-5: per-scene canon, `given_facts` per turn, refinement rule, fact-judge scope, `command_not_finished` and `reveals_hidden_canon` |
+| `e3dec65` | B1 no "closed or open" offer in THINGS; B4 a reply with no `item_facts` means no change |
+| `dafcc77` | A: the owner rule names only visible placed items (the hidden memory card no longer reaches the narrator) |
+| `c7ec63f` | C1(a): `source_beats` per realization, loader fails closed, `_candidate_beats` drops the word-overlap gate |
+| `2b8d6b3` | The bench test is hermetic; four judge rubric points from Brandon's label rulings |
+| `a5df264` | B2, B3, C2 prompt changes |
+| `5ce8de0`, `17ccf84`, `45f431a` | This plan |
+
+Open items, in the order to pick them up:
+
+1. **Billed measurement of round 8 (needs Brandon's go-ahead; nothing else
+   blocks it).** Smoke one replicate, read it, then four. Manifests are written
+   and linted but live in the session scratchpad
+   (`.../scratchpad/r8/manifest_smoke.json`, `manifest_round8.json`, check
+   `check_bench.py`); if the scratchpad is gone, rebuild them from the round 7
+   live task recorded in `~/.ringer/runs/freytag-round7-live-*.json`
+   (`full_access: true`, `max_attempts: 1`, one bench command run exactly once,
+   the check reads the artifacts and never calls a model). The command:
+   `set -a; [ -f .env ] && . ./.env; set +a; TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-package-two-scene.json --scene 1A --replicates 4 --script change-types --out bench/results/item-facts-v9-two-scene-1a --confirm`
+   Questions it answers: is the invented USB drive gone from the drawer now
+   that the card is not named in the prompt (Brandon: the only drive in the
+   story is the one taped beneath the drawer, so an invented one is a failure);
+   does the narrator still invent a pick-up source; does the laptop still
+   arrive `closed`; is the hand-over completed; does the 1B bench still invent
+   a receipt now that beat 1B.1 reaches the prompt. Then build the round 8
+   report with `bench/failure_report.py` and put Brandon's comments in it as in
+   round 7.
+2. **Beat 2B.2 "Kristin Was Bait" reaches no realization** (found while doing
+   C1(a)). It is a source beat of SL-2B-B, but both realizations assert only
+   Brandon's JANUS role, so nothing links 2B.2 and the narrator can never be
+   told it; meanwhile the fact `archive_crisis_understood` is described as
+   Kristin having learned "the bait/Brandon revelations". This is a writing
+   problem, so per Brandon's standing practice it goes to ChatGPT Desktop with
+   a self-contained prompt: add a third realization SL-2B-B-R3 with
+   `source_beats: [scene-2b2--kristin-was-bait]` asserting a new fact
+   `kristin_was_bait`, its knowledge record `k_sl_2b_b_r3` modelled on
+   `k_sl_2b_b_r1`, and a line under SL-2B-B's **Possible realizations** in
+   `storylets.md`; no code and no `plot.md` change. Apply the result through a
+   Ringer task whose check loads the package, because the loader now rejects a
+   realization naming a beat outside its own storylet.
+3. **Merge Ringer's `check-timeout-override`**, then raise task check timeouts
+   and correct the AGENTS.md line about `RINGER_CHECK_TIMEOUT_S`.
+4. **Carry the judge calibration into the repo.** Brandon's round 7 rulings are
+   encoded as labels (114 continuity cells, 113 fact cells) in the session
+   scratchpad, with `check_calib.py` (scores judge output against them and
+   fails below a bar) and `rejudge.py` (re-runs both judges over saved turn
+   records, 8 billed calls). They are not in git and will be lost with the
+   scratchpad. A Ringer task should move them to `bench/calibration/` so any
+   later judge change can be re-scored. The rulings themselves, in case the
+   labels must be rebuilt from `bench/results/round7.md`: a look command is
+   finished whether or not Kristin picks the thing up; an invented USB drive in
+   the drawer is `reveals_hidden_canon`; a condition the narration never showed
+   is invented; an attempted hand-over nobody takes changes nothing; a more
+   specific place or state inside the given one is consistent; world facts
+   override canon and earlier commands.
+5. **Then Phase 1**, whose decisions are still open: 1a (story-break status and
+   declared axes), 1b, 1d, 1e (containment tree, including the
+   `{"kitchen counter": {"contents": [...]}}` replies still dropped). 1c is
+   decided. Phase 0's exit criterion - every change type at 92% - is still
+   unmet, and the round 8 run is the next measurement against it.
+
+Round 8 defects that are fixed in code but NOT yet confirmed live: the USB
+drive and memory card in the drawer, the invented pick-up source, the invented
+`closed`, the flattened "broken", the unfinished commands, and the invented
+receipt at the bench. Only the billed run can confirm any of them, and the
+replicates are highly correlated, so treat a 4-replicate move as weak evidence.
+
+Two C1 findings were investigated but NOT fixed, and neither has been decided:
+stale 1A material in the 1B prompt (1A's entry statement and a 1A complication
+rendered as "This happens now"), and scene-entry knowledge becoming NPC speech
+(`k_scene_1b_entry` is public, so Brandon's only permitted line is the scene
+frame; candidate fix is to exclude `source.kind: scene_entry` from NPC sayable
+lines).
+
 Operational lessons from round 1 (apply to every live run):
 - Put `"max_attempts": 1` on any Ringer task that runs a billed bench. A failed
   check otherwise retries and reruns the whole spend. Lint does not flag an
@@ -1038,3 +1144,25 @@ small plan or task.
 - Round results: `bench/results/round5-failures.md`,
   `bench/results/round6-failures.md`, `bench/results/item-facts-v7-two-scene-1a`,
   `bench/results/split-command-1a`.
+- Round 7, the source of every round 8 fix: `bench/results/round7.md` (every
+  turn, with Brandon's own comment under each) and
+  `bench/results/round7-failures.md`; records in
+  `bench/results/item-facts-v8-two-scene-1a/`.
+- Round 8 output directory to create: `bench/results/item-facts-v9-two-scene-1a`
+  (smoke into `item-facts-v9-smoke-two-scene-1a`, whose ledger row is removed
+  afterwards).
+- Re-judging saved turns without replaying narration: run
+  `bench/continuity-judge.mjs` and `bench/fact-tracking-judge.mjs` with
+  `--input <run>/all-turn-records.json --output <file>`, after setting the
+  record's `package_path` to the variation's effective package
+  (`load_variation(...)["_package_path"]`), because the run's own temporary
+  package is gone. Two judge calls per replicate.
+- Judge scopes, as of round 8: the fact judge owns tracked-thing state
+  (`facts_after_correct`, `missed_change`, `invented_change`,
+  `narration_contradicts_given_facts`, `dropped_true_condition`,
+  `kept_ended_condition`, `state_as_place`); the continuity judge owns narration
+  against canon and earlier turns (`contradicts_stated_fact`,
+  `protagonist_acts_beyond_command` as context only, `restarts_scene`,
+  `command_not_finished`, `reveals_hidden_canon`). `bench/failure_report.py`
+  counts every continuity label except `protagonist_acts_beyond_command`, which
+  it prints as "[narrator initiative]".
