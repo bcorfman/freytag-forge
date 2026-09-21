@@ -1476,6 +1476,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
     assert "Do not say anything that goes against the entry text or the beat details." in captured["payload"]["user"]
     assert "Do not make up new objects, clues, or things inside containers." in captured["payload"]["user"]
+    assert "When the player gives a thing to someone, that person takes it." not in captured["payload"]["user"]
     assert "Keep each object where the scene puts it." in captured["payload"]["user"]
     assert "Michelle's phone is on the kitchen floor." in captured["payload"]["user"]
     user = captured["payload"]["user"]
@@ -1956,7 +1957,10 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
 
     assert "Use the places and details the story gives you." in rules
     assert "Keep each object where the scene puts it." in rules
-    assert "Finish each action the player gives. Only show Kristin doing what the player said." in rules
+    assert "Finish each action the player gives." in rules
+    assert "When the player gives a thing to someone, that person takes it." in rules
+    assert "Only show Kristin doing what the player said." in rules
+    assert ("Finish each action the player gives." + " " + "Only show Kristin doing what the player said.") not in rules
     assert "Answer what the player did. Only show Kristin doing what the player said." not in rules
 
 

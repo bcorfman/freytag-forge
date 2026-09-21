@@ -419,7 +419,9 @@ class CloudflareTurnProvider:
             "Use only what the SCENE section tells you.",
             "Use the places and details the story gives you.",
             self._object_place_rule(),
-            f"Finish each action the player gives. Only show {self._protagonist_name()} doing what the player said.",
+            "Finish each action the player gives.",
+            "When the player gives a thing to someone, that person takes it.",
+            f"Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
             *(
