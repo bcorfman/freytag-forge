@@ -1,12 +1,11 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-21): Phase 0 bench work is through round 8, and round 9's code
-is built through batch 2 on branch `round9` with nothing billed yet. Round 8's
-code is merged to `main` (PR #469 from `narration-phone-fixes`, PR #470 from
-`narrated-beat`), and its billed run is written up every turn with Brandon's
-comments in `bench/results/round8.md`. Read "Round 8" at the end of Phase 0,
-then "Round 9" and "Round 9 as built" for what landed and what is still ahead,
-then "State at hand-off" for commits and commands.
+Status (2026-09-21): Phase 0 bench work is through round 9's billed run, which
+is written up every turn in `bench/results/round9.md` and awaits Brandon's
+comments; round 9 is on branch `round9`, not yet merged. Round 8's code is
+merged to `main` (PR #469, PR #470). Read "Round 8" at the end of Phase 0, then
+"Round 9", "Round 9 as built" and "Round 9 run" for what landed and what it
+measured, then "State at hand-off" for commits and commands.
 
 Round 8 measured no net improvement. Scored by Brandon's own comments in both
 rounds, turns with a real failure were 25/48 in round 7 and 25/48 in round 8;
@@ -1013,6 +1012,47 @@ Nothing has been billed in round 9. The run itself (one smoke replicate, read
 the transcripts, then two replicates into
 `bench/results/item-facts-v10-two-scene-1a`, then the every-turn report) is
 still ahead.
+
+**Round 9 run (2026-09-21, billed, awaiting Brandon's comments)**
+
+R9-6b was applied from the saved patch (`ffc5cca`) and re-graded offline over
+both rounds' labels. It first failed the round 7 fact floor (90.3% against
+95.6%). Brandon chose to drop the fact rubric's "a thing is new" sentence and
+to correct two round 8 label cells that contradicted his written comments
+(r1 t4 is a restart; r2 t11 has no missed change), in `40cac70`. The checker
+also learned to skip cells he left unlabelled (`ae7f28f`). A control re-grade
+with round 8's own unchanged rubric then showed the floor itself was noise:
+
+| Rubric | R7 continuity | R7 fact | R8 continuity | R8 fact |
+|---|---|---|---|---|
+| Round 8's, re-run today (control) | 95.6% | 92.0% | 97.9% | 97.0% |
+| Round 9's (`40cac70`) | 98.2% | 92.9% | 97.9% | 95.8% |
+
+So a single judge re-grade moves by three or four cells, and the round 8
+figures (96.5%/95.6%) are one sample, not a floor. The round 9 rubric is
+kept. Any later rubric gate should compare against a control run in the same
+session, not against a remembered figure.
+
+The smoke (`bench/results/item-facts-v10-smoke-two-scene-1a`, `e9939b2`) and
+the two-replicate run (`bench/results/item-facts-v10-two-scene-1a`) completed
+with 0 rejected turns. The judges report 21/36 turns with a real failure; the
+round is scored by Brandon's comments in `bench/results/round9.md`, against
+25/48 for round 8. First reading, before his review:
+
+- Hand-over completes on r2 t15, the first time in three rounds.
+- The GIVEN-place contradiction is not fixed: turn 3 still picks the phone up
+  "from the floor" 2/2 after turn 1 put it in her hand.
+- The laptop stays one thing 2/2; the owner-key resolver fired on r2 t5.
+- End-of-turn capture held on r2 t10 (thrown and picked up in one turn).
+- The hidden memory card is narrated inside the drawer 2/2 (round 8: 1/4).
+- NEW, caused by R9-1: turn 12 "Carry Michelle's phone out to the truck."
+  leaves the phone on the passenger seat 2/2, so 1B opens with the phone in
+  the truck and turns 13, 15, 16 and 17 are set up to contradict. The
+  replacement turn needs to keep the phone on Kristin (for example "Put
+  Michelle's phone in your pocket and walk out to the truck.") before round
+  10 can read the hand-over cleanly.
+- Stalled one-sentence narration is the largest judge bucket
+  (command_not_finished 12), mostly a single sentence that stops partway.
 
 **Order and exit for Round 9**
 
