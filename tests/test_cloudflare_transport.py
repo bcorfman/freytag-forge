@@ -2330,6 +2330,15 @@ def test_sections_prompt_introduces_only_the_characters_this_scene_involves() ->
         assert absent not in characters, f"{absent} does not appear in Scene 1A"
 
 
+def test_shipped_provider_player_block_contains_only_the_command() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    user = provider._section_user_prompt(provider.assemble_turn_prompt("Look around the kitchen.")["context"])
+
+    assert user.rsplit("PLAYER:\n", 1)[1] == "- Look around the kitchen."
+
+
 def test_a_characters_concealed_history_never_reaches_the_narrator() -> None:
     """plot.md may state what a character hides; the narrator may not be told it.
 

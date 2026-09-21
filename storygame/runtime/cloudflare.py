@@ -914,6 +914,12 @@ class CloudflareTurnProvider:
         npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
         return npc.name if npc else entity_id
 
+    def _player_lines(self, user: dict[str, object]) -> list[str]:
+        """Render the player's command and any subclass-provided turn lines."""
+
+        player_input = str(user.get("player_input", "")).strip()
+        return [player_input] if player_input else []
+
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         """Render turn context as the authored roleplay sections.
 
@@ -923,7 +929,6 @@ class CloudflareTurnProvider:
 
         scene: list[str] = []
         constraints: list[str] = []
-        player_lines: list[str] = []
         handoff_turn = self._is_authored_handoff_turn()
 
         def paragraphs(text: str) -> list[str]:
@@ -996,9 +1001,7 @@ class CloudflareTurnProvider:
                         constraints.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
         rules = user.get("_rules", [])
         constraints.extend(rule for rule in rules if isinstance(rule, str))
-        player_input = str(user.get("player_input", "")).strip()
-        if player_input:
-            player_lines.append(player_input)
+        player_lines = self._player_lines(user)
 
         blocks = []
         for heading, items in (

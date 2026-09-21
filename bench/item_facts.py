@@ -173,7 +173,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
 
     def _things_block(self) -> str:
-        names = self._selected_names if self._selected_names is not None else self.dependency_names()
+        names = self._thing_names()
         if not names:
             return ""
         lines = ["THINGS:"]
@@ -201,6 +201,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 line += f" Condition: {', '.join(conditions)}."
             lines.append(line)
         return "\n".join(lines)
+
+    def _thing_names(self) -> list[str]:
+        return self._selected_names if self._selected_names is not None else self.dependency_names()
+
+    def _player_lines(self, user: dict[str, object]) -> list[str]:
+        lines = super()._player_lines(user)
+        if not lines or "scene_setting" not in user:
+            return lines
+        for name in self._thing_names():
+            place = self.item_facts[name].get("place")
+            if isinstance(place, str) and place.strip():
+                lines.append(f"{name} is {place.strip()} right now.")
+        return lines
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         rendered = super()._section_user_prompt(user)
