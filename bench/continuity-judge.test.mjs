@@ -68,6 +68,7 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
   assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the narration shows her attending to that thing/);
   assert.match(request.input[0].content, /drives away from the house does not finish drive to the park/);
+  assert.match(request.input[0].content, /Repeating a journey the story already finished is also a restart/);
   assert.deepEqual(request.text.format.schema.properties.turns.items.required, [
     "turn",
     "contradicts_stated_fact",
