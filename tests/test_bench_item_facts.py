@@ -1058,14 +1058,14 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     assert result["status"] == "ok"
-    assert len(result["turns"]) == 12
-    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 8 + ["1B"] * 4
+    assert len(result["turns"]) == 18
+    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 12 + ["1B"] * 6
     assert result["scene_transitions"] == [
-        {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
+        {"from_scene": "1A", "to_scene": "1B", "after_turn": 12, "advanced_offline": True}
     ]
-    assert "Michelle's phone" not in result["turns"][7]["item_facts_after"]
-    assert "Kristin's laptop" not in result["turns"][8]["item_facts_before"]
-    assert len(calls) == 25
+    assert "Michelle's phone" not in result["turns"][11]["item_facts_after"]
+    assert "Kristin's laptop" not in result["turns"][12]["item_facts_before"]
+    assert len(calls) == 37
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
