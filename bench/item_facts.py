@@ -70,7 +70,8 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 
 _SINGLE_CALL_RULES = (
-    "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
+    "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. "
+    "Use where it is when the story ends.",
     'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
     'Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is {"place": "on the floor", '
     '"condition": ["cracked in two"]}.',
@@ -129,6 +130,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": None,
             "match_issues": [],
             "resolutions": {},
+            "engine_resolutions": {},
         }
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
@@ -411,8 +413,39 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return
         issues: list[str] = []
         resolutions: dict[str, str] = {}
+        engine_resolutions: dict[str, str] = {}
+        unresolved_names: list[str] = []
+        for name in names:
+            entry = self._held_item_facts[name]
+            owner = entry.get("owner")
+            candidate = f"{owner}'s {name}" if isinstance(owner, str) else None
+            matches = [
+                tracked for tracked in self.item_facts if candidate and tracked.casefold() == candidate.casefold()
+            ]
+            if len(matches) != 1:
+                unresolved_names.append(name)
+                continue
+            target = matches[0]
+            before = copy.deepcopy(self.item_facts[target])
+            self._merge_entry(target, entry)
+            if before != self.item_facts[target]:
+                self._changed_last_turn.add(target)
+            resolutions[name] = target
+            engine_resolutions[name] = target
+
+        if not unresolved_names:
+            self._held_item_facts = {}
+            self._last_item_facts_match = {
+                "match_call": False,
+                "match_raw": None,
+                "match_issues": [],
+                "resolutions": resolutions,
+                "engine_resolutions": engine_resolutions,
+            }
+            return
+
         dependencies = set(self.dependency_names())
-        payload = self._match_payload(player_input, names, dependencies)
+        payload = self._match_payload(player_input, unresolved_names, dependencies)
         self.item_facts_match_calls += 1
         try:
             reply = CloudflareTurnProvider._request(self, payload)
@@ -424,7 +457,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
         if not valid:
             issues.append("invalid item_facts match reply")
-        for name in names:
+        for name in unresolved_names:
             entry = self._held_item_facts[name]
             target = reply.get("same_as", {}).get(name) if isinstance(reply, dict) else None
             if isinstance(target, str) and target != name and target in self.item_facts:
@@ -442,6 +475,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": resolutions,
+            "engine_resolutions": engine_resolutions,
         }
 
     def apply_item_facts(
@@ -499,6 +533,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
+                "engine_resolutions": {},
             }
             self._last_item_facts_match = copy.deepcopy(result)
             return result
@@ -524,6 +559,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": {},
+            "engine_resolutions": {},
         }
         self._last_item_facts_match = copy.deepcopy(result)
         return result

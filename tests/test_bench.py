@@ -402,6 +402,7 @@ def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
     assert turn["item_facts_after"]["receipt"] == {"place": "on the ground", "condition": ["crumpled"]}
     assert turn["item_facts_held"] == []
     assert turn["item_facts_resolutions"] == {"receipt": "new"}
+    assert turn["item_facts_engine_resolutions"] == {}
 
 
 def test_run_scene_fixed_turns_records_rejection_and_continues(monkeypatch) -> None:

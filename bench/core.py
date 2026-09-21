@@ -783,6 +783,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "match_raw": match_info["match_raw"],
                     "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
+                    "item_facts_engine_resolutions": match_info["engine_resolutions"],
                 }
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery

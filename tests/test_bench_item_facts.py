@@ -66,7 +66,7 @@ def test_single_call_rules_require_facts_for_every_change():
 
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
-        "add that thing to item_facts.\n"
+        "add that thing to item_facts. Use where it is when the story ends.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
         "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
@@ -789,6 +789,53 @@ def test_valid_untracked_name_is_resolved_same_turn(monkeypatch):
     provider.apply_item_facts({"the notebook": {"place": "on the desk", "condition": ["open"]}})
     assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
     assert provider._held_item_facts == {}
+
+
+def test_owner_resolves_untracked_name_without_match_call(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
+
+    provider.apply_item_facts({"laptop": {"owner": "Kristin", "place": "on the desk"}})
+
+    result = provider.last_item_facts_match()
+    assert provider.item_facts["Kristin's laptop"]["place"] == "on the desk"
+    assert provider.item_facts_match_calls == 0
+    assert result["match_call"] is False
+    assert result["match_raw"] is None
+    assert result["match_issues"] == []
+    assert result["resolutions"] == {"laptop": "Kristin's laptop"}
+    assert result["engine_resolutions"] == {"laptop": "Kristin's laptop"}
+
+
+def test_bare_name_still_reaches_match_call(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    payloads = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
+    )
+
+    provider.apply_item_facts({"laptop": {"place": "on the desk"}})
+
+    assert provider.item_facts_match_calls == 1
+    assert "- laptop." in payloads[0]["user"]
+
+
+def test_owner_naming_untracked_person_still_reaches_match_call(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: {"refers": [], "same_as": {}},
+    )
+
+    provider.apply_item_facts({"laptop": {"owner": "Morgan", "place": "on the desk"}})
+
+    assert provider.item_facts_match_calls == 1
+    assert provider.last_item_facts_match()["engine_resolutions"] == {}
 
 
 def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
