@@ -1,0 +1,428 @@
+{
+  "source": "bench/results/round7.md comments",
+  "continuity": {
+    "1:1": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "2:1": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "3:1": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "4:1": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "1:2": {
+      "reveals_hidden_canon": "yes"
+    },
+    "2:2": {
+      "reveals_hidden_canon": "yes",
+      "contradicts_stated_fact": "yes"
+    },
+    "3:2": {
+      "reveals_hidden_canon": "yes",
+      "contradicts_stated_fact": "yes"
+    },
+    "4:2": {
+      "reveals_hidden_canon": "yes"
+    },
+    "1:3": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "yes"
+    },
+    "2:3": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "yes"
+    },
+    "3:3": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "yes"
+    },
+    "4:3": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "yes"
+    },
+    "1:4": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "2:4": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "3:4": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "4:4": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "1:5": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "2:5": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "3:5": {
+      "reveals_hidden_canon": "no",
+      "command_not_finished": "yes"
+    },
+    "4:5": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "1:6": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "2:6": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "3:6": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "4:6": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "1:7": {
+      "reveals_hidden_canon": "no"
+    },
+    "2:7": {
+      "reveals_hidden_canon": "no"
+    },
+    "3:7": {
+      "reveals_hidden_canon": "no"
+    },
+    "4:7": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "1:8": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "2:8": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "3:8": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "4:8": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "no"
+    },
+    "1:9": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "2:9": {
+      "reveals_hidden_canon": "no"
+    },
+    "3:9": {
+      "reveals_hidden_canon": "no"
+    },
+    "4:9": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "1:10": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "restarts_scene": "no"
+    },
+    "2:10": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "restarts_scene": "no"
+    },
+    "3:10": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "restarts_scene": "no"
+    },
+    "4:10": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "restarts_scene": "no"
+    },
+    "1:11": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "2:11": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "3:11": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "4:11": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no",
+      "command_not_finished": "yes"
+    },
+    "1:12": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "2:12": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "3:12": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    },
+    "4:12": {
+      "reveals_hidden_canon": "no",
+      "contradicts_stated_fact": "no"
+    }
+  },
+  "fact": {
+    "1:1": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:1": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "3:1": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:1": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "1:2": {},
+    "2:2": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "3:2": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "4:2": {},
+    "1:3": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "yes"
+    },
+    "2:3": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "yes"
+    },
+    "3:3": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "yes"
+    },
+    "4:3": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "yes"
+    },
+    "1:4": {
+      "facts_after_correct": "no",
+      "invented_change": "yes",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:4": {
+      "facts_after_correct": "no",
+      "invented_change": "yes",
+      "narration_contradicts_given_facts": "no"
+    },
+    "3:4": {
+      "facts_after_correct": "no",
+      "invented_change": "yes",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:4": {
+      "facts_after_correct": "no",
+      "invented_change": "yes",
+      "narration_contradicts_given_facts": "no"
+    },
+    "1:5": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:5": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:5": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "1:6": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:6": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "3:6": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:6": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "1:7": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "2:7": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "3:7": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "4:7": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "1:8": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:8": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "3:8": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:8": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "1:9": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "2:9": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "3:9": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "4:9": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "1:10": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "2:10": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "3:10": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "4:10": {
+      "facts_after_correct": "yes",
+      "invented_change": "no"
+    },
+    "1:11": {
+      "missed_change": "no"
+    },
+    "2:11": {
+      "missed_change": "no"
+    },
+    "3:11": {
+      "missed_change": "no"
+    },
+    "4:11": {
+      "missed_change": "no"
+    },
+    "1:12": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "2:12": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "3:12": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    },
+    "4:12": {
+      "facts_after_correct": "yes",
+      "invented_change": "no",
+      "narration_contradicts_given_facts": "no"
+    }
+  },
+  "notes": {
+    "2a": "Brandon: fine whether Kristin picks the phone up or not, so turn 1 is finished.",
+    "2b": "Brandon: the USB drive must be eliminated from the drawer; the only drive is the one taped beneath it.",
+    "2c": "Not relevant once the USB drive is gone."
+  },
+  "results_dir": "bench/results/item-facts-v8-two-scene-1a"
+}
