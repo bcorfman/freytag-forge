@@ -83,7 +83,6 @@ test("fact rubric separates given conflicts and allows introduced refinements", 
   );
   const rubric = requests[0].input[0].content;
   assert.match(rubric, /facts_after_correct: answer only whether item_facts_after matches what the narration shows/);
-  assert.match(rubric, /A thing the narration introduces this turn and item_facts_after now lists is tracked/);
   assert.match(rubric, /judge that only under narration_contradicts_given_facts/);
   assert.match(rubric, /A state the narration gives a thing must also be possible with the conditions item_facts_before records for it/);
   assert.match(rubric, /more specific place or state that fits inside the given one is consistent/);

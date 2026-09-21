@@ -20,8 +20,8 @@
       "reveals_hidden_canon": "no"
     },
     "1:4": {
-      "contradicts_stated_fact": "yes",
-      "restarts_scene": "no",
+      "contradicts_stated_fact": "no",
+      "restarts_scene": "yes",
       "command_not_finished": "no",
       "reveals_hidden_canon": "no"
     },
@@ -491,7 +491,7 @@
     },
     "2:11": {
       "facts_after_correct": "no",
-      "missed_change": "yes",
+      "missed_change": "no",
       "invented_change": "yes",
       "narration_contradicts_given_facts": "no",
       "dropped_true_condition": "no",
@@ -726,6 +726,8 @@
   },
   "results_dir": "bench/results/item-facts-v9-two-scene-1a",
   "notes": {
-    "overrules": "Author overrules: continuity 3:10 restarts_scene is no. Fact 1:1 narration_contradicts_given_facts is yes. Fact 1:2 dropped_true_condition is no. Fact 1:10 facts_after_correct is yes. Fact 1:10 invented_change is no. Fact 3:2 dropped_true_condition is no. Fact 3:7 narration_contradicts_given_facts is yes."
+    "overrules": "Author overrules: continuity 3:10 restarts_scene is no. Fact 1:1 narration_contradicts_given_facts is yes. Fact 1:2 dropped_true_condition is no. Fact 1:10 facts_after_correct is yes. Fact 1:10 invented_change is no. Fact 3:2 dropped_true_condition is no. Fact 3:7 narration_contradicts_given_facts is yes.",
+    "continuity_1:4": "The author corrected restarts_scene for continuity 1:4 to yes.",
+    "fact_2:11": "The author corrected missed_change for fact 2:11 to no."
   }
 }
