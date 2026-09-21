@@ -209,11 +209,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
         lines = super()._player_lines(user)
         if not lines or "scene_setting" not in user:
             return lines
+        place_lines = []
         for name in self._thing_names():
             place = self.item_facts[name].get("place")
             if isinstance(place, str) and place.strip():
-                lines.append(f"{name} is {place.strip()} right now.")
-        return lines
+                place_lines.append(f"{name} is {place.strip()}.")
+        return place_lines + lines
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         rendered = super()._section_user_prompt(user)

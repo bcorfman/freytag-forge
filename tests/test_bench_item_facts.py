@@ -61,7 +61,7 @@ def test_things_are_after_scene_and_render_single_value_facts():
     assert provider._setting_fact_rules() == []
 
 
-def test_player_block_repeats_placed_things_in_things_order():
+def test_player_block_places_come_before_the_command():
     provider = _provider()
     provider.item_facts["the notebook"] = {"place": "in Michelle's hand", "condition": []}
     provider.item_facts["the gate"]["place"] = None
@@ -71,9 +71,7 @@ def test_player_block_repeats_placed_things_in_things_order():
     user = provider._section_user_prompt(prompt["context"])
 
     assert user.split("PLAYER:\n", 1)[1] == (
-        "- Pick up the notebook.\n"
-        "- the notebook is in Michelle's hand right now.\n"
-        "- the lantern is on the table right now."
+        "- the notebook is in Michelle's hand.\n- the lantern is on the table.\n- Pick up the notebook."
     )
 
 
