@@ -729,6 +729,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 match_info = provider.prepare_turn(player_input)
             try:
                 proposal = _turn_with_rate_limit_retry(engine, player_input)
+                last_prompt = getattr(provider, "last_prompt", None)
+                turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
                 if fixed_turns is None or error.error_code != "INVALID_PROPOSAL":
                     raise
@@ -803,6 +805,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 turn_record = {
                     "player_input": player_input,
                     "narrated_command": narrated_command,
+                    "prompt_system": turn_prompt["system"] if turn_prompt is not None else None,
+                    "prompt_user": turn_prompt["user"] if turn_prompt is not None else None,
                     "narration": narration,
                     "left_scene": entered,
                     "scene_id": prior_scene,

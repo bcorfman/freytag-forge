@@ -385,6 +385,7 @@ def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
     monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
 
     def request(_provider, payload):
+        _provider.last_prompt = {"system": payload["system"], "user": payload["user"]}
         if payload["system"] == _MATCH_SYSTEM:
             return {"refers": [], "same_as": {"receipt": "receipt"}}
         return {
@@ -403,6 +404,33 @@ def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
     assert turn["item_facts_held"] == []
     assert turn["item_facts_resolutions"] == {"receipt": "new"}
     assert turn["item_facts_engine_resolutions"] == {}
+
+
+def test_run_scene_records_narration_prompt_before_item_facts_match(monkeypatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+
+    def request(provider, payload):
+        provider.last_prompt = {"system": payload["system"], "user": payload["user"]}
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": ["Michelle's phone"], "same_as": {}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin pockets the phone."}],
+            "selected_knowledge_ids": [],
+        }
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
+    variation["_fixed_turns"] = 1
+    command = "Pick up Michelle's phone and put it in your pocket."
+
+    result = core.run_scene(variation, "1A", {"name": "prompt", "inputs": [command]})
+
+    turn = result["turns"][0]
+    assert "PLAYER:" in turn["prompt_user"]
+    assert turn["narrated_command"] in turn["prompt_user"]
+    assert turn["prompt_system"] != _MATCH_SYSTEM
+    assert "COMMAND:" not in turn["prompt_user"]
 
 
 def test_run_scene_fixed_turns_records_rejection_and_continues(monkeypatch) -> None:
