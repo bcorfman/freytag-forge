@@ -91,6 +91,14 @@ def test_single_call_rules_require_facts_for_every_change():
     assert "Also return item_facts" not in system
 
 
+def test_two_scene_variation_output_example_shows_two_step_action():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
+
+    assert "She picks up the lantern. She carries it out to the porch." in prompt["system"]
+    assert "She looks at the lantern. Its light has gone out." not in prompt["system"]
+
+
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
     provider = _provider()
 

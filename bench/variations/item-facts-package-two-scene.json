@@ -7,7 +7,7 @@
   "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"shut": ["closed"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}}},
   "continue_to": {"scene": "1B", "fixed_turns": 6, "script": "carry-and-hand-off"},
   "system_prompt": {
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"condition\":[\"dark\"]}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She sets it on the rail. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"on the porch rail\",\"condition\":[\"dark\"]}}}"
   },
   "overrides": {
     "knowledge.yaml": {"replacements": [
