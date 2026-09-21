@@ -1,10 +1,11 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-21): Phase 0 bench work is through round 8 and round 9 is
-proposed, awaiting Brandon's approval. Round 8's code is merged to `main` (PR
-#469 from `narration-phone-fixes`, PR #470 from `narrated-beat`), and its billed
-run is done and written up every turn with Brandon's comments in
-`bench/results/round8.md`. Read "Round 8" at the end of Phase 0, then "Round 9",
+Status (2026-09-21): Phase 0 bench work is through round 8, and round 9's code
+is built through batch 2 on branch `round9` with nothing billed yet. Round 8's
+code is merged to `main` (PR #469 from `narration-phone-fixes`, PR #470 from
+`narrated-beat`), and its billed run is written up every turn with Brandon's
+comments in `bench/results/round8.md`. Read "Round 8" at the end of Phase 0,
+then "Round 9" and "Round 9 as built" for what landed and what is still ahead,
 then "State at hand-off" for commits and commands.
 
 Round 8 measured no net improvement. Scored by Brandon's own comments in both
@@ -759,14 +760,24 @@ is closer to 12 observations than 48, so every "4/4" and "3/4" in these reports
 is near enough one sample. Widen the script with distinct commands before
 adding replicates; more replicates buy more copies of the same sample.
 
-Decisions Brandon confirms before Round 9 starts:
-- [ ] R9-1 changes the bench script, which breaks strict comparability with
-  rounds 1-8 on that turn. Accept, or keep t8 and score it separately.
-- [ ] R9-4's head-noun rule would auto-resolve "card" to Michelle's memory
-  card, which round 7 wanted. Confirm that is still wanted now that the card is
-  no longer named in the prompt (fix A).
-- [ ] Whether the C1 finding "scene-entry knowledge becomes NPC speech" is in
-  scope for R9-3 or stays parked.
+Decisions Brandon settled on 2026-09-21, before Round 9 started:
+- [x] R9-1 replaces the impossible turn AND widens the script, at two
+  replicates instead of four. Strict comparability with rounds 1-8 is given up
+  deliberately: the measurement finding above says the fourth replicate buys
+  another copy of the same sample, so the round trades it for six more distinct
+  turns. 1A now runs 12 distinct commands and 1B 6, so the round measures 18
+  distinct turns at 2 replicates (36 turns) against round 8's 12 at 4 (48).
+- [x] R9-4 ships the owner-key rule only; the head-noun rule is NOT built. A
+  bare name still goes to the match call. Checked against the code first: no
+  card is tracked at seed in 1A, so the head-noun rule could never have
+  resolved hidden canon - it would only have merged a later bare "card" into a
+  card the narration had already created. That is worth less than the risk of
+  silently merging two things that share a head noun.
+- [x] The C1 finding "scene-entry knowledge becomes NPC speech" stays parked.
+  R9-3 ships the concrete hand-over rule alone, so the hand-over's 0/8 across
+  two rounds is attributable to one change. If it still fails, excluding
+  `source.kind: scene_entry` from NPC sayable lines is round 10's first
+  candidate, with clean evidence behind it.
 
 ---
 
@@ -958,6 +969,50 @@ in principle. It must not be built or billed on faith:
 - Only if it separates them: one check call per turn, and a second narration
   call only when a conflict fires, with a plain hint naming the thing and its
   place. Cost belongs in the decision, per principle 7.
+
+**Round 9 as built (2026-09-21, branch `round9`, no billing spent yet)**
+
+Batches 1 and 2 are merged into `round9` and the full suite is green at 654
+tests. Brandon stopped the round after batch 2, before any billed run.
+
+| Task | Commit | What landed |
+|---|---|---|
+| R9-4 + R9-5 | `371ec11` | owner-key resolution in the engine; capture asks for the end of the turn |
+| R9-6a | `95e81c9` | the calibration corpus, in `bench/calibration/` |
+| R9-1 | `e906143` | the widened 12 + 6 script, park turn gone |
+| R9-3 | `22e5dd1` | the hand-over rule, the joined rule split |
+| R9-2 | `06faeb7` | each referred thing's place in the PLAYER block |
+
+R9-4 and R9-5 were merged into one task rather than two, because both edit
+`bench/item_facts.py` and two workers on one file collide on apply. They target
+different mechanisms (6 and 8), so the round can still attribute them.
+
+Two things worth knowing next session:
+
+- The round 7 calibration labels were recovered from the round 8 session's
+  scratchpad, which had not yet been cleaned. `bench/calibration/` now holds
+  them, round 8's 96 cells derived from `round8.md` plus the six cells Brandon
+  overruled, a `check_calib.py` that scores a saved judge output against either
+  and exits non-zero below a bar, and a `rejudge.py`.
+- R9-2's bench hook returns early unless the payload carries `scene_setting`.
+  Every real turn does and a committed test pins the PLAYER block, but if that
+  key ever leaves the turn payload the place lines would disappear silently
+  rather than fail loudly.
+
+**R9-6b, built but NOT applied.** The three judge rubric gaps were written and
+verified offline (probe: the three sentences reach the rubric, no existing
+sentence lost or reworded, node and python suites green) but the patch was not
+committed, because Brandon stopped the round at batch 2. It is at
+`scratchpad/out/task-r9f.patch` in session `57b1ddff`, which is session-scoped
+and will be lost with it; the manifest beside it regenerates the work in about
+five minutes if it is gone. The billed half of R9-6b - re-scoring both rounds'
+cells with the changed rubric, which must not drop either judge below 96.5%
+continuity or 95.6% fact - has NOT been run.
+
+Nothing has been billed in round 9. The run itself (one smoke replicate, read
+the transcripts, then two replicates into
+`bench/results/item-facts-v10-two-scene-1a`, then the every-turn report) is
+still ahead.
 
 **Order and exit for Round 9**
 
