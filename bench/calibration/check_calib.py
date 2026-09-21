@@ -34,11 +34,15 @@ def main() -> int:
         agree = total = 0
         per_label: dict[str, list[int]] = {}
         mismatches = []
+        unlabelled = []
         for run, judgment in zip(records["runs"], judgments, strict=True):
             by_turn = {verdict["turn"]: verdict for verdict in judgment["turns"]}
             for turn in run["turns"]:
                 key = f"{run['replicate']}:{turn['turn_number']}"
-                wanted = labels[block][key]
+                wanted = labels[block].get(key)
+                if wanted is None:
+                    unlabelled.append(f"r{run['replicate']} t{turn['turn_number']}")
+                    continue
                 verdict = by_turn.get(turn["turn_number"])
                 for label, expected in wanted.items():
                     total += 1
@@ -56,6 +60,8 @@ def main() -> int:
                         )
         rate = agree / total if total else 0
         report.append(f"## {block} judge: {agree}/{total} = {rate:.1%}")
+        if unlabelled:
+            report.append(f"- unlabelled turns skipped: {len(unlabelled)} ({', '.join(unlabelled)})")
         report.extend(f"- {label}: {good}/{count}" for label, (good, count) in sorted(per_label.items()))
         report.append("Mismatches:")
         report.extend(f"  - {mismatch}" for mismatch in mismatches)
