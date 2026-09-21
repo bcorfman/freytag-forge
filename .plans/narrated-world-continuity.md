@@ -1054,6 +1054,31 @@ round is scored by Brandon's comments in `bench/results/round9.md`, against
 - Stalled one-sentence narration is the largest judge bucket
   (command_not_finished 12), mostly a single sentence that stops partway.
 
+**Round 9 follow-up: why commands went unfinished (2026-09-21)**
+
+Diagnosed from the round 9 records: every unfinished 1A turn narrated only the
+first step of a two-step command (lifts the laptop, never carries it out).
+Two changes, measured one live replicate and then two:
+
+- `4f4a3cc` puts each referred thing's place BEFORE the command and drops
+  "right now". One replicate (`item-facts-v11-reorder-two-scene-1a`): not a
+  fix on its own. The model now obeys the given place firmly, so one stall
+  (t4 leaves the laptop in the truck) cascades into t5, t6 and t9.
+- `d0092c2` swaps the reply example's one-segment look ("She looks at the
+  lantern. Its light has gone out.") for a finished two-step action in two
+  segments. Two replicates (`item-facts-v12-example-two-scene-1a`), against
+  round 9: one-sentence turns 14/36 -> 0/36, command_not_finished 12 -> 6,
+  judge-failed turns 21 -> 18. No example words (lantern, porch, rail)
+  leaked into narration. Of the 6 left, one is a dropped second step (r2 t4,
+  never brings the laptop inside); the rest are the 1B man (t15 hand-over not
+  shown taken once, t17 resisting twice, t18 silent twice).
+- `a089d6b` saves each turn's narration system and user prompt in the bench
+  records (`prompt_system`, `prompt_user`), so a turn can be read exactly.
+
+What now leads is capture, not narration: the narrator's own reply reports
+the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
+place (r2 t2), and never reports the laptop open (t6, 2/2).
+
 **Order and exit for Round 9**
 
 1. R9-1, R9-4, R9-5 in parallel Ringer tasks; each owns disjoint files. No
