@@ -354,7 +354,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 not isinstance(item, str) or not item.strip() for item in condition
             ):
                 return False
-            self._apply_conditions(name, condition[:2])
+            if condition:
+                self._apply_conditions(name, condition[:2])
         return True
 
     def _axis_match(self, name: str, text: str) -> str | None:

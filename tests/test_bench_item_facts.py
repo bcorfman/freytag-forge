@@ -484,13 +484,16 @@ def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix
     assert provider.item_facts_axis_fixes == 0
 
 
-def test_empty_condition_reply_keeps_axis_and_clears_other_conditions():
+def test_empty_condition_reply_keeps_axis_and_other_conditions():
     provider = _provider()
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.item_facts["the lantern"]["condition"] = ["shut", "carved with KMS"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["shut"]}
+    assert provider.item_facts["the lantern"] == {
+        "place": "on the table",
+        "condition": ["shut", "carved with KMS"],
+    }
 
     provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
     provider.apply_item_facts({"the lantern": {"condition": []}})
@@ -500,7 +503,7 @@ def test_empty_condition_reply_keeps_axis_and_clears_other_conditions():
     assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["open"]}
 
 
-def test_empty_condition_reply_keeps_laptop_state_and_clears_other_conditions():
+def test_empty_condition_reply_keeps_laptop_state_and_other_conditions():
     provider = _provider()
     provider.state_axes = {"Kristin's laptop": {"closed": [], "open": []}}
     provider.item_facts["Kristin's laptop"] = {
@@ -510,12 +513,29 @@ def test_empty_condition_reply_keeps_laptop_state_and_clears_other_conditions():
     provider.apply_item_facts({"Kristin's laptop": {"place": "in Kristin's hands", "condition": []}})
     assert provider.item_facts["Kristin's laptop"] == {
         "place": "in Kristin's hands",
-        "condition": ["closed"],
+        "condition": ["closed", "dusty"],
     }
 
     provider.apply_item_facts({"the gate": {"condition": ["blocked"]}})
     provider.apply_item_facts({"the gate": {"condition": []}})
-    assert provider.item_facts["the gate"]["condition"] == []
+    assert provider.item_facts["the gate"]["condition"] == ["blocked"]
+
+
+def test_empty_condition_reply_keeps_the_phone_crack():
+    provider = _provider()
+    provider.item_facts["Michelle's phone"] = {
+        "place": "in Kristin's hand",
+        "condition": ["cracked screen"],
+    }
+
+    provider.apply_item_facts({"Michelle's phone": {"place": "in Kristin's pocket", "condition": []}})
+    assert provider.item_facts["Michelle's phone"] == {
+        "place": "in Kristin's pocket",
+        "condition": ["cracked screen"],
+    }
+
+    provider.apply_item_facts({"Michelle's phone": {"condition": ["cracked in two"]}})
+    assert provider.item_facts["Michelle's phone"]["condition"] == ["cracked in two"]
 
 
 def test_non_axis_place_still_updates_location():
