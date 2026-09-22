@@ -1127,6 +1127,21 @@ Two changes, measured one live replicate and then two:
   never answers or gives the phone back; t6 types Michelle's password into
   Kristin's laptop 2/2.
 
+- `17684e6` completes a narration reply that only lacks its closing
+  brackets (a replay of the hand-over prompt, 12 samples, showed the model
+  writes item_facts but omits the final brace in 5 of 12; the decoder's
+  mid-word salvage then dropped item_facts). `673e11e` anchors the fact
+  judge's kept_ended_condition to the words in AFTER (re-grade of v16: 0
+  false positives, against 1 for the old rubric re-run as a control, so the
+  original 8 were mostly one noisy grading). Two replicates
+  (`item-facts-v17-close-two-scene-1a`): omitted item_facts 2 -> 0,
+  kept_ended_condition 8 -> 0, judge-failed turns 20 -> 18. The hand-over
+  reply now arrives but says the phone is still "in Kristin's pocket" while
+  the narration has the man take it (2/2, and 4 of 6 v16 replay samples):
+  it copies the place line given just before the command. New judge false
+  positives from the kept_ended wording: dropped_true_condition on four r2
+  flips (shut -> open etc.), where the judge calls a replaced pole dropped.
+
 What now leads is capture, not narration: the narrator's own reply reports
 the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
 place (r2 t2), and never reports the laptop open (t6, 2/2).
