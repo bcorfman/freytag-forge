@@ -1525,6 +1525,9 @@ class CloudflareTurnProvider:
         try:
             return json.loads(narration)
         except json.JSONDecodeError:
+            completed = self._complete_truncated_json(narration)
+            if completed is not None:
+                return completed
             salvaged = self._salvage_truncated_json(narration)
             if salvaged is None:
                 raise
@@ -1535,6 +1538,39 @@ class CloudflareTurnProvider:
             )
             self._record_recovery()
             return salvaged
+
+    @staticmethod
+    def _complete_truncated_json(narration: str) -> dict[str, object] | None:
+        """Complete a reply that only lacks its closing JSON delimiters."""
+
+        closers = {"{": "}", "[": "]"}
+        stack: list[str] = []
+        in_string = False
+        escaped = False
+        for char in narration:
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char in closers:
+                stack.append(char)
+            elif char in "]}" and (not stack or closers[stack[-1]] != char):
+                return None
+            elif char in "]}":
+                stack.pop()
+        if in_string:
+            return None
+        try:
+            candidate = json.loads(narration + "".join(closers[char] for char in reversed(stack)))
+        except json.JSONDecodeError:
+            return None
+        return candidate if isinstance(candidate, dict) else None
 
     @staticmethod
     def _salvage_truncated_json(narration: str) -> dict[str, object] | None:

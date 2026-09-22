@@ -484,6 +484,42 @@ def test_transport_keeps_the_finished_segments_of_a_truncated_reply(monkeypatch)
     assert state.last_turn_delivery.recovery_used
 
 
+def test_transport_completes_a_reply_missing_its_final_brace(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = (
+        '{"segments":[{"kind":"narration","text":"She lifts the phone."},'
+        '{"kind":"narration","text":"The screen catches the light."}],'
+        '"item_facts":{"Michelle\'s phone":{"place":"in the man\'s hand",'
+        '"condition":["cracked screen"]}}'
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    result = provider._request({"system": "", "user": ""})
+
+    assert len(result["segments"]) == 2
+    assert result["item_facts"]["Michelle's phone"]["condition"] == ["cracked screen"]
+    assert state.last_turn_delivery.segments_truncated is False
+    assert state.last_turn_delivery.recovery_used is False
+
+
+def test_transport_completes_a_reply_missing_two_closing_delimiters(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = '{"segments":[{"kind":"narration","text":"She lifts the phone."}'
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    result = provider._request({"system": "", "user": ""})
+
+    assert result == {"segments": [{"kind": "narration", "text": "She lifts the phone."}]}
+    assert state.last_turn_delivery.segments_truncated is False
+    assert state.last_turn_delivery.recovery_used is False
+
+
 def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
