@@ -26,3 +26,5 @@ but it invokes paid model calls only when explicitly run.
 
 These labels come from one story. Tuning a judge until it agrees with this
 corpus does not show that it generalizes to another story.
+
+An optional `superseded` block records labels that are kept for reference but skipped when scoring.

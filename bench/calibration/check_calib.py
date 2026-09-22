@@ -62,6 +62,9 @@ def main() -> int:
         report.append(f"## {block} judge: {agree}/{total} = {rate:.1%}")
         if unlabelled:
             report.append(f"- unlabelled turns skipped: {len(unlabelled)} ({', '.join(unlabelled)})")
+        superseded = labels.get("superseded", {}).get(block, {})
+        if superseded:
+            report.append(f"- superseded cells skipped: {sum(len(cell) for cell in superseded.values())}")
         report.extend(f"- {label}: {good}/{count}" for label, (good, count) in sorted(per_label.items()))
         report.append("Mismatches:")
         report.extend(f"  - {mismatch}" for mismatch in mismatches)

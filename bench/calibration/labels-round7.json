@@ -264,23 +264,15 @@
       "narration_contradicts_given_facts": "yes"
     },
     "1:4": {
-      "facts_after_correct": "no",
-      "invented_change": "yes",
       "narration_contradicts_given_facts": "no"
     },
     "2:4": {
-      "facts_after_correct": "no",
-      "invented_change": "yes",
       "narration_contradicts_given_facts": "no"
     },
     "3:4": {
-      "facts_after_correct": "no",
-      "invented_change": "yes",
       "narration_contradicts_given_facts": "no"
     },
     "4:4": {
-      "facts_after_correct": "no",
-      "invented_change": "yes",
       "narration_contradicts_given_facts": "no"
     },
     "1:5": {
@@ -417,6 +409,27 @@
       "facts_after_correct": "yes",
       "invented_change": "no",
       "narration_contradicts_given_facts": "no"
+    }
+  },
+  "superseded": {
+    "reason": "The story canon now declares Kristin's laptop starts closed, so recording it closed is no longer invented.",
+    "fact": {
+      "1:4": {
+        "facts_after_correct": "no",
+        "invented_change": "yes"
+      },
+      "2:4": {
+        "facts_after_correct": "no",
+        "invented_change": "yes"
+      },
+      "3:4": {
+        "facts_after_correct": "no",
+        "invented_change": "yes"
+      },
+      "4:4": {
+        "facts_after_correct": "no",
+        "invented_change": "yes"
+      }
     }
   },
   "notes": {

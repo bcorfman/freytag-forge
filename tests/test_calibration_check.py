@@ -10,6 +10,7 @@ def test_skips_unlabelled_turn_and_scores_labelled_mismatch(tmp_path: Path, monk
         "results_dir": str(tmp_path),
         "continuity": {"1:1": {"consistent": "yes"}, "1:2": {"consistent": "no"}},
         "fact": {"1:1": {"correct": "yes"}},
+        "superseded": {"fact": {"1:2": {"correct": "no"}}},
     }
     records = {
         "runs": [
@@ -58,3 +59,5 @@ def test_skips_unlabelled_turn_and_scores_labelled_mismatch(tmp_path: Path, monk
     output = capsys.readouterr().out
     assert "unlabelled turns skipped: 1 (r1 t2)" in output
     assert "## continuity judge: 1/2 = 50.0%" in output
+    assert "## fact judge: 1/1 = 100.0%" in output
+    assert "superseded cells skipped: 1" in output
