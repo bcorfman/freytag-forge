@@ -1,9 +1,9 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-22): Phase 0 bench work is through round 9 and a long
-follow-up of single-mechanism runs (v11-v17), all on branch `round9` at
-`e9e33f8`, not merged. TWO DECISIONS ARE WAITING ON BRANDON before the next
-change; they are the first thing in "State at hand-off (2026-09-22)", which is
+follow-up of single-mechanism runs (v11-v18), all on branch `round9`, not
+merged. The two decisions from the 2026-09-22 hand-off are resolved (v18);
+the open items are listed in "State at hand-off (2026-09-22)", which is
 where a new session should start. Round 8's code is merged to `main` (PR #469,
 PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
 "Round 9 follow-up" at the end of Phase 0.
@@ -1180,7 +1180,24 @@ Not merged to `main`. Every measurement below is two live replicates of the
 and every turn record now saves its exact narration prompts
 (`prompt_system`, `prompt_user`).
 
-*Decision 1 (open): the hand-over reply copies the place it was given.*
+*Both decisions below were RESOLVED on 2026-09-22 in `da78720` (option 1 and
+the proposed rubric sentence) and measured as v18
+(`bench/results/item-facts-v18-handover-two-scene-1a`):*
+- Hand-over: t15's reply now gives the phone "in the man's hand" 2/2 (v17:
+  "in Kristin's pocket" 2/2). No choppy-prose leak seen in t15.
+- v18 fact judge: 7/36 turns with a failed cell (v17: 12/36, same script,
+  new rubric vs old, so part of that drop is the rubric). Continuity:
+  21/36 including protagonist_acts_beyond_command (v17: 24/36). New in
+  v18: restarts_scene 2 (r1 t18, r2 t12) and the chair called "empty"
+  while canon says overturned (t5, 2/2).
+- Re-grade with a same-session control (old rubric from `e9e33f8`),
+  `bench/results/probes/dropped-opposite-regrade.md`: dropped_true_condition
+  yes on v17 fell 9 -> 1 turns; round 8 dropped_true_condition 43/48 ->
+  47/48, fact judge 95.2% -> 96.4%; round 7 fact judge 95.2% -> 94.3%
+  (invented_change only, which the change does not touch - noise). The
+  unchanged continuity judge moved 3 cells on round 8, the noise floor.
+
+*Decision 1 (resolved, see above): the hand-over reply copies the place it was given.*
 Since `17684e6` the hand-over turn (t15, "Walk over to the man watching you.
 Hand him Michelle's phone.") no longer loses its item_facts. The reply now
 arrives, but in v17 it says the phone is still "in Kristin's pocket" while
@@ -1203,7 +1220,7 @@ narration call (a second capture call is ruled out by Brandon):
      person's hand as its place." First in Brandon's ranking, but examples
      have beaten rules on this model so far.
 
-*Decision 2 (open): a fact-judge false positive introduced by `673e11e`.*
+*Decision 2 (resolved, see above): a fact-judge false positive introduced by `673e11e`.*
 The new kept_ended_condition wording ("read ... word for word") leaked into
 dropped_true_condition: on four r2 flips in v17 (drawer shut -> open, laptop
 closed -> open, chair overturned -> upright, drawer open -> shut) the judge
