@@ -1075,6 +1075,16 @@ Two changes, measured one live replicate and then two:
 - `a089d6b` saves each turn's narration system and user prompt in the bench
   records (`prompt_system`, `prompt_user`), so a turn can be read exactly.
 
+- `aa9fece` moves the 14 rules that are the same on every turn (and the
+  opening's 11) out of the user CONSTRAINTS block into the system prompt,
+  word for word, behind a bench flag; the shipped prompts are byte-identical.
+  Two replicates (`item-facts-v13-sysrules-two-scene-1a`), against v12:
+  judge-failed turns 18 -> 17 (a wash overall), command_not_finished 6 -> 3,
+  restarts_scene 4 -> 1, contradicts_stated_fact 1 -> 4. Every 1A command
+  finished in both replicates; the hand-over completed 2/2 for the first
+  time; the three unfinished turns are all the 1B man (t17 resists 2/2, t18
+  silent once). New slip, 2/2 on t16: "his cracked screen" for the phone.
+
 What now leads is capture, not narration: the narrator's own reply reports
 the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
 place (r2 t2), and never reports the laptop open (t6, 2/2).
