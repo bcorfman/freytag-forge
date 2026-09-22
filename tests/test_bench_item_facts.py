@@ -96,11 +96,11 @@ def test_two_scene_variation_output_example_shows_two_step_action():
     prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
 
     assert "She picks up the lantern. She carries it out to the porch." in prompt["system"]
-    assert "She sets it on the rail and lights it with a match." in prompt["system"]
+    assert "She hands it to her neighbor, who takes it with a nod." in prompt["system"]
+    assert '"place":"in the neighbor\'s hand"' in prompt["system"]
     assert '"condition":["lit"]' in prompt["system"]
-    assert "She lights it. It glows." not in prompt["system"]
+    assert "She sets it on the rail" not in prompt["system"]
     assert "Its light has gone out." not in prompt["system"]
-    assert "She looks at the lantern. Its light has gone out." not in prompt["system"]
 
 
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):

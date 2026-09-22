@@ -8,7 +8,7 @@
   "continue_to": {"scene": "1B", "fixed_turns": 6, "script": "carry-and-hand-off"},
   "system_prompt": {
     "constant_rules_in_system": true,
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She sets it on the rail and lights it with a match. Now the lantern glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"on the porch rail\",\"condition\":[\"lit\"]}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light. She hands it to her neighbor, who takes it with a nod.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"in the neighbor's hand\",\"condition\":[\"lit\"]}}}"
   },
   "overrides": {
     "knowledge.yaml": {"replacements": [
