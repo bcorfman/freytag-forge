@@ -96,8 +96,9 @@ def test_two_scene_variation_output_example_shows_two_step_action():
     prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
 
     assert "She picks up the lantern. She carries it out to the porch." in prompt["system"]
-    assert "She lights it. It glows." in prompt["system"]
+    assert "She sets it on the rail and lights it with a match." in prompt["system"]
     assert '"condition":["lit"]' in prompt["system"]
+    assert "She lights it. It glows." not in prompt["system"]
     assert "Its light has gone out." not in prompt["system"]
     assert "She looks at the lantern. Its light has gone out." not in prompt["system"]
 
@@ -684,11 +685,31 @@ def test_package_seed_scene_1a_matches_authored_things():
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
         "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
-        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []},
+        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
             "place": "in Michelle's workstation",
             "condition": ["shut"],
         },
+        "workstation chair": {
+            "place": "at Michelle's workstation",
+            "condition": ["overturned"],
+        },
+    }
+    assert issues == []
+
+
+def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    package = load_story_package(Path(variation["_package_path"]))
+    state = RuntimeState(package=package, current_scene_id="1A", phase="exposition")
+    state._assert_scene_entry_fact("1A")
+
+    things, issues = package_seed(package, state, "1A")
+
+    assert things["Kristin's laptop"]["condition"] == ["closed"]
+    assert things["workstation chair"] == {
+        "place": "at Michelle's workstation",
+        "condition": ["overturned"],
     }
     assert issues == []
 
