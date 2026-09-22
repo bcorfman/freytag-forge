@@ -21,8 +21,8 @@
   },
   "scripts": {
     "1A": [
-      {"name": "joined", "inputs": ["Look carefully at Michelle's phone.", "Open the drawer with your initials carved into it.", "Pick up Michelle's phone and put it in your pocket.", "Go out to your truck and bring your laptop inside."]},
-      {"name": "split", "inputs": ["Look carefully at Michelle's phone.", "Open the drawer with your initials carved into it.", "Pick up Michelle's phone and put it in your pocket.", "Go out to your truck. Bring your laptop inside."]}
+      {"name": "joined", "inputs": ["Look carefully at Michelle's phone.", "Open the drawer with my initials carved into it.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck and bring my laptop inside."]},
+      {"name": "split", "inputs": ["Look carefully at Michelle's phone.", "Open the drawer with my initials carved into it.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck. Bring my laptop inside."]}
     ]
   }
 }

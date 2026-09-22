@@ -369,7 +369,7 @@ def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monke
     result = core.run_scene(
         variation,
         "1A",
-        {"name": "fixed", "inputs": ["Go out to your truck and bring your laptop inside."]},
+        {"name": "fixed", "inputs": ["Go out to the truck and bring my laptop inside."]},
     )
 
     assert result["status"] == "ok"
@@ -377,7 +377,7 @@ def test_run_scene_fixed_turns_completes_without_leaving_and_numbers_turns(monke
     assert [turn["turn_number"] for turn in result["turns"]] == [1, 2, 3]
     assert result["rejected_turns"] == []
     assert all("narrated_command" in turn for turn in result["turns"])
-    assert result["turns"][0]["narrated_command"] == "Go out to your truck. Bring your laptop inside."
+    assert result["turns"][0]["narrated_command"] == "Go out to the truck. Bring my laptop inside."
 
 
 def test_run_scene_turn_record_keeps_new_item_on_same_turn(monkeypatch) -> None:
@@ -422,7 +422,7 @@ def test_run_scene_records_narration_prompt_before_item_facts_match(monkeypatch)
     monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
     variation["_fixed_turns"] = 1
-    command = "Pick up Michelle's phone and put it in your pocket."
+    command = "Pick up Michelle's phone and put it in my pocket."
 
     result = core.run_scene(variation, "1A", {"name": "prompt", "inputs": [command]})
 

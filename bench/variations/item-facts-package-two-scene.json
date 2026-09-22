@@ -23,10 +23,10 @@
   },
   "scripts": {
     "1A": [{"name": "change-types", "inputs": [
-      "Look carefully at Michelle's phone.", "Open the drawer with your initials carved into it.", "Pick up Michelle's phone and put it in your pocket.", "Go out to your truck and bring your laptop inside.", "Set your laptop on Michelle's workstation.", "Open your laptop.", "Stand the overturned chair back up.", "Shut the drawer.", "Carry your laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Put Michelle's phone in your pocket and walk out to the truck."
+      "Look carefully at Michelle's phone.", "Open the drawer with my initials carved into it.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck and bring my laptop inside.", "Set my laptop on Michelle's workstation.", "Open my laptop.", "Stand the overturned chair back up.", "Shut the drawer.", "Carry my laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Put Michelle's phone in my pocket and walk out to the truck."
     ]}],
     "1B": [{"name": "carry-and-hand-off", "inputs": [
-      "Check that you still have Michelle's phone.", "Look around the bench for anything Michelle left.", "Walk over to the man watching you and hand him Michelle's phone.", "Check who has Michelle's phone now.", "Take Michelle's phone back from the man.", "Ask the man who he is."
+      "Check that I still have Michelle's phone.", "Look around the bench for anything Michelle left.", "Walk over to the man watching me and hand him Michelle's phone.", "Check who has Michelle's phone now.", "Take Michelle's phone back from the man.", "Ask the man who he is."
     ]}]
   }
 }

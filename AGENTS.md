@@ -33,6 +33,9 @@ phrasing hides behind a green suite.
 - **Imperative, not first person.** `Search the kitchen for signs of a
   struggle.` Never `I search the kitchen...`. The second is the player writing
   the story, which is the narrator's job.
+- Name the player's own things in the first person: `my laptop`, `my pocket`,
+  never `your laptop`. Use a plain article when ownership need not be said:
+  `Go out to the truck.`
 - **An active move, never a restraint.** Strip any `do not ...`, `without
   ...`, `avoid ...` clause and keep the action that remains. Declining to do
   something is not a turn.

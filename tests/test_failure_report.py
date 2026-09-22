@@ -102,10 +102,10 @@ def test_narrated_command_is_printed_when_different(tmp_path):
     path = tmp_path / "results"
     _write_results(path, [1], [_fact(1, facts_after_correct="no")], [])
     records = json.loads((path / "all-turn-records.json").read_text())
-    records["runs"][0]["turns"][0]["narrated_command"] = "Go out to your truck. Bring your laptop inside."
+    records["runs"][0]["turns"][0]["narrated_command"] = "Go out to the truck. Bring my laptop inside."
     (path / "all-turn-records.json").write_text(json.dumps(records))
 
-    assert "- NARRATED COMMAND: Go out to your truck. Bring your laptop inside." in _report(path)
+    assert "- NARRATED COMMAND: Go out to the truck. Bring my laptop inside." in _report(path)
 
 
 def test_all_turns_includes_clean_turn_with_full_body_and_count(tmp_path):
