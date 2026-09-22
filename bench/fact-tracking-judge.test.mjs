@@ -90,6 +90,7 @@ test("fact rubric separates given conflicts and allows introduced refinements", 
   assert.match(rubric, /An action the narration only attempts changes nothing/);
   assert.match(rubric, /An attempted handover that nobody takes changes nothing/);
   assert.match(rubric, /recording a laptop as closed when the narration only shows her carrying it out of the truck is invented/);
+  assert.match(rubric, /item_facts_after listing open is no/);
 });
 
 test("rejects a verdict with the wrong turn count", async () => {
