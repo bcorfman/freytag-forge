@@ -1097,6 +1097,20 @@ Two changes, measured one live replicate and then two:
   condition at all and does not track the chair, whose "overturned" state
   lives only in SCENE prose.
 
+- `fd77280` gives 1A's laptop a starting state (closed) and tracks the
+  workstation chair (overturned), in plot.md and world.yaml, and rewrites the
+  example with normal sentences. Two replicates
+  (`item-facts-v15-states-two-scene-1a`), against v14: chair captured upright
+  2/2 (0/2), drawer still 2/2, choppy sentences 17% -> 2%, missed_change
+  13 -> 6, facts_after_wrong 13 -> 6; judge-failed turns 21 -> 20. The laptop
+  is still never captured open, because turn 4's reply sends
+  `"condition": []` and the engine takes an empty list as clearing "closed"
+  (the same empty list drops the phone's "cracked screen" on r1 t3). The rise
+  in contradicts (8) and restarts (7) sits almost entirely in 1B: r1 carried
+  the phone to the truck on turn 12 (the known script defect), and both
+  hand-over replies (t15) omitted item_facts, so the man's taking the phone
+  was never recorded and t16-t17 contradict the stale facts.
+
 What now leads is capture, not narration: the narrator's own reply reports
 the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
 place (r2 t2), and never reports the laptop open (t6, 2/2).
