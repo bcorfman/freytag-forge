@@ -1,11 +1,12 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-21): Phase 0 bench work is through round 9's billed run, which
-is written up every turn in `bench/results/round9.md` and awaits Brandon's
-comments; round 9 is on branch `round9`, not yet merged. Round 8's code is
-merged to `main` (PR #469, PR #470). Read "Round 8" at the end of Phase 0, then
-"Round 9", "Round 9 as built" and "Round 9 run" for what landed and what it
-measured, then "State at hand-off" for commits and commands.
+Status (2026-09-22): Phase 0 bench work is through round 9 and a long
+follow-up of single-mechanism runs (v11-v17), all on branch `round9` at
+`e9e33f8`, not merged. TWO DECISIONS ARE WAITING ON BRANDON before the next
+change; they are the first thing in "State at hand-off (2026-09-22)", which is
+where a new session should start. Round 8's code is merged to `main` (PR #469,
+PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
+"Round 9 follow-up" at the end of Phase 0.
 
 Round 8 measured no net improvement. Scored by Brandon's own comments in both
 rounds, turns with a real failure were 25/48 in round 7 and 25/48 in round 8;
@@ -1169,6 +1170,117 @@ Exit: the round 9 report is scored by Brandon's labels, not the judges' counts,
 and compared against 25/48 on the same basis. Phase 0's exit criterion of 92%
 per change type remains unmet and remains the gate; at 48% clean, round 9 is a
 mechanism round, not the round that meets it.
+
+**State at hand-off (2026-09-22) - START HERE**
+
+Branch `round9` at `e9e33f8`, tree clean, full suite green, nothing running.
+Not merged to `main`. Every measurement below is two live replicates of the
+18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
+12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
+and every turn record now saves its exact narration prompts
+(`prompt_system`, `prompt_user`).
+
+*Decision 1 (open): the hand-over reply copies the place it was given.*
+Since `17684e6` the hand-over turn (t15, "Walk over to the man watching you.
+Hand him Michelle's phone.") no longer loses its item_facts. The reply now
+arrives, but in v17 it says the phone is still "in Kristin's pocket" while
+the narration says "The man takes the phone" (2/2), and the replay in
+`bench/results/probes/handover-t15-replay.json` shows the same in 4 of 6 v16
+samples. The reply copies the place line written just before the command
+("- Michelle's phone is in Kristin's pocket."), which R9-2 added to stop
+narration contradicting where things are. Options, all inside the single
+narration call (a second capture call is ruled out by Brandon):
+  1. Add a hand-over to the reply example (recommended): the example's
+     lantern ends up taken by someone, and its reply place is that person's
+     hand. The reply example is the lever that has moved this model every
+     time (one-sentence turns 14/36 -> 0/36, state flips 0/2 -> 2/2), and it
+     teaches with material rather than a rule. Watch style leakage: the v14
+     example's three-word sentences doubled choppy prose until v15 fixed it.
+  2. Take the place line out of the PLAYER block and keep it in THINGS only.
+     Simpler, but may bring back the pick-up-source contradictions R9-2 was
+     for.
+  3. A short narrator rule such as "When someone takes a thing, give that
+     person's hand as its place." First in Brandon's ranking, but examples
+     have beaten rules on this model so far.
+
+*Decision 2 (open): a fact-judge false positive introduced by `673e11e`.*
+The new kept_ended_condition wording ("read ... word for word") leaked into
+dropped_true_condition: on four r2 flips in v17 (drawer shut -> open, laptop
+closed -> open, chair overturned -> upright, drawer open -> shut) the judge
+says the old state was "dropped rather than ended", though the new state
+correctly replaced it. Proposed fix: one rubric sentence in
+`bench/fact-tracking-judge.mjs`, under dropped_true_condition, saying a
+condition replaced by its opposite (shut becoming open) is not dropped. Then
+re-grade v17 offline, plus both labelled rounds, with a same-session control
+(see the note on judge noise below).
+
+*Other open items, in rough order:*
+- An empty condition list still wipes a thing that has no declared state
+  pair: the phone's crack is lost on 1-3 turns a run (`a8bf2b7` covers only
+  two-state things). Damage is not a two-state pair.
+- The 1B man never answers "Ask the man who he is." and resists "Take
+  Michelle's phone back from the man." (t17, t18, every run). This is the
+  parked C1 finding: excluding `source.kind: scene_entry` knowledge from NPC
+  sayable lines leaves him nothing to say.
+- t6 "Open your laptop." types Michelle's password into Kristin's laptop 2/2
+  (invented detail).
+- Brandon's per-turn comments on `bench/results/round9.md` are still
+  outstanding; the follow-up runs were read by the judges and by Claude only.
+- Two code nits from review: `storygame/runtime/command_split.py` duplicates
+  `_split_sentence` as `_split_masked_sentence` instead of sharing it with an
+  offset map; `_turn_rules` in `storygame/runtime/cloudflare.py` rebuilds its
+  rule list by slicing `_constant_turn_rules()` at fixed positions.
+
+*What changed in the SHIPPED game this session* (everything else is
+bench-only): `plot.md`/`world.yaml` 1A now track the workstation chair
+(overturned) and say the laptop starts closed (`fd77280`, Brandon's ruling);
+the compound-command splitter handles possessive names (`adae214`); a reply
+missing only its closing brackets is completed instead of truncated
+(`17684e6`); `CloudflareTurnProvider` gained helper methods and a no-op
+`_system_rules` hook with byte-identical prompts (`aa9fece`).
+
+*Where the numbers stand* (judge-failed turns of 36; the judges are a guide,
+not the score):
+
+| Run | Change | Failed | Note |
+|---|---|---|---|
+| v10 (round 9) | R9-1..R9-5 | 21 | 12 command_not_finished |
+| v12 | two-step reply example | 18 | one-sentence turns 14 -> 0 |
+| v13 | constant rules into system prompt | 17 | every 1A command finished; hand-over 2/2 |
+| v14 | example flips a state | 21 | drawer captured; choppy prose 17% |
+| v15 | laptop/chair starting states, smoother example | 20 | chair captured; choppy 2% |
+| v16 | two-state keep, turn 12, splitter | 20 (~15 real) | every scripted state change captured 2/2 |
+| v17 | complete unclosed replies, kept_ended rubric | 18 | omitted item_facts 0; hand-over echo; new judge FP |
+
+*Judge noise, measured this session:* a single re-grade of the same records
+moves by 3-5 cells, and the old rubric re-run as a control scored 95.6%/92.0%
+on round 7 where a remembered figure was 96.5%/95.6%. Gate any rubric change
+against a control run in the same session, never against a remembered
+figure. Round 7's 8 "laptop invented closed" cells are superseded
+(`e9e33f8`) now that canon says it starts closed.
+
+*How to run a live measurement* (the session's manifests lived in a
+scratchpad and are gone). One Ringer task per run, `engine: codex`,
+`model: gpt-5.6-luna`, `task_type: probe`, `full_access: true`,
+`max_attempts: 1`; the worker runs exactly once, from the repo root:
+`set -a; [ -f .env ] && . ./.env; set +a; TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-package-two-scene.json --scene 1A --replicates 2 --script change-types --out bench/results/item-facts-v18-<name>-two-scene-1a --confirm`
+The check never calls a model: it asserts 2 replicates with 18 turns each,
+no rejected turns, both judgment files present, and a non-empty
+`prompt_user` containing "PLAYER:" on every turn, and prints the judge
+tallies. Code changes go through a separate worktree Ringer task whose check
+exports a patch; review it, then apply and commit on `round9` before the
+live run. Re-grading saved records offline:
+`bench/calibration/rejudge.py --results <dir> --out <dir>` then
+`bench/calibration/check_calib.py --labels bench/calibration/labels-round{7,8}.json --judgments <dir> --records <results>/all-turn-records.json`.
+
+*This session's commits on `round9`, oldest first:* `ffc5cca` `ae7f28f`
+`e9939b2` `40cac70` `6a6e116` (round 9 run and report), `4f4a3cc` `a089d6b`
+`7014335` (place line before the command; prompts saved), `d0092c2` `ad86fb4`
+(two-step example), `aa9fece` `b02ba49` (rules to system prompt), `81c4a49`
+`c3929a8` (state-flip example), `fd77280` `f2f0eca` (laptop/chair states),
+`a8bf2b7` `d0c564a` `adae214` `b65a058` (two-state keep, turn 12, splitter),
+`673e11e` `17684e6` `fa83185` (kept_ended rubric, unclosed replies), `e9e33f8`
+(superseded labels).
 
 **State at hand-off (2026-09-19)**
 
