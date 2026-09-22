@@ -1085,6 +1085,18 @@ Two changes, measured one live replicate and then two:
   time; the three unfinished turns are all the 1B man (t17 resists 2/2, t18
   silent once). New slip, 2/2 on t16: "his cracked screen" for the phone.
 
+- `81c4a49` makes the reply example flip a state ("She lights it. It glows."
+  -> condition "lit"). Two replicates (`item-facts-v14-flip-two-scene-1a`),
+  against v13: the drawer is captured open 2/2 and shut 2/2 (0/2 before,
+  and 0/6 since round 9), but judge-failed turns rose 17 -> 21. The example's
+  three-word sentences leaked into style (sentences of five words or fewer
+  8% -> 17%), including one degenerate loop (r2 t12 "She gets in. She starts
+  the engine. ... She drives back to the truck."). The laptop (0/2) and the
+  chair (0/2) are still not captured, and the records show why: THINGS gives
+  the drawer a current state ("shut") to flip, but gives the laptop no
+  condition at all and does not track the chair, whose "overturned" state
+  lives only in SCENE prose.
+
 What now leads is capture, not narration: the narrator's own reply reports
 the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
 place (r2 t2), and never reports the laptop open (t6, 2/2).
