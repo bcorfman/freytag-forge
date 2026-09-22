@@ -1232,9 +1232,16 @@ re-grade v17 offline, plus both labelled rounds, with a same-session control
 (see the note on judge noise below).
 
 *Other open items, in rough order:*
-- An empty condition list still wipes a thing that has no declared state
-  pair: the phone's crack is lost on 1-3 turns a run (`a8bf2b7` covers only
-  two-state things). Damage is not a two-state pair.
+- RESOLVED in `408126e`: an empty condition list wiped the phone's crack
+  (every loss in v15-v18 was a `condition: []` reply). An empty list is now
+  no condition change at all. v19 (`item-facts-v19-emptykeep-two-scene-1a`)
+  lost no phone condition, but the model sent no empty list for the phone
+  that run, so the unit tests are the evidence the path works.
+- New fact-judge false positive, seen in v19: dropped_true_condition fires
+  when the phone's damage is reworded or split/merged ("cracked in two,
+  shattered" vs "cracked in two", "shattered") or escalates (cracked screen
+  -> cracked in two). All 5 of v19's dropped cells are this, as is round 8
+  r3 t12. Likely leakage from kept_ended_condition's "word for word".
 - The 1B man never answers "Ask the man who he is." and resists "Take
   Michelle's phone back from the man." (t17, t18, every run). This is the
   parked C1 finding: excluding `source.kind: scene_entry` knowledge from NPC
