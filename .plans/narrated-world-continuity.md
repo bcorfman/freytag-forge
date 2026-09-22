@@ -1111,6 +1111,22 @@ Two changes, measured one live replicate and then two:
   hand-over replies (t15) omitted item_facts, so the man's taking the phone
   was never recorded and t16-t17 contradict the stale facts.
 
+- `a8bf2b7` (an empty condition list keeps a two-state thing's state),
+  `d0c564a` (turn 12 becomes "Put Michelle's phone in your pocket and walk
+  out to the truck.") and `adae214` (the splitter now splits compound
+  commands carrying a possessive name, which spaCy's small model misparsed).
+  Two replicates (`item-facts-v16-axis-two-scene-1a`), against v15: every
+  scripted state change is now captured 2/2 (laptop kept closed on t4 and
+  opened on t6, drawer, chair, phone pocketed on t12); restarts 7 -> 1,
+  missed_change 6 -> 2; judge-failed turns 20 -> 20 as reported, but all 8
+  kept_ended_condition labels are fact-judge false positives on records
+  identical to v15's (AFTER is ["open"], the judge says "shut" was kept), so
+  the real count is about 15. Still open: the hand-over reply omitted
+  item_facts on t15 in all four replicates of v15 and v16; an empty list
+  still wipes a non-axis condition (the phone's crack, 3 turns); the 1B man
+  never answers or gives the phone back; t6 types Michelle's password into
+  Kristin's laptop 2/2.
+
 What now leads is capture, not narration: the narrator's own reply reports
 the drawer still "shut" after opening it (r1 t2), puts "open" in the drawer's
 place (r2 t2), and never reports the laptop open (t6, 2/2).
