@@ -367,6 +367,42 @@ class CloudflareTurnProvider:
     def _object_place_rule(self) -> str:
         return "Keep each object where the scene puts it."
 
+    def _constant_turn_rules(self) -> list[str]:
+        return [
+            "Show what happens right after the player acts.",
+            "Use only what the SCENE section tells you.",
+            "Use the places and details the story gives you.",
+            self._object_place_rule(),
+            "Finish each action the player gives.",
+            "When the player gives a thing to someone, that person takes it.",
+            f"Only show {self._protagonist_name()} doing what the player said.",
+            "Do not make up new objects, clues, or things inside containers.",
+            "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
+            "A character may only say what you were told that character can say.",
+            "Never write IDs or story bookkeeping into the prose.",
+            "Do not copy sentences from the SCENE section.",
+            "Do not say anything that goes against the SCENE section.",
+            "Do not repeat the request's labels back.",
+        ]
+
+    def _constant_opening_rules(self) -> list[str]:
+        return [
+            "The player already read the entry text. Write only what comes next. Keep the same voice and tense.",
+            "Show only the opening beat and what the SCENE section tells you.",
+            "Do not repeat or reword the entry text.",
+            "Do not make up clues, characters, or events.",
+            "Do not solve the goal for the player.",
+            "Do not act for the player. Do not offer choices.",
+            "Keep selected_knowledge_ids empty.",
+            "Do not say anything that goes against the entry text or the beat details.",
+            "Do not make up new objects, clues, or things inside containers.",
+            "Never write IDs or story bookkeeping into the prose.",
+            self._object_place_rule(),
+        ]
+
+    def _system_rules(self, opening: bool) -> list[str]:
+        return []
+
     def _turn_rules(self) -> list[str]:
         """State the rules that apply to this turn.
 
@@ -414,16 +450,9 @@ class CloudflareTurnProvider:
         )
         complication_text = self.state.last_turn_delivery.complication_text
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
+        constant_rules = self._constant_turn_rules()
         default_rules = [
-            "Show what happens right after the player acts.",
-            "Use only what the SCENE section tells you.",
-            "Use the places and details the story gives you.",
-            self._object_place_rule(),
-            "Finish each action the player gives.",
-            "When the player gives a thing to someone, that person takes it.",
-            f"Only show {self._protagonist_name()} doing what the player said.",
-            "Do not make up new objects, clues, or things inside containers.",
-            "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
+            *constant_rules[:9],
             *(
                 (
                     "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
@@ -432,17 +461,16 @@ class CloudflareTurnProvider:
                 if model_grounding
                 else ()
             ),
-            "A character may only say what you were told that character can say.",
+            constant_rules[9],
             *selection_rules,
-            "Never write IDs or story bookkeeping into the prose.",
-            "Do not copy sentences from the SCENE section.",
-            "Do not say anything that goes against the SCENE section.",
-            "Do not repeat the request's labels back.",
+            *constant_rules[10:],
         ]
+        system_rules = self._system_rules(opening=False)
         configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
         rules = list(configured_rules) if not handoff_turn and isinstance(configured_rules, list) else default_rules
         if not all(isinstance(rule, str) and rule for rule in rules):
             raise ValueError("prompt variant rules must be a list of non-empty strings")
+        rules = [rule for rule in rules if rule not in system_rules]
         # A variation that replaces the rules block still needs this turn-specific
         # rule, except on authored handoffs where selection is runtime-owned.
         if configured_rules and not candidates and not handoff_turn:
@@ -552,7 +580,7 @@ class CloudflareTurnProvider:
             return package.protagonist_id
         return min((*npc.aliases, npc.name), key=len)
 
-    def _system_prompt(self) -> str:
+    def _system_prompt(self, opening: bool = False) -> str:
         """The instructions that never vary: role, genre, player, and reply shape.
 
         Everything that changes with the scene or the beat lives in the user
@@ -567,6 +595,7 @@ class CloudflareTurnProvider:
             "sections in the message that follows.",
             "Make the roleplay realistic, with realistic character behaviors, personalities and motivations.",
             f"The player is {self._protagonist_name()}.",
+            *self._system_rules(opening),
             "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.",
         ]
         example = self._output_example()
@@ -584,24 +613,14 @@ class CloudflareTurnProvider:
         self.authored_handoff = None
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         entry = self._scene_entry()
-        rules = [
-            "The player already read the entry text. Write only what comes next. Keep the same voice and tense.",
-            "Show only the opening beat and what the SCENE section tells you.",
-            "Do not repeat or reword the entry text.",
-            "Do not make up clues, characters, or events.",
-            "Do not solve the goal for the player.",
-            "Do not act for the player. Do not offer choices.",
-            "Keep selected_knowledge_ids empty.",
-            "Do not say anything that goes against the entry text or the beat details.",
-            "Do not make up new objects, clues, or things inside containers.",
-            "Never write IDs or story bookkeeping into the prose.",
-            self._object_place_rule(),
-        ]
+        rules = self._constant_opening_rules()
+        system_rules = self._system_rules(opening=True)
+        rules = [rule for rule in rules if rule not in system_rules]
         rules.extend(self._owner_rules())
         rules.extend(self._placement_rules())
         rules.extend(self._setting_fact_rules())
         return self._dispatch(
-            self._system_prompt(),
+            self._system_prompt(opening=True),
             {
                 "scene_entry": entry,
                 "knowledge_context": {"player": self._serialized_player_context({})},

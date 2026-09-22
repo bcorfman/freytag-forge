@@ -232,8 +232,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _setting_fact_rules(self) -> list[str]:
         return []
 
-    def _system_prompt(self) -> str:
-        system = super()._system_prompt()
+    def _system_rules(self, opening: bool) -> list[str]:
+        if self.prompt_variant and self.prompt_variant.get("constant_rules_in_system") is True:
+            return self._constant_opening_rules() if opening else self._constant_turn_rules()
+        return []
+
+    def _system_prompt(self, opening: bool = False) -> str:
+        system = super()._system_prompt(opening=opening)
         if self.item_facts_mode == "single_call":
             return f"{system}\n{_SINGLE_CALL_RULES[0]}\n{_SINGLE_CALL_RULES[1]}"
         return system

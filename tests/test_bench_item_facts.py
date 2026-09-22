@@ -115,6 +115,50 @@ def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
     assert "Keep each object where the scene puts it." not in user
 
 
+def test_shipped_provider_keeps_constant_rules_in_user_prompts(monkeypatch):
+    provider = _provider()
+    turn = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
+
+    assert provider._system_rules(opening=False) == []
+    assert "Show what happens right after the player acts." not in turn["system"]
+    assert "Show what happens right after the player acts." in provider._section_user_prompt(turn["context"])
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    assert provider._system_rules(opening=True) == []
+    assert "The player already read the entry text." not in provider.last_prompt["system"]
+    assert "The player already read the entry text." in provider.last_prompt["user"]
+
+
+def test_constant_rules_can_move_to_system_prompt(monkeypatch):
+    provider = _provider()
+    provider.prompt_variant = {"constant_rules_in_system": True}
+    turn = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
+    system = turn["system"]
+    user = provider._section_user_prompt(turn["context"])
+    constant_rules = provider._constant_turn_rules()
+
+    system_rules = system.split("The player is Kristin.\n", 1)[1].split("Describe each scene", 1)[0].splitlines()
+    assert system_rules == constant_rules
+    for rule in constant_rules:
+        assert rule not in user
+    assert "Say who owns a thing the first time you name it:" in user
+    assert "This turn has no candidates. Leave selected_knowledge_ids empty." in user
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    opening_system = provider.last_prompt["system"]
+    assert opening_system.split("The player is Kristin.\n", 1)[1].split("Describe each scene", 1)[0].splitlines() == (
+        provider._constant_opening_rules()
+    )
+
+
 def test_match_system_describes_references_and_new_names():
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
     assert "carried" not in _MATCH_SYSTEM

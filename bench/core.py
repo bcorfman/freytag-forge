@@ -272,6 +272,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     narrow_to_shadow_match = prompt.get("narrow_to_shadow_match", False)
     if not isinstance(narrow_to_shadow_match, bool):
         raise ValueError("system_prompt.narrow_to_shadow_match must be a boolean")
+    constant_rules_in_system = prompt.get("constant_rules_in_system", False)
+    if not isinstance(constant_rules_in_system, bool):
+        raise ValueError("system_prompt.constant_rules_in_system must be a boolean")
     variation["_prompt_variant"] = {
         **({"rules": rules} if rules is not None else {}),
         "include_output_example": include_output_example,
@@ -281,6 +284,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         "positive_selection_example": positive_selection_example,
         "model_grounding": model_grounding,
         "narrow_to_shadow_match": narrow_to_shadow_match,
+        "constant_rules_in_system": constant_rules_in_system,
     }
     variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
@@ -295,6 +299,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
             "positive_selection_example": positive_selection_example,
             "model_grounding": model_grounding,
             "narrow_to_shadow_match": narrow_to_shadow_match,
+            "constant_rules_in_system": constant_rules_in_system,
         }
     )
     variation["_story_package_value"] = package_value
