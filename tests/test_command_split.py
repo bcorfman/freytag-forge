@@ -25,6 +25,26 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
             ["Pick up Michelle's phone.", "Put it in your pocket."],
         ),
         (
+            "Put Michelle's phone in your pocket and walk out to the truck.",
+            ["Put Michelle's phone in your pocket.", "Walk out to the truck."],
+        ),
+        (
+            "Open Michelle's drawer and take the memory card.",
+            ["Open Michelle's drawer.", "Take the memory card."],
+        ),
+        (
+            "Hand Michelle's phone to the man and walk back to the bench.",
+            ["Hand Michelle's phone to the man.", "Walk back to the bench."],
+        ),
+        (
+            "Show Kristin's badge to the guard and open the gate.",
+            ["Show Kristin's badge to the guard.", "Open the gate."],
+        ),
+        (
+            "Put Michelle’s phone in your pocket and walk out to the truck.",
+            ["Put Michelle’s phone in your pocket.", "Walk out to the truck."],
+        ),
+        (
             "Take Michelle's phone out and throw it hard against the kitchen wall.",
             ["Take Michelle's phone out.", "Throw it hard against the kitchen wall."],
         ),
@@ -57,6 +77,9 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
             ["Look around the bench for anything Michelle left."],
         ),
         ("Ask Brandon where he and Michelle met.", ["Ask Brandon where he and Michelle met."]),
+        ("Look at Kristin's laptop and Michelle's phone.", ["Look at Kristin's laptop and Michelle's phone."]),
+        ("Watch Michelle's car drive away.", ["Watch Michelle's car drive away."]),
+        ("Ask Michelle's neighbor where she went.", ["Ask Michelle's neighbor where she went."]),
         ("Tell Brandon to wait and watch the gate.", ["Tell Brandon to wait and watch the gate."]),
         ('Say "run and hide" to Brandon.', ['Say "run and hide" to Brandon.']),
         ("Look carefully at Michelle's phone.", ["Look carefully at Michelle's phone."]),

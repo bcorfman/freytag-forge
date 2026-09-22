@@ -38,7 +38,97 @@ def split_command(text: str) -> list[str]:
         pieces.extend(sentence_pieces)
         did_split |= len(sentence_pieces) > 1
 
-    return pieces if did_split else [text]
+    if did_split:
+        return pieces
+
+    masked_text, masked_to_original = _mask_possessive_names(text, doc)
+    if masked_text == text:
+        return [text]
+
+    try:
+        masked_doc = _get_pipeline()(masked_text)
+    except Exception:
+        return [text]
+
+    masked_pieces: list[str] = []
+    for sentence in masked_doc.sents:
+        sentence_pieces = _split_masked_sentence(sentence, text, masked_to_original)
+        masked_pieces.extend(sentence_pieces)
+        did_split |= len(sentence_pieces) > 1
+    return masked_pieces if did_split else [text]
+
+
+def _mask_possessive_names(text: str, doc: spacy.tokens.Doc) -> tuple[str, list[int]]:
+    replacements = [
+        (token.idx, doc[token.i + 1].idx + len(doc[token.i + 1]))
+        for token in doc
+        if token.pos_ == "PROPN"
+        and token.i + 1 < len(doc)
+        and doc[token.i + 1].tag_ == "POS"
+        and doc[token.i + 1].text in {"'s", "’s"}
+    ]
+    if not replacements:
+        return text, list(range(len(text) + 1))
+
+    masked_parts: list[str] = []
+    masked_to_original = [0]
+    original_cursor = 0
+    masked_length = 0
+    for start, end in replacements:
+        unchanged = text[original_cursor:start]
+        masked_parts.append(unchanged)
+        masked_to_original.extend(range(original_cursor + 1, start + 1))
+        masked_parts.append("her")
+        masked_to_original.extend([start, start, end])
+        masked_length += len(unchanged) + 3
+        original_cursor = end
+    unchanged = text[original_cursor:]
+    masked_parts.append(unchanged)
+    masked_to_original.extend(range(original_cursor + 1, len(text) + 1))
+    assert len(masked_to_original) == masked_length + len(unchanged) + 1
+    return "".join(masked_parts), masked_to_original
+
+
+def _split_masked_sentence(sentence: Span, text: str, masked_to_original: list[int]) -> list[str]:
+    quoted = _quoted_token_indexes(sentence)
+    root, parsed_root = _imperative_root(sentence)
+    if root is None or parsed_root is None or root.i in quoted:
+        return [text[masked_to_original[sentence.start_char] : masked_to_original[sentence.end_char]]]
+
+    action_roots = _coordinated_verbs(parsed_root, quoted)
+    action_roots = [action_root for action_root in action_roots if action_root.i > root.i]
+    if not action_roots:
+        return [text[masked_to_original[sentence.start_char] : masked_to_original[sentence.end_char]]]
+
+    starts = [sentence.start, *(action_root.i for action_root in action_roots)]
+    original_starts = [masked_to_original[sentence.doc[start].idx] for start in starts]
+    original_end = masked_to_original[sentence.end_char]
+    pieces: list[str] = []
+    for piece_number, start in enumerate(starts):
+        end = starts[piece_number + 1] if piece_number + 1 < len(starts) else sentence.end
+        original_piece_end = (
+            original_starts[piece_number + 1] if piece_number + 1 < len(original_starts) else original_end
+        )
+        original_piece = text[original_starts[piece_number] : original_piece_end]
+        if piece_number + 1 < len(starts):
+            piece = _drop_masked_separator(original_piece, sentence, start, end, masked_to_original)
+            piece = f"{piece}."
+        else:
+            piece = _add_terminal_punctuation(original_piece)
+        pieces.append(_capitalize(piece))
+    return pieces
+
+
+def _drop_masked_separator(piece: str, sentence: Span, start: int, end: int, masked_to_original: list[int]) -> str:
+    token_end = end - 1
+    while token_end >= start:
+        token = sentence.doc[token_end]
+        if token.is_punct or token.dep_ == "cc" or token.text.casefold() == "then":
+            token_end -= 1
+            continue
+        original_end = masked_to_original[token.idx + len(token)] - masked_to_original[sentence.doc[start].idx]
+        return piece[:original_end].rstrip()
+    return ""
 
 
 def _split_sentence(sentence: Span) -> list[str]:
