@@ -194,14 +194,14 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
     )
 
 
-def test_things_axis_vocabulary_remains_after_axis_is_cleared():
+def test_things_axis_vocabulary_remains_after_empty_condition_reply():
     provider = _provider()
     provider._selected_names = list(provider.item_facts)
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
     assert "Condition: shut (or open)." in provider._things_block()
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert "Condition:" not in provider._things_block().splitlines()[1]
+    assert "Condition: shut (or open)." in provider._things_block().splitlines()[1]
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -484,20 +484,38 @@ def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix
     assert provider.item_facts_axis_fixes == 0
 
 
-def test_empty_condition_reply_clears_axis_and_conditions_but_keeps_place():
+def test_empty_condition_reply_keeps_axis_and_clears_other_conditions():
     provider = _provider()
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
-    provider.item_facts["the lantern"]["condition"] = ["open", "carved with KMS"]
+    provider.item_facts["the lantern"]["condition"] = ["shut", "carved with KMS"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["shut"]}
 
     provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"]["condition"] == []
+    assert provider.item_facts["the lantern"]["condition"] == ["open"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["open"]}
+
+
+def test_empty_condition_reply_keeps_laptop_state_and_clears_other_conditions():
+    provider = _provider()
+    provider.state_axes = {"Kristin's laptop": {"closed": [], "open": []}}
+    provider.item_facts["Kristin's laptop"] = {
+        "place": "in the truck",
+        "condition": ["closed", "dusty"],
+    }
+    provider.apply_item_facts({"Kristin's laptop": {"place": "in Kristin's hands", "condition": []}})
+    assert provider.item_facts["Kristin's laptop"] == {
+        "place": "in Kristin's hands",
+        "condition": ["closed"],
+    }
+
+    provider.apply_item_facts({"the gate": {"condition": ["blocked"]}})
+    provider.apply_item_facts({"the gate": {"condition": []}})
+    assert provider.item_facts["the gate"]["condition"] == []
 
 
 def test_non_axis_place_still_updates_location():
