@@ -1,13 +1,15 @@
 # Judge calibration corpus
 
-This directory contains the author's labels for two saved judge runs. The
+This directory contains the author's labels for three saved judge runs. The
 labels are an offline corpus for checking changes to the continuity and
 fact-tracking judges.
 
 `labels-round7.json` grades
 `bench/results/item-facts-v8-two-scene-1a`. `labels-round8.json` grades
 `bench/results/item-facts-v9-two-scene-1a`, using the author's comments in
-`bench/results/round8.md` and its six explicit overrules.
+`bench/results/round8.md` and its six explicit overrules. `labels-round9.json`
+grades `bench/results/item-facts-v10-two-scene-1a`, using the author's
+comments in `bench/results/round9.md`.
 
 After producing `continuity-judgments.json` and
 `fact-tracking-judgments.json`, score a run with:
