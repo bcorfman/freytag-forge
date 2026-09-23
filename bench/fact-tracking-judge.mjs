@@ -77,6 +77,7 @@ function playerVisibleTurn(turn, index) {
     turn_number: Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1,
     player_input: turn.player_input,
     narration: turn.narration,
+    story_text: turn.story_text ?? [],
     item_facts_before: turn.item_facts_before,
     item_facts_after: turn.item_facts_after,
     ...(Object.hasOwn(turn, "scene_id") ? { scene_id: turn.scene_id } : {}),

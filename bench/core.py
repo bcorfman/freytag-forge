@@ -19,6 +19,7 @@ from statistics import mean, stdev
 from typing import Any
 
 from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
+from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
     CloudflareTurnProvider,
@@ -1370,7 +1371,7 @@ def run_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
         "--output",
         str(output_path),
     ]
-    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    result = _run_with_judge_input(command, input_path)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "judge CLI failed")
     return read_json(output_path)
@@ -1385,7 +1386,7 @@ def run_escalation_judges(input_path: Path, output_path: Path) -> dict[str, Any]
         "--output",
         str(output_path),
     ]
-    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    result = _run_with_judge_input(command, input_path)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "escalation judge CLI failed")
     return read_json(output_path)
@@ -1400,7 +1401,7 @@ def run_continuity_judges(input_path: Path, output_path: Path) -> dict[str, Any]
         "--output",
         str(output_path),
     ]
-    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    result = _run_with_judge_input(command, input_path)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "continuity judge CLI failed")
     return read_json(output_path)
@@ -1415,7 +1416,25 @@ def run_fact_tracking_judges(input_path: Path, output_path: Path) -> dict[str, A
         "--output",
         str(output_path),
     ]
-    result = subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())
+    result = _run_with_judge_input(command, input_path)
     if result.returncode:
         raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
     return read_json(output_path)
+
+
+def _run_with_judge_input(command: list[str], input_path: Path) -> subprocess.CompletedProcess[str]:
+    source = read_json(input_path)
+    package = load_story_package(Path(source["package_path"]))
+    transformed = dict(source)
+    transformed["runs"] = [
+        {
+            **run,
+            "turns": judge_turns(run.get("turns", []), run.get("scene_transitions", []), package),
+        }
+        for run in source.get("runs", [])
+    ]
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as handle:
+        json.dump(transformed, handle, ensure_ascii=False)
+        handle.flush()
+        command = [handle.name if value == str(input_path) else value for value in command]
+        return subprocess.run(command, check=False, text=True, capture_output=True, env=os.environ.copy())

@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from storygame.story_package.loader import load_story_package
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -17,8 +19,17 @@ def main() -> int:
     records = json.loads((args.results / "all-turn-records.json").read_text())
     sys.path.insert(0, ".")
     from bench.core import load_variation  # noqa: E402
+    from bench.judge_input import judge_turns  # noqa: E402
 
     variation = load_variation(Path("bench/variations/item-facts-package-two-scene.json"))
+    package = load_story_package(Path(variation["_package_path"]))
+    records["runs"] = [
+        {
+            **run,
+            "turns": judge_turns(run.get("turns", []), run.get("scene_transitions", []), package),
+        }
+        for run in records.get("runs", [])
+    ]
     records["package_path"] = str(variation["_package_path"])
     (args.out / "input.json").write_text(json.dumps(records))
     for judge, name in (

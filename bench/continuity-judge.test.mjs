@@ -27,6 +27,7 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
     {
       player_input: "Look at the phone.",
       narration: "The phone lies on the floor.",
+      story_text: ["The story adds this sentence."],
       scene_id: "1A",
       item_facts_before: { phone: { place: "her hands" } },
       item_facts_after: { phone: { place: "floor" } },
@@ -63,9 +64,11 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
       player_input: "Look at the phone.",
       narration: "The phone lies on the floor.",
       given_facts: { phone: { place: "her hands" } },
+      story_text: ["The story adds this sentence."],
     },
   ]);
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
+  assert.match(request.input[0].content, /story_text lists sentences at the end of the narration that the story itself wrote for this turn/);
   assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the narration shows her attending to that thing/);
   assert.match(request.input[0].content, /She cannot control another character/);
   assert.match(request.input[0].content, /When she tries to take a thing from another character, trying is her whole part/);
