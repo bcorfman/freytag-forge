@@ -1322,14 +1322,15 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     assert result["status"] == "ok"
-    assert len(result["turns"]) == 18
-    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 12 + ["1B"] * 6
+    assert len(result["turns"]) == 19
+    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 13 + ["1B"] * 6
     assert result["scene_transitions"] == [
-        {"from_scene": "1A", "to_scene": "1B", "after_turn": 12, "advanced_offline": True}
+        {"from_scene": "1A", "to_scene": "1B", "after_turn": 13, "advanced_offline": False}
     ]
-    assert "Michelle's phone" not in result["turns"][11]["item_facts_after"]
-    assert "Kristin's laptop" not in result["turns"][12]["item_facts_before"]
-    assert len(calls) == 37
+    assert "Michelle's phone" not in result["turns"][12]["item_facts_after"]
+    assert result["turns"][12]["authored_handoff_candidate_id"] in {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
+    assert "Kristin's laptop" not in result["turns"][13]["item_facts_before"]
+    assert len(calls) == 39
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):

@@ -1,7 +1,7 @@
 {
   "name": "item-facts-package-two-scene",
   "story_package": "data/stories/continuity-initiative",
-  "fixed_turns": 12,
+  "fixed_turns": 13,
   "continuity_judge": true,
   "fact_tracking_judge": true,
   "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"shut": ["closed"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}, "workstation chair": {"overturned": [], "upright": ["standing"]}}},
@@ -23,7 +23,7 @@
   },
   "scripts": {
     "1A": [{"name": "change-types", "inputs": [
-      "Look carefully at Michelle's phone.", "Open the drawer with my initials carved into it.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck and bring my laptop inside.", "Set my laptop on Michelle's workstation.", "Open my laptop.", "Stand the overturned chair back up.", "Shut the drawer.", "Carry my laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Put Michelle's phone in my pocket and walk out to the truck."
+      "Look carefully at Michelle's phone.", "Open the drawer with my initials carved into it.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck and bring my laptop inside.", "Set my laptop on Michelle's workstation.", "Open my laptop.", "Stand the overturned chair back up.", "Shut the drawer.", "Carry my laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Put Michelle's phone in my pocket and walk out to the truck.", "Read the saved files on the memory card."
     ]}],
     "1B": [{"name": "carry-and-hand-off", "inputs": [
       "Check that I still have Michelle's phone.", "Look around the bench for anything Michelle left.", "Walk over to the man watching me and hand him Michelle's phone.", "Check who has Michelle's phone now.", "Take Michelle's phone back from the man.", "Ask the man who he is."
