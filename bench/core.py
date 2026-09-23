@@ -612,6 +612,8 @@ def prompt_for(
         raise ValueError("--beat and --storylet select the turn in different ways; name only one")
     if beat is not None:
         selected = resolve_beat(package, scene_id, beat)
+        if isinstance(provider, CloudflareTurnProvider):
+            provider._forced_beat_anchors.add(selected.anchor)
         establish_prior_beats(package, state, scene_id, selected)
         # Pacing decides which beat is live on turn 1. Naming a beat asks to see a
         # different one, so its storylets are activated directly; the beat reaches

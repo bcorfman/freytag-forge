@@ -231,6 +231,7 @@ class CloudflareTurnProvider:
         self.model_grounding_ids: tuple[str, ...] = ()
         self.shadow_matched_candidate_id: str | None = None
         self.authored_handoff: AuthoredHandoff | None = None
+        self._forced_beat_anchors: set[str] = set()
         self.prompt_candidate_ids: tuple[str, ...] = ()
         self._example_player_input = ""
         self.prompt_variant = prompt_variant
@@ -671,11 +672,12 @@ class CloudflareTurnProvider:
         """Return authored beat material that the player can earn on this turn.
 
         Beat prose is added only for storylets whose reveals are candidates on
-        this turn. The scene's beats describe what later reveals contain - Scene
-        2B's first beat names JANUS outright - so sending all of them would hand
-        the narrator knowledge the player has not earned. The projection already
-        supplies place and objective; this adds only the authored material the
-        player can earn now.
+        this turn. Beats of a runtime-owned reveal are sent only on the turn
+        that reveal is reached. The scene's beats describe what later reveals
+        contain - Scene 2B's first beat names JANUS outright - so sending all
+        of them would hand the narrator knowledge the player has not earned.
+        The projection already supplies place and objective; this adds only the
+        authored material the player can earn now.
         """
 
         setting: dict[str, object] = {}
@@ -723,6 +725,13 @@ class CloudflareTurnProvider:
             for realization in route.realizations
         }
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
+        current_scene = next(
+            (scene for scene in package.scenes if scene.metadata.scene_id == self.state.current_scene_id),
+            None,
+        )
+        opening_anchor = current_scene.opening_beat.anchor if current_scene is not None else None
+        handoff_candidate_id = self.authored_handoff.candidate.id if self.authored_handoff is not None else None
+        handoff_ids = self._handoff_eligible_candidate_ids()
         seen: set[str] = set()
         selected: list[SceneBeat] = []
         for candidate in self.last_projection.candidates if self.last_projection else ():
@@ -735,6 +744,13 @@ class CloudflareTurnProvider:
             realization = realizations.get((storylet.id, knowledge.source.realization_id))
             anchors = realization.source_beats if realization and realization.source_beats else storylet.source_links
             for anchor in anchors:
+                if (
+                    candidate.id in handoff_ids
+                    and candidate.id != handoff_candidate_id
+                    and anchor != opening_anchor
+                    and anchor not in self._forced_beat_anchors
+                ):
+                    continue
                 beat = beats_by_anchor.get(anchor)
                 if anchor not in seen and beat is not None:
                     seen.add(anchor)

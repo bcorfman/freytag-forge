@@ -290,6 +290,47 @@ def test_candidate_beats_project_the_1b_dead_drop_for_offered_candidates() -> No
     assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
 
 
+def test_runtime_owned_later_beat_is_not_projected_while_merely_eligible() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1a_b_r2", action_evidence=(("read",),), delivery_text="reveal"),)
+    )
+
+    assert provider._candidate_beats() == ()
+
+
+def test_runtime_owned_later_beat_is_projected_on_its_matched_handoff() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1a_b_r2", action_evidence=(("read",),), delivery_text="reveal"),)
+    )
+    provider.authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_sl_1a_b_r2"))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == (
+        "scene-1a2--michelles-last-investigation",
+        "scene-1a3--the-interrupted-message",
+    )
+
+
+def test_runtime_owned_opening_beat_is_still_projected() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1a_a_r1", action_evidence=(("search",),), delivery_text="reveal"),)
+    )
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1a1--michelle-is-gone",)
+
+
+def test_narrator_selected_candidates_keep_projecting_all_source_beats() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1a_b_r2"),))
+
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == (
+        "scene-1a2--michelles-last-investigation",
+        "scene-1a3--the-interrupted-message",
+    )
+
+
 def test_candidate_beats_use_each_realization_source_beats_only() -> None:
     provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
     provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1c_c_r1"),))
