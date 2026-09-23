@@ -1312,7 +1312,36 @@ turns. The reveal TURN fails every judge 3/3:
   player a card exists, so the scripted command is one a real player could
   not know to type.
 
-Branch `round9` at `d9b70bf`, tree clean, full suite green, nothing running.
+*v25 (2026-09-23, `bench/results/item-facts-v25-cardsplit-two-scene-1a`
+plus smoke `item-facts-v25-smoke-two-scene-1a`).* The card is found and read
+in two steps, authored with ChatGPT and approved by Brandon. `d192126` adds
+the `while_fact_true` placement guard, and on a matched reveal's turn it
+shows the things that reveal places. `31b0a34` adds storylet SL-1A-E: "Look
+beneath the KMS drawer." (`k_sl_1a_b_r0`) sets custody and places the card
+"with Kristin". SL-1A-B's reveals now need custody. R0 owns the card
+phrases the old reveals owned, so the leak guard still stops the card being
+named before it is found. The bench's 1A is now 13 turns (the scene
+deadline): the find at t2, the read at t13, and the old opening "Look
+carefully at Michelle's phone." is gone.
+- Both reveals match live 3/3, the card is tracked "with Kristin" from t2,
+  and 1A.2/1A.3 reach SCENE only at t13.
+- t13 (read) no longer restarts the house arrival. In all 3 replicates
+  Kristin walks to the truck, boots her laptop and inserts the card, then
+  the authored reveal and the bridge follow. The judges still flag
+  restarts_scene on 2/3 (walking back to the truck) and
+  protagonist_acts_beyond_command.
+- t2 (find): the narrator copied `DEFAULT_OUTPUT_EXAMPLE` word for word, 2/2
+  in the full run ("The drawer sticks, then gives. Inside, under a curl of
+  packing tape ..."). `_output_example()` forces that example on every
+  authored-handoff turn, overriding the variation's lantern example, and its
+  content is this story's own taped-under-the-drawer scene. That is a
+  story-specific string in the shipped runtime, and on the find turn it
+  becomes a template. Open item for Brandon.
+- Judge-failed turns, leaving out protagonist_acts_beyond_command: 22/38
+  (v24 18/38); smoke 9/19. t2's copied example accounts for part of the
+  rise.
+
+Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
