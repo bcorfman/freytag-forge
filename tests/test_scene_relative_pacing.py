@@ -157,6 +157,7 @@ def test_every_scene_has_at_least_as_many_turns_as_it_has_beats() -> None:
 def test_storylet_activation_uses_scene_relative_turns_after_a_late_clock() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="story_elapsed_seconds", subject="story", value="600"))
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     engine = RuntimeEngine(state, _quiet_turn)
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
@@ -170,6 +171,8 @@ def test_storylet_activation_uses_scene_relative_turns_after_a_late_clock() -> N
 def test_storylet_activation_earns_forward_after_an_earlier_same_scene_beat() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.fired_event_ids.add("SL-1A-A")
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.turn_index = 2
     engine = RuntimeEngine(state, _quiet_turn)
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.

@@ -130,6 +130,14 @@ new_fact_ids:
   used_by_storylets:
   - SL-1A-B
   used_by_transitions: []
+- id: memory_card_in_kristins_custody
+  definition: Kristin has recovered Michelle's memory card and is carrying it.
+  used_by_storylets:
+  - SL-1A-E
+  - SL-1A-B
+  - SL-1A-D
+  used_by_transitions:
+  - t_1a_1b
 - id: official_interest_in_michelle_known
   definition: Kristin knows the welfare patrol was specifically interested in Dr. McGehee’s research.
   used_by_storylets:
@@ -559,12 +567,50 @@ storylets:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1A-E
+  scene_id: 1A
+  title: The KMS Mark
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: memory_card_in_kristins_custody
+      equals: false
+    pacing:
+      earliest_turn: 1
+      target_turn: 3
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the KMS mark reward a careful search of Michelle's workstation before the patrol closes in.
+  realization_options:
+  - id: SL-1A-E-R1
+    dramatic_intent: Kristin searches beneath the KMS drawer, finds Michelle's hidden memory card, and keeps it with her.
+    source_beats: [scene-1a1--michelle-is-gone]
+    operations:
+    - op: assert
+      fact_id: memory_card_in_kristins_custody
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1a_1b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: memory_card_in_kristins_custody
+      equals: true
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful searches may validate the same operation.
 - id: SL-1A-B
   scene_id: 1A
   title: Michelle Hid Something for Kristin
   activation:
     scene_id: 1A
     conditions:
+    - fact_id: memory_card_in_kristins_custody
+      equals: true
     - fact_id: continuity_initiative_known
       equals: false
     pacing:
@@ -572,16 +618,12 @@ storylets:
       target_turn: 5
       latest_turn: 6
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player lingers in Michelle’s work area, let her preparation reward investigation and connect
-    her disappearance to a deliberate threat rather than require a specific search command.
+  pressure_role: Once Kristin has the card, let its files or recording reveal Michelle's lead without requiring one fixed command.
   realization_options:
   - id: SL-1A-B-R1
-    dramatic_intent: Find and secure Michelle's hidden memory card first, then read its files and damaged recording; the card points to a dead drop at a bench in the park, giving Kristin a concrete lead away from the house.
+    dramatic_intent: Kristin reads the recovered card's files and damaged recording. They point to a dead drop at a bench in the park.
     source_beats: [scene-1a2--michelles-last-investigation, scene-1a3--the-interrupted-message]
     operations:
-    - op: assert
-      fact_id: memory_card_in_kristins_custody
-      value: true
     - op: assert
       fact_id: continuity_initiative_known
       value: true
@@ -602,13 +644,9 @@ storylets:
     - brandon_history
     - phase_two
   - id: SL-1A-B-R2
-    dramatic_intent: Find and secure Michelle's hidden memory card first, then play its damaged warning; its interrupted
-      ending plus the house evidence is enough to support abduction suspicion even before every file is understood.
-    source_beats: [scene-1a2--michelles-last-investigation, scene-1a3--the-interrupted-message]
+    dramatic_intent: Kristin plays the recovered card's damaged warning before reading the remaining files.
+    source_beats: [scene-1a3--the-interrupted-message]
     operations:
-    - op: assert
-      fact_id: memory_card_in_kristins_custody
-      value: true
     - op: assert
       fact_id: michelle_warning_known
       value: true
@@ -628,8 +666,7 @@ storylets:
       - michelle_warning_known
     abort_when:
     - scene_id_not: 1A
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+  non_coercion_note: Offer as a consequence of free-text play. Do not present these realizations as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1A-C
   scene_id: 1A
   title: The Welfare Check Feels Like a Search

@@ -28,6 +28,13 @@ from storygame.story_package.models import ItemPlacement
 from tests._legacy_package import legacy_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _activate_card_reading(state: RuntimeState) -> None:
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.active_event_ids.add("SL-1A-B")
+
+
 AUTHORED_DELIVERY = (
     "Michelle's memory card from under the drawer carved with her initials, KMS, holds a damaged recording that "
     "warns Kristin not to trust emergency broadcasts."
@@ -118,7 +125,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert captured["payload"]["max_tokens"] == 1024
     assert captured["payload"]["response_format"] == {"type": "json_object"}
     context = captured["payload"]["user"]
-    assert "Dr. Michelle McGehee may say this aloud" not in context
+    assert "k_sl_1a_b_r0" not in context
     assert "Show what happens right after the player acts." in captured["payload"]["user"]
     instruction = captured["payload"]["system"]
     assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in instruction
@@ -212,7 +219,7 @@ def test_transport_salvages_valid_segments_around_malformed_entry(monkeypatch, b
 
 def test_transport_refuses_salvage_when_selected_reveal_is_in_malformed_segment(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     reply = {
         "segments": [
             {"kind": "narration", "text": "The drawer opens."},
@@ -306,10 +313,7 @@ def test_runtime_owned_later_beat_is_projected_on_its_matched_handoff() -> None:
     )
     provider.authored_handoff = SimpleNamespace(candidate=SimpleNamespace(id="k_sl_1a_b_r2"))
 
-    assert tuple(beat.anchor for beat in provider._candidate_beats()) == (
-        "scene-1a2--michelles-last-investigation",
-        "scene-1a3--the-interrupted-message",
-    )
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1a3--the-interrupted-message",)
 
 
 def test_runtime_owned_opening_beat_is_still_projected() -> None:
@@ -325,10 +329,7 @@ def test_narrator_selected_candidates_keep_projecting_all_source_beats() -> None
     provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
     provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1a_b_r2"),))
 
-    assert tuple(beat.anchor for beat in provider._candidate_beats()) == (
-        "scene-1a2--michelles-last-investigation",
-        "scene-1a3--the-interrupted-message",
-    )
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1a3--the-interrupted-message",)
 
 
 def test_candidate_beats_use_each_realization_source_beats_only() -> None:
@@ -401,7 +402,7 @@ def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(mon
     provider("Examine Michelle's phone.")
     _assert_memory_card_in_custody(state)
     state.active_event_ids.clear()
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider("Recover Michelle's memory card and read the saved files.")
 
     contexts = [payload["user"] for payload in captured]
@@ -751,14 +752,14 @@ def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> 
 
 def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     reply = {
         "segments": [
             {
                 "kind": "narration",
                 "text": (
-                    "Kristin finds Michelle's hidden memory card and plays the damaged recording. "
+                    "Kristin plays the damaged recording on Michelle's memory card. "
                     "Her warning is not to trust emergency broadcasts."
                 ),
             }
@@ -767,12 +768,12 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Recover the interrupted recording and listen to it.")
+    result = provider("Play the damaged recording on Michelle's memory card.")
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r0", "k_sl_1a_b_r2"]
     assert result["segments"][1]["text"] == PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r2"].delivery_text
-    assert result["segments"][1]["grounding_ids"] == ["k_sl_1a_b_r2"]
+    assert result["segments"][1]["grounding_ids"] == ["k_sl_1a_b_r2", "k_sl_1a_b_r0"]
     assert provider.model_selected_knowledge_ids == ()
     assert provider.recovery_count == 0
 
@@ -780,7 +781,7 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
 def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypatch) -> None:
     package = _authored_handoff_package()
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     reply = {
         "segments": [
@@ -794,7 +795,7 @@ def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypa
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Recover the damaged recording and listen to it.")
+    result = provider("Play the damaged recording on Michelle's memory card.")
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert result["segments"] == [
@@ -803,7 +804,7 @@ def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypa
             "kind": "narration",
             "text": AUTHORED_DELIVERY,
             "speaker_id": None,
-            "grounding_ids": ["k_sl_1a_b_r2"],
+            "grounding_ids": ["k_sl_1a_b_r2", "k_sl_1a_b_r0"],
         },
     ]
     assert provider.model_selected_knowledge_ids == ("k_future_unavailable",)
@@ -813,7 +814,7 @@ def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypa
 def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypatch) -> None:
     package = _authored_handoff_package()
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
@@ -823,14 +824,14 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
     )
     before = state.snapshot()
 
-    proposal = RuntimeEngine(state, provider).turn("Recover the damaged recording and listen to it.")
+    proposal = RuntimeEngine(state, provider).turn("Play the damaged recording on Michelle's memory card.")
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     assert proposal.segments[-1].text == AUTHORED_DELIVERY
     assert Fact(predicate="michelle_warning_known", subject="story", value="true") in state.facts.asserted
 
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
@@ -843,7 +844,7 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
     )
 
     with pytest.raises(ProposalValidationError):
-        RuntimeEngine(state, provider).turn("Recover the damaged recording and listen to it.")
+        RuntimeEngine(state, provider).turn("Play the damaged recording on Michelle's memory card.")
 
     assert state.snapshot() == before
 
@@ -851,7 +852,7 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
 def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
     package = _authored_handoff_package()
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
@@ -868,7 +869,7 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    result = provider("Recover the damaged recording and listen to it.")
+    result = provider("Play the damaged recording on Michelle's memory card.")
 
     assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
     assert len(captured) == 1
@@ -885,7 +886,7 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
 def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) -> None:
     package = _authored_handoff_package()
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     captured: list[dict[str, object]] = []
     responses = iter(
@@ -901,7 +902,7 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    result = provider("Recover the damaged recording and listen to it.")
+    result = provider("Play the damaged recording on Michelle's memory card.")
 
     assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
     assert provider.recovery_count == 1
@@ -945,7 +946,7 @@ def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monke
 
 def test_transport_leaves_ambiguous_or_incomplete_candidates_unselected(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     reply = {
         "segments": [{"kind": "narration", "text": "Kristin searches the desk and finds a card."}],
@@ -961,7 +962,7 @@ def test_transport_leaves_ambiguous_or_incomplete_candidates_unselected(monkeypa
 
 def test_transport_harness_selection_can_be_disabled_for_comparison(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn",
         token="",
@@ -1238,7 +1239,7 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -1325,7 +1326,7 @@ def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> No
     """
 
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     projector = KnowledgeProjector()
     projection = projector.project(state, "player", "Search the drawer.")
     provider_proposal = parse_turn_proposal({"segments": segments, "selected_knowledge_ids": selected})
@@ -1422,7 +1423,7 @@ def test_persistently_ineligible_selection_keeps_the_narration_and_commits_nothi
 
     payloads: list[dict[str, object]] = []
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
     def open_request(request, timeout):
@@ -2104,6 +2105,7 @@ def test_scene_1a_hidden_canon_stays_out_of_beats_and_pre_reveal_prompts(monkeyp
 
 def test_reveal_delivery_locates_card_and_clears_card_placement_rules(monkeypatch) -> None:
     state = _staged_scene_1a_state()
+    _activate_card_reading(state)
     payloads: list[dict[str, object]] = []
 
     def open_request(request, **_kwargs: object) -> _Response:
@@ -2112,12 +2114,12 @@ def test_reveal_delivery_locates_card_and_clears_card_placement_rules(monkeypatc
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    proposal = provider("Recover the damaged recording and listen to it.")
+    proposal = provider("Play the damaged recording on Michelle's memory card.")
 
     assert proposal["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
-    assert "KMS" in proposal["segments"][-1]["text"]
-    assert "drawer" in proposal["segments"][-1]["text"].casefold()
-    assert not any("Michelle's memory card is " in rule for rule in provider._turn_rules())
+    assert "emergency broadcasts" in proposal["segments"][-1]["text"]
+    assert "KMS" not in proposal["segments"][-1]["text"]
+    assert any("Michelle's memory card is with Kristin." in rule for rule in provider._turn_rules())
 
 
 def test_turn_rules_sharpen_the_authored_place_rule() -> None:
@@ -2167,6 +2169,7 @@ def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
 
 def test_nonmatching_turn_hides_migrated_candidates_but_keeps_projection() -> None:
     state = _staged_scene_1a_state()
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
     prompt = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
@@ -2212,6 +2215,7 @@ def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_comm
 
 def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatch) -> None:
     state = _staged_scene_1a_state()
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
@@ -2291,7 +2295,7 @@ def test_scene_1a_migrated_reveal_composes_through_engine(
             "k_sl_1a_b_r2",
             None,
             (),
-            "Recover the damaged recording and listen to it.",
+            "Play the damaged recording on Michelle's memory card.",
             "Kristin finds the damaged recording and listens.",
             id="damaged-recording",
         ),
@@ -2306,6 +2310,8 @@ def test_authored_handoff_grounds_echoed_prose_on_the_matched_candidate(
     model_text: str,
 ) -> None:
     state = _staged_scene_1a_state() if storylet_id is None else RuntimeState.bootstrap(PACKAGE)
+    if storylet_id is None:
+        _activate_card_reading(state)
     for fact_id in fact_ids:
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
     if storylet_id is not None:
@@ -2354,6 +2360,7 @@ def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
     model_text: str,
 ) -> None:
     state = _staged_scene_1a_state()
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     request_count = 0
 
@@ -2366,7 +2373,7 @@ def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     engine = RuntimeEngine(state, provider)
 
-    first = engine.turn("Recover the damaged recording and listen to it.")
+    first = engine.turn("Play the damaged recording on Michelle's memory card.")
     assert first.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     state.scene_entered_at_turn = state.turn_index + 1
     if storylet_id not in state.active_event_ids:
@@ -2375,7 +2382,7 @@ def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
     candidate = PACKAGE.knowledge_indexes.by_id[candidate_id]
     proposal = engine.turn(player_input)
 
-    assert "k_sl_1a_b_r2" in proposal.segments[0].grounding_ids
+    assert "k_sl_1a_b_r2" not in proposal.segments[0].grounding_ids
     assert proposal.selected_knowledge_ids == (candidate_id,)
     assert proposal.segments[-1].text == candidate.delivery_text
     for effect in candidate.establishes:
@@ -2385,7 +2392,7 @@ def test_authored_handoff_prefers_the_committed_owner_of_a_shared_term(
 
 def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"positive_selection_example": True}
     )
@@ -2398,10 +2405,10 @@ def test_unmatched_action_does_not_receive_an_offered_candidate_as_an_example() 
 
 def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
-    prompt = provider.assemble_turn_prompt("Recover the interrupted message and listen to it.")
+    prompt = provider.assemble_turn_prompt("Play the damaged recording on Michelle's memory card.")
 
     assert provider.shadow_matched_candidate_id == "k_sl_1a_b_r2"
     assert "action_evidence" not in prompt["system"]
@@ -2411,12 +2418,12 @@ def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt()
 def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver() -> None:
     package = legacy_package(PACKAGE, {"k_sl_1a_b_r1", "k_sl_1a_b_r2"})
     state = RuntimeState.bootstrap(package)
-    state.active_event_ids.add("SL-1A-B")
+    _activate_card_reading(state)
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"narrow_to_shadow_match": True}
     )
 
-    prompt = provider.assemble_turn_prompt("Recover the interrupted message and listen to it.")
+    prompt = provider.assemble_turn_prompt("Play the damaged recording on Michelle's memory card.")
     user = provider._section_user_prompt(prompt["context"])
 
     assert provider.shadow_matched_candidate_id == "k_sl_1a_b_r2"

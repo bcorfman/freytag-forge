@@ -1350,8 +1350,10 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     assert result["scene_transitions"] == [
         {"from_scene": "1A", "to_scene": "1B", "after_turn": 13, "advanced_offline": False}
     ]
+    assert result["turns"][1]["authored_handoff_candidate_id"] == "k_sl_1a_b_r0"
+    assert result["turns"][12]["authored_handoff_candidate_id"] == "k_sl_1a_b_r1"
+    assert result["rejected_turns"] == []
     assert "Michelle's phone" not in result["turns"][12]["item_facts_after"]
-    assert result["turns"][12]["authored_handoff_candidate_id"] in {"k_sl_1a_b_r1", "k_sl_1a_b_r2"}
     assert "Kristin's laptop" not in result["turns"][13]["item_facts_before"]
     assert len(calls) == 39
 

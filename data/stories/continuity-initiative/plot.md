@@ -83,6 +83,9 @@ objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
 item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair]
 item_placements:
+  memory_card:
+    placement: with Kristin
+    while_fact_true: memory_card_in_kristins_custody
   michelle_phone: on the kitchen floor
   kristin_laptop: in Kristin's truck outside the house
   michelle_drawer: in Michelle's workstation
@@ -92,8 +95,7 @@ entry_text: "Michelle's text came in a little after 4:00am, while Kristin was fi
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
-    Michelle's files reference an ordinary park bench where she exchanged information with a confidential source.
-    Kristin travels there while avoiding checkpoints and emergency patrols.
+    Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols.
 ---
 
 **Setting:** Kristin and Michelle’s shared home
@@ -124,9 +126,9 @@ Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS
 
 **Details:** Michelle's memory card; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds Michelle's memory card. Kristin plugs the memory card into her laptop out in her truck.
+Kristin finds Michelle's memory card taped beneath the drawer carved with her initials, KMS. She takes the card out to her truck and opens it on her laptop.
 
-The memory card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
+The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 
 The files show that private contractors constructed dozens of enormous “population stabilization centers” before the disappearances. Officially, the centers were designed as shelters for natural disasters and biological attacks.
 
@@ -138,7 +140,7 @@ Michelle’s notes contain one alarming sentence:
 
 **Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe
 
-On the memory card, Kristin also finds a voice recording Michelle attempted to send shortly before she disappeared. In it, she says that government officials have been tracking her and that a planned “activation event” is imminent.
+On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
 Before naming her source, Michelle hears someone enter the house. The recording ends after she whispers:
 

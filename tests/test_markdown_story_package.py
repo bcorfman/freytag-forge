@@ -12,6 +12,7 @@ from storygame.runtime.candidate_matcher import (
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
@@ -40,10 +41,11 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 33
+    assert len(package.storylets) == 34
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
+        "memory_card": ItemPlacement(placement="with Kristin", while_fact_true="memory_card_in_kristins_custody"),
         "michelle_phone": "on the kitchen floor",
         "kristin_laptop": "in Kristin's truck outside the house",
         "michelle_drawer": "in Michelle's workstation",
@@ -341,6 +343,7 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
     package = load_story_package(PACKAGE)
     expected = {
         "k_sl_1a_a_r1",
+        "k_sl_1a_b_r0",
         "k_sl_1a_b_r1",
         "k_sl_1a_b_r2",
         "k_sl_1a_c_r1",
@@ -448,24 +451,22 @@ def test_legacy_evidence_without_delivery_text_still_loads(tmp_path: Path) -> No
 def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     projection = KnowledgeProjector().project(
         state,
         "player",
-        "Recover Michelle's damaged recording and listen to it.",
+        "Play the damaged recording on Michelle's memory card.",
     )
 
     handoff = uniquely_matched_authored_handoff(
-        "Recover Michelle's damaged recording and listen to it.",
+        "Play the damaged recording on Michelle's memory card.",
         projection.candidates,
     )
 
     assert handoff is not None
     assert handoff.candidate.id == "k_sl_1a_b_r2"
-    assert handoff.delivery_text == (
-        "Michelle's memory card was taped under the drawer carved with Kristin's initials, KMS. "
-        "Michelle's memory card contains a damaged recording. It warns Kristin not to trust emergency broadcasts."
-    )
+    assert handoff.delivery_text == package.knowledge_indexes.by_id["k_sl_1a_b_r2"].delivery_text
 
 
 def test_1a_deadline_fallback_names_the_kms_drawer() -> None:
@@ -481,6 +482,7 @@ def test_1a_deadline_fallback_names_the_kms_drawer() -> None:
 def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     candidates = (
         KnowledgeProjector()
@@ -515,6 +517,7 @@ def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(
 ) -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     candidates = KnowledgeProjector().project(state, "player", player_input).candidates
 

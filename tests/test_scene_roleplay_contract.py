@@ -34,8 +34,9 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
-                        "points to a dead drop at a bench in the park."
+                        "The card holds Michelle's saved files and a damaged recording. The recording warns, "
+                        '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and point '
+                        "to a dead drop at a bench in the park."
                     ),
                     "grounding_ids": ["k_sl_1a_b_r1"],
                 }
@@ -50,6 +51,7 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
 def test_every_policy_style_reaches_the_provider_as_normalized(player_input: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     calls: list[str] = []
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(state, _selection_provider(state, calls))
 

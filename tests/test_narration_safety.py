@@ -51,6 +51,7 @@ def _run_rejected(
 
 def _run_accepted(text: str, *, beats: tuple[str, ...] = (), package=PACKAGE):
     state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
 
     def provider(_player_input: str) -> dict[str, object]:
@@ -131,6 +132,7 @@ def test_wrong_speaker_dialogue_cannot_use_a_private_projection() -> None:
         }
     )
     state = RuntimeState.bootstrap(package)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     text = "Michelle's memory card was under the KMS drawer and plays the damaged recording about emergency broadcasts."
     payload = {

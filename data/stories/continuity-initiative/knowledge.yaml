@@ -294,18 +294,16 @@ knowledge:
   - [chair]
   - [door, forced entry]
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
-- id: k_sl_1a_b_r1
-  statement: "Kristin finds and secures Michelle's memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park."
-  earn_when: reads the saved files on Michelle's memory card
+- id: k_sl_1a_b_r0
+  statement: "Kristin finds Michelle's memory card taped beneath the KMS drawer and takes it with her."
+  earn_when: searches beneath the KMS drawer
   action_evidence:
-  - [recover, retrieve, memory card, the card]
-  - [card files, saved files, files on the card]
-  - [read, inspect]
-  entity_ids: []
+  - [look, search, inspect, check]
+  - [under, beneath, underside]
+  - [drawer, KMS, workstation]
+  entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
-  - continuity initiative known
-  - michelle abduction suspicion
-  - michelle lead actionable
+  - memory card in kristins custody
   audience:
     kind: public
     player_visible: true
@@ -316,6 +314,42 @@ knowledge:
   - op: assert
     fact_id: memory_card_in_kristins_custody
     value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-E
+    realization_id: SL-1A-E-R1
+  relevance:
+    entity_ids: [memory_card, michelle_drawer]
+    priority: 10
+  must_convey:
+  - [memory card, card, Michelle's card, the card, hidden card, hidden memory card]
+  - [taped]
+  - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
+  delivery_text: >-
+    A memory card is taped beneath the KMS drawer. It is Michelle's card.
+- id: k_sl_1a_b_r1
+  statement: "Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park."
+  earn_when: reads the files on Michelle's recovered memory card
+  action_evidence:
+  - [read, inspect, open, check, review, plug, insert, connect]
+  - [memory card, card]
+  - [file, files, saved file, saved files, card file, card files, laptop]
+  entity_ids: [kristin, michelle, memory_card, kristin_laptop]
+  aliases:
+  - continuity initiative known
+  - michelle warning known
+  - michelle abduction suspicion
+  - michelle lead actionable
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires:
+  - fact_id: memory_card_in_kristins_custody
+    equals: true
+  establishes:
   - op: assert
     fact_id: michelle_warning_known
     value: true
@@ -333,24 +367,27 @@ knowledge:
     storylet_id: SL-1A-B
     realization_id: SL-1A-B-R1
   relevance:
-    entity_ids: []
-    priority: 0
+    entity_ids: [memory_card, kristin_laptop]
+    priority: 10
   must_convey:
-  - [memory card, hidden card, card, Michelle's card, hidden memory card, the card]
-  - [under the drawer, taped under the drawer, beneath the drawer, under the KMS drawer]
-  - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
-  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
-  - [dead drop, exchange point, place to trade information, the dead-drop, park exchange, drop at the bench]
-  - [bench in the park, park bench, bench, park, the park bench, bench near the park]
-  delivery_text: "Michelle's memory card was taped under the drawer carved with Kristin's initials, KMS. Michelle's memory card contains a damaged recording and saved files. The card points to a dead drop at a bench in the park."
+  - [memory card, card]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
+  - [damaged recording, voice recording, recording]
+  - [emergency broadcasts, broadcast]
+  - [dead drop, exchange point]
+  - [bench in the park, park bench]
+  delivery_text: >-
+    The card holds Michelle's saved files and a damaged recording. The recording warns,
+    "Do not trust the emergency broadcasts." The files name the Continuity Initiative and
+    point to a dead drop at a bench in the park.
 - id: k_sl_1a_b_r2
-  statement: "Kristin finds and secures Michelle's memory card, then plays its damaged recording: do not trust emergency broadcasts."
-  earn_when: recovers Michelle's damaged recording and listens to it
+  statement: "Kristin plays the damaged recording on Michelle's memory card. It warns her not to trust emergency broadcasts."
+  earn_when: plays Michelle's damaged recording
   action_evidence:
-  - [recover, retrieve, memory card, the card]
-  - [damaged recording, interrupted message, recording]
-  - [listen, play]
-  entity_ids: []
+  - [listen, play, hear]
+  - [damaged recording, interrupted message, recording, message]
+  - [memory card, card]
+  entity_ids: [kristin, michelle, memory_card, kristin_laptop]
   aliases:
   - michelle warning known
   - michelle abduction suspicion
@@ -359,11 +396,10 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: memory_card_in_kristins_custody
+    equals: true
   establishes:
-  - op: assert
-    fact_id: memory_card_in_kristins_custody
-    value: true
   - op: assert
     fact_id: michelle_warning_known
     value: true
@@ -375,18 +411,16 @@ knowledge:
     storylet_id: SL-1A-B
     realization_id: SL-1A-B-R2
   relevance:
-    entity_ids: []
-    priority: 0
+    entity_ids: [memory_card, kristin_laptop]
+    priority: 10
   must_convey:
-  - [memory card, hidden card, card, Michelle's card, hidden memory card, the card]
-  - [under the drawer, taped under the drawer, beneath the drawer, under the KMS drawer]
-  - [damaged recording, voice recording, recording, damaged voice recording, recording from Michelle, broken recording]
-  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Dr. Michelle, Shelly]
-  - [emergency broadcasts, warning, do not trust the emergency broadcasts, distrust the broadcasts]
+  - [memory card, card]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
+  - [damaged recording, voice recording, recording]
+  - [emergency broadcasts, broadcast]
   delivery_text: >-
-    Michelle's memory card was taped under the drawer carved with Kristin's
-    initials, KMS. Michelle's memory card contains a damaged recording. It warns
-    Kristin not to trust emergency broadcasts.
+    The card holds a damaged recording. Michelle's voice warns, "Do not trust the
+    emergency broadcasts."
 - id: k_sl_1a_d_r1
   statement: 'Kristin reads the remaining files on Michelle''s recovered memory card and learns the place she used to trade information.'
   entity_ids: [kristin, michelle, memory_card]
