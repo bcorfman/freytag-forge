@@ -6,7 +6,7 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, package_seed, validate_item_facts
+from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, package_seed, validate_item_facts
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -982,6 +982,42 @@ def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     assert result["match_call"] is False
     assert provider.item_facts_match_calls == 0
     assert provider._selected_names == provider.dependency_names()
+
+
+def test_resolve_refer_exact_name():
+    assert _resolve_refer("the lantern", ["the lantern"]) == "the lantern"
+
+
+def test_resolve_refer_laptop_short_names():
+    tracked = ["Kristin's laptop"]
+    assert _resolve_refer("laptop", tracked) == "Kristin's laptop"
+    assert _resolve_refer("my laptop", tracked) == "Kristin's laptop"
+
+
+def test_resolve_refer_chair_short_name():
+    assert _resolve_refer("chair", ["workstation chair"]) == "workstation chair"
+
+
+def test_resolve_refer_ambiguous_or_unmatched_names():
+    assert _resolve_refer("Michelle", ["Michelle's phone"]) is None
+    assert _resolve_refer("phone", ["Kristin's phone", "Michelle's phone"]) is None
+    assert _resolve_refer("truck", ["workstation chair"]) is None
+    assert _resolve_refer("man", ["workman"]) is None
+
+
+def test_prepare_turn_resolves_short_names(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": ["laptop"], "same_as": {}},
+    )
+
+    result = provider.prepare_turn("Open my laptop.")
+
+    assert "Kristin's laptop" in provider._selected_names
+    assert result["engine_resolutions"] == {"laptop": "Kristin's laptop"}
 
 
 def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch):

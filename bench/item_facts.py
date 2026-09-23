@@ -11,6 +11,31 @@ from storygame.runtime.validation import ProgressionValidator, predicate_matches
 from storygame.story_package.models import FactPredicate, ItemPlacement
 
 
+def _resolve_refer(name: str, tracked) -> str | None:
+    tracked_names = list(tracked)
+    if name in tracked_names:
+        return name
+
+    def normalize(value: str) -> str:
+        normalized = value.strip().lower().rstrip(".,;:!?").strip()
+        for article in ("the", "my", "a", "an"):
+            if normalized.startswith(f"{article} "):
+                return normalized[len(article) + 1 :]
+        return normalized
+
+    normalized_name = normalize(name)
+    if not normalized_name:
+        return None
+    normalized_tracked = [(tracked_name, normalize(tracked_name)) for tracked_name in tracked_names]
+    exact_matches = [tracked_name for tracked_name, value in normalized_tracked if value == normalized_name]
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    suffix_matches = [
+        tracked_name for tracked_name, value in normalized_tracked if value.endswith(f" {normalized_name}")
+    ]
+    return suffix_matches[0] if len(suffix_matches) == 1 else None
+
+
 def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
     """Build tracked things from the authored placements and setting facts."""
 
@@ -573,7 +598,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not valid:
             self._selected_names = dependencies
         else:
-            refers = [name for name in reply["refers"] if isinstance(name, str) and name in self.item_facts]
+            refers = []
+            engine_resolutions = {}
+            for name in reply["refers"]:
+                if not isinstance(name, str):
+                    continue
+                resolved = _resolve_refer(name, self.item_facts)
+                if resolved is not None and resolved not in refers:
+                    refers.append(resolved)
+                if resolved is not None and resolved != name:
+                    engine_resolutions[name] = resolved
             selected = set(dependencies) | set(refers)
             self._selected_names = [name for name in self.item_facts if name in selected]
         result = {
@@ -581,7 +615,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": {},
-            "engine_resolutions": {},
+            "engine_resolutions": engine_resolutions if valid else {},
         }
         self._last_item_facts_match = copy.deepcopy(result)
         return result
