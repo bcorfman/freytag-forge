@@ -304,6 +304,48 @@ def test_candidate_beats_omit_unoffered_storylet_realizations() -> None:
     assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
 
 
+def test_turn_scene_details_omit_unrevealed_items_but_keep_other_details() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(
+        candidates=(SimpleNamespace(id="k_sl_1a_b_r1"),), established_entity_ids=()
+    )
+    beat = provider._candidate_beats()[0]
+
+    details = provider._scene_setting()["beats"][0]["details"]
+
+    assert "Michelle's memory card" not in details
+    assert any(detail in details for detail in beat.details if "memory card" not in detail.casefold())
+
+
+def test_opening_scene_details_omit_unrevealed_items(monkeypatch) -> None:
+    scene = PACKAGE.scenes[0]
+    opening_beat = scene.opening_beat.model_copy(update={"details": ("Michelle's memory card", "Michelle's phone")})
+    package = PACKAGE.model_copy(
+        update={"scenes": (scene.model_copy(update={"opening_beat": opening_beat}), *PACKAGE.scenes[1:])}
+    )
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(package)
+    ).opening()
+
+    opening_beat_prompt = captured["payload"]["user"]
+    assert "Michelle's memory card" not in opening_beat_prompt
+    assert "Michelle's phone" in opening_beat_prompt
+
+
+def test_established_item_details_are_kept() -> None:
+    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
+    provider.last_projection = SimpleNamespace(established_entity_ids=("memory_card",))
+
+    assert provider._revealed_details(("Michelle's memory card",)) == ["Michelle's memory card"]
+
+
 def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(monkeypatch) -> None:
     captured: list[dict[str, object]] = []
 

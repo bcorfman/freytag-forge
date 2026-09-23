@@ -512,6 +512,25 @@ class CloudflareTurnProvider:
             visible[item_id] = (item, placement)
         return visible
 
+    def _revealed_details(self, details: tuple[str, ...] | list[str]) -> list[str]:
+        visible_ids = set(self._visible_placed_items())
+        if self.last_projection is not None:
+            visible_ids.update(getattr(self.last_projection, "established_entity_ids", ()))
+        world_items = self.state.package.world.items
+        revealed_details: list[str] = []
+        for detail in details:
+            if any(
+                item.id not in visible_ids
+                and any(
+                    re.search(rf"(?<!\w){re.escape(surface)}(?!\w)", detail, re.IGNORECASE)
+                    for surface in (item.name, *item.aliases)
+                )
+                for item in world_items
+            ):
+                continue
+            revealed_details.append(detail)
+        return revealed_details
+
     def _owner_rules(self) -> list[str]:
         visible_items = self._visible_placed_items()
         possessive_items = [
@@ -670,7 +689,7 @@ class CloudflareTurnProvider:
                     "title": beat.title,
                     "anchor": beat.anchor,
                     "prose": beat.prose,
-                    "details": list(beat.details),
+                    "details": self._revealed_details(beat.details),
                     "your_job": (
                         "Show this world state only as far as the player's action reaches. Do not copy its words."
                     ),
@@ -766,7 +785,11 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
-            "opening_beat": {"id": beat.id, "title": beat.title, "details": list(beat.details)},
+            "opening_beat": {
+                "id": beat.id,
+                "title": beat.title,
+                "details": self._revealed_details(beat.details),
+            },
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:

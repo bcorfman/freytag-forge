@@ -1298,7 +1298,7 @@ def test_a_named_beat_reaches_the_prompt(monkeypatch) -> None:
     with_beat = prompt_for(default_variation(), "1A", "Search the drawers.", "1A.2")
 
     assert "taped drawer" not in entered["user"]
-    assert "Michelle's memory card" in with_beat["user"]
+    assert "population stabilization centers" in with_beat["user"]
     assert "k_sl_1a_d_r1 in selected_knowledge_ids" in with_beat["user"]
 
 
