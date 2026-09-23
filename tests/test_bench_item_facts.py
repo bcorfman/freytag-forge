@@ -448,6 +448,98 @@ def test_fixed_item_axis_place_still_sets_pole_without_moving():
     assert provider.item_facts_axis_fixes == 1
 
 
+def test_axis_place_change_wins_over_echoed_condition():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["shut"], "place": "open"}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open"]
+
+
+def test_axis_place_change_wins_in_reverse_direction():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["open"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["open"], "place": "shut"}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["shut"]
+
+
+@pytest.mark.parametrize("conditions", [["open", "shut"], ["shut", "open"]])
+def test_both_axis_poles_keep_the_pole_that_differs_from_before(conditions):
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": conditions}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open"]
+
+
+def test_axis_alias_echo_is_dropped_when_place_names_the_change():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["closed"], "place": "open"}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open"]
+
+
+def test_axis_echo_keeps_the_existing_pole():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["shut"]}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["shut"]
+
+
+def test_axis_flip_keeps_non_axis_condition():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["open", "splintered"]}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open", "splintered"]
+
+
+def test_axis_echo_only_keeps_existing_non_axis_condition():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut", "KMS initials carved in"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["shut"], "place": "open"}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open", "KMS initials carved in"]
+
+
 def test_movable_item_still_updates_place():
     provider = _provider()
 

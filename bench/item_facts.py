@@ -359,12 +359,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _merge_entry(self, name: str, value: dict[str, object]) -> bool:
         facts = self.item_facts[name]
+        place_pole: str | None = None
         if "place" in value:
             place = value["place"]
             if not isinstance(place, str) or not place.strip():
                 return False
-            pole = self._axis_match(name, place)
-            if pole is None:
+            place_pole = self._axis_match(name, place)
+            if place_pole is None:
                 current_place = facts.get("place")
                 repeated_place = (
                     isinstance(current_place, str) and current_place.strip().casefold() == place.strip().casefold()
@@ -375,17 +376,39 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     )
                 elif not repeated_place:
                     facts["place"] = place.strip()[:80]
-            else:
-                self._apply_conditions(name, [pole], replace=False)
-                self.item_facts_axis_fixes += 1
         if "condition" in value:
             condition = value["condition"]
             if not isinstance(condition, list) or any(
                 not isinstance(item, str) or not item.strip() for item in condition
             ):
                 return False
-            if condition:
-                self._apply_conditions(name, condition[:2])
+
+        before_pole = next(
+            (self._axis_match(name, item) for item in facts["condition"] if self._axis_match(name, item) is not None),
+            None,
+        )
+        reply_poles = [place_pole] if place_pole is not None else []
+        if "condition" in value:
+            reply_poles.extend(
+                pole for item in value["condition"] if (pole := self._axis_match(name, item)) is not None
+            )
+        distinct_poles = set(reply_poles)
+        changed_pole = None
+        if len(distinct_poles) > 1 and before_pole is not None:
+            differing_poles = {pole for pole in distinct_poles if pole != before_pole}
+            if len(differing_poles) == 1:
+                changed_pole = differing_poles.pop()
+
+        if place_pole is not None:
+            if changed_pole is None or changed_pole == place_pole:
+                self._apply_conditions(name, [place_pole], replace=False)
+            self.item_facts_axis_fixes += 1
+        if "condition" in value and value["condition"]:
+            conditions = value["condition"]
+            if changed_pole is not None:
+                conditions = [item for item in conditions if self._axis_match(name, item) in (None, changed_pole)]
+            if conditions:
+                self._apply_conditions(name, conditions[:2])
         return True
 
     def _axis_match(self, name: str, text: str) -> str | None:
