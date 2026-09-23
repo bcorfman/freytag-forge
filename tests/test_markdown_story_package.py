@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from storygame.runtime.candidate_matcher import (
     ActionEvidenceCandidate,
@@ -15,6 +16,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package.models import ItemPlacement
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -152,6 +154,18 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     assert placement.while_fact_false == "michelle_abduction_suspicion"
 
 
+def test_item_placement_accepts_true_guard_and_rejects_two_guards() -> None:
+    placement = ItemPlacement(placement="under the drawer", while_fact_true="memory_card_in_kristins_custody")
+
+    assert placement.while_fact_true == "memory_card_in_kristins_custody"
+    with pytest.raises(ValidationError, match="at most one"):
+        ItemPlacement(
+            placement="under the drawer",
+            while_fact_false="memory_card_in_kristins_custody",
+            while_fact_true="memory_card_in_kristins_custody",
+        )
+
+
 def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
@@ -209,6 +223,20 @@ def test_loader_rejects_item_placement_guard_for_an_unknown_fact(tmp_path: Path)
     contents = plot.read_text(encoding="utf-8").replace(
         "  michelle_phone: on the kitchen floor\n",
         "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
+        1,
+    )
+    plot.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="scene 1A.*michelle_phone.*undeclared_fact"):
+        load_story_package(root)
+
+
+def test_loader_rejects_true_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8").replace(
+        "  michelle_phone: on the kitchen floor\n",
+        "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_true: undeclared_fact\n",
         1,
     )
     plot.write_text(contents, encoding="utf-8")

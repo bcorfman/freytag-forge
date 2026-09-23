@@ -25,15 +25,22 @@ from storygame.runtime.contracts import (
     contract_error_summary,
     parse_turn_proposal,
 )
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
     derive_statement_grounding,
-    predicate_matches,
     unconveyed_terms,
 )
-from storygame.story_package.models import FactPredicate, Item, ItemPlacement, Scene, SceneBeat, SceneMetadata
+from storygame.story_package.models import (
+    Item,
+    ItemPlacement,
+    Scene,
+    SceneBeat,
+    SceneMetadata,
+    item_placement_is_visible,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -274,6 +281,7 @@ class CloudflareTurnProvider:
         self._example_player_input = player_input
         self.last_projection = self.projector.project(self.state, "player", player_input)
         self.authored_handoff = uniquely_matched_authored_handoff(player_input, self.last_projection.candidates)
+        self._prepare_turn_visibility()
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
@@ -300,6 +308,20 @@ class CloudflareTurnProvider:
         }
         context["_rules"] = self._turn_rules()
         return {"system": self._system_prompt(), "context": context}
+
+    def _prepare_turn_visibility(self) -> None:
+        """Give subclasses a chance to track items newly visible this turn."""
+
+    def _placement_facts(self):
+        facts = self.state.facts.clone()
+        if getattr(self, "authored_handoff", None) is not None:
+            knowledge = self.state.package.knowledge_indexes.by_id[self.authored_handoff.candidate.id]
+            for operation in knowledge.establishes:
+                if operation.op == "assert":
+                    facts.assert_fact(
+                        Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower())
+                    )
+        return facts
 
     def _shadow_matched_candidate_id(self, player_input: str) -> str | None:
         """Record a matcher result without changing the narrated turn.
@@ -506,10 +528,8 @@ class CloudflareTurnProvider:
             item = scene_items.get(item_id)
             if item is None:
                 continue
-            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-                if predicate_matches(guard, self.state.facts):
-                    continue
+            if not item_placement_is_visible(placement, self._placement_facts()):
+                continue
             visible[item_id] = (item, placement)
         return visible
 

@@ -204,6 +204,28 @@ def entity_surface_forms(entity: Entity) -> tuple[str, ...]:
 class ItemPlacement(_Model):
     placement: str = Field(min_length=1)
     while_fact_false: str | None = Field(default=None, pattern=_ID)
+    while_fact_true: str | None = Field(default=None, pattern=_ID)
+
+    @model_validator(mode="after")
+    def one_visibility_guard(self) -> ItemPlacement:
+        if self.while_fact_false is not None and self.while_fact_true is not None:
+            raise ValueError("item placement may have at most one visibility guard")
+        return self
+
+
+def item_placement_is_visible(placement: str | ItemPlacement, facts) -> bool:
+    """Return whether a placement is visible under the supplied fact store."""
+
+    if isinstance(placement, str):
+        return True
+    true_facts = {
+        fact.predicate for fact in facts.asserted if (fact.value if fact.value is not None else fact.object) == "true"
+    }
+    if placement.while_fact_false is not None:
+        return placement.while_fact_false not in true_facts
+    if placement.while_fact_true is not None:
+        return placement.while_fact_true in true_facts
+    return True
 
 
 class Character(_Model):

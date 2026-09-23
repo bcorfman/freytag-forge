@@ -1966,6 +1966,33 @@ def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
     assert "Test item is beneath the test desk." not in provider._turn_rules()
 
 
+def test_true_guarded_item_placement_rule_appears_after_fact() -> None:
+    scene = PACKAGE.scenes[0]
+    synthetic_item = next(item for item in PACKAGE.world.items if item.id == "michelle_phone").model_copy(
+        update={"id": "synthetic_item", "name": "Test item"}
+    )
+    custom_world = PACKAGE.world.model_copy(update={"items": (*PACKAGE.world.items, synthetic_item)})
+    metadata = scene.metadata.model_copy(
+        update={
+            "item_ids": (*scene.metadata.item_ids, "synthetic_item"),
+            "item_placements": {
+                "synthetic_item": ItemPlacement(
+                    placement="with Kristin", while_fact_true="memory_card_in_kristins_custody"
+                )
+            },
+        }
+    )
+    custom_package = PACKAGE.model_copy(
+        update={"world": custom_world, "scenes": (scene.model_copy(update={"metadata": metadata}), *PACKAGE.scenes[1:])}
+    )
+    state = RuntimeState.bootstrap(custom_package)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    assert "Test item is with Kristin." not in provider._turn_rules()
+    _assert_memory_card_in_custody(state)
+    assert "Test item is with Kristin." in provider._turn_rules()
+
+
 def test_setting_facts_follow_placements_in_opening_and_turn_rules(monkeypatch) -> None:
     scene = PACKAGE.scenes[0]
     metadata = scene.metadata.model_copy(

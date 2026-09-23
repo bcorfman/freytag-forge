@@ -10,6 +10,7 @@ from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, p
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import ItemPlacement
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative")
@@ -873,6 +874,28 @@ def test_package_seed_hides_guarded_3c_archive():
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(PACKAGE, state, "3C")
     assert "Portable data case" not in things
+
+
+def test_package_seed_honors_true_guarded_placement():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "3C")
+    placement = scene.metadata.item_placements["portable_archive"]
+    guarded = ItemPlacement(placement=placement.placement, while_fact_true="portable_archive_secured")
+    metadata = scene.metadata.model_copy(update={"item_placements": {"portable_archive": guarded}})
+    package = PACKAGE.model_copy(
+        update={
+            "scenes": tuple(
+                scene.model_copy(update={"metadata": metadata}) if item is scene else item for item in PACKAGE.scenes
+            )
+        }
+    )
+    state = RuntimeState(package=package, current_scene_id="3C", phase="resolution")
+    state._assert_scene_entry_fact("3C")
+
+    things, _ = package_seed(package, state, "3C")
+    assert "Portable data case" not in things
+    state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
+    things, _ = package_seed(package, state, "3C")
+    assert things["Portable data case"] == {"place": placement.placement, "condition": []}
 
 
 @pytest.mark.parametrize("change", [{"fixed_turns": 1}, {"scene": "9Z", "fixed_turns": 1, "script": "x"}])

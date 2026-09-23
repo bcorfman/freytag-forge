@@ -563,12 +563,12 @@ def _validate(package: StoryPackage) -> None:
                 f"{sorted(invalid_placements)}"
             )
         unknown_placement_guards = {
-            item_id: placement.while_fact_false
+            item_id: placement.while_fact_false or placement.while_fact_true
             for item_id, placement in scene.metadata.item_placements.items()
             if (
                 not isinstance(placement, str)
-                and placement.while_fact_false is not None
-                and placement.while_fact_false not in package.fact_ids
+                and (placement.while_fact_false or placement.while_fact_true) is not None
+                and (placement.while_fact_false or placement.while_fact_true) not in package.fact_ids
             )
         }
         if unknown_placement_guards:

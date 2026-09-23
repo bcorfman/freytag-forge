@@ -7,8 +7,8 @@ from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.validation import ProgressionValidator, predicate_matches
-from storygame.story_package.models import FactPredicate, ItemPlacement
+from storygame.runtime.validation import ProgressionValidator
+from storygame.story_package.models import ItemPlacement, item_placement_is_visible
 
 
 def _resolve_refer(name: str, tracked) -> str | None:
@@ -50,10 +50,8 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
         if item is None:
             issues.append(f"scene {scene_id} placement references unknown item {item_id!r}")
             continue
-        if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-            guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-            if predicate_matches(guard, state.facts):
-                continue
+        if not item_placement_is_visible(placement, state.facts):
+            continue
         place = placement if isinstance(placement, str) else placement.placement
         if len(place) > 80:
             issues.append(f"placement for {item.name!r} is longer than 80 characters")
@@ -132,6 +130,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _object_place_rule(self) -> str:
         return "Each thing starts at the place THINGS gives it."
+
+    def _prepare_turn_visibility(self) -> None:
+        super()._prepare_turn_visibility()
+        package = self.state.package
+        items = {item.id: item for item in package.world.items}
+        for item_id, placement in self._current_scene().item_placements.items():
+            item = items.get(item_id)
+            if (
+                item is None
+                or item.name in self.item_facts
+                or not isinstance(placement, ItemPlacement)
+                or (placement.while_fact_false is None and placement.while_fact_true is None)
+            ):
+                continue
+            if not item_placement_is_visible(placement, self._placement_facts()):
+                continue
+            place = placement if isinstance(placement, str) else placement.placement
+            self.item_facts[item.name] = {"place": place, "condition": []}
+            self.item_facts_seed_names = (*self.item_facts_seed_names, item.name)
+            if self._selected_names is None:
+                self._selected_names = self.dependency_names()
+            self._selected_names.append(item.name)
 
     def __init__(
         self,
