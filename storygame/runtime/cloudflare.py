@@ -47,13 +47,9 @@ logger = logging.getLogger(__name__)
 MAX_TURN_SEGMENTS = 5
 
 DEFAULT_OUTPUT_EXAMPLE = (
-    '{"segments":[{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
-    "her fingers find the flat edge of something that was never meant to be seen from above, and the "
-    'kitchen behind her goes very quiet."},{"kind":"narration","text":"She works it loose and turns it over in the '
-    "light from the window. "
-    "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
-    'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
-    '"selected_knowledge_ids":[]}'
+    '{"segments":[{"kind":"narration","text":"She picks up the lantern. She carries it out to the porch."},'
+    '{"kind":"narration","text":"She lights it with a match, and it glows with a warm light. She hands it to her '
+    'neighbor, who takes it with a nod."}],"selected_knowledge_ids":[]}'
 )
 
 # Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
@@ -586,15 +582,17 @@ class CloudflareTurnProvider:
 
         if self.prompt_variant and not self.prompt_variant.get("include_output_example", True):
             return None
-        if self._is_authored_handoff_turn():
-            return DEFAULT_OUTPUT_EXAMPLE
         if self.prompt_variant and "output_example" in self.prompt_variant:
             example_text = self.prompt_variant["output_example"]
         else:
             candidates = self._model_candidates()
             example_candidate = (
                 self._example_candidate(candidates)
-                if self.prompt_variant and self.prompt_variant.get("positive_selection_example", False)
+                if (
+                    self.prompt_variant
+                    and self.prompt_variant.get("positive_selection_example", False)
+                    and not self._is_authored_handoff_turn()
+                )
                 else None
             )
             example_text = DEFAULT_OUTPUT_EXAMPLE

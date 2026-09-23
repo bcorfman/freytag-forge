@@ -106,7 +106,7 @@ def test_no_example_variation_has_zero_example_leakage() -> None:
     no_example = load_variation(NO_EXAMPLE_VARIATION)
 
     assert no_example["_resolved_output_example"] is None
-    narration = ["The drawer sticks, then gives, inside a curl of packing tape."]
+    narration = ["She picks up the lantern. She carries it out to the porch."]
     assert count_example_leakage(narration, no_example["_resolved_output_example"]) == 0
 
 

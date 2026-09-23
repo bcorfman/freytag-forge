@@ -858,7 +858,9 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
         token="",
         state=state,
         prompt_variant={
-            "output_example": f'{{"candidate":"k_sl_1a_b_r2","text":"{AUTHORED_DELIVERY}"}}',
+            "output_example": (
+                '{"segments":[{"kind":"narration","text":"The room settles."}],"selected_knowledge_ids":[]}'
+            ),
         },
     )
     captured: list[dict[str, object]] = []
@@ -915,6 +917,23 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
     assert "grounding_ids" not in recovery_system
     assert "Put" not in recovery_system
     assert "Do not select a fact." in recovery_system
+
+
+def test_authored_handoff_with_positive_selection_example_uses_the_default_example() -> None:
+    package = _authored_handoff_package()
+    state = RuntimeState.bootstrap(package)
+    _activate_card_reading(state)
+    provider = CloudflareTurnProvider(
+        worker_url="",
+        token="",
+        state=state,
+        prompt_variant={"positive_selection_example": True},
+    )
+
+    prompt = provider.assemble_turn_prompt("Play the damaged recording on Michelle's memory card.")
+
+    assert DEFAULT_OUTPUT_EXAMPLE in prompt["system"]
+    assert "k_sl_1a_b_r2" not in prompt["system"]
 
 
 def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
