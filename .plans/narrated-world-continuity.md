@@ -977,11 +977,11 @@ tests. Brandon stopped the round after batch 2, before any billed run.
 
 | Task | Commit | What landed |
 |---|---|---|
-| R9-4 + R9-5 | `371ec11` | owner-key resolution in the engine; capture asks for the end of the turn |
-| R9-6a | `95e81c9` | the calibration corpus, in `bench/calibration/` |
-| R9-1 | `e906143` | the widened 12 + 6 script, park turn gone |
-| R9-3 | `22e5dd1` | the hand-over rule, the joined rule split |
-| R9-2 | `06faeb7` | each referred thing's place in the PLAYER block |
+| R9-4 + R9-5 | `1ceccf8` | owner-key resolution in the engine; capture asks for the end of the turn |
+| R9-6a | `0fcf7ad` | the calibration corpus, in `bench/calibration/` |
+| R9-1 | `71ea009` | the widened 12 + 6 script, park turn gone |
+| R9-3 | `132914f` | the hand-over rule, the joined rule split |
+| R9-2 | `194b19b` | each referred thing's place in the PLAYER block |
 
 R9-4 and R9-5 were merged into one task rather than two, because both edit
 `bench/item_facts.py` and two workers on one file collide on apply. They target
@@ -1016,25 +1016,25 @@ still ahead.
 
 **Round 9 run (2026-09-21, billed, awaiting Brandon's comments)**
 
-R9-6b was applied from the saved patch (`ffc5cca`) and re-graded offline over
+R9-6b was applied from the saved patch (`3b550e8`) and re-graded offline over
 both rounds' labels. It first failed the round 7 fact floor (90.3% against
 95.6%). Brandon chose to drop the fact rubric's "a thing is new" sentence and
 to correct two round 8 label cells that contradicted his written comments
-(r1 t4 is a restart; r2 t11 has no missed change), in `40cac70`. The checker
-also learned to skip cells he left unlabelled (`ae7f28f`). A control re-grade
+(r1 t4 is a restart; r2 t11 has no missed change), in `a9c63e7`. The checker
+also learned to skip cells he left unlabelled (`8893b03`). A control re-grade
 with round 8's own unchanged rubric then showed the floor itself was noise:
 
 | Rubric | R7 continuity | R7 fact | R8 continuity | R8 fact |
 |---|---|---|---|---|
 | Round 8's, re-run today (control) | 95.6% | 92.0% | 97.9% | 97.0% |
-| Round 9's (`40cac70`) | 98.2% | 92.9% | 97.9% | 95.8% |
+| Round 9's (`a9c63e7`) | 98.2% | 92.9% | 97.9% | 95.8% |
 
 So a single judge re-grade moves by three or four cells, and the round 8
 figures (96.5%/95.6%) are one sample, not a floor. The round 9 rubric is
 kept. Any later rubric gate should compare against a control run in the same
 session, not against a remembered figure.
 
-The smoke (`bench/results/item-facts-v10-smoke-two-scene-1a`, `e9939b2`) and
+The smoke (`bench/results/item-facts-v10-smoke-two-scene-1a`, `75bebaf`) and
 the two-replicate run (`bench/results/item-facts-v10-two-scene-1a`) completed
 with 0 rejected turns. The judges report 21/36 turns with a real failure; the
 round is scored by Brandon's comments in `bench/results/round9.md`, against
@@ -1061,11 +1061,11 @@ Diagnosed from the round 9 records: every unfinished 1A turn narrated only the
 first step of a two-step command (lifts the laptop, never carries it out).
 Two changes, measured one live replicate and then two:
 
-- `4f4a3cc` puts each referred thing's place BEFORE the command and drops
+- `b5eb396` puts each referred thing's place BEFORE the command and drops
   "right now". One replicate (`item-facts-v11-reorder-two-scene-1a`): not a
   fix on its own. The model now obeys the given place firmly, so one stall
   (t4 leaves the laptop in the truck) cascades into t5, t6 and t9.
-- `d0092c2` swaps the reply example's one-segment look ("She looks at the
+- `6507612` swaps the reply example's one-segment look ("She looks at the
   lantern. Its light has gone out.") for a finished two-step action in two
   segments. Two replicates (`item-facts-v12-example-two-scene-1a`), against
   round 9: one-sentence turns 14/36 -> 0/36, command_not_finished 12 -> 6,
@@ -1073,10 +1073,10 @@ Two changes, measured one live replicate and then two:
   leaked into narration. Of the 6 left, one is a dropped second step (r2 t4,
   never brings the laptop inside); the rest are the 1B man (t15 hand-over not
   shown taken once, t17 resisting twice, t18 silent twice).
-- `a089d6b` saves each turn's narration system and user prompt in the bench
+- `8bc471a` saves each turn's narration system and user prompt in the bench
   records (`prompt_system`, `prompt_user`), so a turn can be read exactly.
 
-- `aa9fece` moves the 14 rules that are the same on every turn (and the
+- `21efd11` moves the 14 rules that are the same on every turn (and the
   opening's 11) out of the user CONSTRAINTS block into the system prompt,
   word for word, behind a bench flag; the shipped prompts are byte-identical.
   Two replicates (`item-facts-v13-sysrules-two-scene-1a`), against v12:
@@ -1086,7 +1086,7 @@ Two changes, measured one live replicate and then two:
   time; the three unfinished turns are all the 1B man (t17 resists 2/2, t18
   silent once). New slip, 2/2 on t16: "his cracked screen" for the phone.
 
-- `81c4a49` makes the reply example flip a state ("She lights it. It glows."
+- `d0f4211` makes the reply example flip a state ("She lights it. It glows."
   -> condition "lit"). Two replicates (`item-facts-v14-flip-two-scene-1a`),
   against v13: the drawer is captured open 2/2 and shut 2/2 (0/2 before,
   and 0/6 since round 9), but judge-failed turns rose 17 -> 21. The example's
@@ -1098,7 +1098,7 @@ Two changes, measured one live replicate and then two:
   condition at all and does not track the chair, whose "overturned" state
   lives only in SCENE prose.
 
-- `fd77280` gives 1A's laptop a starting state (closed) and tracks the
+- `ef3f902` gives 1A's laptop a starting state (closed) and tracks the
   workstation chair (overturned), in plot.md and world.yaml, and rewrites the
   example with normal sentences. Two replicates
   (`item-facts-v15-states-two-scene-1a`), against v14: chair captured upright
@@ -1112,9 +1112,9 @@ Two changes, measured one live replicate and then two:
   hand-over replies (t15) omitted item_facts, so the man's taking the phone
   was never recorded and t16-t17 contradict the stale facts.
 
-- `a8bf2b7` (an empty condition list keeps a two-state thing's state),
-  `d0c564a` (turn 12 becomes "Put Michelle's phone in your pocket and walk
-  out to the truck.") and `adae214` (the splitter now splits compound
+- `97f22ba` (an empty condition list keeps a two-state thing's state),
+  `d93bb3f` (turn 12 becomes "Put Michelle's phone in your pocket and walk
+  out to the truck.") and `6dc19ac` (the splitter now splits compound
   commands carrying a possessive name, which spaCy's small model misparsed).
   Two replicates (`item-facts-v16-axis-two-scene-1a`), against v15: every
   scripted state change is now captured 2/2 (laptop kept closed on t4 and
@@ -1128,10 +1128,10 @@ Two changes, measured one live replicate and then two:
   never answers or gives the phone back; t6 types Michelle's password into
   Kristin's laptop 2/2.
 
-- `17684e6` completes a narration reply that only lacks its closing
+- `f5f1582` completes a narration reply that only lacks its closing
   brackets (a replay of the hand-over prompt, 12 samples, showed the model
   writes item_facts but omits the final brace in 5 of 12; the decoder's
-  mid-word salvage then dropped item_facts). `673e11e` anchors the fact
+  mid-word salvage then dropped item_facts). `8849944` anchors the fact
   judge's kept_ended_condition to the words in AFTER (re-grade of v16: 0
   false positives, against 1 for the old rubric re-run as a control, so the
   original 8 were mostly one noisy grading). Two replicates
@@ -1174,14 +1174,14 @@ mechanism round, not the round that meets it.
 **State at hand-off (2026-09-22) - START HERE**
 
 *Round 9 review (2026-09-23).* Brandon's per-turn comments in
-`bench/results/round9.md` (`7fd6bdb`) score round 9 at 18/36 turns with a
+`bench/results/round9.md` (local only, not in git) score round 9 at 18/36 turns with a
 real failure (50%), against 25/48 (52%) for round 8: flat. The judges agreed
 with him on 31 of 36 turns; they missed r1 t3 and wrongly failed r2 t5,
 r2 t14, r2 t17 and r2 t18. His rulings:
 - The tracked place overrides the plot's authored place (t3, r2 t11).
-  Already fixed by `4f4a3cc`: in v20b turn 3 takes the phone "from her hand"
+  Already fixed by `b5eb396`: in v20b turn 3 takes the phone "from her hand"
   2/2.
-- The chair was never given as overturned (t7): fixed by `fd77280`.
+- The chair was never given as overturned (t7): fixed by `ef3f902`.
 - GIVEN must carry only what the command refers to, never everything tracked
   (r1 t13, r1 t18, r2 t16). His "objects in the scene or that Kristin is
   holding" was pushback on round 9 sending the whole store, not a widening of
@@ -1193,16 +1193,16 @@ r2 t14, r2 t17 and r2 t18. His rulings:
   item below).
 
 Acted on:
-- `a633a95` adds `bench/calibration/labels-round9.json` (the judge verdicts
+- `f122923` adds `bench/calibration/labels-round9.json` (the judge verdicts
   plus his eight overrules; three cells he did not rule on are unlabelled).
-- `f9bf716` tells the continuity judge a refusal, struggle or silence
+- `267c956` tells the continuity judge a refusal, struggle or silence
   finishes the command. Re-grade against a same-session control
   (`bench/results/probes/npc-rubric-regrade/`): continuity 99.1/99.0/93.0%
   -> 98.2/97.9/92.3% on rounds 7/8/9, fact 93.3/95.8/95.6% ->
   96.2/96.1/96.0%, all within the 3-5 cell noise. Round 9
   command_not_finished stays 31/35: r2 t18 is fixed, r2 t17 is not (the
   judge still wants to see whether she gets the phone back).
-- `ff5e726` fixes r2 t17: trying to take a thing from another character is
+- `b2e6c96` fixes r2 t17: trying to take a thing from another character is
   her whole part, and the narration need not say whether she gets it.
   Re-grade against a same-session control
   (`bench/results/probes/take-attempt-regrade/`): r2 t17 goes yes -> no
@@ -1211,9 +1211,9 @@ Acted on:
   unchanged at 21/22 and 48/48. Continuity 98.2/97.9/95.1% ->
   99.1/98.4/93.0%, fact 96.2/95.5/93.6% -> 95.2/97.3/95.6%. The round 9
   continuity dip is restarts_scene 35/36 -> 31/36, a rule the change does
-  not touch; `f9bf716`'s own re-grade also scored it 31/36, so it is noise.
-- `9fc67e2` tells the match call to list only the things the command names,
-  and `5dfe2ff` resolves a shortened name ("laptop", "my laptop", "chair")
+  not touch; `267c956`'s own re-grade also scored it 31/36, so it is noise.
+- `c643dea` tells the match call to list only the things the command names,
+  and `b0fa318` resolves a shortened name ("laptop", "my laptop", "chair")
   to the one tracked name it means, because the narrower prompt made the
   model drop owners and exact-only matching then lost the thing. Live A/B
   (`bench/results/probes/match-overselect-ab.json`, 18 commands x 5
@@ -1221,14 +1221,14 @@ Acted on:
   0/10, named things kept 86/95 -> 95/95. No full bench run has measured
   the two together yet.
 
-Branch `round9` at `e9e33f8`, tree clean, full suite green, nothing running.
+Branch `round9` at `5b54d85`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
 and every turn record now saves its exact narration prompts
 (`prompt_system`, `prompt_user`).
 
-*Both decisions below were RESOLVED on 2026-09-22 in `da78720` (option 1 and
+*Both decisions below were RESOLVED on 2026-09-22 in `faa01dd` (option 1 and
 the proposed rubric sentence) and measured as v18
 (`bench/results/item-facts-v18-handover-two-scene-1a`):*
 - Hand-over: t15's reply now gives the phone "in the man's hand" 2/2 (v17:
@@ -1238,7 +1238,7 @@ the proposed rubric sentence) and measured as v18
   21/36 including protagonist_acts_beyond_command (v17: 24/36). New in
   v18: restarts_scene 2 (r1 t18, r2 t12) and the chair called "empty"
   while canon says overturned (t5, 2/2).
-- Re-grade with a same-session control (old rubric from `e9e33f8`),
+- Re-grade with a same-session control (old rubric from `5b54d85`),
   `bench/results/probes/dropped-opposite-regrade.md`: dropped_true_condition
   yes on v17 fell 9 -> 1 turns; round 8 dropped_true_condition 43/48 ->
   47/48, fact judge 95.2% -> 96.4%; round 7 fact judge 95.2% -> 94.3%
@@ -1246,7 +1246,7 @@ the proposed rubric sentence) and measured as v18
   unchanged continuity judge moved 3 cells on round 8, the noise floor.
 
 *Decision 1 (resolved, see above): the hand-over reply copies the place it was given.*
-Since `17684e6` the hand-over turn (t15, "Walk over to the man watching you.
+Since `f5f1582` the hand-over turn (t15, "Walk over to the man watching you.
 Hand him Michelle's phone.") no longer loses its item_facts. The reply now
 arrives, but in v17 it says the phone is still "in Kristin's pocket" while
 the narration says "The man takes the phone" (2/2), and the replay in
@@ -1268,7 +1268,7 @@ narration call (a second capture call is ruled out by Brandon):
      person's hand as its place." First in Brandon's ranking, but examples
      have beaten rules on this model so far.
 
-*Decision 2 (resolved, see above): a fact-judge false positive introduced by `673e11e`.*
+*Decision 2 (resolved, see above): a fact-judge false positive introduced by `8849944`.*
 The new kept_ended_condition wording ("read ... word for word") leaked into
 dropped_true_condition: on four r2 flips in v17 (drawer shut -> open, laptop
 closed -> open, chair overturned -> upright, drawer open -> shut) the judge
@@ -1279,7 +1279,7 @@ condition replaced by its opposite (shut becoming open) is not dropped. Then
 re-grade v17 offline, plus both labelled rounds, with a same-session control
 (see the note on judge noise below).
 
-*Player input is now first person* (`cf202e7`): the scripted commands said
+*Player input is now first person* (`2a60d30`): the scripted commands said
 "your laptop" and "your truck", a game master's voice; they now say "my
 laptop" and "the truck". This changes the 1A/1B scripts, so v20 and later are
 not strictly comparable with v18/v19. Measured as v20b
@@ -1302,19 +1302,19 @@ they hold usable 1A turn records and can be judged offline with
 `bench/calibration/rejudge.py`, or deleted.
 
 *Other open items, in rough order:*
-- RESOLVED in `408126e`: an empty condition list wiped the phone's crack
+- RESOLVED in `29aca63`: an empty condition list wiped the phone's crack
   (every loss in v15-v18 was a `condition: []` reply). An empty list is now
   no condition change at all. v19 (`item-facts-v19-emptykeep-two-scene-1a`)
   lost no phone condition, but the model sent no empty list for the phone
   that run, so the unit tests are the evidence the path works.
-- RESOLVED in `74b990c`: dropped_true_condition fired when the
+- RESOLVED in `fdb2547`: dropped_true_condition fired when the
   phone's damage was split, merged, reworded or made worse ("cracked in two,
   shattered" vs "cracked in two", "shattered"), leaked from
   kept_ended_condition's "word for word". That sentence is now scoped to
   kept_ended_condition, and dropped_true_condition compares meaning. Re-grade
   against a same-session control (`bench/results/probes/dropped-meaning-regrade/`):
   the three split/merge cells (v19 r2 t11, r2 t15; round 8 r3 t12) went to
-  0. The real drops from before `408126e` (v16 r1 t3, r1 t17, r2 t17; v17 r2
+  0. The real drops from before `29aca63` (v16 r1 t3, r1 t17, r2 t17; v17 r2
   t3) are still caught, and kept_ended_condition stays 0 everywhere. Fact
   agreement went 96.2/95.5/94.8% -> 93.3/95.2/96.0% on rounds 7/8/9. The
   round 7 dip is invented_change on the "crumpled" receipt, which the change
@@ -1337,11 +1337,11 @@ they hold usable 1A turn records and can be judged offline with
 
 *What changed in the SHIPPED game this session* (everything else is
 bench-only): `plot.md`/`world.yaml` 1A now track the workstation chair
-(overturned) and say the laptop starts closed (`fd77280`, Brandon's ruling);
-the compound-command splitter handles possessive names (`adae214`); a reply
+(overturned) and say the laptop starts closed (`ef3f902`, Brandon's ruling);
+the compound-command splitter handles possessive names (`6dc19ac`); a reply
 missing only its closing brackets is completed instead of truncated
-(`17684e6`); `CloudflareTurnProvider` gained helper methods and a no-op
-`_system_rules` hook with byte-identical prompts (`aa9fece`).
+(`f5f1582`); `CloudflareTurnProvider` gained helper methods and a no-op
+`_system_rules` hook with byte-identical prompts (`21efd11`).
 
 *Where the numbers stand* (judge-failed turns of 36; the judges are a guide,
 not the score):
@@ -1361,7 +1361,7 @@ moves by 3-5 cells, and the old rubric re-run as a control scored 95.6%/92.0%
 on round 7 where a remembered figure was 96.5%/95.6%. Gate any rubric change
 against a control run in the same session, never against a remembered
 figure. Round 7's 8 "laptop invented closed" cells are superseded
-(`e9e33f8`) now that canon says it starts closed.
+(`5b54d85`) now that canon says it starts closed.
 
 *How to run a live measurement* (the session's manifests lived in a
 scratchpad and are gone). One Ringer task per run, `engine: codex`,
@@ -1377,13 +1377,13 @@ live run. Re-grading saved records offline:
 `bench/calibration/rejudge.py --results <dir> --out <dir>` then
 `bench/calibration/check_calib.py --labels bench/calibration/labels-round{7,8}.json --judgments <dir> --records <results>/all-turn-records.json`.
 
-*This session's commits on `round9`, oldest first:* `ffc5cca` `ae7f28f`
-`e9939b2` `40cac70` `6a6e116` (round 9 run and report), `4f4a3cc` `a089d6b`
-`7014335` (place line before the command; prompts saved), `d0092c2` `ad86fb4`
-(two-step example), `aa9fece` `b02ba49` (rules to system prompt), `81c4a49`
-`c3929a8` (state-flip example), `fd77280` `f2f0eca` (laptop/chair states),
-`a8bf2b7` `d0c564a` `adae214` `b65a058` (two-state keep, turn 12, splitter),
-`673e11e` `17684e6` `fa83185` (kept_ended rubric, unclosed replies), `e9e33f8`
+*This session's commits on `round9`, oldest first:* `3b550e8` `8893b03`
+`75bebaf` `a9c63e7` `bfeccdb` (round 9 run and report), `b5eb396` `8bc471a`
+`f3b6882` (place line before the command; prompts saved), `6507612` `5035bb8`
+(two-step example), `21efd11` `21fc17b` (rules to system prompt), `d0f4211`
+`ad29804` (state-flip example), `ef3f902` `c54911f` (laptop/chair states),
+`97f22ba` `d93bb3f` `6dc19ac` `8768a8a` (two-state keep, turn 12, splitter),
+`8849944` `f5f1582` `b10e595` (kept_ended rubric, unclosed replies), `5b54d85`
 (superseded labels).
 
 **State at hand-off (2026-09-19)**
