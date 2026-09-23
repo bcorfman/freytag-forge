@@ -1202,6 +1202,16 @@ Acted on:
   96.2/96.1/96.0%, all within the 3-5 cell noise. Round 9
   command_not_finished stays 31/35: r2 t18 is fixed, r2 t17 is not (the
   judge still wants to see whether she gets the phone back).
+- `ff5e726` fixes r2 t17: trying to take a thing from another character is
+  her whole part, and the narration need not say whether she gets it.
+  Re-grade against a same-session control
+  (`bench/results/probes/take-attempt-regrade/`): r2 t17 goes yes -> no
+  ("Trying to take it back is her whole part"); round 9
+  command_not_finished 30/35 -> 32/35; rounds 7/8 command_not_finished
+  unchanged at 21/22 and 48/48. Continuity 98.2/97.9/95.1% ->
+  99.1/98.4/93.0%, fact 96.2/95.5/93.6% -> 95.2/97.3/95.6%. The round 9
+  continuity dip is restarts_scene 35/36 -> 31/36, a rule the change does
+  not touch; `f9bf716`'s own re-grade also scored it 31/36, so it is noise.
 - `9fc67e2` tells the match call to list only the things the command names,
   and `5dfe2ff` resolves a shortened name ("laptop", "my laptop", "chair")
   to the one tracked name it means, because the narrower prompt made the
