@@ -1285,7 +1285,31 @@ SHIPPED runtime (`_candidate_beats`).
 - Not yet exercised live: the reveal turn itself (no scripted command
   matches the card handoff's action evidence); the offline probe covers it.
 
-Branch `round9` at `8368be4`, tree clean, full suite green, nothing running.
+*v24 (2026-09-23, `bench/results/item-facts-v24-cardturn-two-scene-1a`
+plus smoke `item-facts-v24-smoke-two-scene-1a`).* `d9b70bf` appends 1A turn
+13, "Read the saved files on the memory card.", which matches the card
+reveal's action evidence; the script is now 13 + 6 turns, so totals are not
+comparable with v10-v23. The reveal mechanism works live 3/3: t13 matches
+handoff `k_sl_1a_b_r1`, beats 1A.2/1A.3 reach SCENE only on that turn, and
+1A now ends on the reveal (`advanced_offline: false`) instead of a forced
+transition. The reveal TURN fails every judge 3/3:
+- The narrator's own prose restarts the arrival at the house ("steps out of
+  her truck and onto the cracked driveway") and never reads anything; once
+  it put the card on the desk. Its prompt names the card only in PLAYER:
+  no THINGS entry, no place, nothing saying the card was just found.
+- `_compose_authored_handoff` then appends the authored delivery text
+  verbatim: it narrates in past tense that the card "was taped under the
+  drawer" and ends with Kristin travelling to the park, so the turn reads as
+  a restart plus bolted-on exposition.
+- The reply's item_facts are empty, so the card is never captured
+  (missed_change); the judges also call the sanctioned reveal
+  reveals_hidden_canon, a judge gap.
+- Discoverability: the reveal's action evidence needs the player to say
+  "memory card" or "the card", but nothing before the reveal tells the
+  player a card exists, so the scripted command is one a real player could
+  not know to type.
+
+Branch `round9` at `d9b70bf`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
