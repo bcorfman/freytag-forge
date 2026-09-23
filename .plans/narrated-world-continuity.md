@@ -1245,7 +1245,28 @@ defect, and builds `_turn_rules` from named groups instead of slicing;
   t3's prompts differ from v20b only by the new owner sentence and the
   match-call changes, and no replay tool exists to A/B them.
 
-Branch `round9` at `5bad989`, tree clean, full suite green, nothing running.
+*v22 (2026-09-23, `bench/results/item-facts-v22-drawerfix-two-scene-1a`
+plus smoke `item-facts-v22-smoke-two-scene-1a`, 3 replicates in all).*
+Brandon picked one fix per v21 fault: `20d3c90` keeps the narrated pole when
+one reply names both poles of an axis (the echo of the pre-reply pole is
+dropped; an echo that leaves no condition changes none); `404ee5b` drops any
+beat detail that names a world item neither placed in the scene nor
+established by committed knowledge, on the turn and opening paths.
+- Drawer: captured open at t2 and shut at t8 in 3/3 (v21 0/2). v22 r2 t2
+  sent v21's exact bad reply (`place: open`, `condition: [shut]`) and it
+  landed as open, so the merge fix is confirmed live; the other two sent a
+  clean reply.
+- Card: never named in 1A narration, 0/3 (v21 2/2, one sample).
+- New leak by the same look-ahead: the card's CONTENTS still reach SCENE as
+  beat details that are not tracked items ("voice recording",
+  "Continuity Initiative files"), and the narrator puts them on the desk
+  (t3, 2/3) or on Kristin's laptop (t6/t9, 3 turns). The item filter
+  cannot catch these; the next lever is projecting a beat's details only
+  once the player's action reaches that beat.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 18/36
+  (v21 20/36), within noise.
+
+Branch `round9` at `404ee5b`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
