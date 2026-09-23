@@ -8,6 +8,7 @@ import math
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 from bench.core import (
     DEFAULT_PACKAGE,
@@ -481,6 +482,7 @@ def _run(args: argparse.Namespace) -> int:
             judged = run_judges(pending, judged_path)
         except (OSError, ValueError, RuntimeError) as error:
             judge_failure_reason = _failure_reason(error)
+            _mark_judge_failures(judged_runs, judge_failure_reason)
             failed_runs.extend(judged_runs)
             judged_runs = []
     judgments = judged["judgments"]
@@ -516,6 +518,7 @@ def _run(args: argparse.Namespace) -> int:
             )
         except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
             escalation_failure_reason = _failure_reason(error)
+            _mark_judge_failures(judged_runs, escalation_failure_reason)
             failed_runs.extend(judged_runs)
             judged_runs = []
             judgments = []
@@ -541,6 +544,7 @@ def _run(args: argparse.Namespace) -> int:
             )
         except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
             continuity_failure_reason = _failure_reason(error)
+            _mark_judge_failures(judged_runs, continuity_failure_reason)
             failed_runs.extend(judged_runs)
             judged_runs = []
             judgments = []
@@ -568,6 +572,7 @@ def _run(args: argparse.Namespace) -> int:
             )
         except (OSError, KeyError, ValueError, RuntimeError, TypeError) as error:
             fact_tracking_failure_reason = _failure_reason(error)
+            _mark_judge_failures(judged_runs, fact_tracking_failure_reason)
             failed_runs.extend(judged_runs)
             judged_runs = []
             judgments = []
@@ -590,6 +595,7 @@ def _run(args: argparse.Namespace) -> int:
         aggregate["continuity"] = continuity
     if fact_tracking is not None:
         aggregate["fact_tracking"] = fact_tracking
+    aggregate["judge_failure_reason"] = judge_failure_reason
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
@@ -644,6 +650,12 @@ def _run(args: argparse.Namespace) -> int:
 def _failure_reason(error: BaseException) -> str:
     error_code = getattr(error, "error_code", "")
     return f"{error_code}: {error}" if error_code else str(error)
+
+
+def _mark_judge_failures(runs: list[dict[str, Any]], reason: str) -> None:
+    for run in runs:
+        run["status"] = "failed"
+        run.setdefault("failure_reason", reason)
 
 
 def _chat(args: argparse.Namespace) -> int:
