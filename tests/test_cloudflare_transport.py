@@ -484,6 +484,42 @@ def test_transport_keeps_the_finished_segments_of_a_truncated_reply(monkeypatch)
     assert state.last_turn_delivery.recovery_used
 
 
+def test_transport_completes_a_reply_missing_its_final_brace(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = (
+        '{"segments":[{"kind":"narration","text":"She lifts the phone."},'
+        '{"kind":"narration","text":"The screen catches the light."}],'
+        '"item_facts":{"Michelle\'s phone":{"place":"in the man\'s hand",'
+        '"condition":["cracked screen"]}}'
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    result = provider._request({"system": "", "user": ""})
+
+    assert len(result["segments"]) == 2
+    assert result["item_facts"]["Michelle's phone"]["condition"] == ["cracked screen"]
+    assert state.last_turn_delivery.segments_truncated is False
+    assert state.last_turn_delivery.recovery_used is False
+
+
+def test_transport_completes_a_reply_missing_two_closing_delimiters(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = '{"segments":[{"kind":"narration","text":"She lifts the phone."}'
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    result = provider._request({"system": "", "user": ""})
+
+    assert result == {"segments": [{"kind": "narration", "text": "She lifts the phone."}]}
+    assert state.last_turn_delivery.segments_truncated is False
+    assert state.last_turn_delivery.recovery_used is False
+
+
 def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
     provider = CloudflareTurnProvider(
@@ -1476,6 +1512,7 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
     assert "Do not say anything that goes against the entry text or the beat details." in captured["payload"]["user"]
     assert "Do not make up new objects, clues, or things inside containers." in captured["payload"]["user"]
+    assert "When the player gives a thing to someone, that person takes it." not in captured["payload"]["user"]
     assert "Keep each object where the scene puts it." in captured["payload"]["user"]
     assert "Michelle's phone is on the kitchen floor." in captured["payload"]["user"]
     user = captured["payload"]["user"]
@@ -1956,7 +1993,10 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
 
     assert "Use the places and details the story gives you." in rules
     assert "Keep each object where the scene puts it." in rules
-    assert "Finish each action the player gives. Only show Kristin doing what the player said." in rules
+    assert "Finish each action the player gives." in rules
+    assert "When the player gives a thing to someone, that person takes it." in rules
+    assert "Only show Kristin doing what the player said." in rules
+    assert ("Finish each action the player gives." + " " + "Only show Kristin doing what the player said.") not in rules
     assert "Answer what the player did. Only show Kristin doing what the player said." not in rules
 
 
@@ -2324,6 +2364,15 @@ def test_sections_prompt_introduces_only_the_characters_this_scene_involves() ->
     assert _rendered_character_line("michelle") in characters
     for absent in ("Charles Jenkins", "Rebecca Jenkins", "Brandon Corfman"):
         assert absent not in characters, f"{absent} does not appear in Scene 1A"
+
+
+def test_shipped_provider_player_block_contains_only_the_command() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    user = provider._section_user_prompt(provider.assemble_turn_prompt("Look around the kitchen.")["context"])
+
+    assert user.rsplit("PLAYER:\n", 1)[1] == "- Look around the kitchen."
 
 
 def test_a_characters_concealed_history_never_reaches_the_narrator() -> None:

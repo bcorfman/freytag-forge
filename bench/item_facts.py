@@ -11,6 +11,31 @@ from storygame.runtime.validation import ProgressionValidator, predicate_matches
 from storygame.story_package.models import FactPredicate, ItemPlacement
 
 
+def _resolve_refer(name: str, tracked) -> str | None:
+    tracked_names = list(tracked)
+    if name in tracked_names:
+        return name
+
+    def normalize(value: str) -> str:
+        normalized = value.strip().lower().rstrip(".,;:!?").strip()
+        for article in ("the", "my", "a", "an"):
+            if normalized.startswith(f"{article} "):
+                return normalized[len(article) + 1 :]
+        return normalized
+
+    normalized_name = normalize(name)
+    if not normalized_name:
+        return None
+    normalized_tracked = [(tracked_name, normalize(tracked_name)) for tracked_name in tracked_names]
+    exact_matches = [tracked_name for tracked_name, value in normalized_tracked if value == normalized_name]
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    suffix_matches = [
+        tracked_name for tracked_name, value in normalized_tracked if value.endswith(f" {normalized_name}")
+    ]
+    return suffix_matches[0] if len(suffix_matches) == 1 else None
+
+
 def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
     """Build tracked things from the authored placements and setting facts."""
 
@@ -70,9 +95,10 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
 
 
 _SINGLE_CALL_RULES = (
-    "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts.",
+    "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. "
+    "Use where it is when the story ends.",
     'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-    'Example: if she drops a cup and it cracks in two, the cup is {"place": "on the floor", '
+    'Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is {"place": "on the floor", '
     '"condition": ["cracked in two"]}.',
 )
 _MATCH_SYSTEM = (
@@ -81,7 +107,12 @@ _MATCH_SYSTEM = (
     "storyteller used. Return only JSON like "
     '{"refers": ["name"], "same_as": {"new name": "name"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
-    'like "the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS '
+    'like "the old lamp" for "Grandma\'s lamp". '
+    "List only the things the command itself names or points to. "
+    "Do not list a thing because it is nearby. "
+    "Do not list a thing because someone holds it. "
+    'For "Ask the cook who took the key." list only the cook and the key. '
+    "In same_as, give each name in NEW NAMES the name from THINGS "
     'that is the very same object, or "new" if it is a different object. A thing that is in, on or under another '
     "thing is a different object, like a key in a box. Copy names from THINGS exactly."
 )
@@ -129,6 +160,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": None,
             "match_issues": [],
             "resolutions": {},
+            "engine_resolutions": {},
         }
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
@@ -171,7 +203,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
 
     def _things_block(self) -> str:
-        names = self._selected_names if self._selected_names is not None else self.dependency_names()
+        names = self._thing_names()
         if not names:
             return ""
         lines = ["THINGS:"]
@@ -200,6 +232,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
             lines.append(line)
         return "\n".join(lines)
 
+    def _thing_names(self) -> list[str]:
+        return self._selected_names if self._selected_names is not None else self.dependency_names()
+
+    def _player_lines(self, user: dict[str, object]) -> list[str]:
+        lines = super()._player_lines(user)
+        if not lines or "scene_setting" not in user:
+            return lines
+        place_lines = []
+        for name in self._thing_names():
+            place = self.item_facts[name].get("place")
+            if isinstance(place, str) and place.strip():
+                place_lines.append(f"{name} is {place.strip()}.")
+        return place_lines + lines
+
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         rendered = super()._section_user_prompt(user)
         things = self._things_block()
@@ -216,8 +262,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _setting_fact_rules(self) -> list[str]:
         return []
 
-    def _system_prompt(self) -> str:
-        system = super()._system_prompt()
+    def _system_rules(self, opening: bool) -> list[str]:
+        if self.prompt_variant and self.prompt_variant.get("constant_rules_in_system") is True:
+            return self._constant_opening_rules() if opening else self._constant_turn_rules()
+        return []
+
+    def _system_prompt(self, opening: bool = False) -> str:
+        system = super()._system_prompt(opening=opening)
         if self.item_facts_mode == "single_call":
             return f"{system}\n{_SINGLE_CALL_RULES[0]}\n{_SINGLE_CALL_RULES[1]}"
         return system
@@ -333,9 +384,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 not isinstance(item, str) or not item.strip() for item in condition
             ):
                 return False
-            if not condition:
-                self.item_facts[name]["condition"] = []
-            else:
+            if condition:
                 self._apply_conditions(name, condition[:2])
         return True
 
@@ -411,8 +460,39 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return
         issues: list[str] = []
         resolutions: dict[str, str] = {}
+        engine_resolutions: dict[str, str] = {}
+        unresolved_names: list[str] = []
+        for name in names:
+            entry = self._held_item_facts[name]
+            owner = entry.get("owner")
+            candidate = f"{owner}'s {name}" if isinstance(owner, str) else None
+            matches = [
+                tracked for tracked in self.item_facts if candidate and tracked.casefold() == candidate.casefold()
+            ]
+            if len(matches) != 1:
+                unresolved_names.append(name)
+                continue
+            target = matches[0]
+            before = copy.deepcopy(self.item_facts[target])
+            self._merge_entry(target, entry)
+            if before != self.item_facts[target]:
+                self._changed_last_turn.add(target)
+            resolutions[name] = target
+            engine_resolutions[name] = target
+
+        if not unresolved_names:
+            self._held_item_facts = {}
+            self._last_item_facts_match = {
+                "match_call": False,
+                "match_raw": None,
+                "match_issues": [],
+                "resolutions": resolutions,
+                "engine_resolutions": engine_resolutions,
+            }
+            return
+
         dependencies = set(self.dependency_names())
-        payload = self._match_payload(player_input, names, dependencies)
+        payload = self._match_payload(player_input, unresolved_names, dependencies)
         self.item_facts_match_calls += 1
         try:
             reply = CloudflareTurnProvider._request(self, payload)
@@ -424,7 +504,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
         if not valid:
             issues.append("invalid item_facts match reply")
-        for name in names:
+        for name in unresolved_names:
             entry = self._held_item_facts[name]
             target = reply.get("same_as", {}).get(name) if isinstance(reply, dict) else None
             if isinstance(target, str) and target != name and target in self.item_facts:
@@ -442,6 +522,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": resolutions,
+            "engine_resolutions": engine_resolutions,
         }
 
     def apply_item_facts(
@@ -499,6 +580,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
+                "engine_resolutions": {},
             }
             self._last_item_facts_match = copy.deepcopy(result)
             return result
@@ -516,7 +598,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not valid:
             self._selected_names = dependencies
         else:
-            refers = [name for name in reply["refers"] if isinstance(name, str) and name in self.item_facts]
+            refers = []
+            engine_resolutions = {}
+            for name in reply["refers"]:
+                if not isinstance(name, str):
+                    continue
+                resolved = _resolve_refer(name, self.item_facts)
+                if resolved is not None and resolved not in refers:
+                    refers.append(resolved)
+                if resolved is not None and resolved != name:
+                    engine_resolutions[name] = resolved
             selected = set(dependencies) | set(refers)
             self._selected_names = [name for name in self.item_facts if name in selected]
         result = {
@@ -524,6 +615,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues,
             "resolutions": {},
+            "engine_resolutions": engine_resolutions if valid else {},
         }
         self._last_item_facts_match = copy.deepcopy(result)
         return result

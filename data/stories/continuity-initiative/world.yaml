@@ -80,6 +80,8 @@ items:
 - id: michelle_drawer
   name: drawer
   fixed: true
+- id: workstation_chair
+  name: workstation chair
 - id: transit_card
   name: Transit token
 - id: override_codes

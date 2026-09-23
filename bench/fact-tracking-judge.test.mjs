@@ -84,11 +84,16 @@ test("fact rubric separates given conflicts and allows introduced refinements", 
   const rubric = requests[0].input[0].content;
   assert.match(rubric, /facts_after_correct: answer only whether item_facts_after matches what the narration shows/);
   assert.match(rubric, /judge that only under narration_contradicts_given_facts/);
+  assert.match(rubric, /A state the narration gives a thing must also be possible with the conditions item_facts_before records for it/);
   assert.match(rubric, /more specific place or state that fits inside the given one is consistent/);
+  assert.match(rubric, /Compare meaning, not wording/);
+  assert.match(rubric, /a cracked screen that later shatters is not dropped/);
+  assert.doesNotMatch(rubric, /word for word/);
   assert.match(rubric, /not in item_facts_before but that the narration introduces is never an invented change/);
   assert.match(rubric, /An action the narration only attempts changes nothing/);
   assert.match(rubric, /An attempted handover that nobody takes changes nothing/);
   assert.match(rubric, /recording a laptop as closed when the narration only shows her carrying it out of the truck is invented/);
+  assert.match(rubric, /item_facts_after listing open is no/);
 });
 
 test("rejects a verdict with the wrong turn count", async () => {

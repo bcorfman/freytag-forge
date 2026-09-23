@@ -6,7 +6,7 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, package_seed, validate_item_facts
+from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, package_seed, validate_item_facts
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -61,18 +61,46 @@ def test_things_are_after_scene_and_render_single_value_facts():
     assert provider._setting_fact_rules() == []
 
 
+def test_player_block_places_come_before_the_command():
+    provider = _provider()
+    provider.item_facts["the notebook"] = {"place": "in Michelle's hand", "condition": []}
+    provider.item_facts["the gate"]["place"] = None
+    provider._selected_names = ["the notebook", "the lantern", "the gate"]
+
+    prompt = provider.assemble_turn_prompt("Pick up the notebook.")
+    user = provider._section_user_prompt(prompt["context"])
+
+    assert user.split("PLAYER:\n", 1)[1] == (
+        "- the notebook is in Michelle's hand.\n- the lantern is on the table.\n- Pick up the notebook."
+    )
+
+
 def test_single_call_rules_require_facts_for_every_change():
     system = _provider()._system_prompt()
 
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
-        "add that thing to item_facts.\n"
+        "add that thing to item_facts. Use where it is when the story ends.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-        "Example: if she drops a cup and it cracks in two, the cup is "
+        "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
         '"condition": ["cracked in two"]}.'
     )
+    assert 'falls, so the cup is {"place": "on the floor"' in system
+    assert '"condition": ["cracked in two"]' in system
     assert "Also return item_facts" not in system
+
+
+def test_two_scene_variation_output_example_shows_two_step_action():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
+
+    assert "She picks up the lantern. She carries it out to the porch." in prompt["system"]
+    assert "She hands it to her neighbor, who takes it with a nod." in prompt["system"]
+    assert '"place":"in the neighbor\'s hand"' in prompt["system"]
+    assert '"condition":["lit"]' in prompt["system"]
+    assert "She sets it on the rail" not in prompt["system"]
+    assert "Its light has gone out." not in prompt["system"]
 
 
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
@@ -91,12 +119,64 @@ def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
     assert "Keep each object where the scene puts it." not in user
 
 
+def test_shipped_provider_keeps_constant_rules_in_user_prompts(monkeypatch):
+    provider = _provider()
+    turn = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
+
+    assert provider._system_rules(opening=False) == []
+    assert "Show what happens right after the player acts." not in turn["system"]
+    assert "Show what happens right after the player acts." in provider._section_user_prompt(turn["context"])
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    assert provider._system_rules(opening=True) == []
+    assert "The player already read the entry text." not in provider.last_prompt["system"]
+    assert "The player already read the entry text." in provider.last_prompt["user"]
+
+
+def test_constant_rules_can_move_to_system_prompt(monkeypatch):
+    provider = _provider()
+    provider.prompt_variant = {"constant_rules_in_system": True}
+    turn = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
+    system = turn["system"]
+    user = provider._section_user_prompt(turn["context"])
+    constant_rules = provider._constant_turn_rules()
+
+    system_rules = system.split("The player is Kristin.\n", 1)[1].split("Describe each scene", 1)[0].splitlines()
+    assert system_rules == constant_rules
+    for rule in constant_rules:
+        assert rule not in user
+    assert "Say who owns a thing the first time you name it:" in user
+    assert "This turn has no candidates. Leave selected_knowledge_ids empty." in user
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    opening_system = provider.last_prompt["system"]
+    assert opening_system.split("The player is Kristin.\n", 1)[1].split("Describe each scene", 1)[0].splitlines() == (
+        provider._constant_opening_rules()
+    )
+
+
 def test_match_system_describes_references_and_new_names():
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
     assert "carried" not in _MATCH_SYSTEM
     assert "PLACES" not in _MATCH_SYSTEM
     assert '"places"' not in _MATCH_SYSTEM
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
+
+
+def test_match_system_lists_only_named_things():
+    assert "List only the things the command itself names or points to." in _MATCH_SYSTEM
+    assert "Do not list a thing because it is nearby." in _MATCH_SYSTEM
+    assert "Do not list a thing because someone holds it." in _MATCH_SYSTEM
+    assert 'For "Ask the cook who took the key." list only the cook and the key.' in _MATCH_SYSTEM
+    assert "Copy names from THINGS exactly." in _MATCH_SYSTEM
 
 
 def test_things_omit_condition_for_empty_condition_list():
@@ -122,14 +202,14 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
     )
 
 
-def test_things_axis_vocabulary_remains_after_axis_is_cleared():
+def test_things_axis_vocabulary_remains_after_empty_condition_reply():
     provider = _provider()
     provider._selected_names = list(provider.item_facts)
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
     assert "Condition: shut (or open)." in provider._things_block()
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert "Condition:" not in provider._things_block().splitlines()[1]
+    assert "Condition: shut (or open)." in provider._things_block().splitlines()[1]
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -412,20 +492,58 @@ def test_non_axis_condition_reply_preserves_axis_and_non_axis_place_does_not_fix
     assert provider.item_facts_axis_fixes == 0
 
 
-def test_empty_condition_reply_clears_axis_and_conditions_but_keeps_place():
+def test_empty_condition_reply_keeps_axis_and_other_conditions():
     provider = _provider()
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
-    provider.item_facts["the lantern"]["condition"] = ["open", "carved with KMS"]
+    provider.item_facts["the lantern"]["condition"] = ["shut", "carved with KMS"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {
+        "place": "on the table",
+        "condition": ["shut", "carved with KMS"],
+    }
 
     provider.apply_item_facts({"the lantern": {"condition": ["open"]}})
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"]["condition"] == []
+    assert provider.item_facts["the lantern"]["condition"] == ["open"]
 
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": []}
+    assert provider.item_facts["the lantern"] == {"place": "on the table", "condition": ["open"]}
+
+
+def test_empty_condition_reply_keeps_laptop_state_and_other_conditions():
+    provider = _provider()
+    provider.state_axes = {"Kristin's laptop": {"closed": [], "open": []}}
+    provider.item_facts["Kristin's laptop"] = {
+        "place": "in the truck",
+        "condition": ["closed", "dusty"],
+    }
+    provider.apply_item_facts({"Kristin's laptop": {"place": "in Kristin's hands", "condition": []}})
+    assert provider.item_facts["Kristin's laptop"] == {
+        "place": "in Kristin's hands",
+        "condition": ["closed", "dusty"],
+    }
+
+    provider.apply_item_facts({"the gate": {"condition": ["blocked"]}})
+    provider.apply_item_facts({"the gate": {"condition": []}})
+    assert provider.item_facts["the gate"]["condition"] == ["blocked"]
+
+
+def test_empty_condition_reply_keeps_the_phone_crack():
+    provider = _provider()
+    provider.item_facts["Michelle's phone"] = {
+        "place": "in Kristin's hand",
+        "condition": ["cracked screen"],
+    }
+
+    provider.apply_item_facts({"Michelle's phone": {"place": "in Kristin's pocket", "condition": []}})
+    assert provider.item_facts["Michelle's phone"] == {
+        "place": "in Kristin's pocket",
+        "condition": ["cracked screen"],
+    }
+
+    provider.apply_item_facts({"Michelle's phone": {"condition": ["cracked in two"]}})
+    assert provider.item_facts["Michelle's phone"]["condition"] == ["cracked in two"]
 
 
 def test_non_axis_place_still_updates_location():
@@ -613,11 +731,31 @@ def test_package_seed_scene_1a_matches_authored_things():
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
         "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
-        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []},
+        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
             "place": "in Michelle's workstation",
             "condition": ["shut"],
         },
+        "workstation chair": {
+            "place": "at Michelle's workstation",
+            "condition": ["overturned"],
+        },
+    }
+    assert issues == []
+
+
+def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    package = load_story_package(Path(variation["_package_path"]))
+    state = RuntimeState(package=package, current_scene_id="1A", phase="exposition")
+    state._assert_scene_entry_fact("1A")
+
+    things, issues = package_seed(package, state, "1A")
+
+    assert things["Kristin's laptop"]["condition"] == ["closed"]
+    assert things["workstation chair"] == {
+        "place": "at Michelle's workstation",
+        "condition": ["overturned"],
     }
     assert issues == []
 
@@ -789,6 +927,53 @@ def test_valid_untracked_name_is_resolved_same_turn(monkeypatch):
     assert provider._held_item_facts == {}
 
 
+def test_owner_resolves_untracked_name_without_match_call(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
+
+    provider.apply_item_facts({"laptop": {"owner": "Kristin", "place": "on the desk"}})
+
+    result = provider.last_item_facts_match()
+    assert provider.item_facts["Kristin's laptop"]["place"] == "on the desk"
+    assert provider.item_facts_match_calls == 0
+    assert result["match_call"] is False
+    assert result["match_raw"] is None
+    assert result["match_issues"] == []
+    assert result["resolutions"] == {"laptop": "Kristin's laptop"}
+    assert result["engine_resolutions"] == {"laptop": "Kristin's laptop"}
+
+
+def test_bare_name_still_reaches_match_call(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    payloads = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
+    )
+
+    provider.apply_item_facts({"laptop": {"place": "on the desk"}})
+
+    assert provider.item_facts_match_calls == 1
+    assert "- laptop." in payloads[0]["user"]
+
+
+def test_owner_naming_untracked_person_still_reaches_match_call(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, payload: {"refers": [], "same_as": {}},
+    )
+
+    provider.apply_item_facts({"laptop": {"owner": "Morgan", "place": "on the desk"}})
+
+    assert provider.item_facts_match_calls == 1
+    assert provider.last_item_facts_match()["engine_resolutions"] == {}
+
+
 def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     provider = _provider()
     provider.item_facts = {}
@@ -797,6 +982,42 @@ def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     assert result["match_call"] is False
     assert provider.item_facts_match_calls == 0
     assert provider._selected_names == provider.dependency_names()
+
+
+def test_resolve_refer_exact_name():
+    assert _resolve_refer("the lantern", ["the lantern"]) == "the lantern"
+
+
+def test_resolve_refer_laptop_short_names():
+    tracked = ["Kristin's laptop"]
+    assert _resolve_refer("laptop", tracked) == "Kristin's laptop"
+    assert _resolve_refer("my laptop", tracked) == "Kristin's laptop"
+
+
+def test_resolve_refer_chair_short_name():
+    assert _resolve_refer("chair", ["workstation chair"]) == "workstation chair"
+
+
+def test_resolve_refer_ambiguous_or_unmatched_names():
+    assert _resolve_refer("Michelle", ["Michelle's phone"]) is None
+    assert _resolve_refer("phone", ["Kristin's phone", "Michelle's phone"]) is None
+    assert _resolve_refer("truck", ["workstation chair"]) is None
+    assert _resolve_refer("man", ["workman"]) is None
+
+
+def test_prepare_turn_resolves_short_names(monkeypatch):
+    provider = _provider()
+    provider.item_facts["Kristin's laptop"] = {"place": "in the truck", "condition": []}
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": ["laptop"], "same_as": {}},
+    )
+
+    result = provider.prepare_turn("Open my laptop.")
+
+    assert "Kristin's laptop" in provider._selected_names
+    assert result["engine_resolutions"] == {"laptop": "Kristin's laptop"}
 
 
 def test_prepare_turn_match_payload_has_prompt_sections_and_no_facts(monkeypatch):
@@ -1009,14 +1230,14 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     assert result["status"] == "ok"
-    assert len(result["turns"]) == 12
-    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 8 + ["1B"] * 4
+    assert len(result["turns"]) == 18
+    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 12 + ["1B"] * 6
     assert result["scene_transitions"] == [
-        {"from_scene": "1A", "to_scene": "1B", "after_turn": 8, "advanced_offline": True}
+        {"from_scene": "1A", "to_scene": "1B", "after_turn": 12, "advanced_offline": True}
     ]
-    assert "Michelle's phone" not in result["turns"][7]["item_facts_after"]
-    assert "Kristin's laptop" not in result["turns"][8]["item_facts_before"]
-    assert len(calls) == 25
+    assert "Michelle's phone" not in result["turns"][11]["item_facts_after"]
+    assert "Kristin's laptop" not in result["turns"][12]["item_facts_before"]
+    assert len(calls) == 37
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):

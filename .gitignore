@@ -128,6 +128,7 @@ cython_debug/
 runs/
 artifacts/
 bench-report.md
+bench/results/
 frontend/test-results/
 
 # MCP directories
