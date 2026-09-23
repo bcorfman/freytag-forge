@@ -1299,8 +1299,9 @@ transition. The reveal TURN fails every judge 3/3:
   no THINGS entry, no place, nothing saying the card was just found.
 - `_compose_authored_handoff` then appends the authored delivery text
   verbatim: it narrates in past tense that the card "was taped under the
-  drawer" and ends with Kristin travelling to the park, so the turn reads as
-  a restart plus bolted-on exposition.
+  drawer", and because the reveal now ends 1A, the 1A->1B `bridge_text`
+  ("Kristin travels there while avoiding checkpoints ...") follows it, so
+  the turn reads as a restart plus bolted-on exposition.
 - The reply's item_facts are empty, so the card is never captured
   (missed_change); the judges also call the sanctioned reveal
   reveals_hidden_canon, a judge gap.
