@@ -82,7 +82,12 @@ _MATCH_SYSTEM = (
     "storyteller used. Return only JSON like "
     '{"refers": ["name"], "same_as": {"new name": "name"}}. '
     "In refers, list each name from THINGS that the command talks about, even when the command uses other words, "
-    'like "the old lamp" for "Grandma\'s lamp". In same_as, give each name in NEW NAMES the name from THINGS '
+    'like "the old lamp" for "Grandma\'s lamp". '
+    "List only the things the command itself names or points to. "
+    "Do not list a thing because it is nearby. "
+    "Do not list a thing because someone holds it. "
+    'For "Ask the cook who took the key." list only the cook and the key. '
+    "In same_as, give each name in NEW NAMES the name from THINGS "
     'that is the very same object, or "new" if it is a different object. A thing that is in, on or under another '
     "thing is a different object, like a key in a box. Copy names from THINGS exactly."
 )

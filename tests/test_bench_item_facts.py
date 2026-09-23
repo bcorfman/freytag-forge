@@ -171,6 +171,14 @@ def test_match_system_describes_references_and_new_names():
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
 
 
+def test_match_system_lists_only_named_things():
+    assert "List only the things the command itself names or points to." in _MATCH_SYSTEM
+    assert "Do not list a thing because it is nearby." in _MATCH_SYSTEM
+    assert "Do not list a thing because someone holds it." in _MATCH_SYSTEM
+    assert 'For "Ask the cook who took the key." list only the cook and the key.' in _MATCH_SYSTEM
+    assert "Copy names from THINGS exactly." in _MATCH_SYSTEM
+
+
 def test_things_omit_condition_for_empty_condition_list():
     provider = _provider()
     provider._selected_names = list(provider.item_facts)
