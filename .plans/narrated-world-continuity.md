@@ -1175,7 +1175,7 @@ mechanism round, not the round that meets it.
 **State at hand-off (2026-09-23) - START HERE**
 
 *Where things stand.* Branch `round9`, tree clean, full suite green
-(703 passed), ruff clean, nothing running, not merged to `main`. The last
+(705 passed), ruff clean, nothing running, not merged to `main`. The last
 measurement is v26 (the "v26" entry below). This session's commits, oldest
 first:
 - `6236d02`: a failed judge's reason is written into `summary.json`
@@ -1207,20 +1207,15 @@ first:
 1. DONE in `0117d51`, measured as v26 (the "v26" entry below): the copied
    example on reveal turns is gone. Reveal turns use the variation's
    example, and the default example is story-neutral.
-2. **Judge gaps at the reveal turns.** Partly done in `3c99b23` (the
-   "Judge story_text" entry below). The judges now get `story_text` and a
-   reveal-aware before, but the continuity judge still grades the bridge
-   and the reveal text in 2 of 4 reveal-turn cells. Proposed next
-   (subtractive, not yet approved by Brandon): send the continuity judge
-   the narration without the story_text suffix, so it never sees those
-   sentences as the narrator's. They are the runtime's own appended
-   segments, so this is an exact suffix strip, not a scan of model prose.
-   The fact judge keeps the full narration.
-   The fact judge also shows two real gaps: the find reveal's text says the
-   card "is taped beneath" but the story places it "with Kristin" (a story
-   fix for the step 3 ChatGPT prompt), and changes that only story_text
-   shows (the drive to the park) are never captured, because capture comes
-   from the narrator's reply, written before the story text is appended.
+2. DONE in `3c99b23` and `3253adb` (the "Judge story_text" entry below):
+   the continuity judge reads only the narrator's prose plus story_text,
+   and its remaining reveal-turn flags now cite the narrator's own
+   sentences. Two real gaps the fact judge exposed stay open: the find
+   reveal's text says the card "is taped beneath" but the story places it
+   "with Kristin" (a story fix for the step 3 ChatGPT prompt), and changes
+   that only story_text shows (the drive to the park) are never captured,
+   because capture comes from the narrator's reply, written before the
+   story text is appended.
 3. **Invented drawer contents.** "Research notes" appear inside the opened
    drawer (v23, 3/3), and since v26 a "small piece of paper" appears on the
    find turn (3/3), because the 1A scene frame calls the drawer one of "the
@@ -1505,6 +1500,17 @@ records:
   never says Kristin takes the card although the story places it with her.
 - The fact judge now flags the bridge's drive to the park as an uncaptured
   change (missed_change 8 -> 11).
+- `3253adb` (approved by Brandon): the sentence did not hold, so the
+  continuity judge now reads `narrator_narration`, the narration minus the
+  exact story_text suffix (left whole if it is not an exact suffix), with
+  story_text sent as its own field. The rubric sentence now reads:
+  story_text is not part of narration, is canon, and is used only for
+  command_not_finished and what is true after the turn. The fact judge
+  keeps the full narration. Re-grade in `.../story-text-regrade/strip`:
+  16/38 again, but every t2/t13 continuity flag now cites the narrator's
+  own prose. The drawer paper put in the card's hidden spot is
+  reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
+  No flag cites the bridge or the reveal text any more.
 
 Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
