@@ -1231,6 +1231,28 @@ condition replaced by its opposite (shut becoming open) is not dropped. Then
 re-grade v17 offline, plus both labelled rounds, with a same-session control
 (see the note on judge noise below).
 
+*Player input is now first person* (`cf202e7`): the scripted commands said
+"your laptop" and "your truck", a game master's voice; they now say "my
+laptop" and "the truck". This changes the 1A/1B scripts, so v20 and later are
+not strictly comparable with v18/v19. Measured as v20b
+(`bench/results/item-facts-v20b-firstperson-two-scene-1a`): hand-over still
+gives "in the man's hand" 2/2; fact judge 9/36 turns with a failed cell
+(v18 7/36, v19 13/36 - inside this bench's noise); continuity 23/36
+including protagonist_acts_beyond_command. "Open my laptop." made t6 better
+in one run of two: Kristin now types her OWN password, where "Open your
+laptop." typed Michelle's 2/2. The other run still drifts into Michelle's
+tabs, so the t6 item below stands.
+
+*The bench hides a judge failure*: when the OpenAI account ran out of
+credits, three runs narrated all their turns and then died in the judge
+stage, and `summary.json` recorded `failed_replicates` with `status: "ok"`
+and `failure_reason: null` - the HTTP 429 text went only to stdout. The
+judge's failure reason should be written into the summary. Two unjudged
+runs from that outage (`item-facts-v20-firstperson-two-scene-1a` and
+`item-facts-v20c-diag-two-scene-1a`) are left in `bench/results/` untracked;
+they hold usable 1A turn records and can be judged offline with
+`bench/calibration/rejudge.py`, or deleted.
+
 *Other open items, in rough order:*
 - RESOLVED in `408126e`: an empty condition list wiped the phone's crack
   (every loss in v15-v18 was a `condition: []` reply). An empty list is now
