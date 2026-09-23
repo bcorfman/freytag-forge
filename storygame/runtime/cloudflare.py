@@ -367,7 +367,7 @@ class CloudflareTurnProvider:
     def _object_place_rule(self) -> str:
         return "Keep each object where the scene puts it."
 
-    def _constant_turn_rules(self) -> list[str]:
+    def _turn_rules_before_grounding(self) -> list[str]:
         return [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
@@ -378,11 +378,24 @@ class CloudflareTurnProvider:
             f"Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
-            "A character may only say what you were told that character can say.",
+        ]
+
+    def _turn_grounding_rule(self) -> str:
+        return "A character may only say what you were told that character can say."
+
+    def _turn_rules_after_selection(self) -> list[str]:
+        return [
             "Never write IDs or story bookkeeping into the prose.",
             "Do not copy sentences from the SCENE section.",
             "Do not say anything that goes against the SCENE section.",
             "Do not repeat the request's labels back.",
+        ]
+
+    def _constant_turn_rules(self) -> list[str]:
+        return [
+            *self._turn_rules_before_grounding(),
+            self._turn_grounding_rule(),
+            *self._turn_rules_after_selection(),
         ]
 
     def _constant_opening_rules(self) -> list[str]:
@@ -450,9 +463,8 @@ class CloudflareTurnProvider:
         )
         complication_text = self.state.last_turn_delivery.complication_text
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
-        constant_rules = self._constant_turn_rules()
         default_rules = [
-            *constant_rules[:9],
+            *self._turn_rules_before_grounding(),
             *(
                 (
                     "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
@@ -461,9 +473,9 @@ class CloudflareTurnProvider:
                 if model_grounding
                 else ()
             ),
-            constant_rules[9],
+            self._turn_grounding_rule(),
             *selection_rules,
-            *constant_rules[10:],
+            *self._turn_rules_after_selection(),
         ]
         system_rules = self._system_rules(opening=False)
         configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
@@ -509,7 +521,15 @@ class CloudflareTurnProvider:
         ]
         if not possessive_items:
             return []
-        return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
+        ownership_rules = [
+            f"{item_name} stores only {match.group('owner')}{match.group('possessive')} things."
+            for item_name in possessive_items
+            if (match := re.fullmatch(r"(?P<owner>.+)(?P<possessive>['’]s)\s+.+", item_name))
+        ]
+        return [
+            f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}.",
+            " ".join(ownership_rules),
+        ]
 
     def _placement_rules(self) -> list[str]:
         rules = []

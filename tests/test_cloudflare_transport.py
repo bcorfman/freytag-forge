@@ -1717,6 +1717,7 @@ def test_turn_rules_name_possessive_items_in_the_current_scene() -> None:
     rules = provider._turn_rules()
 
     assert "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop." in rules
+    assert "Michelle's phone stores only Michelle's things. Kristin's laptop stores only Kristin's things." in rules
 
 
 def test_turn_rules_omit_unplaced_possessive_scene_item() -> None:
@@ -1771,6 +1772,27 @@ def test_opening_rules_omit_unplaced_memory_card(monkeypatch) -> None:
         "Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop."
         in captured["payload"]["user"]
     )
+    assert (
+        "Michelle's phone stores only Michelle's things. Kristin's laptop stores only Kristin's things."
+        in captured["payload"]["user"]
+    )
+
+
+def test_opening_rules_omit_ownership_rule_when_scene_items_are_not_possessive(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The house is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    provider.opening()
+
+    assert "stores only" not in captured["payload"]["user"]
 
 
 def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
