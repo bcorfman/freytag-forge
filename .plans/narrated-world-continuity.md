@@ -1290,9 +1290,11 @@ plus smoke `item-facts-v24-smoke-two-scene-1a`).* `d9b70bf` appends 1A turn
 13, "Read the saved files on the memory card.", which matches the card
 reveal's action evidence; the script is now 13 + 6 turns, so totals are not
 comparable with v10-v23. The reveal mechanism works live 3/3: t13 matches
-handoff `k_sl_1a_b_r1`, beats 1A.2/1A.3 reach SCENE only on that turn, and
-1A now ends on the reveal (`advanced_offline: false`) instead of a forced
-transition. The reveal TURN fails every judge 3/3:
+handoff `k_sl_1a_b_r1` and beats 1A.2/1A.3 reach SCENE only on that turn.
+1A->1B is no longer advanced offline, but scene 1A's deadline
+(`handoff_after_turns: 13`) also falls on turn 13, so the run cannot show
+whether the reveal or the deadline ended the scene; 1A holds at most 13
+turns. The reveal TURN fails every judge 3/3:
 - The narrator's own prose restarts the arrival at the house ("steps out of
   her truck and onto the cracked driveway") and never reads anything; once
   it put the card on the desk. Its prompt names the card only in PLAYER:
