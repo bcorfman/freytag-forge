@@ -1,9 +1,9 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-23, end of day): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v25, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v26, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
-Phase 0. It lists what changed in v21-v25, the next steps in order, the
+Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
 to run a measurement. Round 8's code is merged to `main` (PR #469,
 PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
@@ -1175,8 +1175,8 @@ mechanism round, not the round that meets it.
 **State at hand-off (2026-09-23) - START HERE**
 
 *Where things stand.* Branch `round9`, tree clean, full suite green
-(700 passed), ruff clean, nothing running, not merged to `main`. The last
-measurement is v25 (the "v25" entry below). This session's commits, oldest
+(701 passed), ruff clean, nothing running, not merged to `main`. The last
+measurement is v26 (the "v26" entry below). This session's commits, oldest
 first:
 - `6236d02`: a failed judge's reason is written into `summary.json`
   (`judge_failure_reason`, and each failure record is marked failed).
@@ -1204,23 +1204,17 @@ first:
   tracking a placed thing the first time it becomes visible.
 
 *Next steps, in order:*
-1. **The copied example on reveal turns** (v25 t2, 2/2). `_output_example()`
-   in `storygame/runtime/cloudflare.py` returns `DEFAULT_OUTPUT_EXAMPLE` on
-   every authored-handoff turn, overriding the variation's example. That
-   example is this story's own taped-under-the-drawer scene, so it is a
-   story-specific string in the shipped runtime, and on the find turn the
-   narrator copies it word for word. Proposed (subtractive, not yet approved
-   by Brandon): delete the handoff special case so reveal turns use the
-   same example as every other turn, and make the default example
-   story-neutral. Measure as v26 (smoke, then 2 replicates) and compare
-   t2/t13 with v25.
+1. DONE in `0117d51`, measured as v26 (the "v26" entry below): the copied
+   example on reveal turns is gone. Reveal turns use the variation's
+   example, and the default example is story-neutral.
 2. **Judge gaps at the reveal turns.** At t13 the judges call Kristin
    walking back to the truck `restarts_scene` (2/3); on a sanctioned reveal
    turn they have called the reveal itself `reveals_hidden_canon` (v24).
    Neither judge is told a reveal was sanctioned on that turn. Fix with a
    same-session control re-grade (see the note on judge noise below).
 3. **Invented drawer contents.** "Research notes" appear inside the opened
-   drawer (v23, 3/3) because the 1A scene frame calls the drawer one of "the
+   drawer (v23, 3/3), and since v26 a "small piece of paper" appears on the
+   find turn (3/3), because the 1A scene frame calls the drawer one of "the
    places she kept her research". Brandon's call: say what is in the
    drawer, or reword the frame. Either is a plot.md change via ChatGPT.
 4. Phase 0's exit gate (92% per change type) is still unmet. Decide
@@ -1455,6 +1449,28 @@ carefully at Michelle's phone." is gone.
 - Judge-failed turns, leaving out protagonist_acts_beyond_command: 22/38
   (v24 18/38); smoke 9/19. t2's copied example accounts for part of the
   rise.
+
+*v26 (2026-09-23, `bench/results/item-facts-v26-example-two-scene-1a` plus
+smoke `item-facts-v26-smoke-two-scene-1a`).* `0117d51` (approved by
+Brandon): reveal turns use the variation's own output example, like every
+other turn; only the candidate-selection example stays off them.
+`DEFAULT_OUTPUT_EXAMPLE` is now a story-neutral lantern example. The
+handoff privacy test keeps its whole-prompt assertions, with a neutral
+variant example.
+- t2 (find): no copied example, 0/3 (v25 2/2). Every reveal-turn prompt
+  carries the variation's example, so the find turn is also shown
+  `item_facts`.
+- New at t2, 3/3: the narrator opens the drawer and invents "a small piece
+  of paper" (once with the message "They're watching."), captured as a
+  tracked `paper` on the floor. This is next step 3's invented drawer
+  contents moving to the find turn: the only source in the t2 prompt is
+  the frame's "the places she kept her research". The judges flag t2 for
+  invented_change, missed_change and reveals_hidden_canon.
+- t13 (read) is unchanged from v25: the walk to the truck, then the
+  authored reveal; restarts_scene 2/2 in the full run.
+- Judge-failed turns, leaving out protagonist_acts_beyond_command: 13/38
+  (v25 22/38); smoke 7/19 (v25 9/19). Two replicates are within judge noise
+  of each other, so read this as "no worse" rather than a measured gain.
 
 Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
