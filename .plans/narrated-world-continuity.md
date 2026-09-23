@@ -1,10 +1,11 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-23): Phase 0 bench work is through round 9 and a long
-follow-up of single-mechanism runs (v11-v20b), all on branch `round9`, not
-merged. Brandon's round 9 review is scored and acted on ("Round 9 review",
-at the top of "State at hand-off (2026-09-22)"), which is where a new
-session should start. Round 8's code is merged to `main` (PR #469,
+Status (2026-09-23, end of day): Phase 0 bench work is through round 9 and
+single-mechanism runs v11-v25, all on branch `round9`, not merged. A new
+session should start at "State at hand-off (2026-09-23) - START HERE" in
+Phase 0. It lists what changed in v21-v25, the next steps in order, the
+story-package authoring rules any ChatGPT story prompt must state, and how
+to run a measurement. Round 8's code is merged to `main` (PR #469,
 PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
 "Round 9 follow-up" at the end of Phase 0.
 
@@ -1171,7 +1172,121 @@ and compared against 25/48 on the same basis. Phase 0's exit criterion of 92%
 per change type remains unmet and remains the gate; at 48% clean, round 9 is a
 mechanism round, not the round that meets it.
 
-**State at hand-off (2026-09-22) - START HERE**
+**State at hand-off (2026-09-23) - START HERE**
+
+*Where things stand.* Branch `round9`, tree clean, full suite green
+(700 passed), ruff clean, nothing running, not merged to `main`. The last
+measurement is v25 (the "v25" entry below). This session's commits, oldest
+first:
+- `6236d02`: a failed judge's reason is written into `summary.json`
+  (`judge_failure_reason`, and each failure record is marked failed).
+- `4473aae`: a narrator rule, "<owner>'s <thing> stores only <owner>'s
+  things.", on the turn and opening paths; `_turn_rules` is built from
+  named rule groups instead of slices.
+- `5bad989`: one sentence splitter shared by the plain and masked paths.
+- `20d3c90`: a reply naming both poles of an axis keeps the pole that
+  differs from the state before the reply; an echo that leaves no condition
+  changes none.
+- `404ee5b`: beat details naming a world item that is not placed in the
+  scene and not established are withheld from the narrator.
+- `8368be4` (shipped runtime): a runtime-owned reveal's source beats reach
+  the prompt only on the turn its handoff matches; the scene's opening beat
+  is always sent; narrator-selected candidates are unchanged.
+- `d9b70bf`, then `31b0a34`: the two-scene bench script and the story
+  package now find the memory card (SL-1A-E, `k_sl_1a_b_r0`, "Look beneath
+  the KMS drawer.") separately from reading it (`k_sl_1a_b_r1`, "Read the
+  files on Michelle's memory card with my laptop."). ChatGPT authored this
+  and Brandon approved it, including two phrase fixes: R0 owns "Michelle's
+  card", "the card" and "hidden card".
+- `d192126`: a `while_fact_true` placement guard (one helper shared by the
+  runtime and the bench seed); on a matched reveal's turn, guards are judged
+  as if that reveal's asserted facts already held; the bench starts
+  tracking a placed thing the first time it becomes visible.
+
+*Next steps, in order:*
+1. **The copied example on reveal turns** (v25 t2, 2/2). `_output_example()`
+   in `storygame/runtime/cloudflare.py` returns `DEFAULT_OUTPUT_EXAMPLE` on
+   every authored-handoff turn, overriding the variation's example. That
+   example is this story's own taped-under-the-drawer scene, so it is a
+   story-specific string in the shipped runtime, and on the find turn the
+   narrator copies it word for word. Proposed (subtractive, not yet approved
+   by Brandon): delete the handoff special case so reveal turns use the
+   same example as every other turn, and make the default example
+   story-neutral. Measure as v26 (smoke, then 2 replicates) and compare
+   t2/t13 with v25.
+2. **Judge gaps at the reveal turns.** At t13 the judges call Kristin
+   walking back to the truck `restarts_scene` (2/3); on a sanctioned reveal
+   turn they have called the reveal itself `reveals_hidden_canon` (v24).
+   Neither judge is told a reveal was sanctioned on that turn. Fix with a
+   same-session control re-grade (see the note on judge noise below).
+3. **Invented drawer contents.** "Research notes" appear inside the opened
+   drawer (v23, 3/3) because the 1A scene frame calls the drawer one of "the
+   places she kept her research". Brandon's call: say what is in the
+   drawer, or reword the frame. Either is a plot.md change via ChatGPT.
+4. Phase 0's exit gate (92% per change type) is still unmet. Decide
+   whether `round9` is merged to `main` before Phase 1's decisions.
+5. Small review nits, none urgent. `_candidate_beats` reads
+   `self._forced_beat_anchors` directly, so a provider built with
+   `__new__` and given candidates would fail. `_turn_grounding_rule`
+   misnames the "A character may only say..." rule. The splitter's
+   `_drop_separator` keeps an unused no-map branch. `_mark_judge_failures`
+   uses `setdefault`, so an explicit `failure_reason: None` would survive.
+   Reveal-turn visibility and the bench's mid-scene tracking are covered
+   only by the bench test and not by unit tests of their own.
+
+*Story-package authoring rules.* The loader and tests enforce these. Every
+ChatGPT story prompt must state them, because ChatGPT does not know them and
+each one cost a round trip this session:
+- Delivering any realization of a storylet fires the whole storylet
+  (`state.py` `apply_proposal`), and a reveal is offered only while its
+  storylet is active and not fired (`knowledge.py`). Two reveals that must
+  both happen need separate storylets.
+- A storylet no scene transition depends on is dropped after its
+  `latest_turn`, and its `latest_turn` must be below the scene's
+  `handoff_after_turns` (1A: 13). The scene's deadline ends it at that turn.
+- Within a scene, storylet `target_turn`s must be unique and increase in
+  file order; `earliest_turn <= target_turn <= handoff_after_turns`.
+- A reveal realization without `source_beats` falls back to its
+  storylet's `source_links`, and those beats are sent on its reveal turn.
+- A reveal's `statement` must contain a phrase from every `must_convey`
+  group (groups naming "under the drawer" are exempt).
+- A multi-word `must_convey` phrase is owned by its knowledge. A scene's
+  entry text and frame may use it only if the owner is established at that
+  scene's entry, and narration naming it is rejected unless an owner is
+  committed, the phrase is in a projected beat, or the turn's reveal text
+  contains it. Dropping a phrase from every owner leaves it unguarded.
+- `action_evidence`: one player sentence must hold a phrase from every
+  group; phrases match as whole words, ignoring case, with no stemming;
+  compound commands are split into sentences first; a sentence containing
+  not/no/never/without/avoid/cannot/don't/do never matches. Exactly one
+  candidate may match, or none is delivered.
+- Story text changes go to ChatGPT Desktop with a self-contained prompt
+  that states the relevant rules above. Apply its blocks verbatim, and
+  check them against the loader before a worker applies them.
+
+*How to run a measurement now.* The script is 19 turns: 13 in 1A (t1 open
+the KMS drawer, t2 find the card, t3-t12 the old middle turns, t13 read the
+card) then 6 in 1B. One Ringer task per run, `engine: codex`,
+`model: gpt-5.6-luna`, `task_type: probe`, `full_access: true`,
+`max_attempts: 1`, from the repo root:
+`set -a; [ -f .env ] && . ./.env; set +a; TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-package-two-scene.json --scene 1A --replicates 2 --script change-types --out bench/results/item-facts-v<N>-<name>-two-scene-1a --confirm`
+Run `--replicates 1` into a `-smoke-` directory first and read it. The
+check never calls a model. It asserts the replicate count, 19 turns each,
+no rejected turns, both judgment files, no `judge_failure_reason`, and a
+non-empty `prompt_user` containing "PLAYER:" on every turn. It then prints
+the judge tallies and the t2/t6/t13 narrations. A run takes about 2 minutes
+per replicate. Code changes go through a worktree Ringer task whose check
+exports a patch; review the patch, then apply it and commit on `round9`.
+Two gotchas:
+- A fresh worktree's `uv run` can fail to download `en_core_web_sm` (TLS
+  error), which fails a check that is otherwise fine. Confirm by applying
+  the exported patch to the main checkout and running the probes and the
+  suite with the main `.venv`.
+- A worker told to make the suite pass may weaken a test or monkeypatch
+  away the path under test (it happened in `31b0a34`'s first attempt).
+  Review every changed assertion, and forbid both in the spec.
+
+**State at hand-off (2026-09-22)** (superseded; kept for history)
 
 *Round 9 review (2026-09-23).* Brandon's per-turn comments in
 `bench/results/round9.md` (local only, not in git) score round 9 at 18/36 turns with a
