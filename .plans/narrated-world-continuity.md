@@ -1218,10 +1218,34 @@ Acted on:
   model drop owners and exact-only matching then lost the thing. Live A/B
   (`bench/results/probes/match-overselect-ab.json`, 18 commands x 5
   samples, one late-game store): unrelated things on who-questions 5/10 ->
-  0/10, named things kept 86/95 -> 95/95. No full bench run has measured
-  the two together yet.
+  0/10, named things kept 86/95 -> 95/95. Measured together in v21 below.
 
-Branch `round9` at `5b54d85`, tree clean, full suite green, nothing running.
+*v21 (2026-09-23, `bench/results/item-facts-v21-matchfix-two-scene-1a`,
+every-turn report `bench/results/v21.md`, awaiting Brandon's comments).*
+Built on three commits: `6236d02` writes a failed judge's reason into
+`summary.json` (`judge_failure_reason`, and each failure record is marked
+failed with it; v20b's own summary still shows the old silent failure);
+`4473aae` adds one narrator sentence per owned thing after the owner rule
+("Michelle's phone stores only Michelle's things. Kristin's laptop stores
+only Kristin's things.", turn and opening paths) for the t6 password/tabs
+defect, and builds `_turn_rules` from named groups instead of slicing;
+`5bad989` shares one splitter between the plain and masked paths.
+- t6 "Open my laptop." shows Kristin's own login or desktop 2/2 (v20b: 1/2
+  drifted into Michelle's tabs).
+- GIVEN carried only the named things on every turn; t14 got none, the
+  who-questions only "man".
+- Judge-failed turns 29/36 (v20b 24/36); leaving out
+  protagonist_acts_beyond_command, 20/36 (v20b 16/36), inside this
+  bench's noise.
+- Two new faults, each identical word for word in both replicates, so
+  effectively one sample each: t2's reply puts "open" in the drawer's place
+  and keeps it shut (the known state_as_place fault; it cascades into t8,
+  "shut an already shut drawer"), and t3's narration puts Michelle's hidden
+  memory card on the desk (reveals_hidden_canon). Not attributed: t2 and
+  t3's prompts differ from v20b only by the new owner sentence and the
+  match-call changes, and no replay tool exists to A/B them.
+
+Branch `round9` at `5bad989`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
