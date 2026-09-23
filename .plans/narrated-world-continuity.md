@@ -1175,7 +1175,7 @@ mechanism round, not the round that meets it.
 **State at hand-off (2026-09-23) - START HERE**
 
 *Where things stand.* Branch `round9`, tree clean, full suite green
-(701 passed), ruff clean, nothing running, not merged to `main`. The last
+(703 passed), ruff clean, nothing running, not merged to `main`. The last
 measurement is v26 (the "v26" entry below). This session's commits, oldest
 first:
 - `6236d02`: a failed judge's reason is written into `summary.json`
@@ -1207,11 +1207,20 @@ first:
 1. DONE in `0117d51`, measured as v26 (the "v26" entry below): the copied
    example on reveal turns is gone. Reveal turns use the variation's
    example, and the default example is story-neutral.
-2. **Judge gaps at the reveal turns.** At t13 the judges call Kristin
-   walking back to the truck `restarts_scene` (2/3); on a sanctioned reveal
-   turn they have called the reveal itself `reveals_hidden_canon` (v24).
-   Neither judge is told a reveal was sanctioned on that turn. Fix with a
-   same-session control re-grade (see the note on judge noise below).
+2. **Judge gaps at the reveal turns.** Partly done in `3c99b23` (the
+   "Judge story_text" entry below). The judges now get `story_text` and a
+   reveal-aware before, but the continuity judge still grades the bridge
+   and the reveal text in 2 of 4 reveal-turn cells. Proposed next
+   (subtractive, not yet approved by Brandon): send the continuity judge
+   the narration without the story_text suffix, so it never sees those
+   sentences as the narrator's. They are the runtime's own appended
+   segments, so this is an exact suffix strip, not a scan of model prose.
+   The fact judge keeps the full narration.
+   The fact judge also shows two real gaps: the find reveal's text says the
+   card "is taped beneath" but the story places it "with Kristin" (a story
+   fix for the step 3 ChatGPT prompt), and changes that only story_text
+   shows (the drive to the park) are never captured, because capture comes
+   from the narrator's reply, written before the story text is appended.
 3. **Invented drawer contents.** "Research notes" appear inside the opened
    drawer (v23, 3/3), and since v26 a "small piece of paper" appears on the
    find turn (3/3), because the 1A scene frame calls the drawer one of "the
@@ -1471,6 +1480,31 @@ variant example.
 - Judge-failed turns, leaving out protagonist_acts_beyond_command: 13/38
   (v25 22/38); smoke 7/19 (v25 9/19). Two replicates are within judge noise
   of each other, so read this as "no worse" rather than a measured gain.
+
+*Judge story_text (2026-09-23, `3c99b23`, re-grade of v26 in
+`bench/results/probes/story-text-regrade/{ctl,new}`).* `bench/judge_input.py`
+`judge_turns` builds the judges' view of each turn: `story_text` (the
+reveal's `delivery_text`, then the scene's `bridge_text`, looked up by id)
+and an `item_facts_before` without the things the turn's reveal made
+visible (placements whose `while_fact_true` the reveal asserts). `bench run`
+and `rejudge.py` both use it; saved records are unchanged. The continuity
+rubric gains Brandon's approved sentence: story_text is canon, and never a
+reason for contradicts_stated_fact, protagonist_acts_beyond_command,
+restarts_scene or reveals_hidden_canon. The fact rubric is unchanged.
+Same-session control (old judges) against new, both over the saved v26
+records:
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 16/38
+  both (the original v26 grading was 13/38, so the noise is 3 cells).
+- Fixed: "given facts already place the card with Kristin" at t2 is gone;
+  command_not_finished at t13 2 -> 0.
+- Not fixed: r2 t2 is still reveals_hidden_canon, and r2 t13 still cites
+  the bridge's drive to the park as restart and beyond-command. The rubric
+  sentence does not hold reliably.
+- Real, not judge error: r1 t13's narrator walks back to the truck she is
+  already at; t2's invented paper (next step 3); the find reveal's text
+  never says Kristin takes the card although the story places it with her.
+- The fact judge now flags the bridge's drive to the park as an uncaptured
+  change (missed_change 8 -> 11).
 
 Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
