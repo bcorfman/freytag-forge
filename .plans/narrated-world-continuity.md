@@ -1,10 +1,10 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-22): Phase 0 bench work is through round 9 and a long
-follow-up of single-mechanism runs (v11-v18), all on branch `round9`, not
-merged. The two decisions from the 2026-09-22 hand-off are resolved (v18);
-the open items are listed in "State at hand-off (2026-09-22)", which is
-where a new session should start. Round 8's code is merged to `main` (PR #469,
+Status (2026-09-23): Phase 0 bench work is through round 9 and a long
+follow-up of single-mechanism runs (v11-v20b), all on branch `round9`, not
+merged. Brandon's round 9 review is scored and acted on ("Round 9 review",
+at the top of "State at hand-off (2026-09-22)"), which is where a new
+session should start. Round 8's code is merged to `main` (PR #469,
 PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
 "Round 9 follow-up" at the end of Phase 0.
 
@@ -1173,6 +1173,44 @@ mechanism round, not the round that meets it.
 
 **State at hand-off (2026-09-22) - START HERE**
 
+*Round 9 review (2026-09-23).* Brandon's per-turn comments in
+`bench/results/round9.md` (`7fd6bdb`) score round 9 at 18/36 turns with a
+real failure (50%), against 25/48 (52%) for round 8: flat. The judges agreed
+with him on 31 of 36 turns; they missed r1 t3 and wrongly failed r2 t5,
+r2 t14, r2 t17 and r2 t18. His rulings:
+- The tracked place overrides the plot's authored place (t3, r2 t11).
+  Already fixed by `4f4a3cc`: in v20b turn 3 takes the phone "from her hand"
+  2/2.
+- The chair was never given as overturned (t7): fixed by `fd77280`.
+- GIVEN must carry only what the command refers to, never everything tracked
+  (r1 t13, r1 t18, r2 t16). His "objects in the scene or that Kristin is
+  holding" was pushback on round 9 sending the whole store, not a widening of
+  the 2026-09-16 rule. Measured on v20b: 34/36 turns sent only referred
+  things; the leak was the match call over-listing on questions about people.
+- The player character cannot control an NPC: a refusal, a struggle or
+  silence finishes the command (r2 t17, r2 t18). The 1B man not answering or
+  not giving the phone back is therefore not a narrator defect (see the open
+  item below).
+
+Acted on:
+- `a633a95` adds `bench/calibration/labels-round9.json` (the judge verdicts
+  plus his eight overrules; three cells he did not rule on are unlabelled).
+- `f9bf716` tells the continuity judge a refusal, struggle or silence
+  finishes the command. Re-grade against a same-session control
+  (`bench/results/probes/npc-rubric-regrade/`): continuity 99.1/99.0/93.0%
+  -> 98.2/97.9/92.3% on rounds 7/8/9, fact 93.3/95.8/95.6% ->
+  96.2/96.1/96.0%, all within the 3-5 cell noise. Round 9
+  command_not_finished stays 31/35: r2 t18 is fixed, r2 t17 is not (the
+  judge still wants to see whether she gets the phone back).
+- `9fc67e2` tells the match call to list only the things the command names,
+  and `5dfe2ff` resolves a shortened name ("laptop", "my laptop", "chair")
+  to the one tracked name it means, because the narrower prompt made the
+  model drop owners and exact-only matching then lost the thing. Live A/B
+  (`bench/results/probes/match-overselect-ab.json`, 18 commands x 5
+  samples, one late-game store): unrelated things on who-questions 5/10 ->
+  0/10, named things kept 86/95 -> 95/95. No full bench run has measured
+  the two together yet.
+
 Branch `round9` at `e9e33f8`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
@@ -1265,13 +1303,13 @@ they hold usable 1A turn records and can be judged offline with
   -> cracked in two). All 5 of v19's dropped cells are this, as is round 8
   r3 t12. Likely leakage from kept_ended_condition's "word for word".
 - The 1B man never answers "Ask the man who he is." and resists "Take
-  Michelle's phone back from the man." (t17, t18, every run). This is the
-  parked C1 finding: excluding `source.kind: scene_entry` knowledge from NPC
-  sayable lines leaves him nothing to say.
+  Michelle's phone back from the man." (t17, t18, every run). Brandon ruled
+  this is not a narrator failure (she cannot control him), so it is no longer
+  a defect to fix. Whether he should ever have something to say is the
+  parked C1 story question: excluding `source.kind: scene_entry` knowledge
+  from NPC sayable lines leaves him nothing to say.
 - t6 "Open your laptop." types Michelle's password into Kristin's laptop 2/2
   (invented detail).
-- Brandon's per-turn comments on `bench/results/round9.md` are still
-  outstanding; the follow-up runs were read by the judges and by Claude only.
 - Two code nits from review: `storygame/runtime/command_split.py` duplicates
   `_split_sentence` as `_split_masked_sentence` instead of sharing it with an
   offset map; `_turn_rules` in `storygame/runtime/cloudflare.py` rebuilds its
