@@ -55,6 +55,7 @@ test("filters turn fields and uses the default model with the strict schema", as
   assert.match(body.input[0].content, /Use cause command only when the player's command itself asks for that change/);
   assert.match(body.input[0].content, /Looking at, examining, searching, or checking a thing does not ask for moving/);
   assert.deepEqual(Object.keys(sent).sort(), ["item_facts_after", "item_facts_before", "narration", "player_input", "story_text", "turn_number"]);
+  assert.equal(sent.narration, "The lantern feels warm.");
   assert.deepEqual(sent.story_text, ["The story adds this sentence."]);
   assert.deepEqual(body.text.format.schema.properties.turns.items.required, [
     "turn",

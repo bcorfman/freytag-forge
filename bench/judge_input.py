@@ -63,6 +63,16 @@ def _revealed_item_names(turn: dict[str, Any], package: StoryPackage) -> set[str
     }
 
 
+def _narrator_narration(narration: str, story_text: list[str]) -> str:
+    remaining = narration
+    for authored in reversed(story_text):
+        candidate = remaining.rstrip()
+        if not candidate.endswith(authored):
+            return narration
+        remaining = candidate[: -len(authored)]
+    return remaining.rstrip()
+
+
 def judge_turns(
     turns: list[dict[str, Any]], scene_transitions: list[dict[str, Any]], package: StoryPackage
 ) -> list[dict[str, Any]]:
@@ -72,6 +82,7 @@ def judge_turns(
     for turn in turns:
         copy = dict(turn)
         copy["story_text"] = _story_text(turn, scene_transitions, package)
+        copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"])
         before = dict(turn.get("item_facts_before", {}))
         for item_name in _revealed_item_names(turn, package):
             before.pop(item_name, None)

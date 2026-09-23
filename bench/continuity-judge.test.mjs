@@ -26,7 +26,8 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
   const turns = [
     {
       player_input: "Look at the phone.",
-      narration: "The phone lies on the floor.",
+      narration: "The phone lies on the floor. The story adds this sentence.",
+      narrator_narration: "The phone lies on the floor.",
       story_text: ["The story adds this sentence."],
       scene_id: "1A",
       item_facts_before: { phone: { place: "her hands" } },
@@ -68,7 +69,7 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
     },
   ]);
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
-  assert.match(request.input[0].content, /story_text lists sentences at the end of the narration that the story itself wrote for this turn/);
+  assert.match(request.input[0].content, /story_text lists sentences the story itself wrote at the end of this turn\. They are not part of narration\. They are canon\./);
   assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the narration shows her attending to that thing/);
   assert.match(request.input[0].content, /She cannot control another character/);
   assert.match(request.input[0].content, /When she tries to take a thing from another character, trying is her whole part/);
@@ -86,6 +87,23 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
     "reveals_hidden_canon",
     "reason",
   ]);
+});
+
+test("continuity judge falls back to the full narration when narrator text is absent", async () => {
+  let request;
+  await judgeContinuity(
+    { sceneId: "1A", opening: "", turns: [{ narration: "Full narration.", story_text: ["Authored text."] }] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async (_url, options) => {
+        request = JSON.parse(options.body);
+        return response(verdict);
+      },
+    },
+  );
+  const sent = JSON.parse(request.input[1].content).turns[0];
+  assert.equal(sent.narration, "Full narration.");
+  assert.deepEqual(sent.story_text, ["Authored text."]);
 });
 
 test("packageCanon returns the whole scene block", () => {
