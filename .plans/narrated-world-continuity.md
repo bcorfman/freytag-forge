@@ -1297,11 +1297,21 @@ they hold usable 1A turn records and can be judged offline with
   no condition change at all. v19 (`item-facts-v19-emptykeep-two-scene-1a`)
   lost no phone condition, but the model sent no empty list for the phone
   that run, so the unit tests are the evidence the path works.
-- New fact-judge false positive, seen in v19: dropped_true_condition fires
-  when the phone's damage is reworded or split/merged ("cracked in two,
-  shattered" vs "cracked in two", "shattered") or escalates (cracked screen
-  -> cracked in two). All 5 of v19's dropped cells are this, as is round 8
-  r3 t12. Likely leakage from kept_ended_condition's "word for word".
+- RESOLVED in `74b990c`: dropped_true_condition fired when the
+  phone's damage was split, merged, reworded or made worse ("cracked in two,
+  shattered" vs "cracked in two", "shattered"), leaked from
+  kept_ended_condition's "word for word". That sentence is now scoped to
+  kept_ended_condition, and dropped_true_condition compares meaning. Re-grade
+  against a same-session control (`bench/results/probes/dropped-meaning-regrade/`):
+  the three split/merge cells (v19 r2 t11, r2 t15; round 8 r3 t12) went to
+  0. The real drops from before `408126e` (v16 r1 t3, r1 t17, r2 t17; v17 r2
+  t3) are still caught, and kept_ended_condition stays 0 everywhere. Fact
+  agreement went 96.2/95.5/94.8% -> 93.3/95.2/96.0% on rounds 7/8/9. The
+  round 7 dip is invented_change on the "crumpled" receipt, which the change
+  does not touch. One new wrong cell: round 9 r1 t2 (drawer opened, reply put
+  "open" in the place), which the control also flagged on r2 t2. The
+  control graded v19 at 2 dropped cells, not the original 5, so part of the
+  original 5 was one noisy grading.
 - The 1B man never answers "Ask the man who he is." and resists "Take
   Michelle's phone back from the man." (t17, t18, every run). Brandon ruled
   this is not a narrator failure (she cannot control him), so it is no longer
