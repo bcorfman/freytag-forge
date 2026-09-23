@@ -1266,7 +1266,26 @@ established by committed knowledge, on the turn and opening paths.
 - Judge-failed turns leaving out protagonist_acts_beyond_command: 18/36
   (v21 20/36), within noise.
 
-Branch `round9` at `404ee5b`, tree clean, full suite green, nothing running.
+*v23 (2026-09-23, `bench/results/item-facts-v23-beatgate-two-scene-1a`
+plus smoke `item-facts-v23-smoke-two-scene-1a`).* Brandon approved gating
+beats on the player's action: `8368be4` sends a runtime-owned reveal's
+source beats only on the turn its handoff matches the player's input; the
+scene's opening beat is still sent, narrator-selected candidates (1B) are
+unchanged, and bench-forced beats are exempt. This change is in the
+SHIPPED runtime (`_candidate_beats`).
+- 1A SCENE carries no later-beat detail on any turn; 1A narration names
+  none of the card's contents (v22: 7 turns across 2 replicates; the only
+  hits left are "research notes" in the opened drawer, which the scene frame
+  itself places there and no judge flagged).
+- reveals_hidden_canon 0 (v22 1, v21 2); contradicts_stated_fact 2 (v22 7,
+  v21 10).
+- Drawer still open at t2 and shut at t8, 3/3.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 13/36
+  (v22 18/36, v21 20/36); smoke 5/18.
+- Not yet exercised live: the reveal turn itself (no scripted command
+  matches the card handoff's action evidence); the offline probe covers it.
+
+Branch `round9` at `8368be4`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,
