@@ -1,7 +1,7 @@
 # Jev judge trial: plan
 
-Status (2026-09-24): not started; section 8's questions are decided. Next
-is Phase A's test call; the credentials are in `.env`. Written
+Status (2026-09-24): Phase A done (access, price, one live call). Next is
+Phase B, the Jev judge with offline tests. Written
 to be picked up in a new chat with no other context.
 
 Goal: find out whether TypeSafe's Jev (`typesafe/jev` on Cloudflare Workers
@@ -278,6 +278,16 @@ or r9.
 
 Exit: access works, the price is known, and the cost estimate in 6.D is
 recomputed from it.
+
+DONE 2026-09-24. After Brandon added AI Gateway credit, one call with the
+documentation's example returned `jev-1.13.0` answers matching the docs
+(`is_urgent` 0.95, `department` billing 0.88, `frustration` 1.04; 426 input
+tokens), billed as `"keySource": "Unified"`. Cloudflare wraps the answer one
+level deeper than the docs show, and the judge must parse this shape:
+`{"success": true, "result": {"state": "Completed", "result": {"model",
+"answers", "usage"}, "gatewayMetadata": {...}}}`. Treat any `state` other than
+`Completed` as a failure. The price is unchanged at $0.042 per million input
+tokens, so the 6.D estimate stands.
 
 ### Phase B - Question design on a small slice (offline code, then a tiny billed probe)
 
