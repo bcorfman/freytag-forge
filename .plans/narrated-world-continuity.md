@@ -1216,11 +1216,12 @@ first:
    that only story_text shows (the drive to the park) are never captured,
    because capture comes from the narrator's reply, written before the
    story text is appended.
-3. **Invented drawer contents.** "Research notes" appear inside the opened
-   drawer (v23, 3/3), and since v26 a "small piece of paper" appears on the
-   find turn (3/3), because the 1A scene frame calls the drawer one of "the
-   places she kept her research". Brandon's call: say what is in the
-   drawer, or reword the frame. Either is a plot.md change via ChatGPT.
+3. DONE in `1b45b71` and `6ddd0b2`, measured as v27 (the "v27" entry
+   below): the drawer's contents are authored, the frame no longer points
+   at research, and the find reveal has Kristin take the card. Open from
+   v27: the narrator re-enters the house or re-walks to the truck on the
+   reveal turns (restarts_scene 7 cells), and once invents Michelle's
+   laptop open with a "Confidential" folder at t13.
 4. Phase 0's exit gate (92% per change type) is still unmet. Decide
    whether `round9` is merged to `main` before Phase 1's decisions.
 5. Small review nits, none urgent. `_candidate_beats` reads
@@ -1511,6 +1512,30 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v27 (2026-09-23, `bench/results/item-facts-v27-drawer-two-scene-1a` plus
+smoke `item-facts-v27-smoke-two-scene-1a`).* `1b45b71` (ChatGPT-authored,
+Brandon-approved, applied verbatim): a 1A setting fact "The drawer holds
+pens, binder clips, a stapler, and spare batteries.", the frame's last
+sentence is now "Michelle's work area has not been searched yet. The KMS
+drawer is worth a look.", and the find delivery_text is "Kristin finds
+Michelle's memory card taped beneath the KMS drawer. She takes it with
+her." The smoke run showed the bench never sent that setting fact:
+`ItemFactsProvider` sends setting facts only as tracked THINGS, and it
+cannot parse a contents sentence. `6ddd0b2` makes the seed parser report
+the setting facts it did not track, and the bench sends exactly those as
+text, as production does. The full run is on `6ddd0b2`.
+- t1 (open the drawer): no invented research, 2/2 (v23 research notes 3/3).
+  One replicate names exactly the authored contents; the other says
+  "revealing the contents inside".
+- t2 (find): no invented paper, 3/3 including the smoke (v26 3/3). The
+  card is tracked "with Kristin" after the find.
+- New: restarts_scene 7 cells. The narrator re-approaches the workstation
+  or re-enters the house at t2 and t13, and r2 t13 walks back from the
+  truck into the house. r1 t13 invents Michelle's laptop open on the desk
+  with a "Confidential" folder.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 15/38
+  (v26 13/38, within noise).
 
 Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
