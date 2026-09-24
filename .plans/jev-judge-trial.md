@@ -438,6 +438,38 @@ the other two. Held out means without the 10 probe turns, 414 cells:
   "audits generalize across stories". It should be re-checked on a second
   labeled set, such as v29, before it is trusted.
 
+### Unfinished-command variants (2026-09-24)
+
+`8aca8dd` adds three variants built on the preamble:
+- `preamble-rubric`: the author's command-finishing rules added to the task
+  line;
+- `preamble-holistic`: one direct `command_unfinished` question, recorded
+  but not used by the hand rules;
+- `preamble-rubric-holistic`: both.
+
+Each ran once over rounds 7-9 (`bench/results/probes/jev-unfinished`,
+about $0.04). Scored held out, with leave-one-round-out learning (analysis
+script `r18/analyze_unfinished.py` in the session scratchpad):
+
+| Variant / method | Continuity | Unfinished commands |
+|---|---|---|
+| preamble, hand rules | 90.8% | 85.7% |
+| preamble, learned combiner | 94.0% | 89.8% |
+| preamble-rubric, learned combiner | 94.0% | 90.8% |
+| preamble-holistic, direct question alone | 91.8% | 88.8% |
+| preamble-holistic, learned combiner + direct question | 95.2% | 94.9% |
+| preamble-rubric-holistic, learned combiner + direct question | 94.4% | 93.9% |
+| Luna | 96.4% | 96.9% |
+
+- Writing the rules into the preamble does not help.
+- The direct question is weak on its own, but as one more input to the
+  learned combiner it adds 5 unfinished-command cells.
+- The best Jev setup (`preamble-holistic` plus the learned combiner) is 1.2
+  points behind Luna on continuity: 394 against 399 of 414 cells. On
+  unfinished commands it is 2 points behind.
+- The same caveat applies: the combiner's weights come from one story's
+  labels, and it needs a second labeled set before it is trusted.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
