@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-23, end of day): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v26, all on branch `round9`, not merged. A new
+Status (2026-09-24): Phase 0 bench work is through round 9 and
+single-mechanism runs v11-v28, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1222,6 +1222,19 @@ first:
    v27: the narrator re-enters the house or re-walks to the truck on the
    reveal turns (restarts_scene 7 cells), and once invents Michelle's
    laptop open with a "Confidential" folder at t13.
+3a. PARTLY DONE in `d09db55`, measured as v28 (the "v28" entry below):
+   the 1A scene frame described an arrival ("has reached the house ...
+   not been searched yet") and is sent every turn; it now describes only
+   the place. The t1/t2 re-approach is gone. Still open, with one cause:
+   the narrator never learns where Kristin is or what the last turn did.
+   So t13 still walks back into the house from the truck (1/2), and 1B
+   t19 re-approaches "the watching man" (2/2). The candidate fix is to
+   give the narrator the player character's place, or last turn's
+   command, in PLAYER. That is a shipped runtime change and needs
+   Brandon's go-ahead.
+3b. DONE in `9eb2b1e`: the judges default to `gpt-5.6-luna`, for cost
+   (see "Luna judge calibration" below). Tallies up to v27 are gpt-5.4's
+   and are not comparable with v28 onward.
 4. Phase 0's exit gate (92% per change type) is still unmet. Decide
    whether `round9` is merged to `main` before Phase 1's decisions.
 5. Small review nits, none urgent. `_candidate_beats` reads
@@ -1512,6 +1525,49 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v28 (2026-09-24, `bench/results/item-facts-v28-frame-two-scene-1a` plus
+smoke `item-facts-v28-smoke-two-scene-1a`, first run judged by Luna).*
+`d09db55` replaces the 1A frame with "Michelle's home is otherwise
+untouched, but its back door frame shows recent damage. Michelle is
+missing, and her tablet and work bag are gone. A drawer on Michelle's
+workstation has Kristin's initials, KMS, newly carved into it."
+(ChatGPT-authored, Brandon-approved; "forced entry" is a guarded phrase
+of `k_sl_1a_a_r1` and cannot appear in a frame). Six variations lost a
+dead replacement that patched the old frame's phone sentence. Read by
+hand, since the judge changed:
+- t2: no re-approach and no re-opened drawer, 3/3 including the smoke
+  (v27: r2 t1 and t2 re-walked to the desk).
+- t13: walks back into the house from the truck 1/2 (r1) and reads the
+  card at the workstation; the prompt carries no arrival text, and
+  nothing in it says Kristin is at the truck. r2 reads it in the truck.
+- 1B t19: "approaches the watching man" 2/2 after two turns of talking.
+- The invented paper under the drawer is back at t2, 3/3 including
+  the smoke (v26 and v27: 0/3). An invented password prompt appears at
+  t6, 3/3.
+- Luna judge: 13/38 turns with a failed cell. It flagged r1 t4
+  (commanded "bring my laptop inside") as restarts_scene and let the t2
+  paper through.
+
+*Luna judge calibration (2026-09-24,
+`bench/results/probes/luna-calibration/r7`-`r9`).* `rejudge.py` plus
+`check_calib.py` on HEAD `d09db55`, against the round 7-9 labels:
+
+| Round | Continuity | Fact |
+|---|---|---|
+| r7 | 111/114 = 97.4% | 91/105 = 86.7% |
+| r8 | 184/192 = 95.8% | 315/336 = 93.8% |
+| r9 | 132/142 = 93.0% | 236/251 = 94.0% |
+| total | 427/448 = 95.3% | 642/692 = 92.8% |
+
+The closest gpt-5.4 scores are `probes/take-attempt-regrade/new`: 96.9%
+continuity and 96.4% fact overall, on an older rubric (before `3c99b23`
+and `3253adb`), so this is not a same-rubric control. Luna's repeated
+misses: `narration_contradicts_given_facts` on the t3 pocket turn (every
+replicate of r7, plus r8 and r9); a "crumpled" receipt condition called
+invented in r7 t10 (4 replicates); and restarts_scene misses in r9 1B.
+Brandon chose Luna for cost, so these are fixed through the rubric and
+the labels, not by changing the model.
 
 *v27 (2026-09-23, `bench/results/item-facts-v27-drawer-two-scene-1a` plus
 smoke `item-facts-v27-smoke-two-scene-1a`).* `1b45b71` (ChatGPT-authored,
