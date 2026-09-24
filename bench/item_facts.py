@@ -36,8 +36,8 @@ def _resolve_refer(name: str, tracked) -> str | None:
     return suffix_matches[0] if len(suffix_matches) == 1 else None
 
 
-def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
-    """Build tracked things from the authored placements and setting facts."""
+def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str], list[str]]:
+    """Build tracked things and classify the authored setting facts once."""
 
     scene = next((item for item in package.scenes if item.metadata.scene_id == scene_id), None)
     if scene is None:
@@ -45,6 +45,7 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
     items = {item.id: item for item in package.world.items}
     things: dict[str, dict] = {}
     issues: list[str] = []
+    unconsumed_setting_facts: list[str] = []
     for item_id, placement in scene.metadata.item_placements.items():
         item = items.get(item_id)
         if item is None:
@@ -77,18 +78,29 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
             condition = condition.removeprefix("is ").removeprefix("are ").strip()
             if len(things[matched]["condition"]) >= 2 or len(condition) > 40:
                 issues.append(f"setting fact for {matched!r} could not be added as a condition")
+                unconsumed_setting_facts.append(setting)
                 continue
             things[matched]["condition"].append(condition)
             continue
         separator = next((separator for separator in (" is ", " are ") if separator in phrase), None)
         if separator is None:
             issues.append(f"setting fact {setting!r} could not be parsed")
+            unconsumed_setting_facts.append(setting)
             continue
         name, condition = (part.strip() for part in phrase.split(separator, 1))
         if not name or len(condition) > 40:
             issues.append(f"setting fact {setting!r} exceeds item-facts limits")
+            unconsumed_setting_facts.append(setting)
             continue
         issues.append(f"setting fact for unplaced thing {name!r}: {setting!r}")
+        unconsumed_setting_facts.append(setting)
+    return things, issues, unconsumed_setting_facts
+
+
+def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
+    """Build tracked things from the authored placements and setting facts."""
+
+    things, issues, _ = _package_seed(package, state, scene_id)
     return things, issues
 
 
@@ -280,7 +292,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return []
 
     def _setting_fact_rules(self) -> list[str]:
-        return []
+        package = getattr(self.state, "package", None)
+        if package is None:
+            return []
+        _, _, unconsumed = _package_seed(package, self.state, self.state.current_scene_id)
+        return unconsumed
 
     def _system_rules(self, opening: bool) -> list[str]:
         if self.prompt_variant and self.prompt_variant.get("constant_rules_in_system") is True:

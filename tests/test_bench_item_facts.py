@@ -59,7 +59,56 @@ def test_things_are_after_scene_and_render_single_value_facts():
         "CONSTRAINTS:"
     ) in user
     assert provider._placement_rules() == []
+    assert provider._setting_fact_rules() == ["The drawer holds pens, binder clips, a stapler, and spare batteries."]
+
+
+def test_untracked_setting_fact_reaches_turn_and_opening_prompts(monkeypatch):
+    provider = _provider()
+    fact = "The drawer holds pens, binder clips, a stapler, and spare batteries."
+
+    turn = provider.assemble_turn_prompt("Search the workstation for useful supplies.")
+    assert fact in provider._section_user_prompt(turn["context"])
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    assert fact in provider.last_prompt["user"]
+
+
+def test_tracked_setting_fact_does_not_reach_prompt_as_text():
+    provider = _provider()
+    turn = provider.assemble_turn_prompt("Check the drawer.")
+    user = provider._section_user_prompt(turn["context"])
+
+    assert "The drawer is shut." not in user
+    assert "The drawer holds pens, binder clips, a stapler, and spare batteries." in user
+
+
+def test_scene_with_every_setting_fact_tracked_sends_no_setting_fact_rules():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    metadata = scene.metadata.model_copy(update={"setting_facts": ("The drawer is shut.",)})
+    package = PACKAGE.model_copy(
+        update={
+            "scenes": tuple(
+                scene.model_copy(update={"metadata": metadata}) if item is scene else item for item in PACKAGE.scenes
+            )
+        }
+    )
+    state = RuntimeState(package=package, current_scene_id="1A", phase="exposition")
+    state._assert_scene_entry_fact("1A")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={"drawer": {"place": "in Michelle's workstation", "condition": []}},
+        mode="single_call",
+    )
+
+    turn = provider.assemble_turn_prompt("Check the drawer.")
     assert provider._setting_fact_rules() == []
+    assert "The drawer is shut." not in provider._section_user_prompt(turn["context"])
 
 
 def test_player_block_places_come_before_the_command():
