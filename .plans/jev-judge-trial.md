@@ -409,6 +409,35 @@ The two baseline runs agree within 1 cell, and the preamble beats both by
 contradicts_stated_fact and restarts_scene, so it is real. It still leaves
 Jev's continuity about 5 points behind Luna and gpt-5.4.
 
+### Free analysis of the saved preamble answers (2026-09-24)
+
+No new calls. The script is kept in the session scratchpad as
+`r16/analyze.py`, and a Ringer task should move it to `bench/` if it is
+kept. It uses the preamble answers for rounds 7-9 (132 labeled turns), with
+leave-one-round-out validation: each round is scored by a model trained on
+the other two. Held out means without the 10 probe turns, 414 cells:
+
+| Approach | Continuity held out | contradicts | restarts | command | reveals |
+|---|---|---|---|---|---|
+| Flat 0.5 hand rules (committed) | 90.8% | 92.1% | 88.8% | 85.7% | 95.1% |
+| A. Per-question thresholds | 91.1% | 93.0% | 86.2% | 87.8% | 95.1% |
+| B. Learned combiner (logistic regression per verdict) | 94.0% | 93.0% | 93.8% | 89.8% | 98.4% |
+| Luna | 96.4% | 96.5% | 91.2% | 96.9% | 99.2% |
+
+- A is noise: tuning thresholds does not help.
+- B gains about 3 points over the hand rules. It beats Luna on restarts, is
+  level on hidden canon, and trails on contradictions and, mostly, on
+  unfinished commands.
+- C, the Jev -> Luna cascade, is simulated with Luna's saved verdicts:
+  - Cells whose questions are all at least 0.2 from 0.5 cover 77% of cells
+    and are 95.4% correct. Uncertain cells are only 75.7% correct.
+  - Sending every turn with any uncertain answer to Luna scores 96.2% (all
+    448 cells) against Luna's 95.3% alone, but routes 89 of 132 turns (67%)
+    to Luna. That is little saving.
+- Caveat: B learns weights from one story's labels, which cuts against
+  "audits generalize across stories". It should be re-checked on a second
+  labeled set, such as v29, before it is trusted.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
