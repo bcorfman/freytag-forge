@@ -470,6 +470,39 @@ script `r18/analyze_unfinished.py` in the session scratchpad):
 - The same caveat applies: the combiner's weights come from one story's
   labels, and it needs a second labeled set before it is trusted.
 
+### Unseen check on v28 (2026-09-24)
+
+v28 (`bench/results/item-facts-v28-frame-two-scene-1a`, 38 turns) was never
+used for tuning. Claude labeled it, applying the author's recorded rulings:
+`bench/calibration/labels-v28-claude.json`, whose notes list 8 unsure calls.
+These are Claude's labels, not Brandon's. Luna's saved v28 verdicts agree
+with them 96.7%, a sanity check that the labels are not eccentric. Jev
+(`preamble-holistic`) judged v28 once (`bench/results/probes/jev-v28`).
+The combiner was trained on rounds 7-9 only.
+
+| Judge | Continuity (152 cells) | Fact without invented_change (228 cells) |
+|---|---|---|
+| Luna | 96.7% | 96.5% |
+| Jev, hand rules | 92.8% | 95.2% |
+| Jev, learned combiner + direct question | 84.2% | - |
+
+- The learned combiner does not survive a change of data. It called
+  `reveals_hidden_canon` yes on 20 of 38 turns. In v28 the memory card is
+  found by a scripted reveal at t2 and then carried and named in later
+  narration. Rounds 7-9 were produced under an earlier package and script,
+  so the weights learned there misfire. This is the one-story overfitting
+  risk, now observed: drop the combiner.
+- The hand rules transfer. Continuity is 4 points behind Luna, and facts are
+  about 1 point behind.
+- The hand rules' remaining hidden-canon misses (r1 t8, r1 t13, r2 t8) are
+  the same flaw in miniature. `hidden_shown` fires when the narration names
+  a card the player already found. The question needs to know that
+  `given_facts` or `earlier_narration` already have the card.
+- Rubric gap, for every judge: an invented clue at the hidden spot (the
+  paper under the drawer, r1 t2 and r2 t2) or at the dead drop (a new
+  memory card, r2 t15) is caught by no continuity verdict. Luna missed these
+  too.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
