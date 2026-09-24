@@ -320,6 +320,37 @@ Exit: on the 10 turns, every cell's answer agrees with the label, or the
 disagreement is understood and the rubric point is written into the
 question.
 
+### Results so far (2026-09-24)
+
+Phase B, first 10-turn probe (`bench/results/probes/jev-probe`, first
+questions): Jev 79/88 labeled cells against Luna 77/88 on the same cells.
+Four fixes followed (`4b17bff`): the facts_after_correct combining bug, a
+starting-place conflict question, trips finished in the opening, duplicate
+names, and look-alikes of hidden things.
+
+Full rounds 7-9 with the round-2 questions
+(`bench/results/probes/jev-calibration`, 473k input tokens, about $0.02),
+against the author's labels. "Held out" drops `invented_change`,
+acts-beyond-command and the 10 probe turns the questions were tuned on:
+
+| Judge | Continuity, all | Fact, all | Continuity, held out | Fact, held out |
+|---|---|---|---|---|
+| gpt-5.4 (saved, older rubric) | 96.9% | 96.4% | 96.9% | 97.3% |
+| Luna (current rubric) | 95.3% | 92.8% | 96.4% | 92.6% |
+| Jev (round-2 questions) | 86.4% | 92.9% | 85.7% | 93.3% |
+
+Fact: Jev is level with Luna, at a fraction of the cost. Continuity: Jev is
+about 10 points behind. Its misses are spread fairly evenly:
+- `command_not_finished`, 11 false yes: a look command where she also picks
+  the thing up fails `own_part_done`, and "around the bench" is read as a
+  named place that is never reached;
+- `command_not_finished`, 11 false no;
+- `restarts_scene`, 11 false yes: `rediscovers` fires at 0.53-0.74 on
+  ordinary turns;
+- `contradicts_stated_fact`, 11 false yes and 8 false no.
+
+Many of the deciding probabilities sit near 0.5.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
