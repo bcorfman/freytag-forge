@@ -169,7 +169,7 @@ source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --gr
 | `@smoke` | Session, opening, one turn; writes `artifacts/e2e-smoke-loaded.png` | Narration calls |
 | `@spine` | Scripted traversal toward 3C; delivery telemetry in `artifacts/e2e-spine.json` | Long run; use the 90 s timeout |
 | `@storylets`, `@npc`, `@world-state`, `@safety` | Category policies | Narration calls |
-| `@llm-judge` | Two free-text turns judged for responsiveness | `OPENAI_API_KEY`; `E2E_JUDGE_MODEL` defaults to `gpt-5.4` |
+| `@llm-judge` | Two free-text turns judged for responsiveness | `OPENAI_API_KEY`; `E2E_JUDGE_MODEL` defaults to `gpt-5.6-luna` |
 | `@timed-events` | Pressure event fires via the test clock | See section 8 |
 | `@knowledge-timeline` | Reveal timeline and payload IDs | See section 9 |
 | `@llm-canon` | Nine-scene canon judge | See section 7 |

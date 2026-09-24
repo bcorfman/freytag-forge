@@ -50,7 +50,7 @@ test("filters turn fields and uses the default model with the strict schema", as
   const sent = JSON.parse(body.input[1].content).turns[0];
 
   assert.equal(result.turns.length, 1);
-  assert.equal(body.model, "gpt-5.4");
+  assert.equal(body.model, "gpt-5.6-luna");
   assert.equal(body.store, false);
   assert.match(body.input[0].content, /Use cause command only when the player's command itself asks for that change/);
   assert.match(body.input[0].content, /Looking at, examining, searching, or checking a thing does not ask for moving/);

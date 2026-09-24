@@ -38,7 +38,7 @@ test("roleplay judge sends the transcript and parses a passing structured verdic
   );
 
   assert.equal(verdict.verdict, "pass");
-  assert.equal(request.model, "gpt-5.4");
+  assert.equal(request.model, "gpt-5.6-luna");
   assert.equal(request.store, false);
   assert.match(request.input[0].content, /Creative additions are allowed/);
   assert.equal(JSON.parse(request.input[1].content).player_input, "Inspect the desk.");
