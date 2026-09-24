@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 
 from storygame.audit import _markdown, audit_package
@@ -68,13 +69,28 @@ def test_real_package_has_no_ambiguous_owned_item() -> None:
     assert "ambiguous_owned_item" not in _checks(report)
 
 
-def test_frame_conflict_fixture(tmp_path: Path) -> None:
-    root = _package(
-        tmp_path,
-        plot="The phone remains on the floor undamaged.",
-        **{"knowledge.yaml": {"scene_frames": [{"scene_id": "1A", "situation": "The phone is facedown."}]}},
-    )
-    assert "frame_beat_conflict" in _checks(audit_package(root))
+@pytest.mark.parametrize(
+    ("plot", "files", "expected_finding"),
+    [
+        pytest.param(
+            "The phone remains on the floor undamaged.",
+            {"knowledge.yaml": {"scene_frames": [{"scene_id": "1A", "situation": "The phone is facedown."}]}},
+            "frame_beat_conflict",
+            id="frame_conflict_fixture",
+        ),
+        pytest.param(
+            "### Scene 1A.1 — One\nA.\n### Scene 1A.2 — Two\nB.",
+            {"pacing.yaml": {"scenes": [{"scene_id": "1A", "handoff_after_turns": 1}]}},
+            "beats_without_turns",
+            id="beats_without_turns_fixture",
+        ),
+    ],
+)
+def test_audit_reports_inconsistent_scene_structure(
+    tmp_path: Path, plot: str, files: dict[str, object], expected_finding: str
+) -> None:
+    root = _package(tmp_path, plot=plot, **files)
+    assert expected_finding in _checks(audit_package(root))
 
 
 def test_absent_speaker_fixture(tmp_path: Path) -> None:
@@ -116,15 +132,6 @@ def test_overprojection_fixture(tmp_path: Path) -> None:
 def test_prompt_hygiene_fixture(tmp_path: Path) -> None:
     root = _package(tmp_path, plot='entry_text: "hello\\n\\n"\nA house.')
     assert "prompt_hygiene" in _checks(audit_package(root))
-
-
-def test_beats_without_turns_fixture(tmp_path: Path) -> None:
-    root = _package(
-        tmp_path,
-        plot="### Scene 1A.1 — One\nA.\n### Scene 1A.2 — Two\nB.",
-        **{"pacing.yaml": {"scenes": [{"scene_id": "1A", "handoff_after_turns": 1}]}},
-    )
-    assert "beats_without_turns" in _checks(audit_package(root))
 
 
 def test_markdown_report_is_grouped_by_scene(tmp_path: Path) -> None:

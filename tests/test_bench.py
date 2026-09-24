@@ -1026,13 +1026,30 @@ def test_escalation_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp
     assert "escalation" not in ledger_rows(ledger)[0]
 
 
-def test_non_boolean_escalation_judge_is_rejected(tmp_path) -> None:
+@pytest.mark.parametrize(
+    "judge_key, invalid_path, error_message",
+    [
+        pytest.param(
+            "escalation_judge",
+            "invalid-escalation.json",
+            "escalation_judge must be a boolean",
+            id="non_boolean_escalation_judge_is_rejected",
+        ),
+        pytest.param(
+            "continuity_judge",
+            "invalid-continuity.json",
+            "continuity_judge must be a boolean",
+            id="non_boolean_continuity_judge_is_rejected",
+        ),
+    ],
+)
+def test_non_boolean_judge_is_rejected(tmp_path, judge_key, invalid_path, error_message) -> None:
     source = json.loads(VARIATION.read_text(encoding="utf-8"))
-    source["escalation_judge"] = "yes"
-    path = tmp_path / "invalid-escalation.json"
+    source[judge_key] = "yes"
+    path = tmp_path / invalid_path
     path.write_text(json.dumps(source), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="escalation_judge must be a boolean"):
+    with pytest.raises(ValueError, match=error_message):
         load_variation(path)
 
 
@@ -1154,15 +1171,6 @@ def test_continuity_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp
     summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
     assert "continuity" not in summary
     assert "continuity" not in ledger_rows(ledger)[0]
-
-
-def test_non_boolean_continuity_judge_is_rejected(tmp_path) -> None:
-    source = json.loads(VARIATION.read_text(encoding="utf-8"))
-    source["continuity_judge"] = "yes"
-    path = tmp_path / "invalid-continuity.json"
-    path.write_text(json.dumps(source), encoding="utf-8")
-    with pytest.raises(ValueError, match="continuity_judge must be a boolean"):
-        load_variation(path)
 
 
 def test_run_writes_failed_turns_to_all_turn_records_without_changing_judged_records(monkeypatch, tmp_path) -> None:

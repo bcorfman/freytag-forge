@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.contracts import NarrationSegment
 from storygame.runtime.validation import derive_grounding, derive_statement_grounding, unconveyed_terms
 from storygame.story_package import load_story_package
@@ -32,14 +34,18 @@ def test_derive_grounding_returns_the_smallest_segment_set_that_tells_the_reveal
     assert derive_grounding(REVEAL_GROUPS, segments) == (segments[1],)
 
 
-def test_derive_grounding_returns_nothing_when_prose_tells_none_of_the_reveal() -> None:
-    segments = (NarrationSegment(kind="narration", text="The drawer sticks."),)
-
-    assert derive_grounding(REVEAL_GROUPS, segments) == ()
-
-
-def test_derive_grounding_returns_nothing_when_prose_tells_only_part_of_the_reveal() -> None:
-    segments = (NarrationSegment(kind="narration", text="Kristin finds Michelle's memory card."),)
+@pytest.mark.parametrize(
+    ("text",),
+    [
+        pytest.param("The drawer sticks.", id="derive_grounding_returns_nothing_when_prose_tells_none_of_the_reveal"),
+        pytest.param(
+            "Kristin finds Michelle's memory card.",
+            id="derive_grounding_returns_nothing_when_prose_tells_only_part_of_the_reveal",
+        ),
+    ],
+)
+def test_derive_grounding_returns_nothing_when_reveal_is_not_fully_told(text: str) -> None:
+    segments = (NarrationSegment(kind="narration", text=text),)
 
     assert derive_grounding(REVEAL_GROUPS, segments) == ()
 

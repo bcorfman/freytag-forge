@@ -498,30 +498,25 @@ def test_fixed_item_axis_place_still_sets_pole_without_moving():
     assert provider.item_facts_axis_fixes == 1
 
 
-def test_axis_place_change_wins_over_echoed_condition():
+@pytest.mark.parametrize(
+    "initial_condition, echoed_condition, place, expected_condition",
+    [
+        pytest.param("shut", "shut", "open", "open", id="axis_place_change_wins_over_echoed_condition"),
+        pytest.param("open", "open", "shut", "shut", id="axis_place_change_wins_in_reverse_direction"),
+        pytest.param("shut", "closed", "open", "open", id="axis_alias_echo_is_dropped_when_place_names_the_change"),
+    ],
+)
+def test_axis_place_change_overrides_echoed_condition(initial_condition, echoed_condition, place, expected_condition):
     provider = _provider()
     provider.item_facts["drawer"] = {
         "place": "in Michelle's workstation",
-        "condition": ["shut"],
+        "condition": [initial_condition],
     }
     provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
 
-    provider.apply_item_facts({"drawer": {"condition": ["shut"], "place": "open"}})
+    provider.apply_item_facts({"drawer": {"condition": [echoed_condition], "place": place}})
 
-    assert provider.item_facts["drawer"]["condition"] == ["open"]
-
-
-def test_axis_place_change_wins_in_reverse_direction():
-    provider = _provider()
-    provider.item_facts["drawer"] = {
-        "place": "in Michelle's workstation",
-        "condition": ["open"],
-    }
-    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
-
-    provider.apply_item_facts({"drawer": {"condition": ["open"], "place": "shut"}})
-
-    assert provider.item_facts["drawer"]["condition"] == ["shut"]
+    assert provider.item_facts["drawer"]["condition"] == [expected_condition]
 
 
 @pytest.mark.parametrize("conditions", [["open", "shut"], ["shut", "open"]])
@@ -534,19 +529,6 @@ def test_both_axis_poles_keep_the_pole_that_differs_from_before(conditions):
     provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
 
     provider.apply_item_facts({"drawer": {"condition": conditions}})
-
-    assert provider.item_facts["drawer"]["condition"] == ["open"]
-
-
-def test_axis_alias_echo_is_dropped_when_place_names_the_change():
-    provider = _provider()
-    provider.item_facts["drawer"] = {
-        "place": "in Michelle's workstation",
-        "condition": ["shut"],
-    }
-    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
-
-    provider.apply_item_facts({"drawer": {"condition": ["closed"], "place": "open"}})
 
     assert provider.item_facts["drawer"]["condition"] == ["open"]
 
@@ -1027,19 +1009,26 @@ def test_place_entry_updates_location():
     assert provider.item_facts["the lantern"]["place"] == "on the floor"
 
 
-def test_same_turn_match_can_add_a_new_tracked_thing(monkeypatch):
+@pytest.mark.parametrize(
+    "same_as_target, expected_resolution",
+    [
+        pytest.param("new", "new", id="same_turn_match_can_add_a_new_tracked_thing"),
+        pytest.param("the notebook", "new", id="self_mapping_adds_new_thing_same_turn"),
+    ],
+)
+def test_same_turn_match_adds_a_new_tracked_thing(monkeypatch, same_as_target, expected_resolution):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
         "_request",
-        lambda *_args: {"refers": [], "same_as": {"the notebook": "new"}},
+        lambda *_args: {"refers": [], "same_as": {"the notebook": same_as_target}},
     )
     provider.apply_item_facts(
         {"the notebook": {"place": "on the desk", "condition": ["open"]}},
         player_input="Pick up the notebook.",
     )
     result = provider.last_item_facts_match()
-    assert result["resolutions"] == {"the notebook": "new"}
+    assert result["resolutions"] == {"the notebook": expected_resolution}
     assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
@@ -1141,18 +1130,21 @@ def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     assert provider._selected_names == provider.dependency_names()
 
 
-def test_resolve_refer_exact_name():
-    assert _resolve_refer("the lantern", ["the lantern"]) == "the lantern"
+@pytest.mark.parametrize(
+    "name, tracked, expected",
+    [
+        pytest.param("the lantern", ["the lantern"], "the lantern", id="resolve_refer_exact_name"),
+        pytest.param("chair", ["workstation chair"], "workstation chair", id="resolve_refer_chair_short_name"),
+    ],
+)
+def test_resolve_refer_exact_or_short_name(name, tracked, expected):
+    assert _resolve_refer(name, tracked) == expected
 
 
 def test_resolve_refer_laptop_short_names():
     tracked = ["Kristin's laptop"]
     assert _resolve_refer("laptop", tracked) == "Kristin's laptop"
     assert _resolve_refer("my laptop", tracked) == "Kristin's laptop"
-
-
-def test_resolve_refer_chair_short_name():
-    assert _resolve_refer("chair", ["workstation chair"]) == "workstation chair"
 
 
 def test_resolve_refer_ambiguous_or_unmatched_names():
@@ -1214,22 +1206,6 @@ def test_same_as_tracked_name_merges_new_entry_same_turn(monkeypatch):
     assert result["resolutions"] == {"the old lamp": "the lantern"}
     assert provider.item_facts["the lantern"] == {"place": "by the door", "condition": ["warm"]}
     assert "the old lamp" not in provider.item_facts
-
-
-def test_self_mapping_adds_new_thing_same_turn(monkeypatch):
-    provider = _provider()
-    monkeypatch.setattr(
-        CloudflareTurnProvider,
-        "_request",
-        lambda *_args: {"refers": [], "same_as": {"the notebook": "the notebook"}},
-    )
-    provider.apply_item_facts(
-        {"the notebook": {"place": "on the desk", "condition": ["open"]}},
-        player_input="Pick up the notebook.",
-    )
-    result = provider.last_item_facts_match()
-    assert result["resolutions"] == {"the notebook": "new"}
-    assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):

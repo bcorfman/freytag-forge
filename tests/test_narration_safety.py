@@ -61,10 +61,30 @@ def _run_accepted(text: str, *, beats: tuple[str, ...] = (), package=PACKAGE):
     return RuntimeEngine(state, provider).turn("Search the desk drawer.")
 
 
-def test_future_entity_name_or_alias_is_rejected_without_grounding() -> None:
-    error = _run_rejected("Brandon waits beside the door.")
+@pytest.mark.parametrize(
+    ("text", "expected_code"),
+    [
+        pytest.param(
+            "Brandon waits beside the door.",
+            "narration_known_term_leak",
+            id="future_entity_name_or_alias_is_rejected_without_grounding",
+        ),
+        pytest.param(
+            "The Regional facility's detention level opens ahead.",
+            "narration_known_term_leak",
+            id="target_scene_detail_is_rejected_before_transition",
+        ),
+        pytest.param(
+            "Brandon's hidden archive proves the future route is safe.",
+            "narration_known_term_leak",
+            id="invented_game_breaking_evidence_cannot_satisfy_a_future_dependency",
+        ),
+    ],
+)
+def test_rejected_narration_cannot_leak_future_details(text: str, expected_code: str) -> None:
+    error = _run_rejected(text)
 
-    assert error.code == "narration_known_term_leak"
+    assert error.code == expected_code
 
 
 def test_determiner_variant_shares_knowledge_owners_with_bare_term() -> None:
@@ -99,16 +119,30 @@ def test_earned_memory_card_accepts_determiner_but_unearned_term_is_rejected() -
     assert error.code in {"uncited_knowledge", "narration_known_term_leak"}
 
 
-def test_protected_concept_alias_is_rejected() -> None:
-    error = _run_rejected("The selection system is already ranking people.")
+@pytest.mark.parametrize(
+    ("text", "expected_codes"),
+    [
+        pytest.param(
+            "The selection system is already ranking people.",
+            {"protected_narration_leak", "narration_known_term_leak"},
+            id="protected_concept_alias_is_rejected",
+        ),
+        pytest.param(
+            "The hidden memory card waits beneath the drawer.",
+            {"uncited_knowledge", "narration_known_term_leak"},
+            id="uncited_knowledge_is_rejected_even_when_the_candidate_is_eligible",
+        ),
+        pytest.param(
+            "The damaged recording warns against emergency broadcasts.",
+            {"uncited_knowledge", "narration_known_term_leak"},
+            id="unselected_candidate_effects_cannot_be_asserted_as_true",
+        ),
+    ],
+)
+def test_rejected_narration_cannot_use_unavailable_knowledge(text: str, expected_codes: set[str]) -> None:
+    error = _run_rejected(text)
 
-    assert error.code in {"protected_narration_leak", "narration_known_term_leak"}
-
-
-def test_uncited_knowledge_is_rejected_even_when_the_candidate_is_eligible() -> None:
-    error = _run_rejected("The hidden memory card waits beneath the drawer.")
-
-    assert error.code in {"uncited_knowledge", "narration_known_term_leak"}
+    assert error.code in expected_codes
 
 
 def test_wrong_speaker_dialogue_cannot_use_a_private_projection() -> None:
@@ -151,24 +185,6 @@ def test_wrong_speaker_dialogue_cannot_use_a_private_projection() -> None:
         RuntimeEngine(state, lambda _: payload).turn("Ask Michelle about the recording.")
 
     assert caught.value.code == "dialogue_grounding_not_sayable"
-
-
-def test_unselected_candidate_effects_cannot_be_asserted_as_true() -> None:
-    error = _run_rejected("The damaged recording warns against emergency broadcasts.")
-
-    assert error.code in {"uncited_knowledge", "narration_known_term_leak"}
-
-
-def test_target_scene_detail_is_rejected_before_transition() -> None:
-    error = _run_rejected("The Regional facility's detention level opens ahead.")
-
-    assert error.code == "narration_known_term_leak"
-
-
-def test_invented_game_breaking_evidence_cannot_satisfy_a_future_dependency() -> None:
-    error = _run_rejected("Brandon's hidden archive proves the future route is safe.")
-
-    assert error.code == "narration_known_term_leak"
 
 
 def test_named_durable_incidental_claim_is_rejected_but_local_color_is_allowed() -> None:

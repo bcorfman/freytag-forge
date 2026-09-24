@@ -75,7 +75,22 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
             assert effects == set(realization.operations)
 
 
-def test_loader_rejects_missing_source_beats_on_multi_beat_realization(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        pytest.param(
+            lambda realization: realization.pop("source_beats"),
+            "SL-1B-B-R1.*SL-1B-B.*source_beats",
+            id="loader_rejects_missing_source_beats_on_multi_beat_realization",
+        ),
+        pytest.param(
+            lambda realization: realization.__setitem__("source_beats", ["scene-1a1--michelles-gone"]),
+            "SL-1B-B-R1.*outside its storylet",
+            id="loader_rejects_source_beat_outside_realization_storylet",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_realization_source_beats(tmp_path: Path, mutate: object, message: str) -> None:
     root = copied_package(tmp_path)
     source = root / "storylet-routes.yaml"
     routes = yaml.safe_load(source.read_text(encoding="utf-8"))
@@ -86,28 +101,10 @@ def test_loader_rejects_missing_source_beats_on_multi_beat_realization(tmp_path:
         for realization in route["realization_options"]
         if realization["id"] == "SL-1B-B-R1"
     )
-    realization.pop("source_beats")
+    mutate(realization)  # type: ignore[operator]
     source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*SL-1B-B.*source_beats"):
-        load_story_package(root)
-
-
-def test_loader_rejects_source_beat_outside_realization_storylet(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    source = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
-    realization = next(
-        realization
-        for route in routes["storylets"]
-        if route["id"] == "SL-1B-B"
-        for realization in route["realization_options"]
-        if realization["id"] == "SL-1B-B-R1"
-    )
-    realization["source_beats"] = ["scene-1a1--michelles-gone"]
-    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(StoryPackageError, match="SL-1B-B-R1.*outside its storylet"):
+    with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
@@ -187,20 +184,43 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     assert scene.metadata.setting_facts == ("The test shutters are closed.", "The test lamp is on.")
 
 
-def test_loader_rejects_empty_setting_fact(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        pytest.param(
+            'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
+            'spare batteries.", '
+            '"Kristin\'s laptop is closed.", "The workstation chair is overturned.", '
+            '"Michelle\'s phone is not damaged."]',
+            'setting_facts: ["  "]',
+            "setting_facts",
+            id="loader_rejects_empty_setting_fact",
+        ),
+        pytest.param(
+            "  michelle_phone: on the kitchen floor\n",
+            "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
+            "scene 1A.*michelle_phone.*undeclared_fact",
+            id="loader_rejects_item_placement_guard_for_an_unknown_fact",
+        ),
+        pytest.param(
+            "  michelle_phone: on the kitchen floor\n",
+            "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_true: undeclared_fact\n",
+            "scene 1A.*michelle_phone.*undeclared_fact",
+            id="loader_rejects_true_item_placement_guard_for_an_unknown_fact",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_scene_fact_values(tmp_path: Path, old: str, new: str, message: str) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
-        'spare batteries.", '
-        '"Kristin\'s laptop is closed.", "The workstation chair is overturned.", '
-        '"Michelle\'s phone is not damaged."]',
-        'setting_facts: ["  "]',
+        old,
+        new,
         1,
     )
     plot.write_text(contents, encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="setting_facts"):
+    with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
@@ -218,34 +238,6 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     plot.write_text(contents, encoding="utf-8")
 
     assert load_story_package(root).scenes[0].metadata.setting_facts == ()
-
-
-def test_loader_rejects_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8").replace(
-        "  michelle_phone: on the kitchen floor\n",
-        "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
-
-    with pytest.raises(StoryPackageError, match="scene 1A.*michelle_phone.*undeclared_fact"):
-        load_story_package(root)
-
-
-def test_loader_rejects_true_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8").replace(
-        "  michelle_phone: on the kitchen floor\n",
-        "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_true: undeclared_fact\n",
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
-
-    with pytest.raises(StoryPackageError, match="scene 1A.*michelle_phone.*undeclared_fact"):
-        load_story_package(root)
 
 
 def test_loader_rejects_transition_trigger_that_can_never_fail(tmp_path: Path) -> None:
@@ -710,18 +702,30 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
         load_story_package(root)
 
 
-def test_loader_rejects_transition_dependency_cycle(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("transition", "message"),
+    [
+        pytest.param(
+            "- {id: t_cycle, source_scene_id: 3C, target_scene_id: 1A, priority: 1, "
+            "triggers: [{fact_id: broadcast_started, equals: true}]}\n",
+            "dependency cycle",
+            id="loader_rejects_transition_dependency_cycle",
+        ),
+        pytest.param(
+            "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
+            "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
+            "{fact_id: patrol_return_pressure, equals: true}, "
+            "{fact_id: memory_card_in_kristins_custody, equals: true}]}\n",
+            "ambiguous priority",
+            id="loader_rejects_ambiguous_transition_priority",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_transition_graph(tmp_path: Path, transition: str, message: str) -> None:
     root = copied_package(tmp_path)
     source = root / "pacing.yaml"
-    source.write_text(
-        source.read_text()
-        + "\n"
-        + (
-            "- {id: t_cycle, source_scene_id: 3C, target_scene_id: 1A, priority: 1, "
-            "triggers: [{fact_id: broadcast_started, equals: true}]}\n"
-        )
-    )
-    with pytest.raises(StoryPackageError, match="dependency cycle"):
+    source.write_text(source.read_text() + "\n" + transition)
+    with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
@@ -765,23 +769,6 @@ def test_loader_rejects_remaining_boundary_errors(tmp_path: Path, path: str, old
     source = root / path
     source.write_text(source.read_text().replace(old, new, 1))
     with pytest.raises(StoryPackageError, match=message):
-        load_story_package(root)
-
-
-def test_loader_rejects_ambiguous_transition_priority(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    source = root / "pacing.yaml"
-    source.write_text(
-        source.read_text()
-        + "\n"
-        + (
-            "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
-            "{fact_id: patrol_return_pressure, equals: true}, "
-            "{fact_id: memory_card_in_kristins_custody, equals: true}]}\n"
-        )
-    )
-    with pytest.raises(StoryPackageError, match="ambiguous priority"):
         load_story_package(root)
 
 
@@ -832,36 +819,42 @@ def test_loader_rejects_duplicate_fact_delivery(tmp_path: Path) -> None:
         load_story_package(root)
 
 
-def test_loader_rejects_delivery_source_outside_scene_participants(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("fact_id", "field", "value", "message"),
+    [
+        pytest.param(
+            "brandon_identified",
+            "source_entity_id",
+            "rebecca",
+            "brandon_identified.*source entity.*rebecca.*absent",
+            id="loader_rejects_delivery_source_outside_scene_participants",
+        ),
+        pytest.param(
+            "facility_proof",
+            "fallback_text",
+            "The terminal is quiet and empty.",
+            "facility_proof.*fallback_text.*fresh tire tracks",
+            id="loader_rejects_delivery_fallback_that_misses_a_required_phrase",
+        ),
+        pytest.param(
+            "facility_proof",
+            "cue_text",
+            "   ",
+            "cue_text",
+            id="loader_rejects_empty_delivery_cue_text",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_delivery_fields(
+    tmp_path: Path, fact_id: str, field: str, value: str, message: str
+) -> None:
     root = copied_package(tmp_path)
     source, handoffs = _handoffs(root)
-    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "brandon_identified")  # type: ignore[index]
-    delivery["source_entity_id"] = "rebecca"
+    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == fact_id)  # type: ignore[index]
+    delivery[field] = value
     source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="brandon_identified.*source entity.*rebecca.*absent"):
-        load_story_package(root)
-
-
-def test_loader_rejects_delivery_fallback_that_misses_a_required_phrase(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "facility_proof")  # type: ignore[index]
-    delivery["fallback_text"] = "The terminal is quiet and empty."
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(StoryPackageError, match="facility_proof.*fallback_text.*fresh tire tracks"):
-        load_story_package(root)
-
-
-def test_loader_rejects_empty_delivery_cue_text(tmp_path: Path) -> None:
-    root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == "facility_proof")  # type: ignore[index]
-    delivery["cue_text"] = "   "
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(StoryPackageError, match="cue_text"):
+    with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 

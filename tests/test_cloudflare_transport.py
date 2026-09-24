@@ -325,25 +325,31 @@ def test_runtime_owned_opening_beat_is_still_projected() -> None:
     assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1a1--michelle-is-gone",)
 
 
-def test_narrator_selected_candidates_keep_projecting_all_source_beats() -> None:
+@pytest.mark.parametrize(
+    ("candidate_id", "expected_anchor"),
+    [
+        pytest.param(
+            "k_sl_1a_b_r2",
+            "scene-1a3--the-interrupted-message",
+            id="narrator_selected_candidates_keep_projecting_all_source_beats",
+        ),
+        pytest.param(
+            "k_sl_1c_c_r1",
+            "scene-1c3--the-nationwide-network",
+            id="candidate_beats_use_each_realization_source_beats_only",
+        ),
+        pytest.param(
+            "k_sl_1b_a_r1",
+            "scene-1b1--michelles-dead-drop",
+            id="candidate_beats_omit_unoffered_storylet_realizations",
+        ),
+    ],
+)
+def test_candidate_beats_project_only_offered_source_beats(candidate_id: str, expected_anchor: str) -> None:
     provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
-    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1a_b_r2"),))
+    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id=candidate_id),))
 
-    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1a3--the-interrupted-message",)
-
-
-def test_candidate_beats_use_each_realization_source_beats_only() -> None:
-    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
-    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1c_c_r1"),))
-
-    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1c3--the-nationwide-network",)
-
-
-def test_candidate_beats_omit_unoffered_storylet_realizations() -> None:
-    provider = CloudflareTurnProvider(worker_url="", token="", state=RuntimeState.bootstrap(PACKAGE))
-    provider.last_projection = SimpleNamespace(candidates=(SimpleNamespace(id="k_sl_1b_a_r1"),))
-
-    assert tuple(beat.anchor for beat in provider._candidate_beats()) == ("scene-1b1--michelles-dead-drop",)
+    assert tuple(beat.anchor for beat in provider._candidate_beats()) == (expected_anchor,)
 
 
 def test_turn_scene_details_omit_unrevealed_items_but_keep_other_details() -> None:
@@ -1898,12 +1904,27 @@ def test_opening_rules_omit_ownership_rule_when_scene_items_are_not_possessive(m
     assert "stores only" not in captured["payload"]["user"]
 
 
-def test_turn_rules_omit_owner_rule_when_scene_items_are_not_possessive() -> None:
+@pytest.mark.parametrize(
+    ("absent_rule_text", "scene_id"),
+    [
+        pytest.param(
+            "owner",
+            "2A",
+            id="turn_rules_omit_owner_rule_when_scene_items_are_not_possessive",
+        ),
+        pytest.param(
+            "kitchen floor",
+            "2A",
+            id="turn_rules_omit_item_placement_when_scene_has_none",
+        ),
+    ],
+)
+def test_turn_rules_omit_inapplicable_scene_rules(absent_rule_text: str, scene_id: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "2A"
+    state.current_scene_id = scene_id
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
-    assert not any("owner" in rule for rule in provider._turn_rules())
+    assert not any(absent_rule_text in rule for rule in provider._turn_rules())
 
 
 def test_turn_rules_derive_owner_name_from_the_package() -> None:
@@ -1920,26 +1941,24 @@ def test_turn_rules_derive_owner_name_from_the_package() -> None:
     assert "Avery's handset" in next(rule for rule in rules if "Say who owns" in rule)
 
 
-def test_turn_rules_include_authored_item_placement() -> None:
+@pytest.mark.parametrize(
+    "expected_rule",
+    [
+        pytest.param(
+            "Michelle's phone is on the kitchen floor.",
+            id="turn_rules_include_authored_item_placement",
+        ),
+        pytest.param(
+            "Kristin's laptop is in Kristin's truck outside the house.",
+            id="turn_rules_include_kristins_laptop_placement",
+        ),
+    ],
+)
+def test_turn_rules_include_authored_item_placements(expected_rule: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
-    assert "Michelle's phone is on the kitchen floor." in provider._turn_rules()
-
-
-def test_turn_rules_include_kristins_laptop_placement() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
-
-    assert "Kristin's laptop is in Kristin's truck outside the house." in provider._turn_rules()
-
-
-def test_turn_rules_omit_item_placement_when_scene_has_none() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "2A"
-    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
-
-    assert not any("kitchen floor" in rule for rule in provider._turn_rules())
+    assert expected_rule in provider._turn_rules()
 
 
 def test_item_placement_rule_uses_package_name_and_placement() -> None:

@@ -47,16 +47,23 @@ def test_activation_rule_applies_pool_threshold(at_least: int, true_facts: froze
     assert rule.is_satisfied(true_facts) is expected
 
 
-def test_activation_rule_full_pool_cannot_replace_missing_mandatory_fact() -> None:
+@pytest.mark.parametrize(
+    ("true_facts",),
+    [
+        pytest.param(
+            frozenset({"pool_a", "pool_b"}),
+            id="activation_rule_full_pool_cannot_replace_missing_mandatory_fact",
+        ),
+        pytest.param(
+            frozenset({"mandatory_fact", "pool_a"}),
+            id="activation_rule_rejects_too_few_pool_facts_with_mandatory_fact",
+        ),
+    ],
+)
+def test_activation_rule_rejects_insufficient_pool_facts(true_facts: frozenset[str]) -> None:
     rule = ActivationRule(all_facts_true=("mandatory_fact",), any_of=("pool_a", "pool_b"), at_least=2)
 
-    assert not rule.is_satisfied(frozenset({"pool_a", "pool_b"}))
-
-
-def test_activation_rule_rejects_too_few_pool_facts_with_mandatory_fact() -> None:
-    rule = ActivationRule(all_facts_true=("mandatory_fact",), any_of=("pool_a", "pool_b"), at_least=2)
-
-    assert not rule.is_satisfied(frozenset({"mandatory_fact", "pool_a"}))
+    assert not rule.is_satisfied(true_facts)
 
 
 def _copied_package(tmp_path: Path) -> Path:

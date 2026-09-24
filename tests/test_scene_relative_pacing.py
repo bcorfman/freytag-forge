@@ -200,40 +200,36 @@ def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
         load_story_package(root)
 
 
-def test_loader_rejects_guarded_last_pacing_realization(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        pytest.param(
+            lambda event: event["realizations"][-1].__setitem__(
+                "when", [{"fact_id": "patrol_return_pressure", "equals": True}]
+            ),
+            "pacing event 'pressure_1a'",
+            id="loader_rejects_guarded_last_pacing_realization",
+        ),
+        pytest.param(
+            lambda event: event["realizations"][0].__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
+            "pacing event 'pressure_1a'",
+            id="loader_rejects_unknown_pacing_realization_fact",
+        ),
+        pytest.param(
+            lambda event: event.__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
+            "pacing event 'pressure_1a'.*unknown event guard predicate",
+            id="loader_rejects_unknown_pacing_event_guard_fact",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_pacing_event_guards(tmp_path: Path, mutate: object, message: str) -> None:
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
     data = yaml.safe_load(source.read_text())
     event = next(item for item in data["events"] if item["id"] == "pressure_1a")
-    event["realizations"][-1]["when"] = [{"fact_id": "patrol_return_pressure", "equals": True}]
+    mutate(event)  # type: ignore[operator]
     source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
 
-    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'"):
-        load_story_package(root)
-
-
-def test_loader_rejects_unknown_pacing_realization_fact(tmp_path: Path) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(Path("data/stories/continuity-initiative"), root)
-    source = root / "pacing.yaml"
-    data = yaml.safe_load(source.read_text())
-    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
-    event["realizations"][0]["when"] = [{"fact_id": "no_such_fact", "equals": True}]
-    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
-
-    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'"):
-        load_story_package(root)
-
-
-def test_loader_rejects_unknown_pacing_event_guard_fact(tmp_path: Path) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(Path("data/stories/continuity-initiative"), root)
-    source = root / "pacing.yaml"
-    data = yaml.safe_load(source.read_text())
-    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
-    event["when"] = [{"fact_id": "no_such_fact", "equals": True}]
-    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
-
-    with pytest.raises(StoryPackageError, match="pacing event 'pressure_1a'.*unknown event guard predicate"):
+    with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
