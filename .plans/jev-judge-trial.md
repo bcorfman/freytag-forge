@@ -1,7 +1,8 @@
 # Jev judge trial: plan
 
-Status (2026-09-24): Phase A done (access, price, one live call). Next is
-Phase B, the Jev judge with offline tests. Written
+Status (2026-09-24): decided. Brandon chose Jev for the bench fact judge and
+Luna for continuity (`35f2de9`, merged into `round9`). v29 is the first run
+with it. Continuity work on Jev stopped at the v28 check. Written
 to be picked up in a new chat with no other context.
 
 Goal: find out whether TypeSafe's Jev (`typesafe/jev` on Cloudflare Workers

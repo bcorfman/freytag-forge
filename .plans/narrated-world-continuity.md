@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v28, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v29, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,25 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v29 (2026-09-24, `bench/results/item-facts-v29-jevfacts-two-scene-1a` plus
+smoke `item-facts-v29-smoke-two-scene-1a`).* This is the first run with the
+fact judge on Jev (`35f2de9`; see `.plans/jev-judge-trial.md`); continuity
+is still judged by Luna. The narration code is the same as v28. Judge
+spend: 4 OpenAI calls and 58 Jev requests. Read by hand:
+- t13: both replicates read the card at the truck. Neither walks back into
+  the house (v28: 1/2). The same code gave a different sample, so this is
+  noise, not a fix.
+- 1B t19: "approaches the watching man" 2/2 again. Luna did not flag it,
+  the same miss it made in v28.
+- t2: the invented paper under the drawer, 3/3 including the smoke.
+- Luna's continuity flags include r1 t4 restarts_scene, where "bring my
+  laptop inside" was the command. Luna made the same false alarm in v28.
+- Jev's fact flags: t9 "closed" was invented 2/2 (context only). t6
+  `narration_contradicts_given_facts` fired 2/2 on "walks over to Michelle's
+  workstation and opens her laptop" (before_conflict 0.68-0.70). That looks
+  like a Jev false alarm near threshold. r1 t13 missed the laptop being
+  opened. That one is correct.
 
 *v28 (2026-09-24, `bench/results/item-facts-v28-frame-two-scene-1a` plus
 smoke `item-facts-v28-smoke-two-scene-1a`, first run judged by Luna).*
