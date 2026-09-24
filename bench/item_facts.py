@@ -36,6 +36,27 @@ def _resolve_refer(name: str, tracked) -> str | None:
     return suffix_matches[0] if len(suffix_matches) == 1 else None
 
 
+def _protagonist_name(package) -> str | None:
+    """Return the short protagonist name used by the narration provider."""
+
+    npc = next((entity for entity in package.world.npcs if entity.id == package.protagonist_id), None)
+    if npc is None:
+        return None
+    return min((*npc.aliases, npc.name), key=len)
+
+
+def _seed_protagonist(package, scene, things: dict[str, dict], issues: list[str]) -> None:
+    protagonist_name = _protagonist_name(package)
+    location = next((item for item in package.world.locations if item.id == scene.metadata.location_id), None)
+    if protagonist_name is None:
+        issues.append(f"protagonist NPC {package.protagonist_id!r} is missing")
+    if location is None:
+        issues.append(f"scene {scene.metadata.scene_id} location {scene.metadata.location_id!r} is missing")
+    if protagonist_name is None or location is None:
+        return
+    things[protagonist_name] = {"place": f"in {location.name}", "condition": []}
+
+
 def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str], list[str]]:
     """Build tracked things and classify the authored setting facts once."""
 
@@ -46,6 +67,7 @@ def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[
     things: dict[str, dict] = {}
     issues: list[str] = []
     unconsumed_setting_facts: list[str] = []
+    _seed_protagonist(package, scene, things, issues)
     for item_id, placement in scene.metadata.item_placements.items():
         item = items.get(item_id)
         if item is None:
@@ -111,6 +133,18 @@ _SINGLE_CALL_RULES = (
     'Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is {"place": "on the floor", '
     '"condition": ["cracked in two"]}.',
 )
+
+
+def _single_call_rules(protagonist_name: str | None) -> tuple[str, ...]:
+    if protagonist_name is None:
+        return _SINGLE_CALL_RULES
+    protagonist_rule = (
+        f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts "
+        "with the place she is when the story ends."
+    )
+    return (_SINGLE_CALL_RULES[0], protagonist_rule, _SINGLE_CALL_RULES[1])
+
+
 _MATCH_SYSTEM = (
     "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. "
     "THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the "
@@ -265,7 +299,18 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return "\n".join(lines)
 
     def _thing_names(self) -> list[str]:
-        return self._selected_names if self._selected_names is not None else self.dependency_names()
+        names = list(self._selected_names if self._selected_names is not None else self.dependency_names())
+        protagonist_name = _protagonist_name(self.state.package)
+        if protagonist_name in self.item_facts and protagonist_name not in names:
+            names.append(protagonist_name)
+        return names
+
+    def _select_protagonist(self) -> None:
+        if self._selected_names is None:
+            return
+        protagonist_name = _protagonist_name(self.state.package)
+        if protagonist_name in self.item_facts and protagonist_name not in self._selected_names:
+            self._selected_names.append(protagonist_name)
 
     def _player_lines(self, user: dict[str, object]) -> list[str]:
         lines = super()._player_lines(user)
@@ -306,7 +351,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _system_prompt(self, opening: bool = False) -> str:
         system = super()._system_prompt(opening=opening)
         if self.item_facts_mode == "single_call":
-            return f"{system}\n{_SINGLE_CALL_RULES[0]}\n{_SINGLE_CALL_RULES[1]}"
+            rules = _single_call_rules(_protagonist_name(self.state.package))
+            return f"{system}\n{'\n'.join(rules)}"
         return system
 
     def _request(self, payload: dict[str, object]) -> object:
@@ -614,6 +660,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 else:
                     issues.append(f"unknown item_facts name {name!r} was dropped")
                 continue
+            protagonist_name = _protagonist_name(self.state.package)
+            if name == protagonist_name and isinstance(value, dict) and "condition" in value:
+                issues.append(f"item_facts condition for {name} ignored")
+                value = {key: item for key, item in value.items() if key != "condition"}
+                if not value:
+                    continue
             if isinstance(value, dict) and not value:
                 issues.append(f"empty item_facts entry for {name} ignored")
                 continue
@@ -634,6 +686,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         candidates = [name for name in self.item_facts if name not in dependencies]
         if not candidates:
             self._selected_names = dependencies
+            self._select_protagonist()
             result = {
                 "match_call": False,
                 "match_raw": None,
@@ -669,6 +722,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     engine_resolutions[name] = resolved
             selected = set(dependencies) | set(refers)
             self._selected_names = [name for name in self.item_facts if name in selected]
+        self._select_protagonist()
         result = {
             "match_call": True,
             "match_raw": copy.deepcopy(reply),

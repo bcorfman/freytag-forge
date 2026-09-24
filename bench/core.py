@@ -18,7 +18,7 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
+from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -872,8 +872,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "seed_from_package", False
             ):
                 additions, issues = package_seed(package, state, target_scene)
+                target_protagonist = additions.get(_protagonist_name(package))
                 additions = {name: facts for name, facts in additions.items() if name not in provider.item_facts}
                 provider.item_facts.update(additions)
+                protagonist_name = _protagonist_name(package)
+                if protagonist_name in provider.item_facts and target_protagonist is not None:
+                    provider.item_facts[protagonist_name] = target_protagonist
                 provider.item_facts_seed_names = tuple(provider.item_facts)
                 provider.item_facts_seed_issues.extend(issues)
             continuation_script = next(
