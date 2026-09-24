@@ -390,6 +390,25 @@ against the external guidance (section 2), which found no support for
 personas. Even the best variant trails Luna (97.4%) and gpt-5.4 on round 7
 continuity.
 
+### Preamble confirmed on rounds 8-9 (2026-09-24)
+
+`preamble` and a fresh `baseline`, each run once over rounds 8 and 9
+continuity (`bench/results/probes/jev-preamble-r8r9`, about $0.02).
+Held out means without the 10 probe turns, 306 cells:
+
+| Judge | All 334 cells | Held out |
+|---|---|---|
+| Jev baseline, earlier run | 86.2% | 85.6% |
+| Jev baseline, today | 86.2% | 85.9% |
+| Jev preamble | 91.0% | 90.8% |
+| Luna | - | 95.8% |
+| gpt-5.4 (saved, older rubric) | - | 96.1% |
+
+The two baseline runs agree within 1 cell, and the preamble beats both by
+15-16 cells. The gain is spread across command_not_finished,
+contradicts_stated_fact and restarts_scene, so it is real. It still leaves
+Jev's continuity about 5 points behind Luna and gpt-5.4.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
