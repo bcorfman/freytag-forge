@@ -1,7 +1,7 @@
 # Jev judge trial: plan
 
 Status (2026-09-24): not started; section 8's questions are decided. Next
-is Phase A: the worker's Jev branch, which Brandon then uploads. Written
+is Phase A's test call; the credentials are in `.env`. Written
 to be picked up in a new chat with no other context.
 
 Goal: find out whether TypeSafe's Jev (`typesafe/jev` on Cloudflare Workers
@@ -252,25 +252,21 @@ or r9.
 
 ### Phase A - Access, price and a live hello (Brandon plus one probe)
 
-1. Ringer task: add a Jev branch to the narration worker source,
-   `.plans/cloudflare.js`. Brandon uploads that file to Cloudflare by hand.
-   A POST whose body has a `jev` object (`{"jev": {"state": ..., "questions":
-   {...}}}`) calls `POST .../accounts/{CF_ACCOUNT_ID}/ai/run` with
-   `{"model": "typesafe/jev", "input": {"state": ..., "questions": ...}}`,
-   using the worker's existing `CF_ACCOUNT_ID` and `CF_API_TOKEN`. It
-   returns `{"jev": <the upstream result>, "trace_id": ...}`, and upstream
-   errors map through the existing `classifyUpstreamFailure`. Every request
-   without `jev` takes the current narration path, unchanged. The bench
-   reaches it with the existing `CLOUDFLARE_WORKER_URL` and
-   `CLOUDFLARE_WORKER_TOKEN`, so there are no new credentials. The check runs
-   the worker in node with a stubbed `fetch`. It asserts the Jev request
-   shape, and it asserts that a narration request produces exactly the same
-   upstream call and response as the unmodified file.
-2. Brandon uploads the new `cloudflare.js` and reads Jev's price in the
-   Cloudflare dashboard (`dash.cloudflare.com/?to=/:account/ai/models/typesafe/jev`),
-   which is recorded here.
-3. One Ringer probe task sends the documentation's example through the
-   worker once and saves the response. Its check asserts that `answers` has
+1. Brandon created a user-owned Cloudflare API token with Workers AI
+   permission, `CLOUDFLARE_AI_TOKEN`, and added it to `.env` with
+   `CLOUDFLARE_ACCOUNT_ID` (done 2026-09-24). Verify it for free with
+   `GET https://api.cloudflare.com/client/v4/user/tokens/verify`; the
+   account-level verify endpoint rejects user-owned tokens. The worker's
+   `CLOUDFLARE_WORKER_TOKEN` is not a Cloudflare API token: it is the
+   worker's own `DEMO_SHARED_TOKEN`, and Cloudflare rejects it. The narration
+   worker is not changed. A worker branch was built and passed its check,
+   but it is not needed and was not applied.
+2. Brandon reads Jev's price in the Cloudflare dashboard
+   (`dash.cloudflare.com/?to=/:account/ai/models/typesafe/jev`), and it is
+   recorded here.
+3. One Ringer probe task sends the documentation's example once to
+   `POST https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run`
+   with `Authorization: Bearer $CLOUDFLARE_AI_TOKEN`, and saves the response. Its check asserts that `answers` has
    the three typed answers and that `model` starts with `jev-`.
 
 Exit: access works, the price is known, and the cost estimate in 6.D is
@@ -280,8 +276,8 @@ recomputed from it.
 
 1. Ringer task: write `bench/jev-judge.mjs` with the same CLI shape as
    `bench/continuity-judge.mjs` (`--input`, `--output`). It builds
-   the per-turn states and questions of section 5, calls the worker's Jev
-   branch at `CLOUDFLARE_WORKER_URL`, combines
+   the per-turn states and questions of section 5, calls `/ai/run` with
+   `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN`, combines
    the answers in code, and writes the two judgment files plus
    `jev-raw.json`. The tests `bench/jev-judge.test.mjs` are hermetic: a stub
    fetch returns canned Jev answers, and the tests cover:
@@ -366,12 +362,10 @@ Brandon decides whether Jev becomes the default bench judge. If it does:
 
 ## 8. Decisions (Brandon, 2026-09-24)
 
-1. **Access:** go through the narration worker. Brandon's suggestion was
-   to edit `.plans/cloudflare.js`, a copy of the deployed worker, and upload
-   it himself. This reuses the worker's Cloudflare credentials and the
-   bench's `CLOUDFLARE_WORKER_URL` and `CLOUDFLARE_WORKER_TOKEN`. (He had
-   first approved a new API token in `.env`; the worker route replaces
-   that.)
+1. **Access:** call Cloudflare's REST `/ai/run` directly from the local
+   judge, with `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN` in `.env`.
+   The narration worker (`.plans/cloudflare.js`) is not changed, so the trial
+   cannot affect the live game.
 2. **Reasons:** the verdict alone is enough. "Just getting the verdict is
    fine (command_not_finished, restarts_scene, etc.)." No generative model
    writes reasons. The code-built `reason` in 5.3 is an optional debugging
