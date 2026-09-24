@@ -1408,18 +1408,48 @@ def run_continuity_judges(input_path: Path, output_path: Path) -> dict[str, Any]
 
 
 def run_fact_tracking_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
-    command = [
-        "node",
-        str(Path(__file__).with_name("fact-tracking-judge.mjs")),
-        "--input",
-        str(input_path),
-        "--output",
-        str(output_path),
-    ]
-    result = _run_with_judge_input(command, input_path)
-    if result.returncode:
-        raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
-    return read_json(output_path)
+    backend = os.environ.get("BENCH_FACT_JUDGE", "").strip() or "jev"
+    if backend not in {"jev", "luna"}:
+        raise ValueError(f"unknown fact judge backend: {backend}")
+    if backend == "luna":
+        command = [
+            "node",
+            str(Path(__file__).with_name("fact-tracking-judge.mjs")),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ]
+        result = _run_with_judge_input(command, input_path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
+        judged = read_json(output_path)
+        judged["judge_backend"] = "luna"
+        return judged
+
+    package_path = read_json(input_path)["package_path"]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        command = [
+            "node",
+            str(Path(__file__).with_name("jev-judge.mjs")),
+            "--input",
+            str(input_path),
+            "--package",
+            package_path,
+            "--out",
+            temp_dir,
+            "--judges",
+            "fact",
+        ]
+        result = _run_with_judge_input(command, input_path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "Jev fact-tracking judge CLI failed")
+        shutil.copyfile(temp_path / "fact-tracking-judgments.json", output_path)
+        shutil.copyfile(temp_path / "jev-raw.json", output_path.parent / "fact-tracking-jev-raw.json")
+    judged = read_json(output_path)
+    judged["judge_backend"] = "jev"
+    return judged
 
 
 def _run_with_judge_input(command: list[str], input_path: Path) -> subprocess.CompletedProcess[str]:

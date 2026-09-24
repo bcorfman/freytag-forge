@@ -551,6 +551,7 @@ def _run(args: argparse.Namespace) -> int:
             continuity = score_continuity_judgments([], 0)
         judge_failure_reason = judge_failure_reason or continuity_failure_reason
     fact_tracking = None
+    fact_tracking_backend = None
     fact_tracking_failure_reason = None
     if variation.get("fact_tracking_judge", False):
         fact_tracking_path = args.out / "fact-tracking-judgments.json"
@@ -560,6 +561,7 @@ def _run(args: argparse.Namespace) -> int:
                 if judged_runs
                 else {"judgments": [], "judge_calls": 0}
             )
+            fact_tracking_backend = fact_tracking_judged.get("judge_backend")
             fact_tracking_judgments = fact_tracking_judged["judgments"]
             if len(fact_tracking_judgments) != len(judged_runs):
                 raise RuntimeError(
@@ -604,7 +606,10 @@ def _run(args: argparse.Namespace) -> int:
         "actual_openai_judge_calls": judged.get("judge_calls", 0)
         + (escalation or {}).get("judge_calls", 0)
         + (continuity or {}).get("judge_calls", 0)
-        + (fact_tracking or {}).get("judge_calls", 0),
+        + ((fact_tracking or {}).get("judge_calls", 0) if fact_tracking_backend != "jev" else 0),
+        "actual_jev_judge_requests": (fact_tracking or {}).get("judge_calls", 0)
+        if fact_tracking_backend == "jev"
+        else 0,
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:
@@ -629,6 +634,7 @@ def _run(args: argparse.Namespace) -> int:
         failure_budget = {
             "estimated_workers_ai_neurons_from_requests": failed.get("narration_requests", 0) * 330 / 30,
             "actual_openai_judge_calls": 0,
+            "actual_jev_judge_requests": 0,
         }
         failure_aggregate["budget"] = failure_budget
         append_ledger_row(

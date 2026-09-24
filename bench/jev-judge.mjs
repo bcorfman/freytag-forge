@@ -638,8 +638,12 @@ async function main() {
   const judges = process.argv.includes("--judges") ? argument("--judges") : "both";
   const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges });
   const out = argument("--out");
-  writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");
-  writeFileSync(resolve(out, "fact-tracking-judgments.json"), JSON.stringify(result.fact, null, 2) + "\n");
+  if (judges !== "fact") {
+    writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");
+  }
+  if (judges !== "continuity") {
+    writeFileSync(resolve(out, "fact-tracking-judgments.json"), JSON.stringify(result.fact, null, 2) + "\n");
+  }
   writeFileSync(resolve(out, "jev-raw.json"), JSON.stringify(result.raw, null, 2) + "\n");
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();

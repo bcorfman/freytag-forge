@@ -1478,7 +1478,11 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
             "judge_calls": 1,
         },
     )
-    monkeypatch.setattr(bench_cli, "run_fact_tracking_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(
+        bench_cli,
+        "run_fact_tracking_judges",
+        lambda *_: {"judgments": [judgment], "judge_calls": 1, "judge_backend": "jev"},
+    )
     monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
     args = bench_cli.parser().parse_args(
         ["run", "--variation", str(SINGLE), "--scene", "1A", "--replicates", "1", "--out", str(tmp_path)]
@@ -1486,6 +1490,8 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
     assert bench_cli._run(args) == 0
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["fact_tracking"]["judge_calls"] == 1
+    assert summary["budget"]["actual_openai_judge_calls"] == 2
+    assert summary["budget"]["actual_jev_judge_requests"] == 1
     ledger = json.loads((tmp_path / "ledger.jsonl").read_text())
     assert ledger["fact_tracking"]["changes_by_cause"] == {"command": 0, "narrator": 0}
-    assert ledger["spend"]["judge_calls"] == 3
+    assert ledger["spend"]["judge_calls"] == 2
