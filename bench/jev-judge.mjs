@@ -20,6 +20,32 @@ const CONTINUITY_PREAMBLE = [
   "You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, ",
   "and continue from where the story left off?",
 ].join("");
+const COMMAND_RUBRIC = [
+  "A command is finished when she does her own part of it. Looking at, examining, searching or checking a thing is finished when she pays attention to it, even if she also picks it up. ",
+  "Trying to take a thing from another character is her whole part, whether or not she gets it. When the command needs another character to act, any response counts, including a refusal, a struggle or silence; only holding a thing out with nothing shown in return is unfinished. ",
+  "When the command names a place to go to or to bring a thing to, she must arrive there or clearly head there. `story_text` is written by the story after the narrator, and it counts as what happened.",
+].join("");
+const COMMAND_UNFINISHED = {
+  type: "noul",
+  instructions: "Does `narration` stop before the action that `command` asked for is done?",
+  criteria: {
+    true: [
+      "The action is not done. She does not do her own part, she does not reach or clearly head to the place `command` names, ",
+      "or `command` needs another character to act and no response from that character is shown. Only holding a thing out, ",
+      "with nothing shown in return, is not done.",
+    ].join(""),
+    false: [
+      "The action is done. Paying attention to a thing finishes a command to look at, examine, search or check it, even if she ",
+      "also picks it up. Trying to take a thing from another character is her whole part. A refusal, a struggle or silence from ",
+      "another character is still a response. `story_text` counts as what happened.",
+    ].join(""),
+  },
+};
+const CONTINUITY_VARIANTS = [
+  "baseline", "preamble", "preamble-rubric", "preamble-holistic",
+  "preamble-rubric-holistic",
+  "split", "split-examples", "split-criteria",
+];
 const CONTINUITY_EXAMPLES = {
   command: [
     {
@@ -266,7 +292,15 @@ function orderedObject(source, names) {
 
 function continuityRequests(state, questions, variant) {
   if (variant === "baseline") return [{ state, questions }];
-  if (variant === "preamble") return [{ state: { task: CONTINUITY_PREAMBLE, ...state }, questions }];
+  if (variant.startsWith("preamble")) {
+    const rubric = variant.includes("rubric");
+    const holistic = variant.includes("holistic");
+    const preambleQuestions = holistic ? { ...questions, command_unfinished: COMMAND_UNFINISHED } : questions;
+    return [{
+      state: { task: rubric ? `${CONTINUITY_PREAMBLE} ${COMMAND_RUBRIC}` : CONTINUITY_PREAMBLE, ...state },
+      questions: preambleQuestions,
+    }];
+  }
   const requests = Object.entries(CONTINUITY_GROUPS).map(([groupName, group]) => {
     const groupState = orderedObject(state, group.state);
     if (variant === "split-examples") groupState.examples = CONTINUITY_EXAMPLES[groupName];
@@ -450,7 +484,7 @@ export async function judgeInput(
   input,
   { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both" } = {},
 ) {
-  if (!["baseline", "preamble", "split", "split-examples", "split-criteria"].includes(variant)) {
+  if (!CONTINUITY_VARIANTS.includes(variant)) {
     throw new Error(`Unknown continuity variant: ${variant}`);
   }
   if (!["both", "continuity", "fact"].includes(judges)) {

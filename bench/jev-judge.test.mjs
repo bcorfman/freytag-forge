@@ -45,6 +45,27 @@ const splitCriteriaSuffixes = {
       + 'rowing across the bay again to reach that boat repeats the trip.',
   },
 };
+const commandRubric = [
+  "A command is finished when she does her own part of it. Looking at, examining, searching or checking a thing is finished when she pays attention to it, even if she also picks it up. ",
+  "Trying to take a thing from another character is her whole part, whether or not she gets it. When the command needs another character to act, any response counts, including a refusal, a struggle or silence; only holding a thing out with nothing shown in return is unfinished. ",
+  "When the command names a place to go to or to bring a thing to, she must arrive there or clearly head there. `story_text` is written by the story after the narrator, and it counts as what happened.",
+].join("");
+const commandUnfinished = {
+  type: "noul",
+  instructions: "Does `narration` stop before the action that `command` asked for is done?",
+  criteria: {
+    true: [
+      "The action is not done. She does not do her own part, she does not reach or clearly head to the place `command` names, ",
+      "or `command` needs another character to act and no response from that character is shown. Only holding a thing out, ",
+      "with nothing shown in return, is not done.",
+    ].join(""),
+    false: [
+      "The action is done. Paying attention to a thing finishes a command to look at, examine, search or check it, even if she ",
+      "also picks it up. Trying to take a thing from another character is her whole part. A refusal, a struggle or silence from ",
+      "another character is still a response. `story_text` counts as what happened.",
+    ].join(""),
+  },
+};
 
 test("combineContinuity applies all rules", () => {
   assert.equal(combineContinuity(yes(["given_conflict", "beyond_command", "arrives", "rediscovers", "repeats_trip", "needs_other", "names_place"]), { firstTurnInScene: false, hasHiddenCanon: false }).contradicts_stated_fact, "yes");
@@ -73,10 +94,44 @@ test("judgeInput supports continuity variants and judge selection", async () => 
   const baselineSeen = [];
   const baseline = await judgeInput(input, { ...options, fetchImpl: stubFetch(baselineSeen) });
   const preambleSeen = [];
-  await judgeInput(input, { ...options, variant: "preamble", fetchImpl: stubFetch(preambleSeen) });
+  const preamble = await judgeInput(input, { ...options, variant: "preamble", fetchImpl: stubFetch(preambleSeen) });
   const preambleInput = JSON.parse(preambleSeen[0].options.body).input;
   assert.equal(preambleInput.state.task, "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, and continue from where the story left off?");
   assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "opening", "earlier_narration", "hidden_canon"]);
+
+  const preambleRequest = JSON.parse(preambleSeen[0].options.body).input;
+  const newVariants = ["preamble-rubric", "preamble-holistic", "preamble-rubric-holistic"];
+  for (const variant of newVariants) {
+    const seen = [];
+    const result = await judgeInput(input, { ...options, variant, fetchImpl: stubFetch(seen) });
+    const request = JSON.parse(seen[0].options.body).input;
+    const hasRubric = variant.includes("rubric");
+    const hasHolistic = variant.includes("holistic");
+    const expectedTask = hasRubric ? `${preambleInput.state.task} ${commandRubric}` : preambleInput.state.task;
+    assert.equal(request.state.task, expectedTask);
+    assert.deepEqual(Object.keys(request.state), Object.keys(preambleInput.state));
+    assert.deepEqual(Object.keys(request.questions), hasHolistic
+      ? [...Object.keys(preambleInput.questions), "command_unfinished"]
+      : Object.keys(preambleInput.questions));
+    if (hasHolistic) {
+      assert.deepEqual(request.questions.command_unfinished, commandUnfinished);
+    }
+    assert.deepEqual(verdicts(result), verdicts(preamble));
+    assert.equal(result.raw.every((record) => record.variant === variant), true);
+  }
+  assert.deepEqual(JSON.parse(preambleSeen[0].options.body).input, preambleRequest);
+
+  for (const answer of [0.1, 0.9]) {
+    const seen = [];
+    const result = await judgeInput(input, {
+      ...options,
+      variant: "preamble-holistic",
+      fetchImpl: answerFetch(seen, answer),
+    });
+    assert.deepEqual(verdicts(result), verdicts(preamble));
+    assert.equal(result.raw[0].answers.command_unfinished.noul, answer);
+    assert.equal(JSON.parse(seen[0].options.body).input.questions.command_unfinished.type, "noul");
+  }
 
   const requestsByVariant = {};
   const resultsByVariant = {};
@@ -186,6 +241,25 @@ function stubFetch(seen, failureAt = 0) {
     const body = JSON.parse(options.body); const answers = Object.fromEntries(Object.keys(body.input.questions).map((name) => [name, { type: "noul", noul: 0.1 }]));
     return { status: 200, json: async () => ({ success: true, errors: [], result: { state: "Completed", result: { model: "jev-1", answers, usage: {} } } }) };
   };
+}
+
+function answerFetch(seen, unfinishedAnswer) {
+  return async (url, options) => {
+    seen.push({ url, options });
+    const body = JSON.parse(options.body);
+    const answers = Object.fromEntries(Object.keys(body.input.questions).map((name) => [name, {
+      type: "noul", noul: name === "command_unfinished" ? unfinishedAnswer : 0.1,
+    }]));
+    return { status: 200, json: async () => ({
+      success: true, errors: [], result: { state: "Completed", result: { model: "jev-1", answers, usage: {} } },
+    }) };
+  };
+}
+
+function verdicts(result) {
+  return result.continuity.judgments.map((run) => ({
+    turns: run.turns.map(({ reason, ...turn }) => turn),
+  }));
 }
 
 test("judgeInput is offline, sequential, and builds scoped continuity state", async () => {
