@@ -351,6 +351,29 @@ about 10 points behind. Its misses are spread fairly evenly:
 
 Many of the deciding probabilities sit near 0.5.
 
+### Continuity request-design ablation, round 7 (2026-09-24)
+
+Five ways of sending the continuity questions (`--variant`, `2ce4c71`,
+`8f71e79`), each run once over round 7
+(`bench/results/probes/jev-variants-r7`, about $0.03 in total):
+
+| Variant | Round 7 continuity | Input tokens |
+|---|---|---|
+| baseline (one request per turn) | 96/114 = 84.2% | 97k |
+| preamble (continuity-editor task line in state) | 103/114 = 90.4% | 100k |
+| split (command / turn / history requests) | 101/114 = 88.6% | 127k |
+| split-examples (split plus invented worked examples in state) | 100/114 = 87.7% | 177k |
+| split-criteria (split plus the same examples in criteria) | 100/114 = 87.7% | 142k |
+
+Jev is not deterministic. The baseline sent byte-identical requests to the
+earlier round 7 run, which scored 99/114. Answers moved by 0.013 on average
+(max 0.20), and 6 of 688 crossed 0.5. So about 3 cells (2-3 points) is the
+noise floor. The preamble's gain (+4 to +7 cells) is suggestive, not proven.
+The split and example variants sit within about twice the noise. This goes
+against the external guidance (section 2), which found no support for
+personas. Even the best variant trails Luna (97.4%) and gpt-5.4 on round 7
+continuity.
+
 ### Phase C - Calibration on rounds 7-9 (billed, cheap)
 
 1. Ringer probe task (`max_attempts: 1`): extend `rejudge.py`, or add a
