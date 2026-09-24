@@ -149,6 +149,13 @@ Pass criteria for Jev:
 - It reaches `check_calib.py`'s 90% bar on every round and judge.
 - It costs less per two-replicate bench run than Luna.
 
+Brandon does not care about `invented_change` disagreements unless the
+invention breaks the story (2026-09-24, over a receipt tracked as
+"crumpled"). Report `invented_change` cells separately, as context. Do not
+tune questions to win them, and do not ask for relabels.
+`protagonist_acts_beyond_command` is likewise context, never a failure
+(memory `narrator-initiative-is-not-a-failure`).
+
 Luna's known weak cells are the ones to watch:
 - `narration_contradicts_given_facts` on the t3 pocket turn;
 - `invented_change` on r7 t10's "crumpled" receipt;
