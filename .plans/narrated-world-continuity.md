@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v29, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v30, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,35 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v30 (2026-09-24, `bench/results/item-facts-v30-kristin-two-scene-1a` plus
+smoke `item-facts-v30-smoke-two-scene-1a`).* `22a057b`: the bench now tracks
+the protagonist like a thing. She is seeded at "in <scene location>", given
+in THINGS and PLAYER every turn (Brandon approved this one exception to the
+refers-only rule), moved by the narrator's own item_facts reply, and reset at
+the scene change. One rule sentence asks the narrator to report her new
+place. Judge spend: 4 OpenAI calls and 97 Jev requests. Read by hand over
+all 3 replicates:
+- t13 walk back into the house: 1/3 (r1). Its prompt said "Kristin is in
+  the truck" and the laptop was "on the passenger seat", and it still walked
+  her into the house. v28: 1/2. The given place alone does not stop it.
+- 1B t19 "approaches the man": 2/3 (both v30 replicates; the smoke said
+  "stands near"), even with "Kristin is near the man watching her" given.
+  t18 opens with "approaches" 3/3.
+- Capture of her place works but misses real moves. She walks into the
+  kitchen (smoke t3), carries the laptop to the truck but is left "in
+  Michelle's house" or "in the kitchen" (t9, 3/3), and drives off (smoke
+  t13). A stale place then fails later turns under the whole-state bar.
+- Jev's `moved` answer for Kristin sits at 0.51-0.55 on small steps inside
+  a room, which adds missed_change false alarms.
+- Follow-up: the rule sentence says "the place she is". That assumes a
+  female protagonist; make it gender-neutral before any runtime version.
+
+Next, by Brandon's ranking (a rule first, then an LLM check):
+- a plain rule that she starts the turn where PLAYER says, so she is not
+  walked there again;
+- check whether beat details sent on t13 ("someone entering house") pull
+  her back inside.
 
 *v29 (2026-09-24, `bench/results/item-facts-v29-jevfacts-two-scene-1a` plus
 smoke `item-facts-v29-smoke-two-scene-1a`).* This is the first run with the
