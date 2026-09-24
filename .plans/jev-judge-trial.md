@@ -261,9 +261,13 @@ or r9.
    worker's own `DEMO_SHARED_TOKEN`, and Cloudflare rejects it. The narration
    worker is not changed. A worker branch was built and passed its check,
    but it is not needed and was not applied.
-2. Brandon reads Jev's price in the Cloudflare dashboard
-   (`dash.cloudflare.com/?to=/:account/ai/models/typesafe/jev`), and it is
-   recorded here.
+2. Price, read by Brandon in the Cloudflare dashboard on 2026-09-24:
+   $0.042 per million input tokens, the same as TypeSafe's direct price.
+   Cloudflare bills Jev through AI Gateway credit, not the Workers AI
+   allowance that narration uses. The first probe call authenticated but was
+   refused with "Insufficient balance; add money to your gateway or use
+   BYOK" (code 2021). Nothing runs until the gateway has a balance, or a
+   TypeSafe key is stored in AI Gateway.
 3. One Ringer probe task sends the documentation's example once to
    `POST https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run`
    with `Authorization: Bearer $CLOUDFLARE_AI_TOKEN`, and saves the response. Its check asserts that `answers` has
