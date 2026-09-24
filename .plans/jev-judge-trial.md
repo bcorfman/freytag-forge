@@ -95,6 +95,22 @@ https://docs.typesafe.ai/models.md (and its linked pages
   8. *Structural invariants are not guaranteed.* A question and its negation
      need not sum to 1. Ask each decision one way only.
 
+External guidance, gathered by a ChatGPT web search on 2026-09-24. Jev
+launched on 2026-09-15, so most of this is vendor text or self-reported:
+- TypeSafe's official skill file
+  (github.com/typesafe-ai/skills, `skills/typesafe-ai/SKILL.md`, checked).
+  It says: "Put the judgment in instructions and define its possible answers
+  in criteria." It also says: "Ask one narrow, coherent judgment per
+  question." A second request is warranted only to fetch evidence, build new
+  state, or choose the next options. Thresholds should be "evaluated on the
+  user's data". Nothing on personas or few-shot examples.
+- Community, unverified: richer criteria (definitions, "not for" cases,
+  examples) measured 64.5% -> 81% -> 84.5% on one dataset (jev-mcp
+  RECIPES.md). Best thresholds varied from 0.30 to 0.75 across questions
+  (jevi). A roleplay author reports that whole-transcript subjective judging
+  fails, while narrow adherence checks work.
+- No Jev comparison with GPT-class judges on stories was found.
+
 So the trial is a new judge implementation that asks many narrow questions
 per turn and combines the answers in code. It is not a one-line model change.
 
