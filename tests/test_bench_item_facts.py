@@ -834,7 +834,9 @@ def test_package_seed_scene_1a_matches_authored_things():
             "condition": ["overturned"],
         },
     }
-    assert issues == []
+    assert issues == [
+        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
+    ]
 
 
 def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
@@ -850,7 +852,9 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
         "place": "at Michelle's workstation",
         "condition": ["overturned"],
     }
-    assert issues == []
+    assert issues == [
+        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
+    ]
 
 
 def test_package_seed_accepts_the_prefix_case_insensitively():

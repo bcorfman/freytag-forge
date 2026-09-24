@@ -8,11 +8,7 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
 def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
-    reveal = next(
-        item
-        for item in PACKAGE.knowledge.knowledge
-        if item.delivery_text == "A memory card is taped beneath the KMS drawer. It is Michelle's card."
-    )
+    reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     turns = [
         {
             "turn_number": 2,
@@ -61,11 +57,7 @@ def test_judge_turns_projects_scene_bridge_after_turn() -> None:
 
 
 def test_judge_turns_strips_delivery_then_bridge_in_reverse_order() -> None:
-    reveal = next(
-        item
-        for item in PACKAGE.knowledge.knowledge
-        if item.delivery_text == "A memory card is taped beneath the KMS drawer. It is Michelle's card."
-    )
+    reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     bridge = PACKAGE.scenes[0].metadata.bridge_text["t_1a_1b"]
     turn = {
         "turn_number": 13,
@@ -86,11 +78,7 @@ def test_judge_turns_strips_delivery_then_bridge_in_reverse_order() -> None:
 
 
 def test_judge_turns_keeps_narration_when_authored_text_is_not_a_suffix() -> None:
-    reveal = next(
-        item
-        for item in PACKAGE.knowledge.knowledge
-        if item.delivery_text == "A memory card is taped beneath the KMS drawer. It is Michelle's card."
-    )
+    reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     narration = f"{reveal.delivery_text} Kristin searches beneath the drawer."
     judged = judge_turns(
         [{"authored_handoff_candidate_id": reveal.id, "narration": narration}],
