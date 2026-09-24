@@ -1,7 +1,7 @@
 # Jev judge trial: plan
 
 Status (2026-09-24): not started; section 8's questions are decided. Next
-is Phase A, which starts with Brandon creating the credentials. Written
+is Phase A: the worker's Jev branch, which Brandon then uploads. Written
 to be picked up in a new chat with no other context.
 
 Goal: find out whether TypeSafe's Jev (`typesafe/jev` on Cloudflare Workers
@@ -11,6 +11,15 @@ continuity judge (`bench/continuity-judge.mjs`) and the fact-tracking judge
 agreement with Brandon's own labels, at lower cost. The escalation judge and
 the E2E roleplay judge (`frontend/e2e/roleplay-judge.js`) are out of scope
 until this trial passes.
+
+This is a trial only. The Luna judges stay the default and keep running
+unchanged throughout. Jev runs beside them as a separate, opt-in judge, and
+nothing about the OpenAI judges is removed or changed. Whether Jev ever
+becomes the default is Brandon's decision after Phase D (Phase E).
+
+Where the judges run: only locally. `python -m bench run` and
+`bench/calibration/rejudge.py` start the judge scripts with `node` on the
+developer's machine. The Railway backend never runs a judge.
 
 ## Contents
 
@@ -243,17 +252,26 @@ or r9.
 
 ### Phase A - Access, price and a live hello (Brandon plus one probe)
 
-1. Brandon creates a Cloudflare API token with Workers AI permission and
-   adds `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN` to `.env`. The
-   narration worker's source is not in this repo (`.plans/wrangler.jsonc`
-   names only `cloudflare.js`), so going through the worker is not an
-   option without that code.
-2. Brandon reads Jev's price in the Cloudflare dashboard
-   (`dash.cloudflare.com/?to=/:account/ai/models/typesafe/jev`), and it is
-   recorded here.
-3. One Ringer probe task runs the documentation's curl example once and
-   saves the response. Its check asserts that `answers` has the three typed
-   answers and that `model` starts with `jev-`.
+1. Ringer task: add a Jev branch to the narration worker source,
+   `.plans/cloudflare.js`. Brandon uploads that file to Cloudflare by hand.
+   A POST whose body has a `jev` object (`{"jev": {"state": ..., "questions":
+   {...}}}`) calls `POST .../accounts/{CF_ACCOUNT_ID}/ai/run` with
+   `{"model": "typesafe/jev", "input": {"state": ..., "questions": ...}}`,
+   using the worker's existing `CF_ACCOUNT_ID` and `CF_API_TOKEN`. It
+   returns `{"jev": <the upstream result>, "trace_id": ...}`, and upstream
+   errors map through the existing `classifyUpstreamFailure`. Every request
+   without `jev` takes the current narration path, unchanged. The bench
+   reaches it with the existing `CLOUDFLARE_WORKER_URL` and
+   `CLOUDFLARE_WORKER_TOKEN`, so there are no new credentials. The check runs
+   the worker in node with a stubbed `fetch`. It asserts the Jev request
+   shape, and it asserts that a narration request produces exactly the same
+   upstream call and response as the unmodified file.
+2. Brandon uploads the new `cloudflare.js` and reads Jev's price in the
+   Cloudflare dashboard (`dash.cloudflare.com/?to=/:account/ai/models/typesafe/jev`),
+   which is recorded here.
+3. One Ringer probe task sends the documentation's example through the
+   worker once and saves the response. Its check asserts that `answers` has
+   the three typed answers and that `model` starts with `jev-`.
 
 Exit: access works, the price is known, and the cost estimate in 6.D is
 recomputed from it.
@@ -262,7 +280,8 @@ recomputed from it.
 
 1. Ringer task: write `bench/jev-judge.mjs` with the same CLI shape as
    `bench/continuity-judge.mjs` (`--input`, `--output`). It builds
-   the per-turn states and questions of section 5, calls `/ai/run`, combines
+   the per-turn states and questions of section 5, calls the worker's Jev
+   branch at `CLOUDFLARE_WORKER_URL`, combines
    the answers in code, and writes the two judgment files plus
    `jev-raw.json`. The tests `bench/jev-judge.test.mjs` are hermetic: a stub
    fetch returns canned Jev answers, and the tests cover:
@@ -320,6 +339,8 @@ Brandon decides whether Jev becomes the default bench judge. If it does:
   picks.
 - Update the runbook entry in place.
 - Keep the Luna judges working as the fallback.
+- If Jev does not become the default, it stays an opt-in judge or is
+  removed. Either way the Luna judges are untouched.
 
 ## 7. Risks
 
@@ -345,10 +366,12 @@ Brandon decides whether Jev becomes the default bench judge. If it does:
 
 ## 8. Decisions (Brandon, 2026-09-24)
 
-1. **Credentials:** a Cloudflare API token plus account ID in `.env`
-   (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_TOKEN`) is acceptable. Jev is
-   called through Cloudflare's REST `/ai/run`, not through the narration
-   worker.
+1. **Access:** go through the narration worker. Brandon's suggestion was
+   to edit `.plans/cloudflare.js`, a copy of the deployed worker, and upload
+   it himself. This reuses the worker's Cloudflare credentials and the
+   bench's `CLOUDFLARE_WORKER_URL` and `CLOUDFLARE_WORKER_TOKEN`. (He had
+   first approved a new API token in `.env`; the worker route replaces
+   that.)
 2. **Reasons:** the verdict alone is enough. "Just getting the verdict is
    fine (command_not_finished, restarts_scene, etc.)." No generative model
    writes reasons. The code-built `reason` in 5.3 is an optional debugging
