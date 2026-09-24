@@ -266,8 +266,11 @@ or r9.
    Cloudflare bills Jev through AI Gateway credit, not the Workers AI
    allowance that narration uses. The first probe call authenticated but was
    refused with "Insufficient balance; add money to your gateway or use
-   BYOK" (code 2021). Nothing runs until the gateway has a balance, or a
-   TypeSafe key is stored in AI Gateway.
+   BYOK" (code 2021). Nothing runs until the gateway has a balance. To add
+   one: AI Gateway page -> Credits Available -> Manage -> Top-up credits
+   (a 5% fee applies to credit purchases; the gateway's Workers AI Billing
+   setting may need to be "Unified billing"). The BYOK route is not
+   available: direct TypeSafe access is behind a waitlist.
 3. One Ringer probe task sends the documentation's example once to
    `POST https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run`
    with `Authorization: Bearer $CLOUDFLARE_AI_TOKEN`, and saves the response. Its check asserts that `answers` has
