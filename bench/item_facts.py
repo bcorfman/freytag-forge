@@ -7,8 +7,8 @@ from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.validation import ProgressionValidator, predicate_matches
-from storygame.story_package.models import FactPredicate, ItemPlacement
+from storygame.runtime.validation import ProgressionValidator
+from storygame.story_package.models import ItemPlacement, item_placement_is_visible
 
 
 def _resolve_refer(name: str, tracked) -> str | None:
@@ -36,8 +36,8 @@ def _resolve_refer(name: str, tracked) -> str | None:
     return suffix_matches[0] if len(suffix_matches) == 1 else None
 
 
-def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
-    """Build tracked things from the authored placements and setting facts."""
+def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str], list[str]]:
+    """Build tracked things and classify the authored setting facts once."""
 
     scene = next((item for item in package.scenes if item.metadata.scene_id == scene_id), None)
     if scene is None:
@@ -45,15 +45,14 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
     items = {item.id: item for item in package.world.items}
     things: dict[str, dict] = {}
     issues: list[str] = []
+    unconsumed_setting_facts: list[str] = []
     for item_id, placement in scene.metadata.item_placements.items():
         item = items.get(item_id)
         if item is None:
             issues.append(f"scene {scene_id} placement references unknown item {item_id!r}")
             continue
-        if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-            guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-            if predicate_matches(guard, state.facts):
-                continue
+        if not item_placement_is_visible(placement, state.facts):
+            continue
         place = placement if isinstance(placement, str) else placement.placement
         if len(place) > 80:
             issues.append(f"placement for {item.name!r} is longer than 80 characters")
@@ -79,18 +78,29 @@ def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[s
             condition = condition.removeprefix("is ").removeprefix("are ").strip()
             if len(things[matched]["condition"]) >= 2 or len(condition) > 40:
                 issues.append(f"setting fact for {matched!r} could not be added as a condition")
+                unconsumed_setting_facts.append(setting)
                 continue
             things[matched]["condition"].append(condition)
             continue
         separator = next((separator for separator in (" is ", " are ") if separator in phrase), None)
         if separator is None:
             issues.append(f"setting fact {setting!r} could not be parsed")
+            unconsumed_setting_facts.append(setting)
             continue
         name, condition = (part.strip() for part in phrase.split(separator, 1))
         if not name or len(condition) > 40:
             issues.append(f"setting fact {setting!r} exceeds item-facts limits")
+            unconsumed_setting_facts.append(setting)
             continue
         issues.append(f"setting fact for unplaced thing {name!r}: {setting!r}")
+        unconsumed_setting_facts.append(setting)
+    return things, issues, unconsumed_setting_facts
+
+
+def package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[str]]:
+    """Build tracked things from the authored placements and setting facts."""
+
+    things, issues, _ = _package_seed(package, state, scene_id)
     return things, issues
 
 
@@ -132,6 +142,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _object_place_rule(self) -> str:
         return "Each thing starts at the place THINGS gives it."
+
+    def _prepare_turn_visibility(self) -> None:
+        super()._prepare_turn_visibility()
+        package = self.state.package
+        items = {item.id: item for item in package.world.items}
+        for item_id, placement in self._current_scene().item_placements.items():
+            item = items.get(item_id)
+            if (
+                item is None
+                or item.name in self.item_facts
+                or not isinstance(placement, ItemPlacement)
+                or (placement.while_fact_false is None and placement.while_fact_true is None)
+            ):
+                continue
+            if not item_placement_is_visible(placement, self._placement_facts()):
+                continue
+            place = placement if isinstance(placement, str) else placement.placement
+            self.item_facts[item.name] = {"place": place, "condition": []}
+            self.item_facts_seed_names = (*self.item_facts_seed_names, item.name)
+            if self._selected_names is None:
+                self._selected_names = self.dependency_names()
+            self._selected_names.append(item.name)
 
     def __init__(
         self,
@@ -260,7 +292,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return []
 
     def _setting_fact_rules(self) -> list[str]:
-        return []
+        package = getattr(self.state, "package", None)
+        if package is None:
+            return []
+        _, _, unconsumed = _package_seed(package, self.state, self.state.current_scene_id)
+        return unconsumed
 
     def _system_rules(self, opening: bool) -> list[str]:
         if self.prompt_variant and self.prompt_variant.get("constant_rules_in_system") is True:
@@ -359,12 +395,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _merge_entry(self, name: str, value: dict[str, object]) -> bool:
         facts = self.item_facts[name]
+        place_pole: str | None = None
         if "place" in value:
             place = value["place"]
             if not isinstance(place, str) or not place.strip():
                 return False
-            pole = self._axis_match(name, place)
-            if pole is None:
+            place_pole = self._axis_match(name, place)
+            if place_pole is None:
                 current_place = facts.get("place")
                 repeated_place = (
                     isinstance(current_place, str) and current_place.strip().casefold() == place.strip().casefold()
@@ -375,17 +412,39 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     )
                 elif not repeated_place:
                     facts["place"] = place.strip()[:80]
-            else:
-                self._apply_conditions(name, [pole], replace=False)
-                self.item_facts_axis_fixes += 1
         if "condition" in value:
             condition = value["condition"]
             if not isinstance(condition, list) or any(
                 not isinstance(item, str) or not item.strip() for item in condition
             ):
                 return False
-            if condition:
-                self._apply_conditions(name, condition[:2])
+
+        before_pole = next(
+            (self._axis_match(name, item) for item in facts["condition"] if self._axis_match(name, item) is not None),
+            None,
+        )
+        reply_poles = [place_pole] if place_pole is not None else []
+        if "condition" in value:
+            reply_poles.extend(
+                pole for item in value["condition"] if (pole := self._axis_match(name, item)) is not None
+            )
+        distinct_poles = set(reply_poles)
+        changed_pole = None
+        if len(distinct_poles) > 1 and before_pole is not None:
+            differing_poles = {pole for pole in distinct_poles if pole != before_pole}
+            if len(differing_poles) == 1:
+                changed_pole = differing_poles.pop()
+
+        if place_pole is not None:
+            if changed_pole is None or changed_pole == place_pole:
+                self._apply_conditions(name, [place_pole], replace=False)
+            self.item_facts_axis_fixes += 1
+        if "condition" in value and value["condition"]:
+            conditions = value["condition"]
+            if changed_pole is not None:
+                conditions = [item for item in conditions if self._axis_match(name, item) in (None, changed_pole)]
+            if conditions:
+                self._apply_conditions(name, conditions[:2])
         return True
 
     def _axis_match(self, name: str, text: str) -> str | None:

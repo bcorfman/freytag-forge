@@ -77,6 +77,45 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-E — The KMS Mark
+
+**Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin does not yet have Michelle's memory card.
+
+**Participants / items**
+- Kristin Schweitzer
+- Michelle's workstation drawer carved KMS
+- Hidden memory card
+
+**Dramatic purpose**
+- Let the KMS mark reward a careful search of Michelle's workstation before the patrol closes in.
+
+**Possible realizations**
+- Kristin searches beneath the KMS drawer, finds Michelle's hidden memory card, and keeps it with her.
+
+**Effects**
+- May set `memory_card_in_kristins_custody` when Kristin finds the card.
+
+**Completion**
+- Kristin has Michelle's memory card.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 1`
+- target: `turn 3`
+- latest: `turn 12`
+
+---
+
 ### SL-1A-B — Michelle Hid Something for Kristin
 
 **Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation), [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)

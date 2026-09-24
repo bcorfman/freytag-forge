@@ -10,6 +10,7 @@ from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, p
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import ItemPlacement
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative")
@@ -58,7 +59,56 @@ def test_things_are_after_scene_and_render_single_value_facts():
         "CONSTRAINTS:"
     ) in user
     assert provider._placement_rules() == []
+    assert provider._setting_fact_rules() == ["The drawer holds pens, binder clips, a stapler, and spare batteries."]
+
+
+def test_untracked_setting_fact_reaches_turn_and_opening_prompts(monkeypatch):
+    provider = _provider()
+    fact = "The drawer holds pens, binder clips, a stapler, and spare batteries."
+
+    turn = provider.assemble_turn_prompt("Search the workstation for useful supplies.")
+    assert fact in provider._section_user_prompt(turn["context"])
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    assert fact in provider.last_prompt["user"]
+
+
+def test_tracked_setting_fact_does_not_reach_prompt_as_text():
+    provider = _provider()
+    turn = provider.assemble_turn_prompt("Check the drawer.")
+    user = provider._section_user_prompt(turn["context"])
+
+    assert "The drawer is shut." not in user
+    assert "The drawer holds pens, binder clips, a stapler, and spare batteries." in user
+
+
+def test_scene_with_every_setting_fact_tracked_sends_no_setting_fact_rules():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    metadata = scene.metadata.model_copy(update={"setting_facts": ("The drawer is shut.",)})
+    package = PACKAGE.model_copy(
+        update={
+            "scenes": tuple(
+                scene.model_copy(update={"metadata": metadata}) if item is scene else item for item in PACKAGE.scenes
+            )
+        }
+    )
+    state = RuntimeState(package=package, current_scene_id="1A", phase="exposition")
+    state._assert_scene_entry_fact("1A")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={"drawer": {"place": "in Michelle's workstation", "condition": []}},
+        mode="single_call",
+    )
+
+    turn = provider.assemble_turn_prompt("Check the drawer.")
     assert provider._setting_fact_rules() == []
+    assert "The drawer is shut." not in provider._section_user_prompt(turn["context"])
 
 
 def test_player_block_places_come_before_the_command():
@@ -448,12 +498,78 @@ def test_fixed_item_axis_place_still_sets_pole_without_moving():
     assert provider.item_facts_axis_fixes == 1
 
 
-def test_movable_item_still_updates_place():
+@pytest.mark.parametrize(
+    "initial_condition, echoed_condition, place, expected_condition",
+    [
+        pytest.param("shut", "shut", "open", "open", id="axis_place_change_wins_over_echoed_condition"),
+        pytest.param("open", "open", "shut", "shut", id="axis_place_change_wins_in_reverse_direction"),
+        pytest.param("shut", "closed", "open", "open", id="axis_alias_echo_is_dropped_when_place_names_the_change"),
+    ],
+)
+def test_axis_place_change_overrides_echoed_condition(initial_condition, echoed_condition, place, expected_condition):
     provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": [initial_condition],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
 
-    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
+    provider.apply_item_facts({"drawer": {"condition": [echoed_condition], "place": place}})
 
-    assert provider.item_facts["the lantern"]["place"] == "in her hand"
+    assert provider.item_facts["drawer"]["condition"] == [expected_condition]
+
+
+@pytest.mark.parametrize("conditions", [["open", "shut"], ["shut", "open"]])
+def test_both_axis_poles_keep_the_pole_that_differs_from_before(conditions):
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": conditions}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open"]
+
+
+def test_axis_echo_keeps_the_existing_pole():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["shut"]}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["shut"]
+
+
+def test_axis_flip_keeps_non_axis_condition():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["open", "splintered"]}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open", "splintered"]
+
+
+def test_axis_echo_only_keeps_existing_non_axis_condition():
+    provider = _provider()
+    provider.item_facts["drawer"] = {
+        "place": "in Michelle's workstation",
+        "condition": ["shut", "KMS initials carved in"],
+    }
+    provider.state_axes = {"drawer": {"shut": ["closed"], "open": []}}
+
+    provider.apply_item_facts({"drawer": {"condition": ["shut"], "place": "open"}})
+
+    assert provider.item_facts["drawer"]["condition"] == ["open", "KMS initials carved in"]
 
 
 def test_state_axis_alias_is_canonical_and_evicts_opposite():
@@ -631,9 +747,6 @@ def test_item_facts_seed_validation_errors(bad_seed):
 @pytest.mark.parametrize(
     "axes",
     [
-        {"unknown": {"shut": [], "open": []}},
-        {"thing": {"shut": [], "open": [], "ajar": []}},
-        {"thing": {"shut": []}},
         {"thing": {"shut": ["closed"], "open": [" CLOSED "]}},
     ],
 )
@@ -741,7 +854,9 @@ def test_package_seed_scene_1a_matches_authored_things():
             "condition": ["overturned"],
         },
     }
-    assert issues == []
+    assert issues == [
+        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
+    ]
 
 
 def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
@@ -757,7 +872,9 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
         "place": "at Michelle's workstation",
         "condition": ["overturned"],
     }
-    assert issues == []
+    assert issues == [
+        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
+    ]
 
 
 def test_package_seed_accepts_the_prefix_case_insensitively():
@@ -781,6 +898,28 @@ def test_package_seed_hides_guarded_3c_archive():
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(PACKAGE, state, "3C")
     assert "Portable data case" not in things
+
+
+def test_package_seed_honors_true_guarded_placement():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "3C")
+    placement = scene.metadata.item_placements["portable_archive"]
+    guarded = ItemPlacement(placement=placement.placement, while_fact_true="portable_archive_secured")
+    metadata = scene.metadata.model_copy(update={"item_placements": {"portable_archive": guarded}})
+    package = PACKAGE.model_copy(
+        update={
+            "scenes": tuple(
+                scene.model_copy(update={"metadata": metadata}) if item is scene else item for item in PACKAGE.scenes
+            )
+        }
+    )
+    state = RuntimeState(package=package, current_scene_id="3C", phase="resolution")
+    state._assert_scene_entry_fact("3C")
+
+    things, _ = package_seed(package, state, "3C")
+    assert "Portable data case" not in things
+    state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
+    things, _ = package_seed(package, state, "3C")
+    assert things["Portable data case"] == {"place": placement.placement, "condition": []}
 
 
 @pytest.mark.parametrize("change", [{"fixed_turns": 1}, {"scene": "9Z", "fixed_turns": 1, "script": "x"}])
@@ -870,19 +1009,26 @@ def test_place_entry_updates_location():
     assert provider.item_facts["the lantern"]["place"] == "on the floor"
 
 
-def test_same_turn_match_can_add_a_new_tracked_thing(monkeypatch):
+@pytest.mark.parametrize(
+    "same_as_target, expected_resolution",
+    [
+        pytest.param("new", "new", id="same_turn_match_can_add_a_new_tracked_thing"),
+        pytest.param("the notebook", "new", id="self_mapping_adds_new_thing_same_turn"),
+    ],
+)
+def test_same_turn_match_adds_a_new_tracked_thing(monkeypatch, same_as_target, expected_resolution):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
         "_request",
-        lambda *_args: {"refers": [], "same_as": {"the notebook": "new"}},
+        lambda *_args: {"refers": [], "same_as": {"the notebook": same_as_target}},
     )
     provider.apply_item_facts(
         {"the notebook": {"place": "on the desk", "condition": ["open"]}},
         player_input="Pick up the notebook.",
     )
     result = provider.last_item_facts_match()
-    assert result["resolutions"] == {"the notebook": "new"}
+    assert result["resolutions"] == {"the notebook": expected_resolution}
     assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
@@ -984,18 +1130,21 @@ def test_prepare_turn_skips_match_when_all_things_are_dependencies(monkeypatch):
     assert provider._selected_names == provider.dependency_names()
 
 
-def test_resolve_refer_exact_name():
-    assert _resolve_refer("the lantern", ["the lantern"]) == "the lantern"
+@pytest.mark.parametrize(
+    "name, tracked, expected",
+    [
+        pytest.param("the lantern", ["the lantern"], "the lantern", id="resolve_refer_exact_name"),
+        pytest.param("chair", ["workstation chair"], "workstation chair", id="resolve_refer_chair_short_name"),
+    ],
+)
+def test_resolve_refer_exact_or_short_name(name, tracked, expected):
+    assert _resolve_refer(name, tracked) == expected
 
 
 def test_resolve_refer_laptop_short_names():
     tracked = ["Kristin's laptop"]
     assert _resolve_refer("laptop", tracked) == "Kristin's laptop"
     assert _resolve_refer("my laptop", tracked) == "Kristin's laptop"
-
-
-def test_resolve_refer_chair_short_name():
-    assert _resolve_refer("chair", ["workstation chair"]) == "workstation chair"
 
 
 def test_resolve_refer_ambiguous_or_unmatched_names():
@@ -1057,22 +1206,6 @@ def test_same_as_tracked_name_merges_new_entry_same_turn(monkeypatch):
     assert result["resolutions"] == {"the old lamp": "the lantern"}
     assert provider.item_facts["the lantern"] == {"place": "by the door", "condition": ["warm"]}
     assert "the old lamp" not in provider.item_facts
-
-
-def test_self_mapping_adds_new_thing_same_turn(monkeypatch):
-    provider = _provider()
-    monkeypatch.setattr(
-        CloudflareTurnProvider,
-        "_request",
-        lambda *_args: {"refers": [], "same_as": {"the notebook": "the notebook"}},
-    )
-    provider.apply_item_facts(
-        {"the notebook": {"place": "on the desk", "condition": ["open"]}},
-        player_input="Pick up the notebook.",
-    )
-    result = provider.last_item_facts_match()
-    assert result["resolutions"] == {"the notebook": "new"}
-    assert provider.item_facts["the notebook"] == {"place": "on the desk", "condition": ["open"]}
 
 
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
@@ -1230,14 +1363,17 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     assert result["status"] == "ok"
-    assert len(result["turns"]) == 18
-    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 12 + ["1B"] * 6
+    assert len(result["turns"]) == 19
+    assert [turn["scene_id"] for turn in result["turns"]] == ["1A"] * 13 + ["1B"] * 6
     assert result["scene_transitions"] == [
-        {"from_scene": "1A", "to_scene": "1B", "after_turn": 12, "advanced_offline": True}
+        {"from_scene": "1A", "to_scene": "1B", "after_turn": 13, "advanced_offline": False}
     ]
-    assert "Michelle's phone" not in result["turns"][11]["item_facts_after"]
-    assert "Kristin's laptop" not in result["turns"][12]["item_facts_before"]
-    assert len(calls) == 37
+    assert result["turns"][1]["authored_handoff_candidate_id"] == "k_sl_1a_b_r0"
+    assert result["turns"][12]["authored_handoff_candidate_id"] == "k_sl_1a_b_r1"
+    assert result["rejected_turns"] == []
+    assert "Michelle's phone" not in result["turns"][12]["item_facts_after"]
+    assert "Kristin's laptop" not in result["turns"][13]["item_facts_before"]
+    assert len(calls) == 39
 
 
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):

@@ -67,6 +67,7 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     """Temporary deterministic E2E fixture retained through every redesign phase."""
 
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     projector = KnowledgeProjector(max_candidates=8)
 
     opening = projector.project(state, "player", "Inspect Michelle's phone.")
@@ -77,7 +78,7 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     # Shadow eligibility starts only after the package's route has activated;
     # the warning is still a candidate, never a committed discovery.
     state.active_event_ids.update({"SL-1A-A", "SL-1A-B"})
-    recording = projector.project(state, "player", "Search the desk drawer for Michelle's damaged recording.")
+    recording = projector.project(state, "player", "Play the damaged recording on Michelle's memory card.")
     assert "k_sl_1a_b_r2" in _ids(recording.candidates)
     assert "k_sl_1a_b_r2" not in _ids(recording.committed_knowledge)
     assert recording.payload_size() < 8_192
@@ -136,23 +137,25 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "The cracked phone is nearly out of power.",
-                        "grounding_ids": ["k_scene_1a_entry"],
+                        "text": "A memory card is taped beneath the KMS drawer. Michelle left it there.",
+                        "grounding_ids": ["k_sl_1a_b_r0"],
                     }
-                ]
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r0"],
             },
             {
                 "segments": [
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin secures Michelle's memory card from under the drawer carved with her initials, "
-                            "KMS, and plays its damaged recording, which warns her not to trust emergency broadcasts."
+                            "The card holds Michelle's saved files and a damaged recording. The recording warns, "
+                            '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
+                            "point to a dead drop at a bench in the park."
                         ),
-                        "grounding_ids": ["k_sl_1a_b_r2"],
+                        "grounding_ids": ["k_sl_1a_b_r1"],
                     }
                 ],
-                "selected_knowledge_ids": ["k_sl_1a_b_r2"],
+                "selected_knowledge_ids": ["k_sl_1a_b_r1"],
             },
             {
                 "segments": [
@@ -168,18 +171,15 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
 
     expected_candidates = (
         {"k_sl_1a_a_r1"},
+        {"k_sl_1a_b_r0"},
         {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
-        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
-        # This run took the damaged recording before Michelle's files, which used to
-        # consume Scene 1A's only source of the actionable lead. The memory card
-        # recovery now appears alongside the patrol beat so the scene stays winnable.
-        {"k_sl_1a_c_r1", "k_sl_1a_c_r2", "k_sl_1a_d_r1"},
+        {"k_sl_1a_c_r1", "k_sl_1a_c_r2"},
     )
     for player_input, expected in zip(
         (
             "Inspect the back door.",
-            "Examine Michelle's phone.",
-            "Search the desk and drawer for Michelle's research or a damaged recording.",
+            "Look beneath the KMS drawer.",
+            "Read the files on Michelle's memory card.",
             "Check the gate.",
         ),
         expected_candidates,
@@ -347,15 +347,4 @@ def test_entity_references_use_whole_words_and_authored_aliases() -> None:
     assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
     assert "memory_card" in _input_referenced_entity_ids(world, "Check Shelly's memory card.")
     assert "mcgehee_home" not in _input_referenced_entity_ids(world, "Inspect Shelly's housework.")
-    assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()
-
-
-def test_a_player_may_name_an_entity_by_its_alias_or_short_form() -> None:
-    """A player writes "Shelly" or "the memory card", not the credited full name."""
-
-    from storygame.runtime.knowledge import _input_referenced_entity_ids
-
-    world = PACKAGE.world
-    assert "michelle" in _input_referenced_entity_ids(world, "Call Shelly again.")
-    assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
     assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()

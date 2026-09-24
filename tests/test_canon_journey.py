@@ -23,7 +23,7 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 # Alternate-realization coverage at the default 60-second turn cadence.
 UNCLOCKED_JOURNEY = [
     ("k_sl_1a_a_r1", "1A"),
-    (None, "1A"),
+    ("k_sl_1a_b_r0", "1A"),
     (None, "1A"),
     (None, "1A"),
     ("k_sl_1a_b_r1", "1A"),
@@ -115,6 +115,8 @@ class _ScriptedProvider:
         if self.selected:
             knowledge = self.package.knowledge_indexes.by_id[self.selected[0]]
             text = knowledge.delivery_text or knowledge.statement
+            if self.selected[0] == "k_sl_1a_b_r0":
+                text = "A memory card is taped beneath the KMS drawer. Michelle left it there."
         return {
             "segments": [
                 {
@@ -182,9 +184,10 @@ def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:
     engine = RuntimeEngine(state, provider)
 
     _drive(engine, provider, "k_sl_1a_a_r1", clock_seconds=120)
+    _drive(engine, provider, "k_sl_1a_b_r0", clock_seconds=0)
     _drive(engine, provider, "k_sl_1a_b_r1", clock_seconds=75)
     window = next(item for item in package.pacing.scenes if item.scene_id == "1A")
-    for _ in range(window.min_turns - 3):
+    for _ in range(window.min_turns - 4):
         _drive(engine, provider, None, clock_seconds=0)
     assert state.current_scene_id == "1A"
     _drive(engine, provider, None, clock_seconds=0)

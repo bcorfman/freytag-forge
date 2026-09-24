@@ -25,28 +25,31 @@ from storygame.runtime.contracts import (
     contract_error_summary,
     parse_turn_proposal,
 )
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
     derive_statement_grounding,
-    predicate_matches,
     unconveyed_terms,
 )
-from storygame.story_package.models import FactPredicate, Item, ItemPlacement, Scene, SceneBeat, SceneMetadata
+from storygame.story_package.models import (
+    Item,
+    ItemPlacement,
+    Scene,
+    SceneBeat,
+    SceneMetadata,
+    item_placement_is_visible,
+)
 
 logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
 
 DEFAULT_OUTPUT_EXAMPLE = (
-    '{"segments":[{"kind":"narration","text":"The drawer sticks, then gives. Inside, under a curl of packing tape, '
-    "her fingers find the flat edge of something that was never meant to be seen from above, and the "
-    'kitchen behind her goes very quiet."},{"kind":"narration","text":"She works it loose and turns it over in the '
-    "light from the window. "
-    "The plastic is scuffed at one corner, as though it had been pressed into place in a hurry, and "
-    'the initials carved into the drawer front suddenly read less like affection than instruction."}],'
-    '"selected_knowledge_ids":[]}'
+    '{"segments":[{"kind":"narration","text":"She picks up the lantern. She carries it out to the porch."},'
+    '{"kind":"narration","text":"She lights it with a match, and it glows with a warm light. She hands it to her '
+    'neighbor, who takes it with a nod."}],"selected_knowledge_ids":[]}'
 )
 
 # Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
@@ -231,6 +234,7 @@ class CloudflareTurnProvider:
         self.model_grounding_ids: tuple[str, ...] = ()
         self.shadow_matched_candidate_id: str | None = None
         self.authored_handoff: AuthoredHandoff | None = None
+        self._forced_beat_anchors: set[str] = set()
         self.prompt_candidate_ids: tuple[str, ...] = ()
         self._example_player_input = ""
         self.prompt_variant = prompt_variant
@@ -273,6 +277,7 @@ class CloudflareTurnProvider:
         self._example_player_input = player_input
         self.last_projection = self.projector.project(self.state, "player", player_input)
         self.authored_handoff = uniquely_matched_authored_handoff(player_input, self.last_projection.candidates)
+        self._prepare_turn_visibility()
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
@@ -299,6 +304,20 @@ class CloudflareTurnProvider:
         }
         context["_rules"] = self._turn_rules()
         return {"system": self._system_prompt(), "context": context}
+
+    def _prepare_turn_visibility(self) -> None:
+        """Give subclasses a chance to track items newly visible this turn."""
+
+    def _placement_facts(self):
+        facts = self.state.facts.clone()
+        if getattr(self, "authored_handoff", None) is not None:
+            knowledge = self.state.package.knowledge_indexes.by_id[self.authored_handoff.candidate.id]
+            for operation in knowledge.establishes:
+                if operation.op == "assert":
+                    facts.assert_fact(
+                        Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower())
+                    )
+        return facts
 
     def _shadow_matched_candidate_id(self, player_input: str) -> str | None:
         """Record a matcher result without changing the narrated turn.
@@ -367,7 +386,7 @@ class CloudflareTurnProvider:
     def _object_place_rule(self) -> str:
         return "Keep each object where the scene puts it."
 
-    def _constant_turn_rules(self) -> list[str]:
+    def _turn_rules_before_grounding(self) -> list[str]:
         return [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
@@ -378,11 +397,24 @@ class CloudflareTurnProvider:
             f"Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
-            "A character may only say what you were told that character can say.",
+        ]
+
+    def _turn_grounding_rule(self) -> str:
+        return "A character may only say what you were told that character can say."
+
+    def _turn_rules_after_selection(self) -> list[str]:
+        return [
             "Never write IDs or story bookkeeping into the prose.",
             "Do not copy sentences from the SCENE section.",
             "Do not say anything that goes against the SCENE section.",
             "Do not repeat the request's labels back.",
+        ]
+
+    def _constant_turn_rules(self) -> list[str]:
+        return [
+            *self._turn_rules_before_grounding(),
+            self._turn_grounding_rule(),
+            *self._turn_rules_after_selection(),
         ]
 
     def _constant_opening_rules(self) -> list[str]:
@@ -450,9 +482,8 @@ class CloudflareTurnProvider:
         )
         complication_text = self.state.last_turn_delivery.complication_text
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
-        constant_rules = self._constant_turn_rules()
         default_rules = [
-            *constant_rules[:9],
+            *self._turn_rules_before_grounding(),
             *(
                 (
                     "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
@@ -461,9 +492,9 @@ class CloudflareTurnProvider:
                 if model_grounding
                 else ()
             ),
-            constant_rules[9],
+            self._turn_grounding_rule(),
             *selection_rules,
-            *constant_rules[10:],
+            *self._turn_rules_after_selection(),
         ]
         system_rules = self._system_rules(opening=False)
         configured_rules = self.prompt_variant.get("rules") if self.prompt_variant else None
@@ -493,12 +524,29 @@ class CloudflareTurnProvider:
             item = scene_items.get(item_id)
             if item is None:
                 continue
-            if isinstance(placement, ItemPlacement) and placement.while_fact_false:
-                guard = FactPredicate(fact_id=placement.while_fact_false, equals=True)
-                if predicate_matches(guard, self.state.facts):
-                    continue
+            if not item_placement_is_visible(placement, self._placement_facts()):
+                continue
             visible[item_id] = (item, placement)
         return visible
+
+    def _revealed_details(self, details: tuple[str, ...] | list[str]) -> list[str]:
+        visible_ids = set(self._visible_placed_items())
+        if self.last_projection is not None:
+            visible_ids.update(getattr(self.last_projection, "established_entity_ids", ()))
+        world_items = self.state.package.world.items
+        revealed_details: list[str] = []
+        for detail in details:
+            if any(
+                item.id not in visible_ids
+                and any(
+                    re.search(rf"(?<!\w){re.escape(surface)}(?!\w)", detail, re.IGNORECASE)
+                    for surface in (item.name, *item.aliases)
+                )
+                for item in world_items
+            ):
+                continue
+            revealed_details.append(detail)
+        return revealed_details
 
     def _owner_rules(self) -> list[str]:
         visible_items = self._visible_placed_items()
@@ -509,7 +557,15 @@ class CloudflareTurnProvider:
         ]
         if not possessive_items:
             return []
-        return [f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}."]
+        ownership_rules = [
+            f"{item_name} stores only {match.group('owner')}{match.group('possessive')} things."
+            for item_name in possessive_items
+            if (match := re.fullmatch(r"(?P<owner>.+)(?P<possessive>['’]s)\s+.+", item_name))
+        ]
+        return [
+            f"Say who owns a thing the first time you name it: {', '.join(possessive_items)}.",
+            " ".join(ownership_rules),
+        ]
 
     def _placement_rules(self) -> list[str]:
         rules = []
@@ -526,15 +582,17 @@ class CloudflareTurnProvider:
 
         if self.prompt_variant and not self.prompt_variant.get("include_output_example", True):
             return None
-        if self._is_authored_handoff_turn():
-            return DEFAULT_OUTPUT_EXAMPLE
         if self.prompt_variant and "output_example" in self.prompt_variant:
             example_text = self.prompt_variant["output_example"]
         else:
             candidates = self._model_candidates()
             example_candidate = (
                 self._example_candidate(candidates)
-                if self.prompt_variant and self.prompt_variant.get("positive_selection_example", False)
+                if (
+                    self.prompt_variant
+                    and self.prompt_variant.get("positive_selection_example", False)
+                    and not self._is_authored_handoff_turn()
+                )
                 else None
             )
             example_text = DEFAULT_OUTPUT_EXAMPLE
@@ -632,11 +690,12 @@ class CloudflareTurnProvider:
         """Return authored beat material that the player can earn on this turn.
 
         Beat prose is added only for storylets whose reveals are candidates on
-        this turn. The scene's beats describe what later reveals contain - Scene
-        2B's first beat names JANUS outright - so sending all of them would hand
-        the narrator knowledge the player has not earned. The projection already
-        supplies place and objective; this adds only the authored material the
-        player can earn now.
+        this turn. Beats of a runtime-owned reveal are sent only on the turn
+        that reveal is reached. The scene's beats describe what later reveals
+        contain - Scene 2B's first beat names JANUS outright - so sending all
+        of them would hand the narrator knowledge the player has not earned.
+        The projection already supplies place and objective; this adds only the
+        authored material the player can earn now.
         """
 
         setting: dict[str, object] = {}
@@ -650,7 +709,7 @@ class CloudflareTurnProvider:
                     "title": beat.title,
                     "anchor": beat.anchor,
                     "prose": beat.prose,
-                    "details": list(beat.details),
+                    "details": self._revealed_details(beat.details),
                     "your_job": (
                         "Show this world state only as far as the player's action reaches. Do not copy its words."
                     ),
@@ -684,6 +743,13 @@ class CloudflareTurnProvider:
             for realization in route.realizations
         }
         beats_by_anchor = {anchor: beat for scene in package.scenes for anchor, beat in scene.beats.items()}
+        current_scene = next(
+            (scene for scene in package.scenes if scene.metadata.scene_id == self.state.current_scene_id),
+            None,
+        )
+        opening_anchor = current_scene.opening_beat.anchor if current_scene is not None else None
+        handoff_candidate_id = self.authored_handoff.candidate.id if self.authored_handoff is not None else None
+        handoff_ids = self._handoff_eligible_candidate_ids()
         seen: set[str] = set()
         selected: list[SceneBeat] = []
         for candidate in self.last_projection.candidates if self.last_projection else ():
@@ -696,6 +762,13 @@ class CloudflareTurnProvider:
             realization = realizations.get((storylet.id, knowledge.source.realization_id))
             anchors = realization.source_beats if realization and realization.source_beats else storylet.source_links
             for anchor in anchors:
+                if (
+                    candidate.id in handoff_ids
+                    and candidate.id != handoff_candidate_id
+                    and anchor != opening_anchor
+                    and anchor not in self._forced_beat_anchors
+                ):
+                    continue
                 beat = beats_by_anchor.get(anchor)
                 if anchor not in seen and beat is not None:
                     seen.add(anchor)
@@ -746,7 +819,11 @@ class CloudflareTurnProvider:
             "phase": scene.freytag_phase,
             "objective": scene.objective,
             "entry_text": scene.entry_text,
-            "opening_beat": {"id": beat.id, "title": beat.title, "details": list(beat.details)},
+            "opening_beat": {
+                "id": beat.id,
+                "title": beat.title,
+                "details": self._revealed_details(beat.details),
+            },
         }
 
     def _dispatch(self, system: str, user: dict[str, object]) -> object:

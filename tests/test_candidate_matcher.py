@@ -1,3 +1,5 @@
+import pytest
+
 from storygame.runtime.candidate_matcher import (
     ActionEvidenceCandidate,
     uniquely_matched_authored_handoff,
@@ -36,32 +38,35 @@ FILES_HANDOFF = RevealCandidate(
 )
 
 
-def test_unique_complete_evidence_matches_one_candidate() -> None:
-    result = uniquely_matched_candidate("Recover the damaged recording and listen to it.", (WARNING, FILES))
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        pytest.param(
+            "Recover the damaged recording and listen to it.",
+            id="unique_complete_evidence_matches_one_candidate",
+        ),
+        pytest.param("Retrieve the broken recording and play it.", id="declared_paraphrase_matches_without_inference"),
+    ],
+)
+def test_complete_evidence_matches_one_candidate(player_input: str) -> None:
+    result = uniquely_matched_candidate(player_input, (WARNING, FILES))
 
     assert result == WARNING
 
 
-def test_declared_paraphrase_matches_without_inference() -> None:
-    result = uniquely_matched_candidate("Retrieve the broken recording and play it.", (WARNING, FILES))
-
-    assert result == WARNING
-
-
-def test_partial_evidence_does_not_match() -> None:
-    result = uniquely_matched_candidate("Recover the damaged recording.", (WARNING, FILES))
-
-    assert result is None
-
-
-def test_unrelated_action_does_not_match() -> None:
-    result = uniquely_matched_candidate("Search the kitchen for signs of a struggle.", (WARNING, FILES))
-
-    assert result is None
-
-
-def test_negated_action_does_not_match() -> None:
-    result = uniquely_matched_candidate("Do not recover the damaged recording or listen to it.", (WARNING, FILES))
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        pytest.param("Recover the damaged recording.", id="partial_evidence_does_not_match"),
+        pytest.param("Search the kitchen for signs of a struggle.", id="unrelated_action_does_not_match"),
+        pytest.param(
+            "Do not recover the damaged recording or listen to it.",
+            id="negated_action_does_not_match",
+        ),
+    ],
+)
+def test_nonmatching_evidence_does_not_match(player_input: str) -> None:
+    result = uniquely_matched_candidate(player_input, (WARNING, FILES))
 
     assert result is None
 
@@ -80,12 +85,21 @@ def test_card_reference_aliases_match_only_the_intended_reveal() -> None:
         assert result.id == expected_id
 
 
-def test_card_reference_without_the_reveal_action_does_not_match() -> None:
-    assert uniquely_matched_candidate("Ask Brandon about the memory card.", (WARNING, FILES)) is None
-
-
-def test_negated_recording_action_does_not_match_with_card_alias() -> None:
-    assert uniquely_matched_candidate("Do not listen to the damaged recording.", (WARNING, FILES)) is None
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        pytest.param(
+            "Ask Brandon about the memory card.",
+            id="card_reference_without_the_reveal_action_does_not_match",
+        ),
+        pytest.param(
+            "Do not listen to the damaged recording.",
+            id="negated_recording_action_does_not_match_with_card_alias",
+        ),
+    ],
+)
+def test_missing_or_negated_reveal_action_does_not_match(player_input: str) -> None:
+    assert uniquely_matched_candidate(player_input, (WARNING, FILES)) is None
 
 
 def test_ambiguous_complete_evidence_does_not_break_ties() -> None:
@@ -119,19 +133,22 @@ def test_authored_handoff_accepts_declared_aliases() -> None:
     assert result.candidate.id == "warning"
 
 
-def test_authored_handoff_rejects_partial_input() -> None:
-    assert uniquely_matched_authored_handoff("Recover the damaged recording.", (WARNING_HANDOFF,)) is None
-
-
-def test_authored_handoff_rejects_negated_input() -> None:
-    assert (
-        uniquely_matched_authored_handoff("Do not recover the damaged recording or listen to it.", (WARNING_HANDOFF,))
-        is None
-    )
-
-
-def test_authored_handoff_rejects_no_offered_candidate() -> None:
-    assert uniquely_matched_authored_handoff("Search the kitchen for signs of a struggle.", (WARNING_HANDOFF,)) is None
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        pytest.param("Recover the damaged recording.", id="authored_handoff_rejects_partial_input"),
+        pytest.param(
+            "Do not recover the damaged recording or listen to it.",
+            id="authored_handoff_rejects_negated_input",
+        ),
+        pytest.param(
+            "Search the kitchen for signs of a struggle.",
+            id="authored_handoff_rejects_no_offered_candidate",
+        ),
+    ],
+)
+def test_authored_handoff_rejects_nonmatching_input(player_input: str) -> None:
+    assert uniquely_matched_authored_handoff(player_input, (WARNING_HANDOFF,)) is None
 
 
 def test_authored_handoff_rejects_two_matching_candidates() -> None:

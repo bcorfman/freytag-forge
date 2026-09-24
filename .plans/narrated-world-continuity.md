@@ -1,10 +1,11 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-23): Phase 0 bench work is through round 9 and a long
-follow-up of single-mechanism runs (v11-v20b), all on branch `round9`, not
-merged. Brandon's round 9 review is scored and acted on ("Round 9 review",
-at the top of "State at hand-off (2026-09-22)"), which is where a new
-session should start. Round 8's code is merged to `main` (PR #469,
+Status (2026-09-23, end of day): Phase 0 bench work is through round 9 and
+single-mechanism runs v11-v26, all on branch `round9`, not merged. A new
+session should start at "State at hand-off (2026-09-23) - START HERE" in
+Phase 0. It lists what changed in v21-v26, the next steps in order, the
+story-package authoring rules any ChatGPT story prompt must state, and how
+to run a measurement. Round 8's code is merged to `main` (PR #469,
 PR #470). For history read "Round 9", "Round 9 as built", "Round 9 run" and
 "Round 9 follow-up" at the end of Phase 0.
 
@@ -1171,7 +1172,120 @@ and compared against 25/48 on the same basis. Phase 0's exit criterion of 92%
 per change type remains unmet and remains the gate; at 48% clean, round 9 is a
 mechanism round, not the round that meets it.
 
-**State at hand-off (2026-09-22) - START HERE**
+**State at hand-off (2026-09-23) - START HERE**
+
+*Where things stand.* Branch `round9`, tree clean, full suite green
+(705 passed), ruff clean, nothing running, not merged to `main`. The last
+measurement is v26 (the "v26" entry below). This session's commits, oldest
+first:
+- `6236d02`: a failed judge's reason is written into `summary.json`
+  (`judge_failure_reason`, and each failure record is marked failed).
+- `4473aae`: a narrator rule, "<owner>'s <thing> stores only <owner>'s
+  things.", on the turn and opening paths; `_turn_rules` is built from
+  named rule groups instead of slices.
+- `5bad989`: one sentence splitter shared by the plain and masked paths.
+- `20d3c90`: a reply naming both poles of an axis keeps the pole that
+  differs from the state before the reply; an echo that leaves no condition
+  changes none.
+- `404ee5b`: beat details naming a world item that is not placed in the
+  scene and not established are withheld from the narrator.
+- `8368be4` (shipped runtime): a runtime-owned reveal's source beats reach
+  the prompt only on the turn its handoff matches; the scene's opening beat
+  is always sent; narrator-selected candidates are unchanged.
+- `d9b70bf`, then `31b0a34`: the two-scene bench script and the story
+  package now find the memory card (SL-1A-E, `k_sl_1a_b_r0`, "Look beneath
+  the KMS drawer.") separately from reading it (`k_sl_1a_b_r1`, "Read the
+  files on Michelle's memory card with my laptop."). ChatGPT authored this
+  and Brandon approved it, including two phrase fixes: R0 owns "Michelle's
+  card", "the card" and "hidden card".
+- `d192126`: a `while_fact_true` placement guard (one helper shared by the
+  runtime and the bench seed); on a matched reveal's turn, guards are judged
+  as if that reveal's asserted facts already held; the bench starts
+  tracking a placed thing the first time it becomes visible.
+
+*Next steps, in order:*
+1. DONE in `0117d51`, measured as v26 (the "v26" entry below): the copied
+   example on reveal turns is gone. Reveal turns use the variation's
+   example, and the default example is story-neutral.
+2. DONE in `3c99b23` and `3253adb` (the "Judge story_text" entry below):
+   the continuity judge reads only the narrator's prose plus story_text,
+   and its remaining reveal-turn flags now cite the narrator's own
+   sentences. Two real gaps the fact judge exposed stay open: the find
+   reveal's text says the card "is taped beneath" but the story places it
+   "with Kristin" (a story fix for the step 3 ChatGPT prompt), and changes
+   that only story_text shows (the drive to the park) are never captured,
+   because capture comes from the narrator's reply, written before the
+   story text is appended.
+3. DONE in `1b45b71` and `6ddd0b2`, measured as v27 (the "v27" entry
+   below): the drawer's contents are authored, the frame no longer points
+   at research, and the find reveal has Kristin take the card. Open from
+   v27: the narrator re-enters the house or re-walks to the truck on the
+   reveal turns (restarts_scene 7 cells), and once invents Michelle's
+   laptop open with a "Confidential" folder at t13.
+4. Phase 0's exit gate (92% per change type) is still unmet. Decide
+   whether `round9` is merged to `main` before Phase 1's decisions.
+5. Small review nits, none urgent. `_candidate_beats` reads
+   `self._forced_beat_anchors` directly, so a provider built with
+   `__new__` and given candidates would fail. `_turn_grounding_rule`
+   misnames the "A character may only say..." rule. The splitter's
+   `_drop_separator` keeps an unused no-map branch. `_mark_judge_failures`
+   uses `setdefault`, so an explicit `failure_reason: None` would survive.
+   Reveal-turn visibility and the bench's mid-scene tracking are covered
+   only by the bench test and not by unit tests of their own.
+
+*Story-package authoring rules.* The loader and tests enforce these. Every
+ChatGPT story prompt must state them, because ChatGPT does not know them and
+each one cost a round trip this session:
+- Delivering any realization of a storylet fires the whole storylet
+  (`state.py` `apply_proposal`), and a reveal is offered only while its
+  storylet is active and not fired (`knowledge.py`). Two reveals that must
+  both happen need separate storylets.
+- A storylet no scene transition depends on is dropped after its
+  `latest_turn`, and its `latest_turn` must be below the scene's
+  `handoff_after_turns` (1A: 13). The scene's deadline ends it at that turn.
+- Within a scene, storylet `target_turn`s must be unique and increase in
+  file order; `earliest_turn <= target_turn <= handoff_after_turns`.
+- A reveal realization without `source_beats` falls back to its
+  storylet's `source_links`, and those beats are sent on its reveal turn.
+- A reveal's `statement` must contain a phrase from every `must_convey`
+  group (groups naming "under the drawer" are exempt).
+- A multi-word `must_convey` phrase is owned by its knowledge. A scene's
+  entry text and frame may use it only if the owner is established at that
+  scene's entry, and narration naming it is rejected unless an owner is
+  committed, the phrase is in a projected beat, or the turn's reveal text
+  contains it. Dropping a phrase from every owner leaves it unguarded.
+- `action_evidence`: one player sentence must hold a phrase from every
+  group; phrases match as whole words, ignoring case, with no stemming;
+  compound commands are split into sentences first; a sentence containing
+  not/no/never/without/avoid/cannot/don't/do never matches. Exactly one
+  candidate may match, or none is delivered.
+- Story text changes go to ChatGPT Desktop with a self-contained prompt
+  that states the relevant rules above. Apply its blocks verbatim, and
+  check them against the loader before a worker applies them.
+
+*How to run a measurement now.* The script is 19 turns: 13 in 1A (t1 open
+the KMS drawer, t2 find the card, t3-t12 the old middle turns, t13 read the
+card) then 6 in 1B. One Ringer task per run, `engine: codex`,
+`model: gpt-5.6-luna`, `task_type: probe`, `full_access: true`,
+`max_attempts: 1`, from the repo root:
+`set -a; [ -f .env ] && . ./.env; set +a; TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-package-two-scene.json --scene 1A --replicates 2 --script change-types --out bench/results/item-facts-v<N>-<name>-two-scene-1a --confirm`
+Run `--replicates 1` into a `-smoke-` directory first and read it. The
+check never calls a model. It asserts the replicate count, 19 turns each,
+no rejected turns, both judgment files, no `judge_failure_reason`, and a
+non-empty `prompt_user` containing "PLAYER:" on every turn. It then prints
+the judge tallies and the t2/t6/t13 narrations. A run takes about 2 minutes
+per replicate. Code changes go through a worktree Ringer task whose check
+exports a patch; review the patch, then apply it and commit on `round9`.
+Two gotchas:
+- A fresh worktree's `uv run` can fail to download `en_core_web_sm` (TLS
+  error), which fails a check that is otherwise fine. Confirm by applying
+  the exported patch to the main checkout and running the probes and the
+  suite with the main `.venv`.
+- A worker told to make the suite pass may weaken a test or monkeypatch
+  away the path under test (it happened in `31b0a34`'s first attempt).
+  Review every changed assertion, and forbid both in the spec.
+
+**State at hand-off (2026-09-22)** (superseded; kept for history)
 
 *Round 9 review (2026-09-23).* Brandon's per-turn comments in
 `bench/results/round9.md` (local only, not in git) score round 9 at 18/36 turns with a
@@ -1218,10 +1332,212 @@ Acted on:
   model drop owners and exact-only matching then lost the thing. Live A/B
   (`bench/results/probes/match-overselect-ab.json`, 18 commands x 5
   samples, one late-game store): unrelated things on who-questions 5/10 ->
-  0/10, named things kept 86/95 -> 95/95. No full bench run has measured
-  the two together yet.
+  0/10, named things kept 86/95 -> 95/95. Measured together in v21 below.
 
-Branch `round9` at `5b54d85`, tree clean, full suite green, nothing running.
+*v21 (2026-09-23, `bench/results/item-facts-v21-matchfix-two-scene-1a`,
+every-turn report `bench/results/v21.md`, awaiting Brandon's comments).*
+Built on three commits: `6236d02` writes a failed judge's reason into
+`summary.json` (`judge_failure_reason`, and each failure record is marked
+failed with it; v20b's own summary still shows the old silent failure);
+`4473aae` adds one narrator sentence per owned thing after the owner rule
+("Michelle's phone stores only Michelle's things. Kristin's laptop stores
+only Kristin's things.", turn and opening paths) for the t6 password/tabs
+defect, and builds `_turn_rules` from named groups instead of slicing;
+`5bad989` shares one splitter between the plain and masked paths.
+- t6 "Open my laptop." shows Kristin's own login or desktop 2/2 (v20b: 1/2
+  drifted into Michelle's tabs).
+- GIVEN carried only the named things on every turn; t14 got none, the
+  who-questions only "man".
+- Judge-failed turns 29/36 (v20b 24/36); leaving out
+  protagonist_acts_beyond_command, 20/36 (v20b 16/36), inside this
+  bench's noise.
+- Two new faults, each identical word for word in both replicates, so
+  effectively one sample each: t2's reply puts "open" in the drawer's place
+  and keeps it shut (the known state_as_place fault; it cascades into t8,
+  "shut an already shut drawer"), and t3's narration puts Michelle's hidden
+  memory card on the desk (reveals_hidden_canon). Not attributed: t2 and
+  t3's prompts differ from v20b only by the new owner sentence and the
+  match-call changes, and no replay tool exists to A/B them.
+
+*v22 (2026-09-23, `bench/results/item-facts-v22-drawerfix-two-scene-1a`
+plus smoke `item-facts-v22-smoke-two-scene-1a`, 3 replicates in all).*
+Brandon picked one fix per v21 fault: `20d3c90` keeps the narrated pole when
+one reply names both poles of an axis (the echo of the pre-reply pole is
+dropped; an echo that leaves no condition changes none); `404ee5b` drops any
+beat detail that names a world item neither placed in the scene nor
+established by committed knowledge, on the turn and opening paths.
+- Drawer: captured open at t2 and shut at t8 in 3/3 (v21 0/2). v22 r2 t2
+  sent v21's exact bad reply (`place: open`, `condition: [shut]`) and it
+  landed as open, so the merge fix is confirmed live; the other two sent a
+  clean reply.
+- Card: never named in 1A narration, 0/3 (v21 2/2, one sample).
+- New leak by the same look-ahead: the card's CONTENTS still reach SCENE as
+  beat details that are not tracked items ("voice recording",
+  "Continuity Initiative files"), and the narrator puts them on the desk
+  (t3, 2/3) or on Kristin's laptop (t6/t9, 3 turns). The item filter
+  cannot catch these; the next lever is projecting a beat's details only
+  once the player's action reaches that beat.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 18/36
+  (v21 20/36), within noise.
+
+*v23 (2026-09-23, `bench/results/item-facts-v23-beatgate-two-scene-1a`
+plus smoke `item-facts-v23-smoke-two-scene-1a`).* Brandon approved gating
+beats on the player's action: `8368be4` sends a runtime-owned reveal's
+source beats only on the turn its handoff matches the player's input; the
+scene's opening beat is still sent, narrator-selected candidates (1B) are
+unchanged, and bench-forced beats are exempt. This change is in the
+SHIPPED runtime (`_candidate_beats`).
+- 1A SCENE carries no later-beat detail on any turn; 1A narration names
+  none of the card's contents (v22: 7 turns across 2 replicates; the only
+  hits left are "research notes" in the opened drawer, which the scene frame
+  itself places there and no judge flagged).
+- reveals_hidden_canon 0 (v22 1, v21 2); contradicts_stated_fact 2 (v22 7,
+  v21 10).
+- Drawer still open at t2 and shut at t8, 3/3.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 13/36
+  (v22 18/36, v21 20/36); smoke 5/18.
+- Not yet exercised live: the reveal turn itself (no scripted command
+  matches the card handoff's action evidence); the offline probe covers it.
+
+*v24 (2026-09-23, `bench/results/item-facts-v24-cardturn-two-scene-1a`
+plus smoke `item-facts-v24-smoke-two-scene-1a`).* `d9b70bf` appends 1A turn
+13, "Read the saved files on the memory card.", which matches the card
+reveal's action evidence; the script is now 13 + 6 turns, so totals are not
+comparable with v10-v23. The reveal mechanism works live 3/3: t13 matches
+handoff `k_sl_1a_b_r1` and beats 1A.2/1A.3 reach SCENE only on that turn.
+1A->1B is no longer advanced offline, but scene 1A's deadline
+(`handoff_after_turns: 13`) also falls on turn 13, so the run cannot show
+whether the reveal or the deadline ended the scene; 1A holds at most 13
+turns. The reveal TURN fails every judge 3/3:
+- The narrator's own prose restarts the arrival at the house ("steps out of
+  her truck and onto the cracked driveway") and never reads anything; once
+  it put the card on the desk. Its prompt names the card only in PLAYER:
+  no THINGS entry, no place, nothing saying the card was just found.
+- `_compose_authored_handoff` then appends the authored delivery text
+  verbatim: it narrates in past tense that the card "was taped under the
+  drawer", and because the reveal now ends 1A, the 1A->1B `bridge_text`
+  ("Kristin travels there while avoiding checkpoints ...") follows it, so
+  the turn reads as a restart plus bolted-on exposition.
+- The reply's item_facts are empty, so the card is never captured
+  (missed_change); the judges also call the sanctioned reveal
+  reveals_hidden_canon, a judge gap.
+- Discoverability: the reveal's action evidence needs the player to say
+  "memory card" or "the card", but nothing before the reveal tells the
+  player a card exists, so the scripted command is one a real player could
+  not know to type.
+
+*v25 (2026-09-23, `bench/results/item-facts-v25-cardsplit-two-scene-1a`
+plus smoke `item-facts-v25-smoke-two-scene-1a`).* The card is found and read
+in two steps, authored with ChatGPT and approved by Brandon. `d192126` adds
+the `while_fact_true` placement guard, and on a matched reveal's turn it
+shows the things that reveal places. `31b0a34` adds storylet SL-1A-E: "Look
+beneath the KMS drawer." (`k_sl_1a_b_r0`) sets custody and places the card
+"with Kristin". SL-1A-B's reveals now need custody. R0 owns the card
+phrases the old reveals owned, so the leak guard still stops the card being
+named before it is found. The bench's 1A is now 13 turns (the scene
+deadline): the find at t2, the read at t13, and the old opening "Look
+carefully at Michelle's phone." is gone.
+- Both reveals match live 3/3, the card is tracked "with Kristin" from t2,
+  and 1A.2/1A.3 reach SCENE only at t13.
+- t13 (read) no longer restarts the house arrival. In all 3 replicates
+  Kristin walks to the truck, boots her laptop and inserts the card, then
+  the authored reveal and the bridge follow. The judges still flag
+  restarts_scene on 2/3 (walking back to the truck) and
+  protagonist_acts_beyond_command.
+- t2 (find): the narrator copied `DEFAULT_OUTPUT_EXAMPLE` word for word, 2/2
+  in the full run ("The drawer sticks, then gives. Inside, under a curl of
+  packing tape ..."). `_output_example()` forces that example on every
+  authored-handoff turn, overriding the variation's lantern example, and its
+  content is this story's own taped-under-the-drawer scene. That is a
+  story-specific string in the shipped runtime, and on the find turn it
+  becomes a template. Open item for Brandon.
+- Judge-failed turns, leaving out protagonist_acts_beyond_command: 22/38
+  (v24 18/38); smoke 9/19. t2's copied example accounts for part of the
+  rise.
+
+*v26 (2026-09-23, `bench/results/item-facts-v26-example-two-scene-1a` plus
+smoke `item-facts-v26-smoke-two-scene-1a`).* `0117d51` (approved by
+Brandon): reveal turns use the variation's own output example, like every
+other turn; only the candidate-selection example stays off them.
+`DEFAULT_OUTPUT_EXAMPLE` is now a story-neutral lantern example. The
+handoff privacy test keeps its whole-prompt assertions, with a neutral
+variant example.
+- t2 (find): no copied example, 0/3 (v25 2/2). Every reveal-turn prompt
+  carries the variation's example, so the find turn is also shown
+  `item_facts`.
+- New at t2, 3/3: the narrator opens the drawer and invents "a small piece
+  of paper" (once with the message "They're watching."), captured as a
+  tracked `paper` on the floor. This is next step 3's invented drawer
+  contents moving to the find turn: the only source in the t2 prompt is
+  the frame's "the places she kept her research". The judges flag t2 for
+  invented_change, missed_change and reveals_hidden_canon.
+- t13 (read) is unchanged from v25: the walk to the truck, then the
+  authored reveal; restarts_scene 2/2 in the full run.
+- Judge-failed turns, leaving out protagonist_acts_beyond_command: 13/38
+  (v25 22/38); smoke 7/19 (v25 9/19). Two replicates are within judge noise
+  of each other, so read this as "no worse" rather than a measured gain.
+
+*Judge story_text (2026-09-23, `3c99b23`, re-grade of v26 in
+`bench/results/probes/story-text-regrade/{ctl,new}`).* `bench/judge_input.py`
+`judge_turns` builds the judges' view of each turn: `story_text` (the
+reveal's `delivery_text`, then the scene's `bridge_text`, looked up by id)
+and an `item_facts_before` without the things the turn's reveal made
+visible (placements whose `while_fact_true` the reveal asserts). `bench run`
+and `rejudge.py` both use it; saved records are unchanged. The continuity
+rubric gains Brandon's approved sentence: story_text is canon, and never a
+reason for contradicts_stated_fact, protagonist_acts_beyond_command,
+restarts_scene or reveals_hidden_canon. The fact rubric is unchanged.
+Same-session control (old judges) against new, both over the saved v26
+records:
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 16/38
+  both (the original v26 grading was 13/38, so the noise is 3 cells).
+- Fixed: "given facts already place the card with Kristin" at t2 is gone;
+  command_not_finished at t13 2 -> 0.
+- Not fixed: r2 t2 is still reveals_hidden_canon, and r2 t13 still cites
+  the bridge's drive to the park as restart and beyond-command. The rubric
+  sentence does not hold reliably.
+- Real, not judge error: r1 t13's narrator walks back to the truck she is
+  already at; t2's invented paper (next step 3); the find reveal's text
+  never says Kristin takes the card although the story places it with her.
+- The fact judge now flags the bridge's drive to the park as an uncaptured
+  change (missed_change 8 -> 11).
+- `3253adb` (approved by Brandon): the sentence did not hold, so the
+  continuity judge now reads `narrator_narration`, the narration minus the
+  exact story_text suffix (left whole if it is not an exact suffix), with
+  story_text sent as its own field. The rubric sentence now reads:
+  story_text is not part of narration, is canon, and is used only for
+  command_not_finished and what is true after the turn. The fact judge
+  keeps the full narration. Re-grade in `.../story-text-regrade/strip`:
+  16/38 again, but every t2/t13 continuity flag now cites the narrator's
+  own prose. The drawer paper put in the card's hidden spot is
+  reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
+  No flag cites the bridge or the reveal text any more.
+
+*v27 (2026-09-23, `bench/results/item-facts-v27-drawer-two-scene-1a` plus
+smoke `item-facts-v27-smoke-two-scene-1a`).* `1b45b71` (ChatGPT-authored,
+Brandon-approved, applied verbatim): a 1A setting fact "The drawer holds
+pens, binder clips, a stapler, and spare batteries.", the frame's last
+sentence is now "Michelle's work area has not been searched yet. The KMS
+drawer is worth a look.", and the find delivery_text is "Kristin finds
+Michelle's memory card taped beneath the KMS drawer. She takes it with
+her." The smoke run showed the bench never sent that setting fact:
+`ItemFactsProvider` sends setting facts only as tracked THINGS, and it
+cannot parse a contents sentence. `6ddd0b2` makes the seed parser report
+the setting facts it did not track, and the bench sends exactly those as
+text, as production does. The full run is on `6ddd0b2`.
+- t1 (open the drawer): no invented research, 2/2 (v23 research notes 3/3).
+  One replicate names exactly the authored contents; the other says
+  "revealing the contents inside".
+- t2 (find): no invented paper, 3/3 including the smoke (v26 3/3). The
+  card is tracked "with Kristin" after the find.
+- New: restarts_scene 7 cells. The narrator re-approaches the workstation
+  or re-enters the house at t2 and t13, and r2 t13 walks back from the
+  truck into the house. r1 t13 invents Michelle's laptop open on the desk
+  with a "Confidential" folder.
+- Judge-failed turns leaving out protagonist_acts_beyond_command: 15/38
+  (v26 13/38, within noise).
+
+Branch `round9` at `31b0a34`, tree clean, full suite green, nothing running.
 Not merged to `main`. Every measurement below is two live replicates of the
 18-turn two-scene script (`bench/variations/item-facts-package-two-scene.json`,
 12 turns in 1A then 6 in 1B), each run in `bench/results/item-facts-v<N>-*`,

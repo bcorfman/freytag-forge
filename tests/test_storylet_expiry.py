@@ -59,7 +59,7 @@ def test_expired_optional_storylet_cannot_reopen_through_earned_forward() -> Non
 
 def test_required_storylet_stays_active_past_latest_turn() -> None:
     for turns in (3, 4):
-        engine, state = _engine_at("1A", turns)
+        engine, state = _engine_at("1A", turns, facts=("memory_card_in_kristins_custody",))
 
         engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
 

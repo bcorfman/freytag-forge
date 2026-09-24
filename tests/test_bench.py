@@ -106,7 +106,7 @@ def test_no_example_variation_has_zero_example_leakage() -> None:
     no_example = load_variation(NO_EXAMPLE_VARIATION)
 
     assert no_example["_resolved_output_example"] is None
-    narration = ["The drawer sticks, then gives, inside a curl of packing tape."]
+    narration = ["She picks up the lantern. She carries it out to the porch."]
     assert count_example_leakage(narration, no_example["_resolved_output_example"]) == 0
 
 
@@ -563,6 +563,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     }
 
     def provider_for_with_active_storylet(state, _variation):
+        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         return provider
 
@@ -820,6 +821,92 @@ def test_focused_run_allows_one_explicit_replicate_without_calling_live_services
     assert summary["pooled"]["score_points"]["n"] == 1
     assert summary["pooled"]["score_points"]["standard_deviation"] is None
     assert summary["budget"]["actual_openai_judge_calls"] == 1
+    assert summary["judge_failure_reason"] is None
+
+
+def test_main_judge_failure_is_recorded_on_summary_and_failures(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "judge-failure",
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    record = {
+        "status": "ok",
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [{"name": "e2e", "inputs": ["Look around."]}])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+
+    def fail_judges(*_):
+        raise RuntimeError("HTTP 429 quota")
+
+    monkeypatch.setattr(bench_cli, "run_judges", fail_judges)
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    args = bench_cli.parser().parse_args(
+        ["run", "--variation", str(VARIATION), "--scene", "1A", "--replicates", "1", "--out", str(tmp_path)]
+    )
+
+    assert bench_cli._run(args) == 2
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["judge_failure_reason"] == "HTTP 429 quota"
+    assert summary["failures"][0]["status"] == "failed"
+    assert summary["failures"][0]["failure_reason"] == "HTTP 429 quota"
+
+
+def test_fact_tracking_judge_failure_is_recorded_on_summary_and_failures(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "fact-tracking-failure",
+        "fact_tracking_judge": True,
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    judgment = {criterion: False for criterion in CRITERIA} | {"missing_or_wrong": []}
+    record = {
+        "status": "ok",
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [{"name": "e2e", "inputs": ["Look around."]}])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(bench_cli, "run_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+
+    def fail_fact_tracking_judges(*_):
+        raise RuntimeError("HTTP 429 quota")
+
+    monkeypatch.setattr(bench_cli, "run_fact_tracking_judges", fail_fact_tracking_judges)
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    args = bench_cli.parser().parse_args(
+        ["run", "--variation", str(VARIATION), "--scene", "1A", "--replicates", "1", "--out", str(tmp_path)]
+    )
+
+    assert bench_cli._run(args) == 2
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["judge_failure_reason"] == "HTTP 429 quota"
+    assert summary["failures"][0]["status"] == "failed"
+    assert summary["failures"][0]["failure_reason"] == "HTTP 429 quota"
 
 
 def test_escalation_judge_is_opt_in_and_added_to_summary_ledger_and_spend(monkeypatch, tmp_path) -> None:
@@ -939,13 +1026,30 @@ def test_escalation_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp
     assert "escalation" not in ledger_rows(ledger)[0]
 
 
-def test_non_boolean_escalation_judge_is_rejected(tmp_path) -> None:
+@pytest.mark.parametrize(
+    "judge_key, invalid_path, error_message",
+    [
+        pytest.param(
+            "escalation_judge",
+            "invalid-escalation.json",
+            "escalation_judge must be a boolean",
+            id="non_boolean_escalation_judge_is_rejected",
+        ),
+        pytest.param(
+            "continuity_judge",
+            "invalid-continuity.json",
+            "continuity_judge must be a boolean",
+            id="non_boolean_continuity_judge_is_rejected",
+        ),
+    ],
+)
+def test_non_boolean_judge_is_rejected(tmp_path, judge_key, invalid_path, error_message) -> None:
     source = json.loads(VARIATION.read_text(encoding="utf-8"))
-    source["escalation_judge"] = "yes"
-    path = tmp_path / "invalid-escalation.json"
+    source[judge_key] = "yes"
+    path = tmp_path / invalid_path
     path.write_text(json.dumps(source), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="escalation_judge must be a boolean"):
+    with pytest.raises(ValueError, match=error_message):
         load_variation(path)
 
 
@@ -1067,15 +1171,6 @@ def test_continuity_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp
     summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
     assert "continuity" not in summary
     assert "continuity" not in ledger_rows(ledger)[0]
-
-
-def test_non_boolean_continuity_judge_is_rejected(tmp_path) -> None:
-    source = json.loads(VARIATION.read_text(encoding="utf-8"))
-    source["continuity_judge"] = "yes"
-    path = tmp_path / "invalid-continuity.json"
-    path.write_text(json.dumps(source), encoding="utf-8")
-    with pytest.raises(ValueError, match="continuity_judge must be a boolean"):
-        load_variation(path)
 
 
 def test_run_writes_failed_turns_to_all_turn_records_without_changing_judged_records(monkeypatch, tmp_path) -> None:
@@ -1212,7 +1307,7 @@ def test_a_named_beat_reaches_the_prompt(monkeypatch) -> None:
     with_beat = prompt_for(default_variation(), "1A", "Search the drawers.", "1A.2")
 
     assert "taped drawer" not in entered["user"]
-    assert "Michelle's memory card" in with_beat["user"]
+    assert "population stabilization centers" in with_beat["user"]
     assert "k_sl_1a_d_r1 in selected_knowledge_ids" in with_beat["user"]
 
 
@@ -1253,7 +1348,7 @@ def test_a_beat_carries_the_progress_of_the_beats_before_it(monkeypatch) -> None
 
     earlier = "to a removal too deliberate to be looting"
     assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.4"
-    assert earlier not in constraints, "an established reveal must not still be offered"
+    assert "k_sl_1a_a_r1" not in constraints, "an established reveal must not still be offered"
     assert "k_sl_1a_c_r2 in selected_knowledge_ids" in constraints, "1A.4's own reveal stays on offer"
     # SL-1A-D is optional and gated on memory_card_in_kristins_custody, which is
     # not established by naming beat 1A.4 alone.

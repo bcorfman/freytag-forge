@@ -31,7 +31,7 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
         state, lambda _: _turn("The damaged recording carries Michelle's warning.", ["k_sl_1a_b_r2"])
     )
 
-    with pytest.raises(ProposalValidationError, match="under the drawer"):
+    with pytest.raises(ProposalValidationError, match="selected knowledge is not eligible"):
         engine.turn("Play Michelle's damaged recording.")
 
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
@@ -40,12 +40,15 @@ def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None
 
 def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.active_event_ids.add("SL-1A-E")
     responses = iter(
         (
             _turn(
-                "Kristin finds and secures Michelle's memory card under the KMS drawer, then plays its damaged "
-                "recording: do not trust emergency broadcasts.",
+                "A memory card is taped beneath the KMS drawer. Michelle left it there.",
+                ["k_sl_1a_b_r0"],
+            ),
+            _turn(
+                'The card holds a damaged recording. Michelle\'s voice warns, "Do not trust the emergency broadcasts."',
                 ["k_sl_1a_b_r2"],
             ),
             _turn(
@@ -57,10 +60,11 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
     )
     engine = RuntimeEngine(state, lambda _: next(responses))
 
-    engine.turn("Search beneath the marked drawer for Michelle's memory card and play its damaged recording.")
+    engine.turn("Search beneath the marked drawer for Michelle's memory card.")
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
-    assert Fact(predicate="michelle_warning_known", subject="story", value="true") in state.facts.asserted
 
+    engine.turn("Play the damaged recording on Michelle's memory card.")
+    assert Fact(predicate="michelle_warning_known", subject="story", value="true") in state.facts.asserted
     state.active_event_ids.add("SL-1A-D")
     engine.turn("Read the remaining files on Michelle's recovered memory card.")
 
@@ -70,17 +74,24 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
 
 def test_complete_path_secures_card_with_files_and_park_lead() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.active_event_ids.add("SL-1A-B")
+    state.active_event_ids.add("SL-1A-E")
     engine = RuntimeEngine(
         state,
-        lambda _: _turn(
-            "Kristin finds and secures Michelle's memory card under the KMS drawer, then reads its damaged recording "
-            "and files; the card points to a dead drop at a bench in the park.",
-            ["k_sl_1a_b_r1"],
+        lambda player_input: (
+            _turn("A memory card is taped beneath the KMS drawer. Michelle left it there.", ["k_sl_1a_b_r0"])
+            if "Search" in player_input
+            else _turn(
+                "The card holds Michelle's saved files and a damaged recording. The recording warns, "
+                '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and point to a dead '
+                "drop at a bench in the park.",
+                ["k_sl_1a_b_r1"],
+            )
         ),
     )
 
-    engine.turn("Search beneath the marked drawer for Michelle's memory card and read its files.")
+    engine.turn("Search beneath the marked drawer for Michelle's memory card.")
+    state.active_event_ids.add("SL-1A-B")
+    engine.turn("Read the files on Michelle's recovered memory card.")
 
     assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
@@ -103,6 +114,7 @@ def test_invalid_or_duplicate_selection_is_atomic(selected: list[str]) -> None:
 
 def test_grounding_cannot_name_an_unselected_or_invented_source() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
@@ -127,6 +139,7 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
     """
 
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
@@ -153,6 +166,7 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
 
 def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
@@ -162,8 +176,9 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
                     {
                         "kind": "narration",
                         "text": (
-                            "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
-                            "points to a dead drop at a bench in the park."
+                            "The card holds Michelle's saved files and a damaged recording. The recording warns, "
+                            '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
+                            "point to a dead drop at a bench in the park."
                         ),
                         "grounding_ids": ["k_sl_1a_b_r1"],
                     }
@@ -192,6 +207,7 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
 
 def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,
@@ -200,8 +216,9 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
                 {
                     "kind": "narration",
                     "text": (
-                        "Kristin finds Michelle's memory card under the KMS drawer and damaged recording; the card "
-                        "points to a dead drop at a bench in the park."
+                        "The card holds Michelle's saved files and a damaged recording. The recording warns, "
+                        '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
+                        "point to a dead drop at a bench in the park."
                     ),
                 }
             ],
@@ -218,6 +235,7 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
 
 def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(
         state,

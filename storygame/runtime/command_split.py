@@ -52,7 +52,7 @@ def split_command(text: str) -> list[str]:
 
     masked_pieces: list[str] = []
     for sentence in masked_doc.sents:
-        sentence_pieces = _split_masked_sentence(sentence, text, masked_to_original)
+        sentence_pieces = _split_sentence(sentence, text, masked_to_original)
         masked_pieces.extend(sentence_pieces)
         did_split |= len(sentence_pieces) > 1
     return masked_pieces if did_split else [text]
@@ -89,7 +89,17 @@ def _mask_possessive_names(text: str, doc: spacy.tokens.Doc) -> tuple[str, list[
     return "".join(masked_parts), masked_to_original
 
 
-def _split_masked_sentence(sentence: Span, text: str, masked_to_original: list[int]) -> list[str]:
+def _split_sentence(
+    sentence: Span,
+    text: str | None = None,
+    masked_to_original: list[int] | None = None,
+) -> list[str]:
+    if text is None:
+        text = sentence.doc.text
+    if masked_to_original is None:
+        masked_to_original = list(range(len(sentence.doc.text) + 1))
+    is_masked = text != sentence.doc.text
+
     quoted = _quoted_token_indexes(sentence)
     root, parsed_root = _imperative_root(sentence)
     if root is None or parsed_root is None or root.i in quoted:
@@ -110,50 +120,37 @@ def _split_masked_sentence(sentence: Span, text: str, masked_to_original: list[i
             original_starts[piece_number + 1] if piece_number + 1 < len(original_starts) else original_end
         )
         original_piece = text[original_starts[piece_number] : original_piece_end]
+        piece = original_piece if is_masked else original_piece.strip()
         if piece_number + 1 < len(starts):
-            piece = _drop_masked_separator(original_piece, sentence, start, end, masked_to_original)
+            piece = _drop_separator(piece, sentence, start, end, masked_to_original)
             piece = f"{piece}."
         else:
-            piece = _add_terminal_punctuation(original_piece)
+            piece = _add_terminal_punctuation(piece)
         pieces.append(_capitalize(piece))
     return pieces
 
 
-def _drop_masked_separator(piece: str, sentence: Span, start: int, end: int, masked_to_original: list[int]) -> str:
+def _drop_separator(
+    piece: str,
+    sentence: Span,
+    start: int | None = None,
+    end: int | None = None,
+    masked_to_original: list[int] | None = None,
+) -> str:
+    start = sentence.start if start is None else start
+    end = sentence.end if end is None else end
     token_end = end - 1
     while token_end >= start:
         token = sentence.doc[token_end]
         if token.is_punct or token.dep_ == "cc" or token.text.casefold() == "then":
             token_end -= 1
             continue
-        original_end = masked_to_original[token.idx + len(token)] - masked_to_original[sentence.doc[start].idx]
+        if masked_to_original is None:
+            original_end = token.idx - sentence.doc[start].idx + len(token)
+        else:
+            original_end = masked_to_original[token.idx + len(token)] - masked_to_original[sentence.doc[start].idx]
         return piece[:original_end].rstrip()
     return ""
-
-
-def _split_sentence(sentence: Span) -> list[str]:
-    quoted = _quoted_token_indexes(sentence)
-    root, parsed_root = _imperative_root(sentence)
-    if root is None or parsed_root is None or root.i in quoted:
-        return [sentence.text]
-
-    action_roots = _coordinated_verbs(parsed_root, quoted)
-    action_roots = [action_root for action_root in action_roots if action_root.i > root.i]
-    if not action_roots:
-        return [sentence.text]
-
-    starts = [sentence.start, *(action_root.i for action_root in action_roots)]
-    pieces: list[str] = []
-    for piece_number, start in enumerate(starts):
-        end = starts[piece_number + 1] if piece_number + 1 < len(starts) else sentence.end
-        piece = sentence.doc[start:end].text.strip()
-        if piece_number + 1 < len(starts):
-            piece = _drop_separator(piece, sentence.doc[start:end])
-            piece = f"{piece}."
-        else:
-            piece = _add_terminal_punctuation(piece)
-        pieces.append(_capitalize(piece))
-    return pieces
 
 
 def _imperative_root(sentence: Span) -> tuple[Token | None, Token | None]:
@@ -203,17 +200,6 @@ def _quoted_token_indexes(sentence: Span) -> set[int]:
         elif inside_quote:
             quoted.add(token.i)
     return quoted
-
-
-def _drop_separator(piece: str, span: Span) -> str:
-    end = len(span) - 1
-    while end >= 0:
-        token = span[end]
-        if token.is_punct or token.dep_ == "cc" or token.text.casefold() == "then":
-            end -= 1
-            continue
-        break
-    return piece[: span[end].idx - span[0].idx + len(span[end])].rstrip() if end >= 0 else ""
 
 
 def _add_terminal_punctuation(piece: str) -> str:
