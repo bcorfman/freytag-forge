@@ -1,7 +1,8 @@
 # Jev judge trial: plan
 
-Status (2026-09-24): not started. Written to be picked up in a new chat with
-no other context.
+Status (2026-09-24): not started; section 8's questions are decided. Next
+is Phase A, which starts with Brandon creating the credentials. Written
+to be picked up in a new chat with no other context.
 
 Goal: find out whether TypeSafe's Jev (`typesafe/jev` on Cloudflare Workers
 AI) can replace `gpt-5.6-luna` as the model behind the two bench judges, the
@@ -20,7 +21,7 @@ until this trial passes.
 5. Design: questions per cell, answers combined in code
 6. Phases
 7. Risks
-8. Open questions for Brandon
+8. Decisions
 9. Reference
 
 ---
@@ -228,9 +229,8 @@ work unchanged. Two additions:
 - A sidecar `jev-raw.json` keeps every request's `model` version, question
   set, answers and `usage`, for audit and cost.
 
-This loses the model-written reason, which the every-turn round reports
-show Brandon (memory `round-reports-show-every-turn`). Section 8 asks
-whether that is acceptable.
+This loses the model-written reason. Brandon ruled that the verdict alone
+is enough (section 8).
 
 ### 5.4 Thresholds
 
@@ -331,8 +331,6 @@ Brandon decides whether Jev becomes the default bench judge. If it does:
   `contradicts_stated_fact` look back over earlier turns. Too little history
   misses restarts; too much is the distractor problem. Phase B tries two
   history sizes.
-- **No reasons.** Brandon reviews rounds by reading reasons. Code-built
-  reasons from sub-question probabilities are less readable.
 - **Calibration is TypeSafe's, not ours.** Jev's probabilities are
   calibrated on TypeSafe's data. A 0.5 threshold may not be right for these
   questions, hence the held-out threshold rule.
@@ -345,17 +343,17 @@ Brandon decides whether Jev becomes the default bench judge. If it does:
 - **Rate limits.** TypeSafe says its limits "are adjusting dynamically". A
   429 mid-run must fail loudly, never retry silently into a billed rerun.
 
-## 8. Open questions for Brandon
+## 8. Decisions (Brandon, 2026-09-24)
 
-1. **Credentials.** Is a Cloudflare API token plus account ID in `.env`
-   acceptable for bench-only use, or should Jev go through the narration
-   worker? That needs the worker's source, which is not in this repo.
-2. **Reasons.** Are code-built reasons (sub-question names plus
-   probabilities) acceptable in round reports, or is a model-written reason
-   a requirement? If it is required, Jev can only screen turns, with a
-   generative model writing reasons for the flagged ones. That costs more
-   and needs more code.
-3. **Scope.** Confirm the trial covers only the continuity and fact judges.
+1. **Credentials:** a Cloudflare API token plus account ID in `.env`
+   (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_TOKEN`) is acceptable. Jev is
+   called through Cloudflare's REST `/ai/run`, not through the narration
+   worker.
+2. **Reasons:** the verdict alone is enough. "Just getting the verdict is
+   fine (command_not_finished, restarts_scene, etc.)." No generative model
+   writes reasons. The code-built `reason` in 5.3 is an optional debugging
+   aid. Do not spend effort making it readable.
+3. **Scope:** the continuity and fact-tracking judges only.
 
 ## 9. Reference
 
