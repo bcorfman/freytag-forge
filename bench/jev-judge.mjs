@@ -15,6 +15,101 @@ const FACT_NAMES = [
   "place_is_condition", "command_asks", "same_as_other",
 ];
 
+const CONTINUITY_PREAMBLE = [
+  "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. ",
+  "You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, ",
+  "and continue from where the story left off?",
+].join("");
+const CONTINUITY_EXAMPLES = {
+  command: [
+    {
+      command: "Look around the dock for anything left behind.", question: "names_place", answer: false,
+      why: "\"Around the dock\" says where to look. It is not a place she must go to or put something.",
+    },
+    {
+      command: "Carry the lamp up to the tower.", question: "names_place", answer: true,
+      why: "The tower is where she must bring the lamp.",
+    },
+    {
+      command: "Hand the letter to the captain.", question: "needs_other", answer: true,
+      why: "The captain has to take the letter.",
+    },
+    {
+      command: "Take the key back from the captain.", question: "take_from_other", answer: true,
+      why: "She is told to take a thing from someone.",
+    },
+    {
+      command: "Pick up the key from the table.", question: "take_from_other", answer: false,
+      why: "The key is on a table, not held by another character.",
+    },
+  ],
+  turn: [
+    {
+      command: "Look closely at the lamp.", narration: "Ana studies the lamp, then lifts it to check the base.",
+      question: "own_part_done", answer: true,
+      why: "Looking at the lamp is her whole part. Picking it up as well does not undo that.",
+    },
+    {
+      command: "Take the key back from the captain.",
+      narration: "Ana reaches for the key, but the captain closes his fist around it.",
+      question: "own_part_done", answer: true, why: "Trying to take it is her whole part.",
+    },
+    {
+      command: "Take the key back from the captain.",
+      narration: "Ana reaches for the key, but the captain closes his fist around it.",
+      question: "other_responds", answer: true, why: "Refusing is a response.",
+    },
+    {
+      command: "Hand the letter to the captain.", narration: "Ana holds the letter out to him.",
+      question: "other_responds", answer: false,
+      why: "Holding it out, with no reaction shown, is not a response.",
+    },
+    {
+      command: "Put the key in my pocket.", given_facts: { key: { place: "in Ana's hand", condition: [] } },
+      narration: "Ana picks the key up from the table and pockets it.", question: "given_start_conflict", answer: true,
+      why: "The facts say the key was in her hand, but the narration takes it from the table.",
+    },
+  ],
+  history: [
+    {
+      earlier_narration: ["Ana climbs to the lamp room and sees the cracked lens."],
+      narration: "Ana works on the lamp, glancing again at the cracked lens.", question: "rediscovers", answer: false,
+      why: "Noticing something already known is not treating it as new.",
+    },
+    {
+      earlier_narration: ["Ana climbs to the lamp room and sees the cracked lens."],
+      narration: "Ana steps into the lamp room and spots a cracked lens.", question: "arrives", answer: true,
+      why: "She is already in the lamp room, but the narration has her enter it as if new.",
+    },
+    {
+      command: "Go down to the dock.", earlier_narration: ["Ana climbs to the lamp room."],
+      narration: "Ana walks down the stairs to the dock.", question: "arrives", answer: false,
+      why: "The command sent her to the dock.",
+    },
+    {
+      opening: "Ana rows across the bay to the lighthouse and ties up at its dock.",
+      narration: "Ana rows across the bay again to fetch her bag from the boat at the dock.",
+      question: "repeats_trip", answer: true,
+      why: "The boat is at the lighthouse dock, so crossing the bay again repeats a finished trip.",
+    },
+  ],
+};
+const CONTINUITY_GROUPS = {
+  command: {
+    state: ["command"], questions: ["needs_other", "take_from_other", "names_place"],
+  },
+  turn: {
+    state: ["command", "narration", "story_text", "given_facts"],
+    questions: [
+      "given_conflict", "given_start_conflict", "beyond_command", "own_part_done", "other_responds", "reaches_place",
+    ],
+  },
+  history: {
+    state: ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+    questions: ["earlier_conflict", "arrives", "rediscovers", "repeats_trip", "hidden_shown", "hidden_lookalike"],
+  },
+};
+
 function nounl(instructions, truth, falsity) {
   return { type: "noul", instructions, criteria: { true: truth, false: falsity } };
 }
@@ -124,6 +219,25 @@ function phrases(before, after) {
   };
 }
 function questionSet(state, questions) { return { state, questions }; }
+
+function orderedObject(source, names) {
+  return Object.fromEntries(
+    names.filter((name) => Object.hasOwn(source, name)).map((name) => [name, source[name]]),
+  );
+}
+
+function continuityRequests(state, questions, variant) {
+  if (variant === "baseline") return [{ state, questions }];
+  if (variant === "preamble") return [{ state: { task: CONTINUITY_PREAMBLE, ...state }, questions }];
+  return Object.entries(CONTINUITY_GROUPS).map(([groupName, group]) => {
+    const groupState = orderedObject(state, group.state);
+    if (variant === "split-examples") groupState.examples = CONTINUITY_EXAMPLES[groupName];
+    return {
+      state: groupState,
+      questions: orderedObject(questions, group.questions),
+    };
+  });
+}
 
 function continuityQuestions(state, hasHidden) {
   const q = {
@@ -280,7 +394,16 @@ function factQuestions(thing, item, phrasesForThing) {
   return q;
 }
 
-export async function judgeInput(input, { packagePath, fetchImpl = fetch, environment = process.env, only } = {}) {
+export async function judgeInput(
+  input,
+  { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both" } = {},
+) {
+  if (!["baseline", "preamble", "split", "split-examples"].includes(variant)) {
+    throw new Error(`Unknown continuity variant: ${variant}`);
+  }
+  if (!["both", "continuity", "fact"].includes(judges)) {
+    throw new Error(`Unknown judges option: ${judges}`);
+  }
   if (!environment.CLOUDFLARE_ACCOUNT_ID || !environment.CLOUDFLARE_AI_TOKEN) {
     throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are required.");
   }
@@ -308,7 +431,7 @@ export async function judgeInput(input, { packagePath, fetchImpl = fetch, enviro
     model ||= parsed.model;
     raw.push({
       judge, replicate, turn, ...(thing === undefined ? {} : { thing }), model: parsed.model,
-      state, questions, answers: parsed.answers, usage: parsed.usage,
+      variant, state, questions, answers: parsed.answers, usage: parsed.usage,
     });
     return parsed.answers;
   };
@@ -337,26 +460,34 @@ export async function judgeInput(input, { packagePath, fetchImpl = fetch, enviro
         earlier_narration: earlier,
         hidden_canon: hc,
       };
-      const questions = continuityQuestions(state, Boolean(hc));
-      const answers = await request("continuity", replicate, number, undefined, state, questions);
-      continuity.judge_calls++;
-      const truth = Object.fromEntries(
-        Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
-      );
-      const reason = Object.entries(answers)
-        .filter(([, answer]) => answer?.noul > THRESHOLD)
-        .map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`)
-        .join("; ");
-      cTurns.push({
-        turn: number,
-        ...combineContinuity(truth, { firstTurnInScene: first, hasHiddenCanon: Boolean(hc) }),
-        reason,
-      });
+      if (judges !== "fact") {
+        const questions = continuityQuestions(state, Boolean(hc));
+        const answers = {};
+        for (const requestInput of continuityRequests(state, questions, variant)) {
+          const part = await request(
+            "continuity", replicate, number, undefined, requestInput.state, requestInput.questions,
+          );
+          Object.assign(answers, part);
+          continuity.judge_calls++;
+        }
+        const truth = Object.fromEntries(
+          Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
+        );
+        const reason = Object.entries(answers)
+          .filter(([, answer]) => answer?.noul > THRESHOLD)
+          .map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`)
+          .join("; ");
+        cTurns.push({
+          turn: number,
+          ...combineContinuity(truth, { firstTurnInScene: first, hasHiddenCanon: Boolean(hc) }),
+          reason,
+        });
+      }
       const before = turn.item_facts_before || {};
       const after = turn.item_facts_after || {};
       const things = [...new Set([...Object.keys(before), ...Object.keys(after)])];
       const perThing = [];
-      for (const thing of things) {
+      for (const thing of judges === "continuity" ? [] : things) {
         const b = before[thing];
         const a = after[thing];
         const trackedBefore = Boolean(b);
@@ -402,7 +533,8 @@ export async function judgeInput(input, { packagePath, fetchImpl = fetch, enviro
         .join("; ");
       fTurns.push({ turn: number, ...combined, reason: factReason });
     }
-    continuity.judgments.push({ turns: cTurns }); fact.judgments.push({ turns: fTurns });
+    continuity.judgments.push({ turns: cTurns });
+    fact.judgments.push({ turns: judges === "continuity" ? [] : fTurns });
   }
   return { continuity, fact, raw };
 }
@@ -416,7 +548,9 @@ async function main() {
   const input = JSON.parse(readFileSync(argument("--input"), "utf8"));
   const onlyArg = process.argv.includes("--only") ? argument("--only") : "";
   const only = onlyArg ? new Set(onlyArg.split(",")) : undefined;
-  const result = await judgeInput(input, { packagePath: argument("--package"), only });
+  const variant = process.argv.includes("--variant") ? argument("--variant") : "baseline";
+  const judges = process.argv.includes("--judges") ? argument("--judges") : "both";
+  const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges });
   const out = argument("--out");
   writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");
   writeFileSync(resolve(out, "fact-tracking-judgments.json"), JSON.stringify(result.fact, null, 2) + "\n");

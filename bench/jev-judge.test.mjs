@@ -18,6 +18,65 @@ test("combineContinuity applies all rules", () => {
   assert.equal(combineContinuity(yes(["hidden_shown"]), { firstTurnInScene: false, hasHiddenCanon: true }).reveals_hidden_canon, "yes");
 });
 
+test("judgeInput supports continuity variants and judge selection", async () => {
+  const dir = await packageDir("## Scene 1A\n**Hidden canon:** card under rug.");
+  const turn = {
+    scene_id: "1A",
+    player_input: "Look at the desk.",
+    narration: "She looks at the desk.",
+    item_facts_before: {},
+    item_facts_after: {},
+  };
+  const input = { runs: [{ opening: "", turns: [turn] }] };
+  const options = {
+    packagePath: dir,
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+  };
+  const baselineSeen = [];
+  const baseline = await judgeInput(input, { ...options, fetchImpl: stubFetch(baselineSeen) });
+  const preambleSeen = [];
+  await judgeInput(input, { ...options, variant: "preamble", fetchImpl: stubFetch(preambleSeen) });
+  const preambleInput = JSON.parse(preambleSeen[0].options.body).input;
+  assert.equal(preambleInput.state.task, "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, and continue from where the story left off?");
+  assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "opening", "earlier_narration", "hidden_canon"]);
+
+  for (const variant of ["split", "split-examples"]) {
+    const seen = [];
+    const result = await judgeInput(input, { ...options, variant, fetchImpl: stubFetch(seen) });
+    const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+    assert.equal(requests.length, 3);
+    assert.deepEqual(requests.map((request) => Object.keys(request.state)), [
+      ["command"],
+      ["command", "narration", "story_text", "given_facts"],
+      ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+    ].map((keys) => variant === "split-examples" ? [...keys, "examples"] : keys));
+    assert.deepEqual(requests.map((request) => Object.keys(request.questions)), [
+      ["needs_other", "take_from_other", "names_place"],
+      ["given_conflict", "given_start_conflict", "beyond_command", "own_part_done", "other_responds", "reaches_place"],
+      ["earlier_conflict", "arrives", "rediscovers", "repeats_trip", "hidden_shown", "hidden_lookalike"],
+    ]);
+    assert.deepEqual(result.continuity.judgments, baseline.continuity.judgments);
+    assert.equal(result.raw.every((record) => record.variant === variant), true);
+    if (variant === "split-examples") assert.equal(requests[0].state.examples[0].answer, false);
+  }
+
+  const continuitySeen = [];
+  const continuityOnly = await judgeInput(input, { ...options, judges: "continuity", fetchImpl: stubFetch(continuitySeen) });
+  assert.equal(continuitySeen.length, 1);
+  assert.deepEqual(continuityOnly.fact.judgments, [{ turns: [] }]);
+  assert.equal(continuityOnly.raw[0].variant, "baseline");
+  const factSeen = [];
+  const factInput = {
+    runs: [{ turns: [{ ...turn, item_facts_before: { desk: { place: "room", condition: [] } }, item_facts_after: {} }] }],
+  };
+  const factOnly = await judgeInput(factInput, { ...options, judges: "fact", fetchImpl: stubFetch(factSeen) });
+  assert.equal(factSeen.length, 1);
+  assert.deepEqual(factOnly.continuity.judgments, [{ turns: [] }]);
+  assert.equal(factOnly.raw[0].judge, "fact");
+  await assert.rejects(() => judgeInput(input, { ...options, variant: "nope", fetchImpl: stubFetch([]) }), /Unknown continuity variant/);
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("combineFact applies tracking rules and causes", () => {
   const result = combineFact([
     item({ moved: true, command_asks: true }, { placeChanged: true }),
