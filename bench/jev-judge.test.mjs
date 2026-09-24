@@ -38,6 +38,11 @@ test("combineFact applies tracking rules and causes", () => {
   ]);
   assert.equal(combineFact([item({ moved: true, after_place_right: true }, { trackedBefore: false, trackedAfter: true, placeChanged: true })]).invented_change, "no");
   assert.equal(combineFact([item({ moved: false }, { trackedBefore: true, trackedAfter: true })]).facts_after_correct, "yes");
+  assert.equal(combineFact([item({ before_conflict: true })]).facts_after_correct, "yes");
+  assert.equal(combineFact([item({ start_conflict: true })]).narration_contradicts_given_facts, "yes");
+  assert.equal(combineFact([item({ start_conflict: true })]).facts_after_correct, "yes");
+  assert.equal(combineFact([item({ same_as_other: true }, { trackedBefore: false, trackedAfter: true })]).invented_change, "yes");
+  assert.equal(combineFact([item({}, { trackedBefore: false, trackedAfter: true })]).invented_change, "no");
 });
 
 test("hiddenCanon extracts one scene only", () => {
@@ -78,6 +83,66 @@ test("judgeInput is offline, sequential, and builds scoped continuity state", as
   assert.equal(result.continuity.judge_calls, 4); assert.equal(result.fact.judge_calls, 0); assert.equal(result.raw.length, 4);
   const states = seen.map((x) => JSON.parse(x.options.body).input.state);
   assert.equal(states[0].opening, "start"); assert.deepEqual(states[2].earlier_narration, ["v0", "v1"]); assert.equal(states[3].opening, ""); assert.ok(!Object.hasOwn(JSON.parse(seen[3].options.body).input.questions, "hidden_shown"));
+  const continuityQuestions = JSON.parse(seen[0].options.body).input.questions;
+  assert.ok(Object.hasOwn(continuityQuestions, "given_start_conflict"));
+  assert.ok(Object.hasOwn(continuityQuestions, "hidden_lookalike"));
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("judgeInput sends start and duplicate-name fact questions", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  const input = {
+    runs: [{ turns: [{
+      scene_id: "1A",
+      player_input: "Take the laptop.",
+      narration: "She takes the laptop.",
+      item_facts_before: { "Kristin's laptop": { place: "desk", condition: [] } },
+      item_facts_after: {
+        "Kristin's laptop": { place: "desk", condition: [] },
+        laptop: { place: "hands", condition: [] },
+      },
+    }] }],
+  };
+  await judgeInput(input, {
+    packagePath: dir,
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const factRequests = seen.slice(1).map((entry) => JSON.parse(entry.options.body).input);
+  const existingThing = factRequests.find((request) => request.state.thing === "Kristin's laptop");
+  const newThing = factRequests.find((request) => request.state.thing === "laptop");
+  assert.deepEqual(existingThing.state.other_things, ["laptop"]);
+  assert.deepEqual(newThing.state.other_things, ["Kristin's laptop"]);
+  assert.ok(Object.hasOwn(existingThing.questions, "start_conflict"));
+  assert.ok(Object.hasOwn(newThing.questions, "same_as_other"));
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("hidden look-alike only reveals hidden canon when canon exists", async () => {
+  const withCanon = await packageDir("## Scene 1A\n**Hidden canon:** card under rug.");
+  const withoutCanon = await packageDir();
+  const seen = [];
+  const base = { scene_id: "1A", player_input: "Look around.", narration: "x", item_facts_before: {}, item_facts_after: {} };
+  const options = { environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" }, fetchImpl: stubFetch(seen) };
+  await judgeInput({ runs: [{ turns: [base] }] }, { packagePath: withCanon, ...options });
+  await judgeInput({ runs: [{ turns: [base] }] }, { packagePath: withoutCanon, ...options });
+  assert.ok(Object.hasOwn(JSON.parse(seen[0].options.body).input.questions, "hidden_lookalike"));
+  assert.ok(!Object.hasOwn(JSON.parse(seen[1].options.body).input.questions, "hidden_lookalike"));
+  await rm(withCanon, { recursive: true, force: true });
+  await rm(withoutCanon, { recursive: true, force: true });
+});
+
+test("repeats_trip wording names opening", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  await judgeInput({ runs: [{ opening: "She drove to the house.", turns: [{ scene_id: "1A", player_input: "Look around.", narration: "x", item_facts_before: {}, item_facts_after: {} }] }] }, {
+    packagePath: dir,
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const question = JSON.parse(seen[0].options.body).input.questions.repeats_trip;
+  assert.match(question.instructions, /opening/);
   await rm(dir, { recursive: true, force: true });
 });
 

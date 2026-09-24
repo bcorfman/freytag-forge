@@ -5,11 +5,15 @@ import { pathToFileURL } from "node:url";
 export const THRESHOLD = 0.5;
 
 const CONTINUITY_NAMES = [
-  "given_conflict", "earlier_conflict", "beyond_command", "arrives", "rediscovers",
-  "repeats_trip", "own_part_done", "needs_other", "take_from_other", "other_responds",
-  "names_place", "reaches_place", "hidden_shown",
+  "given_conflict", "given_start_conflict", "earlier_conflict", "beyond_command",
+  "arrives", "rediscovers", "repeats_trip", "own_part_done", "needs_other",
+  "take_from_other", "other_responds", "names_place", "reaches_place", "hidden_shown",
+  "hidden_lookalike",
 ];
-const FACT_NAMES = ["moved", "condition_changed", "after_place_right", "before_conflict", "place_is_condition", "command_asks"];
+const FACT_NAMES = [
+  "moved", "condition_changed", "after_place_right", "before_conflict", "start_conflict",
+  "place_is_condition", "command_asks", "same_as_other",
+];
 
 function nounl(instructions, truth, falsity) {
   return { type: "noul", instructions, criteria: { true: truth, false: falsity } };
@@ -23,13 +27,19 @@ export function hiddenCanon(plotText, sceneId) {
 }
 
 export function parseEnvelope(httpStatus, json, asked = []) {
-  const errors = Array.isArray(json?.errors) ? json.errors.map((error) => typeof error === "string" ? error : error?.message || JSON.stringify(error)).join("; ") : "";
-  const fail = (message) => { throw new Error(`Jev request failed with HTTP ${httpStatus}: ${message}${errors ? ` (${errors})` : ""}`); };
+  const errors = Array.isArray(json?.errors)
+    ? json.errors.map((error) => typeof error === "string" ? error : error?.message || JSON.stringify(error)).join("; ")
+    : "";
+  const fail = (message) => {
+    throw new Error(`Jev request failed with HTTP ${httpStatus}: ${message}${errors ? ` (${errors})` : ""}`);
+  };
   if (httpStatus < 200 || httpStatus >= 300) fail("HTTP error");
   if (json?.success !== true) fail("success was not true");
   if (json?.result?.state !== "Completed") fail(`result state was ${json?.result?.state || "missing"}`);
   const result = json.result.result;
-  if (!result || typeof result.model !== "string" || !result.answers || typeof result.answers !== "object") fail("missing result");
+  if (!result || typeof result.model !== "string" || !result.answers || typeof result.answers !== "object") {
+    fail("missing result");
+  }
   for (const name of asked) if (!Object.hasOwn(result.answers, name)) fail(`missing answer ${name}`);
   return { model: result.model, answers: result.answers, usage: result.usage };
 }
@@ -37,32 +47,52 @@ export function parseEnvelope(httpStatus, json, asked = []) {
 export function combineContinuity(a, { firstTurnInScene, hasHiddenCanon }) {
   const yes = (name) => Boolean(a[name]);
   return {
-    contradicts_stated_fact: yes("given_conflict") || yes("earlier_conflict") ? "yes" : "no",
+    contradicts_stated_fact: yes("given_conflict") || yes("given_start_conflict") || yes("earlier_conflict")
+      ? "yes" : "no",
     protagonist_acts_beyond_command: yes("beyond_command") ? "yes" : "no",
     restarts_scene: !firstTurnInScene && (yes("arrives") || yes("rediscovers") || yes("repeats_trip")) ? "yes" : "no",
-    command_not_finished: !yes("own_part_done") || (yes("needs_other") && !yes("take_from_other") && !yes("other_responds")) || (yes("names_place") && !yes("reaches_place")) ? "yes" : "no",
-    reveals_hidden_canon: hasHiddenCanon && yes("hidden_shown") ? "yes" : "no",
+    command_not_finished: !yes("own_part_done")
+      || (yes("needs_other") && !yes("take_from_other") && !yes("other_responds"))
+      || (yes("names_place") && !yes("reaches_place")) ? "yes" : "no",
+    reveals_hidden_canon: hasHiddenCanon && (yes("hidden_shown") || yes("hidden_lookalike")) ? "yes" : "no",
   };
 }
 
 export function combineFact(items) {
-  const verdict = { missed_change: false, invented_change: false, narration_contradicts_given_facts: false, dropped_true_condition: false, kept_ended_condition: false, state_as_place: false };
+  const verdict = {
+    missed_change: false,
+    invented_change: false,
+    narration_contradicts_given_facts: false,
+    dropped_true_condition: false,
+    kept_ended_condition: false,
+    state_as_place: false,
+  };
   const changes = [];
   for (const item of items) {
     const q = item.answersTrue;
     const moved = Boolean(q.moved);
     const conditionChanged = Boolean(q.condition_changed);
-    const missed = (moved && !item.placeChanged && (item.trackedAfter || item.trackedBefore)) || (moved && !item.trackedAfter) || (conditionChanged && !item.conditionsChanged);
-    const invented = (item.placeChanged && !q.after_place_right) || item.newConditions.some((_, i) => q[`new_condition_${i}`] === false);
+    const missed = (moved && !item.placeChanged && (item.trackedAfter || item.trackedBefore))
+      || (moved && !item.trackedAfter)
+      || (conditionChanged && !item.conditionsChanged);
+    const invented = (item.placeChanged && !q.after_place_right)
+      || item.newConditions.some((_, i) => q[`new_condition_${i}`] === false)
+      || (!item.trackedBefore && item.trackedAfter && q.same_as_other);
     const dropped = item.goneConditions.some((_, i) => q[`gone_condition_${i}`] === false);
     const kept = item.keptConditions.some((_, i) => q[`kept_condition_${i}`]);
     verdict.missed_change ||= missed;
     verdict.invented_change ||= invented;
-    verdict.narration_contradicts_given_facts ||= Boolean(q.before_conflict);
+    verdict.narration_contradicts_given_facts ||= Boolean(q.before_conflict) || Boolean(q.start_conflict);
     verdict.dropped_true_condition ||= dropped;
     verdict.kept_ended_condition ||= kept;
     verdict.state_as_place ||= Boolean(q.place_is_condition);
-    if (moved || conditionChanged) changes.push({ thing: item.thing, change: moved && conditionChanged ? "moved and condition changed" : moved ? "moved" : "condition changed", cause: q.command_asks ? "command" : "narrator" });
+    if (moved || conditionChanged) {
+      changes.push({
+        thing: item.thing,
+        change: moved && conditionChanged ? "moved and condition changed" : moved ? "moved" : "condition changed",
+        cause: q.command_asks ? "command" : "narrator",
+      });
+    }
   }
   const out = {};
   out.missed_change = verdict.missed_change ? "yes" : "no";
@@ -71,92 +101,305 @@ export function combineFact(items) {
   out.dropped_true_condition = verdict.dropped_true_condition ? "yes" : "no";
   out.kept_ended_condition = verdict.kept_ended_condition ? "yes" : "no";
   out.state_as_place = verdict.state_as_place ? "yes" : "no";
-  out.facts_after_correct = Object.values(verdict).some(Boolean) ? "no" : "yes";
+  out.facts_after_correct = [
+    "missed_change", "invented_change", "dropped_true_condition", "kept_ended_condition", "state_as_place",
+  ].some((name) => verdict[name]) ? "no" : "yes";
   return { ...out, changes };
 }
 
-function narrationOf(turn, full = false) { return full ? turn.narration : (typeof turn.narrator_narration === "string" ? turn.narrator_narration : turn.narration); }
+function narrationOf(turn, full = false) {
+  if (full) return turn.narration;
+  return typeof turn.narrator_narration === "string" ? turn.narrator_narration : turn.narration;
+}
 function story(turn) { return Array.isArray(turn.story_text) ? turn.story_text.join(" ") : ""; }
 function turnNumber(turn, index) { return Number.isInteger(turn.turn_number) ? turn.turn_number : index + 1; }
 function phrases(before, after) {
   const norm = (x) => String(x).trim().toLowerCase();
-  const b = (before?.condition || []).map(norm); const a = (after?.condition || []).map(norm);
-  return { newConditions: a.filter((x) => !b.includes(x)), goneConditions: b.filter((x) => !a.includes(x)), keptConditions: b.filter((x) => a.includes(x)) };
+  const b = (before?.condition || []).map(norm);
+  const a = (after?.condition || []).map(norm);
+  return {
+    newConditions: a.filter((x) => !b.includes(x)),
+    goneConditions: b.filter((x) => !a.includes(x)),
+    keptConditions: b.filter((x) => a.includes(x)),
+  };
 }
 function questionSet(state, questions) { return { state, questions }; }
 
 function continuityQuestions(state, hasHidden) {
   const q = {
-    given_conflict: nounl("Does `narration` put a thing from `given_facts` in a different place or holder, or give it a different condition, than `given_facts` says, without showing that change happen during this turn?", "`narration` conflicts with `given_facts` about a thing's place, holder or condition.", "`narration` agrees with `given_facts`, does not mention the thing, or shows the thing change. A more specific place inside the given one agrees: on the passenger seat is inside the truck. A general word for the same condition agrees: broken fits a cracked screen."),
-    earlier_conflict: nounl("Does `narration` state where a thing is, or its physical state, in a way that conflicts with `opening` or `earlier_narration`?", "`narration` contradicts `opening` or `earlier_narration` about a thing's place or physical state.", "No conflict. A detail that `opening` and `earlier_narration` never mention is not a conflict. If `given_facts` agrees with `narration`, it is not a conflict."),
-    beyond_command: nounl("Does `narration` have the player character physically do something that `command` did not ask for?", "She picks up, moves, opens, takes or uses an object, or goes to another place, and `command` did not ask for it.", "She does only what `command` asks. Looking, noticing, thinking, feeling, and small movements needed to carry out `command` do not count."),
-    arrives: nounl("Does `narration` describe the player character arriving at, entering, or approaching the place where she already is, as if she were not already there?", "`narration` has her arrive, enter or approach as if new to the place.", "She simply keeps acting where she is, or `command` asked her to go there."),
-    rediscovers: nounl("Does `narration` present something already described in `opening` or `earlier_narration` as though she were finding it for the first time?", "Something already described is found again as if new.", "Nothing already described is treated as new."),
-    repeats_trip: nounl("Does `narration` repeat a trip that `earlier_narration` already finished, when `command` did not ask her to go there?", "She makes again a trip the story already finished, without `command` asking for it.", "No trip is repeated, or `command` asked for the trip."),
-    own_part_done: nounl("Does `narration` or `story_text` show the player character doing her own part of `command`?", "She does her part. For a command to look at, examine, search or check a thing, paying attention to that thing is enough. For a command to take a thing from another character, trying to take it is enough.", "She does not do her part, or stops before it is done."),
-    needs_other: nounl("Does `command` ask for something that only another character can do, such as taking a thing she hands over or answering her question?", "`command` needs another character to act.", "`command` needs only her own actions."),
-    take_from_other: nounl("Does `command` ask her to take a thing from another character?", "Yes, she is told to take a thing from someone.", "No."),
-    other_responds: nounl("Does `narration` or `story_text` show how the other character responds to her?", "Another character responds. A refusal, a struggle or silence counts as a response.", "No response is shown. Only holding a thing out, with no reaction shown, is not a response."),
-    names_place: nounl("Does `command` name a place for her to go to, or a place to bring or put a thing?", "`command` names such a place.", "`command` names no place."),
-    reaches_place: nounl("Does `narration` or `story_text` show her arriving at, clearly heading to, or putting the thing in the place `command` names?", "She reaches or clearly heads to that place, or puts the thing there.", "She does not. Driving away from somewhere does not reach a named place."),
+    given_conflict: nounl(
+      "Does `narration` put a thing from `given_facts` in a different place or holder, or give it a different condition, than `given_facts` says, without showing that change happen during this turn?",
+      "`narration` conflicts with `given_facts` about a thing's place, holder or condition.",
+      "`narration` agrees with `given_facts`, does not mention the thing, or shows the thing change. A more specific place inside the given one agrees: on the passenger seat is inside the truck. A general word for the same condition agrees: broken fits a cracked screen.",
+    ),
+    given_start_conflict: nounl(
+      "Does `narration` say or imply that a thing from `given_facts` was somewhere else at the start of this turn than `given_facts` says?",
+      "`narration` shows the thing being taken from, found in, or used from a place or holder that differs from `given_facts`. For example, she picks it up from a table while `given_facts` says it is in her hands, or she hands over a thing that `given_facts` puts somewhere she has not fetched it from.",
+      "`narration` takes or uses the thing from the place `given_facts` gives, or does not say where it was. A more specific place inside the given one agrees.",
+    ),
+    earlier_conflict: nounl(
+      "Does `narration` state where a thing is, or its physical state, in a way that conflicts with `opening` or `earlier_narration`?",
+      "`narration` contradicts `opening` or `earlier_narration` about a thing's place or physical state.",
+      "No conflict. A detail that `opening` and `earlier_narration` never mention is not a conflict. If `given_facts` agrees with `narration`, it is not a conflict.",
+    ),
+    beyond_command: nounl(
+      "Does `narration` have the player character physically do something that `command` did not ask for?",
+      "She picks up, moves, opens, takes or uses an object, or goes to another place, and `command` did not ask for it.",
+      "She does only what `command` asks. Looking, noticing, thinking, feeling, and small movements needed to carry out `command` do not count.",
+    ),
+    arrives: nounl(
+      "Does `narration` describe the player character arriving at, entering, or approaching the place where she already is, as if she were not already there?",
+      "`narration` has her arrive, enter or approach as if new to the place.",
+      "She simply keeps acting where she is, or `command` asked her to go there.",
+    ),
+    rediscovers: nounl(
+      "Does `narration` present something already described in `opening` or `earlier_narration` as though she were finding it for the first time?",
+      "Something already described is found again as if new.",
+      "Nothing already described is treated as new.",
+    ),
+    repeats_trip: nounl(
+      "Does `narration` repeat a trip that `opening` or `earlier_narration` already finished, when `command` did not ask for that trip?",
+      "She travels again along a route the story already finished. For example, `narration` has her drive through the city to reach a truck that is parked outside the house she is already in.",
+      "No finished trip is repeated. Going where `command` sends her is not a repeat.",
+    ),
+    own_part_done: nounl(
+      "Does `narration` or `story_text` show the player character doing her own part of `command`?",
+      "She does her part. For a command to look at, examine, search or check a thing, paying attention to that thing is enough. For a command to take a thing from another character, trying to take it is enough.",
+      "She does not do her part, or stops before it is done.",
+    ),
+    needs_other: nounl(
+      "Does `command` ask for something that only another character can do, such as taking a thing she hands over or answering her question?",
+      "`command` needs another character to act.",
+      "`command` needs only her own actions.",
+    ),
+    take_from_other: nounl(
+      "Does `command` ask her to take a thing from another character?",
+      "Yes, she is told to take a thing from someone.",
+      "No.",
+    ),
+    other_responds: nounl(
+      "Does `narration` or `story_text` show how the other character responds to her?",
+      "Another character responds. A refusal, a struggle or silence counts as a response.",
+      "No response is shown. Only holding a thing out, with no reaction shown, is not a response.",
+    ),
+    names_place: nounl(
+      "Does `command` name a place for her to go to, or a place to bring or put a thing?",
+      "`command` names such a place.",
+      "`command` names no place.",
+    ),
+    reaches_place: nounl(
+      "Does `narration` or `story_text` show her arriving at, clearly heading to, or putting the thing in the place `command` names?",
+      "She reaches or clearly heads to that place, or puts the thing there.",
+      "She does not. Driving away from somewhere does not reach a named place.",
+    ),
   };
-  if (hasHidden) q.hidden_shown = nounl("Does `narration` show or name a thing that `hidden_canon` says is hidden, either before `command` reaches its hidden spot or somewhere other than that spot?", "`narration` reveals the hidden thing too early or in the wrong place.", "`narration` does not show the hidden thing, or shows it only because `command` reached its hidden spot.");
+  if (hasHidden) q.hidden_shown = nounl(
+    "Does `narration` show or name a thing that `hidden_canon` says is hidden, either before `command` reaches its hidden spot or somewhere other than that spot?",
+    "`narration` reveals the hidden thing too early or in the wrong place.",
+    "`narration` does not show the hidden thing, or shows it only because `command` reached its hidden spot.",
+  );
+  if (hasHidden) q.hidden_lookalike = nounl(
+    "Does `narration` show a thing of the same kind as a thing `hidden_canon` says is hidden, at or near its hidden spot, before `command` reaches that spot?",
+    "`narration` puts an object like the hidden one (for example another storage device when a memory card is hidden) in or near the hidden spot early.",
+    "`narration` shows nothing like the hidden thing near its hidden spot, or `command` has reached the spot.",
+  );
   return q;
 }
 
 function factQuestions(thing, item, phrasesForThing) {
   const t = `\`${thing}\``;
   const q = {
-    moved: nounl(`Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`, "It moves or changes hands.", "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move."),
-    condition_changed: nounl(`Does \`narration\` show a condition of ${t} changing during this turn, such as opening, closing, cracking or switching on?`, "A condition changes.", "No condition changes."),
+    moved: nounl(
+      `Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`,
+      "It moves or changes hands.",
+      "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+    ),
+    condition_changed: nounl(
+      `Does \`narration\` show a condition of ${t} changing during this turn, such as opening, closing, cracking or switching on?`,
+      "A condition changes.",
+      "No condition changes.",
+    ),
   };
   if (item.trackedAfter) {
-    q.after_place_right = nounl(`Is \`after_place\` where \`narration\` leaves ${t} at the end of this turn?`, "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right.", "No, `narration` leaves it somewhere else, or never shows it there.");
-    q.place_is_condition = nounl(`Is \`after_place\` a condition, such as open, cracked or charging, instead of a place or a person holding ${t}?`, "`after_place` is a condition.", "`after_place` is a place or a holder.");
+    q.after_place_right = nounl(
+      `Is \`after_place\` where \`narration\` leaves ${t} at the end of this turn?`,
+      "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right.",
+      "No, `narration` leaves it somewhere else, or never shows it there.",
+    );
+    q.place_is_condition = nounl(
+      `Is \`after_place\` a condition, such as open, cracked or charging, instead of a place or a person holding ${t}?`,
+      "`after_place` is a condition.",
+      "`after_place` is a place or a holder.",
+    );
   }
-  if (item.trackedBefore) q.before_conflict = nounl(`Does \`narration\` describe ${t} in a way that conflicts with \`before_place\` or \`before_conditions\`, without showing it change during this turn?`, "`narration` conflicts with the given facts.", "No conflict. A more specific place or state that fits inside the given one is not a conflict.");
-  for (let i = 0; i < phrasesForThing.newConditions.length; i++) q[`new_condition_${i}`] = nounl(`Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`, "`narration` shows it.", "`narration` never shows it. A likely or ordinary state that is not shown does not count.");
-  for (let i = 0; i < phrasesForThing.goneConditions.length; i++) q[`gone_condition_${i}`] = nounl(`Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`, "The condition ended in `narration`, or `after_conditions` still covers it.", "`after_conditions` dropped it without cause.");
-  for (let i = 0; i < phrasesForThing.keptConditions.length; i++) q[`kept_condition_${i}`] = nounl(`Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`, "`narration` ends that condition.", "It still holds.");
-  q.command_asks = nounl(`Does \`command\` itself ask for a change to ${t}?`, "`command` asks for this change.", "`command` does not. Looking at, examining, searching or checking a thing does not ask for moving, taking, opening or damaging it.");
+  if (item.trackedBefore) {
+    q.before_conflict = nounl(
+      `Does \`narration\` describe ${t} in a way that conflicts with \`before_place\` or \`before_conditions\`, without showing it change during this turn?`,
+      "`narration` conflicts with the given facts.",
+      "No conflict. A more specific place or state that fits inside the given one is not a conflict.",
+    );
+    q.start_conflict = nounl(
+      `Does \`narration\` say or imply that ${t} was somewhere else at the start of this turn than \`before_place\`?`,
+      "`narration` shows it taken from, found in, or used from a place or holder that differs from `before_place`, for example picked up from a table while `before_place` says in her hands.",
+      "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
+    );
+  }
+  for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
+    q[`new_condition_${i}`] = nounl(
+      `Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`,
+      "`narration` shows it.",
+      "`narration` never shows it. A likely or ordinary state that is not shown does not count.",
+    );
+  }
+  for (let i = 0; i < phrasesForThing.goneConditions.length; i++) {
+    q[`gone_condition_${i}`] = nounl(
+      `Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`,
+      "The condition ended in `narration`, or `after_conditions` still covers it.",
+      "`after_conditions` dropped it without cause.",
+    );
+  }
+  for (let i = 0; i < phrasesForThing.keptConditions.length; i++) {
+    q[`kept_condition_${i}`] = nounl(
+      `Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`,
+      "`narration` ends that condition.",
+      "It still holds.",
+    );
+  }
+  q.command_asks = nounl(
+    `Does \`command\` itself ask for a change to ${t}?`,
+    "`command` asks for this change.",
+    "`command` does not. Looking at, examining, searching or checking a thing does not ask for moving, taking, opening or damaging it.",
+  );
+  if (!item.trackedBefore && item.trackedAfter) {
+    q.same_as_other = nounl(
+      `Is ${t} the same object as one of \`other_things\`, recorded under a different name?`,
+      "It is the same object as a thing in `other_things`, for example `laptop` and `Kristin's laptop` for the one laptop the story has.",
+      "It is a different object from every thing in `other_things`, or `other_things` is empty.",
+    );
+  }
   return q;
 }
 
 export async function judgeInput(input, { packagePath, fetchImpl = fetch, environment = process.env, only } = {}) {
-  if (!environment.CLOUDFLARE_ACCOUNT_ID || !environment.CLOUDFLARE_AI_TOKEN) throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are required.");
+  if (!environment.CLOUDFLARE_ACCOUNT_ID || !environment.CLOUDFLARE_AI_TOKEN) {
+    throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are required.");
+  }
   const plot = readFileSync(resolve(packagePath, "plot.md"), "utf8");
   const raw = []; let calls = 0; let model;
   const request = async (judge, replicate, turn, thing, state, questions) => {
     const questionSize = Math.max(0, ...Object.values(questions).map((q) => JSON.stringify(q).length));
-    if (Math.ceil((JSON.stringify(state).length + questionSize) / 4) > 30000) throw new Error("Jev request exceeds the 30000 token estimate.");
-    const response = await fetchImpl(`https://api.cloudflare.com/client/v4/accounts/${environment.CLOUDFLARE_ACCOUNT_ID}/ai/run`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${environment.CLOUDFLARE_AI_TOKEN}` }, body: JSON.stringify({ model: "typesafe/jev", input: questionSet(state, questions) }) });
+    if (Math.ceil((JSON.stringify(state).length + questionSize) / 4) > 30000) {
+      throw new Error("Jev request exceeds the 30000 token estimate.");
+    }
+    const response = await fetchImpl(
+      `https://api.cloudflare.com/client/v4/accounts/${environment.CLOUDFLARE_ACCOUNT_ID}/ai/run`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${environment.CLOUDFLARE_AI_TOKEN}`,
+        },
+        body: JSON.stringify({ model: "typesafe/jev", input: questionSet(state, questions) }),
+      },
+    );
     calls += 1;
     const parsed = parseEnvelope(response.status, await response.json(), Object.keys(questions));
     if (model && parsed.model !== model) throw new Error(`Jev model changed from ${model} to ${parsed.model}.`);
     model ||= parsed.model;
-    raw.push({ judge, replicate, turn, ...(thing === undefined ? {} : { thing }), model: parsed.model, state, questions, answers: parsed.answers, usage: parsed.usage });
+    raw.push({
+      judge, replicate, turn, ...(thing === undefined ? {} : { thing }), model: parsed.model,
+      state, questions, answers: parsed.answers, usage: parsed.usage,
+    });
     return parsed.answers;
   };
   const continuity = { judgments: [], judge_calls: 0 }; const fact = { judgments: [], judge_calls: 0 };
   for (let ri = 0; ri < input.runs.length; ri++) {
     const run = input.runs[ri]; const cTurns = []; const fTurns = [];
     for (let i = 0; i < run.turns.length; i++) {
-      const turn = run.turns[i]; const replicate = run.replicate ?? ri; const number = turnNumber(turn, i); const key = `${replicate}:${number}`;
+      const turn = run.turns[i];
+      const replicate = run.replicate ?? ri;
+      const number = turnNumber(turn, i);
+      const key = `${replicate}:${number}`;
       if (only && !only.has(key)) continue;
       const sceneId = turn.scene_id; const first = i === 0 || run.turns[i - 1].scene_id !== sceneId;
-      const earlier = []; for (let j = i - 1; j >= 0 && earlier.length < 2; j--) if (run.turns[j].scene_id === sceneId) earlier.unshift(narrationOf(run.turns[j]));
-      const hc = hiddenCanon(plot, sceneId); const firstSceneId = run.turns[0]?.scene_id; const state = { command: turn.player_input, narration: narrationOf(turn), story_text: story(turn), given_facts: turn.item_facts_before || {}, opening: sceneId === firstSceneId ? run.opening : "", earlier_narration: earlier, hidden_canon: hc };
-      const questions = continuityQuestions(state, Boolean(hc));
-      const answers = await request("continuity", replicate, number, undefined, state, questions); continuity.judge_calls++; const truth = Object.fromEntries(Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]));
-      const reason = Object.entries(answers).filter(([, answer]) => answer?.noul > THRESHOLD).map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`).join("; ");
-      cTurns.push({ turn: number, ...combineContinuity(truth, { firstTurnInScene: first, hasHiddenCanon: Boolean(hc) }), reason });
-      const before = turn.item_facts_before || {}; const after = turn.item_facts_after || {}; const things = [...new Set([...Object.keys(before), ...Object.keys(after)])]; const perThing = [];
-      for (const thing of things) {
-        const b = before[thing]; const a = after[thing]; const trackedBefore = Boolean(b); const trackedAfter = Boolean(a); const pf = phrases(b, a); const placeChanged = trackedAfter && String(a.place || "").trim().toLowerCase() !== String(b?.place || "").trim().toLowerCase(); const item = { thing, trackedBefore, trackedAfter, ...pf, conditionsChanged: pf.newConditions.length > 0 || pf.goneConditions.length > 0, placeChanged };
-        const fs = { command: turn.player_input, narration: turn.narration, story_text: story(turn), thing, before_place: b?.place || "", before_conditions: b?.condition || [], after_place: a?.place || "", after_conditions: a?.condition || [], tracked_before: trackedBefore, tracked_after: trackedAfter };
-        const fq = factQuestions(thing, item, pf); const fa = await request("fact", replicate, number, thing, fs, fq); fact.judge_calls++; const ft = Object.fromEntries(Object.entries(fa).map(([name, answer]) => [name, answer?.noul > THRESHOLD])); perThing.push({ ...item, answersTrue: ft, answers: fa });
+      const earlier = [];
+      for (let j = i - 1; j >= 0 && earlier.length < 2; j--) {
+        if (run.turns[j].scene_id === sceneId) earlier.unshift(narrationOf(run.turns[j]));
       }
-      const combined = combineFact(perThing); const factReason = perThing.flatMap((item) => Object.entries(item.answersTrue).filter(([, yes]) => yes).map(([name]) => `${item.thing}:${name} ${(item.answers?.[name]?.noul ?? 0).toFixed(2)}`)).join("; ");
+      const hc = hiddenCanon(plot, sceneId);
+      const firstSceneId = run.turns[0]?.scene_id;
+      const state = {
+        command: turn.player_input,
+        narration: narrationOf(turn),
+        story_text: story(turn),
+        given_facts: turn.item_facts_before || {},
+        opening: sceneId === firstSceneId ? run.opening : "",
+        earlier_narration: earlier,
+        hidden_canon: hc,
+      };
+      const questions = continuityQuestions(state, Boolean(hc));
+      const answers = await request("continuity", replicate, number, undefined, state, questions);
+      continuity.judge_calls++;
+      const truth = Object.fromEntries(
+        Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
+      );
+      const reason = Object.entries(answers)
+        .filter(([, answer]) => answer?.noul > THRESHOLD)
+        .map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`)
+        .join("; ");
+      cTurns.push({
+        turn: number,
+        ...combineContinuity(truth, { firstTurnInScene: first, hasHiddenCanon: Boolean(hc) }),
+        reason,
+      });
+      const before = turn.item_facts_before || {};
+      const after = turn.item_facts_after || {};
+      const things = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+      const perThing = [];
+      for (const thing of things) {
+        const b = before[thing];
+        const a = after[thing];
+        const trackedBefore = Boolean(b);
+        const trackedAfter = Boolean(a);
+        const pf = phrases(b, a);
+        const placeChanged = trackedAfter
+          && String(a.place || "").trim().toLowerCase() !== String(b?.place || "").trim().toLowerCase();
+        const item = {
+          thing,
+          trackedBefore,
+          trackedAfter,
+          ...pf,
+          conditionsChanged: pf.newConditions.length > 0 || pf.goneConditions.length > 0,
+          placeChanged,
+        };
+        const otherThings = things.filter((otherThing) => otherThing !== thing);
+        const fs = {
+          command: turn.player_input,
+          narration: turn.narration,
+          story_text: story(turn),
+          thing,
+          other_things: otherThings,
+          before_place: b?.place || "",
+          before_conditions: b?.condition || [],
+          after_place: a?.place || "",
+          after_conditions: a?.condition || [],
+          tracked_before: trackedBefore,
+          tracked_after: trackedAfter,
+        };
+        const fq = factQuestions(thing, item, pf);
+        const fa = await request("fact", replicate, number, thing, fs, fq);
+        fact.judge_calls++;
+        const ft = Object.fromEntries(
+          Object.entries(fa).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
+        );
+        perThing.push({ ...item, answersTrue: ft, answers: fa });
+      }
+      const combined = combineFact(perThing);
+      const factReason = perThing
+        .flatMap((item) => Object.entries(item.answersTrue)
+          .filter(([, yes]) => yes)
+          .map(([name]) => `${item.thing}:${name} ${(item.answers?.[name]?.noul ?? 0).toFixed(2)}`))
+        .join("; ");
       fTurns.push({ turn: number, ...combined, reason: factReason });
     }
     continuity.judgments.push({ turns: cTurns }); fact.judgments.push({ turns: fTurns });
@@ -164,10 +407,19 @@ export async function judgeInput(input, { packagePath, fetchImpl = fetch, enviro
   return { continuity, fact, raw };
 }
 
-function argument(name) { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error(`Missing ${name}.`); return process.argv[i + 1]; }
+function argument(name) {
+  const i = process.argv.indexOf(name);
+  if (i < 0 || !process.argv[i + 1]) throw new Error(`Missing ${name}.`);
+  return process.argv[i + 1];
+}
 async function main() {
-  const input = JSON.parse(readFileSync(argument("--input"), "utf8")); const onlyArg = process.argv.includes("--only") ? argument("--only") : ""; const only = onlyArg ? new Set(onlyArg.split(",")) : undefined;
-  const result = await judgeInput(input, { packagePath: argument("--package"), only }); const out = argument("--out");
-  writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n"); writeFileSync(resolve(out, "fact-tracking-judgments.json"), JSON.stringify(result.fact, null, 2) + "\n"); writeFileSync(resolve(out, "jev-raw.json"), JSON.stringify(result.raw, null, 2) + "\n");
+  const input = JSON.parse(readFileSync(argument("--input"), "utf8"));
+  const onlyArg = process.argv.includes("--only") ? argument("--only") : "";
+  const only = onlyArg ? new Set(onlyArg.split(",")) : undefined;
+  const result = await judgeInput(input, { packagePath: argument("--package"), only });
+  const out = argument("--out");
+  writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");
+  writeFileSync(resolve(out, "fact-tracking-judgments.json"), JSON.stringify(result.fact, null, 2) + "\n");
+  writeFileSync(resolve(out, "jev-raw.json"), JSON.stringify(result.raw, null, 2) + "\n");
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
