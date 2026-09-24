@@ -348,14 +348,3 @@ def test_entity_references_use_whole_words_and_authored_aliases() -> None:
     assert "memory_card" in _input_referenced_entity_ids(world, "Check Shelly's memory card.")
     assert "mcgehee_home" not in _input_referenced_entity_ids(world, "Inspect Shelly's housework.")
     assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()
-
-
-def test_a_player_may_name_an_entity_by_its_alias_or_short_form() -> None:
-    """A player writes "Shelly" or "the memory card", not the credited full name."""
-
-    from storygame.runtime.knowledge import _input_referenced_entity_ids
-
-    world = PACKAGE.world
-    assert "michelle" in _input_referenced_entity_ids(world, "Call Shelly again.")
-    assert "memory_card" in _input_referenced_entity_ids(world, "Turn the memory card over in my hand.")
-    assert _input_referenced_entity_ids(world, "Inspect the blank wall.") == frozenset()

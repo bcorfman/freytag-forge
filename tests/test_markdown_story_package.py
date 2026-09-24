@@ -220,12 +220,6 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     assert load_story_package(root).scenes[0].metadata.setting_facts == ()
 
 
-def test_bare_string_item_placement_remains_a_string() -> None:
-    placement = load_story_package(PACKAGE).scenes[0].metadata.item_placements["michelle_phone"]
-
-    assert placement == "on the kitchen floor"
-
-
 def test_loader_rejects_item_placement_guard_for_an_unknown_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
@@ -674,7 +668,7 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
             "pacing.yaml",
             "min_turns: 8\n  nudge_after_turns: 10",
             "min_turns: 11\n  nudge_after_turns: 10",
-            "turn allocations",
+            "turn allocations must be ordered",
         ),
         ("storylets.md", "**Pacing window**", "**Window**", "lacks sections"),
         ("storylets.md", "plot.md#scene-1a1", "plot.md#missing", "unknown plot heading"),

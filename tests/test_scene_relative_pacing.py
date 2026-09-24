@@ -190,18 +190,6 @@ def test_earned_forward_activation_never_crosses_scene_boundaries() -> None:
     assert not any(event_id.startswith("SL-1B-") for event_id in state.active_event_ids)
 
 
-def test_loader_rejects_out_of_order_scene_turn_allocation(tmp_path: Path) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(Path("data/stories/continuity-initiative"), root)
-    source = root / "pacing.yaml"
-    old = "min_turns: 8\n  nudge_after_turns: 10"
-    new = "min_turns: 11\n  nudge_after_turns: 10"
-    source.write_text(source.read_text().replace(old, new, 1))
-
-    with pytest.raises(StoryPackageError, match="turn allocations must be ordered"):
-        load_story_package(root)
-
-
 def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
     root = tmp_path / "package"
     shutil.copytree(Path("data/stories/continuity-initiative"), root)

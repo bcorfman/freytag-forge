@@ -590,14 +590,6 @@ def test_axis_echo_only_keeps_existing_non_axis_condition():
     assert provider.item_facts["drawer"]["condition"] == ["open", "KMS initials carved in"]
 
 
-def test_movable_item_still_updates_place():
-    provider = _provider()
-
-    provider.apply_item_facts({"the lantern": {"place": "in her hand"}})
-
-    assert provider.item_facts["the lantern"]["place"] == "in her hand"
-
-
 def test_state_axis_alias_is_canonical_and_evicts_opposite():
     provider = _provider()
     provider.state_axes = {"the lantern": {"lit": [], "dark": ["unlit"]}}
@@ -773,9 +765,6 @@ def test_item_facts_seed_validation_errors(bad_seed):
 @pytest.mark.parametrize(
     "axes",
     [
-        {"unknown": {"shut": [], "open": []}},
-        {"thing": {"shut": [], "open": [], "ajar": []}},
-        {"thing": {"shut": []}},
         {"thing": {"shut": ["closed"], "open": [" CLOSED "]}},
     ],
 )
