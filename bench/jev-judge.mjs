@@ -109,6 +109,44 @@ const CONTINUITY_GROUPS = {
     questions: ["earlier_conflict", "arrives", "rediscovers", "repeats_trip", "hidden_shown", "hidden_lookalike"],
   },
 };
+const SPLIT_CRITERIA_SUFFIXES = {
+  names_place: {
+    true: 'Example: "Carry the lamp up to the tower" names the tower.',
+    false: 'Example: in "Look around the dock for anything left behind", "around the dock" says where to look, '
+      + 'so no place is named.',
+  },
+  needs_other: {
+    true: 'Example: "Hand the letter to the captain" needs the captain to take it.',
+  },
+  take_from_other: {
+    true: 'Example: "Take the key back from the captain."',
+    false: 'Example: "Pick up the key from the table" takes it from a table, not from a person.',
+  },
+  own_part_done: {
+    true: 'Example: told to look closely at the lamp, she studies it and then lifts it; '
+      + 'looking was her whole part. Example: told to take the key back from the captain, '
+      + 'she reaches for it and he closes his fist; trying was her whole part.',
+  },
+  other_responds: {
+    true: 'Example: she reaches for the key and the captain closes his fist around it; refusing is a response.',
+    false: 'Example: she holds the letter out to the captain and nothing else happens.',
+  },
+  given_start_conflict: {
+    true: 'Example: the facts say the key is in her hand, but she picks it up from the table.',
+  },
+  rediscovers: {
+    false: 'Example: she already saw the cracked lens, and now glances at it again while she works; '
+      + 'that is not treating it as new.',
+  },
+  arrives: {
+    true: 'Example: she is already in the lamp room, but the narration has her step into it and spot the lens.',
+    false: 'Example: the command sends her down to the dock, and she walks there.',
+  },
+  repeats_trip: {
+    true: 'Example: the opening had her row across the bay and tie up at the lighthouse dock; '
+      + 'rowing across the bay again to reach that boat repeats the trip.',
+  },
+};
 
 function nounl(instructions, truth, falsity) {
   return { type: "noul", instructions, criteria: { true: truth, false: falsity } };
@@ -229,7 +267,7 @@ function orderedObject(source, names) {
 function continuityRequests(state, questions, variant) {
   if (variant === "baseline") return [{ state, questions }];
   if (variant === "preamble") return [{ state: { task: CONTINUITY_PREAMBLE, ...state }, questions }];
-  return Object.entries(CONTINUITY_GROUPS).map(([groupName, group]) => {
+  const requests = Object.entries(CONTINUITY_GROUPS).map(([groupName, group]) => {
     const groupState = orderedObject(state, group.state);
     if (variant === "split-examples") groupState.examples = CONTINUITY_EXAMPLES[groupName];
     return {
@@ -237,6 +275,20 @@ function continuityRequests(state, questions, variant) {
       questions: orderedObject(questions, group.questions),
     };
   });
+  if (variant !== "split-criteria") return requests;
+  return requests.map((request) => ({
+    ...request,
+    questions: Object.fromEntries(Object.entries(request.questions).map(([name, question]) => {
+      const suffixes = SPLIT_CRITERIA_SUFFIXES[name];
+      if (!suffixes) return [name, question];
+      return [name, {
+        ...question,
+        criteria: Object.fromEntries(Object.entries(question.criteria).map(([side, text]) => [
+          side, suffixes[side] ? `${text} ${suffixes[side]}` : text,
+        ])),
+      }];
+    })),
+  }));
 }
 
 function continuityQuestions(state, hasHidden) {
@@ -398,7 +450,7 @@ export async function judgeInput(
   input,
   { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both" } = {},
 ) {
-  if (!["baseline", "preamble", "split", "split-examples"].includes(variant)) {
+  if (!["baseline", "preamble", "split", "split-examples", "split-criteria"].includes(variant)) {
     throw new Error(`Unknown continuity variant: ${variant}`);
   }
   if (!["both", "continuity", "fact"].includes(judges)) {

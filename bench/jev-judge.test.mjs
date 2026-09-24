@@ -7,6 +7,44 @@ import { combineContinuity, combineFact, hiddenCanon, judgeInput, parseEnvelope,
 
 const yes = (names) => Object.fromEntries(names.map((name) => [name, true]));
 const item = (answersTrue, extra = {}) => ({ thing: "phone", trackedBefore: true, trackedAfter: true, placeChanged: false, conditionsChanged: false, newConditions: [], goneConditions: [], keptConditions: [], answersTrue, ...extra });
+const splitCriteriaSuffixes = {
+  names_place: {
+    true: 'Example: "Carry the lamp up to the tower" names the tower.',
+    false: 'Example: in "Look around the dock for anything left behind", "around the dock" says where to look, '
+      + "so no place is named.",
+  },
+  needs_other: {
+    true: 'Example: "Hand the letter to the captain" needs the captain to take it.',
+  },
+  take_from_other: {
+    true: 'Example: "Take the key back from the captain."',
+    false: 'Example: "Pick up the key from the table" takes it from a table, not from a person.',
+  },
+  own_part_done: {
+    true: 'Example: told to look closely at the lamp, she studies it and then lifts it; '
+      + 'looking was her whole part. Example: told to take the key back from the captain, '
+      + 'she reaches for it and he closes his fist; trying was her whole part.',
+  },
+  other_responds: {
+    true: 'Example: she reaches for the key and the captain closes his fist around it; refusing is a response.',
+    false: 'Example: she holds the letter out to the captain and nothing else happens.',
+  },
+  given_start_conflict: {
+    true: 'Example: the facts say the key is in her hand, but she picks it up from the table.',
+  },
+  rediscovers: {
+    false: 'Example: she already saw the cracked lens, and now glances at it again while she works; '
+      + 'that is not treating it as new.',
+  },
+  arrives: {
+    true: 'Example: she is already in the lamp room, but the narration has her step into it and spot the lens.',
+    false: 'Example: the command sends her down to the dock, and she walks there.',
+  },
+  repeats_trip: {
+    true: 'Example: the opening had her row across the bay and tie up at the lighthouse dock; '
+      + 'rowing across the bay again to reach that boat repeats the trip.',
+  },
+};
 
 test("combineContinuity applies all rules", () => {
   assert.equal(combineContinuity(yes(["given_conflict", "beyond_command", "arrives", "rediscovers", "repeats_trip", "needs_other", "names_place"]), { firstTurnInScene: false, hasHiddenCanon: false }).contradicts_stated_fact, "yes");
@@ -40,10 +78,14 @@ test("judgeInput supports continuity variants and judge selection", async () => 
   assert.equal(preambleInput.state.task, "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, and continue from where the story left off?");
   assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "opening", "earlier_narration", "hidden_canon"]);
 
-  for (const variant of ["split", "split-examples"]) {
+  const requestsByVariant = {};
+  const resultsByVariant = {};
+  for (const variant of ["split", "split-examples", "split-criteria"]) {
     const seen = [];
     const result = await judgeInput(input, { ...options, variant, fetchImpl: stubFetch(seen) });
     const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+    requestsByVariant[variant] = requests;
+    resultsByVariant[variant] = result;
     assert.equal(requests.length, 3);
     assert.deepEqual(requests.map((request) => Object.keys(request.state)), [
       ["command"],
@@ -58,6 +100,22 @@ test("judgeInput supports continuity variants and judge selection", async () => 
     assert.deepEqual(result.continuity.judgments, baseline.continuity.judgments);
     assert.equal(result.raw.every((record) => record.variant === variant), true);
     if (variant === "split-examples") assert.equal(requests[0].state.examples[0].answer, false);
+    if (variant === "split-criteria") assert.deepEqual(requests.map((request) => request.state),
+      requestsByVariant.split.map((request) => request.state));
+  }
+  assert.deepEqual(resultsByVariant["split-criteria"].continuity.judgments,
+    resultsByVariant.split.continuity.judgments);
+  for (const [variant, requests] of Object.entries(requestsByVariant)) {
+    if (variant === "split" || variant === "split-examples") continue;
+    for (let i = 0; i < requests.length; i++) {
+      for (const [name, splitQuestion] of Object.entries(requestsByVariant.split[i].questions)) {
+        const criteria = requests[i].questions[name].criteria;
+        const suffixes = splitCriteriaSuffixes[name];
+        for (const [side, text] of Object.entries(splitQuestion.criteria)) {
+          assert.equal(criteria[side], suffixes?.[side] ? `${text} ${suffixes[side]}` : text);
+        }
+      }
+    }
   }
 
   const continuitySeen = [];
