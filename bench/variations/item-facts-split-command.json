@@ -10,7 +10,6 @@
   },
   "overrides": {
     "knowledge.yaml": {"replacements": [
-      {"old": "Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor.", "new": "Michelle has not answered her calls or her early-morning text."},
       {"old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.", "new": "The house is quiet and Michelle is missing."}
     ]},
     "plot.md": {"replacements": [

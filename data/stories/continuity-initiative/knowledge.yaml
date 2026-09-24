@@ -235,7 +235,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: "After an overnight assessment shift, Kristin has reached the house she shares with Michelle through emergency-clogged streets. Michelle has not answered her calls or her early-morning text, and Michelle’s undamaged phone is lying on the kitchen floor. Michelle’s tablet and work bag are gone, while the back door frame shows recent damage. Kristin needs to find out where her friend went. Michelle’s work area has not been searched yet. The KMS drawer is worth a look."
+  situation: "Michelle's home is otherwise untouched, but its back door frame shows recent damage. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it."
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
