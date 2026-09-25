@@ -24,6 +24,7 @@ def main() -> int:
     records = json.loads((args.results / "all-turn-records.json").read_text())
     sys.path.insert(0, ".")
     from bench.core import load_variation  # noqa: E402
+    from bench.item_facts import _protagonist_name  # noqa: E402
     from bench.judge_input import judge_turns  # noqa: E402
 
     variation = load_variation(Path("bench/variations/item-facts-package-two-scene.json"))
@@ -66,6 +67,9 @@ def main() -> int:
             "--judges",
             "fact",
         ]
+        protagonist_name = _protagonist_name(package)
+        if protagonist_name is not None:
+            fact_command.extend(["--protagonist", protagonist_name])
     else:
         fact_command = [
             "node",

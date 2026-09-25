@@ -138,12 +138,15 @@ def test_player_block_places_come_before_the_command():
 
 
 def test_single_call_rules_require_facts_for_every_change():
-    system = _provider()._system_prompt()
+    provider = _provider()
+    system = provider._system_prompt()
 
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts. Use where it is when the story ends.\n"
-        "When Kristin goes to a new place, add Kristin to item_facts with the place she is when the story ends.\n"
+        "When Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is "
+        "when the story ends.\n"
+        "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
         "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
@@ -152,6 +155,28 @@ def test_single_call_rules_require_facts_for_every_change():
     assert 'falls, so the cup is {"place": "on the floor"' in system
     assert '"condition": ["cracked in two"]' in system
     assert "Also return item_facts" not in system
+
+
+def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
+    provider = _provider()
+    start_rule = "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again."
+
+    turn_system = provider._system_prompt(opening=False)
+    assert start_rule in turn_system
+    assert turn_system.index(start_rule) > turn_system.index(
+        "When Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is "
+        "when the story ends."
+    )
+    assert "the place she is" not in turn_system
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    opening_system = provider.last_prompt["system"]
+    assert start_rule not in opening_system
+    assert "the place she is" not in opening_system
 
 
 def test_protagonist_is_always_selected_and_given(monkeypatch):

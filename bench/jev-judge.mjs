@@ -406,14 +406,20 @@ function continuityQuestions(state, hasHidden) {
   return q;
 }
 
-function factQuestions(thing, item, phrasesForThing) {
+function factQuestions(thing, item, phrasesForThing, protagonist) {
   const t = `\`${thing}\``;
   const q = {
-    moved: nounl(
-      `Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`,
-      "It moves or changes hands.",
-      "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
-    ),
+    moved: thing === protagonist
+      ? nounl(
+        `Does \`narration\` show ${t} changing locations during this turn?`,
+        `${t} ends the turn in a different location than \`before_place\`, such as another room, a vehicle, or another part of the area.`,
+        `${t} stays in the same location. Small steps within the same room or area, like walking over to a desk or turning to someone, are not a change of location.`,
+      )
+      : nounl(
+        `Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`,
+        "It moves or changes hands.",
+        "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+      ),
     condition_changed: nounl(
       `Does \`narration\` show a condition of ${t} changing during this turn, such as opening, closing, cracking or switching on?`,
       "A condition changes.",
@@ -482,7 +488,7 @@ function factQuestions(thing, item, phrasesForThing) {
 
 export async function judgeInput(
   input,
-  { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both" } = {},
+  { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both", protagonist } = {},
 ) {
   if (!CONTINUITY_VARIANTS.includes(variant)) {
     throw new Error(`Unknown continuity variant: ${variant}`);
@@ -603,7 +609,7 @@ export async function judgeInput(
           tracked_before: trackedBefore,
           tracked_after: trackedAfter,
         };
-        const fq = factQuestions(thing, item, pf);
+        const fq = factQuestions(thing, item, pf, protagonist);
         const fa = await request("fact", replicate, number, thing, fs, fq);
         fact.judge_calls++;
         const ft = Object.fromEntries(
@@ -636,7 +642,8 @@ async function main() {
   const only = onlyArg ? new Set(onlyArg.split(",")) : undefined;
   const variant = process.argv.includes("--variant") ? argument("--variant") : "baseline";
   const judges = process.argv.includes("--judges") ? argument("--judges") : "both";
-  const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges });
+  const protagonist = process.argv.includes("--protagonist") ? argument("--protagonist") : undefined;
+  const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges, protagonist });
   const out = argument("--out");
   if (judges !== "fact") {
     writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");

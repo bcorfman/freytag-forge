@@ -1446,6 +1446,9 @@ def run_fact_tracking_judges(input_path: Path, output_path: Path) -> dict[str, A
             "--judges",
             "fact",
         ]
+        protagonist_name = _protagonist_name(load_story_package(Path(package_path)))
+        if protagonist_name is not None:
+            command.extend(["--protagonist", protagonist_name])
         result = _run_with_judge_input(command, input_path)
         if result.returncode:
             raise RuntimeError(result.stderr.strip() or "Jev fact-tracking judge CLI failed")

@@ -140,7 +140,7 @@ def _single_call_rules(protagonist_name: str | None) -> tuple[str, ...]:
         return _SINGLE_CALL_RULES
     protagonist_rule = (
         f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts "
-        "with the place she is when the story ends."
+        f"with the place where {protagonist_name} is when the story ends."
     )
     return (_SINGLE_CALL_RULES[0], protagonist_rule, _SINGLE_CALL_RULES[1])
 
@@ -351,7 +351,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _system_prompt(self, opening: bool = False) -> str:
         system = super()._system_prompt(opening=opening)
         if self.item_facts_mode == "single_call":
-            rules = _single_call_rules(_protagonist_name(self.state.package))
+            protagonist_name = _protagonist_name(self.state.package)
+            rules = list(_single_call_rules(protagonist_name))
+            if not opening and protagonist_name is not None:
+                rules.insert(
+                    2,
+                    f"{protagonist_name} starts this turn at the place PLAYER gives. "
+                    f"Do not have {protagonist_name} walk there again.",
+                )
             return f"{system}\n{'\n'.join(rules)}"
         return system
 

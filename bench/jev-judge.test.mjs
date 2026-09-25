@@ -217,6 +217,39 @@ test("combineFact applies tracking rules and causes", () => {
   assert.equal(combineFact([item({}, { trackedBefore: false, trackedAfter: true })]).invented_change, "no");
 });
 
+test("judgeInput uses the protagonist location question only for the protagonist", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  const input = {
+    runs: [{ turns: [{
+      scene_id: "1A",
+      player_input: "Search the room.",
+      narration: "Kristin walks over to the desk.",
+      item_facts_before: {
+        Kristin: { place: "in the room", condition: [] },
+        desk: { place: "in the room", condition: [] },
+      },
+      item_facts_after: {
+        Kristin: { place: "in the room", condition: [] },
+        desk: { place: "in the room", condition: [] },
+      },
+    }]}],
+  };
+  await judgeInput(input, {
+    packagePath: dir,
+    judges: "fact",
+    protagonist: "Kristin",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  assert.equal(requests[0].questions.moved.instructions, "Does `narration` show `Kristin` changing locations during this turn?");
+  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in a different location than `before_place`, such as another room, a vehicle, or another part of the area.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` stays in the same location. Small steps within the same room or area, like walking over to a desk or turning to someone, are not a change of location.");
+  assert.equal(requests[1].questions.moved.instructions, "Does `narration` show `desk` moving to a new place or into someone else's hands during this turn?");
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("hiddenCanon extracts one scene only", () => {
   const plot = "## Scene 1A\n**Hidden canon:** a key is under the rug.\n## Scene 1B\nVisible text.";
   assert.equal(hiddenCanon(plot, "1A"), "a key is under the rug.");

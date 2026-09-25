@@ -117,6 +117,7 @@ def test_fact_judge_backend_selection_and_jev_artifacts(monkeypatch, tmp_path) -
     assert calls[0][0:2] == ["node", str(ROOT / "bench" / "jev-judge.mjs")]
     assert calls[0][calls[0].index("--judges") + 1] == "fact"
     assert calls[0][calls[0].index("--package") + 1] == str(PACKAGE)
+    assert calls[0][calls[0].index("--protagonist") + 1] == "Kristin"
     assert output_path.exists()
     assert (tmp_path / "fact-tracking-jev-raw.json").exists()
 
