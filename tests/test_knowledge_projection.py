@@ -24,6 +24,14 @@ def _ids(items: object) -> set[str]:
     return {item.id for item in items}  # type: ignore[union-attr]
 
 
+def _scene_1b_state(package=PACKAGE) -> RuntimeState:
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "1B"
+    state.phase = next(scene.metadata.freytag_phase for scene in package.scenes if scene.metadata.scene_id == "1B")
+    state._assert_scene_entry_fact("1B")
+    return state
+
+
 def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
     term_to_knowledge = PACKAGE.knowledge_indexes.term_to_knowledge
 
@@ -61,6 +69,37 @@ def test_audience_visibility_matrix(audience: str, kind: str, player_visible: bo
     item = PACKAGE.knowledge.knowledge[0].model_copy(update={"audience": scoped_audience})
 
     assert KnowledgeProjector._visible_to(item, audience) is expected
+
+
+def test_public_scene_entry_is_not_sayable_by_an_npc() -> None:
+    projection = KnowledgeProjector().project(_scene_1b_state(), "brandon", "Search the park.")
+
+    assert "k_scene_1b_entry" not in _ids(projection.sayable_knowledge)
+
+
+def test_public_scene_entry_remains_in_players_committed_knowledge() -> None:
+    projection = KnowledgeProjector().project(_scene_1b_state(), "player", "Search the park.")
+
+    assert "k_scene_1b_entry" in _ids(projection.committed_knowledge)
+
+
+def test_character_scoped_scene_entry_remains_sayable_by_that_character() -> None:
+    public_entry = next(item for item in PACKAGE.knowledge.knowledge if item.id == "k_scene_1b_entry")
+    scoped_entry = public_entry.model_copy(
+        update={"audience": Audience(kind="characters", character_ids=("brandon",), player_visible=False)}
+    )
+    knowledge = PACKAGE.knowledge.model_copy(
+        update={
+            "knowledge": tuple(
+                scoped_entry if item.id == scoped_entry.id else item for item in PACKAGE.knowledge.knowledge
+            )
+        }
+    )
+    package = PACKAGE.model_copy(update={"knowledge": knowledge})
+
+    projection = KnowledgeProjector().project(_scene_1b_state(package), "brandon", "Search the park.")
+
+    assert "k_scene_1b_entry" in _ids(projection.sayable_knowledge)
 
 
 def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
