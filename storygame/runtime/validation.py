@@ -17,6 +17,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
+from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
 
 
@@ -254,7 +255,7 @@ class SelectedRevealResolver:
                 )
         self._validator.validate_effects(state, resolved)
         candidate_state = deepcopy(state)
-        candidate_state.apply_proposal(resolved)
+        candidate_state.apply_proposal(resolved, apply_world=False)
         post_projection = projector.project(candidate_state, "player", player_input)
         return resolved, post_projection
 
@@ -293,6 +294,8 @@ class ProgressionValidator:
     def _validate_operations(self, proposal: ResolvedTurnProposal) -> None:
         protected = set(self.package.world.protected_knowledge)
         for operation in proposal.operations:
+            if operation.fact.predicate.startswith("wk_") or operation.fact.predicate == WORLD_EFFECTS_APPLIED:
+                raise ProposalValidationError("proposal attempts to mutate world facts", code="world_fact_mutation")
             if operation.fact.predicate in protected or operation.fact.subject in protected:
                 raise ProposalValidationError(
                     "proposal attempts to mutate protected knowledge", code="protected_knowledge_mutation"
@@ -301,6 +304,10 @@ class ProgressionValidator:
                 raise ProposalValidationError(
                     "canonical facts must use a validated storylet realization", code="canonical_fact_mutation"
                 )
+        for event in proposal.events:
+            for operation in event.operations:
+                if operation.fact.predicate.startswith("wk_") or operation.fact.predicate == WORLD_EFFECTS_APPLIED:
+                    raise ProposalValidationError("proposal attempts to mutate world facts", code="world_fact_mutation")
 
     def _validate_events(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> None:
         storylet_ids = {

@@ -78,7 +78,7 @@ def test_fact_store_helpers_round_trip() -> None:
 
     assert Fact(predicate="located", subject="kristin", object="mcgehee_home") in state.facts.asserted
     assert state.facts.matching("located", "kristin") == (fact,)
-    assert state.facts.asserted == {fact, entry_fact}
+    assert {item for item in state.facts.asserted if not item.predicate.startswith("wk_")} == {fact, entry_fact}
     state.facts.retract_fact(fact)
     assert Fact(predicate="located", subject="kristin", object="mcgehee_home") not in state.facts.asserted
 
@@ -253,7 +253,7 @@ def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates(
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     validator = ProgressionValidator(PACKAGE)
     proposal = ResolvedTurnProposal(
         segments=(NarrationSegment(kind="narration", text="The route out is ready."),),

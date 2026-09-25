@@ -106,7 +106,7 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
     """Temporary deterministic E2E fixture retained through every redesign phase."""
 
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     projector = KnowledgeProjector(max_candidates=8)
 
     opening = projector.project(state, "player", "Inspect Michelle's phone.")

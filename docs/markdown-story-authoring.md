@@ -13,16 +13,24 @@ Its metadata is descriptive; prose is scene-local model guidance, never runtime
 truth.
 
 The optional `item_placements` mapping gives the narrator a positive placement
-sentence for authored items whose location matters in a scene. Author it per
-scene as needed; it is not required to cover every item.
+sentence for authored items whose location matters in a scene. String values and
+the old `{placement: ...}` form still load. The new form also changes the world:
+`{parent: item_or_location_id, text: ..., under: true, part_of: true}`. `under`
+and `part_of` are mutually exclusive; use `part_of` when an item is a component
+of its parent. `text` is optional; without it, the bench uses the parent's name.
+A hidden item may have a declared place because it never
+reaches the narrator, but it must not carry `text`.
 
-Do not use `item_placements` for a hidden item's location. Put that location in
-the reveal's `delivery_text`, and repeat it in any `Deadline` fallback that can
-deliver the same fact. Do not put the location in beat text. For human readers,
-audits, and the bench judge, record it in a scene-level `**Hidden canon:**` line
-after `**Plot:**` and before the first beat. This line is never sent to the
-narrator. Keep it before the first beat; after the last beat it becomes part of
-that beat.
+Locations may declare a `parent` location ID. `world.yaml` may declare story
+sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. Items may set
+`kind`, `openable`, `hidden`, `contents`, and `owner`; furniture descendants are
+fixed unless `fixed: false` is explicit.
+
+World facts may already declare `on_assert` effects. These effects run when the
+fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and
+`set_axis`. A `move` effect may include optional `text`, which becomes the
+narrator's place text after the move. It lasts until the thing or its holder
+moves again.
 
 The optional `setting_facts` list contains true, visible-state sentences. Each
 sentence is rendered verbatim as its own narrator rule after the placement
@@ -141,3 +149,5 @@ guarantee, naming the scene, event, and missing fact.
 Load a package with `storygame.story_package.load_story_package(path)`. It is a
 validated immutable authoring input; it does not interpret player text or add a
 story-specific runtime branch.
+
+The protagonist starts each scene in that scene's location. Things the protagonist carries therefore move with the protagonist when the scene changes.

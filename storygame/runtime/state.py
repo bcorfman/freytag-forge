@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.contracts import FactOperation, GameBreakWarning, ResolvedTurnProposal
 from storygame.runtime.facts import Fact, FactStore
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.models import StoryPackage
 
 SNAPSHOT_VERSION = 3
@@ -99,6 +100,9 @@ class RuntimeState(BaseModel):
         first = package.scenes[0].metadata
         state = cls(package=package, current_scene_id=first.scene_id, phase=first.freytag_phase)
         state._assert_scene_entry_fact(first.scene_id)
+        world_for(package, state.facts).seed()
+        apply_scene_placements(package, state.facts, first.scene_id)
+        apply_world_effects(package, state.facts)
         return state
 
     @property
@@ -157,7 +161,9 @@ class RuntimeState(BaseModel):
             segments=({"kind": "narration", "text": "Pending game-break candidate."},)
         )
 
-    def apply_proposal(self, proposal: ResolvedTurnProposal, *, canonical_event_ids: tuple[str, ...] = ()) -> None:
+    def apply_proposal(
+        self, proposal: ResolvedTurnProposal, *, canonical_event_ids: tuple[str, ...] = (), apply_world: bool = True
+    ) -> None:
         """Validate a complete candidate before replacing canonical session state.
 
         A warning intentionally commits no candidate facts: only the explicit
@@ -211,6 +217,10 @@ class RuntimeState(BaseModel):
         if changed_scene:
             self.active_event_ids.clear()
             self._assert_scene_entry_fact(next_scene_id)
+        if apply_world:
+            if changed_scene:
+                apply_scene_placements(self.package, self.facts, next_scene_id)
+            apply_world_effects(self.package, self.facts)
 
     def _assert_scene_entry_fact(self, scene_id: str) -> None:
         """Commit the typed scene-entry reveal before any opening can render."""

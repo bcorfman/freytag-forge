@@ -31,7 +31,7 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
 def _activate_card_reading(state: RuntimeState) -> None:
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
 
 
@@ -67,7 +67,7 @@ def _authored_handoff_package():
 
 
 def _assert_memory_card_in_custody(state: RuntimeState) -> None:
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
 
 
 def _rendered_character_line(character_id: str) -> str:
@@ -2009,7 +2009,7 @@ def test_guarded_item_placement_rule_tracks_guard_fact() -> None:
             "item_placements": {
                 "synthetic_item": ItemPlacement(
                     placement="beneath the test desk",
-                    while_fact_false="memory_card_in_kristins_custody",
+                    while_fact_false="memory_card_recovered",
                 )
             },
         }
@@ -2036,9 +2036,7 @@ def test_true_guarded_item_placement_rule_appears_after_fact() -> None:
         update={
             "item_ids": (*scene.metadata.item_ids, "synthetic_item"),
             "item_placements": {
-                "synthetic_item": ItemPlacement(
-                    placement="with Kristin", while_fact_true="memory_card_in_kristins_custody"
-                )
+                "synthetic_item": ItemPlacement(placement="with Kristin", while_fact_true="memory_card_recovered")
             },
         }
     )
@@ -2266,7 +2264,7 @@ def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_comm
     proposal = RuntimeEngine(state, provider).turn("Search the kitchen for signs of a struggle.")
 
     assert proposal.selected_knowledge_ids == ()
-    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="memory_card_recovered", subject="story", value="true") not in state.facts.asserted
     assert provider.recovery_count == 1
     assert len(payloads) == 2
     assert "k_sl_1a_b_r1" not in payloads[1]["system"]
@@ -2309,7 +2307,7 @@ def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatc
             "k_sl_1a_d_r1",
             "SL-1A-D",
             "Read the rest of the files.",
-            ("michelle_warning_known", "memory_card_in_kristins_custody"),
+            ("michelle_warning_known", "memory_card_recovered"),
             id="remaining-files",
         ),
     ],

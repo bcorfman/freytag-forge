@@ -1,0 +1,31 @@
+schema_version: '2.0'
+facts:
+- id: scene_1a_entry_known
+  purpose: Ada has entered the cottage.
+- id: scene_1b_entry_known
+  purpose: Ada has entered the lamp room.
+- id: brass_key_found
+  purpose: Ada has found the brass key.
+scene_frames:
+- {scene_id: 1A, situation: The cottage is quiet., pressure: The lamp hour approaches.}
+- {scene_id: 1B, situation: The lamp room is dark., pressure: The light must be tended.}
+knowledge:
+- id: k_find_key
+  statement: Ada found the brass key.
+  entity_ids: [brass_key]
+  aliases: [brass key]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: brass_key_found, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-1A-A, realization_id: r0}
+  action_evidence: [[find, key]]
+  must_convey: [[brass key]]
+  delivery_text: Ada finds the brass key.
+- id: k_lamp_room
+  statement: Ada entered the lamp room.
+  entity_ids: [lamp_room]
+  aliases: [lamp room]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
+  source: {kind: scene_entry}

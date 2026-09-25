@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from worldkeeper import MemoryBackend, World, WorldSchema
 
 
@@ -70,6 +72,42 @@ def test_seed_is_additive_after_play():
     assert world.unplaced_name("coin") == "far beyond the old stone gate"
 
 
+def test_story_kind_inherits_furniture_fixed_default():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "desk", "is": ["furniture", "supporter"]}],
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "desk", "name": "desk", "kind": "desk"},
+            ],
+        }
+    )
+    world = World(schema, MemoryBackend())
+    assert world.seed().ok
+    assert not world.move("desk", "room").ok
+
+
+def test_schema_kind_queries_and_effective_fixed_flags():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "desk", "is": ["furniture", "supporter"]}],
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "desk", "name": "desk", "kind": "desk"},
+                {"id": "drawer", "name": "drawer", "kind": "thing", "fixed": True},
+                {"id": "truck", "name": "truck", "kind": "vehicle"},
+            ],
+        }
+    )
+
+    assert schema.kind_is("desk", "furniture")
+    assert not schema.kind_is("vehicle", "furniture")
+    assert schema.kind_is("missing", "thing") is False
+    assert schema.is_fixed("desk")
+    assert schema.is_fixed("drawer")
+    assert not schema.is_fixed("truck")
+
+
 class StrictFact:
     def __init__(self, *, predicate, subject, object=None, value=None):
         assert re.fullmatch(r"wk_[a-z][a-z0-9_]*", predicate)
@@ -109,6 +147,64 @@ def test_free_text_is_stored_in_value_for_strict_hosts():
     assert world.set_conditions("coin", ["the " + "condition " * 3]).ok
     for fact in backend.matching_all():
         assert fact.object is None or len(fact.object) <= 120
+
+
+def companion_world():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "hall", "name": "hall", "kind": "area"},
+                {"id": "yard", "name": "yard", "kind": "area"},
+                {"id": "attic", "name": "attic", "kind": "area"},
+                {"id": "leader", "name": "leader", "kind": "character"},
+                {"id": "companion", "name": "companion", "kind": "character"},
+                {"id": "stray", "name": "stray", "kind": "character"},
+            ]
+        }
+    )
+    world = World(schema, MemoryBackend())
+    assert world.seed().ok
+    assert world.move("leader", "hall").ok
+    assert world.move("companion", "hall").ok
+    assert world.move("stray", "attic").ok
+    assert world.set_companion("companion", "leader").ok
+    assert world.set_companion("stray", "leader").ok
+    return world
+
+
+def test_story_effect_move_carries_companions_in_the_old_place():
+    world = companion_world()
+
+    assert world.apply_effects([{"move": "leader", "parent": "yard"}])[0].ok
+    assert world.parent("companion") == "yard"
+    assert world.parent("stray") == "attic"
+
+
+def test_move_does_not_carry_companions_when_leader_is_unplaced():
+    world = companion_world()
+    world.set_unplaced("leader", "the road")
+    world.set_unplaced("companion", "the road")
+    world.set_unplaced("stray", "the road")
+
+    assert world.move("leader", "hall").ok
+    assert world.parent("companion") is None
+    assert world.parent("stray") is None
+
+
+def test_story_effect_move_does_not_carry_companions_when_leader_is_unplaced():
+    world = companion_world()
+    world.set_unplaced("leader", "the road")
+    world.set_unplaced("companion", "the road")
+    world.set_unplaced("stray", "the road")
+
+    assert world.apply_effects([{"move": "leader", "parent": "hall"}])[0].ok
+    assert world.parent("companion") is None
+    assert world.parent("stray") is None
+
+
+def test_create_rejects_removed_parent_id_keyword():
+    with pytest.raises(TypeError):
+        companion_world().create("new thing", parent_id="hall")
 
 
 def test_only_in_transfers_open_a_closed_container():

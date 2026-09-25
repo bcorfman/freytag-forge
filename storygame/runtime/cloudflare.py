@@ -33,6 +33,7 @@ from storygame.runtime.validation import (
     derive_statement_grounding,
     unconveyed_terms,
 )
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.models import (
     Item,
     ItemPlacement,
@@ -40,6 +41,7 @@ from storygame.story_package.models import (
     SceneBeat,
     SceneMetadata,
     item_placement_is_visible,
+    placement_text,
 )
 
 logger = logging.getLogger(__name__)
@@ -319,6 +321,11 @@ class CloudflareTurnProvider:
                     )
         return facts
 
+    def _placement_world(self):
+        facts = self._placement_facts()
+        apply_world_effects(self.state.package, facts)
+        return world_for(self.state.package, facts)
+
     def _shadow_matched_candidate_id(self, player_input: str) -> str | None:
         """Record a matcher result without changing the narrated turn.
 
@@ -528,17 +535,25 @@ class CloudflareTurnProvider:
         rules.extend(self._setting_fact_rules())
         return rules
 
-    def _visible_placed_items(self) -> dict[str, tuple[Item, str | ItemPlacement]]:
+    def _visible_placed_items(self, world=None) -> dict[str, tuple[Item, str | ItemPlacement]]:
         scene_items = {item.id: item for item in self.state.package.world.items}
+        if world is None:
+            world = self._placement_world()
+        facts = self._placement_facts()
         visible: dict[str, tuple[Item, str | ItemPlacement]] = {}
         for item_id, placement in self._current_scene().item_placements.items():
             item = scene_items.get(item_id)
             if item is None:
                 continue
-            if not item_placement_is_visible(placement, self._placement_facts()):
+            if not item_placement_is_visible(placement, facts) or world.is_hidden(item_id):
                 continue
             visible[item_id] = (item, placement)
         return visible
+
+    def _placement_text(self, item_id: str, placement: str | ItemPlacement, world) -> str | None:
+        if isinstance(placement, str) or placement.placement is not None:
+            return placement_text(placement)
+        return world.place_text(item_id)
 
     def _revealed_details(self, details: tuple[str, ...] | list[str]) -> list[str]:
         visible_ids = set(self._visible_placed_items())
@@ -560,11 +575,14 @@ class CloudflareTurnProvider:
         return revealed_details
 
     def _owner_rules(self) -> list[str]:
-        visible_items = self._visible_placed_items()
+        world = self._placement_world()
+        visible_items = self._visible_placed_items(world)
         possessive_items = [
             visible_items[item_id][0].name
             for item_id in self._current_scene().item_ids
-            if item_id in visible_items and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
+            if item_id in visible_items
+            and self._placement_text(item_id, visible_items[item_id][1], world) is not None
+            and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
         ]
         if not possessive_items:
             return []
@@ -579,10 +597,12 @@ class CloudflareTurnProvider:
         ]
 
     def _placement_rules(self) -> list[str]:
+        world = self._placement_world()
         rules = []
-        for item, placement in self._visible_placed_items().values():
-            placement_text = placement if isinstance(placement, str) else placement.placement
-            rules.append(f"{item.name} is {placement_text}.")
+        for item_id, (item, placement) in self._visible_placed_items(world).items():
+            text = self._placement_text(item_id, placement, world)
+            if text is not None:
+                rules.append(f"{item.name} is {text}.")
         return rules
 
     def _setting_fact_rules(self) -> list[str]:

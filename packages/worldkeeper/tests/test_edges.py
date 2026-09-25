@@ -59,9 +59,9 @@ def test_create_rejections_and_owner_and_custom_backend():
     assert not w.create("lamp").ok
     assert not w.create("new", kind="character").ok
     assert not w.create("new", owner="lamp").ok
-    assert not w.create("new", parent_id="lamp").ok
-    assert not w.create("new", parent_id="ada", under=True).ok
-    result = w.create("new box", parent_id="ada", owner="ada")
+    assert not w.create("new", parent="lamp").ok
+    assert not w.create("new", parent="ada", under=True).ok
+    result = w.create("new box", parent="ada", owner="ada")
     assert result.ok and w.owner(result.id) == "ada" and w.relation(result.id) == "carried_by"
 
     class HostFact:

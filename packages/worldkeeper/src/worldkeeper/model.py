@@ -113,6 +113,15 @@ class WorldSchema:
     def __init__(self, kinds, entities):
         self.kinds, self.entities = kinds, entities
 
+    def kind_is(self, kind: str, ancestor: str) -> bool:
+        """Return whether a known kind is or descends from an ancestor kind."""
+        return kind in self.kinds and ancestor in _ancestors(self.kinds, kind)
+
+    def is_fixed(self, entity_id: str) -> bool:
+        """Return an entity's effective fixed flag."""
+        entity = self.entities.get(entity_id)
+        return bool(entity and entity.fixed)
+
     @classmethod
     def from_data(cls, data: Mapping):
         """Validate mappings and return a schema, or raise :class:`SchemaError`."""
@@ -161,7 +170,7 @@ class WorldSchema:
                 tuple(entity_data.get("aliases", [])),
                 entity_data.get("owner"),
                 entity_data.get("parent"),
-                entity_data.get("fixed", kind == "furniture"),
+                entity_data.get("fixed", "furniture" in _ancestors(kinds, kind)),
                 entity_data.get("openable", False),
                 entity_data.get("open", False),
                 entity_data.get("captive", False),
@@ -395,10 +404,17 @@ class World:
         """Return authored placement text, parent name, or unplaced name."""
         if not self.exists(entity_id):
             return None
-        moved = any(self._facts("wk_moved", ancestor) for ancestor in (entity_id,) + self.chain(entity_id))
-        if not moved and self._value("wk_place_text", entity_id):
-            return self._value("wk_place_text", entity_id)
+        text = self.place_text(entity_id)
+        if text is not None:
+            return text
         return self.name(self.parent(entity_id)) if self.parent(entity_id) else self.unplaced_name(entity_id)
+
+    def place_text(self, entity_id) -> str | None:
+        """Return authored placement text while the entity's holder is unmoved."""
+        if not self.exists(entity_id):
+            return None
+        moved = any(self._facts("wk_moved", ancestor) for ancestor in (entity_id,) + self.chain(entity_id))
+        return self._value("wk_place_text", entity_id) if not moved else None
 
     def resolve(self, name):
         """Resolve names, aliases, part forms, or a resolver-selected ambiguity."""
@@ -493,10 +509,15 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        self._move_companions(entity_id, old_parent, parent_id)
+        return OpResult(True, id=entity_id)
+
+    def _move_companions(self, entity_id, old_parent, parent_id):
+        if old_parent is None:
+            return
         for companion_id in self.companions(entity_id):
             if self.parent(companion_id) == old_parent:
                 self._write_placement(companion_id, parent_id, self._relation(parent_id))
-        return OpResult(True, id=entity_id)
 
     def place(self, entity_id, parent_id, *, text=None, under=False, part_of=False):
         """Place setup content, permitting fixed and hidden entities."""
@@ -527,11 +548,8 @@ class World:
         self._replace("wk_moved", entity_id, "true")
         return OpResult(True, id=entity_id)
 
-    def create(self, name, parent=None, *, kind="thing", under=False, owner=None, parent_id=None):
+    def create(self, name, parent=None, *, kind="thing", under=False, owner=None):
         """Create a thing, refusing invalid names, kinds, owners, and parents."""
-        if parent is not None and parent_id is not None:
-            return self._bad("parent was supplied twice")
-        parent = parent if parent is not None else parent_id
         if not name or len(name) > 80:
             return self._bad("name must be 1 to 80 characters")
         if self.resolve(name):
@@ -649,4 +667,9 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        self._move_companions(entity_id, old_parent, parent_id)
+        if effect.get("text") is not None:
+            self._replace("wk_place_text", entity_id, value=effect["text"])
+            for fact in self._facts("wk_moved", entity_id):
+                self.backend.retract_fact(fact)
         return OpResult(True, id=entity_id)

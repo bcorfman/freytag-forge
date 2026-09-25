@@ -10,11 +10,13 @@ from typing import Any
 
 import yaml
 from pydantic import ValidationError
+from worldkeeper import BASE_KINDS, MemoryBackend, SchemaError, World, WorldSchema
 
 from storygame.story_package.models import (
     Character,
     Entity,
     FactDelivery,
+    ItemPlacement,
     KnowledgeCatalog,
     KnowledgeDefinition,
     KnowledgeIndexes,
@@ -32,6 +34,7 @@ from storygame.story_package.models import (
     term_lookup_forms,
 )
 from storygame.story_package.obligations import required_storylet_ids
+from storygame.story_package.world_schema import world_source_schema_data
 
 
 class StoryPackageError(ValueError):
@@ -76,6 +79,44 @@ def _yaml(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise StoryPackageError(f"YAML '{path}' must be a mapping")
     return value
+
+
+def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, ...], schema: WorldSchema) -> None:
+    entity_ids = {
+        entity.id for group in (world_source.locations, world_source.npcs, world_source.items) for entity in group
+    }
+    for item in world_source.items:
+        if not schema.kind_is(item.kind, "thing"):
+            raise StoryPackageError(f"item '{item.id}' kind '{item.kind}' does not descend from thing")
+    for scene in scenes:
+        backend = MemoryBackend()
+        world = World(schema, backend)
+        world.seed()
+        for item_id, placement in scene.metadata.item_placements.items():
+            if not isinstance(placement, ItemPlacement) or placement.parent is None:
+                continue
+            if placement.parent not in entity_ids:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} placement for '{item_id}' has unknown parent '{placement.parent}'"
+                )
+            item = next((item for item in world_source.items if item.id == item_id), None)
+            if item is None:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} placement references unknown item '{item_id}'"
+                )
+            if item.hidden and placement.text is not None:
+                raise StoryPackageError(f"hidden item '{item_id}' cannot have placement text")
+            result = world.place(
+                item_id,
+                placement.parent,
+                text=placement.text,
+                under=placement.under,
+                part_of=placement.part_of,
+            )
+            if not result.ok:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} placement for '{item_id}' was refused: {result.reason}"
+                )
 
 
 def _parse_scenes(text: str) -> tuple[Scene, ...]:
@@ -825,6 +866,7 @@ def _validate_transition_trigger_sources(package: StoryPackage) -> None:
             effect.fact_id for effect in event.effects if effect.equals is True
         )
     for delivery in package.deliveries:
+        asserted_by_scene.setdefault(delivery.scene_id, set()).add(delivery.fact_id)
         asserted_by_scene.setdefault(delivery.scene_id, set()).update(_asserted_true_route_operations(delivery.costs))
 
     for transition in package.pacing.transitions:
@@ -983,6 +1025,39 @@ def load_story_package(root: Path) -> StoryPackage:
             (root / "storylets.md").read_text(encoding="utf-8"), plot_beat_anchors, plot_scene_ids
         )
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
+        declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.items)}
+        for fact_id, effects in world.fact_effects.items():
+            for effect in effects:
+                referenced = {
+                    value
+                    for value in (
+                        effect.move,
+                        effect.parent,
+                        effect.reveal,
+                        effect.accompany,
+                        effect.with_,
+                        effect.set_axis,
+                    )
+                    if value is not None
+                }
+                unknown = referenced - declared_ids
+                if unknown:
+                    raise StoryPackageError(
+                        f"world fact '{fact_id}' effect references unknown entity(s): {sorted(unknown)}"
+                    )
+        known_kind_ids = set(BASE_KINDS) | {kind.id for kind in world.kinds}
+        for item in world.items:
+            if item.kind not in known_kind_ids:
+                raise StoryPackageError(f"item '{item.id}' has unknown kind '{item.kind}'")
+        location_ids = {location.id for location in world.locations}
+        for location in world.locations:
+            if location.parent is not None and location.parent not in location_ids:
+                raise StoryPackageError(f"location '{location.id}' has unknown location parent '{location.parent}'")
+        try:
+            schema = WorldSchema.from_data(world_source_schema_data(world))
+        except SchemaError as exc:
+            raise StoryPackageError(f"invalid world schema: {exc}") from exc
+        _validate_scene_placements(world, scenes, schema)
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
         knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))

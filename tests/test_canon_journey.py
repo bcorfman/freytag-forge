@@ -218,7 +218,7 @@ def test_scene_1a_handoff_recovers_card_atomically_with_continuity_files() -> No
 
     assert state.current_scene_id == "1B"
     assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
-    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="memory_card_recovered", subject="story", value="true") in state.facts.asserted
 
 
 def _reachable_facts(package, seed_facts: set[str], fired_storylets: set[str]) -> set[str]:

@@ -56,11 +56,21 @@ def _revealed_item_names(turn: dict[str, Any], package: StoryPackage) -> set[str
     if scene is None:
         return set()
     item_names = {item.id: item.name for item in package.world.items}
+    hidden = {item.id for item in package.world.items if item.hidden}
+    revealed_by_effect = {
+        effect.reveal
+        for fact_id in facts
+        for effect in package.world.fact_effects.get(fact_id, ())
+        if effect.reveal is not None
+    }
     return {
         item_names[item_id]
         for item_id, placement in scene.metadata.item_placements.items()
-        if isinstance(placement, ItemPlacement) and placement.while_fact_true in facts and item_id in item_names
-    }
+        if isinstance(placement, ItemPlacement)
+        and placement.while_fact_true in facts
+        and item_id in item_names
+        and (item_id not in hidden or item_id in revealed_by_effect)
+    } | {item_names[item_id] for item_id in revealed_by_effect if item_id in item_names}
 
 
 def _narrator_narration(narration: str, story_text: list[str]) -> str:

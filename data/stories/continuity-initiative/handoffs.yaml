@@ -12,7 +12,7 @@ deliveries:
     choose who remains.
   cue_text: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.
   costs:
-  - {op: assert, fact_id: memory_card_in_kristins_custody, value: true}
+  - {op: assert, fact_id: memory_card_recovered, value: true}
 - fact_id: park_pursuit_resolved
   scene_id: 1B
   source_kind: observation

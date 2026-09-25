@@ -1,13 +1,117 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled with Brandon (section 12);
-nothing built. Next: S1 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 done, exit gaps closed. See "Resume here";
+next: the S1 PR, then S2 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
 decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
+
+## Resume here (2026-09-25)
+
+Branch `world-model-s1` holds all of S1 on top of main after PR 479:
+
+- task 2: bd8c46b and 529b6a0;
+- task 3: 515201e and cf31bd2;
+- task 4: 89b1eea and 54541e9;
+- the exit gaps: 2c546cb and the round 2 commit after it;
+- d498b9d: ruff formatting of the `.plans/` scripts.
+
+The full suite is green (747 tests, 92.84% coverage), and ruff is clean across
+the whole repository. The shipped narrator's 1A payloads are still
+byte-identical to the pre-S1 baseline. The branch has not been pushed and has
+no PR. **Next:** open the S1 PR, then start S2.
+
+The S1 exit is met:
+
+- `tests/test_world_second_package.py` runs the section 10 storygame checks
+  over continuity-initiative and a synthetic second package,
+  `tests/fixtures/stories/lighthouse-keeper/`. The second package loaded
+  zero-shot apart from one general loader fix: a delivery's own fact now
+  counts as set in its scene, as the engine sets it.
+- The whole tree survives SQLite save and load, snapshot and restore, and a
+  `FactStore` clone. A created thing keeps its minted ID and is still found by
+  name.
+- `MemoryBackend` and `FactStore` give the same world.
+- The protagonist starts each scene in the scene's `location_id`, and a scene
+  change carries what she holds. A refusal is logged like any other
+  placement.
+
+Left for S2: W8's `companions` and `character_placements` front-matter
+fields. S1's task list never scheduled them. Also left for S2 is the
+`together()` question below.
+
+What S1 left in place, for S2 to build on:
+
+- **Package fields.** `world.yaml` declares `kinds` (typed `KindDeclaration`), a
+  location `parent`, and item `kind`, `openable`, `open`, `hidden`,
+  `contents` and `owner`. `Item.fixed` is `None` unless declared, and
+  `WorldSchema.is_fixed` and `WorldSchema.kind_is` decide it.
+- **Placements.** Scene 1A uses only the `{parent, text?, under?,
+  part_of?}` form. The other scenes still use strings. `apply_scene_placements`
+  runs at bootstrap and on a scene change. The loader simulates every scene's
+  new-form placements and rejects bad ones.
+- **The found card.** `memory_card_in_kristins_custody` is now
+  `memory_card_recovered` everywhere outside `.plans/`. Its `on_assert` is
+  `{move: memory_card, parent: kristin, text: with Kristin}` plus
+  `{reveal: memory_card}`. The card starts hidden `under` the drawer.
+- **Text on a move effect.** A move effect may carry `text`, which becomes the
+  thing's authored place text until it or its holder moves
+  (`World.place_text`). This was added in task 4 so the narrator still says
+  "Michelle's memory card is with Kristin." once the card is found.
+- **The shipped narrator reads a world view.**
+  `CloudflareTurnProvider._placement_world()` clones `_placement_facts()`,
+  applies world effects and wraps the result in a world. It is built once
+  per rule call. The narrator leaves out things the world says are hidden.
+  A new-form placement's line comes from `place_text`. Owner and placement
+  rules cover only things with narrator text, so the truck and the
+  workstation get no line.
+- **The workstation's name.** The item is named `workstation` with `owner:
+  michelle`, in the same way as the `drawer`. As `Michelle's workstation` it
+  made the audit flag the beat detail "overturned workstation chair"
+  (`test_real_package_has_no_ambiguous_owned_item`).
+- **Bench and judge.** The bench seed skips hidden things and seeds the card
+  (`with Kristin`) once the world reveals it. The judge treats a thing that a
+  handoff's fact reveals through `on_assert` as revealed.
+
+Materials in [world-model-s1/](world-model-s1/):
+
+- `prompt_capture.py` records the shipped narrator's 1A payloads with the
+  network stubbed: the opening plus the turn "Search the kitchen for signs of
+  a struggle.", each with and without the found fact. It applies world effects
+  after setting the fact, as every commit point does. Its default fact is
+  `memory_card_recovered`. Run it from the repository root: `uv run python
+  .plans/world-model-s1/prompt_capture.py OUT.json`.
+- `narrator-1a-baseline.json` is its output from before S1, and the capture
+  still matches it after task 4. S2 changes the narrator on the bench only,
+  so the shipped narrator must keep matching it until S4.
+- `s1t3_acceptance_draft.py` is task 3's acceptance test, which built the 1A
+  conversion in a temp copy.
+- `s1t2_check_example.sh` is the task 2 check. Reuse its structure:
+  ownership, library boundary, acceptance, full suite, mutation checks,
+  ruff, patch export. Grep only `*.py` files (`--include="*.py"`), because a
+  bare `grep -r` matches `__pycache__`. Run acceptance tests with
+  `PYTHONPATH=packages/worldkeeper/src:.` plus the acceptance directory, or
+  `bench` does not import.
+
+Lessons from task 2, for writing the next checks:
+
+- Enforce the required tests in the check. Round 1 skipped them because only
+  the spec asked for them. Mutation checks work.
+- Scope a layering rule to the new code. A blanket rule ("story_package
+  never imports runtime") pushed the worker to rewrite
+  `_validate_narration_term_traps`, and that rewrite was dropped at
+  integration.
+- `uv sync` makes `packages/worldkeeper/src/worldkeeper.egg-info/`, which is
+  now ignored. Run `uv lock` and `uv sync` yourself after a pyproject change;
+  workers have no network.
+
+Open question for S2, not yet raised with Brandon: `World.area()` returns
+the nearest area. So once the kitchen is nested in the house, a phone in the
+kitchen and Kristin in the house are not `together()`. Decide whether
+`together` should compare the top-level area.
 
 This plan is self-contained so it can be picked up in a new chat with no
 other context. The continuity plan's principles (its section 2) and working
@@ -604,20 +708,22 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
 - Task 2: wire it into storygame: `FactStore` passed as the backend, the
   package data handed to it as plain data, W7 effects applied when a story
   fact is set. This task and the ones below depend on task 1.
-  Task 1 is done (branch `worldkeeper`, commits 9ae8f8f and 35989af). Its
-  review left two small library fixes for this task, each with a
-  regression test in `packages/worldkeeper/tests/`:
-  - A story-effect move (`apply_effects` with `{"move": ..., "parent":
-    ...}`) of a character must carry its companions, as `move()` does.
-    Today `_effect_move` skips them, so a story fact that moves the
-    protagonist leaves a companion behind.
-  - `World.create()` has an undocumented extra keyword `parent_id`
-    alongside `parent`. Remove it so the signature matches the documented
-    `create(name, parent=None, *, kind="thing", under=False, owner=None)`.
+  Task 1 is done (PR 479). Task 2 is done (branch `world-model-s1`,
+  commits bd8c46b and 529b6a0). worldkeeper is a uv workspace dependency.
+  `storygame/runtime/world_model.py` is the adapter. `world.yaml` facts may
+  declare `on_assert` effects, which apply once per fact through a sweep
+  after every commit point, leaving a `world_effects_applied` marker.
+  Bootstrap seeds the world, and the provider cannot write `wk_` facts. The
+  two library fixes from task 1's review landed with it: story-effect moves
+  carry companions, and `create()` lost `parent_id`. So did a third: a
+  companion with no place never follows. The schema data is built in
+  `storygame/story_package/world_schema.py`, and the next task extends it.
 - Package schema and loader: `kind` on items, `parent` on locations, an
   optional `kinds` list, placements as `{parent, text, under}`. Loading
   rejects unknown IDs and parents a kind does not allow. String placements
   still load, so nothing breaks before it is converted.
+  Done as task 3 (commits 515201e and cf31bd2), together with the narrator,
+  bench and docs bullets below.
 - The shipped narrator: `_placement_rules`
   (`storygame/runtime/cloudflare.py`) reads `text` and says exactly what it
   says today. This is the only change to shipped behaviour, and it must change
@@ -626,9 +732,19 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
   other placement readers.
 - Convert continuity-initiative scene 1A only: the kitchen and
   outside-the-house areas, the truck, the workstation, the card's hidden place.
-  Structured YAML edits in a Ringer task; no story prose.
+  Structured YAML edits in a Ringer task; no story prose. Keep the setting
+  fact "The drawer holds pens, binder clips, a stapler, and spare
+  batteries." through S1, because the shipped narrator does not read the
+  tree yet. Removing it now would change what the player sees. It goes when
+  THINGS gives an open container's contents (S2 on the bench, S4 at runtime).
+  The shipped narrator's 1A payloads must stay byte-identical to the
+  baseline captured before S1 (opening and one turn, with and without the
+  card custody fact).
 - Update `docs/markdown-story-authoring.md` for hidden places and the new
   placement form.
+- The 1A conversion and the W7 rename are done as task 4 (commits 89b1eea
+  and 54541e9). See "Resume here" for the move-effect `text`, the narrator's
+  world view and the workstation's name.
 - Exit: the section 10 unit tests pass on continuity-initiative and a
   synthetic second package; full suite green.
 

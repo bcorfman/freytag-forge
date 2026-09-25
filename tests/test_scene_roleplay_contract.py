@@ -51,7 +51,7 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
 def test_every_policy_style_reaches_the_provider_as_normalized(player_input: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     calls: list[str] = []
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     engine = RuntimeEngine(state, _selection_provider(state, calls))
 
@@ -67,7 +67,7 @@ def test_route_package_has_the_fixed_canonical_scene_chain() -> None:
 
 def test_storylet_event_cannot_be_reused_after_acceptance() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     knowledge_id = "k_sl_1a_b_r2"
     event_payload = {

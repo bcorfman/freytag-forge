@@ -2,6 +2,12 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "storygame",
+    "worldkeeper",
+]
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.5"
@@ -1299,6 +1305,7 @@ dependencies = [
     { name = "rich" },
     { name = "spacy" },
     { name = "uvicorn" },
+    { name = "worldkeeper" },
 ]
 
 [package.dev-dependencies]
@@ -1320,6 +1327,7 @@ requires-dist = [
     { name = "rich", specifier = ">=15.0.0" },
     { name = "spacy", specifier = ">=3.8.16" },
     { name = "uvicorn", specifier = ">=0.52.1" },
+    { name = "worldkeeper", editable = "packages/worldkeeper" },
 ]
 
 [package.metadata.requires-dev]
@@ -1503,6 +1511,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/ce/e5/e272bb9a045105a1f
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/07/57ebf7a6798b016c064bd0ca81b4c6a99daa4dc377b898bc7b41eb6b5af0/weasel-1.0.0-py3-none-any.whl", hash = "sha256:89518acee027f49d743126c3502d35e6dd14f5768be5c37c9af47c171b6005cc", size = 50713, upload-time = "2026-03-20T08:10:23.637Z" },
 ]
+
+[[package]]
+name = "worldkeeper"
+version = "0.1.0"
+source = { editable = "packages/worldkeeper" }
 
 [[package]]
 name = "wrapt"

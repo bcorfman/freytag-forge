@@ -167,9 +167,50 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class Location(Entity):
+    parent: str | None = Field(default=None, pattern=_ID)
+
+
 class Item(Entity):
     # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
-    fixed: bool = False
+    fixed: bool | None = None
+    kind: str = Field(default="thing", pattern=_ID)
+    openable: bool = False
+    open: bool = False
+    hidden: bool = False
+    contents: list[str] = Field(default_factory=list)
+    owner: str | None = Field(default=None, pattern=_ID)
+
+
+class WorldEffect(_Model):
+    move: str | None = Field(default=None, pattern=_ID)
+    parent: str | None = Field(default=None, pattern=_ID)
+    text: str | None = Field(default=None, min_length=1)
+    under: bool = False
+    reveal: str | None = Field(default=None, pattern=_ID)
+    accompany: str | None = Field(default=None, pattern=_ID)
+    with_: str | None = Field(default=None, alias="with", pattern=_ID)
+    set_axis: str | None = Field(default=None, pattern=_ID)
+    value: str | None = None
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    @model_validator(mode="after")
+    def one_shape(self) -> WorldEffect:
+        values = self.model_dump(exclude_none=True, exclude_defaults=True, by_alias=True)
+        if self.move is not None:
+            valid = set(values) <= {"move", "parent", "text", "under"} and self.parent is not None
+        elif self.reveal is not None:
+            valid = set(values) == {"reveal"}
+        elif self.accompany is not None:
+            valid = set(values) == {"accompany", "with"} and self.with_ is not None
+        elif self.set_axis is not None:
+            valid = set(values) == {"set_axis", "value"} and self.value is not None
+        else:
+            valid = False
+        if not valid:
+            raise ValueError("world effect must use exactly one supported shape")
+        return self
 
 
 _LEADING_DETERMINERS = frozenset({"the", "a", "an", "this", "that", "her", "his", "their", "its"})
@@ -202,15 +243,35 @@ def entity_surface_forms(entity: Entity) -> tuple[str, ...]:
 
 
 class ItemPlacement(_Model):
-    placement: str = Field(min_length=1)
+    placement: str | None = Field(default=None, min_length=1)
     while_fact_false: str | None = Field(default=None, pattern=_ID)
     while_fact_true: str | None = Field(default=None, pattern=_ID)
+    parent: str | None = Field(default=None, pattern=_ID)
+    text: str | None = Field(default=None, min_length=1)
+    under: bool = False
+    part_of: bool = False
 
     @model_validator(mode="after")
     def one_visibility_guard(self) -> ItemPlacement:
+        old_form = self.placement is not None
+        new_form = self.parent is not None
+        if old_form == new_form:
+            raise ValueError("item placement must use exactly one of placement or parent")
+        if old_form and (self.text is not None or self.under or self.part_of):
+            raise ValueError("old-form item placement cannot use text, under, or part_of")
+        if new_form and (self.while_fact_false is not None or self.while_fact_true is not None):
+            raise ValueError("new-form item placement cannot use visibility guards")
+        if self.under and self.part_of:
+            raise ValueError("item placement cannot be both under and part_of")
         if self.while_fact_false is not None and self.while_fact_true is not None:
             raise ValueError("item placement may have at most one visibility guard")
         return self
+
+
+def placement_text(placement: str | ItemPlacement) -> str | None:
+    if isinstance(placement, str):
+        return placement
+    return placement.placement if placement.placement is not None else placement.text
 
 
 def item_placement_is_visible(placement: str | ItemPlacement, facts) -> bool:
@@ -236,14 +297,46 @@ class Character(_Model):
     bio: str = Field(min_length=1)
 
 
+class KindDeclaration(_Model):
+    id: str = Field(pattern=_ID)
+    is_: tuple[str, ...] = Field(default=(), alias="is")
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+
 class WorldSource(_Model):
     story_id: str = Field(pattern=_ID)
     protagonist_id: str = Field(pattern=_ID)
-    locations: tuple[Entity, ...]
+    locations: tuple[Location, ...]
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
+    kinds: tuple[KindDeclaration, ...] = ()
     facts: tuple[str, ...] = ()
+    fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def split_fact_effects(cls, data):
+        if not isinstance(data, Mapping):
+            return data
+        values = dict(data)
+        if "facts" not in values:
+            return values
+        facts = []
+        effects = dict(values.get("fact_effects", {}))
+        for entry in values.get("facts", ()):
+            if isinstance(entry, str):
+                facts.append(entry)
+            elif isinstance(entry, Mapping):
+                fact_id = entry.get("id")
+                facts.append(fact_id)
+                effects[fact_id] = entry.get("on_assert", ())
+            else:
+                facts.append(entry)
+        values["facts"] = facts
+        values["fact_effects"] = effects
+        return values
 
 
 class SceneMetadata(_Model):

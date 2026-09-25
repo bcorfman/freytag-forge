@@ -90,7 +90,7 @@
     "pacing.yaml": {
       "replacements": [
         {
-          "old": "  realizations:\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: false\n    text: An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.\n  - when:\n    - fact_id: michelle_lead_actionable\n      equals: true\n    text: The patrol is coming back and it is time to leave.\n  - when:\n    - fact_id: memory_card_in_kristins_custody\n      equals: true\n    text: The patrol is back and searching the house for something Kristin now carries.\n  - text: The patrol is returning to the house.\n",
+          "old": "  realizations:\n  - when:\n    - fact_id: memory_card_recovered\n      equals: false\n    text: An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.\n  - when:\n    - fact_id: michelle_lead_actionable\n      equals: true\n    text: The patrol is coming back and it is time to leave.\n  - when:\n    - fact_id: memory_card_recovered\n      equals: true\n    text: The patrol is back and searching the house for something Kristin now carries.\n  - text: The patrol is returning to the house.\n",
           "new": ""
         },
         {

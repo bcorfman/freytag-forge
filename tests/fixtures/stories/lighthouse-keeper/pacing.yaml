@@ -1,0 +1,10 @@
+budget_seconds: 600
+scenes:
+- {scene_id: 1A, min_turns: 0, nudge_after_turns: 1, handoff_after_turns: 2}
+- {scene_id: 1B, min_turns: 0, nudge_after_turns: 1, handoff_after_turns: 2}
+transitions:
+- id: t_1a_1b
+  source_scene_id: 1A
+  target_scene_id: 1B
+  priority: 0
+  triggers: [{fact_id: brass_key_found, equals: true}]

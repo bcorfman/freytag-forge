@@ -58,7 +58,7 @@ def test_personas_cover_the_escalation_ladder_without_stranding(
         events = [event for event in PACKAGE.pacing.events if event.scene_id == scene_id]
         if any(event.at_turn < WINDOWS[scene_id].handoff_after_turns and not event.when for event in events):
             assert row["complication_texts"]
-    assert "memory_card_in_kristins_custody" in _rows(summaries["staller"])[SCENE_IDS[0]]["costs_applied"]
+    assert "memory_card_recovered" in _rows(summaries["staller"])[SCENE_IDS[0]]["costs_applied"]
 
     assert summaries["wrong_lead"]["resolution_complete"] is True
 

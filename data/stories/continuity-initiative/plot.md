@@ -81,15 +81,15 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, kristin_truck, michelle_workstation]
 item_placements:
-  memory_card:
-    placement: with Kristin
-    while_fact_true: memory_card_in_kristins_custody
-  michelle_phone: on the kitchen floor
-  kristin_laptop: in Kristin's truck outside the house
-  michelle_drawer: in Michelle's workstation
-  workstation_chair: at Michelle's workstation
+  memory_card: {parent: michelle_drawer, under: true}
+  michelle_phone: {parent: kitchen, text: on the kitchen floor}
+  kristin_laptop: {parent: kristin_truck, text: in Kristin's truck outside the house}
+  kristin_truck: {parent: outside_house}
+  michelle_workstation: {parent: kitchen}
+  michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
+  workstation_chair: {parent: kitchen, text: at Michelle's workstation}
 setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and spare batteries.", "Kristin's laptop is closed.", "The workstation chair is overturned.", "Michelle's phone is not damaged."]
 entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
 transition_ids: [t_1a_1b]

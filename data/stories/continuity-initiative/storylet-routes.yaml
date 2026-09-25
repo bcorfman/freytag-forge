@@ -130,8 +130,8 @@ new_fact_ids:
   used_by_storylets:
   - SL-1A-B
   used_by_transitions: []
-- id: memory_card_in_kristins_custody
-  definition: Kristin has recovered Michelle's memory card and is carrying it.
+- id: memory_card_recovered
+  definition: Kristin has recovered Michelle's memory card.
   used_by_storylets:
   - SL-1A-E
   - SL-1A-B
@@ -573,7 +573,7 @@ storylets:
   activation:
     scene_id: 1A
     conditions:
-    - fact_id: memory_card_in_kristins_custody
+    - fact_id: memory_card_recovered
       equals: false
     pacing:
       earliest_turn: 1
@@ -587,7 +587,7 @@ storylets:
     source_beats: [scene-1a1--michelle-is-gone]
     operations:
     - op: assert
-      fact_id: memory_card_in_kristins_custody
+      fact_id: memory_card_recovered
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -598,7 +598,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: memory_card_in_kristins_custody
+    - fact_id: memory_card_recovered
       equals: true
     abort_when:
     - scene_id_not: 1A
@@ -609,7 +609,7 @@ storylets:
   activation:
     scene_id: 1A
     conditions:
-    - fact_id: memory_card_in_kristins_custody
+    - fact_id: memory_card_recovered
       equals: true
     - fact_id: continuity_initiative_known
       equals: false
@@ -734,7 +734,7 @@ storylets:
       equals: false
     - fact_id: michelle_warning_known
       equals: true
-    - fact_id: memory_card_in_kristins_custody
+    - fact_id: memory_card_recovered
       equals: true
     pacing:
       earliest_turn: 0

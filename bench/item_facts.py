@@ -6,9 +6,13 @@ import copy
 from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
+from worldkeeper import WorldSchema
+
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.validation import ProgressionValidator
-from storygame.story_package.models import ItemPlacement, item_placement_is_visible
+from storygame.runtime.world_model import apply_world_effects, world_for
+from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
+from storygame.story_package.world_schema import world_source_schema_data
 
 
 def _resolve_refer(name: str, tracked) -> str | None:
@@ -67,15 +71,27 @@ def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[
     things: dict[str, dict] = {}
     issues: list[str] = []
     unconsumed_setting_facts: list[str] = []
+    entities_by_id = {
+        entity.id: entity
+        for group in (package.world.locations, package.world.npcs, package.world.items)
+        for entity in group
+    }
     _seed_protagonist(package, scene, things, issues)
     for item_id, placement in scene.metadata.item_placements.items():
         item = items.get(item_id)
         if item is None:
             issues.append(f"scene {scene_id} placement references unknown item {item_id!r}")
             continue
+        if item.hidden:
+            continue
         if not item_placement_is_visible(placement, state.facts):
             continue
-        place = placement if isinstance(placement, str) else placement.placement
+        place = placement_text(placement)
+        if place is None and isinstance(placement, ItemPlacement):
+            parent = entities_by_id.get(placement.parent)
+            place = parent.name if parent is not None else None
+        if place is None:
+            continue
         if len(place) > 80:
             issues.append(f"placement for {item.name!r} is longer than 80 characters")
             continue
@@ -182,18 +198,27 @@ class ItemFactsProvider(CloudflareTurnProvider):
         super()._prepare_turn_visibility()
         package = self.state.package
         items = {item.id: item for item in package.world.items}
+        placement_facts = self._placement_facts()
+        apply_world_effects(package, placement_facts)
+        world = world_for(package, placement_facts)
         for item_id, placement in self._current_scene().item_placements.items():
             item = items.get(item_id)
-            if (
-                item is None
-                or item.name in self.item_facts
-                or not isinstance(placement, ItemPlacement)
-                or (placement.while_fact_false is None and placement.while_fact_true is None)
-            ):
+            if item is None or item.name in self.item_facts or world.is_hidden(item_id):
                 continue
-            if not item_placement_is_visible(placement, self._placement_facts()):
+            if not isinstance(placement, ItemPlacement):
                 continue
-            place = placement if isinstance(placement, str) else placement.placement
+            if placement.parent is not None:
+                if not item.hidden:
+                    continue
+                place = world.place_label(item_id)
+            else:
+                if placement.while_fact_false is None and placement.while_fact_true is None:
+                    continue
+                if not item_placement_is_visible(placement, placement_facts):
+                    continue
+                place = placement_text(placement)
+            if place is None:
+                continue
             self.item_facts[item.name] = {"place": place, "condition": []}
             self.item_facts_seed_names = (*self.item_facts_seed_names, item.name)
             if self._selected_names is None:
@@ -235,9 +260,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_lifted = 0
         self._item_facts_issues: list[str] = []
         package = getattr(self.state, "package", None)
-        self._fixed_item_names = {
-            item.name for item in getattr(getattr(package, "world", None), "items", ()) if getattr(item, "fixed", False)
-        }
+        if package is None:
+            self._fixed_item_names = set()
+        else:
+            schema = WorldSchema.from_data(world_source_schema_data(package.world))
+            self._fixed_item_names = {item.name for item in package.world.items if schema.is_fixed(item.id)}
         package_names, _ = (
             package_seed(package, self.state, self.state.current_scene_id) if package is not None else ({}, [])
         )

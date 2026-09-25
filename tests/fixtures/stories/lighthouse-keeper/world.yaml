@@ -1,0 +1,53 @@
+story_id: lighthouse_keeper
+protagonist_id: ada
+kinds:
+- id: workbench
+  is: [furniture, supporter]
+locations:
+- id: cottage
+  name: the keeper's cottage
+- id: parlour
+  name: parlour
+  parent: cottage
+- id: shore
+  name: the shore
+- id: lamp_room
+  name: lamp room
+npcs:
+- id: ada
+  name: Ada Lovell
+  aliases: [Ada, Ada Lovell]
+- id: tom
+  name: Tom Reyes
+items:
+- id: ada_lantern
+  name: Ada's lantern
+  owner: ada
+- id: sea_chest
+  name: sea chest
+  kind: container
+  openable: true
+  fixed: true
+  contents: [rope, oilcloth]
+- id: keeper_bench
+  name: bench
+  kind: workbench
+  owner: tom
+- id: brass_key
+  name: brass key
+  hidden: true
+- id: rowboat
+  name: Ada's rowboat
+  kind: vehicle
+  owner: ada
+- id: logbook
+  name: Tom's logbook
+  owner: tom
+facts:
+- scene_1a_entry_known
+- scene_1b_entry_known
+- brass_key_found
+- id: brass_key_found
+  on_assert:
+  - {move: brass_key, parent: ada, text: in Ada's coat pocket}
+  - {reveal: brass_key}

@@ -958,6 +958,8 @@ def test_package_seed_scene_1a_matches_authored_things():
             "place": "at Michelle's workstation",
             "condition": ["overturned"],
         },
+        "Kristin's truck": {"place": "outside the house", "condition": []},
+        "workstation": {"place": "kitchen", "condition": []},
     }
     assert issues == [
         "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
