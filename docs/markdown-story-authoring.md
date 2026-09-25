@@ -150,4 +150,4 @@ Load a package with `storygame.story_package.load_story_package(path)`. It is a
 validated immutable authoring input; it does not interpret player text or add a
 story-specific runtime branch.
 
-The protagonist starts each scene in that scene's location. Things the protagonist carries therefore follow her when the scene changes.
+The protagonist starts each scene in that scene's location. Things the protagonist carries therefore move with the protagonist when the scene changes.

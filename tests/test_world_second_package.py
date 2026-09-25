@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from worldkeeper import MemoryBackend, World, WorldSchema
+from worldkeeper import MemoryBackend, OpResult, World, WorldSchema
 
 from bench.item_facts import package_seed
 from bench.judge_input import _revealed_item_names
@@ -13,7 +13,13 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_world_effects, world_for, world_schema_data
+from storygame.runtime.world_model import (
+    ScenePlacementRefusal,
+    apply_scene_placements,
+    apply_world_effects,
+    world_for,
+    world_schema_data,
+)
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 ROOT = Path(__file__).parents[1]
@@ -86,6 +92,23 @@ def test_packages_load_schema_bootstrap_and_contents(package):
     container = "michelle_drawer" if package.story_id == "continuity_initiative" else "sea_chest"
     for content in world.contents(container):
         assert world.resolve(world.name(content)) == content
+
+
+def test_refused_protagonist_placement_is_returned_and_logged(monkeypatch, caplog):
+    package = load_story_package(STORIES[1])
+    original_place = World.place
+
+    def refuse_protagonist(self, item_id, parent_id, **kwargs):
+        if item_id == package.world.protagonist_id:
+            return OpResult(False, reason="refused for the test")
+        return original_place(self, item_id, parent_id, **kwargs)
+
+    monkeypatch.setattr(World, "place", refuse_protagonist)
+    with caplog.at_level("WARNING"):
+        refusals = apply_scene_placements(package, FactStore(), "1A")
+
+    assert refusals == (ScenePlacementRefusal("1A", "ada", "cottage", "refused for the test"),)
+    assert "refused for the test" in caplog.text
 
 
 def test_found_effect_and_scene_change_carry_the_hidden_item(package):
