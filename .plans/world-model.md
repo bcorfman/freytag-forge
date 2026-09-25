@@ -800,6 +800,12 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   in the loader and in `apply_scene_placements`, plus the decided
   `together()` rule in `worldkeeper`. It is independent of A and B. Done as
   1ab6d22.
+- **Task D: seats (W11).** `enterable` and `enter_pole` in `worldkeeper`,
+  item axes and `seat_for` in `world.yaml` and the loader, the workstation
+  chair declared as a seat, and THINGS giving a furniture's seat with it.
+  The shipped narrator's 1A payloads must stay byte-identical. Then a
+  small smoke with "Sit in the workstation chair." on an overturned chair,
+  separate from the v36 script.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
@@ -949,6 +955,26 @@ the round 7 USB drive in the drawer, was already removed in round 8 by fix A
 hidden-card leak is closed by the `hidden` axis. The list would also need
 text matching of narrated names against authored ones, which W1 rejected,
 and it overrides 1c. Also rejected: contents left as setting text only.
+
+W11. **Seats. Decided (Brandon, 2026-09-25).** When the narration has
+Kristin sit down, the reply names the chair, and the world must hold her
+there. Following Inform 7, a container or supporter may be `enterable`, and
+a character's parent is an area or an enterable container or supporter
+(invariant 6). `vehicle` is enterable by kind; a story kind or an item may
+declare `enterable: true`. An enterable thing may declare an `enter_pole`:
+a character entering it sets that pole, as taking a thing from a closed
+container opens it (W3). So the workstation chair is an enterable
+supporter with an `overturned|upright` axis declared in `world.yaml` and
+`enter_pole: upright`: Kristin can never sit in an overturned chair. A
+seat may declare `seat_for` a piece of furniture; when that furniture is
+given in THINGS, its seat is given with it, so the narrator has the chair's
+name and state when it seats her by its own initiative. A reply that puts
+Kristin "at" furniture that is not enterable still lands her in its area:
+that reply does not say she sat, and seating her anyway would narrate a
+change the prose never showed. Whether the narration shows her righting
+the chair before sitting is measured in its own smoke run first; a short
+prompt rule follows only if it fails most of the time (the narration fix
+ranking).
 
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable
