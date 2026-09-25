@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v35 on branch `round9`; v11-v33 merged to `main` in PR #473. A new
+single-mechanism runs v11-v36 on branch `round9`; v11-v35 merged to `main` (PRs #473, #475). A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,23 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v36 (2026-09-24, `bench/results/item-facts-v36-capture-two-scene-1a` plus
+smoke `item-facts-v36-smoke-two-scene-1a`).* `8ada7e6`, two capture fixes:
+the bench reads a bare-string place (`"Kristin": "in the truck"`) as the
+place instead of dropping it as invalid, and the two-scene reply example
+also shows the player character's own new place (`"{protagonist}"`,
+filled in with the story's name).
+- Baseline from v33-v35: Kristin's place after t9 ("Carry my laptop back
+  out to the truck.") was wrong 7/7. In 4 of those, the narrator had
+  reported "in the truck" correctly as a bare string, and the bench dropped
+  it. In the other 3 it repeated her starting place.
+- v36: right 2/3 at t9. r2 reports "in front of Michelle's workstation".
+  t12 is right 3/3, as before. She is reported every turn, always in the
+  object form. The empty `"lantern": {}` example leak is gone (0/57 turns).
+- Watch: the smoke's t13 has her sit "on the porch steps" to read the card.
+  That may be the example's porch leaking into the story. example_leakage
+  is 0, so it is not a copied span.
 
 *v35 (2026-09-24, `bench/results/item-facts-v35-leadin-two-scene-1a` plus
 smoke `item-facts-v35-smoke-two-scene-1a`).* `50bb6bb`, with Brandon's
