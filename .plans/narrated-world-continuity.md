@@ -1999,7 +1999,8 @@ Open items, in the order to pick them up:
    override canon and earlier commands.
 5. **Round 9** (above), then **Phase 1**, whose decisions are still open: 1a (story-break status and
    declared axes), 1b, 1d, 1e (containment tree, including the
-   `{"kitchen counter": {"contents": [...]}}` replies still dropped). 1c is
+   `{"kitchen counter": {"contents": [...]}}` replies still dropped; now
+   planned in [world-model.md](world-model.md)). 1c is
    decided. Phase 0's exit criterion - every change type at 92% - is still
    unmet, and the round 8 run is the next measurement against it.
 
@@ -2146,7 +2147,17 @@ one-line hint, sharing or separate from the existing recovery budget (decide),
 then fall back to accepting the turn with that single change refused and the
 narration regenerated a second time only if Brandon accepts the cost.
 
-**1e. Containment: characters and things share one tree.** Asked for by Brandon
+**1e. Containment: characters and things share one tree.**
+
+> **Superseded (2026-09-25) by [world-model.md](world-model.md).** Working
+> through the open items below one at a time showed that 1e was designing a
+> world model piece by piece. That plan defines the model as a whole: kinds,
+> one tree of typed relations, operations with rules, THINGS built from the
+> tree, and capture as translating a reply into operations. Its section 12
+> holds the decisions that replace the open items below. The text below is
+> kept as history.
+
+Asked for by Brandon
 on 2026-09-16, after a run recorded the laptop "in her hand" with no record of
 whether Kristin was at the truck or in the house: "The truck contains Kristin, or
 the house contains Kristin, or even the 'outside' contains Kristin. That way,
