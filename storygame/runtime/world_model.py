@@ -103,4 +103,30 @@ def apply_scene_placements(package: StoryPackage, facts: FactStore, scene_id: st
             refusal = ScenePlacementRefusal(scene_id, item_id, placement.parent, result.reason)
             refusals.append(refusal)
             logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
+    for character_id, placement in scene.metadata.character_placements.items():
+        result = world.place(character_id, placement.parent, text=placement.text)
+        if not result.ok:
+            refusal = ScenePlacementRefusal(scene_id, character_id, placement.parent, result.reason)
+            refusals.append(refusal)
+            logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
+    for companion_id in world.companions(package.world.protagonist_id):
+        result = world.clear_companion(companion_id)
+        if not result.ok:
+            refusal = ScenePlacementRefusal(scene_id, companion_id, world.parent(companion_id) or "", result.reason)
+            refusals.append(refusal)
+            logging.getLogger(__name__).warning("scene companion refused: %s", refusal)
+    for companion_id in scene.metadata.companions:
+        if companion_id not in scene.metadata.character_placements:
+            parent_id = world.parent(package.world.protagonist_id)
+            if parent_id is not None:
+                result = world.place(companion_id, parent_id)
+                if not result.ok:
+                    refusal = ScenePlacementRefusal(scene_id, companion_id, parent_id, result.reason)
+                    refusals.append(refusal)
+                    logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
+        result = world.set_companion(companion_id, package.world.protagonist_id)
+        if not result.ok:
+            refusal = ScenePlacementRefusal(scene_id, companion_id, package.world.protagonist_id, result.reason)
+            refusals.append(refusal)
+            logging.getLogger(__name__).warning("scene companion refused: %s", refusal)
     return tuple(refusals)

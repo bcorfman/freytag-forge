@@ -21,6 +21,27 @@ of its parent. `text` is optional; without it, the bench uses the parent's name.
 A hidden item may have a declared place because it never
 reaches the narrator, but it must not carry `text`.
 
+The optional `character_placements` mapping places a participant at scene
+start. Each value has a required `parent` ID and optional non-empty `text`.
+The parent must be a known area or container. Characters cannot start on a
+supporter. The protagonist may be listed; this replaces `location_id`.
+
+The optional `companions` list names NPC participants who start with the
+protagonist. A companion cannot be the protagonist. Each scene resets the
+companions from its own declaration. A companion without its own character
+placement starts where the protagonist starts.
+
+```yaml
+participant_ids: [ada, tom]
+companions: [tom]
+character_placements:
+  tom: {parent: shore, text: mending nets on the shore}
+```
+
+The loader checks all IDs and placements. A companion follows only while he is
+in the same place as her. A narrated split leaves him behind. A narrated rejoin
+makes him follow again.
+
 Locations may declare a `parent` location ID. `world.yaml` may declare story
 sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. Items may set
 `kind`, `openable`, `hidden`, `contents`, and `owner`; furniture descendants are

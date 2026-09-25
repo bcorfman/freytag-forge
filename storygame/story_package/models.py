@@ -268,6 +268,11 @@ class ItemPlacement(_Model):
         return self
 
 
+class CharacterPlacement(_Model):
+    parent: str = Field(pattern=_ID)
+    text: str | None = Field(default=None, min_length=1)
+
+
 def placement_text(placement: str | ItemPlacement) -> str | None:
     if isinstance(placement, str):
         return placement
@@ -352,6 +357,8 @@ class SceneMetadata(_Model):
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
     item_placements: Mapping[str, str | ItemPlacement] = {}
+    companions: tuple[str, ...] = ()
+    character_placements: Mapping[str, CharacterPlacement] = {}
     setting_facts: tuple[str, ...] = ()
 
     @field_validator("setting_facts")

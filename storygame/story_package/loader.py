@@ -85,6 +85,7 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
     entity_ids = {
         entity.id for group in (world_source.locations, world_source.npcs, world_source.items) for entity in group
     }
+    npc_ids = {npc.id for npc in world_source.npcs}
     for item in world_source.items:
         if not schema.kind_is(item.kind, "thing"):
             raise StoryPackageError(f"item '{item.id}' kind '{item.kind}' does not descend from thing")
@@ -92,6 +93,38 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
         backend = MemoryBackend()
         world = World(schema, backend)
         world.seed()
+        invalid_companions = set(scene.metadata.companions) - set(scene.metadata.participant_ids)
+        if invalid_companions:
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} companions must be listed in participant_ids: "
+                f"{sorted(invalid_companions)}"
+            )
+        for companion_id in scene.metadata.companions:
+            if companion_id not in npc_ids:
+                raise StoryPackageError(f"scene {scene.metadata.scene_id} companion '{companion_id}' must name an NPC")
+            if companion_id == world_source.protagonist_id:
+                raise StoryPackageError(f"scene {scene.metadata.scene_id} protagonist cannot be a companion")
+        invalid_character_placements = set(scene.metadata.character_placements) - set(scene.metadata.participant_ids)
+        if invalid_character_placements:
+            raise StoryPackageError(
+                f"scene {scene.metadata.scene_id} character_placements must name participants: "
+                f"{sorted(invalid_character_placements)}"
+            )
+        for character_id, placement in scene.metadata.character_placements.items():
+            if character_id not in npc_ids:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} character placement '{character_id}' must name an NPC"
+                )
+            if placement.parent not in entity_ids:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} placement for '{character_id}' has unknown parent "
+                    f"'{placement.parent}'"
+                )
+            result = world.place(character_id, placement.parent, text=placement.text)
+            if not result.ok:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} placement for '{character_id}' was refused: {result.reason}"
+                )
         for item_id, placement in scene.metadata.item_placements.items():
             if not isinstance(placement, ItemPlacement) or placement.parent is None:
                 continue

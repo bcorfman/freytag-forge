@@ -342,8 +342,13 @@ class World:
         return next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "character")), None)
 
     def together(self, first_id, second_id):
-        """Return whether two entities share an area."""
-        return self.area(first_id) is not None and self.area(first_id) == self.area(second_id)
+        """Return whether two entities are in the same area or nested areas."""
+        first_area, second_area = self.area(first_id), self.area(second_id)
+        if first_area is None or second_area is None:
+            return False
+        return (
+            first_area == second_area or first_area in self.chain(second_area) or second_area in self.chain(first_area)
+        )
 
     def contents(self, entity_id):
         """Return direct child IDs in sorted order."""
