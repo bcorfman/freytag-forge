@@ -7,10 +7,10 @@
   "UNSURE r1 t2, r2 t2: the invented paper under the drawer (a defect the author has tracked) is caught by NO continuity cell under the current rubric: it is not the hidden thing and not a contradiction. A rubric gap, labeled no.",
   "UNSURE r1 t13 contradicts_stated_fact=no: she reads the card at the workstation, while the plot has her read it in the truck and story_text then starts the truck.",
   "UNSURE r1 t14, r2 t14 missed_change=yes: 'She holds the phone' after finding it in her pocket, still recorded in the pocket.",
-  "UNSURE r1 t19, r2 t19 restarts_scene=yes: she 'approaches the watching man' right after dealing with him.",
   "UNSURE r2 t4: 'She closes the laptop' when the facts give it as closed, labeled as a start-state contradiction.",
   "UNSURE r2 t15: a new 'small memory card' found under the bench, recorded as Michelle's memory card (already held since 1A). Labeled invented_change=yes; no continuity cell catches the invented card.",
-  "invented_change cells are context only (the author's ruling); acts-beyond-command is not labeled."
+  "invented_change cells are context only (the author's ruling); acts-beyond-command is not labeled.",
+  "r1 t19, r2 t19 restarts_scene=no: Brandon ruled (2026-09-24) that 'Kristin approaches the stranger' when she is already near him is acceptable phrasing, not a restart."
  ],
  "continuity": {
   "1:1": {
@@ -123,7 +123,7 @@
   },
   "1:19": {
    "contradicts_stated_fact": "no",
-   "restarts_scene": "yes",
+   "restarts_scene": "no",
    "command_not_finished": "yes",
    "reveals_hidden_canon": "no"
   },
@@ -237,7 +237,7 @@
   },
   "2:19": {
    "contradicts_stated_fact": "no",
-   "restarts_scene": "yes",
+   "restarts_scene": "no",
    "command_not_finished": "no",
    "reveals_hidden_canon": "no"
   }
