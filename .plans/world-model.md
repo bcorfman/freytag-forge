@@ -604,6 +604,16 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
 - Task 2: wire it into storygame: `FactStore` passed as the backend, the
   package data handed to it as plain data, W7 effects applied when a story
   fact is set. This task and the ones below depend on task 1.
+  Task 1 is done (branch `worldkeeper`, commits 9ae8f8f and 35989af). Its
+  review left two small library fixes for this task, each with a
+  regression test in `packages/worldkeeper/tests/`:
+  - A story-effect move (`apply_effects` with `{"move": ..., "parent":
+    ...}`) of a character must carry its companions, as `move()` does.
+    Today `_effect_move` skips them, so a story fact that moves the
+    protagonist leaves a companion behind.
+  - `World.create()` has an undocumented extra keyword `parent_id`
+    alongside `parent`. Remove it so the signature matches the documented
+    `create(name, parent=None, *, kind="thing", under=False, owner=None)`.
 - Package schema and loader: `kind` on items, `parent` on locations, an
   optional `kinds` list, placements as `{parent, text, under}`. Loading
   rejects unknown IDs and parents a kind does not allow. String placements
